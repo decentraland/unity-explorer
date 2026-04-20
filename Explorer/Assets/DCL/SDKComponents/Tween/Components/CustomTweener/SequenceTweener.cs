@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.Tween.Components
                     transform.localPosition = Vector3.Lerp(r.PositionStart, r.PositionEnd, t);
                     transform.localRotation = Quaternion.Slerp(r.RotationStart, r.RotationEnd, t);
                     transform.localScale = Vector3.Lerp(r.ScaleStart, r.ScaleEnd, t);
-                }).SetAutoKill(false).Pause();
+                }).SetTarget(transform).SetAutoKill(false).Pause();
                 tween.SetEase(ease);
                 sequence.Append(tween);
                 return;
@@ -113,9 +113,11 @@ namespace DCL.SDKComponents.Tween.Components
                         {
                             case TextureMovementType.TmtOffset:
                                 textureTweener = DOTween.To(() => material.GetTextureOffset(propertyId), x => material.SetTextureOffset(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
+                                textureTweener.SetTarget(material);
                                 break;
                             case TextureMovementType.TmtTiling:
                                 textureTweener = DOTween.To(() => material.GetTextureScale(propertyId), x => material.SetTextureScale(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
+                                textureTweener.SetTarget(material);
                                 break;
                         }
 
