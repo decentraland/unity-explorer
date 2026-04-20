@@ -113,13 +113,14 @@ namespace DCL.AuthenticationScreenFlow
                         profile.HasConnectedWeb3 = true;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
-                    else if (!string.IsNullOrEmpty(email)) // in case of OTP flow we create new Profile and proceed
+                    else
                     {
+                        // New user without profile — show onboarding (randomize + username + ToS).
+                        // Works for all login methods: OTP (has email), MetaMask/Social from auth web (no email).
+                        // The email is only used for optional newsletter subscription.
                         profile = CreateRandomProfile(identity.Address.ToString());
                         machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
                     }
-                    else
-                        throw new ProfileNotFoundException();
                 }
                 catch (OperationCanceledException e)
                 {
