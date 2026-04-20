@@ -16,7 +16,6 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -24,7 +23,6 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using ECS;
-using ECS.StreamableLoading.Common;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
@@ -66,7 +64,6 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
-            FeatureFlagsConfiguration featureFlags,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             AvatarView avatarView,
@@ -154,7 +151,6 @@ namespace DCL.Backpack
 
             avatarController = new AvatarController(
                 avatarView,
-                featureFlags,
                 webBrowser,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,

@@ -55,6 +55,7 @@ MonoBehaviour:
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 2404945524685013116
+      - rid: 2404945524685013200
     - <GroupTitle>k__BackingField: Scene Lighting
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 0
@@ -67,6 +68,11 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 2404945524685013121
       - rid: 2404945524685013122
+    - <GroupTitle>k__BackingField: Other
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 7533463652475600993
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -92,6 +98,7 @@ MonoBehaviour:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
       - rid: 5190442991532376251
+      - rid: 3126482891795070978
     - <GroupTitle>k__BackingField: Point At
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 53
@@ -384,9 +391,9 @@ MonoBehaviour:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Sun Shadows
@@ -396,6 +403,23 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 7
+    - rid: 2404945524685013200
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Sun Lens Flare
+          <Description>k__BackingField: Enables a lens flare effect on the sun light.
+            Disable this to remove the effect and gain a minor performance improvement.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 11
     - rid: 2404945524685013118
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -545,6 +569,23 @@ MonoBehaviour:
           wholeNumbers: 0
           defaultValue: 1
         <Feature>k__BackingField: 3
+    - rid: 3126482891795070978
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Double tap to move
+          <Description>k__BackingField: Double-click on any surface to walk there
+            automatically.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 11
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -735,3 +776,20 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 10
+    - rid: 7533463652475600993
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Play current scene streams only
+          <Description>k__BackingField: Controls if only current scene streams will
+            play or even the closeby scenes will
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 11

@@ -4,14 +4,20 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.Character.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Input.Component;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.FeatureFlags;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Utilities;
+using DCL.Web3;
 using ECS.Abstract;
 using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,30 +28,52 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "View Profile";
+        private const string VIEW_PROFILE_TOOLTIP = "View Profile";
+        private const string OPTIONS_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
-        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
-        private Profile? currentProfileHovered;
         private readonly IMVCManager mvcManager;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly bool useContextMenu;
+
+        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
+        private readonly CancellationTokenSource disposeCts = new ();
+
+        private Profile? currentProfileHovered;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
 
-        private ProcessOtherAvatarsInteractionSystem(
+        private bool wasCursorLockedWhenMenuOpened;
+
+        internal ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
             IMVCManagerMenusAccessFacade menusAccessFacade,
-            IMVCManager mvcManager) : base(world)
+            IMVCManager mvcManager,
+            ObjectProxy<Entity> cameraEntityProxy) : base(world)
         {
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
-            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
+            this.cameraEntityProxy = cameraEntityProxy;
 
-            dclInput.Player.Pointer!.performed += OpenContextMenu;
+            useContextMenu = FeaturesRegistry.Instance.IsEnabled(FeatureId.AVATAR_CONTEXT_MENU);
+
+            if (useContextMenu)
+            {
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(OPTIONS_TOOLTIP, dclInput.Player.RightPointer);
+                dclInput.Player.RightPointer!.performed += OpenOptionsContextMenu;
+                dclInput.Player.Movement.performed += OnPlayerMoved;
+                dclInput.Player.Jump.performed += OnPlayerMoved;
+            }
+            else
+            {
+                viewProfileTooltip = new HoverFeedbackComponent.Tooltip(VIEW_PROFILE_TOOLTIP, dclInput.Player.Pointer);
+                dclInput.Player.Pointer!.performed += OpenPassport;
+            }
         }
 
         protected override void Update(float t)
@@ -55,8 +83,20 @@ namespace DCL.Interaction.Systems
 
         protected override void OnDispose()
         {
-            dclInput.Player.RightPointer!.performed -= OpenContextMenu;
+            if (useContextMenu)
+            {
+                dclInput.Player.RightPointer!.performed -= OpenOptionsContextMenu;
+                dclInput.Player.Movement.performed -= OnPlayerMoved;
+                dclInput.Player.Jump.performed -= OnPlayerMoved;
+            }
+            else
+            {
+                dclInput.Player.Pointer!.performed -= OpenPassport;
+            }
+
             contextMenuTask.TrySetResult();
+            disposeCts.Cancel();
+            disposeCts.Dispose();
         }
 
         [Query]
@@ -87,7 +127,7 @@ namespace DCL.Interaction.Systems
             hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
-        private void OpenContextMenu(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        private void OpenPassport(InputAction.CallbackContext context)
         {
             if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
@@ -97,13 +137,54 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            //Commented for now, we will restore it later
-            //contextMenuTask.TrySetResult();
-            //contextMenuTask = new UniTaskCompletionSource();
-
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(userId))).Forget();
+        }
 
-            //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+        private void OpenOptionsContextMenu(InputAction.CallbackContext context)
+        {
+            if (!context.control.IsPressed() || currentProfileHovered == null)
+                return;
+
+            string userId = currentProfileHovered.UserId;
+
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            wasCursorLockedWhenMenuOpened  = World.Get<CursorComponent>(cameraEntityProxy.Object).CursorState == CursorState.Locked;
+
+            if (wasCursorLockedWhenMenuOpened)
+            {
+                if (World.Has<PointerLockIntention>(cameraEntityProxy.Object))
+                    World.Set(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+                else
+                    World.Add(cameraEntityProxy.Object, new PointerLockIntention(true, true));
+            }
+
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(
+                new Web3Address(userId),
+                currentPositionHovered!.Value,
+                new Vector2(50, 0),
+                disposeCts.Token,
+                contextMenuTask.Task,
+                anchorPoint: MenuAnchorPoint.CENTER_RIGHT,
+                isOpenedOnWorldAvatar: true,
+                onHide: OnContextMenuClosed).Forget();
+        }
+
+        private void OnContextMenuClosed()
+        {
+            if (wasCursorLockedWhenMenuOpened)
+            {
+                ref CursorComponent cursor = ref World.Get<CursorComponent>(cameraEntityProxy.Object);
+                cursor.CursorState = CursorState.Locked;
+            }
+        }
+
+        private void OnPlayerMoved(InputAction.CallbackContext obj)
+        {
+            contextMenuTask.TrySetResult();
         }
     }
 }

@@ -14,10 +14,10 @@ namespace MVC
         internal List<(IController controller, int orderInLayer)> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();
         internal IController? fullscreenController { get; private set; }
-        internal IController? topController { get; private set; }
+        internal IController? overlayController { get; private set; }
 
         public (IController controller, int orderInLayer) TopMostPopup => popupStack.LastOrDefault();
-        public IController CurrentFullscreenController => fullscreenController;
+        public IController? CurrentFullscreenController => fullscreenController;
 
         private readonly List<(IController controller, UniTaskCompletionSource? onClose)> closeableStack = new ();
         private readonly List<(IController controller, UniTaskCompletionSource closer)> controllersClosures = new ();
@@ -64,8 +64,8 @@ namespace MVC
                     persistant.Blur();
 
             return new PopupPushInfo(
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer),
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer - 1),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, currentMaxOrderInLayer),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, currentMaxOrderInLayer - 1),
                     popupStack.Count >= 2 ? popupStack[^2].controller : null,
                     onClose);
         }
@@ -85,11 +85,13 @@ namespace MVC
                 if(persistentController.State == ControllerState.ViewFocused)
                     persistentController.Blur();
 
-            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), onClose);
+            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.FULLSCREEN, 0), onClose);
         }
 
-        public void PopFullscreen(IController controller)
+        public void PopFullscreen(IController? controller)
         {
+            if (controller == null) return;
+
             TryGracefulClose(controller);
 
             foreach (IController persistentController in persistentStack)
@@ -106,7 +108,7 @@ namespace MVC
         {
             persistentStack.Add(controller);
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
-            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
+            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.PERSISTENT, -20));
         }
 
         public void RemovePersistent(IController controller)
@@ -117,14 +119,14 @@ namespace MVC
 
         public OverlayPushInfo PushOverlay(IController controller)
         {
-            topController = controller;
+            overlayController = controller;
             controllersClosures.Add((controller, new UniTaskCompletionSource()));
-            return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 1));
+            return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.OVERLAY, 1));
         }
 
         private void TryGracefulClose(IController controller)
         {
-            for (int i = 0; i < controllersClosures.Count; i++)
+            for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                 {
                     controllersClosures[i].closer.TrySetResult();
@@ -135,7 +137,7 @@ namespace MVC
 
         public UniTaskCompletionSource? GetControllerClosure(IController controller)
         {
-            for (int i = 0; i < controllersClosures.Count; i++)
+            for (var i = 0; i < controllersClosures.Count; i++)
                 if (controllersClosures[i].controller == controller)
                     return controllersClosures[i].closer;
 
@@ -145,7 +147,7 @@ namespace MVC
         public void PopOverlay(IController controller)
         {
             TryGracefulClose(controller);
-            topController = null;
+            overlayController = null;
         }
 
         public PopupPopInfo PopPopup(IController controller, bool shouldGracefullyClose = true)
@@ -169,9 +171,12 @@ namespace MVC
             (IController controller, int orderInLayer) topMostPopup = TopMostPopup;
 
             return new PopupPopInfo(
-                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
+                new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
                 topMostPopup.controller);
         }
+
+        public NonPersistentControllersInfo GetNonPersistentControllersInfo() =>
+            new (popupStack, fullscreenController, overlayController);
 
         private void RemovePopup(IController controller)
         {
@@ -241,10 +246,10 @@ namespace MVC
     public readonly struct OverlayPushInfo
     {
         public readonly List<(IController, int)> PopupControllers;
-        public readonly IController FullscreenController;
+        public readonly IController? FullscreenController;
         public readonly CanvasOrdering ControllerOrdering;
 
-        public OverlayPushInfo(List<(IController, int)> popupControllers, IController fullscreenController, CanvasOrdering controllerOrdering)
+        public OverlayPushInfo(List<(IController, int)> popupControllers, IController? fullscreenController, CanvasOrdering controllerOrdering)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;
@@ -260,5 +265,20 @@ namespace MVC
         {
             ControllerOrdering = controllerOrdering;
         }
+    }
+
+    public readonly struct NonPersistentControllersInfo
+    {
+        public readonly List<(IController, int)> PopupControllers;
+        public readonly IController? FullscreenController;
+        public readonly IController? OverlayController;
+
+        public NonPersistentControllersInfo(List<(IController, int)> popupControllers, IController? fullscreenController, IController? overlayController)
+        {
+            PopupControllers = popupControllers;
+            FullscreenController = fullscreenController;
+            OverlayController = overlayController;
+        }
+
     }
 }
