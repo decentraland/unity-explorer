@@ -26,17 +26,20 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
+        private readonly Func<string, bool>? isIdentityBlocked;
 
         private bool isDisposed;
         internal bool isSuppressed { get; private set; }
 
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
 
-        public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub)
+        public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub,
+            Func<string, bool>? isIdentityBlocked = null)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.playbackSourcesHub = playbackSourcesHub;
+            this.isIdentityBlocked = isIdentityBlocked;
         }
 
         public void Dispose()
@@ -133,9 +136,13 @@ namespace DCL.VoiceChat
             playbackSourcesHub.SetMuteAll(false);
         }
 
+        internal void RemoveStreamsByIdentity(string identity) =>
+            playbackSourcesHub.RemoveStreamsByIdentity(identity);
+
         private bool TryAddStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
+            if (isIdentityBlocked?.Invoke(key.identity) == true) return false;
 
             Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
             if (!stream.Resource.Has) return false;

@@ -94,6 +94,18 @@ namespace DCL.VoiceChat
             foreach (StreamKey streamKey in list) TryRemoveStream(streamKey);
         }
 
+        internal void RemoveStreamsByIdentity(string identity)
+        {
+            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var keysToRemove);
+
+            foreach (StreamKey key in streams.Keys)
+                if (key.identity == identity)
+                    keysToRemove.Add(key);
+
+            foreach (StreamKey key in keysToRemove)
+                TryRemoveStream(key);
+        }
+
         private static LivekitAudioSource CreateAndPlaySource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
         {
             LivekitAudioSource lkSource = LivekitAudioSource.New(true, spatial);

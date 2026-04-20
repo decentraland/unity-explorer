@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
 using DCL.Settings.Settings;
 using DCL.Utilities;
@@ -33,6 +34,7 @@ namespace DCL.VoiceChat
 
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyMuteService muteService;
+        private readonly ObjectProxy<IUserBlockingCache> blockingCacheProxy;
 
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
@@ -53,12 +55,14 @@ namespace DCL.VoiceChat
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
-            NearbyMuteService muteService)
+            NearbyMuteService muteService,
+            ObjectProxy<IUserBlockingCache> blockingCacheProxy)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
             this.muteService = muteService;
+            this.blockingCacheProxy = blockingCacheProxy;
             this.activeAudioSources = activeAudioSources;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
@@ -77,7 +81,8 @@ namespace DCL.VoiceChat
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub,
+                isIdentityBlocked: id => blockingCacheProxy.Object?.UserIsBlocked(id) == true);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -91,6 +96,11 @@ namespace DCL.VoiceChat
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
             muteService.MuteStateChanged += OnMuteStateChanged;
+
+            if (blockingCacheProxy.Configured)
+                SubscribeToBlockingEvents(blockingCacheProxy.Object!);
+
+            blockingCacheProxy.OnObjectSet += SubscribeToBlockingEvents;
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
             Connect();
@@ -106,6 +116,14 @@ namespace DCL.VoiceChat
             nearbyStateSubscription?.Dispose();
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
+
+            blockingCacheProxy.OnObjectSet -= SubscribeToBlockingEvents;
+
+            if (blockingCacheProxy.Object != null)
+            {
+                blockingCacheProxy.Object.UserBlocked -= OnUserBlocked;
+                blockingCacheProxy.Object.UserBlocksYou -= OnUserBlocked;
+            }
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -291,6 +309,22 @@ namespace DCL.VoiceChat
         {
             if (activeAudioSources.TryGetValue(walletId, out LivekitAudioSource? lkSource))
                 lkSource.AudioSource.mute = isMuted;
+        }
+
+        private void SubscribeToBlockingEvents(IUserBlockingCache cache)
+        {
+            cache.UserBlocked += OnUserBlocked;
+            cache.UserBlocksYou += OnUserBlocked;
+        }
+
+        private void OnUserBlocked(string userId)
+        {
+            if (disposed) return;
+
+            remoteListener.RemoveStreamsByIdentity(userId);
+            activeAudioSources.TryRemove(userId, out _);
+
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
         }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)

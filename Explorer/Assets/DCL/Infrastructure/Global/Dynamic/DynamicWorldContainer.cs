@@ -1141,6 +1141,7 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceWidget,
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
+                        userBlockingCacheProxy,
                         nearbyMuteService)
                 );
 
