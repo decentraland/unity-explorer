@@ -1,63 +1,138 @@
 You are reviewing a PR that adds or modifies external dependencies in a Unity project.
 This is a SECURITY-FOCUSED review. The project ships as a desktop client to end users.
 
+Your job is to identify dependency changes visible in the PR, assess their supply-chain and runtime risk, and clearly separate:
+1. facts supported by the diff/repo,
+2. reasonable inferences,
+3. unknowns that require manual follow-up.
+
+Do not guess. If something cannot be determined from the PR, mark it as UNKNOWN.
+
 --- STEP 1: IDENTIFY ALL DEPENDENCY CHANGES ---
-List every external dependency change in this PR:
-- New packages added to `Packages/manifest.json` (name, source URL, version/commit)
-- Version changes to existing packages
-- New DLL/binary files added under `Explorer/Assets/Plugins/` or anywhere under `Explorer/`
-- New or modified `.asmdef` files that reference external assemblies
-- Changes to `Packages/packages-lock.json` (transitive dependency changes)
+List every external dependency change visible in this PR:
 
-For each dependency, state: name, version, source, and whether it's a binary (DLL/SO/dylib) or source code.
+- New or changed entries in `Packages/manifest.json`
+  - Include package name, source (registry/git/path), and exact version/tag/commit if present
+- New or changed entries in `Packages/packages-lock.json`
+  - Include direct and notable transitive changes
+- New binary or native plugin files added or modified under:
+  - `Explorer/Assets/Plugins/`
+  - any `Assets/**`
+  - any package contents included in the repo
+- New or modified `.asmdef` files that reference precompiled assemblies or change assembly visibility
+- New editor scripts, build scripts, install hooks, or package setup code that execute automatically
 
---- STEP 2: EVALUATE EACH NEW/CHANGED DEPENDENCY ---
-For each dependency identified, assess:
+For each item, state:
+- name
+- version / commit / file hash if available
+- source
+- type: source code / managed binary / native binary / unknown
+- scope: runtime / editor-only / test-only / unknown
 
-**Source trust:**
-- Is the source a known, reputable publisher? (Unity official, Microsoft, established OSS with >500 stars)
-- Is the version pinned to an immutable reference (commit SHA, exact version)? Flag branch refs or unpinned git URLs.
-- Is there a Decentraland fork, or is it pulled directly from a third party?
-- For DLLs: can the binary be reproduced from publicly available source code? If not, flag as HIGH RISK.
+--- STEP 2: ASSESS EACH NEW OR CHANGED DEPENDENCY ---
+For each dependency, assess the following using only evidence available in the PR or clearly-labeled external metadata if provided.
 
-**Capabilities and attack surface:**
-- Does this library make network requests? To what domains? Can it contact arbitrary endpoints?
-- Does it render UI, web content, popups, or overlays?
-- Does it access the filesystem beyond its own data directory?
-- Does it use reflection, runtime code generation, or load additional assemblies dynamically?
-- Does it have platform-specific or locale/region-specific behavior? (This was the vector in a past incident where a library showed harmful content to users in specific countries.)
-- Does it include native plugins (.dll/.so/.dylib/.bundle) that can't be inspected as C# source?
-- Does it have capabilities disproportionate to its stated purpose? (e.g., a video URL resolver that includes an HTML rendering engine)
+A. Provenance / source trust
+- Is the publisher clearly identifiable and reputable?
+- Is the dependency pinned to an immutable version or commit?
+- Flag branch refs, floating versions, local paths, or unpinned git URLs
+- Is this an internal fork, official upstream, or third-party fork?
+- For binaries: is corresponding source code referenced or vendored? If not, mark provenance as weaker
 
-**Maintenance and reputation:**
-- When was the library last updated?
-- Does it have known CVEs or security advisories?
-- Is the license compatible with Apache 2.0?
-- Has the author/org published other widely-used packages?
+B. Runtime capability / attack surface
+Check whether the dependency appears to:
+- make network requests or expose network-facing functionality
+- render UI, HTML, webviews, overlays, or external content
+- access filesystem locations beyond normal app data
+- use reflection, dynamic loading, or runtime assembly loading
+- include native plugins (`.dll`, `.so`, `.dylib`, `.bundle`)
+- change behavior by platform, locale, region, or remote config
+- introduce capabilities disproportionate to its stated purpose
 
-**Transitive dependencies:**
-- What transitive dependencies does this library pull in?
-- Do any of them have the above risk factors?
-- Flag any transitive dependency that is not well-known.
+If not provable from the PR, mark UNKNOWN rather than assuming.
 
---- STEP 3: RISK ASSESSMENT ---
-Classify each dependency as:
-- **LOW RISK**: Unity official package, well-known OSS, source-only, no network/UI capabilities
-- **MEDIUM RISK**: Established library with some capabilities (network, filesystem) proportionate to its purpose
-- **HIGH RISK**: Any of: opaque binaries without reproducible build, network + UI capabilities, locale/region-specific behavior, unmaintained (>12 months), low reputation, disproportionate capabilities
+C. Shipping impact
+- Does this ship in the end-user desktop client, or is it editor/dev/test only?
+- Does it affect all platforms or only specific desktop targets?
+
+D. Maintenance / known risk
+If the PR includes evidence, note:
+- maintenance status
+- security advisories / CVEs
+- license
+If not visible from the PR, mark UNKNOWN and recommend manual verification where relevant.
+
+E. Transitive risk
+From lockfile changes, identify notable transitive dependencies that are:
+- new
+- executable/native
+- low-trust / obscure
+- unusually privileged for the parent dependency
+
+--- STEP 3: RISK CLASSIFICATION ---
+Classify each dependency as one of:
+
+LOW RISK
+- official or well-established dependency
+- immutable version pinning
+- source-visible or standard package source
+- capabilities are limited or proportionate
+- no major provenance concerns
+
+MEDIUM RISK
+- some unresolved provenance or maintenance questions
+- network/filesystem/native capability that is proportionate but worth human review
+- notable transitive dependency risk
+- editor/runtime boundary unclear
+- claims require manual validation
+
+HIGH RISK
+- opaque binary or native plugin added for runtime use without trustworthy provenance
+- unpinned or floating external dependency
+- unknown publisher plus privileged capability
+- dynamic code loading / assembly loading / remote executable behavior
+- suspicious mismatch between stated purpose and actual capability
+- region/platform-specific behavior with insufficient reviewability
 
 --- STEP 4: OUTPUT ---
-Post a summary comment with:
+Produce:
 
-1. A table of all dependency changes with risk level
-2. For each MEDIUM/HIGH risk item, a specific explanation of the concern
-3. For HIGH risk items, concrete recommendations (fork it, replace the binary with a source build, use an alternative, add runtime sandboxing)
+1. A concise summary table with:
+- dependency / file
+- version
+- source
+- type
+- scope
+- risk
+- evidence confidence (HIGH / MEDIUM / LOW)
 
-Use mcp__github_inline_comment__create_inline_comment to flag specific files (especially binary additions).
+2. For each MEDIUM or HIGH risk item:
+- specific concern
+- what evidence supports it
+- what remains unknown
 
-At the end, emit:
-DEPENDENCY_REVIEW: PASS (no HIGH risk items)
-or
-DEPENDENCY_REVIEW: NEEDS_ATTENTION (has MEDIUM risk items that need human judgment)
-or
-DEPENDENCY_REVIEW: BLOCK (has HIGH risk items that must be addressed before merge)
+3. For each HIGH risk item:
+- concrete recommendation such as:
+  - replace binary with source build
+  - pin to commit/version
+  - fork and vendor reviewed source
+  - restrict to editor-only
+  - add allowlist / sandboxing / network restrictions
+  - require manual security review before merge
+
+Use inline comments to flag:
+- binary additions
+- unpinned dependency declarations
+- suspicious asmdef or build-script changes
+
+Do not claim to have inspected binary internals unless the PR actually contains inspectable source or metadata.
+
+At the end, emit exactly one:
+DEPENDENCY_REVIEW: PASS
+DEPENDENCY_REVIEW: NEEDS_ATTENTION
+DEPENDENCY_REVIEW: BLOCK
+
+Use:
+- PASS only if no meaningful unresolved concerns remain
+- NEEDS_ATTENTION if human review is needed or important unknowns remain
+- BLOCK if there is a clear high-risk issue that should be addressed before merge
