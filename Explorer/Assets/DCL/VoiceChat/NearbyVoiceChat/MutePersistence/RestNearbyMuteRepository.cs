@@ -45,9 +45,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         ///  - advances offset by the actual Results.Length (not a fixed PAGE_SIZE), so short pages don't lose entries.
         /// Exposed as internal static so tests can drive it with a fake fetcher without mocking the web stack.
         /// </summary>
-        internal static async UniTask<List<string>> PaginateMutesAsync(
-            Func<int, CancellationToken, UniTask<GetMutesResponse>> fetchPage,
-            CancellationToken ct)
+        internal static async UniTask<List<string>> PaginateMutesAsync(Func<int, CancellationToken, UniTask<GetMutesResponse>> fetchPage, CancellationToken ct)
         {
             var allMuted = new List<string>();
             var offset = 0;

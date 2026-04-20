@@ -1,6 +1,4 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -28,8 +26,7 @@ namespace DCL.VoiceChat
         private readonly Transform parent;
 
         private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
-        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams =>
-            streams;
+        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
 
         public PlaybackSourcesHub(
             string parentNameSuffix,
@@ -77,43 +74,36 @@ namespace DCL.VoiceChat
                 pair.source.AudioSource.mute = mute;
         }
 
+        internal void Stop()
+        {
+            foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in streams.Values)
+                pair.source.Stop();
+        }
+
+        internal void Reset()
+        {
+            foreach (StreamKey key in streams.Keys)
+                TryRemoveStream(key);
+        }
+
         internal void SetMuteForIdentity(string identity, bool mute)
         {
             foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> kvp in streams)
                 if (kvp.Key.identity == identity)
                 {
                     kvp.Value.source.AudioSource.mute = mute;
-                    break;
+                    return;
                 }
-        }
-
-        internal void Stop()
-        {
-            ExecuteOnMainThread(this, static hub =>
-            {
-                foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in hub.streams.Values)
-                    pair.source.Stop();
-            });
-        }
-
-        internal void Reset()
-        {
-            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var list);
-
-            foreach (StreamKey streamsKey in streams.Keys) list.Add(streamsKey);
-            foreach (StreamKey streamKey in list) TryRemoveStream(streamKey);
         }
 
         internal void RemoveStreamsByIdentity(string identity)
         {
-            using var _ = ThreadSafeListPool<StreamKey>.SHARED.Get(out var keysToRemove);
-
             foreach (StreamKey key in streams.Keys)
                 if (key.identity == identity)
-                    keysToRemove.Add(key);
-
-            foreach (StreamKey key in keysToRemove)
-                TryRemoveStream(key);
+                {
+                    TryRemoveStream(key);
+                    return;
+                }
         }
 
         private static LivekitAudioSource CreateAndPlaySource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
@@ -133,24 +123,6 @@ namespace DCL.VoiceChat
             livekitAudioSource.Stop();
             livekitAudioSource.Free();
             livekitAudioSource.gameObject.SelfDestroy();
-        }
-
-        private static void ExecuteOnMainThread(PlaybackSourcesHub sourcesHub, Action<PlaybackSourcesHub> action)
-        {
-            if (!PlayerLoopHelper.IsMainThread)
-            {
-                ExecuteAsync().Forget();
-                return;
-            }
-
-            action(sourcesHub);
-            return;
-
-            async UniTaskVoid ExecuteAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                action(sourcesHub);
-            }
         }
     }
 }
