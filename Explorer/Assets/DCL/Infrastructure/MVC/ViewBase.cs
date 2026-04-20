@@ -18,7 +18,16 @@ namespace MVC
         {
             if (canvas != null)
             {
-                canvas.sortingLayerName = order.Layer.ToString();
+                // Map enum values to the Unity sorting layer names defined in TagManager.asset.
+                // The enum uses SCREAMING_CASE while Unity's layers are PascalCase ("Fullscreen", "Popup", ...).
+                canvas.sortingLayerName = order.Layer switch
+                {
+                    CanvasOrdering.SortingLayer.FULLSCREEN => "Fullscreen",
+                    CanvasOrdering.SortingLayer.POPUP => "Popup",
+                    CanvasOrdering.SortingLayer.PERSISTENT => "Persistent",
+                    CanvasOrdering.SortingLayer.OVERLAY => "Top",
+                    _ => "Default",
+                };
                 canvas.sortingOrder = order.OrderInLayer;
             }
         }
