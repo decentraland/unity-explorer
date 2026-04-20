@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
+using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using DCL.LiveKit.Public;
@@ -26,20 +28,24 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
-        private readonly Func<string, bool>? isIdentityBlocked;
+        private readonly ObjectProxy<IUserBlockingCache>? blockingCacheProxy;
 
         private bool isDisposed;
         internal bool isSuppressed { get; private set; }
 
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
 
+        /// <param name="blockingCacheProxy">
+        /// When supplied, streams from blocked users are skipped in <see cref="TryAddStream"/>.
+        /// Pass <c>null</c> for rooms that should hear everyone (Community, private call).
+        /// </param>
         public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub,
-            Func<string, bool>? isIdentityBlocked = null)
+            ObjectProxy<IUserBlockingCache>? blockingCacheProxy = null)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.playbackSourcesHub = playbackSourcesHub;
-            this.isIdentityBlocked = isIdentityBlocked;
+            this.blockingCacheProxy = blockingCacheProxy;
         }
 
         public void Dispose()
@@ -145,7 +151,7 @@ namespace DCL.VoiceChat
         private bool TryAddStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
-            if (isIdentityBlocked?.Invoke(key.identity) == true) return false;
+            if (blockingCacheProxy?.Object?.UserIsBlocked(key.identity) == true) return false;
 
             Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
             if (!stream.Resource.Has) return false;

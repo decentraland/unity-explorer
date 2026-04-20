@@ -81,8 +81,7 @@ namespace DCL.VoiceChat
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub,
-                isIdentityBlocked: id => blockingCacheProxy.Object?.UserIsBlocked(id) == true);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, blockingCacheProxy);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
