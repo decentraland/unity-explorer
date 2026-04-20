@@ -228,7 +228,7 @@ namespace DCL.ParticleSystem.Tests
             var pb = new PBParticleSystem
             {
                 IsDirty = true,
-                Bursts = { new PBParticleSystem.Types.Burst { Time = 0f, Count = 10 } }
+                Bursts = new PBParticleSystem.Types.BurstConfiguration { Values = { new PBParticleSystem.Types.Burst { Time = 0f, Count = 10 } } }
             };
             var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
 
@@ -462,7 +462,7 @@ namespace DCL.ParticleSystem.Tests
             var pb = new PBParticleSystem
             {
                 IsDirty = true,
-                Bursts = { new PBParticleSystem.Types.Burst { Time = 0f, Count = 5 } }
+                Bursts = new PBParticleSystem.Types.BurstConfiguration { Values = { new PBParticleSystem.Types.Burst { Time = 0f, Count = 5 } } }
             };
             var component = new ParticleSystemComponent(testParticleSystem, testGameObject);
 
