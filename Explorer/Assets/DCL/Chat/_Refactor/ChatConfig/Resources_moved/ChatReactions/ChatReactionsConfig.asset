@@ -29,5 +29,5 @@ MonoBehaviour:
   DynamicStaggerRampStart: 15
   MinStaggerInterval: 0
   MaxRemoteUIReactionsPerSec: 10
-  DynamicScalingEnabled: 1
+  DynamicScalingEnabled: 0
   WorldPoolTargetUtilization: 0.7
