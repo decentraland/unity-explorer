@@ -26,7 +26,9 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.Prefs;
 using DCL.RealmNavigation;
+using DCL.Settings.Utils;
 using DCL.VoiceChat.UI;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
@@ -188,7 +190,11 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+                NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                    ? NearbyVoiceChatState.DISABLED
+                    : NearbyVoiceChatState.IDLE;
+
+                nearbyStateModel = new NearbyVoiceChatStateModel(initialState);
                 pluginScope.Add(nearbyStateModel);
 
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
