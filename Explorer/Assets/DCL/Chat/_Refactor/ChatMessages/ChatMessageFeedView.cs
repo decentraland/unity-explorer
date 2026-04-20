@@ -136,7 +136,11 @@ namespace DCL.Chat.ChatMessages
         ///     Reconstructs the scroll view with the data source that was previously set.
         /// </summary>
         /// <param name="resetPosition"></param>
-        public void ReconstructScrollView(bool resetPosition)
+        /// <param name="preserveScrollPosition">
+        ///     When true, forces the non-scrolling "prevent movement" branch even if the user is at the bottom.
+        ///     Used to keep an anchored reaction popup visually stable when new messages arrive.
+        /// </param>
+        public void ReconstructScrollView(bool resetPosition, bool preserveScrollPosition = false)
         {
             int entriesCountWithPaddings = viewModels.Count + 2; // +2 for the padding at the top and bottom
 
@@ -149,7 +153,7 @@ namespace DCL.Chat.ChatMessages
             loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
-            if (IsAtBottom()) { loopList.MovePanelToItemIndex(0, 0); }
+            if (IsAtBottom() && !preserveScrollPosition) { loopList.MovePanelToItemIndex(0, 0); }
             else
             {
                 // TODO this solution doesn't account for the sliding separator element
@@ -213,6 +217,20 @@ namespace DCL.Chat.ChatMessages
 
         internal bool IsAtBottom() =>
             viewModels.Count == 0 || loopList.IsLastItemVisible();
+
+        /// <summary>
+        /// True when the chat content overflows the viewport — i.e. the user can actually scroll.
+        /// </summary>
+        internal bool IsScrollable()
+        {
+            if (scrollRect == null) return false;
+
+            RectTransform? content = scrollRect.content;
+            RectTransform? viewport = scrollRect.viewport;
+            if (content == null || viewport == null) return false;
+
+            return content.rect.height > viewport.rect.height;
+        }
 
         /// <summary>
         ///     Accounts for the padding

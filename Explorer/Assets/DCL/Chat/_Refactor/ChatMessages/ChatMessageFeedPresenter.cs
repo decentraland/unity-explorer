@@ -40,6 +40,7 @@ namespace DCL.Chat.ChatMessages
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
         private readonly ChatMessageReactionService messageReactionService;
         private readonly MessageReactionInteractionPresenter reactionInteraction;
+        private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -99,6 +100,7 @@ namespace DCL.Chat.ChatMessages
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
             this.messageReactionService = messageReactionService;
+            this.reactionsPresenter = reactionsPresenter;
 
             reactionInteraction = new MessageReactionInteractionPresenter(
                 reactionsPresenter,
@@ -230,8 +232,9 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel != destinationChannel)
                 return;
-
-            bool wasAtBottom = view.IsAtBottom();
+            
+            bool popupHoldsScroll = reactionsPresenter.IsMessageModePopupActive && view.IsScrollable();
+            bool wasAtBottom = view.IsAtBottom() && !popupHoldsScroll;
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             int separatorIndexBeforeInsert = separatorFixedIndexFromBottom;
@@ -241,7 +244,7 @@ namespace DCL.Chat.ChatMessages
             if (wasAtBottom)
                 reactionInteraction.Deactivate();
 
-            view.ReconstructScrollView(false);
+            view.ReconstructScrollView(false, preserveScrollPosition: popupHoldsScroll);
             ScrollToBottomIfNeeded(needsSeparator);
 
             scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);

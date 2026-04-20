@@ -123,6 +123,12 @@ namespace DCL.Chat.ChatReactions.Presenters
             || messageSelectorPresenter.IsVisible
             || emojiPanelBridge.IsOpen;
 
+        /// <summary>
+        /// True while the user has an active popup anchored to a specific chat message
+        /// </summary>
+        public bool IsMessageModePopupActive =>
+            IsInMessageMode && (messageSelectorPresenter.IsVisible || emojiPanelBridge.IsOpen);
+
         private bool IsInMessageMode => currentMode == ReactionMode.Message;
 
         private ChatReactionsSelectorPresenter ActivePresenter =>
