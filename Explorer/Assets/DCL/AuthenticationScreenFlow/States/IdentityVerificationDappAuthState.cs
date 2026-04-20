@@ -58,10 +58,13 @@ namespace DCL.AuthenticationScreenFlow
             {
                 view.Hide(OUT);
 
-                // Hide login selection view if still visible (social logins skip the verification step,
-                // so ShowVerification is never called and the login selection view remains active)
+                // Instantly deactivate login selection view if still visible (social logins skip the verification step,
+                // so ShowVerification is never called and the login selection view remains active).
+                // Using SetActive directly instead of Hide() to avoid launching an uncancellable HideAsync animation
+                // that can race with ShowAsync started by subsequent LoginSelectionAuthState.Enter(), causing a zombie
+                // WaitUntil(ct=None) on a deactivated Animator that loops forever and leaves the auth screen non-functional.
                 if (viewInstance.LoginSelectionAuthView.gameObject.activeSelf)
-                    viewInstance.LoginSelectionAuthView.Hide();
+                    viewInstance.LoginSelectionAuthView.gameObject.SetActive(false);
             }
             else
             {
