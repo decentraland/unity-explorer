@@ -268,6 +268,7 @@ namespace SceneRunner
 
                 Runtime.Dispose();
                 SyncDeps.Dispose();
+                SceneAdmins.Dispose();
             }
         }
 

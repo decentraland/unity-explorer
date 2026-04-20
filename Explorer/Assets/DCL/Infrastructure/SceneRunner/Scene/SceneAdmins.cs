@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DCL.WebRequests;
 using ECS;
 using SceneRunner.Scene;
+using Utility;
 using Utility.Multithreading;
 using System;
 using System.Threading;
@@ -17,16 +18,8 @@ namespace SceneRunner.Admins
     /// <summary>
     ///     Exists per scene
     /// </summary>
-    public class SceneAdmins
+    public class SceneAdmins : IDisposable
     {
-        public enum Status
-        {
-            Idle,
-            Loading,
-            Loaded,
-            Error
-        }
-
         public struct AdminInfo
         {
             public string id;
@@ -54,15 +47,19 @@ namespace SceneRunner.Admins
             public string parcel;
         }
         // END Copied
+        
+        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(1000);
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;
         private readonly IRealmData realmData;
         private readonly ISceneData sceneData;
 
+        private readonly CancellationTokenSource cts = new ();
         private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
         private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
-        private Status status = Status.Idle;
+        
+        private bool initialLoadFinished;
 
         public SceneAdmins(
                 IWebRequestController webRequestController,
@@ -84,19 +81,26 @@ namespace SceneRunner.Admins
         }
 #endif
 
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+        }
+
+        public async UniTaskVoid StartRequestPollingAsync()
+        {
+            while (cts.IsCancellationRequested == false)
+            {
+                await FireRequestAsync(cts.Token);
+                await UniTask.Delay(DELAY, cancellationToken: cts.Token);
+            }
+        }
+
+        // Exception-free
         public async UniTask FireRequestAsync(CancellationToken ct)
         {
 #if !SCENE_ADMINS_TESTS // it's not required to execute an actual request for tests
 
             using var _ = await operationLock.LockAsync();
-
-            if (status is Status.Loading)
-            {
-                ReportHub.LogWarning(ReportCategory.SCENE_ADMINS, "Attempt to fire twice. SceneAdmins loading is already in progress");
-                return;
-            }
-
-            status = Status.Loading;
 
             try
             {
@@ -128,17 +132,18 @@ namespace SceneRunner.Admins
                 {
                     wallets[r.admin] = r;
                 }
-
-                status = Status.Loaded;
             }
             catch (OperationCanceledException)
             {
-                status = Status.Idle;
+                // no-op
             }
             catch (Exception e)
             {
-                status = Status.Error;
                 ReportHub.LogException(e, ReportCategory.SCENE_ADMINS);
+            }
+            finally
+            {
+                initialLoadFinished = true;
             }
 #endif
         }
@@ -149,7 +154,7 @@ namespace SceneRunner.Admins
 #if SCENE_ADMINS_TESTS
             return true; // consider always an admin during tests
 #else
-            if (status == Status.Loaded)
+            if (initialLoadFinished)
             {
                 return wallets.ContainsKey(wallet);
             }
@@ -162,13 +167,13 @@ namespace SceneRunner.Admins
 
         public Result<IReadOnlyDictionary<string, AdminInfo>> CurrentAdmins()
         {
-            if (status == Status.Loaded)
+            if (initialLoadFinished)
             {
                 return Result<IReadOnlyDictionary<string, AdminInfo>>.SuccessResult(wallets);
             }
             else
             {
-                return Result<IReadOnlyDictionary<string, AdminInfo>>.ErrorResult($"Cannot provide admins. Current status: {status}");
+                return Result<IReadOnlyDictionary<string, AdminInfo>>.ErrorResult($"Cannot provide admins. initialLoadFinished is not finished yet");
             }
         }
     }

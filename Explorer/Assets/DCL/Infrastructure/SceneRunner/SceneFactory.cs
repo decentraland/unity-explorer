@@ -205,6 +205,7 @@ namespace SceneRunner
                     );
 
             await sceneAdmins.FireRequestAsync(ct);
+            sceneAdmins.StartRequestPollingAsync().Forget();
 
             if (ENABLE_SDK_OBSERVABLES)
             {
