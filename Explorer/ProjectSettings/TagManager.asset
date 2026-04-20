@@ -42,16 +42,16 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Persistent
+  - name: PERSISTENT
     uniqueID: 1391672535
     locked: 0
-  - name: Fullscreen
+  - name: FULLSCREEN
     uniqueID: 1288386503
     locked: 0
-  - name: Popup
+  - name: POPUP
     uniqueID: 943831229
     locked: 0
-  - name: Top
+  - name: OVERLAY
     uniqueID: 4139610399
     locked: 0
   m_RenderingLayers:
