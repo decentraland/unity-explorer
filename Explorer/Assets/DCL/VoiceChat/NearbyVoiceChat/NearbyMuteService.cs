@@ -64,6 +64,8 @@ namespace DCL.VoiceChat.Nearby
         /// </summary>
         public async UniTask SetMutedAsync(string walletId, bool muted, CancellationToken ct)
         {
+            cache.SetMuted(walletId, muted);
+
             if (repository != null)
             {
                 try
@@ -79,8 +81,6 @@ namespace DCL.VoiceChat.Nearby
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally: {ex.Message}");
                 }
             }
-
-            cache.SetMuted(walletId, muted);
         }
     }
 }

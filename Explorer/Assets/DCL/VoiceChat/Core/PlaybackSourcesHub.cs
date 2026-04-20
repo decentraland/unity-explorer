@@ -77,6 +77,16 @@ namespace DCL.VoiceChat
                 pair.source.AudioSource.mute = mute;
         }
 
+        internal void SetMuteForIdentity(string identity, bool mute)
+        {
+            foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> kvp in streams)
+                if (kvp.Key.identity == identity)
+                {
+                    kvp.Value.source.AudioSource.mute = mute;
+                    break;
+                }
+        }
+
         internal void Stop()
         {
             ExecuteOnMainThread(this, static hub =>

@@ -139,6 +139,9 @@ namespace DCL.VoiceChat
         internal void RemoveStreamsByIdentity(string identity) =>
             playbackSourcesHub.RemoveStreamsByIdentity(identity);
 
+        internal void SetMuteForIdentity(string identity, bool mute) =>
+            playbackSourcesHub.SetMuteForIdentity(identity, mute);
+
         private bool TryAddStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;

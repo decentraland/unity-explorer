@@ -39,8 +39,6 @@ namespace DCL.VoiceChat
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
 
-        private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
-
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable? nearbyStateSubscription;
 
@@ -63,7 +61,6 @@ namespace DCL.VoiceChat
             this.stateModel = stateModel;
             this.muteService = muteService;
             this.blockingCacheProxy = blockingCacheProxy;
-            this.activeAudioSources = activeAudioSources;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -305,11 +302,8 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnMuteStateChanged(string walletId, bool isMuted)
-        {
-            if (activeAudioSources.TryGetValue(walletId, out LivekitAudioSource? lkSource))
-                lkSource.AudioSource.mute = isMuted;
-        }
+        private void OnMuteStateChanged(string walletId, bool isMuted) =>
+            remoteListener.SetMuteForIdentity(walletId, isMuted);
 
         private void SubscribeToBlockingEvents(IUserBlockingCache cache)
         {
@@ -322,7 +316,6 @@ namespace DCL.VoiceChat
             if (disposed) return;
 
             remoteListener.RemoveStreamsByIdentity(userId);
-            activeAudioSources.TryRemove(userId, out _);
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
         }
