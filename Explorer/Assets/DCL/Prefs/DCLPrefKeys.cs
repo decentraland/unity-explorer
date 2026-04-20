@@ -100,5 +100,8 @@ namespace DCL.Prefs
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
+
+        public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
     }
 }

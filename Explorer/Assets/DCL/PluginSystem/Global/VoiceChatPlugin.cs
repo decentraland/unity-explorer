@@ -9,7 +9,9 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Profiles.Helpers;
+using ECS.SceneLifeCycle;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
@@ -24,6 +26,9 @@ using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
+using DCL.Prefs;
+using DCL.RealmNavigation;
+using DCL.VoiceChat.UI;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
@@ -46,6 +51,13 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
+        private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
+        private readonly NearbyVoiceWidgetView nearbyVoiceWidgetView;
+        private readonly NearbyVoiceTipView nearbyVoiceTipView;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly VolumeBus volumeBus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -59,6 +71,9 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
+        private NearbyVoiceChatButtonController? nearbyButtonController;
+        private NearbyVoiceWidgetController? nearbyWidgetController;
+        private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -73,7 +88,14 @@ namespace DCL.PluginSystem.Global
             ImageControllerProvider imageControllerProvider,
             IAssetsProvisioner assetsProvisioner,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
-            IDebugContainerBuilder debugContainer)
+            IDebugContainerBuilder debugContainer,
+            ILoadingStatus loadingStatus,
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            NearbyVoiceChatButtonView nearbyVoiceChatButtonView,
+            NearbyVoiceWidgetView nearbyVoiceWidgetView,
+            NearbyVoiceTipView nearbyVoiceTipView,
+            VolumeBus volumeBus)
         {
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -86,12 +108,20 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.debugContainer = debugContainer;
+            this.loadingStatus = loadingStatus;
+            this.scenesCache = scenesCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.nearbyVoiceChatButtonView = nearbyVoiceChatButtonView;
+            this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
+            this.nearbyVoiceTipView = nearbyVoiceTipView;
+            this.volumeBus = volumeBus;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
         public void Dispose()
         {
+            nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -127,13 +157,13 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
-            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler, VoiceChatType.COMMUNITY);
+            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.COMMUNITY);
             remoteListener = new RemoteTrackListener(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatConfiguration,
                 new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
 
-            roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
+            roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager, voiceChatHandler);
             pluginScope.Add(roomManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
@@ -160,17 +190,38 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+                NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                    ? NearbyVoiceChatState.DISABLED
+                    : NearbyVoiceChatState.IDLE;
+
+                nearbyStateModel = new NearbyVoiceChatStateModel(initialState);
                 pluginScope.Add(nearbyStateModel);
 
-                voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
+                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
+                pluginScope.Add(sceneRestrictionWatcher);
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, voiceChatHandler);
+                    nearbyStateModel);
                 pluginScope.Add(nearbyVoiceChatManager);
+
+                nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
+                pluginScope.Add(nearbyButtonController);
+
+                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
+                pluginScope.Add(nearbyWidgetController);
+
+                nearbyTipCts = new CancellationTokenSource();
+                RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
             }
+        }
+
+        private static async UniTaskVoid RunNearbyVoiceTipAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus,
+            NearbyVoiceChatButtonView buttonView, CancellationToken ct)
+        {
+            if (await NearbyVoiceTipFlow.WaitAndShowAsync(view, loadingStatus, ct))
+                buttonView.Button.onClick.Invoke();
         }
 
         [Serializable]
@@ -182,6 +233,39 @@ namespace DCL.PluginSystem.Global
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
                 public VoiceChatConfigurationsReference(string guid) : base(guid) { }
+            }
+        }
+
+        private static class NearbyVoiceTipFlow
+        {
+            public static async UniTask<bool> WaitAndShowAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus, CancellationToken ct)
+            {
+                view.Hide();
+
+                if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED))
+                    return false;
+
+                try
+                {
+                    await UniTask.WaitUntil(
+                        () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
+                        cancellationToken: ct);
+
+                    view.Show();
+
+                    int winner = await UniTask.WhenAny(
+                        view.CloseButton.OnClickAsync(ct),
+                        view.TryItNowButton.OnClickAsync(ct));
+
+                    DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
+                    view.Hide();
+
+                    return winner == 1;
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
             }
         }
     }
