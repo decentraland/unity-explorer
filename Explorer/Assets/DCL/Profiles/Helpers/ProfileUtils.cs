@@ -44,12 +44,7 @@ namespace DCL.Profiles.Helpers
             world.Create(profile, promise);
         }
 
-        /// <summary>
-        /// Single archetype pass over (ProfileTier, Promise) entities. Reuses the first in-flight
-        /// promise whose URL matches <paramref name="desiredUrl"/> by redirecting its ProfileTier
-        /// to <paramref name="newProfile"/>, and cancels any other stale promises for the same user.
-        /// </summary>
-        /// <returns>True if an existing promise was reused (the caller should skip creating a new one).</returns>
+        // Reuses or cancels in-flight (ProfileTier, Promise) entities for the same user; returns true if an existing promise was reused.
         private static bool ReuseOrCancelInFlightPromisesForUser(World world, ProfileTier newProfile, URLAddress desiredUrl)
         {
             Entity reuseEntity = Entity.Null;
@@ -74,8 +69,7 @@ namespace DCL.Profiles.Helpers
             if (reuseEntity == Entity.Null)
                 return false;
 
-            // Redirect the existing promise's ProfileTier to the new profile instance so its
-            // eventual completion writes to the current profile, not the old one.
+            // Redirect ProfileTier to the new instance so the promise's eventual completion writes to the current profile, not the old one.
             ref ProfileTier tier = ref world.Get<ProfileTier>(reuseEntity);
             tier = newProfile;
             return true;
@@ -85,11 +79,10 @@ namespace DCL.Profiles.Helpers
         {
             foreach (Entity entity in entities)
             {
-                ref Promise promise = ref world.Get<Promise>(entity);
+                // Copy by value so no ref remains live across the subsequent world.Destroy (§5).
+                Promise promise = world.Get<Promise>(entity);
 
-                // Consume first to handle late-completion race: if the download already finished,
-                // the loaded asset must be disposed of manually (we are discarding it).
-                // Otherwise, ForgetLoading cancels the in-flight request cleanly.
+                // Consume-first handles the late-completion race: finished downloads must dispose the asset manually; otherwise ForgetLoading cancels cleanly.
                 if (promise.TryConsume(world, out StreamableLoadingResult<TextureData> result))
                     result.Asset?.Dispose();
                 else
