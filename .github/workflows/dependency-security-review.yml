@@ -58,6 +58,9 @@ jobs:
           # List new binaries specifically
           NEW_BINARIES=$(git diff --name-only --diff-filter=A "$BASE_SHA" -- \
             '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
+          echo "new-binaries<<BINARIES_EOF" >> "$GITHUB_OUTPUT"
+          echo "$NEW_BINARIES" >> "$GITHUB_OUTPUT"
+          echo "BINARIES_EOF" >> "$GITHUB_OUTPUT"
           if [ -n "$NEW_BINARIES" ]; then
             echo ""
             echo "⚠️ New binary files added:"
@@ -107,6 +110,9 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             This PR modifies external dependencies. Perform a security-focused review.
+
+            The following new binary files were added in this PR (pre-computed from the diff — these may not appear in `gh pr diff` output for large binaries):
+            ${{ steps.detect.outputs.new-binaries || 'None' }}
 
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
