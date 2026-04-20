@@ -73,7 +73,7 @@ namespace DCL.PluginSystem.Global
         private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
-        private NearbyVoiceTipController? nearbyTipController;
+        private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
@@ -121,6 +121,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
             if (voiceChatPluginSettingsAsset.Value != null)
@@ -211,11 +212,16 @@ namespace DCL.PluginSystem.Global
                 nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
 
-                nearbyTipController = new NearbyVoiceTipController(nearbyVoiceTipView,
-                    onTryItNow: () => nearbyVoiceChatButtonView.Button.onClick.Invoke(),
-                    loadingStatus);
-                pluginScope.Add(nearbyTipController);
+                nearbyTipCts = new CancellationTokenSource();
+                RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
             }
+        }
+
+        private static async UniTaskVoid RunNearbyVoiceTipAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus,
+            NearbyVoiceChatButtonView buttonView, CancellationToken ct)
+        {
+            if (await NearbyVoiceTipFlow.WaitAndShowAsync(view, loadingStatus, ct))
+                buttonView.Button.onClick.Invoke();
         }
 
         [Serializable]
@@ -227,6 +233,39 @@ namespace DCL.PluginSystem.Global
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>
             {
                 public VoiceChatConfigurationsReference(string guid) : base(guid) { }
+            }
+        }
+
+        private static class NearbyVoiceTipFlow
+        {
+            public static async UniTask<bool> WaitAndShowAsync(NearbyVoiceTipView view, ILoadingStatus loadingStatus, CancellationToken ct)
+            {
+                view.Hide();
+
+                if (DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED))
+                    return false;
+
+                try
+                {
+                    await UniTask.WaitUntil(
+                        () => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed,
+                        cancellationToken: ct);
+
+                    view.Show();
+
+                    int winner = await UniTask.WhenAny(
+                        view.CloseButton.OnClickAsync(ct),
+                        view.TryItNowButton.OnClickAsync(ct));
+
+                    DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, true, save: true);
+                    view.Hide();
+
+                    return winner == 1;
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
             }
         }
     }
