@@ -3,6 +3,7 @@ using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using Decentraland.Common;
+using DG.Tweening;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.Systems;
@@ -35,6 +36,7 @@ namespace DCL.PluginSystem.World
 
             transformPool = componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
             {
+                DOTween.Kill(transform);
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
             },
