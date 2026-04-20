@@ -42,7 +42,7 @@
         "com.unity.burst": "1.8.24",
         "com.unity.collections": "1.2.4"
       },
-      "hash": "14bdfb4a2119b965c049ef43ef5a8d5b7aed828d"
+      "hash": "59e20d09a7665395eb9141180c55abdce61fdbc7"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
@@ -114,11 +114,11 @@
       "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#chore/align-to-latest-unity-gltfast",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0132f23fb5d1bfa1634a872ef28e131067df7a69"
+      "hash": "5ccaefd15141db561b75527901a189e88c1d4a35"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
