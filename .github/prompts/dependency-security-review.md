@@ -29,8 +29,27 @@ For each item, state:
 - type: source code / managed binary / native binary / unknown
 - scope: runtime / editor-only / test-only / unknown
 
+--- STEP 1.5: LOOK UP PACKAGE REGISTRY METADATA ---
+For each new or changed dependency identified above, check its public registry listing.
+
+For NuGet packages (.dll from NuGet.org): fetch the NuGet page (e.g. https://www.nuget.org/packages/{PackageName}/{Version})
+For Unity packages (com.* in manifest.json): check the Unity package registry or the linked git repo
+For GitHub-sourced packages: check the repository page
+
+Extract and record (label all findings as **[Registry metadata]** to distinguish from PR-visible facts):
+- **Description and stated purpose** — does it match what the PR uses it for?
+- **Download count / popularity** — is this widely used or obscure?
+- **Listed dependencies** — do they match what's committed in the PR? Are there unexpected transitive dependencies?
+- **Notices, warnings, or restrictions** — any regional restrictions, political notices, usage conditions beyond the license, or availability limitations stated on the listing page
+- **Last published date** — is the version current or abandoned?
+- **License** — compatible with Apache 2.0?
+- **Known vulnerabilities** — any advisories listed on the registry page?
+- **Publisher / author** — same as claimed in the PR? Any other notable packages by this publisher?
+
+If a registry page is unreachable or does not exist, note that and move on.
+
 --- STEP 2: ASSESS EACH NEW OR CHANGED DEPENDENCY ---
-For each dependency, assess the following using only evidence available in the PR or clearly-labeled external metadata if provided.
+For each dependency, assess the following using evidence from the PR diff AND the registry metadata gathered above. Always label the source of each finding: **[PR]**, **[Registry metadata]**, **[Inference]**, or **[UNKNOWN]**.
 
 A. Provenance / source trust
 - Is the publisher clearly identifiable and reputable?
