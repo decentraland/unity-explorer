@@ -39,7 +39,6 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneHandler? microphoneHandler;
-        private readonly VoiceChatType voiceChatType;
         private readonly string tag;
 
         private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
@@ -61,7 +60,6 @@ namespace DCL.VoiceChat
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.microphoneHandler = microphoneHandler;
-            this.voiceChatType = voiceChatType;
             tag = $"{nameof(MicrophoneTrackPublisher)}({voiceChatType})";
         }
 

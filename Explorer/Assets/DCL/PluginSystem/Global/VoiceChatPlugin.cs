@@ -28,7 +28,6 @@ using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.RealmNavigation;
-using DCL.Settings.Utils;
 using DCL.VoiceChat.UI;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
