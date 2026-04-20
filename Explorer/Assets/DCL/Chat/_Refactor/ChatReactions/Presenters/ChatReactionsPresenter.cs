@@ -118,7 +118,10 @@ namespace DCL.Chat.ChatReactions.Presenters
             }
         }
 
-        public bool IsReactionPopupActive => situationalSelectorPresenter.IsVisible || emojiPanelBridge.IsOpen;
+        public bool IsReactionPopupActive =>
+            situationalSelectorPresenter.IsVisible
+            || messageSelectorPresenter.IsVisible
+            || emojiPanelBridge.IsOpen;
 
         private bool IsInMessageMode => currentMode == ReactionMode.Message;
 

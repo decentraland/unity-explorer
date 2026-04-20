@@ -66,7 +66,6 @@ namespace DCL.Chat.ChatReactions.Presenters
             if (!isOpen) return;
 
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
-            emojiPanelPresenter.ResetSearchAndDefocus();
             emojiPanelPresenter.SetPanelVisibility(false);
             isOpen = false;
 

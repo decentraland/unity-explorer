@@ -3,6 +3,7 @@ using DCL.Input;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -81,26 +82,26 @@ namespace DCL.Emoji
 
         public void SetPanelVisibility(bool isVisible)
         {
-            if (!isVisible && view.SearchPanelView.inputField.isFocused)
-                view.SearchPanelView.inputField.DeactivateInputField();
+            TMP_InputField searchInput = view.SearchPanelView.inputField;
+
+            if (!isVisible)
+            {
+                if (searchInput.isFocused)
+                    searchInput.DeactivateInputField();
+
+                if (!string.IsNullOrEmpty(searchInput.text))
+                    searchInput.text = string.Empty;
+            }
 
             view.SetVisible(isVisible);
+
+            if (isVisible)
+            {
+                searchInput.Select();
+                searchInput.ActivateInputField();
+            }
+
             PanelVisibilityChanged?.Invoke(isVisible);
-        }
-
-        /// <summary>
-        /// Forces the search input to lose focus (firing onDeselect so any input-block tied to
-        /// focus is released) and clears any stale search query. Call before hiding the panel
-        /// from flows that do not route through SetPanelVisibility, since CanvasGroup alpha alone
-        /// does not cause TMP_InputField to fire onDeselect via the EventSystem.
-        /// </summary>
-        public void ResetSearchAndDefocus()
-        {
-            if (view.SearchPanelView.inputField.isFocused)
-                view.SearchPanelView.inputField.DeactivateInputField();
-
-            if (!string.IsNullOrEmpty(view.SearchPanelView.inputField.text))
-                view.SearchPanelView.inputField.text = string.Empty;
         }
 
         private void ConfigureEmojiSectionSizes()
