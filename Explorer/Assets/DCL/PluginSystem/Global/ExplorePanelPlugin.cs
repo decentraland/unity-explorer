@@ -26,6 +26,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
+using DCL.SpringBones;
 using DCL.Settings.Configuration;
 using DCL.UI.ProfileElements;
 using DCL.UserInAppInitializationFlow;
@@ -180,6 +181,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             FeatureFlagsConfiguration featureFlags,
@@ -250,7 +252,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
-            IRendererFeaturesCache rendererFeaturesCache
+            IRendererFeaturesCache rendererFeaturesCache,
+            SpringBoneSimulationSettings springBoneSimulationSettings
             )
         {
             this.eventBus = eventBus;
@@ -323,6 +326,7 @@ namespace DCL.PluginSystem.Global
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
+            this.springBoneSimulationSettings = springBoneSimulationSettings;
         }
 
         public void Dispose()
@@ -454,7 +458,8 @@ namespace DCL.PluginSystem.Global
                 landscapeData.Value,
                 rendererFeaturesCache,
                 appArgs,
-                analytics);
+                analytics,
+                springBoneSimulationSettings);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),

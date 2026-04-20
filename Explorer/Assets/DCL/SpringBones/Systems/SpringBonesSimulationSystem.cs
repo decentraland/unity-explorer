@@ -19,16 +19,34 @@ namespace DCL.SpringBones
     {
         private readonly SpringBoneService springBoneService;
         private readonly int maxSimulatedAvatars;
+        private readonly SpringBoneSimulationSettings simulationSettings;
         private readonly List<(float sqrDistance, List<int> slotIndices)> avatarDistances = new ();
+        private bool wasEnabled = true;
 
-        internal SpringBonesSimulationSystem(World world, SpringBoneService springBoneService, int maxSimulatedAvatars) : base(world)
+        internal SpringBonesSimulationSystem(World world, SpringBoneService springBoneService, int maxSimulatedAvatars, SpringBoneSimulationSettings simulationSettings) : base(world)
         {
             this.springBoneService = springBoneService;
             this.maxSimulatedAvatars = maxSimulatedAvatars;
+            this.simulationSettings = simulationSettings;
         }
 
         protected override void Update(float t)
         {
+            if (!simulationSettings.SimulationEnabled)
+            {
+                if (wasEnabled)
+                {
+                    // Simulation just turned off — deactivate all slots so PrepareSimulation resets bones to rest pose
+                    springBoneService.DeactivateAllSlots();
+                    springBoneService.PrepareSimulation();
+                    wasEnabled = false;
+                }
+
+                // Keep syncing wearable parent transforms to skeleton bones so hair/cloth follow avatar animation
+                SyncParentBonesQuery(World);
+                return;
+            }
+            wasEnabled = true;
 
             // 1. Collect distances for all avatars with spring bones
             avatarDistances.Clear();

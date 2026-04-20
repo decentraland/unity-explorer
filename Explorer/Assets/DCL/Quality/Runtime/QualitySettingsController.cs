@@ -4,6 +4,7 @@ using System;
 using DCL.Prefs;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.Settings.Utils;
+using DCL.SpringBones;
 using DCL.Utilities;
 using ECS.Prioritization;
 using Global.AppArgs;
@@ -33,6 +34,7 @@ namespace DCL.Quality.Runtime
         public int MaxSceneLights { get; private set; }
         public ShadowQualityLevel SceneShadowQuality { get; private set; }
         public int ShadowDistance { get; private set; }
+        public bool SpringBoneSimulation { get; private set; }
 
         private readonly QualityPresetsAsset presetsAsset;
         private readonly UpscalingController upscalingController;
@@ -41,6 +43,7 @@ namespace DCL.Quality.Runtime
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IAppArgs appArgs;
         private readonly IAnalyticsController analytics;
+        private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
         private QualityPresetData? presetData;
 
         public QualitySettingsController(
@@ -50,7 +53,8 @@ namespace DCL.Quality.Runtime
             LandscapeData landscapeData,
             IRendererFeaturesCache rendererFeaturesCache,
             IAppArgs appArgs,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            SpringBoneSimulationSettings springBoneSimulationSettings)
         {
             this.presetsAsset = presetsAsset;
             this.upscalingController = upscalingController;
@@ -59,6 +63,7 @@ namespace DCL.Quality.Runtime
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.appArgs = appArgs;
             this.analytics = analytics;
+            this.springBoneSimulationSettings = springBoneSimulationSettings;
 
             QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
@@ -102,6 +107,7 @@ namespace DCL.Quality.Runtime
             MaxSceneLights = preset.MaxSceneLights;
             SceneShadowQuality = preset.ShadowsQualityLevel;
             ShadowDistance = preset.ShadowDistance;
+            SpringBoneSimulation = preset.SpringBoneSimulation;
 
             ApplyAllSettings();
             OnPresetChanged?.Invoke(level);
@@ -126,6 +132,7 @@ namespace DCL.Quality.Runtime
             URPSettingsApplier.ApplySceneLightsShadows(SceneLightShadows);
             URPSettingsApplier.ApplyShadowQuality(presetsAsset.GetShadowConfig(SceneShadowQuality));
             URPSettingsApplier.ApplyShadowDistance(ShadowDistance);
+            springBoneSimulationSettings.SimulationEnabled = SpringBoneSimulation;
             TrackQualitySettingsReport();
         }
 
@@ -264,6 +271,15 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetSpringBoneSimulation(bool enabled)
+        {
+            SpringBoneSimulation = enabled;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SPRING_BONE_SIMULATION, enabled ? 1 : 0);
+            SwitchToCustom();
+            springBoneSimulationSettings.SimulationEnabled = enabled;
+            TrackQualitySettingsReport();
+        }
+
         private void SwitchToCustom()
         {
             if (CurrentPreset == QualityPresetLevel.Custom)
@@ -292,6 +308,7 @@ namespace DCL.Quality.Runtime
             MaxSceneLights = saved.MaxSceneLights;
             SceneShadowQuality = saved.SceneShadowQuality;
             ShadowDistance = saved.ShadowDistance;
+            SpringBoneSimulation = saved.SpringBoneSimulation;
         }
 
         private static void DeleteCustomSettings()
@@ -328,6 +345,7 @@ namespace DCL.Quality.Runtime
                 if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
                 if (SceneShadowQuality != b.ShadowsQualityLevel) properties["shadow_quality"] = SceneShadowQuality.ToString();
                 if (ShadowDistance != b.ShadowDistance) properties["shadow_distance"] = ShadowDistance;
+                if (SpringBoneSimulation != b.SpringBoneSimulation) properties["spring_bone_simulation"] = SpringBoneSimulation;
             }
 
             analytics.Track(AnalyticsEvents.Settings.QUALITY_SETTINGS_REPORT, properties);
