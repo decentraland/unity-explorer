@@ -10,8 +10,10 @@ namespace DCL.VoiceChat.UI
     public class NearbyVoiceTipController : IDisposable
     {
         private readonly NearbyVoiceTipView view;
+        private readonly CancellationTokenSource? cts;
+
         private readonly Action? onTryItNow;
-        private CancellationTokenSource? cts;
+
         private bool subscribed;
 
         public NearbyVoiceTipController(NearbyVoiceTipView view, Action? onTryItNow, ILoadingStatus loadingStatus)

@@ -53,7 +53,7 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.stateModel = stateModel;
 
-            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, null, VoiceChatType.NEARBY);
+            micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
             var nearbyHub = new PlaybackSourcesHub(
                 parentNameSuffix: "Nearby",

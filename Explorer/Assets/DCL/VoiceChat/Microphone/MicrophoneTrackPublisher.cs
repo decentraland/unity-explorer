@@ -38,7 +38,6 @@ namespace DCL.VoiceChat
 
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly VoiceChatMicrophoneHandler? microphoneHandler;
         private readonly string tag;
 
         private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
@@ -49,17 +48,21 @@ namespace DCL.VoiceChat
         internal bool isPublished => microphoneTrack.HasValue;
         internal bool isRecording => CurrentMicrophone.Resource is { Has: true, Value: { IsRecording: true } };
 
+        /// <summary>
+        ///     Raised whenever the active microphone source changes: a new source after successful publish,
+        ///     or <see cref="Weak{T}.Null"/> after unpublish/cleanup (including the error path in <see cref="PublishAsync"/>).
+        /// </summary>
+        public event Action<Weak<MicrophoneRtcAudioSource>>? SourceChanged;
+
         private bool isDisposed;
 
         public MicrophoneTrackPublisher(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
-            VoiceChatMicrophoneHandler? microphoneHandler,
             VoiceChatType voiceChatType)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
-            this.microphoneHandler = microphoneHandler;
             tag = $"{nameof(MicrophoneTrackPublisher)}({voiceChatType})";
         }
 
@@ -77,7 +80,8 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Publishes the local microphone track to the room.
         ///     Creates the <see cref="MicrophoneRtcAudioSource"/> via shared helper;
-        ///     conditionally starts it based on <paramref name="micAutoStart"/> and current mic-enabled state.
+        ///     starts recording immediately when <paramref name="micAutoStart"/> is true — callers decide
+        ///     whether the mic should be recording on publish based on their own state.
         /// </summary>
         public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
@@ -98,14 +102,14 @@ namespace DCL.VoiceChat
 
                 MicrophoneRtcAudioSource rtcAudioSource = await CreateMicrophoneSourceAsync(configuration, ct);
 
-                if (micAutoStart && microphoneHandler != null && microphoneHandler.IsMicrophoneEnabled.Value)
+                if (micAutoStart)
                     rtcAudioSource.Start();
 
                 ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(localParticipant.Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
 
-                microphoneHandler?.Assign(microphoneTrack.Value.Source);
+                SourceChanged?.Invoke(microphoneTrack.Value.Source);
 
                 localParticipant.PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
 
@@ -154,21 +158,10 @@ namespace DCL.VoiceChat
             if (source.Has) source.Value.Stop();
         }
 
-        internal void SwitchMicrophone(MicrophoneSelection selection)
-        {
-            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
-            if (!source.Has) return;
-
-            RichTypes.Result result = source.Value.SwitchMicrophone(selection);
-
-            if (!result.Success)
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{tag} Cannot switch microphone: {result.ErrorMessage}");
-        }
-
         private void CleanupLocalTrack()
         {
             StopMicrophone();
-            microphoneHandler?.Assign(Weak<MicrophoneRtcAudioSource>.Null);
+            SourceChanged?.Invoke(Weak<MicrophoneRtcAudioSource>.Null);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
         }
