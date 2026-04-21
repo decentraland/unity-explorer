@@ -45,7 +45,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
-        private readonly PulseMultiplayerService pulseMultiplayerService;
+        private readonly IPulseMultiplayerService pulseMultiplayerService;
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
@@ -71,7 +71,7 @@ namespace DCL.UserInAppInitializationFlow
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
             StartParcel startParcel,
-            PulseMultiplayerService pulseMultiplayerService,
+            IPulseMultiplayerService pulseMultiplayerService,
             bool isLocalSceneDevelopment)
         {
             this.initOps = initOps;

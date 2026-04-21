@@ -8,11 +8,11 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class StartPulseMultiplayerStartupOperation : StartUpOperationBase
     {
-        private readonly PulseMultiplayerService service;
+        private readonly IPulseMultiplayerService service;
         private readonly IProfilePropagation profilePropagation;
         private readonly ISelfProfile selfProfile;
 
-        public StartPulseMultiplayerStartupOperation(PulseMultiplayerService service,
+        public StartPulseMultiplayerStartupOperation(IPulseMultiplayerService service,
             IProfilePropagation profilePropagation,
             ISelfProfile selfProfile)
         {
