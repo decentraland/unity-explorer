@@ -195,11 +195,8 @@ namespace DCL.AuthenticationScreenFlow
             machine.Enter<LoginSelectionAuthState>(true);
         }
 
-        private void OnCancelBeforeVerification()
-        {
+        private void OnCancelBeforeVerification() =>
             controller.CancelLoginProcess();
-            machine.Enter<LoginSelectionAuthState>(true);
-        }
 
         private void CloseErrorPopup() =>
             view.ErrorPopupRoot.SetActive(false);
