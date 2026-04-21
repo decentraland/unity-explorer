@@ -8,15 +8,19 @@ namespace DCL.AvatarRendering.Emotes
         public AnimationClip? avatarClip { get; private set; }
         public AnimationClip? propClip { get; private set; }
         public Animator? animatorComp { get; private set; }
+        public Animation? animationComp { get; private set; }
+        public bool legacy { get; private set; }
 
         public AudioSource? audioSource;
 
-        public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, int propClipHash)
+        public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
         {
             this.avatarClip = animationClip;
             this.propClip = propClip;
             this.animatorComp = animatorComp;
+            this.animationComp = animationComp;
             this.propClipHash = propClipHash;
+            this.legacy = legacy;
         }
     }
 }

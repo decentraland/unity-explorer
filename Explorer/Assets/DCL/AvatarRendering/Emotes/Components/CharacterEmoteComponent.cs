@@ -20,7 +20,9 @@ namespace DCL.AvatarRendering.Emotes
             : 0f;
 
         public readonly bool IsPlayingEmote =>
-            currentAnimationTag == AnimationHashes.EMOTE || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
+            (CurrentEmoteReference != null && CurrentEmoteReference.legacy)
+            || currentAnimationTag == AnimationHashes.EMOTE
+            || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
         public readonly int CurrentAnimationTag => currentAnimationTag;
 

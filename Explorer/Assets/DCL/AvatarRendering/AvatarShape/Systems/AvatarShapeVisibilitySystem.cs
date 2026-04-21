@@ -255,7 +255,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
 
-            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX;
+            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
             avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;
         }
 

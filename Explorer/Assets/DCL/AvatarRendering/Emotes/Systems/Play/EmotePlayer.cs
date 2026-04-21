@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using System;
@@ -21,9 +22,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
+        private readonly bool legacyAnimationsEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab)
+        public EmotePlayer(AudioSource audioSourcePrefab, bool legacyAnimationsEnabled = false)
         {
+            this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
@@ -48,7 +51,18 @@ namespace DCL.AvatarRendering.Emotes.Play
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
-            PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
+            if (emoteReferences.legacy)
+            {
+                if (!legacyAnimationsEnabled)
+                {
+                    Stop(emoteReferences);
+                    return false;
+                }
+
+                PlayLegacyEmote(view, ref emoteComponent, emoteReferences, emoteComponent.EmoteLoop || isLooping);
+            }
+            else
+                PlayMecanimEmote(view, ref emoteComponent, emoteReferences, isLooping);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
@@ -65,6 +79,13 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
+
+            if (emoteReferences.legacy)
+            {
+                ReportHub.LogWarning(ReportCategory.EMOTE, $"Masked scene emote '{mainAsset.name}' was loaded as Legacy; masks require Mecanim and cannot be played.");
+                Stop(emoteReferences);
+                return false;
+            }
 
             PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
 
@@ -149,7 +170,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                if (mainAsset.GetComponentInChildren<Animator>(true))
+                if (IsValid(mainAsset))
                     pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
                 else
                     return null;
@@ -187,18 +208,42 @@ namespace DCL.AvatarRendering.Emotes.Play
             return emoteReferences;
         }
 
+        private bool IsValid(GameObject mainAsset) =>
+            mainAsset.GetComponentInChildren<Animator>(true)
+            || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
+
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
-            Animator animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
-            AnimationClip[] animationClips = animatorComp.runtimeAnimatorController.animationClips;
+            Animator? animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
+            Animation? animationComp = null;
+            AnimationClip[] animationClips;
+
+            if (animatorComp != null && animatorComp.runtimeAnimatorController != null)
+                animationClips = animatorComp.runtimeAnimatorController.animationClips;
+            else
+            {
+                // Legacy path: GLTFast attached an Animation component with legacy clips
+                animatorComp = null;
+                animationComp = mainGameObject.GetComponentInChildren<Animation>(true);
+
+                List<AnimationClip> legacyClipList = ListPool<AnimationClip>.Get()!;
+
+                if (animationComp != null)
+                    foreach (AnimationState state in animationComp)
+                        if (state.clip != null)
+                            legacyClipList.Add(state.clip);
+
+                animationClips = legacyClipList.ToArray();
+                ListPool<AnimationClip>.Release(legacyClipList);
+            }
 
             EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
             IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
+            ExtractClips(animationClips, uniqueClips, out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash, out bool legacy);
 
             if (uniqueClips.Count == 1)
             {
@@ -225,13 +270,39 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
-            references.Initialize(avatarClip, propClip, animatorComp, propClipHash);
+            references.Initialize(avatarClip, propClip, animatorComp, animationComp, propClipHash, legacy);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
-            animatorComp.fireEvents = false;
+            if (animatorComp != null)
+                animatorComp.fireEvents = false;
 
             return references;
+        }
+
+        private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
+        {
+            Animation animationComp = avatarView.AddOrGetLegacyAnimation();
+
+            animationComp.playAutomatically = false;
+            animationComp.Stop();
+
+            if (emoteReferences.avatarClip != null)
+            {
+                emoteComponent.EmoteLoop = loop;
+                string avatarClipName = emoteReferences.avatarClip.name;
+                animationComp.AddClip(emoteReferences.avatarClip, avatarClipName);
+                animationComp[avatarClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
+                animationComp.Play(avatarClipName);
+            }
+
+            if (emoteReferences.propClip != null && emoteReferences.animationComp != null)
+            {
+                Animation propAnimationComp = emoteReferences.animationComp;
+                string propClipName = emoteReferences.propClip.name;
+                propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
+                propAnimationComp.Play(propClipName);
+            }
         }
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
@@ -310,7 +381,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             List<AnimationClip> uniqueClips,
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
-            out int propClipHash)
+            out int propClipHash,
+            out bool legacy)
         {
             avatarClip = null;
             propClip = null;
@@ -337,6 +409,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
             }
 
+            legacy = avatarClip != null && avatarClip.legacy;
             return;
 
             bool IsValidUniqueClip(AnimationClip clip) =>

@@ -88,6 +88,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             UpdateEmoteTagsQuery(World);
             UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
+            DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
         }
 
@@ -168,6 +169,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
+            // Tear down only when the legacy Animation component has stopped on its own (non-looping).
+            if (emoteReference.legacy)
+            {
+                if (!avatarView.IsLegacyAnimationPlaying)
+                    StopEmote(ref emoteComponent, avatarView);
+                return;
+            }
+
             if (!emoteComponent.IsPlayingEmote)
             {
                 avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
@@ -217,6 +226,9 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteComponent.CurrentEmoteReference == null) return;
 
             emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+
+            // Legacy emotes keep the Mecanim animator disabled while playing
+            avatarView.StopLegacyAnimation();
 
             // Create a clean slate for the animator before setting the stop trigger
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
@@ -351,7 +363,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
                 else
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
-                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
+                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape, emoteIntent.Mask);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -379,13 +391,20 @@ namespace DCL.AvatarRendering.Emotes.Play
             characterController.enabled = !emoteComponent.IsPlayingEmote;
 
         [Query]
+        private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
+        {
+            if (emote.CurrentEmoteReference && emote.CurrentEmoteReference.legacy)
+                avatarView.AvatarAnimator.enabled = false;
+        }
+
+        [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
         }
 
-        private void CreateEmotePromise(URN urn, BodyShape bodyShape)
+        private void CreateEmotePromise(URN urn, BodyShape bodyShape, AvatarEmoteMask mask)
         {
             loadEmoteBuffer[0] = urn;
 
@@ -398,7 +417,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
                 {
                     SceneEmoteFromLocalPromise.Create(World,
-                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop),
+                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop, mask),
                         PartitionComponent.TOP_PRIORITY);
 
                     return;
