@@ -43,6 +43,8 @@ namespace DCL.Chat.ChatMessages
 
         public void Hide()
         {
+            if (this == null) return;
+
             showCts.SafeCancelAndDispose();
             showCts = null;
             SetVisible(false);
