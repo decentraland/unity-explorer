@@ -29,7 +29,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         internal struct MutedUserEntry
         {
             [JsonProperty("address")]
-            public string Address;
+            public string? Address;
         }
     }
 }
