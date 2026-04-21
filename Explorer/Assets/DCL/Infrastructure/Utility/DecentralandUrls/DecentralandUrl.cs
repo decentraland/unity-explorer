@@ -141,6 +141,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         EntitiesActiveElements = 86,
 
-        SocialServiceMutes = 87,
+        SceneAdmins = 87,
+
+        SocialServiceMutes = 88,
     }
 }
