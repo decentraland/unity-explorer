@@ -59,12 +59,26 @@ namespace ECS.StreamableLoading.GLTF
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
+            // In player builds, GLTFast cannot produce Mecanim clips at runtime (needs AnimationClip.SetCurve,
+            // which is Editor-only in runtime). When a scene emote is loaded in local-scene-development on a
+            // build, import as Legacy and convert the resulting clips to Mecanim after load.
+            bool useLegacyImportForMecanim =
+                intention.MecanimAnimationClips
+                && isLocalSceneDevelopment
+                && !Application.isEditor;
+
+            AnimationMethod animationMethod = intention.MecanimAnimationClips && !useLegacyImportForMecanim
+                ? AnimationMethod.Mecanim
+                : AnimationMethod.Legacy;
+
+            Debug.Log($"(Maurizio) LoadGLTFSystem: name='{intention.Name}' hash='{intention.Hash}' isLocalSceneDevelopment={isLocalSceneDevelopment} isEditor={Application.isEditor} mecanimRequested={intention.MecanimAnimationClips} useLegacyImportForMecanim={useLegacyImportForMecanim} finalAnimationMethod={animationMethod}");
+
             var gltFastSettings = new ImportSettings
             {
                 NodeNameMethod = NameImportMethod.OriginalUnique,
                 AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,
-                AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy,
+                AnimationMethod = animationMethod,
                 TexturesReadable = true,
             };
 
@@ -82,7 +96,7 @@ namespace ECS.StreamableLoading.GLTF
             // When GLTFast loads a GLB locally with Mecanim it may not create a RuntimeAnimatorController;
             // in that case we build one from BaseAnimatorController and the imported clips.
             if (intention.MecanimAnimationClips)
-                ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer);
+                ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer, useLegacyImportForMecanim);
 
             // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
             if (patchTexturesFormat)
@@ -98,22 +112,56 @@ namespace ECS.StreamableLoading.GLTF
         }
 
         /// <summary>
-        /// If the GLB has an Animator but no RuntimeAnimatorController (e.g. loaded locally by GLTFast),
-        /// builds an AnimatorOverrideController from Resources/BaseAnimatorController and the GLTF animation clips.
+        /// Builds an AnimatorOverrideController from Resources/BaseAnimatorController and the GLTF animation
+        /// clips when the imported root lacks one.
+        ///
+        /// When <paramref name="convertFromLegacy"/> is true, the GLB was imported via AnimationMethod.Legacy
+        /// (GLTFast attaches a UnityEngine.Animation component with legacy clips instead of an Animator). We
+        /// remove that component, add an Animator, and for each clip that gets assigned to an override slot
+        /// we clone it via Object.Instantiate and flip clone.legacy = false — AnimationClip.legacy is a
+        /// playback-system selector over the same curve data, and the importer-marked original is effectively
+        /// read-only.
         /// </summary>
-        private static void ApplyBaseAnimatorControllerWhenNeeded(GltfImport gltfImport, GameObject rootContainer)
+        private static void ApplyBaseAnimatorControllerWhenNeeded(GltfImport gltfImport, GameObject rootContainer, bool convertFromLegacy)
         {
-            Animator? animator = rootContainer.GetComponentInChildren<Animator>(true);
-            if (animator == null || animator.runtimeAnimatorController != null)
+            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
+            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: root='{rootContainer.name}' convertFromLegacy={convertFromLegacy} clipCount={(gltfClips == null ? 0 : gltfClips.Length)}");
+
+            if (gltfClips == null || gltfClips.Length == 0)
+            {
+                Debug.Log("(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: no clips, aborting");
                 return;
+            }
+
+            Animator? animator = rootContainer.GetComponentInChildren<Animator>(true);
+
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: animator '{animator.name}' already has controller, leaving it alone");
+                return;
+            }
+
+            if (animator == null)
+            {
+                Animation? legacyAnim = rootContainer.GetComponentInChildren<Animation>(true);
+                GameObject host = legacyAnim != null ? legacyAnim.gameObject : rootContainer;
+
+                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: no Animator found. legacyAnimationFound={(legacyAnim != null)} host='{host.name}'");
+
+                if (legacyAnim != null)
+                    UnityEngine.Object.Destroy(legacyAnim);
+
+                animator = host.AddComponent<Animator>();
+            }
+            else
+                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: animator '{animator.name}' found without controller, will assign one");
 
             RuntimeAnimatorController? baseController = Resources.Load<RuntimeAnimatorController>("BaseAnimatorController");
             if (baseController == null)
+            {
+                Debug.Log("(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: BaseAnimatorController not found in Resources, aborting");
                 return;
-
-            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
-            if (gltfClips == null || gltfClips.Length == 0)
-                return;
+            }
 
             AnimationClip? avatarClip = null;
             AnimationClip? propClip = null;
@@ -126,6 +174,14 @@ namespace ECS.StreamableLoading.GLTF
                         avatarClip = clip;
                     else if (clip != null && clip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
                         propClip = clip;
+
+            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: picked avatarClip='{(avatarClip != null ? avatarClip.name : "null")}' propClip='{(propClip != null ? propClip.name : "null")}'");
+
+            if (convertFromLegacy)
+            {
+                if (avatarClip != null) avatarClip = ToMecanim(avatarClip);
+                if (propClip != null) propClip = ToMecanim(propClip);
+            }
 
             var overrideController = new AnimatorOverrideController(baseController);
             var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
@@ -148,6 +204,17 @@ namespace ECS.StreamableLoading.GLTF
 
             overrideController.ApplyOverrides(overrides);
             animator.runtimeAnimatorController = overrideController;
+
+            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: assigned AnimatorOverrideController to '{animator.name}' (overrideSlots={overrides.Count})");
+        }
+
+        private static AnimationClip ToMecanim(AnimationClip legacyClip)
+        {
+            AnimationClip clone = UnityEngine.Object.Instantiate(legacyClip);
+            clone.name = legacyClip.name;
+            clone.legacy = false;
+            Debug.Log($"(Maurizio) ToMecanim: cloned '{legacyClip.name}' (sourceLegacy={legacyClip.legacy}) -> cloneLegacy={clone.legacy}");
+            return clone;
         }
 
         private void PatchTexturesForWearable(GltfImport gltfImport)
