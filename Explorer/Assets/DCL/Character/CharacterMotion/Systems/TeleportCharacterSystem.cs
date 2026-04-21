@@ -27,9 +27,9 @@ namespace DCL.CharacterMotion.Systems
         private const int COUNTDOWN_FRAMES = 20;
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly IPlayerTeleportBroadcast teleportBroadcast;
+        private readonly IMovementMessageBus teleportBroadcast;
 
-        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IPlayerTeleportBroadcast teleportBroadcast) : base(world)
+        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IMovementMessageBus teleportBroadcast) : base(world)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.teleportBroadcast = teleportBroadcast;

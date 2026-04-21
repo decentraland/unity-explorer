@@ -79,7 +79,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             remoteMetadata.BroadcastSelfParcel(characterObject);
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
-            remoteEntities.Remove(removeIntentions, World!);
+            RemoteEntitiesExtensions.Remove(remoteEntities, remoteAnnouncements, removeIntentions, World!);
             profileBroadcast.NotifyRemotes();
         }
     }

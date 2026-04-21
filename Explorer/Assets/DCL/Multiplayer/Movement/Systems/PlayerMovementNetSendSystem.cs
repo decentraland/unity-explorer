@@ -26,20 +26,20 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
         private const float HEAD_IK_EPSILON = 1; // 1 deg
 
-        private readonly MultiplayerMovementMessageBus messageBus;
-        private readonly PulseMultiplayerBus pulseMultiplayerBus;
+        private readonly LiveKitMovementMessageBus messageBus;
+        private readonly IMovementMessageBus movementMessageBus;
         private readonly MultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus,
+        internal PlayerMovementNetSendSystem(World world, LiveKitMovementMessageBus messageBus, IMovementMessageBus movementMessageBus,
             MultiplayerMovementSettings settings, MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
-            this.pulseMultiplayerBus = pulseMultiplayerBus;
+            this.movementMessageBus = movementMessageBus;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -189,9 +189,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = input.Kind,
             };
 
-            // TODO make branching properly based on the server mode
-            // messageBus.Send(playerMovement.LastSentMessage);
-            pulseMultiplayerBus.Send(playerMovement.LastSentMessage);
+            movementMessageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending

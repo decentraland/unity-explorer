@@ -25,7 +25,7 @@ using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat.MessageBus
 {
-    public class MultiplayerChatMessagesBus : IChatMessagesBus
+    public class LiveKitChatMessagesBus : IChatMessagesBus
     {
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IMessageDeduplication<double> messageDeduplication;
@@ -45,7 +45,7 @@ namespace DCL.Chat.MessageBus
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
+        public LiveKitChatMessagesBus(IMessagePipesHub messagePipesHub,
             ChatMessageFactory messageFactory,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             DecentralandEnvironment decentralandEnvironment,

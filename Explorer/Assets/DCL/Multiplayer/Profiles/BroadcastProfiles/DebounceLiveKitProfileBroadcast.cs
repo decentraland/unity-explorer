@@ -2,15 +2,15 @@ using System;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
-    public class DebounceProfileBroadcast : IProfileBroadcast
+    public class DebounceLiveKitProfileBroadcast : IProfileBroadcast
     {
         private readonly IProfileBroadcast origin;
         private readonly TimeSpan debounce;
         private DateTime previousNotify;
 
-        public DebounceProfileBroadcast(IProfileBroadcast origin) : this(origin, TimeSpan.FromSeconds(2)) { }
+        public DebounceLiveKitProfileBroadcast(IProfileBroadcast origin) : this(origin, TimeSpan.FromSeconds(2)) { }
 
-        public DebounceProfileBroadcast(IProfileBroadcast origin, TimeSpan debounce)
+        public DebounceLiveKitProfileBroadcast(IProfileBroadcast origin, TimeSpan debounce)
         {
             this.origin = origin;
             this.debounce = debounce;

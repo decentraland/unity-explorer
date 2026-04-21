@@ -15,7 +15,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public class PulseMultiplayerService : IDisposable
+    public class PulseMultiplayerService : IPulseMultiplayerService
     {
         private const int PORT = 7777;
         private const int MAX_CONNECT_ATTEMPTS = 3;

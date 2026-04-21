@@ -7,13 +7,13 @@ namespace DCL.Chat.MessageBus
 {
     public class SelfResendChatMessageBus : IChatMessagesBus
     {
-        private readonly MultiplayerChatMessagesBus origin;
+        private readonly LiveKitChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ChatMessageFactory messageFactory;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
-        public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory)
+        public SelfResendChatMessageBus(LiveKitChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory)
         {
             this.origin = origin;
             this.web3IdentityCache = web3IdentityCache;

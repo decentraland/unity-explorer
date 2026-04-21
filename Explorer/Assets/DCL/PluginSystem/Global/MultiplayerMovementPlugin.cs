@@ -27,9 +27,10 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly LiveKitMovementMessageBus liveKitMovementMessageBus;
         private readonly PulseMultiplayerBus pulseMultiplayerBus;
-        private readonly PulseMultiplayerService pulseMultiplayerService;
+        private readonly IMovementMessageBus effectiveMovementMessageBus;
+        private readonly IPulseMultiplayerService pulseMultiplayerService;
         private readonly ITransport pulseTransport;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
@@ -44,15 +45,19 @@ namespace DCL.PluginSystem.Global
         private MultiplayerMovementSettings settings;
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, PulseMultiplayerBus pulseMultiplayerBus,
-            PulseMultiplayerService pulseMultiplayerService, ITransport pulseTransport,
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner,
+            LiveKitMovementMessageBus liveKitMovementMessageBus,
+            PulseMultiplayerBus pulseMultiplayerBus,
+            IMovementMessageBus effectiveMovementMessageBus,
+            IPulseMultiplayerService pulseMultiplayerService, ITransport pulseTransport,
             IDebugContainerBuilder debugBuilder,
             RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, ParcelEncoder parcelEncoder)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.messageBus = messageBus;
+            this.liveKitMovementMessageBus = liveKitMovementMessageBus;
             this.pulseMultiplayerBus = pulseMultiplayerBus;
+            this.effectiveMovementMessageBus = effectiveMovementMessageBus;
             this.pulseMultiplayerService = pulseMultiplayerService;
             this.pulseTransport = pulseTransport;
             this.debugBuilder = debugBuilder;
@@ -68,7 +73,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            messageBus.Dispose();
+            liveKitMovementMessageBus.Dispose();
         }
 
         public UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
@@ -77,7 +82,7 @@ namespace DCL.PluginSystem.Global
 
             ConfigureCompressionUsage();
 
-            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, parcelEncoder);
+            liveKitMovementMessageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, parcelEncoder);
             return UniTask.CompletedTask;
         }
 
@@ -97,7 +102,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, pulseMultiplayerBus, settings, debugSettings);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, liveKitMovementMessageBus, effectiveMovementMessageBus, settings, debugSettings);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);

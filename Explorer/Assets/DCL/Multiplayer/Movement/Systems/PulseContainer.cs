@@ -1,12 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse.ENet;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.PluginSystem;
+using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
@@ -15,7 +16,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public class PulseContainer : DCLWorldContainer<PulseContainer.Settings>
+    internal class PulseContainer : DCLWorldContainer<PulseContainer.Settings>
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly MovementInbox movementInbox;
@@ -27,33 +28,35 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         internal readonly ParcelEncoder parcelEncoder;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly PulseIncomingProfileAnnouncements incomingProfiles;
-        private readonly PulseRemoveIntentions removeIntentions;
+
+        public readonly PulseIncomingProfileAnnouncements IncomingProfiles;
+        public readonly PulseRemoveIntentions RemoveIntentions;
+
+        public readonly bool FeatureEnabled;
 
         internal PulseMultiplayerBus? pulseMultiplayerBus { get; private set; }
-        internal PulseMultiplayerService? pulseMultiplayerService { get; private set; }
-        internal PulseProfilePropagationBus? pulseProfilePropagationBus { get; private set; }
+        internal IPulseMultiplayerService? pulseMultiplayerService { get; private set; }
+        internal IProfilePropagation? pulseProfilePropagationBus { get; private set; }
 
         private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox,
-            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource,
-            PulseIncomingProfileAnnouncements incomingProfiles, PulseRemoveIntentions removeIntentions)
+            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource)
         {
             this.identityCache = identityCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
             this.urlsSource = urlsSource;
-            this.incomingProfiles = incomingProfiles;
-            this.removeIntentions = removeIntentions;
+            IncomingProfiles = new PulseIncomingProfileAnnouncements();
+            RemoveIntentions = new PulseRemoveIntentions();
+
+            FeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);
         }
 
         public static async UniTask<PulseContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer,
             IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox, LandscapeData landscapeData,
             IDecentralandUrlsSource urlsSource,
-            PulseIncomingProfileAnnouncements incomingProfiles,
-            PulseRemoveIntentions removeIntentions,
             CancellationToken ct)
         {
-            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData), urlsSource, incomingProfiles, removeIntentions);
+            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData), urlsSource);
             await container.InitializeContainerAsync<PulseContainer, Settings>(pluginSettingsContainer, ct);
             return container;
         }
@@ -63,12 +66,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             lifeCycleCts = lifeCycleCts.SafeRestart();
 
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
-            pulseMultiplayerService = new PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource);
+            pulseMultiplayerService = FeatureEnabled ? new PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource) : new IPulseMultiplayerService.Dummy();
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, incomingProfiles, removeIntentions, identityCache);
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache);
             pulseMultiplayerBus.SubscribeToIncomingMessages();
 
-            pulseProfilePropagationBus = new PulseProfilePropagationBus(pulseMultiplayerService);
+            pulseProfilePropagationBus = FeatureEnabled ? new PulseProfilePropagationBus(pulseMultiplayerService) : new IProfilePropagation.Dummy();
 
             return UniTask.CompletedTask;
         }

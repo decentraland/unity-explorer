@@ -1,16 +1,15 @@
-using DCL.Multiplayer.Connections.Pulse;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Decentraland.Pulse;
 using Pulse.Transport;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Connections.Pulse
 {
     public class PulseProfilePropagationBus : IProfilePropagation
     {
-        private readonly PulseMultiplayerService service;
+        private readonly IPulseMultiplayerService service;
 
-        public PulseProfilePropagationBus(PulseMultiplayerService service)
+        public PulseProfilePropagationBus(IPulseMultiplayerService service)
         {
             this.service = service;
         }

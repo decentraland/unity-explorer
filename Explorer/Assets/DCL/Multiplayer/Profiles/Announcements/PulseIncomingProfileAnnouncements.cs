@@ -1,27 +1,24 @@
 using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Announcements;
-using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Multiplayer.Profiles.RemoveIntentions;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
+namespace DCL.Multiplayer.Profiles.Announcements
 {
     public class PulseIncomingProfileAnnouncements : IRemoteAnnouncements
     {
         private readonly ConcurrentQueue<RemoteAnnouncement> queue = new ();
-        private readonly List<RemoteAnnouncement> drainList = new ();
 
         public void Enqueue(string userId, int version) =>
             queue.Enqueue(new RemoteAnnouncement(version, userId, RoomSource.PULSE));
 
-        public Bunch<RemoteAnnouncement> Bunch()
+        public void Fill(List<RemoteAnnouncement> announcements)
         {
-            drainList.Clear();
-
             while (queue.TryDequeue(out RemoteAnnouncement item))
-                drainList.Add(item);
-
-            return new Bunch<RemoteAnnouncement>(drainList);
+                announcements.Add(item);
         }
+
+        public void Remove(IReadOnlyCollection<RemoveIntention> removeIntentions) { }
     }
 }

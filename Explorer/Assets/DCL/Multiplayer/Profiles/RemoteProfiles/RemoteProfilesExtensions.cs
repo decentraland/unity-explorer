@@ -1,6 +1,6 @@
 using DCL.Multiplayer.Profiles.Announcements;
-using DCL.Multiplayer.Profiles.Bunches;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.Multiplayer.Profiles.RemoteProfiles
 {
@@ -8,13 +8,12 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
     {
         public static void Download(this RemoteProfiles remoteProfiles, IRemoteAnnouncements remoteAnnouncements)
         {
-            using Bunch<RemoteAnnouncement> bunch = remoteAnnouncements.Bunch();
+            using PooledObject<List<RemoteAnnouncement>> _ = ListPool<RemoteAnnouncement>.Get(out List<RemoteAnnouncement>? announcements);
 
-            if (bunch.Available() == false)
-                return;
+            remoteAnnouncements.Fill(announcements);
 
-            IReadOnlyCollection<RemoteAnnouncement> list = bunch.Collection();
-            remoteProfiles.Download(list);
+            if (announcements.Count > 0)
+                remoteProfiles.Download(announcements);
         }
     }
 }

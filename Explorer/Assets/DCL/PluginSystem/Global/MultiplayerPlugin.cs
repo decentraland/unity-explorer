@@ -9,7 +9,6 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
@@ -19,7 +18,6 @@ using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
@@ -52,7 +50,6 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteStorage emoteStorage;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly IProfileRepository profileRepository;
         private readonly ILoadingStatus realFlowLoadingStatus;
@@ -84,7 +81,6 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             ILoadingStatus realFlowLoadingStatus,
             IEntityParticipantTable entityParticipantTable,
-            IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             IRealmData realmData,
@@ -111,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.entityParticipantTable = entityParticipantTable;
-            this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
@@ -154,10 +149,6 @@ namespace DCL.PluginSystem.Global
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,
-                // TODO: properly branch server mode
-                // new LogRemoveIntentions(
-                //     new ThreadSafeRemoveIntentions(roomHub)
-                // ),
                 removeIntentions,
                 new RemoteProfiles(profileRepository, remoteMetadata),
                 profileBroadcast,

@@ -12,8 +12,8 @@ using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +22,7 @@ using Utility;
 
 namespace DCL.Multiplayer.Emotes
 {
-    public class MultiplayerEmotesMessageBus : IDisposable, IEmotesMessageBus
+    public class LiveKitEmotesMessageBus : IDisposable, IEmotesMessageBus
     {
         private const float LATENCY = 0f;
 
@@ -32,20 +32,22 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesScheduler messageScheduler;
-        private uint nextIncrementalId = 1;
+        private readonly LiveKitMessagesBroadcaster broadcaster;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
 
         private readonly MutexSync sync = new();
 
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
+        public LiveKitEmotesMessageBus(IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings settings,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            LiveKitMessagesBroadcaster broadcaster)
         {
             this.messagePipesHub = messagePipesHub;
             this.settings = settings;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.broadcaster = broadcaster;
 
             messageScheduler = new EmotesScheduler();
 
@@ -72,8 +74,7 @@ namespace DCL.Multiplayer.Emotes
 
             float timestamp = Time.unscaledTime;
 
-            SendTo(emote, timestamp, mask, messagePipesHub.IslandPipe());
-            SendTo(emote, timestamp, mask, messagePipesHub.ScenePipe());
+            broadcaster.Send(BUILD_PLAYER_EMOTE_MESSAGE, (emote, timestamp, mask), LKDataPacketKind.KindReliable, cancellationTokenSource.Token);
 
             if (settings.SelfSending)
                 SelfSendWithDelayAsync(emote, timestamp, mask).Forget();
@@ -86,8 +87,7 @@ namespace DCL.Multiplayer.Emotes
 
             float timestamp = Time.unscaledTime;
 
-            SendStopTo(timestamp, messagePipesHub.IslandPipe());
-            SendStopTo(timestamp, messagePipesHub.ScenePipe());
+            broadcaster.Send(BUILD_STOP_MESSAGE, timestamp, LKDataPacketKind.KindReliable, cancellationTokenSource.Token);
 
             if (settings.SelfSending)
                 SelfSendStopWithDelayAsync(timestamp).Forget();
@@ -96,17 +96,15 @@ namespace DCL.Multiplayer.Emotes
         public void OnPlayerRemoved(string walletId) =>
             messageScheduler.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, float timestamp, AvatarEmoteMask mask, IMessagePipe messagePipe)
-        {
-            MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
+        private static readonly Action<(URN, float, AvatarEmoteMask), PlayerEmote> BUILD_PLAYER_EMOTE_MESSAGE = BuildPlayerEmoteMessage;
 
-            emote.Payload.IncrementalId = nextIncrementalId++;
-            emote.Payload.Urn = emoteId;
-            emote.Payload.Timestamp = timestamp;
-            emote.Payload.Mask = (uint)mask;
+        private static void BuildPlayerEmoteMessage((URN emoteId, float timestamp, AvatarEmoteMask mask) input, PlayerEmote payload)
+        {
+            payload.Urn = input.emoteId;
+            payload.Timestamp = input.timestamp;
+            payload.Mask = (uint)input.mask;
             // Message objects are pooled/reused; ensure no stale optional fields leak from previous uses (e.g. SendStop()).
-            emote.Payload.ClearIsStopping();
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
+            payload.ClearIsStopping();
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, AvatarEmoteMask mask)
@@ -115,13 +113,12 @@ namespace DCL.Multiplayer.Emotes
             Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, mask);
         }
 
-        private void SendStopTo(float timestamp, IMessagePipe messagePipe)
+        private static readonly Action<float, PlayerEmote> BUILD_STOP_MESSAGE = BuildStopMessage;
+
+        private static void BuildStopMessage(float timestamp, PlayerEmote payload)
         {
-            MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
-            emote.Payload.IncrementalId = nextIncrementalId++;
-            emote.Payload.Timestamp = timestamp;
-            emote.Payload.IsStopping = true;
-            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
+            payload.Timestamp = timestamp;
+            payload.IsStopping = true;
         }
         private async UniTaskVoid SelfSendStopWithDelayAsync(float timestamp)
         {

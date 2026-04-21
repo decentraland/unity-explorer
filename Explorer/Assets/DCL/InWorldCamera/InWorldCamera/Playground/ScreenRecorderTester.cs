@@ -103,8 +103,7 @@ namespace DCL.InWorldCamera.Playground
                 null,
                 new DefaultProfileCache(),
                 world,
-                playerEntity,
-                new IProfilePropagation.Dummy()
+                playerEntity
             );
         }
     }

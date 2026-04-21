@@ -23,14 +23,14 @@ namespace DCL.CharacterMotion.Tests
     public class TeleportCharacterSystemShould : UnitySystemTestBase<TeleportCharacterSystem>
     {
         private ISceneReadinessReportQueue? sceneReadinessReportQueue;
-        private IPlayerTeleportBroadcast? teleportBroadcast;
+        private IMovementMessageBus? teleportBroadcast;
         private CharacterController characterController;
         private Camera? camera;
 
         [SetUp]
         public void Setup()
         {
-            teleportBroadcast = Substitute.For<IPlayerTeleportBroadcast>();
+            teleportBroadcast = Substitute.For<IMovementMessageBus>();
             system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>(), teleportBroadcast);
             characterController = new GameObject().AddComponent<CharacterController>();
             camera = new GameObject().AddComponent<Camera>();

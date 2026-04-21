@@ -1,10 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
@@ -13,7 +14,7 @@ using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    public class MultiplayerMovementMessageBus : IDisposable
+    public class LiveKitMovementMessageBus : IMovementMessageBus, IDisposable
     {
         public enum Scheme
         {
@@ -25,16 +26,19 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly MovementInbox movementInbox;
+        private readonly LiveKitMessagesBroadcaster broadcaster;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
+        private Action<NetworkMovementMessage, MovementCompressed> compressMessage = null!;
         private NetworkMessageEncoder? messageEncoder;
         private bool isDisposed;
         private IMultiplayerMovementSettings? settingsValue;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, MovementInbox movementInbox)
+        public LiveKitMovementMessageBus(IMessagePipesHub messagePipesHub, MovementInbox movementInbox, LiveKitMessagesBroadcaster broadcaster)
         {
             this.messagePipesHub = messagePipesHub;
             this.movementInbox = movementInbox;
+            this.broadcaster = broadcaster;
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
@@ -49,16 +53,33 @@ namespace DCL.Multiplayer.Movement.Systems
             cancellationTokenSource.Dispose();
         }
 
+        // TODO move to the ctor (dependencies refactoring required)
         public void InitializeEncoder(MessageEncodingSettings messageEncodingSettings, IMultiplayerMovementSettings settingsValue, ParcelEncoder parcelEncoder)
         {
             this.settingsValue = settingsValue;
             messageEncoder = new NetworkMessageEncoder(messageEncodingSettings, parcelEncoder);
+            compressMessage = (message, compressed) => WriteToProto(messageEncoder.Compress(message), compressed);
         }
+
+        public void BroadcastTeleport(Vector3 worldPosition) { }
 
         public void Send(NetworkMovementMessage message)
         {
-            WriteAndSend(message, messagePipesHub.IslandPipe());
-            WriteAndSend(message, messagePipesHub.ScenePipe());
+            Scheme schema = settingsValue.UseCompression ? Scheme.Compressed : Scheme.Uncompressed;
+
+            switch (schema)
+            {
+                case Scheme.Uncompressed:
+                    broadcaster.Send<NetworkMovementMessage, Decentraland.Kernel.Comms.Rfc4.Movement>(
+                        static (m, payload) => WriteToProto(in m, payload),
+                        message, LKDataPacketKind.KindLossy, cancellationTokenSource.Token);
+
+                    break;
+                case Scheme.Compressed:
+                    broadcaster.Send(compressMessage, message, LKDataPacketKind.KindLossy, cancellationTokenSource.Token);
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
         }
 
         private void OnOldSchemaMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
@@ -146,33 +167,7 @@ namespace DCL.Multiplayer.Movement.Systems
             };
         }
 
-        private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
-        {
-            Scheme schema = settingsValue.UseCompression ? Scheme.Compressed : Scheme.Uncompressed;
-
-            switch (schema)
-            {
-                case Scheme.Uncompressed:
-                {
-                    MessageWrap<Decentraland.Kernel.Comms.Rfc4.Movement> messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
-                    WriteToProto(message, messageWrap.Payload);
-                    messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
-                }
-
-                    break;
-                case Scheme.Compressed:
-                {
-                    MessageWrap<MovementCompressed> messageWrap = messagePipe.NewMessage<MovementCompressed>();
-                    WriteToProto(messageEncoder.Compress(message), messageWrap.Payload);
-                    messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
-                }
-
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
+        private static void WriteToProto(in NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
             movement.Timestamp = (float)message.timestamp;
 
@@ -252,6 +247,5 @@ namespace DCL.Multiplayer.Movement.Systems
 
             Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
         }
-
     }
 }

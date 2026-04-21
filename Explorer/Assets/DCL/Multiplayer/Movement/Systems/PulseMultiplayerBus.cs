@@ -1,6 +1,6 @@
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -9,13 +9,13 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
-    public partial class PulseMultiplayerBus : IPlayerTeleportBroadcast, IEmotesMessageBus, IDisposable
+    public partial class PulseMultiplayerBus : IMovementMessageBus, IEmotesMessageBus, IDisposable
     {
         internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
         private const double SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001;
 
-        private readonly PulseMultiplayerService pulseService;
+        private readonly IPulseMultiplayerService pulseService;
         private readonly PeerIdCache peerIdCache;
         private readonly MovementInbox movementInbox;
         private readonly ParcelEncoder parcelEncoder;
@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         internal long EmoteStateMismatchCount { get; private set; }
 
-        public PulseMultiplayerBus(PulseMultiplayerService pulseService,
+        public PulseMultiplayerBus(IPulseMultiplayerService pulseService,
             PeerIdCache peerIdCache,
             MovementInbox movementInbox,
             ParcelEncoder parcelEncoder,

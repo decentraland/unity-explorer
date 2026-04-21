@@ -40,7 +40,7 @@ namespace DCL.UserInAppInitializationFlow
             bool localSceneDevelopment,
             CharacterContainer characterContainer,
             ModerationDataProvider moderationDataProvider,
-            PulseMultiplayerService pulseMultiplayerService,
+            IPulseMultiplayerService pulseMultiplayerService,
             IProfilePropagation profilePropagation)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;

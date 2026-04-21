@@ -1,28 +1,24 @@
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Messaging;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
 using System.Threading;
 
 namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 {
-    public class ProfileBroadcast : IProfileBroadcast
+    public class LiveKitProfileBroadcast : IProfileBroadcast
     {
         private const int CURRENT_PROFILE_VERSION = 0;
-        private readonly IMessagePipesHub messagePipesHub;
         private readonly ISelfProfile selfProfile;
+        private readonly LiveKitMessagesBroadcaster broadcaster;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public ProfileBroadcast(IMessagePipesHub messagePipesHub,
-            ISelfProfile selfProfile)
+        public LiveKitProfileBroadcast(ISelfProfile selfProfile,
+            LiveKitMessagesBroadcaster broadcaster)
         {
-            this.messagePipesHub = messagePipesHub;
             this.selfProfile = selfProfile;
+            this.broadcaster = broadcaster;
         }
 
         public void Dispose()
@@ -33,21 +29,19 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         public void NotifyRemotes()
         {
-            SendTo(messagePipesHub.IslandPipe());
-            SendTo(messagePipesHub.ScenePipe());
-        }
-
-        private void SendTo(IMessagePipe messagePipe)
-        {
             async UniTaskVoid GetProfileVersionThenSendAsync(CancellationToken ct)
             {
                 Profile? profile = await selfProfile.ProfileAsync(ct);
-                MessageWrap<AnnounceProfileVersion> message = messagePipe.NewMessage<AnnounceProfileVersion>();
-                message.Payload.ProfileVersion = (uint)(profile?.Version ?? CURRENT_PROFILE_VERSION);
-                message.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
+
+                broadcaster.Send<Profile?, AnnounceProfileVersion>(static (p, version) => BuildMessage(p, version), profile, LKDataPacketKind.KindReliable, ct);
             }
 
             GetProfileVersionThenSendAsync(cancellationTokenSource.Token).Forget();
+        }
+
+        private static void BuildMessage(Profile? profile, AnnounceProfileVersion payload)
+        {
+            payload.ProfileVersion = (uint)(profile?.Version ?? CURRENT_PROFILE_VERSION);
         }
     }
 }

@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ObjectProxy<FriendsCache> friendsCache;
-        private readonly IPlayerTeleportBroadcast teleportBroadcast;
+        private readonly IMovementMessageBus teleportBroadcast;
 
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             ObjectProxy<FriendsCache> friendsCache,
-            IPlayerTeleportBroadcast teleportBroadcast)
+            IMovementMessageBus teleportBroadcast)
         {
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;

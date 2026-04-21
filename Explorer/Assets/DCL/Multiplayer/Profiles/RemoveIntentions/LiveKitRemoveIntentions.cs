@@ -2,7 +2,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using DCL.LiveKit.Public;
@@ -11,13 +10,13 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Profiles.RemoveIntentions
 {
-    public class ThreadSafeRemoveIntentions : IRemoveIntentions
+    public class LiveKitRemoveIntentions : IRemoveIntentions
     {
         private readonly IRoomHub roomHub;
         private readonly HashSet<RemoveIntention> list = new ();
         private readonly MutexSync multithreadSync = new();
 
-        public ThreadSafeRemoveIntentions(IRoomHub roomHub)
+        public LiveKitRemoveIntentions(IRoomHub roomHub)
         {
             this.roomHub = roomHub;
 
@@ -70,7 +69,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 ThreadSafeAdd(new RemoveIntention(participant.Identity, roomSource));
         }
 
-        ~ThreadSafeRemoveIntentions()
+        ~LiveKitRemoveIntentions()
         {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromIsland;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant -= OnParticipantUpdateFromScene;

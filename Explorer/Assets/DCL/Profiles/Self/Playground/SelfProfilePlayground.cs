@@ -70,8 +70,7 @@ namespace DCL.Profiles.Self.Playground
                 null,
                 new DefaultProfileCache(),
                 world,
-                playerEntity,
-                new IProfilePropagation.Dummy()
+                playerEntity
             );
 
             var profile = await selfProfile.ProfileAsync(ct);

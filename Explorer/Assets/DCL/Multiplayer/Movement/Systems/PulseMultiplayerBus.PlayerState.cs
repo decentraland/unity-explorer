@@ -271,7 +271,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                 last.movementKind = (MovementKind)Mathf.Max(
                     Mathf.RoundToInt(mb),
-                    mb > MultiplayerMovementMessageBus.WALK_EPSILON ? 1 : 0
+                    mb > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0
                 );
             }
 
@@ -329,7 +329,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             Vector3 vel = playerState.Velocity.ToUnityVector();
 
             float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
-            var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > MultiplayerMovementMessageBus.WALK_EPSILON ? 1 : 0);
+            var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
 
             var message = new NetworkMovementMessage
             {

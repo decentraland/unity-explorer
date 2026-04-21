@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
     [LogCategory(ReportCategory.MULTIPLAYER)]
     public partial class DebugPulseSystem : BaseUnityLoopSystem
     {
-        private readonly PulseMultiplayerService service;
+        private readonly IPulseMultiplayerService service;
         private readonly ITransport transport;
         private readonly PulseMultiplayerBus multiplayerBus;
         private readonly ElementBinding<string>? transportState;
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         private DebugPulseSystem(
             World world,
-            PulseMultiplayerService service,
+            IPulseMultiplayerService service,
             ITransport transport,
             PulseMultiplayerBus multiplayerBus,
             IDebugContainerBuilder debugBuilder) : base(world)

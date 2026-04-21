@@ -1,7 +1,4 @@
-using CommunicationData.URLHelpers;
-using DCL.ECSComponents;
 using System;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -9,7 +6,7 @@ namespace DCL.Multiplayer.Emotes
     {
         public readonly string WalletId;
         public readonly double Timestamp;
-        
+
         public RemoteEmoteStopIntention(string walletId, double timestamp)
         {
             WalletId = walletId;
