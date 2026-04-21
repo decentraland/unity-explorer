@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.SDKComponents.MediaStream.YouTube;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using YoutubeExplode.Videos;
-using YoutubeExplode.Videos.Streams;
 
 namespace DCL.SDKComponents.MediaStream.Tests
 {
@@ -150,7 +149,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             const string url = "https://www.youtube.com/live/abc123def456";
             const string hlsUrl = "https://manifest.googlevideo.com/hls/manifest.m3u8";
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(hlsUrl));
 
             ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
@@ -168,7 +167,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             const string url = "https://www.youtube.com/live/abc123def456";
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(string.Empty));
 
             ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
@@ -185,7 +184,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             client.IsLiveStreamAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(true));
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(hlsUrl));
 
             ResolvedYouTubeUrl? result = await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
@@ -204,13 +203,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             const string url = "https://www.youtube.com/live/abc123def456";
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult("https://manifest.googlevideo.com/hls/manifest.m3u8"));
 
             await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
             await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
 
-            await client.Received(1).GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
+            await client.Received(1).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -218,7 +217,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         {
             const string url = "https://www.youtube.com/live/abc123def456";
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult("https://manifest.googlevideo.com/hls/manifest.m3u8"));
 
             await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
@@ -228,7 +227,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
 
-            await client.Received(2).GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
+            await client.Received(2).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -237,7 +236,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             const string url = "https://www.youtube.com/live/abc123def456";
             const string hlsUrl = "https://manifest.googlevideo.com/hls/manifest.m3u8";
 
-            client.GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
+            client.GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>())
                   .Returns(UniTask.FromResult(hlsUrl));
 
             await resolver.ResolveAsync(url, CancellationToken.None).AsTask();
@@ -249,7 +248,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Value.DirectUrl, Is.EqualTo(hlsUrl));
-            await client.Received(1).GetHttpLiveStreamUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
+            await client.Received(1).GetStreamingManifestUrlAsync(Arg.Any<VideoId>(), Arg.Any<CancellationToken>());
         }
 
         // -------------------------------------------------------------------------

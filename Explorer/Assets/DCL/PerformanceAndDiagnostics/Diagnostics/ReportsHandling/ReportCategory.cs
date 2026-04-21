@@ -55,6 +55,11 @@ namespace DCL.Diagnostics
         public const string SCENE_LOADING = nameof(SCENE_LOADING);
 
         /// <summary>
+        ///     Messages related to the scene admins and their operations
+        /// </summary>
+        public const string SCENE_ADMINS = nameof(SCENE_ADMINS);
+
+        /// <summary>
         ///     Messages related to the scene UI
         /// </summary>
         public const string SCENE_UI = nameof(SCENE_UI);
@@ -336,6 +341,7 @@ namespace DCL.Diagnostics
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
         public const string VOICE_CHAT = nameof(VOICE_CHAT);
+        public const string NEARBY_VOICE_CHAT = nameof(NEARBY_VOICE_CHAT);
 
         public const string COMMUNITY_VOICE_CHAT = nameof(COMMUNITY_VOICE_CHAT);
 

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CRDT;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
@@ -184,6 +185,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             // Single pass: reset pointers, find head, build reverse map (rightOf target → node)
             head = null;
+            Node? orphanTail = null;
 
             foreach (var kvp in nodes)
             {
@@ -191,9 +193,36 @@ namespace DCL.SDKComponents.SceneUI.Components
                 kvp.Value.Previous = null;
 
                 if (kvp.Value.RightOf.Id == 0)
+                {
                     head = kvp.Value;
+                }
+                else if (reverseRightOf.ContainsKey(kvp.Value.RightOf))
+                {
+                    // Duplicate rightOf target: two nodes claim to be after the same sibling.
+                    // This happens when a new node is inserted between existing siblings and the
+                    // existing sibling's rightOf hasn't been updated yet (e.g., CRDT update for
+                    // the existing sibling was not processed by ResolveSiblingsOrder).
+                    // Keep the first entry and chain the duplicate at the end to avoid data loss.
+                    ReportHub.LogWarning(
+                        new ReportData(ReportCategory.SCENE_UI),
+                        $"[UISort] Duplicate rightOf target {kvp.Value.RightOf}: "
+                        + $"existing={reverseRightOf[kvp.Value.RightOf].EntityId}, new={kvp.Value.EntityId}. "
+                        + "Appending duplicate to end of chain.");
+
+                    // Track orphan to append at end
+                    if (orphanTail == null)
+                        orphanTail = kvp.Value;
+                    else
+                    {
+                        orphanTail.Next = kvp.Value;
+                        kvp.Value.Previous = orphanTail;
+                        orphanTail = kvp.Value;
+                    }
+                }
                 else
+                {
                     reverseRightOf[kvp.Value.RightOf] = kvp.Value;
+                }
             }
 
             if (head == null)
@@ -207,6 +236,19 @@ namespace DCL.SDKComponents.SceneUI.Components
                 current.Next = next;
                 next.Previous = current;
                 current = next;
+            }
+
+            // Append any orphaned nodes (from duplicate rightOf) at the end of the chain
+            if (orphanTail != null)
+            {
+                // Find the first orphan (walk back from tail)
+                Node firstOrphan = orphanTail;
+
+                while (firstOrphan.Previous != null)
+                    firstOrphan = firstOrphan.Previous;
+
+                current.Next = firstOrphan;
+                firstOrphan.Previous = current;
             }
         }
 

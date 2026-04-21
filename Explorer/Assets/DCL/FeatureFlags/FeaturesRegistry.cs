@@ -72,6 +72,7 @@ namespace DCL.FeatureFlags
             //We need to set FRIENDS AND USER BLOCKING before setting VOICE CHAT that depends on them.
             SetFeatureState(FeatureId.VOICE_CHAT, IsEnabled(FeatureId.FRIENDS) && IsEnabled(FeatureId.FRIENDS_USER_BLOCKING) && (isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))));
             SetFeatureState(FeatureId.COMMUNITY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT));
+            SetFeatureState(FeatureId.NEARBY_VOICE_CHAT, IsEnabled(FeatureId.VOICE_CHAT) && appArgs.ResolveFeatureFlagArg(AppArgsFlags.NEARBY_VOICE_CHAT, featureFlags.IsEnabled(FeatureFlagsStrings.NEARBY_VOICE_CHAT) || Application.isEditor));
         }
 
         /// <summary>
@@ -194,6 +195,7 @@ namespace DCL.FeatureFlags
         SELF_PREVIEW_BUILDER_COLLECTIONS = 59,
         AVATAR_CONTEXT_MENU = 60,
         DOUBLE_CLICK_WALK = 61,
-        PULSE = 62,
+        NEARBY_VOICE_CHAT = 62,
+        PULSE = 63,
     }
 }

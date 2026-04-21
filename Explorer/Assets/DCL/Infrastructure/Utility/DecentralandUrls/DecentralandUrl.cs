@@ -141,6 +141,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         EntitiesActiveElements = 86,
 
+        SceneAdmins = 87,
+
         Pulse = 100,
     }
 }

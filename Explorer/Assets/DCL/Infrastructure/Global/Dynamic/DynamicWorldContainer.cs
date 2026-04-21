@@ -606,6 +606,7 @@ namespace Global.Dynamic
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
+                new SceneAdminsChatCommand(staticContainer.ScenesCache),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
 
@@ -1164,7 +1165,14 @@ namespace Global.Dynamic
                         staticContainer.ImageControllerProvider,
                         assetsProvisioner,
                         chatSharedAreaEventBus,
-                        debugBuilder)
+                        debugBuilder,
+                        staticContainer.LoadingStatus,
+                        staticContainer.ScenesCache,
+                        staticContainer.SceneRestrictionBusController,
+                        mainUIView.SidebarView.NearbyVoiceChatButton,
+                        mainUIView.SidebarView.NearbyVoiceWidget,
+                        mainUIView.SidebarView.NearbyVoiceTip,
+                        bootstrapContainer.VolumeBus)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

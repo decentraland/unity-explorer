@@ -161,8 +161,6 @@ namespace DCL.Chat.ChatServices
         /// <param name="connectionState"></param>
         private void OnRoomConnectionStateChange(LKConnectionState connectionState)
         {
-            bool shouldNotify = false;
-
             lock (onlineParticipants)
             {
                 switch (connectionState)
@@ -172,13 +170,10 @@ namespace DCL.Chat.ChatServices
                         RefreshAllOnlineParticipants(roomHub.AllLocalRoomsRemoteParticipantIdentities());
                         eventBus.RaiseChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, OnlineParticipants);
                         CopyToSnapshotBuffer();
-                        shouldNotify = true;
+                        eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
                         break;
                 }
             }
-
-            if (shouldNotify)
-                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, snapshotBuffer));
         }
 
         private void SetOnline(string userId)

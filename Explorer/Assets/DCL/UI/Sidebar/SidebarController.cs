@@ -33,6 +33,7 @@ using System.Threading;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
+using DCL.VoiceChat.UI;
 using ECS.Abstract;
 using Utility;
 
@@ -58,13 +59,14 @@ namespace DCL.UI.Sidebar
         private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
+        private readonly bool isNearbyVoiceChatEnabled;
 
         private readonly HttpEventsApiService eventsApiService;
-        private CancellationTokenSource profileWidgetCts = new ();
+        private readonly CancellationTokenSource profileWidgetCts = new ();
+        private readonly CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
-        private CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource openPanelCts = new ();
         private SingleInstanceEntity? cameraInternal;
         private bool isMarketplaceCreditsFeatureEnabled;
@@ -105,6 +107,7 @@ namespace DCL.UI.Sidebar
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
+            isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
             this.eventsApiService = eventsApiService;
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
@@ -140,6 +143,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackButton.onClick.RemoveListener(OnBackpackButtonClicked);
                 viewInstance.smartWearablesButton.OnButtonHover -= OnSmartWearablesButtonHover;
                 viewInstance.smartWearablesButton.OnButtonUnhover -= OnSmartWearablesButtonUnhover;
+                if (isNearbyVoiceChatEnabled)
+                    viewInstance.NearbyVoiceChatButton.Button.onClick.RemoveListener(OnNearbyVoiceButtonClicked);
 
                 if (isCameraReelFeatureEnabled)
                     viewInstance.cameraReelButton.onClick.RemoveListener(OnCameraReelButtonClicked);
@@ -174,6 +179,7 @@ namespace DCL.UI.Sidebar
             viewInstance.InWorldCameraButton.gameObject.SetActive(isCameraReelFeatureEnabled);
             viewInstance.placesButton?.gameObject.SetActive(isDiscoverFeatureEnabled);
             viewInstance.eventsButton.gameObject.SetActive(isDiscoverFeatureEnabled);
+            viewInstance.NearbyVoiceChatButton.gameObject.SetActive(isNearbyVoiceChatEnabled);
 
             SubscribeToEvents();
 
@@ -215,6 +221,8 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackButton.onClick.AddListener(OnBackpackButtonClicked);
             viewInstance.smartWearablesButton.OnButtonHover += OnSmartWearablesButtonHover;
             viewInstance.smartWearablesButton.OnButtonUnhover += OnSmartWearablesButtonUnhover;
+            if (isNearbyVoiceChatEnabled)
+                viewInstance.NearbyVoiceChatButton.Button.onClick.AddListener(OnNearbyVoiceButtonClicked);
 
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
@@ -412,6 +420,17 @@ namespace DCL.UI.Sidebar
 
         private void OnSmartWearablesButtonHover() => OpenPanelAsync(viewInstance!.smartWearablesButton, SmartWearablesSideBarTooltipController.IssueCommand()).Forget();
         private void OnSmartWearablesButtonUnhover() => smartWearablesTooltipController.Close();
+
+        private void OnNearbyVoiceButtonClicked()
+        {
+            if (viewInstance!.NearbyVoiceChatButton.IsSuppressed)
+            {
+                viewInstance.NearbyVoiceChatButton.ShowDisabledTooltip();
+                return;
+            }
+
+            OpenPanelAsync(null, NearbyVoicePanelController.IssueCommand()).Forget();
+        }
 
         private void OnMarketplaceButtonClicked()
         {
