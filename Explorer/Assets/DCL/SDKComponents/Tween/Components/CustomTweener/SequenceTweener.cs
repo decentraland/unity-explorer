@@ -114,11 +114,9 @@ namespace DCL.SDKComponents.Tween.Components
                         {
                             case TextureMovementType.TmtOffset:
                                 textureTweener = DOTween.To(() => material.GetTextureOffset(propertyId), x => material.SetTextureOffset(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
-                                textureTweener.SetTarget(material);
                                 break;
                             case TextureMovementType.TmtTiling:
                                 textureTweener = DOTween.To(() => material.GetTextureScale(propertyId), x => material.SetTextureScale(propertyId, x), pbTween.TextureMove.End, durationInSeconds);
-                                textureTweener.SetTarget(material);
                                 break;
                         }
 
