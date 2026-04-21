@@ -1,6 +1,5 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
-using DCL.SDKComponents.Tween;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -10,11 +9,11 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public class TweenerPool
     {
-        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener(), actionOnRelease: tweener => tweener.Kill(true), actionOnGet: tweener => tweener.Kill(true));
-        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener(), actionOnRelease: tweener => tweener.Kill(true), actionOnGet: tweener => tweener.Kill(true));
-        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener(), actionOnRelease: tweener => tweener.Kill(true), actionOnGet: tweener => tweener.Kill(true));
-        private readonly IObjectPool<TransformTweener> transformTweenerPool = new ObjectPool<TransformTweener>(() => new TransformTweener(), actionOnRelease: tweener => tweener.Kill(true), actionOnGet: tweener => tweener.Kill(true));
-        private readonly IObjectPool<SequenceTweener> sequenceTweenerPool = new ObjectPool<SequenceTweener>(() => new SequenceTweener(), actionOnRelease: tweener => tweener.Kill(true), actionOnGet: tweener => tweener.Kill(true));
+        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener(), actionOnRelease: tweener => tweener.Kill(true));
+        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener(), actionOnRelease: tweener => tweener.Kill(true));
+        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener(), actionOnRelease: tweener => tweener.Kill(true));
+        private readonly IObjectPool<TransformTweener> transformTweenerPool = new ObjectPool<TransformTweener>(() => new TransformTweener(), actionOnRelease: tweener => tweener.Kill(true));
+        private readonly IObjectPool<SequenceTweener> sequenceTweenerPool = new ObjectPool<SequenceTweener>(() => new SequenceTweener(), actionOnRelease: tweener => tweener.Kill(true));
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds, Transform? transform = null, Vector2? textureStart = null)
         {

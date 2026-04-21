@@ -35,14 +35,10 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
 
             transformPool = componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
-            {
-                DOTween.Kill(transform);
-                transform.ResetLocalTRS();
-                transform.gameObject.layer = 0;
-            },
-                onGet: transform =>
                 {
                     DOTween.Kill(transform);
+                    transform.ResetLocalTRS();
+                    transform.gameObject.layer = 0;
                 },
                 maxSize: 2048);
         }
