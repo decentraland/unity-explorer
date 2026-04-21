@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -15,7 +13,6 @@ using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.Controls.Configs;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -29,8 +26,10 @@ using System.Threading;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Profiles.Self;
 using DCL.UI.ConfirmationDialog;
+using Newtonsoft.Json;
 using UnityEngine;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
@@ -41,13 +40,13 @@ namespace DCL.UI
     [Serializable]
     public struct GiftData
     {
-        public string userId;
-        public string userName;
+        [JsonProperty("userId")] public string UserId;
+        [JsonProperty("userName")] public string UserName;
 
         public GiftData(string userId, string userName)
         {
-            this.userId = userId;
-            this.userName = userName;
+            this.UserId = userId;
+            this.UserName = userName;
         }
     }
     public class GenericUserProfileContextMenuController
@@ -64,13 +63,13 @@ namespace DCL.UI
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
-        private readonly IChatEventBus chatEventBus;
-        private readonly bool includeUserBlocking;
+        private readonly ChatEventBus chatEventBus;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly bool includeVoiceChat;
-        private readonly bool includeCommunities;
+        private readonly bool isVoiceChatFeatureEnabled;
+        private readonly bool isCommunitiesFeatureEnabled;
+        private readonly bool isUserBlockingFeatureEnabled;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -93,27 +92,26 @@ namespace DCL.UI
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly GenericContextMenuElement contextGiftButton;
-        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly GenericContextMenuElement contextMenuMentionButton;
 
-        private CancellationTokenSource cancellationTokenSource;
-        private UniTaskCompletionSource closeContextMenuTask;
+        private CancellationTokenSource cancellationTokenSource = new();
+        private UniTaskCompletionSource closeContextMenuTask = new ();
         private Profile.CompactInfo targetProfile;
-
-        private readonly CommunityInvitationContextMenuButtonHandler invitationButtonHandler;
+        private GenericContextMenuElement invitationButton;
+        private readonly CommunityInvitationContextMenuButtonHandler? invitationButtonHandler;
 
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
-            bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager,
-            bool includeCommunities,
-            CommunitiesDataProvider communitiesDataProvider, IVoiceChatOrchestratorActions voiceChatOrchestrator,
+            bool isCommunitiesFeatureEnabled,
+            CommunitiesDataProvider communitiesDataProvider,
+            IVoiceChatOrchestratorActions voiceChatOrchestrator,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile)
@@ -122,19 +120,15 @@ namespace DCL.UI
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
-            this.includeUserBlocking = includeUserBlocking;
+            this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.sharedSpaceManager = sharedSpaceManager;
+            this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.selfProfile = selfProfile;
-            this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
-            this.includeUserBlocking = includeUserBlocking;
-            this.onlineUsersProvider = onlineUsersProvider;
-            this.realmNavigator = realmNavigator;
-            this.includeCommunities = includeCommunities;
+            this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.contextMenuSettings = contextMenuSettings;
 
@@ -153,12 +147,14 @@ namespace DCL.UI
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
             contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
-            contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
+            var contextGiftButton = new GenericContextMenuElement(giftButtonControlSettings, true);
+
+            contextMenuMentionButton = new GenericContextMenuElement(mentionUserButtonControlSettings, false);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, SUBMENU_CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                         .AddControl(mentionUserButtonControlSettings)
+                         .AddControl(contextMenuMentionButton)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
                          .AddControl(contextMenuCallButton);
@@ -168,30 +164,32 @@ namespace DCL.UI
 
             contextMenu.AddControl(contextMenuJumpInButton);
 
-            if (includeCommunities)
+            if (isCommunitiesFeatureEnabled)
             {
                 invitationButtonHandler = new CommunityInvitationContextMenuButtonHandler(communitiesDataProvider, CONTEXT_MENU_ELEMENTS_SPACING);
-                invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
+                invitationButton = invitationButtonHandler.AddSubmenuControlToContextMenu(contextMenu, new Vector2(0.0f, contextMenu.offsetFromTarget.y), contextMenuSettings.InviteToCommunityConfig.Text, contextMenuSettings.InviteToCommunityConfig.Sprite);
             }
 
-            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                       .AddControl(contextMenuBlockUserButton);
+            contextMenu.AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.REPORT_USER))
                 contextMenu.AddControl(reportButtonControlSettings);
+
+            contextMenu.AddControl(contextMenuBlockUserButton);
         }
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action? onContextMenuHide = null,
-            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT, Action? onContextMenuShow = null,
+            bool isOpenedOnWorldAvatar = false)
         {
-            closeContextMenuTask?.TrySetResult();
+            closeContextMenuTask.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
             targetProfile = profile;
 
-            if (friendServiceProxy.Configured)
+            if (friendServiceProxy is { Configured: true, Object: not null })
             {
                 Result<FriendshipStatus> friendshipStatusAsyncResult = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct)
                                                                                     .SuppressToResultAsync(ReportCategory.FRIENDS);
@@ -212,8 +210,9 @@ namespace DCL.UI
                     string? json = JsonUtility.ToJson(new GiftData(profile.UserId, profile.DisplayName));
                     giftButtonControlSettings.SetData(json);
 
-                    contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+                    contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
+                                                      friendOnlineStatusCacheProxy is { Configured: true, Object: not null } &&
                                                       friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
                 }
             }
@@ -225,10 +224,27 @@ namespace DCL.UI
             openConversationControlSettings.SetData(profile.UserId);
             reportButtonControlSettings.SetData(profile.UserId);
 
-            if (includeVoiceChat)
+            if (isVoiceChatFeatureEnabled)
             {
-                contextMenuCallButton.Enabled = includeVoiceChat;
+                contextMenuCallButton.Enabled = isVoiceChatFeatureEnabled;
                 startCallButtonControlSettings.SetData(profile.UserId);
+            }
+
+            if (isOpenedOnWorldAvatar)
+            {
+                contextMenuMentionButton.Enabled = false;
+                contextMenuJumpInButton.Enabled = false;
+
+                if (invitationButton != null)
+                    invitationButton.Enabled = false;
+            }
+            else
+            {
+                contextMenuMentionButton.Enabled = true;
+
+                // contextMenuJumpInButton.Enabled is already set above based on friendship status
+                if (invitationButton != null)
+                    invitationButton.Enabled = true;
             }
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
@@ -238,8 +254,8 @@ namespace DCL.UI
 
             contextMenu.ChangeOffsetFromTarget(offset);
 
-            if (includeCommunities)
-                invitationButtonHandler.SetUserToInvite(profile.UserId);
+            if (isCommunitiesFeatureEnabled)
+                invitationButtonHandler!.SetUserToInvite(profile.UserId);
 
             if (ct.IsCancellationRequested) return;
 
@@ -298,6 +314,8 @@ namespace DCL.UI
 
         private void CancelFriendRequest(string userAddress)
         {
+            if (!friendServiceProxy.Configured || friendServiceProxy.Object == null) return;
+
             IFriendsService friendService = friendServiceProxy.Object;
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
             CancelFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
@@ -348,34 +366,20 @@ namespace DCL.UI
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
-
-            ShowChatAsync(() =>
-            {
-                chatEventBus.InsertText(userName + " ");
-            }).Forget();
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
+            chatEventBus.RaiseInsertTextInChatRequestedEvent(userName + " ");
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
-        }
-
-        private async UniTaskVoid ShowChatAsync(Action onChatShown)
-        {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true), PanelsSharingSpace.Chat);
-            onChatShown?.Invoke();
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(userId);
         }
 
         private void OnStartCallButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            StartCallAsync(userId).Forget();
-        }
-
-        private async UniTaskVoid StartCallAsync(string userId)
-        {
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
+            ChatOpener.Instance.CloseAllViewsAndFocusChat();
             voiceChatOrchestrator.StartPrivateCallWithUserId(userId);
         }
 
@@ -428,7 +432,7 @@ namespace DCL.UI
                 try
                 {
                     var data = JsonUtility.FromJson<GiftData>(payload);
-                    ShowGiftingPopupAsync(data.userId, data.userName).Forget();
+                    ShowGiftingPopupAsync(data.UserId, data.UserName).Forget();
                 }
                 catch
                 {

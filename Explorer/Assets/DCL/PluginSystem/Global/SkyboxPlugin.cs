@@ -68,11 +68,17 @@ namespace DCL.SkyBox
 
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
+                // Read the persisted quality setting. On first launch or when running concurrently with
+                // QualitySettingsController init, this may not yet be written — ApplySunLensFlare will
+                // correct the component's enabled state once QualitySettingsController finishes initializing.
+                bool lensFlareEnabled = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, defaultValue: true);
+
                 skyboxRenderController.Initialize(
                     skyboxSettings.SkyboxMaterial,
                     directionalLight,
                     skyboxAnimation,
-                    skyboxSettings.TimeOfDayNormalized
+                    skyboxSettings.TimeOfDayNormalized,
+                    lensFlareEnabled
                 );
             }
             catch (OperationCanceledException)

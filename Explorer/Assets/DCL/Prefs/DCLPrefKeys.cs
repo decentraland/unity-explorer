@@ -48,11 +48,13 @@ namespace DCL.Prefs
         public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
         public const string PS_GRASS_PRESET = "QS_GrassPreset";
         public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SUN_LENS_FLARE = "QS_SunLensFlare";
         public const string PS_SCENE_LIGHTS = "QS_SceneLights";
         public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
         public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
         public const string PS_RESOLUTION = "QS_Resolution";
 
@@ -94,8 +96,13 @@ namespace DCL.Prefs
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
+
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
+
+        public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
     }
 }

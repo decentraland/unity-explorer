@@ -53,7 +53,6 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetEmotesDTOByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetTrimmedEmotesByParamIntention, TrimmedEmotesResponse>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 

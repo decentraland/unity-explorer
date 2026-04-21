@@ -320,6 +320,8 @@ namespace DCL.Diagnostics
 
         public const string LIGHT_SOURCE = nameof(LIGHT_SOURCE);
 
+        public const string PARTICLE_SYSTEM = nameof(PARTICLE_SYSTEM);
+
         public const string ALWAYS = nameof(ALWAYS);
 
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
@@ -334,6 +336,7 @@ namespace DCL.Diagnostics
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
         public const string VOICE_CHAT = nameof(VOICE_CHAT);
+        public const string NEARBY_VOICE_CHAT = nameof(NEARBY_VOICE_CHAT);
 
         public const string COMMUNITY_VOICE_CHAT = nameof(COMMUNITY_VOICE_CHAT);
 

@@ -455,5 +455,13 @@ namespace DCL.CharacterMotion.Settings
             get => impl.HeadIKRemotePlayersDistance;
             set => impl.HeadIKRemotePlayersDistance = value;
         }
+
+        public float PointAndClickArrivalDistance => impl.PointAndClickArrivalDistance;
+
+        public float PointAndClickStuckCheckInterval => impl.PointAndClickStuckCheckInterval;
+
+        public float PointAndClickStuckMinMovement => impl.PointAndClickStuckMinMovement;
+
+        public float PointAndClickMaxRaycastDistance => impl.PointAndClickMaxRaycastDistance;
     }
 }

@@ -44,5 +44,19 @@ namespace DCL.VoiceChat
 
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
+
+        [Header("NEARBY")]
+        public AnimationCurve NearbyCustomRolloffCurve = new (
+            new Keyframe(0f, 1f, 0f, 0f),
+            new Keyframe(3f, 1f, 0f, 0f),
+            new Keyframe(8f, 0.5f, -0.15f, -0.15f),
+            new Keyframe(14f, 0.03f, -0.04f, -0.02f),
+            new Keyframe(16f, 0f, -0.01f, 0f)
+        );
+
+        [Header("NEARBY - LiveKit Spatial")]
+        public bool nearbySpatialize = true;
+        [Range(0f, 1f)] public float nearbyIldStrength = 0.75f;
+        public bool nearbySmoothPanning;
     }
 }
