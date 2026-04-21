@@ -32,6 +32,7 @@ namespace DCL.SDKComponents.Tween.Components
             finished = false;
             sequence = DOTween.Sequence();
             sequence.Pause();
+            sequence.SetTarget(transform);
 
             AppendTweenStep(firstTween, firstTween.Duration / 1000f, transform, material);
 
@@ -130,6 +131,8 @@ namespace DCL.SDKComponents.Tween.Components
                     }
                     break;
             }
+
+            returnTween?.SetTarget(transform);
 
             return returnTween;
         }

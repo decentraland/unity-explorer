@@ -40,6 +40,10 @@ namespace DCL.PluginSystem.World
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
             },
+                onGet: transform =>
+                {
+                    DOTween.Kill(transform);
+                },
                 maxSize: 2048);
         }
 
