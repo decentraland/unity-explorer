@@ -145,6 +145,28 @@ namespace DCL.VoiceChat
         internal void RemoveStreamsByIdentity(string identity) =>
             playbackSourcesHub.RemoveStreamsByIdentity(identity);
 
+        /// <summary>
+        /// Re-adds playback streams for an identity that was previously removed (e.g. after unblock).
+        /// LiveKit keeps the track subscribed, so <see cref="IRoom.TrackSubscribed"/> does not fire again —
+        /// we need to look up the participant and re-invoke <see cref="TryAddStream"/> explicitly.
+        /// </summary>
+        internal async UniTaskVoid AddStreamsForIdentityAsync(string identity)
+        {
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
+            try
+            {
+                if (!voiceChatRoom.Participants.RemoteParticipantIdentities().TryGetValue(identity, out LKParticipant? participant) || participant == null)
+                    return;
+
+                foreach ((string sid, TrackPublication publication) in participant.Tracks)
+                    if (TryAddStream(publication.Kind, new StreamKey(identity, sid)))
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Re-added stream for {identity}");
+            }
+            catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Failed to re-add streams for {identity}", ex), ReportCategory.VOICE_CHAT); }
+        }
+
         internal void SetMuteForIdentity(string identity, bool mute) =>
             playbackSourcesHub.SetMuteForIdentity(identity, mute);
 

@@ -130,6 +130,8 @@ namespace DCL.VoiceChat
             {
                 blockingCacheProxy.Object.UserBlocked -= OnUserBlocked;
                 blockingCacheProxy.Object.UserBlocksYou -= OnUserBlocked;
+                blockingCacheProxy.Object.UserUnblocked -= OnUserUnblocked;
+                blockingCacheProxy.Object.UserUnblocksYou -= OnUserUnblocked;
             }
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
@@ -327,6 +329,8 @@ namespace DCL.VoiceChat
         {
             cache.UserBlocked += OnUserBlocked;
             cache.UserBlocksYou += OnUserBlocked;
+            cache.UserUnblocked += OnUserUnblocked;
+            cache.UserUnblocksYou += OnUserUnblocked;
         }
 
         private void OnUserBlocked(string userId)
@@ -336,6 +340,19 @@ namespace DCL.VoiceChat
             remoteListener.RemoveStreamsByIdentity(userId);
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
+        }
+
+        private void OnUserUnblocked(string userId)
+        {
+            if (disposed) return;
+
+            // Only re-add while listening — suppressed/disabled states will rehydrate via StartListeningAsync on resume.
+            if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING))
+                return;
+
+            remoteListener.AddStreamsForIdentityAsync(userId).Forget();
+
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Restoring nearby audio for unblocked user {userId}");
         }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)
