@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Localization;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using Avatar = DCL.Profiles.Avatar;
 using Random = UnityEngine.Random;
@@ -87,14 +88,12 @@ namespace DCL.AuthenticationScreenFlow
 
             loginCt = payload.ct;
             userEmail = payload.email;
+            selectedBodyType = BodyShape.MALE;
+            newUserProfile = payload.profile;
 
             InitializeAvatarAsync().Forget();
 
-            selectedBodyType = BodyShape.MALE;
-
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
-
-            newUserProfile = payload.profile;
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
@@ -114,7 +113,6 @@ namespace DCL.AuthenticationScreenFlow
             view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
             view.BodyTypeDropdownPanel.SetActive(false);
             UpdateBodyTypeUI();
-
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -283,7 +281,17 @@ namespace DCL.AuthenticationScreenFlow
         private void UpdateBodyTypeUI()
         {
             bool isMale = selectedBodyType.Equals(BodyShape.MALE);
-            view.BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
+            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
+            try
+            {
+                var localizedString = new LocalizedString("Authentication", isMale ? "BODY_TYPE_A" : "BODY_TYPE_B");
+                string result = localizedString.GetLocalizedString();
+                view.BodyTypeLabel.text = !string.IsNullOrEmpty(result) ? result : fallback;
+            }
+            catch
+            {
+                view.BodyTypeLabel.text = fallback;
+            }
 
             // Toggle man/woman icon in the dropdown button
             view.DropdownManIcon.SetActive(isMale);
