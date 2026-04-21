@@ -97,6 +97,8 @@ namespace Global.AppArgs
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "double-click-walk";
 
+        public const string PULSE_MULTIPLAYER = "pulse";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
