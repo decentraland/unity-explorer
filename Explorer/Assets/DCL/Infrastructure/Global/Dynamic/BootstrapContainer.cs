@@ -104,8 +104,10 @@ namespace Global.Dynamic
                 Environment = decentralandEnvironment
             };
 
+            UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: about to InitializeContainerAsync");
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: inside InitializeContainerAsync callback");
                 container.reportHandlingSettings = ProvideReportHandlingSettingsAsync(container.settings, applicationParametersParser);
 
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
@@ -120,12 +122,17 @@ namespace Global.Dynamic
                         UnityDiagnosticsCenter.Instance.SetWallet(container.IdentityCache.Identity.Address);
                 };
 
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: about to create WebRequestsContainer");
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
                 WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, ct);
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: WebRequestsContainer created");
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: about to CreateBootstrapperAsync");
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: Bootstrap created, about to CreateWeb3Dependencies");
                 container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController);
+                UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer: Web3Dependencies created");
 
                 void AddIdentityToSentryScope(Scope scope)
                 {

@@ -73,13 +73,19 @@ namespace DCL.PluginSystem
             where TContainer: DCLContainer<TSettings>
             where TSettings: IDCLPluginSettings, new()
         {
+            UnityEngine.Debug.Log($"[JM-DEBUG] InitializeContainerAsync: loading settings for {typeof(TContainer).Name}");
             (_, bool result) = await pluginSettingsContainer.InitializePluginAsync(container, ct);
+            UnityEngine.Debug.Log($"[JM-DEBUG] InitializeContainerAsync: settings loaded for {typeof(TContainer).Name}, result={result}");
 
             if (!result)
                 return (null, false);
 
             if (createDependencies != null)
+            {
+                UnityEngine.Debug.Log($"[JM-DEBUG] InitializeContainerAsync: running createDependencies for {typeof(TContainer).Name}");
                 await createDependencies(container);
+                UnityEngine.Debug.Log($"[JM-DEBUG] InitializeContainerAsync: createDependencies done for {typeof(TContainer).Name}");
+            }
 
             return (container, true);
         }
