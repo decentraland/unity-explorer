@@ -197,18 +197,8 @@ namespace Global.Dynamic
         {
             var anyFailure = false;
 
-            UnityEngine.Debug.Log($"[JM-DEBUG] Initializing {staticContainer.ECSWorldPlugins.Count} ECS plugins");
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            UnityEngine.Debug.Log($"[JM-DEBUG] ECS plugins done. Initializing {dynamicWorldContainer.GlobalPlugins.Count} global plugins SEQUENTIALLY");
-            foreach (var gp in dynamicWorldContainer.GlobalPlugins)
-            {
-                string name = gp.GetType().Name;
-                UnityEngine.Debug.Log($"[JM-DEBUG]   Initializing: {name}");
-                var result = await globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct);
-                OnPluginInitialized(result);
-                UnityEngine.Debug.Log($"[JM-DEBUG]   Done: {name}, success={result.success}");
-            }
-            UnityEngine.Debug.Log("[JM-DEBUG] All global plugins done");
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -224,7 +214,6 @@ namespace Global.Dynamic
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                FeatureFlagsConfiguration.Reset();
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }

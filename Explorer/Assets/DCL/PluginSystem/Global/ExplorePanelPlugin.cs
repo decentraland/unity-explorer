@@ -339,7 +339,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            UnityEngine.Debug.Log("[JM-DEBUG] ExplorePanelPlugin.InitializeAsync START");
             dclInput.Shortcuts.MainMenu.performed += OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed += OnInputShortcutsMapPerformedAsync;
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
@@ -392,9 +391,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource
             );
 
-            UnityEngine.Debug.Log("[JM-DEBUG] ExplorePanelPlugin: about to load ExplorePanelPrefab");
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
-            UnityEngine.Debug.Log("[JM-DEBUG] ExplorePanelPlugin: ExplorePanelPrefab loaded");
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
@@ -601,7 +598,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
+            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;

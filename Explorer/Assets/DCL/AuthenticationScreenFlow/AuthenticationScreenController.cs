@@ -133,14 +133,12 @@ namespace DCL.AuthenticationScreenFlow
 
         protected override void OnViewInstantiated()
         {
-            UnityEngine.Debug.Log("[JM-DEBUG] OnViewInstantiated START");
             base.OnViewInstantiated();
 
             audio = new AuthenticationScreenAudio(viewInstance, audioMixerVolumesController, backgroundMusic);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
-            UnityEngine.Debug.Log($"[JM-DEBUG] enableEmailOTP={enableEmailOTP}");
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
@@ -159,7 +157,6 @@ namespace DCL.AuthenticationScreenFlow
 
             if (enableEmailOTP)
             {
-                UnityEngine.Debug.Log("[JM-DEBUG] Adding OTP + LobbyForNewAccount states");
                 var otpVerificationState = new IdentityVerificationOTPAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator);
                 otpVerificationState.OTPVerified += (email, success) => OTPVerified?.Invoke(email, success);
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
@@ -170,9 +167,7 @@ namespace DCL.AuthenticationScreenFlow
                 );
             }
 
-            UnityEngine.Debug.Log("[JM-DEBUG] Entering InitAuthState");
             fsm.Enter<InitAuthState>();
-            UnityEngine.Debug.Log("[JM-DEBUG] OnViewInstantiated DONE");
         }
 
         /// <summary>
@@ -181,13 +176,12 @@ namespace DCL.AuthenticationScreenFlow
         /// </summary>
         protected override void OnBeforeViewShow()
         {
-            UnityEngine.Debug.Log("[JM-DEBUG] OnBeforeViewShow START");
             base.OnBeforeViewShow();
+            // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+            // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
-            UnityEngine.Debug.Log($"[JM-DEBUG] storedIdentity={(storedIdentity != null ? $"exists,expired={storedIdentity.IsExpired},exp={storedIdentity.Expiration},hoursLeft={(storedIdentity.Expiration - DateTime.UtcNow).TotalHours:F1}" : "null")}");
             if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
-                UnityEngine.Debug.Log("[JM-DEBUG] Going to TryAutoLogin");
                 CancelLoginProcess();
                 loginCancellationTokenSource = new CancellationTokenSource();
 
@@ -195,7 +189,6 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
             {
-                UnityEngine.Debug.Log("[JM-DEBUG] Going to LoginSelectionAuthState");
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }
         }
@@ -204,25 +197,20 @@ namespace DCL.AuthenticationScreenFlow
         {
             try
             {
-                UnityEngine.Debug.Log("[JM-DEBUG] TryAutoLoginAsync START");
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
-                UnityEngine.Debug.Log($"[JM-DEBUG] TryAutoLoginAsync result={autoLoginSuccess}");
 
                 if (autoLoginSuccess)
                     fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
                 else
                 {
-                    UnityEngine.Debug.Log("[JM-DEBUG] Auto-login failed, going to LoginSelection");
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
                 }
             }
             catch (OperationCanceledException)
-            {
-                UnityEngine.Debug.Log("[JM-DEBUG] TryAutoLogin cancelled");
+            { /* Expected on cancellation */
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log($"[JM-DEBUG] TryAutoLogin exception: {e.Message}");
                 ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
                 fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
             }

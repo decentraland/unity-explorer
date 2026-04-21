@@ -115,13 +115,9 @@ namespace DCL.UserInAppInitializationFlow
                                                 !appArgs.HasFlagWithValueTrue(AppArgsFlags.SKIP_AUTH_SCREEN) &&
                                                 !appArgs.HasFlag(AppArgsFlags.AUTOPILOT);
 
-                UnityEngine.Debug.Log($"[JM-DEBUG] shouldShowAuth initial={shouldShowAuthentication}, ShowAuth={parameters.ShowAuthentication}, identity={(identityCache.Identity != null ? "exists,expired=" + identityCache.Identity.IsExpired + ",exp=" + identityCache.Identity.Expiration : "null")}");
-
                 // Force show authentication if there's no valid identity in the cache
                 if (!shouldShowAuthentication)
                     shouldShowAuthentication = identityCache.Identity == null || identityCache.Identity.IsExpired;
-
-                UnityEngine.Debug.Log($"[JM-DEBUG] shouldShowAuth after identity check={shouldShowAuthentication}");
 
                 // Only a human user can authenticate currently.
                 if (shouldShowAuthentication && appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
@@ -129,7 +125,6 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (shouldShowAuthentication)
                 {
-                    UnityEngine.Debug.Log($"[JM-DEBUG] Entering auth screen, LoadSource={parameters.LoadSource}");
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
 
                     switch (parameters.LoadSource)
@@ -242,17 +237,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
-            UnityEngine.Debug.Log("[JM-DEBUG] ShowAuthenticationScreenAsync START");
-            try
-            {
-                await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
-                UnityEngine.Debug.Log("[JM-DEBUG] ShowAuthenticationScreenAsync DONE");
-            }
-            catch (System.Exception e)
-            {
-                UnityEngine.Debug.Log($"[JM-DEBUG] ShowAuthenticationScreenAsync EXCEPTION: {e}");
-                throw;
-            }
+            await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
 
         private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
