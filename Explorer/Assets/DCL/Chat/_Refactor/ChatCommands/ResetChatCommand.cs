@@ -2,13 +2,12 @@ using DCL.Chat.ChatServices;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Translation.Service;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class ResetChatCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IChatHistory chatHistory;
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CurrentChannelService currentChannelService;
@@ -20,7 +19,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ITranslationCache translationCache;
 
         public ResetChatCommand(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
             CurrentChannelService currentChannelService,
@@ -55,7 +54,7 @@ namespace DCL.Chat.ChatCommands
             translationCache.Clear();
             chatHistoryStorage?.UnloadAllFiles();
 
-            eventBus.Publish(new ChatEvents.ChatResetEvent());
+            eventBus.RaiseChatResetEvent();
         }
     }
 }

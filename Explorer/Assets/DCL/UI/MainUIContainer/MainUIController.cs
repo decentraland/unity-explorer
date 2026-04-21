@@ -31,7 +31,7 @@ namespace DCL.UI.MainUI
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.PERSISTENT;
 
         public MainUIController(
             ViewFactoryMethod viewFactory,

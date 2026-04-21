@@ -81,6 +81,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             // Instead of creating a new collection with VisualElements keep the index in the tabIndex
 
             int i = 0;
+
             for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
             {
                 var childEntityId = node.EntityId;
@@ -89,7 +90,14 @@ namespace DCL.SDKComponents.SceneUI.Components
                 {
                     var childTransform = world.Get<UITransformComponent>(child);
 
-                    childTransform.Transform.tabIndex = childTransform.ZIndex ?? i;
+                    // Use the explicit ZIndex only when it's a non-zero value.
+                    // ZIndex=0 is treated the same as ZIndex=null (positional ordering)
+                    // because the SDK always sends zIndex:0 in its defaults even when
+                    // the user didn't specify one, making it indistinguishable from "not set".
+                    // This matches CSS semantics where z-index:0 is the default stacking order.
+                    childTransform.Transform.tabIndex = childTransform.ZIndex is not null and not 0
+                        ? childTransform.ZIndex.Value
+                        : i;
                 }
 
                 i++;

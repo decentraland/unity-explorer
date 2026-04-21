@@ -63,13 +63,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                //TODO (JUANI) : Newly instantiated asset will remain in the bridge
-                cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
                 entityCollidersSceneCache.Remove(result.Asset);
 
-                // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
+                // Raw GLTFs use NoCache so the underlying data is not shared — dispose directly
+                // instead of returning to the cache (which would later double-dispose)
                 if (result.Asset.AssetData is GLTFData)
                     result.Asset.Dispose();
+                else
+                    cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
             }
 
             component.RootGameObject = null;

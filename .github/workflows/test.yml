@@ -109,7 +109,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Explorer/Library
-          key: Library-Explorer-Ubuntu
+          key: Library-Explorer-Ubuntu-${{ hashFiles('Explorer/Packages/packages-lock.json', 'Explorer/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Explorer-Ubuntu-
 
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
@@ -186,7 +187,7 @@ jobs:
           testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results

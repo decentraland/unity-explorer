@@ -12,12 +12,18 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
-using DCL.WebRequests;
+using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.Systems;
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
+using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using DCL.FeatureFlags;
 using Utility;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
@@ -39,16 +45,21 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
+        private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatTrackManager? trackManager;
+        private MicrophoneTrackPublisher? microphonePublisher;
+        private RemoteTrackListener? remoteListener;
         private VoiceChatRoomManager? roomManager;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private NearbyVoiceChatManager? nearbyVoiceChatManager;
+        private NearbyVoiceChatStateModel? nearbyStateModel;
+        private VoiceChatConfiguration voiceChatConfiguration;
 
         public VoiceChatPlugin(
             IRoomHub roomHub,
@@ -89,7 +100,14 @@ namespace DCL.PluginSystem.Global
             RustAudioClient.DeInit();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
+            {
+                NearbyAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, nearbyAudioSources);
+                NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
+            }
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
@@ -101,7 +119,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPluginSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
 
             VoiceChatPluginSettings pluginSettings = voiceChatPluginSettingsAsset.Value;
-            VoiceChatConfiguration voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
+            voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
             pluginScope.Add(voiceChatHandler);
@@ -109,10 +127,13 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
 
-            trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler);
-            pluginScope.Add(trackManager);
+            microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, voiceChatHandler, VoiceChatType.COMMUNITY);
+            remoteListener = new RemoteTrackListener(
+                roomHub.VoiceChatRoom().Room(),
+                voiceChatConfiguration,
+                new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
 
-            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
+            roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
             pluginScope.Add(roomManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
@@ -121,7 +142,6 @@ namespace DCL.PluginSystem.Global
                 entityParticipantTable,
                 world,
                 playerEntity);
-
             pluginScope.Add(nametagsHandler);
 
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
@@ -133,8 +153,24 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
-            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, trackManager);
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, remoteListener);
             pluginScope.Add(voiceChatDebugContainer);
+
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
+            {
+                IRoom islandRoom = roomHub.IslandRoom();
+
+                nearbyStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+                pluginScope.Add(nearbyStateModel);
+
+                voiceChatHandler.SetNearbyStateModel(nearbyStateModel);
+
+                nearbyVoiceChatManager = new NearbyVoiceChatManager(
+                    islandRoom, voiceChatConfiguration,
+                    nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
+                    nearbyStateModel, voiceChatHandler);
+                pluginScope.Add(nearbyVoiceChatManager);
+            }
         }
 
         [Serializable]

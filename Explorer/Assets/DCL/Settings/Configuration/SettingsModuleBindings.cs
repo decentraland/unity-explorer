@@ -50,7 +50,6 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
             IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
@@ -62,14 +61,9 @@ namespace DCL.Settings.Configuration
         where TConfig : SettingsModuleViewConfiguration
         where TControllerType : Enum
     {
-        [field: SerializeField]
-        public ViewRef View { get; private set; }
-
-        [field: SerializeField]
-        public TConfig Config { get; private set; }
-
-        [field: SerializeField]
-        public TControllerType Feature { get; private set; }
+        [field: SerializeField] public ViewRef View { get; private set; }
+        [field: SerializeField] public TConfig Config { get; private set; }
+        [field: SerializeField] public TControllerType Feature { get; private set; }
 
         [Serializable]
         public class ViewRef : ComponentReference<TView>

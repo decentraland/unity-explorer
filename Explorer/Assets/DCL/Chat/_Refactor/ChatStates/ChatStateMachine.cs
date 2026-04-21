@@ -9,7 +9,7 @@ namespace DCL.Chat.ChatStates
     {
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionHandler chatClickDetectionHandler;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly MVCStateMachine<ChatState> fsm;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatPanelPresenter chatPanelPresenter;
@@ -19,7 +19,7 @@ namespace DCL.Chat.ChatStates
         public bool IsHidden => fsm.CurrentState is HiddenChatState;
 
         public ChatStateMachine(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             ChatUIMediator mediator,
             ChatInputBlockingService inputBlocker,
             ChatClickDetectionHandler chatClickDetectionHandler,
@@ -66,12 +66,8 @@ namespace DCL.Chat.ChatStates
 
             scope.Dispose();
         }
-
         private void PropagateStateChange(ChatState currentState) =>
-            eventBus.Publish(new ChatEvents.ChatStateChangedEvent
-            {
-                CurrentState = currentState,
-            });
+            eventBus.RaiseChatStateChangedEvent(fsm.CurrentState);
 
         public void OnViewShow()
         {
@@ -125,10 +121,7 @@ namespace DCL.Chat.ChatStates
             if (focus)
                 fsm.Enter<FocusedChatState>();
             else
-            {
-                // fsm.Enter<MinimizedChatState>();
                 fsm.TryPopState();
-            }
         }
 
         public void SetToggleState()
@@ -144,10 +137,6 @@ namespace DCL.Chat.ChatStates
             fsm.TryPopState();
         }
 
-        /// <summary>
-        /// NOTE: called from the SharedSpaceManager
-        /// </summary>
-        /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
