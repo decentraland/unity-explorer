@@ -60,7 +60,7 @@ namespace DCL.Quality.Runtime
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
                 SceneShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowsQualityLevel))),
                 ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.ShadowDistance),
-                PlayCurrentSceneStreamsOnly = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, basePresetData.PlayCurrentSceneStreamsOnly ? 1 : 0) == 1
+                PlayCurrentSceneStreamsOnly = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, basePresetData.PlayCurrentSceneStreamsOnly ? 1 : 0) == 1,
                 SpringBoneSimulation = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SPRING_BONE_SIMULATION, basePresetData.SpringBoneSimulation ? 1 : 0) == 1,
             };
         }

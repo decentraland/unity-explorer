@@ -41,7 +41,7 @@ namespace DCL.Settings.Configuration
             FULLSCREEN_FEATURE,
             PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE,
             SUN_LENS_FLARE_FEATURE,
-            DOUBLE_TAP_TO_MOVE
+            DOUBLE_TAP_TO_MOVE,
             SPRING_BONE_SIMULATION_FEATURE,
             // add other features...
         }
