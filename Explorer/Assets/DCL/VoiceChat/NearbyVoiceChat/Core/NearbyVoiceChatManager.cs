@@ -217,7 +217,7 @@ namespace DCL.VoiceChat
                     return;
                 }
 
-                stateModel.StartSpeaking();
+                stateModel.StartSpeaking(stateModel.LastSpeakingOrigin);
                 ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Nearby mic resumed — application regained focus");
             }
         }
@@ -338,7 +338,6 @@ namespace DCL.VoiceChat
             if (disposed) return;
 
             remoteListener.RemoveStreamsByIdentity(userId);
-
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
         }
 
@@ -351,7 +350,6 @@ namespace DCL.VoiceChat
                 return;
 
             remoteListener.AddStreamsForIdentityAsync(userId).Forget();
-
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Restoring nearby audio for unblocked user {userId}");
         }
 
