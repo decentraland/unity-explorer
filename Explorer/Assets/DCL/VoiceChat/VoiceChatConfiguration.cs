@@ -45,9 +45,6 @@ namespace DCL.VoiceChat
         [Tooltip("Specify group where remote sources should put its output")]
         public AudioMixerGroup ChatAudioMixerGroup;
 
-        [Tooltip("Specify group where nearby voice chat sources should put its output")]
-        public AudioMixerGroup NearbyChatAudioMixerGroup;
-
         [Header("NEARBY")]
         public AnimationCurve NearbyCustomRolloffCurve = new (
             new Keyframe(0f, 1f, 0f, 0f),

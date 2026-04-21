@@ -1,7 +1,7 @@
 using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat
 {
     /// <summary>
     /// Marks a remote entity as having an associated nearby audio source.

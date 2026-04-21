@@ -25,6 +25,7 @@ namespace DCL.Minimap
             { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• Passports can not be opened" },
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
             { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Skybox time controls are blocked"},
+            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby voice"},
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
@@ -32,20 +33,20 @@ namespace DCL.Minimap
             this.restrictionsView = restrictionsView;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
 
-            restrictionsView.OnPointerEnterEvent += OnMouseEnter;
-            restrictionsView.OnPointerExitEvent += OnMouseExit;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
-
             foreach (SceneRestrictions restriction in Enum.GetValues(typeof(SceneRestrictions)))
             {
                 restrictionsRegistry[restriction] = 0;
 
                 GameObject restrictionsObject = Object.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
-                restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
                 restrictionsObject.SetActive(false);
+                restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
                 restrictionsObject.name = restriction.ToString();
                 restrictionsGameObjects[restriction] = restrictionsObject;
             }
+
+            restrictionsView.OnPointerEnterEvent += OnMouseEnter;
+            restrictionsView.OnPointerExitEvent += OnMouseExit;
+            sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()

@@ -114,9 +114,16 @@ namespace DCL.Ipfs
             [JsonProperty]
             private string portableExperiences;
 
+            [SerializeField]
+            [JsonProperty]
+            private string nearbyVoiceChat;
+
             public bool PortableExperiencesEnabled => string.IsNullOrEmpty(portableExperiences) ||
                                                       string.Equals(portableExperiences, PORTABLE_EXPERIENCES_ENABLED, StringComparison.OrdinalIgnoreCase) ||
                                                       string.Equals(portableExperiences, PORTABLE_EXPERIENCES_HIDE_UI, StringComparison.OrdinalIgnoreCase);
+
+            public bool NearbyVoiceChatEnabled => string.IsNullOrEmpty(nearbyVoiceChat) ||
+                                                   string.Equals(nearbyVoiceChat, "enabled", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

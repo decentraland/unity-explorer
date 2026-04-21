@@ -23,6 +23,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
+using DCL.VoiceChat.UI;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private ControlsPanelController? controlsPanelController;
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
+        private NearbyVoicePanelController? nearbyVoicePanelController;
 
         private CancellationTokenSource controlsShortcutCts;
 
@@ -140,6 +142,7 @@ namespace DCL.PluginSystem.Global
             controlsPanelController?.Dispose();
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
+            nearbyVoicePanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -161,6 +164,7 @@ namespace DCL.PluginSystem.Global
             skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -187,6 +191,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
+            mvcManager.RegisterController(nearbyVoicePanelController);
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
