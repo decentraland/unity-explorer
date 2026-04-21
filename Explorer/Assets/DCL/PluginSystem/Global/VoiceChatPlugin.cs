@@ -208,7 +208,7 @@ namespace DCL.PluginSystem.Global
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
-                await nearbyMuteService!.LoadAsync(ct);
+                nearbyMuteService!.LoadAsync(ct).Forget();
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,

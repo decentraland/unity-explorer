@@ -105,6 +105,7 @@ namespace DCL.UI
         private readonly NearbyMuteService? nearbyMuteService;
 
         private CancellationTokenSource cancellationTokenSource = new();
+        private CancellationTokenSource muteCancellationTokenSource = new();
         private UniTaskCompletionSource closeContextMenuTask = new ();
         private Profile.CompactInfo targetProfile;
 
@@ -416,20 +417,25 @@ namespace DCL.UI
 
         private void OnMuteNearbyClicked(string userId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            MuteNearbyAsync(userId, true).Forget();
+            muteCancellationTokenSource = muteCancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, true, muteCancellationTokenSource.Token).Forget();
         }
 
         private void OnUnmuteNearbyClicked(string userId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            MuteNearbyAsync(userId, false).Forget();
+            muteCancellationTokenSource = muteCancellationTokenSource.SafeRestart();
+            MuteNearbyAsync(userId, false, muteCancellationTokenSource.Token).Forget();
         }
 
-        private async UniTaskVoid MuteNearbyAsync(string userId, bool muted)
+        private async UniTaskVoid MuteNearbyAsync(string userId, bool muted, CancellationToken ct)
         {
-            await nearbyMuteService!.SetMutedAsync(userId, muted, cancellationTokenSource.Token);
-            closeContextMenuTask.TrySetResult();
+            try
+            {
+                await nearbyMuteService!.SetMutedAsync(userId, muted, ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.VOICE_CHAT); }
+            finally { closeContextMenuTask.TrySetResult(); }
         }
 
         private void OnBlockUserClicked(string userId)

@@ -88,6 +88,7 @@ namespace DCL.VoiceChat
 
         internal void SetMuteForIdentity(string identity, bool mute)
         {
+            // Invariant: at most 1 stream per identity. If this ever changes, replace `return` with `continue`.
             foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> kvp in streams)
                 if (kvp.Key.identity == identity)
                 {
@@ -98,6 +99,7 @@ namespace DCL.VoiceChat
 
         internal void RemoveStreamsByIdentity(string identity)
         {
+            // Invariant: at most 1 stream per identity. If this ever changes, replace `return` with `continue`.
             foreach (StreamKey key in streams.Keys)
                 if (key.identity == identity)
                 {

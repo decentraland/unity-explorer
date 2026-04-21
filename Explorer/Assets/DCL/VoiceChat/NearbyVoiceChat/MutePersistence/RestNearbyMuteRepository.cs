@@ -26,12 +26,8 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
             this.urlsSource = urlsSource;
         }
 
-        public async UniTask<List<string>> GetAllMutedUsersAsync(CancellationToken ct)
-        {
-            List<string> allMuted = await PaginateMutesAsync(FetchPageAsync, ct);
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Loaded {allMuted.Count} muted users from API");
-            return allMuted;
-        }
+        public async UniTask<List<string>> GetAllMutedUsersAsync(CancellationToken ct) =>
+            await PaginateMutesAsync(FetchPageAsync, ct);
 
         private UniTask<GetMutesResponse> FetchPageAsync(int offset, CancellationToken ct) =>
             webRequestController

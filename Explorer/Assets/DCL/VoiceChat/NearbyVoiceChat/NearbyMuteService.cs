@@ -54,7 +54,7 @@ namespace DCL.VoiceChat.Nearby
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to load muted users: {ex.Message}");
+                ReportHub.LogException(new Exception($"{TAG} Failed to load muted users", ex), ReportCategory.VOICE_CHAT);
             }
         }
 
@@ -75,10 +75,10 @@ namespace DCL.VoiceChat.Nearby
                     else
                         await repository.UnmuteUserAsync(walletId, ct);
                 }
-                catch (OperationCanceledException) { return; }
+                catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally: {ex.Message}");
+                    ReportHub.LogException(new Exception($"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally", ex), ReportCategory.VOICE_CHAT);
                 }
             }
         }
