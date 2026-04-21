@@ -163,26 +163,16 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
-            // 1. Pull transforms on main thread — only active slots
-            for (int slot = 0; slot < slotCapacity; slot++)
+            JobHandle pullHandle = new PullSpringBoneTransformsJob
             {
-                if (!slotActive[slot]) continue;
+                Transforms = transforms,
+                SlotActive = slotActive,
+                MaxJointsPerSpring = MAX_JOINTS_PER_SPRING,
+            }.Schedule(taa);
 
-                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
-                int jointCount = slotJointCounts[slot];
-
-                for (int j = 0; j < jointCount; j++)
-                {
-                    int idx = baseIndex + j;
-                    transforms[idx] = SpringBoneTransformData.FromTransform(managedTransforms[idx]);
-                }
-            }
-
-            // 2. Flip tail buffers: prev ← current ← next ← prev
             FlipBuffers();
 
-            // 3. Run simulation (still as a job for Burst)
-            new SpringBoneSimulationJob
+            JobHandle simHandle = new SpringBoneSimulationJob
             {
                 SlotJointCounts = slotJointCounts,
                 SlotActive = slotActive,
@@ -193,22 +183,16 @@ namespace DCL.SpringBones
                 CurrentTails = currentTails,
                 NextTails = nextTails,
                 DeltaTime = deltaTime,
-            }.Schedule(slotCapacity, 1).Complete();
+            }.Schedule(slotCapacity, 1, pullHandle);
 
-            // 4. Push rotations back on main thread — only active slots
-            for (int slot = 0; slot < slotCapacity; slot++)
+            JobHandle pushHandle = new PushSpringBoneTransformsJob
             {
-                if (!slotActive[slot]) continue;
+                Transforms = transforms,
+                SlotActive = slotActive,
+                MaxJointsPerSpring = MAX_JOINTS_PER_SPRING,
+            }.Schedule(taa, simHandle);
 
-                int baseIndex = slot * MAX_JOINTS_PER_SPRING;
-                int jointCount = slotJointCounts[slot];
-
-                for (int j = 0; j < jointCount; j++)
-                {
-                    int idx = baseIndex + j;
-                    managedTransforms[idx].rotation = transforms[idx].Rotation;
-                }
-            }
+            pushHandle.Complete();
         }
 
         void FlipBuffers()
@@ -275,28 +259,13 @@ namespace DCL.SpringBones
             slotWasActive = newSlotWasActive;
             slotCapacity = newCapacity;
 
-            // Resize managed transforms array (was missing — caused IndexOutOfRangeException)
             var newManagedTransforms = new Transform[newTotalJoints];
             Array.Copy(managedTransforms, newManagedTransforms, oldTotalJoints);
             for (int i = oldTotalJoints; i < newTotalJoints; i++)
                 newManagedTransforms[i] = dummyTransform;
             managedTransforms = newManagedTransforms;
 
-            // Rebuild TAA
-            var taaTransforms = new Transform[newTotalJoints];
-
-            for (int slot = 0; slot < newCapacity; slot++)
-            {
-                int baseIdx = slot * MAX_JOINTS_PER_SPRING;
-
-                // We can't recover the original Transform references from the old TAA (it's disposed).
-                // For existing slots, the registration system will re-set TAA entries on next re-registration.
-                // For now, fill everything with dummies. Active slots will be corrected next frame.
-                for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
-                    taaTransforms[baseIdx + j] = dummyTransform;
-            }
-
-            taa = new TransformAccessArray(taaTransforms);
+            taa = new TransformAccessArray(newManagedTransforms);
         }
 
         public void Dispose()

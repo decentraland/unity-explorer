@@ -3,8 +3,6 @@ using DCL.Optimization.Pools;
 using GLTFast;
 using System;
 using System.Collections.Generic;
-using UniGLTF.SpringBoneJobs.Blittables;
-using UniGLTF.SpringBoneJobs.InputPorts;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -128,7 +126,6 @@ namespace DCL.AvatarRendering.Loading.Assets
                     rootConfig.Drag,
                     rootConfig.GravityDir,
                     rootConfig.GravityPower,
-                    rootConfig.HitRadius,
                     child.localRotation));
 
                 CollectSpringBoneChain(child, rootConfig, boneIndexLookup, result);
@@ -158,7 +155,6 @@ namespace DCL.AvatarRendering.Loading.Assets
                     jointAuthoring.Drag,
                     jointAuthoring.GravityDir,
                     jointAuthoring.GravityPower,
-                    jointAuthoring.HitRadius,
                     bone.localRotation));
 
                 // Collect untagged children that inherit this root's spring bone parameters

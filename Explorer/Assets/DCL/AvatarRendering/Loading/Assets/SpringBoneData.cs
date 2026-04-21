@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Loading.Assets
 {
@@ -11,7 +11,6 @@ namespace DCL.AvatarRendering.Loading.Assets
         public readonly float Drag;
         public readonly Vector3 GravityDir;
         public readonly float GravityPower;
-        public readonly float HitRadius;
         public readonly Quaternion InitialLocalRotation;
 
         public SpringBoneData(Transform managedTransform,
@@ -21,7 +20,6 @@ namespace DCL.AvatarRendering.Loading.Assets
             float drag,
             Vector3 gravityDir,
             float gravityPower,
-            float hitRadius,
             Quaternion initialLocalRotation)
         {
             ManagedTransform = managedTransform;
@@ -31,7 +29,6 @@ namespace DCL.AvatarRendering.Loading.Assets
             Drag = drag;
             GravityDir = gravityDir;
             GravityPower = gravityPower;
-            HitRadius = hitRadius;
             InitialLocalRotation = initialLocalRotation;
         }
     }
