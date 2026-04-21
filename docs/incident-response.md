@@ -53,7 +53,7 @@ Tag the right team when reporting or escalating an incident.
 
 | Area | Examples | Handle |
 | --- | --- | --- |
-| **Explorer / Unity client, explorer launcher, aand-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
+| **Explorer / Unity client, launcher, aang-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
 | **Marketplace, dApps, website, backend services** | Marketplace down, credits not updating, wallet connection, API failures, asset bundle pipeline, catalysts | @core-support |
 | **Creator Tools** | Creator Hub bugs, SDK issues, scene deployments | @creatorstoolteam |
 | **QA** | Any report, verification, or severity classification | @qa-team |
@@ -68,7 +68,7 @@ Tag the right team when reporting or escalating an incident.
 
 | Level | GitHub label | When to use | Examples |
 | --- | --- | --- | --- |
-| **SEV-1** | `0-critical` | Core platform broken for most users. No workaround. | Login fails for everyone; client won't launch; teleport completely broken; Marketplace inaccessible |
+| **SEV-1** | `0-critical` | Core platform broken for most users. No workaround. | Login fails for everyone; client won't launch; teleport completely broken; Marketplace inaccessible; uncontrolled retry loop causing excessive network/cost for all users |
 | **SEV-2** | `1-high` | A [primary category feature](issue-triage-categories.md) is broken for some users. Platform still partially works. | Other users don't see your avatar; voice chat down; emotes not equipping; emote wheel not working; Marketplace credits not updating |
 | **SEV-3** | `2-medium` | A [secondary category feature](issue-triage-categories.md) is degraded. Main flows still work. | Weekly goals tooltip wrong; camera shortcuts broken; backpack category filter off |
 | **SEV-4** | `3-low` | Minor issue, low user impact. | Wearable panel misaligned; tooltip copy error |
