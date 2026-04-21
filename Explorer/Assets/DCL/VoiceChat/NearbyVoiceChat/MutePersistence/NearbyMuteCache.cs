@@ -6,6 +6,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
     public class NearbyMuteCache : INearbyMuteCache
     {
         private readonly HashSet<string> mutedWalletIds = new (StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> sessionUnmuted = new (StringComparer.OrdinalIgnoreCase); // Addresses the user explicitly unmuted in this session.
 
         public event Action<string, bool>? MuteStateChanged;
 
@@ -14,20 +15,34 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
 
         public void SetMuted(string walletAddress, bool muted)
         {
-            bool changed = muted
-                ? mutedWalletIds.Add(walletAddress)
-                : mutedWalletIds.Remove(walletAddress);
+            if (muted)
+            {
+                if (mutedWalletIds.Add(walletAddress))
+                    MuteStateChanged?.Invoke(walletAddress, true);
 
-            if (changed)
-                MuteStateChanged?.Invoke(walletAddress, muted);
+                sessionUnmuted.Remove(walletAddress);
+            }
+            else
+            {
+                if (mutedWalletIds.Remove(walletAddress))
+                    MuteStateChanged?.Invoke(walletAddress, false);
+
+                // Record intent even if not currently in the cache — Merge must honour it.
+                sessionUnmuted.Add(walletAddress);
+            }
         }
 
-        public void Reset(IEnumerable<string> mutedAddresses)
+        public void Merge(IEnumerable<string> mutedAddresses)
         {
-            mutedWalletIds.Clear();
-
+            // Client is source of truth: server snapshot only adds missing entries.
+            // Skip addresses the user explicitly unmuted this session, otherwise a stale snapshot would re-mute them.
             foreach (string address in mutedAddresses)
-                mutedWalletIds.Add(address);
+            {
+                if (sessionUnmuted.Contains(address)) continue;
+
+                if (mutedWalletIds.Add(address))
+                    MuteStateChanged?.Invoke(address, true);
+            }
         }
     }
 }

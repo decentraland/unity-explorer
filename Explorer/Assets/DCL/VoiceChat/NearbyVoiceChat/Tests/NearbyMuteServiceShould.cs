@@ -37,7 +37,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             await service.LoadAsync(CancellationToken.None);
 
-            cache.Received(1).Reset(mutedList);
+            cache.Received(1).Merge(mutedList);
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             await service.LoadAsync(CancellationToken.None);
 
-            cache.DidNotReceive().Reset(Arg.Any<IEnumerable<string>>());
+            cache.DidNotReceive().Merge(Arg.Any<IEnumerable<string>>());
         }
 
         [Test]
@@ -160,7 +160,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             await service.LoadAsync(CancellationToken.None);
 
-            cache.DidNotReceive().Reset(Arg.Any<IEnumerable<string>>());
+            cache.DidNotReceive().Merge(Arg.Any<IEnumerable<string>>());
         }
 
         [Test]

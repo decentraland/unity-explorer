@@ -48,7 +48,7 @@ namespace DCL.VoiceChat.Nearby
             try
             {
                 var mutedUsers = await repository.GetAllMutedUsersAsync(ct);
-                cache.Reset(mutedUsers);
+                cache.Merge(mutedUsers);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Loaded {mutedUsers.Count} muted users");
             }
             catch (OperationCanceledException) { }

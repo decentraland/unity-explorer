@@ -11,6 +11,6 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
 
         void SetMuted(string walletAddress, bool muted);
 
-        void Reset(IEnumerable<string> mutedAddresses);
+        void Merge(IEnumerable<string> mutedAddresses);
     }
 }

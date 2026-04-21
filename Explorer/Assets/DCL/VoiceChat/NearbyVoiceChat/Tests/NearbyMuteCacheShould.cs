@@ -84,15 +84,87 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void ReplaceAllEntriesOnReset()
+        public void AddServerEntriesOnMerge()
         {
-            cache.SetMuted("0xOLD", true);
+            cache.Merge(new[] { "0xNEW1", "0xNEW2" });
 
-            cache.Reset(new[] { "0xNEW1", "0xNEW2" });
-
-            Assert.That(cache.IsMuted("0xOLD"), Is.False);
             Assert.That(cache.IsMuted("0xNEW1"), Is.True);
             Assert.That(cache.IsMuted("0xNEW2"), Is.True);
+        }
+
+        [Test]
+        public void PreserveLocalMutesOnMerge()
+        {
+            cache.SetMuted("0xLOCAL", true);
+            receivedEvents.Clear();
+
+            cache.Merge(new[] { "0xSERVER" });
+
+            Assert.That(cache.IsMuted("0xLOCAL"), Is.True);
+            Assert.That(cache.IsMuted("0xSERVER"), Is.True);
+        }
+
+        [Test]
+        public void FireMutedEventsOnlyForNewEntriesOnMerge()
+        {
+            cache.SetMuted("0xLOCAL", true);
+            receivedEvents.Clear();
+
+            cache.Merge(new[] { "0xLOCAL", "0xSERVER" });
+
+            Assert.That(receivedEvents, Is.EquivalentTo(new[]
+            {
+                ("0xSERVER", true),
+            }));
+        }
+
+        [Test]
+        public void NotFireEventsWhenAllServerEntriesAlreadyMutedLocally()
+        {
+            cache.SetMuted("0xA", true);
+            cache.SetMuted("0xB", true);
+            receivedEvents.Clear();
+
+            cache.Merge(new[] { "0xA", "0xB" });
+
+            Assert.That(receivedEvents, Is.Empty);
+        }
+
+        [Test]
+        public void NotReMuteAfterLocalUnmuteOnMerge()
+        {
+            // Edge case: user unmutes X before LoadAsync returns, server snapshot still has X.
+            cache.SetMuted("0xX", false);
+
+            cache.Merge(new[] { "0xX" });
+
+            Assert.That(cache.IsMuted("0xX"), Is.False);
+        }
+
+        [Test]
+        public void NotFireEventForLocallyUnmutedAddressOnMerge()
+        {
+            cache.SetMuted("0xX", false);
+            receivedEvents.Clear();
+
+            cache.Merge(new[] { "0xX" });
+
+            Assert.That(receivedEvents, Is.Empty);
+        }
+
+        [Test]
+        public void ReMuteAfterUnmuteThenReMuteBeforeMerge()
+        {
+            // User flips the decision: unmute, then mute again, before LoadAsync returns.
+            cache.SetMuted("0xX", false);
+            cache.SetMuted("0xX", true);
+            receivedEvents.Clear();
+
+            cache.Merge(new[] { "0xX" });
+
+            // Already muted locally after the re-mute — Merge is a no-op for this address.
+            Assert.That(cache.IsMuted("0xX"), Is.True);
+            Assert.That(receivedEvents, Is.Empty);
         }
 
         [Test]
