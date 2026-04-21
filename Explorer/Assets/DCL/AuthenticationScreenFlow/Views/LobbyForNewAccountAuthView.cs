@@ -23,11 +23,29 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: Space]
         [field: SerializeField]
-        public Button PrevRandomButton { get; private set; } = null!;
-        [field: SerializeField]
-        public Button NextRandomButton { get; private set; } = null!;
-        [field: SerializeField]
         public Button RandomizeButton { get; private set; } = null!;
+
+        [field: Header("Body Type Selector")]
+        [field: SerializeField]
+        public Button BodyTypeDropdownButton { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject BodyTypeDropdownPanel { get; private set; } = null!;
+        [field: SerializeField]
+        public Button BodyTypeOptionA { get; private set; } = null!;
+        [field: SerializeField]
+        public Button BodyTypeOptionB { get; private set; } = null!;
+        [field: SerializeField]
+        public TMPro.TMP_Text BodyTypeLabel { get; private set; } = null!;
+        [field: SerializeField]
+        public RectTransform ChevronIcon { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject DropdownManIcon { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject DropdownWomanIcon { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject CheckmarkIconA { get; private set; } = null!;
+        [field: SerializeField]
+        public GameObject CheckmarkIconB { get; private set; } = null!;
 
         [field: Space]
         [field: SerializeField]

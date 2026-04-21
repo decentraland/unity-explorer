@@ -39,12 +39,10 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private readonly List<Avatar> avatarHistory = new ();
-
         private Dictionary<string, List<URN>>? maleWearablesByCategory;
         private Dictionary<string, List<URN>>? femaleWearablesByCategory;
 
-        private int currentAvatarIndex = -1;
+        private BodyShape selectedBodyType = BodyShape.MALE;
 
         private Profile newUserProfile;
         private string userEmail;
@@ -92,8 +90,7 @@ namespace DCL.AuthenticationScreenFlow
 
             InitializeAvatarAsync().Forget();
 
-            view.PrevRandomButton.interactable = false;
-            view.NextRandomButton.interactable = false;
+            selectedBodyType = BodyShape.MALE;
 
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
@@ -110,8 +107,14 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.AddListener(OnBackButtonClicked);
 
             view.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
-            view.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
-            view.NextRandomButton.onClick.AddListener(NextRandomAvatar);
+
+            // Body type selector
+            view.BodyTypeDropdownButton.onClick.AddListener(ToggleBodyTypeDropdown);
+            view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
+            view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
+            view.BodyTypeDropdownPanel.SetActive(false);
+            UpdateBodyTypeUI();
+
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -129,7 +132,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             characterPreviewController.OnHide();
 
-            avatarHistory.Clear();
             maleWearablesByCategory = null;
             femaleWearablesByCategory = null;
 
@@ -140,8 +142,9 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.RemoveAllListeners();
 
             view.RandomizeButton.onClick.RemoveAllListeners();
-            view.PrevRandomButton.onClick.RemoveAllListeners();
-            view.NextRandomButton.onClick.RemoveAllListeners();
+            view.BodyTypeDropdownButton.onClick.RemoveAllListeners();
+            view.BodyTypeOptionA.onClick.RemoveAllListeners();
+            view.BodyTypeOptionB.onClick.RemoveAllListeners();
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.onValueChanged.RemoveAllListeners();
@@ -171,9 +174,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 if (loadedWearables != null)
                     PopulateWearablesCatalogs(loadedWearables);
-                UpdateCharacterPreview(RandomizeAvatar());
-                UpdateAvatarNavigationButtons();
-                InitializeAvatarHistory(newUserProfile.Avatar);
+                UpdateCharacterPreview(CreateRandomAvatar());
             }
             catch (OperationCanceledException)
             { /* Expected on cancellation */
@@ -242,31 +243,10 @@ namespace DCL.AuthenticationScreenFlow
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalogs populated: male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
         }
 
-        private void InitializeAvatarHistory(Avatar initialAvatar)
-        {
-            avatarHistory.Add(initialAvatar);
-            currentAvatarIndex = 0;
-            UpdateAvatarNavigationButtons();
-        }
-
         private void OnBackButtonClicked()
         {
             view.Hide(UIAnimationHashes.SLIDE);
             controller.ChangeAccount();
-        }
-
-        private Avatar RandomizeAvatar()
-        {
-            // If we're not at the end of history, remove all avatars after current position
-            if (currentAvatarIndex < avatarHistory.Count - 1)
-                avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
-
-            // Create and add new avatar to history
-            Avatar newAvatar = CreateRandomAvatar();
-            avatarHistory.Add(newAvatar);
-            currentAvatarIndex = avatarHistory.Count - 1;
-
-            return newAvatar;
         }
 
         private void UpdateCharacterPreview(Avatar newAvatar)
@@ -279,37 +259,39 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnRandomizeButtonPressed()
         {
-            UpdateCharacterPreview(RandomizeAvatar());
-            UpdateAvatarNavigationButtons();
+            UpdateCharacterPreview(CreateRandomAvatar());
         }
 
-        private void PrevRandomAvatar()
+        private void ToggleBodyTypeDropdown()
         {
-            if (currentAvatarIndex <= 0)
-                return;
-            currentAvatarIndex--;
-
-            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
-            UpdateAvatarNavigationButtons();
+            bool isOpen = !view.BodyTypeDropdownPanel.activeSelf;
+            view.BodyTypeDropdownPanel.SetActive(isOpen);
+            // Flip chevron: 180° when open, 0° when closed
+            view.ChevronIcon.localRotation = Quaternion.Euler(0, 0, isOpen ? 180f : 0f);
         }
 
-        private void NextRandomAvatar()
+        private void SelectBodyType(BodyShape bodyShape)
         {
-            if (currentAvatarIndex >= avatarHistory.Count - 1)
-                return;
-            currentAvatarIndex++;
-
-            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
-            UpdateAvatarNavigationButtons();
+            selectedBodyType = bodyShape;
+            view.BodyTypeDropdownPanel.SetActive(false);
+            view.ChevronIcon.localRotation = Quaternion.identity;
+            UpdateBodyTypeUI();
+            // Regenerate avatar with the new body type
+            UpdateCharacterPreview(CreateRandomAvatar());
         }
 
-        private void UpdateAvatarNavigationButtons()
+        private void UpdateBodyTypeUI()
         {
-            if (viewInstance == null)
-                return;
+            bool isMale = selectedBodyType.Equals(BodyShape.MALE);
+            view.BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
 
-            view.PrevRandomButton.interactable = currentAvatarIndex > 0;
-            view.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
+            // Toggle man/woman icon in the dropdown button
+            view.DropdownManIcon.SetActive(isMale);
+            view.DropdownWomanIcon.SetActive(!isMale);
+
+            // Toggle checkmark on selected option
+            view.CheckmarkIconA.SetActive(isMale);
+            view.CheckmarkIconB.SetActive(!isMale);
         }
 
         private void OnToggleChanged(bool _) =>
@@ -325,7 +307,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private Avatar CreateRandomAvatar()
         {
-            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+            BodyShape bodyShape = selectedBodyType;
 
             // If base wearables loaded from backend - use randomizer
             if (loadedWearables != null && loadedWearables.Count > 0)
