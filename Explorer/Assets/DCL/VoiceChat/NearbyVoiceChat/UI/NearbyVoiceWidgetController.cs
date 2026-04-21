@@ -100,7 +100,7 @@ namespace DCL.VoiceChat.UI
         {
             if (stateModel.State.Value == NearbyVoiceChatState.IDLE)
             {
-                stateModel.StartSpeaking(SpeakingOrigin.SUSTAINED);
+                stateModel.StartSpeaking();
                 view.HearText.text = SPEAKING_BUTTON_TEXT;
             }
             else if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
@@ -128,7 +128,7 @@ namespace DCL.VoiceChat.UI
         private void OnPushToTalkPressed(InputAction.CallbackContext ctx)
         {
             view.HearText.text = SPEAKING_PUSH_TO_TALK_TEXT;
-            stateModel.StartSpeaking(SpeakingOrigin.HELD);
+            stateModel.StartSpeaking();
         }
 
         private void OnPushToTalkReleased(InputAction.CallbackContext ctx)

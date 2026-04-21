@@ -21,12 +21,6 @@ namespace DCL.VoiceChat.Nearby
         LOADING,
     }
 
-    public enum SpeakingOrigin
-    {
-        SUSTAINED, // session persists until explicitly stopped — safe to auto-restore after suppression
-        HELD,      // session bound to a transient trigger — cannot safely auto-restore (release event may be missed)
-    }
-
     public class NearbyVoiceChatStateModel : IDisposable
     {
         private readonly ReactiveProperty<NearbyVoiceChatState> state;
@@ -37,7 +31,6 @@ namespace DCL.VoiceChat.Nearby
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
         public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
-        public SpeakingOrigin LastSpeakingOrigin { get; private set; } = SpeakingOrigin.SUSTAINED;
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
@@ -76,13 +69,10 @@ namespace DCL.VoiceChat.Nearby
         }
 
         // Speaking
-        public void StartSpeaking(SpeakingOrigin origin)
+        public void StartSpeaking()
         {
             if (state.Value == NearbyVoiceChatState.IDLE)
-            {
-                LastSpeakingOrigin = origin;
                 SetState(NearbyVoiceChatState.SPEAKING);
-            }
         }
 
         public void StopSpeaking()
@@ -101,9 +91,7 @@ namespace DCL.VoiceChat.Nearby
 
             if (state.Value != NearbyVoiceChatState.SUPPRESSED)
             {
-                // Force-stop HELD speaking: its release event can be missed during SUPPRESSED,
-                // which would leave the mic broadcasting after Resume. SUSTAINED keeps toggle semantics.
-                if (state.Value == NearbyVoiceChatState.SPEAKING && LastSpeakingOrigin == SpeakingOrigin.HELD)
+                if (state.Value == NearbyVoiceChatState.SPEAKING)
                     StopSpeaking();
 
                 preBlockedState = state.Value;
