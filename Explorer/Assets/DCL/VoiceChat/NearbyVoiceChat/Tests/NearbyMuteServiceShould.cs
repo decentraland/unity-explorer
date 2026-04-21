@@ -52,27 +52,33 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public async Task CallRepositoryThenCacheOnMute()
+        public async Task CallCacheThenRepositoryOnMute()
         {
             repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Returns(UniTask.CompletedTask);
 
             await service.SetMutedAsync("0xABC", true, CancellationToken.None);
 
-            await repository.Received(1).MuteUserAsync("0xABC", Arg.Any<CancellationToken>());
-            cache.Received(1).SetMuted("0xABC", true);
+            Received.InOrder(() =>
+            {
+                cache.SetMuted("0xABC", true);
+                repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>());
+            });
         }
 
         [Test]
-        public async Task CallRepositoryThenCacheOnUnmute()
+        public async Task CallCacheThenRepositoryOnUnmute()
         {
             repository.UnmuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Returns(UniTask.CompletedTask);
 
             await service.SetMutedAsync("0xABC", false, CancellationToken.None);
 
-            await repository.Received(1).UnmuteUserAsync("0xABC", Arg.Any<CancellationToken>());
-            cache.Received(1).SetMuted("0xABC", false);
+            Received.InOrder(() =>
+            {
+                cache.SetMuted("0xABC", false);
+                repository.UnmuteUserAsync("0xABC", Arg.Any<CancellationToken>());
+            });
         }
 
         [Test]
@@ -158,29 +164,30 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public async Task NotUpdateCacheWhenMuteIsCancelled()
+        public async Task UpdateCacheEvenWhenMuteIsCancelled()
         {
+            // Cache is updated before the API call, so cancellation of the API does not roll it back
             repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Throws(new OperationCanceledException());
 
             await service.SetMutedAsync("0xABC", true, CancellationToken.None);
 
-            cache.DidNotReceive().SetMuted(Arg.Any<string>(), Arg.Any<bool>());
+            cache.Received(1).SetMuted("0xABC", true);
         }
 
         [Test]
-        public async Task CallApiBeforeUpdatingCacheOnMute()
+        public async Task UpdateCacheBeforeCallingApiOnMute()
         {
             repository.MuteUserAsync("0xABC", Arg.Any<CancellationToken>())
                       .Returns(_ =>
                       {
-                          cache.DidNotReceive().SetMuted(Arg.Any<string>(), Arg.Any<bool>());
+                          cache.Received(1).SetMuted("0xABC", true);
                           return UniTask.CompletedTask;
                       });
 
             await service.SetMutedAsync("0xABC", true, CancellationToken.None);
 
-            cache.Received(1).SetMuted("0xABC", true);
+            await repository.Received(1).MuteUserAsync("0xABC", Arg.Any<CancellationToken>());
         }
 
         [Test]
