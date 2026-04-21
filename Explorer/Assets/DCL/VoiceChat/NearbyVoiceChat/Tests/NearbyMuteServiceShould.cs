@@ -117,17 +117,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public async Task SkipLoadWhenNoRepository()
-        {
-            var localCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(localCache);
-
-            await localService.LoadAsync(CancellationToken.None);
-
-            Assert.That(localCache.IsMuted("0xABC"), Is.False);
-        }
-
-        [Test]
         public async Task LogWarningWhenLoadFails()
         {
             repository.GetAllMutedUsersAsync(Arg.Any<CancellationToken>())
@@ -190,15 +179,5 @@ namespace DCL.VoiceChat.Nearby.Tests
             await repository.Received(1).MuteUserAsync("0xABC", Arg.Any<CancellationToken>());
         }
 
-        [Test]
-        public async Task UpdateCacheDirectlyWhenAsyncMuteHasNoRepository()
-        {
-            var localCache = new NearbyMuteCache();
-            var localService = new NearbyMuteService(localCache);
-
-            await localService.SetMutedAsync("0xABC", true, CancellationToken.None);
-
-            Assert.That(localService.IsMuted("0xABC"), Is.True);
-        }
     }
 }

@@ -16,10 +16,9 @@ namespace DCL.VoiceChat.Nearby
         private const string TAG = nameof(NearbyMuteService);
 
         private readonly INearbyMuteCache cache;
-        private readonly INearbyMuteRepository? repository;
+        private readonly INearbyMuteRepository repository;
 
         /// <summary>
-        /// Raised when a participant's mute state changes.
         /// Parameters: walletId, isMuted.
         /// </summary>
         public event Action<string, bool>? MuteStateChanged
@@ -28,7 +27,7 @@ namespace DCL.VoiceChat.Nearby
             remove => cache.MuteStateChanged -= value;
         }
 
-        public NearbyMuteService(INearbyMuteCache cache, INearbyMuteRepository? repository = null)
+        public NearbyMuteService(INearbyMuteCache cache, INearbyMuteRepository repository)
         {
             this.cache = cache;
             this.repository = repository;
@@ -43,8 +42,6 @@ namespace DCL.VoiceChat.Nearby
         /// </summary>
         public async UniTask LoadAsync(CancellationToken ct)
         {
-            if (repository == null) return;
-
             try
             {
                 var mutedUsers = await repository.GetAllMutedUsersAsync(ct);
@@ -66,20 +63,17 @@ namespace DCL.VoiceChat.Nearby
         {
             cache.SetMuted(walletId, muted);
 
-            if (repository != null)
+            try
             {
-                try
-                {
-                    if (muted)
-                        await repository.MuteUserAsync(walletId, ct);
-                    else
-                        await repository.UnmuteUserAsync(walletId, ct);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    ReportHub.LogException(new Exception($"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally", ex), ReportCategory.VOICE_CHAT);
-                }
+                if (muted)
+                    await repository.MuteUserAsync(walletId, ct);
+                else
+                    await repository.UnmuteUserAsync(walletId, ct);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(new Exception($"{TAG} Failed to {(muted ? "mute" : "unmute")} {walletId} via API, applying locally", ex), ReportCategory.VOICE_CHAT);
             }
         }
     }
