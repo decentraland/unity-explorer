@@ -1,3 +1,16 @@
+## Feature Categories for Severity & Hotfix Decisions
+
+This document is the source of truth for two decisions:
+
+1. **Severity labeling** — whether a bug gets `1-high` (SEV-2) or `2-medium` (SEV-3) on GitHub
+2. **Hotfix vs normal release** — whether a SEV-2 bug ships as a hotfix or waits for the next release cycle
+
+**The rule:** Primary category bugs that meet SEV-2 criteria get `1-high` and require a hotfix. Secondary category bugs get `2-medium` and are handled in the normal release cycle.
+
+> **If the auto-labeler assigns the wrong priority:** check whether the affected feature is in the right section below and move it if needed. The bot reads this file directly.
+
+---
+
 ## When to hotfix
 
 **SEV-1** — always hotfix.
@@ -11,9 +24,11 @@ Sometimes even if a feature belongs to a **Secondary category**, the issue may s
 - A large percentage of users are affected
 - Core gameplay becomes impossible
 
+---
+
 ## 🔴 Primary Categories
 
-*SEV-2 bug in these categories → hotfix required*
+*SEV-2 bug in these categories → `1-high` label + hotfix required*
 
 **Stability & Crashes**
 
@@ -74,7 +89,7 @@ Sometimes even if a feature belongs to a **Secondary category**, the issue may s
 
 ## 🟡 Secondary Categories
 
-*SEV-2 bug in these categories → tracked in #qa-team, no hotfix*
+*SEV-2 bug in these categories → `2-medium` label, tracked in #qa-team, no hotfix*
 
 **Avatar & Identity**
 
@@ -106,7 +121,7 @@ Sometimes even if a feature belongs to a **Secondary category**, the issue may s
 - Skybox
 - Badges
 
-**Economy** *(no matching dashboard category — gap to address)*
+**Economy**
 
 - Tips / Donations
 - Marketplace — Lists
@@ -131,4 +146,3 @@ Sometimes even if a feature belongs to a **Secondary category**, the issue may s
 
 - Mini Games
 - Genesis Plaza
-

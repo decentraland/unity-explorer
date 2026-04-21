@@ -162,4 +162,4 @@ GitHub pre-fills most of this from the PR; tidy it before clicking the final mer
 | QA reviewer isn't responding | Ping in `#qa-team` on Slack. Don't reassign QA — the auto-assign picked the right rotation. |
 | Your PR touches only GitHub workflows | It's still a real PR. The AI should mark it `QA_REQUIRED: NO`; if it doesn't, add `no QA needed` manually and note why. |
 | You disagree with an AI inline comment | Reply with your reasoning on the thread. A maintainer will resolve it. Don't silently resolve/dismiss AI comments without engaging. |
-| You want a faster turnaround on a hotfix | See [Incident Management & Hotfix Policy](incident-management-and-hotfix-policy.md) — there is a separate fast-track process for SEV-1/SEV-2. |
+| You want a faster turnaround on a hotfix | See [Incident Response](incident-response.md) — there is a separate fast-track process for SEV-1/SEV-2. |
