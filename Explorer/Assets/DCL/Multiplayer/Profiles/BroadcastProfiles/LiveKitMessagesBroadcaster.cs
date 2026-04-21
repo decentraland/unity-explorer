@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                     BuildMessageAndSend(messagePipesHub.IslandPipe(), islandList);
 
                 if (sceneList.Count > 0)
-                    BuildMessageAndSend(messagePipesHub.ScenePipe(), islandList);
+                    BuildMessageAndSend(messagePipesHub.ScenePipe(), sceneList);
             }
             else
             {
