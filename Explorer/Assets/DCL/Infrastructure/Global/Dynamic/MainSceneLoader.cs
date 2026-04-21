@@ -206,6 +206,7 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
+            UnityEngine.Debug.Log("[JM-DEBUG] About to create BootstrapContainer");
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 assetsProvisioner,
                 debugSettings,
@@ -226,10 +227,12 @@ namespace Global.Dynamic
             );
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
+            UnityEngine.Debug.Log("[JM-DEBUG] BootstrapContainer created, starting PreInitialize");
 
             try
             {
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
+                UnityEngine.Debug.Log("[JM-DEBUG] PreInitializeSetup done");
 
                 if (ShouldForceSingleRunningInstance(applicationParametersParser))
                 {
@@ -239,14 +242,17 @@ namespace Global.Dynamic
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
+                UnityEngine.Debug.Log("[JM-DEBUG] About to InitializeFeatureFlags");
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, ct);
+                UnityEngine.Debug.Log("[JM-DEBUG] FeatureFlags initialized");
 
                 bootstrap.InitializeFeaturesRegistry();
 
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
                 bool isLoaded;
+                UnityEngine.Debug.Log("[JM-DEBUG] About to LoadStaticContainer");
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
@@ -261,6 +267,7 @@ namespace Global.Dynamic
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
+                UnityEngine.Debug.Log("[JM-DEBUG] About to LoadDynamicWorldContainer");
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -304,6 +311,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
+                UnityEngine.Debug.Log("[JM-DEBUG] About to InitializePlugins");
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
@@ -312,8 +320,11 @@ namespace Global.Dynamic
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
+                UnityEngine.Debug.Log("[JM-DEBUG] About to LoadStartingRealm");
                 await LoadStartingRealmAsync(ct);
+                UnityEngine.Debug.Log("[JM-DEBUG] About to LoadUserFlow (this calls auth)");
                 await LoadUserFlowAsync(playerEntity, ct);
+                UnityEngine.Debug.Log("[JM-DEBUG] LoadUserFlow DONE");
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -321,13 +332,13 @@ namespace Global.Dynamic
 
                 RestoreInputs();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e)
             {
-                // ignore
+                UnityEngine.Debug.Log($"[JM-DEBUG] InitializeFlowAsync CANCELLED: {e.Message}");
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // unhandled exception
+                UnityEngine.Debug.Log($"[JM-DEBUG] InitializeFlowAsync EXCEPTION: {e}");
                 GameReports.PrintIsDead();
                 throw;
             }

@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Localization;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using Avatar = DCL.Profiles.Avatar;
 using Random = UnityEngine.Random;
@@ -281,17 +280,7 @@ namespace DCL.AuthenticationScreenFlow
         private void UpdateBodyTypeUI()
         {
             bool isMale = selectedBodyType.Equals(BodyShape.MALE);
-            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
-            try
-            {
-                var localizedString = new LocalizedString("Authentication", isMale ? "BODY_TYPE_A" : "BODY_TYPE_B");
-                string result = localizedString.GetLocalizedString();
-                view.BodyTypeLabel.text = !string.IsNullOrEmpty(result) ? result : fallback;
-            }
-            catch
-            {
-                view.BodyTypeLabel.text = fallback;
-            }
+            view.BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
 
             // Toggle man/woman icon in the dropdown button
             view.DropdownManIcon.SetActive(isMale);
