@@ -74,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
+        private NearbyVoiceChatNametagsHandler? nearbyNametagsHandler;
         private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
@@ -224,6 +225,12 @@ namespace DCL.PluginSystem.Global
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
                     nearbyStateModel, nearbyMuteService, userBlockingCache, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
+
+                nearbyNametagsHandler = new NearbyVoiceChatNametagsHandler(
+                    islandRoom, entityParticipantTable, world,
+                    voiceChatOrchestrator.CurrentCallStatus, playerEntity,
+                    nearbyMuteService, nearbyStateModel);
+                pluginScope.Add(nearbyNametagsHandler);
 
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
                 pluginScope.Add(nearbyButtonController);
