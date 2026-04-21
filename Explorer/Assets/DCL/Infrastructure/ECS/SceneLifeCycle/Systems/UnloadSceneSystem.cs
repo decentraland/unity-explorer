@@ -104,9 +104,10 @@ namespace ECS.SceneLifeCycle.Systems
             ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
             ReportHub.Log(ReportCategory.SCENE_LOADING, $"UnloadSceneSystem: UnloadLoadedScene '{definitionComponent.Definition?.GetLogSceneName()}'");
 
+            World.Remove<DeleteEntityIntention>(entity);
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
         }
 
 

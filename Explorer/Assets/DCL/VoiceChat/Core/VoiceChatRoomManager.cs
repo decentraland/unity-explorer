@@ -30,6 +30,7 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
+        private readonly VoiceChatMicrophoneHandler voiceChatMicrophoneHandler;
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable localParticipantIsSpeakerSubscription;
 
@@ -48,7 +49,8 @@ namespace DCL.VoiceChat
             IRoom voiceChatRoom,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatConfiguration configuration,
-            VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager)
+            VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager,
+            VoiceChatMicrophoneHandler voiceChatMicrophoneHandler)
         {
             this.microphonePublisher = microphonePublisher;
             this.remoteListener = remoteListener;
@@ -56,9 +58,12 @@ namespace DCL.VoiceChat
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
+            this.voiceChatMicrophoneHandler = voiceChatMicrophoneHandler;
 
             reconnectionManager = new VoiceChatReconnectionManager(
                 roomHub, voiceChatOrchestrator, configuration, voiceChatRoom);
+
+            microphonePublisher.SourceChanged += voiceChatMicrophoneHandler.Assign;
 
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
@@ -78,6 +83,8 @@ namespace DCL.VoiceChat
         {
             if (isDisposed) return;
             isDisposed = true;
+
+            microphonePublisher.SourceChanged -= voiceChatMicrophoneHandler.Assign;
 
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -131,7 +138,7 @@ namespace DCL.VoiceChat
             if (isSpeaker && voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL && roomHub.VoiceChatRoom().Activated)
             {
                 voiceChatMicrophoneStateManager.OnRoomConnectionChangedMuted(true);
-                microphonePublisher.PublishAsync(micAutoStart: true, CancellationToken.None).Forget();
+                microphonePublisher.PublishAsync(micAutoStart: voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value, CancellationToken.None).Forget();
             }
             else
             {
@@ -270,7 +277,7 @@ namespace DCL.VoiceChat
                 if (canSpeak)
                 {
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                    microphonePublisher.PublishAsync(micAutoStart: true, CancellationToken.None).Forget();
+                    microphonePublisher.PublishAsync(micAutoStart: voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value, CancellationToken.None).Forget();
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }

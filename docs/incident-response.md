@@ -11,6 +11,25 @@
 
 ---
 
+## Severity → GitHub Label Reference
+
+> This table is used by the automated issue-labeler bot and is the authoritative mapping between severity and GitHub priority labels.
+> If the bot assigns the wrong label, check the [feature categories doc](issue-triage-categories.md) and move the affected feature to the correct Primary/Secondary section.
+
+| Severity | GitHub label | Criteria |
+| --- | --- | --- |
+| **SEV-1** | `0-critical` | Core platform broken for **most users**. No workaround. |
+| **SEV-2** | `1-high` | A **Primary category** feature broken for some users. Platform still partially works. |
+| **SEV-3** | `2-medium` | A **Secondary category** feature degraded. Main flows still work. |
+| **SEV-4** | `3-low` | Minor issue, low user impact. Functional but unpleasant. |
+| **SEV-5** | `3-low` | Cosmetic only. No functional impact (typos, misaligned icons). |
+
+Primary vs Secondary categories are defined in [issue-triage-categories.md](issue-triage-categories.md).
+
+Even a Secondary feature can be escalated to SEV-2 (`1-high`) if a large percentage of users are affected or core gameplay becomes impossible — judge this from the reported user impact.
+
+---
+
 # Why this exists
 
 The bigger our teams get, the more changes land in production — and the more things can go wrong. Without a shared process, incidents get reported in the wrong channels, the wrong people get pulled in, communication to the community is inconsistent, and resolution takes longer than it should.
@@ -34,7 +53,7 @@ Tag the right team when reporting or escalating an incident.
 
 | Area | Examples | Handle |
 | --- | --- | --- |
-| **Explorer / Unity client, explorer launcher, aand-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
+| **Explorer / Unity client, launcher, aang-renderer (wearable preview)** | Client crash, rendering issues, login failure, teleport broken, avatar sync, voice chat, wearable not displayed properly in Marketplace, launcher not starting the client | @explorer-support |
 | **Marketplace, dApps, website, backend services** | Marketplace down, credits not updating, wallet connection, API failures, asset bundle pipeline, catalysts | @core-support |
 | **Creator Tools** | Creator Hub bugs, SDK issues, scene deployments | @creatorstoolteam |
 | **QA** | Any report, verification, or severity classification | @qa-team |
@@ -45,13 +64,13 @@ Tag the right team when reporting or escalating an incident.
 
 > 🏷️ Severity levels align with GitHub issue labels.
 
-[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md) 
+[Issue Triage Categories](issue-triage-categories.md)
 
 | Level | GitHub label | When to use | Examples |
 | --- | --- | --- | --- |
-| **SEV-1** | `0-critical` | Core platform broken for most users. No workaround. | Login fails for everyone; client won't launch; teleport completely broken; Marketplace inaccessible |
-| **SEV-2** | `1-high` | A [primary category feature](primary-and-secondary-categories-when-to-hotfix.md) is broken for some users. Platform still partially works. | Other users don't see your avatar; voice chat down; emotes not equipping; emote wheel not working; Marketplace credits not updating |
-| **SEV-3** | `2-medium` | A [secondary category feature](primary-and-secondary-categories-when-to-hotfix.md) is degraded. Main flows still work. | Weekly goals tooltip wrong; camera shortcuts broken; backpack category filter off |
+| **SEV-1** | `0-critical` | Core platform broken for most users. No workaround. | Login fails for everyone; client won't launch; teleport completely broken; Marketplace inaccessible; uncontrolled retry loop causing excessive network/cost for all users |
+| **SEV-2** | `1-high` | A [primary category feature](issue-triage-categories.md) is broken for some users. Platform still partially works. | Other users don't see your avatar; voice chat down; emotes not equipping; emote wheel not working; Marketplace credits not updating |
+| **SEV-3** | `2-medium` | A [secondary category feature](issue-triage-categories.md) is degraded. Main flows still work. | Weekly goals tooltip wrong; camera shortcuts broken; backpack category filter off |
 | **SEV-4** | `3-low` | Minor issue, low user impact. | Wearable panel misaligned; tooltip copy error |
 | **SEV-5** | `3-low` | Cosmetic only. No functional impact. | Typo in a navigation label; icon slightly off-position |
 
@@ -131,15 +150,15 @@ Once the incident is created, **immediately notify**:
 
 # Hotfix Policy - When to hotfix
 
-[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md)
+[Issue Triage Categories](issue-triage-categories.md)
 
 **SEV-1** — always hotfix.
 
-**SEV-2** — hotfix only if the bug falls into a [**Primary category**](primary-and-secondary-categories-when-to-hotfix.md).
+**SEV-2** — hotfix only if the bug falls into a [**Primary category**](issue-triage-categories.md).
 
 SEV-2 bugs in Secondary categories are fixed in the normal release cycle.
 
-Sometimes even if a feature belongs to a [**Secondary category**](primary-and-secondary-categories-when-to-hotfix.md), the issue may still require a hotfix if:
+Sometimes even if a feature belongs to a [**Secondary category**](issue-triage-categories.md), the issue may still require a hotfix if:
 
 - A large percentage of users are affected
 - Core gameplay becomes impossible
