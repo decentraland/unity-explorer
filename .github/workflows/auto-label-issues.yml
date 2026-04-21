@@ -1,11 +1,11 @@
-name: AI Label Issues
+name: Triage Issues
 on:
   issues:
     types: [opened, reopened]
   workflow_dispatch:
     inputs:
       issue_number:
-        description: 'Issue number to label'
+        description: 'Triage Issues using specification from docs/ directory.'
         required: true
 jobs:
   label_issues:
@@ -29,7 +29,7 @@ jobs:
         with:
           allowed_bots: "sentry"
           prompt: |
-            You are an issue triage assistant. Your ONLY action is to apply labels — do NOT post any comments.
+            You are an issue triage assistant. Your job is to apply labels and post a brief analysis comment.
             Repository: ${{ github.repository }}
             Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
 
@@ -52,26 +52,24 @@ jobs:
                - User impact described
             4. Create a summary report:
                Save your analysis and decisions to /tmp/label_analysis.md in this format:
-               ## Issue Analysis
-               **Issue Number:** #[number]
+               ## Issue Triage Summary
+               **Issue:** #[number]
                **Title:** [title]
                **Analysis:** [your reasoning]
                **Selected Labels:** [list of labels]
                **Applied:** [yes/no]
             5. Apply labels using:
                gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --add-label "label1" --add-label "label2"
+            6. Post your analysis as a comment on the issue:
+               gh issue comment ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --body "$(cat /tmp/label_analysis.md)"
 
             Rules:
-            - ALWAYS include the "new" label.
             - ALWAYS include a priority label (low, medium, high, critical).
             - Only select from labels that already exist in the repository.
             - Be specific but comprehensive — apply all labels that clearly match.
-            - If no labels beyond "new" are clearly applicable, only apply "new".
-            - Do NOT create new labels.
-            - Do NOT post any comments on the issue.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue edit:*)"
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*)"
 
       - name: Copy Claude execution output to artifacts
         if: always()
