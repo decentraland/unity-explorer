@@ -128,6 +128,19 @@ on:
         required: false
         default: false
         type: boolean
+    secrets:
+      ES_USERNAME:
+        description: 'SSL.com username for Windows code signing'
+        required: false
+      ES_PASSWORD:
+        description: 'SSL.com password for Windows code signing'
+        required: false
+      WINDOWS_CREDENTIAL_ID_SIGNER:
+        description: 'SSL.com credential ID for Windows code signing'
+        required: false
+      ES_TOTP_SECRET:
+        description: 'SSL.com TOTP secret for Windows code signing'
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
@@ -457,6 +470,63 @@ jobs:
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      - name: Download CodeSignTool
+        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        run: |
+          set -euo pipefail
+          CST_VERSION="v1.3.2"
+          curl -sSL -o "$RUNNER_TEMP/CodeSignTool.zip" \
+            "https://github.com/SSLcom/CodeSignTool/releases/download/${CST_VERSION}/CodeSignTool-${CST_VERSION}.zip"
+          unzip -q "$RUNNER_TEMP/CodeSignTool.zip" -d "$RUNNER_TEMP/CodeSignTool"
+          rm "$RUNNER_TEMP/CodeSignTool.zip"
+
+          JAR=$(find "$RUNNER_TEMP/CodeSignTool" -name 'code_sign_tool-*.jar' | head -n1)
+          if [[ -z "$JAR" ]]; then
+            echo "::error::CodeSignTool JAR not found"
+            exit 1
+          fi
+          echo "CODESIGN_JAR=$JAR" >> "$GITHUB_ENV"
+          echo "CodeSignTool ready: $JAR"
+
+      - name: Sign Windows executable
+        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        env:
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          WINDOWS_CREDENTIAL_ID_SIGNER: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+        run: |
+          set -euo pipefail
+
+          MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
+          if [[ -z "$MAIN_EXE" ]]; then
+            echo "::error::No main .exe found in build/"
+            exit 1
+          fi
+
+          echo "Signing $MAIN_EXE ..."
+          java -jar "$CODESIGN_JAR" sign \
+            -username="$ES_USERNAME" \
+            -password="$ES_PASSWORD" \
+            -credential_id="$WINDOWS_CREDENTIAL_ID_SIGNER" \
+            -totp_secret="$ES_TOTP_SECRET" \
+            -input_file_path="$MAIN_EXE" \
+            -override=true \
+            -malware_block=false
+
+          echo "::notice::Signed $MAIN_EXE"
+
+      - name: Verify Windows signature
+        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
+
+          MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
+          echo "Verifying signature on $MAIN_EXE ..."
+          osslsigncode verify -in "$MAIN_EXE"
+          echo "::notice::Signature verified for $MAIN_EXE"
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
