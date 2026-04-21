@@ -1,0 +1,148 @@
+## Feature Categories for Severity & Hotfix Decisions
+
+This document is the source of truth for two decisions:
+
+1. **Severity labeling** — whether a bug gets `1-high` (SEV-2) or `2-medium` (SEV-3) on GitHub
+2. **Hotfix vs normal release** — whether a SEV-2 bug ships as a hotfix or waits for the next release cycle
+
+**The rule:** Primary category bugs that meet SEV-2 criteria get `1-high` and require a hotfix. Secondary category bugs get `2-medium` and are handled in the normal release cycle.
+
+> **If the auto-labeler assigns the wrong priority:** check whether the affected feature is in the right section below and move it if needed. The bot reads this file directly.
+
+---
+
+## When to hotfix
+
+**SEV-1** — always hotfix.
+
+**SEV-2** — hotfix only if the bug falls into a **Primary category**.
+
+SEV-2 bugs in Secondary categories are fixed in the normal release cycle.
+
+Sometimes even if a feature belongs to a **Secondary category**, the issue may still require a hotfix if:
+
+- A large percentage of users are affected
+- Core gameplay becomes impossible
+
+---
+
+## 🔴 Primary Categories
+
+*SEV-2 bug in these categories → `1-high` label + hotfix required*
+
+**Stability & Crashes**
+
+- All crashes and freezes, severity depends on the impact of user base
+
+**Auth & Onboarding**
+
+- Login — Web3
+- Login — Social (Google, Discord, etc)
+- Login — Email + OTP
+- Any step of the funnel preventing new and returning users accessing the platform
+
+**Social & Communication**
+
+- Friends
+- Text Chat (live communication)
+- Communities Chat
+- Private Voice Chat
+
+**Blocking & Reporting**
+
+- Block Players
+
+**Avatar & Identity**
+
+- NAMEs (citizen identity)
+- Profile (passport)
+- Wearables equipping
+- Emotes equipping
+- Avatar synchronization / visibility to other players
+- Avatar locomotion
+
+**World & Navigation**
+
+- Teleportation
+- Worlds access
+
+**Video Streaming**
+
+- Video Streaming
+
+**Launcher**
+
+- Desktop Client launch
+
+**Marketplace**
+
+- Marketplace — Purchases
+- Marketplace Credits
+
+**Creator Tools & Scenes**
+
+- Creator Hub not launching
+- Local Scene Preview not Working
+- Scene deployments
+
+---
+
+## 🟡 Secondary Categories
+
+*SEV-2 bug in these categories → `2-medium` label, tracked in #qa-team, no hotfix*
+
+**Avatar & Identity**
+
+- Backpack
+- Outfits
+- Smart Wearables
+- Linked Wearables
+- Portable Experiences (internal)
+
+**Social & Communication**
+
+- Autotranslate
+- Gifting
+- Communities
+
+**World & Navigation**
+
+- Events Calendar
+- Places Browser
+- Events dApp
+- Places dApp
+- Top Scenes
+
+**UI & Settings**
+
+- Loading Screens
+- Notifications
+- Camera / Gallery
+- Skybox
+- Badges
+
+**Economy**
+
+- Tips / Donations
+- Marketplace — Lists
+- Marketplace — Bids
+- Referral System
+
+**Admin Tools**
+
+- Admin Tools
+
+**Creator Tools & Scenes**
+
+- Creator Hub (non-launch issues)
+- Docs
+- SDK7
+- Smart Items
+- NPCs
+- Emotes & Wearables Builder
+- Decentraland Cast
+
+**Games & Minigames**
+
+- Mini Games
+- Genesis Plaza
