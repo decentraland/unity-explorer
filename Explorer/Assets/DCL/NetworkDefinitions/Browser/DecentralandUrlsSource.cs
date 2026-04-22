@@ -37,6 +37,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
+        private readonly string? gatekeeperBaseOverride;
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null)
         {
@@ -44,6 +45,7 @@ namespace DCL.Browser.DecentralandUrls
             this.environment = environment;
             this.realmData = realmData;
             this.launchMode = launchMode;
+            this.gatekeeperBaseOverride = string.IsNullOrEmpty(gatekeeperBaseOverride) ? null : gatekeeperBaseOverride;
 
             if (environment == DecentralandEnvironment.Today)
             {
@@ -67,15 +69,6 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.Gatekeeper);
                 Url(DecentralandUrl.RemotePeers);
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
-            }
-
-            // Override the gatekeeper base URL for cross-environment debugging (e.g. Zone gatekeeper while app runs in Org).
-            // All composed gatekeeper URLs (GateKeeperSceneAdapter, ChatAdapter, GatekeeperStatus, BannedUsers, SceneAdmins) inherit this.
-            // LocalGateKeeperSceneAdapter is a separate hardcoded URL, so it must be overridden explicitly.
-            if (!string.IsNullOrEmpty(gatekeeperBaseOverride))
-            {
-                cache[DecentralandUrl.Gatekeeper] = new UrlData(CacheBehaviour.STATIC, gatekeeperBaseOverride);
-                cache[DecentralandUrl.LocalGateKeeperSceneAdapter] = new UrlData(CacheBehaviour.STATIC, $"{gatekeeperBaseOverride}/get-scene-adapter");
             }
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
@@ -177,10 +170,12 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.Gatekeeper => $"https://comms-gatekeeper.decentraland.{ENV}",
-                DecentralandUrl.GateKeeperSceneAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/get-scene-adapter",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
-                DecentralandUrl.ChatAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/private-messages/token",
+                DecentralandUrl.Gatekeeper => gatekeeperBaseOverride ?? $"https://comms-gatekeeper.decentraland.{ENV}",
+                DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/get-scene-adapter",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => gatekeeperBaseOverride != null
+                    ? $"{gatekeeperBaseOverride}/get-scene-adapter"
+                    : "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
+                DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
@@ -198,7 +193,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
-                DecentralandUrl.GatekeeperStatus => $"{Url(DecentralandUrl.Gatekeeper)}/status",
+                DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
@@ -232,8 +227,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 DecentralandUrl.ReportUserForm => $"https://decentraland.{ENV}/report/players?player_address={{0}}&reported_address={{1}}",
-                DecentralandUrl.BannedUsers => $"{Url(DecentralandUrl.Gatekeeper)}/users/{{0}}/bans",
-                DecentralandUrl.SceneAdmins => $"{Url(DecentralandUrl.Gatekeeper)}/scene-admin",
+                DecentralandUrl.BannedUsers => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/users/{{0}}/bans",
+                DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
 
                 DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",

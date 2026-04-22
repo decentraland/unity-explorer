@@ -188,7 +188,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
+            string? gatekeeperBaseOverride = debugSettings.GatekeeperBaseOverride;
 
             // CLI arg takes precedence (enables override in running builds)
             bool cliOverride = applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl)
@@ -812,17 +812,6 @@ namespace Global.Dynamic
                 ReportHub.Log(data, "Finish checking");
             }
         }
-
-        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
-            mode switch
-            {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>

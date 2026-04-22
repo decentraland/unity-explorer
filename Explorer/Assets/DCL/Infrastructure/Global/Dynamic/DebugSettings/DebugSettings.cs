@@ -89,5 +89,21 @@ namespace Global.Dynamic.DebugSettings
         public GatekeeperMode GatekeeperMode => Application.isEditor ? gatekeeperMode : RELEASE_SETTINGS.gatekeeperMode;
         public string CustomGatekeeperUrl => Application.isEditor ? customGatekeeperUrl : RELEASE_SETTINGS.customGatekeeperUrl;
         public string[] AppParameters => Application.isEditor ? appParameters : RELEASE_SETTINGS.appParameters;
+
+        /// <summary>
+        ///     Base gatekeeper URL override derived from <see cref="GatekeeperMode"/> and
+        ///     (for <see cref="Global.Dynamic.DebugSettings.GatekeeperMode.Custom"/>) <see cref="CustomGatekeeperUrl"/>.
+        ///     Returns <c>null</c> when no override should be applied (Org mode, or Custom with an empty URL).
+        /// </summary>
+        public string? GatekeeperBaseOverride =>
+            GatekeeperMode switch
+            {
+                GatekeeperMode.Org => null,
+                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
+                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                GatekeeperMode.Localhost => "http://localhost:3000",
+                GatekeeperMode.Custom => string.IsNullOrEmpty(CustomGatekeeperUrl) ? null : CustomGatekeeperUrl,
+                _ => throw new ArgumentOutOfRangeException(nameof(GatekeeperMode), GatekeeperMode, null),
+            };
     }
 }
