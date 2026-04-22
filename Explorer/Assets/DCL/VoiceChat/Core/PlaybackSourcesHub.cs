@@ -26,6 +26,8 @@ namespace DCL.VoiceChat
         private readonly Transform parent;
 
         private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
+        // Read as ConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<StreamKey, byte>> streamKeysByIdentity;
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
 
         public PlaybackSourcesHub(
@@ -36,6 +38,7 @@ namespace DCL.VoiceChat
             Action<StreamKey>? onSourceRemoved = null)
         {
             this.streams = new ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
+            this.streamKeysByIdentity = new ConcurrentDictionary<string, ConcurrentDictionary<StreamKey, byte>>();
             this.audioMixerGroup = audioMixerGroup;
             this.spatial = spatial;
             this.onSourceConfigured = onSourceConfigured;
@@ -56,6 +59,10 @@ namespace DCL.VoiceChat
                 return;
             }
 
+            streamKeysByIdentity
+               .GetOrAdd(key.identity, static _ => new ConcurrentDictionary<StreamKey, byte>())
+               .TryAdd(key, 0); // 0 is a dummy value — inner dict is used as a set, only keys matter.
+
             onSourceConfigured?.Invoke(key, source);
         }
 
@@ -63,6 +70,14 @@ namespace DCL.VoiceChat
         {
             if (streams.TryRemove(key, out (Weak<AudioStream> stream, LivekitAudioSource source) pair))
             {
+                if (streamKeysByIdentity.TryGetValue(key.identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+                {
+                    keys.TryRemove(key, out _);
+
+                    if (keys.IsEmpty)
+                        streamKeysByIdentity.TryRemove(key.identity, out _);
+                }
+
                 onSourceRemoved?.Invoke(key);
                 DisposeSource(pair.source);
             }
@@ -82,24 +97,21 @@ namespace DCL.VoiceChat
 
         internal void SetMuteForIdentity(string identity, bool mute)
         {
-            // Invariant: at most 1 stream per identity. If this ever changes, replace `return` with `continue`.
-            foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> kvp in streams)
-                if (kvp.Key.identity == identity)
-                {
-                    kvp.Value.source.AudioSource.mute = mute;
-                    return;
-                }
+            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+                return;
+
+            foreach (KeyValuePair<StreamKey, byte> kvp in keys)
+                if (streams.TryGetValue(kvp.Key, out (Weak<AudioStream> stream, LivekitAudioSource source) pair))
+                    pair.source.AudioSource.mute = mute;
         }
 
         internal void RemoveStreamsByIdentity(string identity)
         {
-            // Invariant: at most 1 stream per identity. If this ever changes, replace `return` with `continue`.
-            foreach (StreamKey key in streams.Keys)
-                if (key.identity == identity)
-                {
-                    TryRemoveStream(key);
-                    return;
-                }
+            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+                return;
+
+            foreach (KeyValuePair<StreamKey, byte> kvp in keys)
+                TryRemoveStream(kvp.Key);
         }
 
         private static LivekitAudioSource CreateAndPlaySource(StreamKey key, Weak<AudioStream> stream, AudioMixerGroup mixerGroup, Transform parent, bool spatial = false)
