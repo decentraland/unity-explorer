@@ -140,7 +140,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (emote.IsLoading) continue;
 
                 // Builder-preview (and LSD) emotes are loaded via raw GLTF elsewhere
-                // (ResolveBuilderEmotePromisesSystem / LoadSceneEmotesSystem). Their DTOs carry
+                // (LoadTrimmedEmotesByParamSystem.AfterBuilderItemsLoaded / LoadSceneEmotesSystem). Their DTOs carry
                 // a sentinel manifest from CreateLSDAsset() with no version/build date, so
                 // creating an AssetBundle promise for them would NRE in PrepareCommonArguments.
                 bool skipAssetBundle = emote.DTO.assetBundleManifestVersion is { IsLSDAsset: true };

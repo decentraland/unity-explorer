@@ -111,6 +111,11 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                     LoadBuilderItem(ref intention, lambdaResponse);
+
+                // Create dependent asset promises on the intention entity's partition BEFORE returning,
+                // so they exist before the promise result is added and the entity is consumed/destroyed
+                // by the async caller.
+                AfterBuilderItemsLoaded(ref intention, partition);
             }
             else
             {
@@ -168,7 +173,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TFullAvatarElementDTO>> lambdaResponse)
         {
-            if (string.IsNullOrEmpty(builderContentURL)) return;
+            if (string.IsNullOrEmpty(builderContentURL))
+                return;
 
             if (lambdaResponse.CollectionElements is { Count: > 0 })
             {
@@ -241,5 +247,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TFullAvatarElementDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
+
+        protected virtual void AfterBuilderItemsLoaded(ref TIntention intention, IPartitionComponent partition) { }
     }
 }

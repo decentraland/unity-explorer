@@ -245,7 +245,10 @@ namespace DCL.Backpack.EmotesSection
                 {
                     //No need to do anything if the operation was canceled
                 }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.BACKPACK); }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.BACKPACK);
+                }
                 finally
                 {
                     ListPool<ITrimmedEmote>.Release(customOwnedEmotes);

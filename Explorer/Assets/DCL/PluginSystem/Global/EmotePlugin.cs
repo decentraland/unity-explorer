@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Load;
-using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -154,9 +153,6 @@ namespace DCL.PluginSystem.Global
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
                 emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
                 decentralandUrlsSource, builderContentURL);
-
-            if(builderCollectionsPreview)
-                ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
             var sharedEmotePlayer = new EmotePlayer(audioSourceReference!, legacyAnimationsEnabled: localSceneDevelopment || builderCollectionsPreview);
             emotePlayerProxy.SetObject(sharedEmotePlayer);

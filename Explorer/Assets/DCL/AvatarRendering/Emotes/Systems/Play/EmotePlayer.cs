@@ -168,6 +168,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteInUse != null)
                 Stop(emoteInUse);
 
+            view.StopLegacyAnimation();
+
             if (!pools.ContainsKey(mainAsset))
             {
                 if (IsValid(mainAsset))
@@ -282,6 +284,13 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {
+            // Disable the Mecanim animator before the legacy Animation starts: on the very first legacy
+            // emote of a fresh AvatarBase the Animation component is added live, and if the Animator is
+            // still enabled during this same frame it drives the shared transforms and the legacy clip
+            // has no visible effect until the next Play. (DisableAnimatorWhenPlayingLegacyAnimations
+            // later in the frame is a defence-in-depth, not a substitute.)
+            avatarView.AvatarAnimator.enabled = false;
+
             Animation animationComp = avatarView.AddOrGetLegacyAnimation();
 
             animationComp.playAutomatically = false;
