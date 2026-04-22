@@ -101,7 +101,9 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             try
             {
                 // Delay the profile resolution in case it's not found, as otherwise it will be re-requested every frame - it's not the desired behaviour
-                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token, batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                // In case it needs to be retrieved, force it to the catalyst, otherwise we get outdated profiles
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                 if (profile is null)
                     return;
