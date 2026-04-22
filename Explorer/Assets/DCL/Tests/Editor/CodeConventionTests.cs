@@ -145,7 +145,7 @@ namespace DCL.Tests
         [Test]
         public void VerifyShouldNotUseWaitForComplition()
         {
-            const string pattern = @"\.GetLocalizedString\b\(\)";
+            const string pattern = @"'\.GetLocalizedString\(\)'";
             ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
         }
 
