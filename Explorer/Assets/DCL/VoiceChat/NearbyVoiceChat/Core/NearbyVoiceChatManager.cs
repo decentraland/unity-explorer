@@ -35,7 +35,7 @@ namespace DCL.VoiceChat
 
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyMuteService muteService;
-        private readonly ObjectProxy<IUserBlockingCache> blockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
@@ -56,14 +56,14 @@ namespace DCL.VoiceChat
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
             NearbyMuteService muteService,
-            ObjectProxy<IUserBlockingCache> blockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
             this.muteService = muteService;
-            this.blockingCacheProxy = blockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -81,7 +81,7 @@ namespace DCL.VoiceChat
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, blockingCacheProxy);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, userBlockingCache);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -96,10 +96,10 @@ namespace DCL.VoiceChat
 
             muteService.MuteStateChanged += OnMuteStateChanged;
 
-            if (blockingCacheProxy.Configured)
-                SubscribeToBlockingEvents(blockingCacheProxy.Object!);
-
-            blockingCacheProxy.OnObjectSet += SubscribeToBlockingEvents;
+            userBlockingCache.UserBlocked += OnUserBlocked;
+            userBlockingCache.UserBlocksYou += OnUserBlocked;
+            userBlockingCache.UserUnblocked += OnUserUnblocked;
+            userBlockingCache.UserUnblocksYou += OnUserUnblocked;
 
             // Suppress while world is still loading so we do not attempt to connect before the player spawns.
             // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
@@ -124,15 +124,10 @@ namespace DCL.VoiceChat
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
 
-            blockingCacheProxy.OnObjectSet -= SubscribeToBlockingEvents;
-
-            if (blockingCacheProxy.Object != null)
-            {
-                blockingCacheProxy.Object.UserBlocked -= OnUserBlocked;
-                blockingCacheProxy.Object.UserBlocksYou -= OnUserBlocked;
-                blockingCacheProxy.Object.UserUnblocked -= OnUserUnblocked;
-                blockingCacheProxy.Object.UserUnblocksYou -= OnUserUnblocked;
-            }
+            userBlockingCache.UserBlocked -= OnUserBlocked;
+            userBlockingCache.UserBlocksYou -= OnUserBlocked;
+            userBlockingCache.UserUnblocked -= OnUserUnblocked;
+            userBlockingCache.UserUnblocksYou -= OnUserUnblocked;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -324,14 +319,6 @@ namespace DCL.VoiceChat
 
         private void OnMuteStateChanged(string walletId, bool isMuted) =>
             remoteListener.SetMuteForIdentity(walletId, isMuted);
-
-        private void SubscribeToBlockingEvents(IUserBlockingCache cache)
-        {
-            cache.UserBlocked += OnUserBlocked;
-            cache.UserBlocksYou += OnUserBlocked;
-            cache.UserUnblocked += OnUserUnblocked;
-            cache.UserUnblocksYou += OnUserUnblocked;
-        }
 
         private void OnUserBlocked(string userId)
         {

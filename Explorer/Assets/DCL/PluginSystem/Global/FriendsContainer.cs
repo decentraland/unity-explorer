@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isConnectivityStatusEnabled;
         private readonly bool includeUserBlocking;
 
-        private UniTask[] subscriptions = new UniTask[3];
+        private readonly UniTask[] subscriptions = new UniTask[3];
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -213,8 +213,7 @@ namespace DCL.PluginSystem.Global
 
             async UniTask InitUserBlockingAsync()
             {
-                userBlockingCache = new UserBlockingCache(friendsEventBus);
-                userBlockingCacheProxy.SetObject(userBlockingCache);
+                userBlockingCache = (UserBlockingCache)userBlockingCacheProxy.StrictObject;
                 socialServiceEventBus.WebSocketConnectionEstablished += SyncBlockingStatus;
 
                 BlockUserPromptView blockUserPromptPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.BlockUserPromptPrefab, ct)).Value;

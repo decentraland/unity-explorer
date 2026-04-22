@@ -667,6 +667,11 @@ namespace Global.Dynamic
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
 
+            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING)
+                ? new UserBlockingCache(friendsEventBus)
+                : new NullUserBlockingCache();
+            userBlockingCacheProxy.SetObject(userBlockingCache);
+
             var profileChangesBus = new ProfileChangesBus();
 
             var translationSettings = new PlayerPrefsTranslationSettings();
@@ -1142,7 +1147,7 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceWidget,
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
-                        userBlockingCacheProxy,
+                        userBlockingCache,
                         nearbyMuteService)
                 );
 

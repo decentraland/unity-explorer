@@ -26,21 +26,21 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
         private readonly PlaybackSourcesHub playbackSourcesHub;
-        private readonly ObjectProxy<IUserBlockingCache>? blockingCacheProxy;
+        private readonly IUserBlockingCache? userBlockingCache;
 
         private bool isDisposed;
 
-        /// <param name="blockingCacheProxy">
+        /// <param name="userBlockingCache">
         /// When supplied, streams from blocked users are skipped in <see cref="TryAddStream"/>.
         /// Pass <c>null</c> for rooms that should hear everyone (Community, private call).
         /// </param>
         public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub,
-            ObjectProxy<IUserBlockingCache>? blockingCacheProxy = null)
+            IUserBlockingCache? userBlockingCache = null)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
             this.playbackSourcesHub = playbackSourcesHub;
-            this.blockingCacheProxy = blockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
         }
 
         public void Dispose()
@@ -151,7 +151,7 @@ namespace DCL.VoiceChat
         private bool TryAddStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
-            if (blockingCacheProxy?.Object?.UserIsBlocked(key.identity) == true) return false;
+            if (userBlockingCache?.UserIsBlocked(key.identity) == true) return false;
 
             Weak<AudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(key);
             if (!stream.Resource.Has) return false;
