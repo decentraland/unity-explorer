@@ -35,6 +35,8 @@ namespace DCL.Chat.ChatMessages
         private string ownWalletAddress = string.Empty;
         private ChatReactionsMessageConfig messageReactionsConfig;
 
+        private bool reactionsEnabled = true;
+
         // View models are reused and set
         // by reference from the presenter
         private IReadOnlyList<ChatMessageViewModel> viewModels = Array.Empty<ChatMessageViewModel>();
@@ -100,6 +102,11 @@ namespace DCL.Chat.ChatMessages
             reactionsAtlasConfig = atlasConfig;
             ownWalletAddress = walletAddress;
             this.messageReactionsConfig = messageReactionsConfig;
+        }
+
+        public void SetReactionsEnabled(bool activated)
+        {
+            reactionsEnabled = activated;
         }
 
         private void ChatScrollToBottomToBottomClicked()
@@ -281,8 +288,16 @@ namespace DCL.Chat.ChatMessages
                 if (chatEntry.messageBubbleElement.reactionButton != null)
                 {
                     chatEntry.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
-                    chatEntry.messageBubbleElement.reactionButton.onClick.AddListener(() =>
-                        OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, chatEntry));
+
+                    if (reactionsEnabled)
+                    {
+                        chatEntry.messageBubbleElement.reactionButton.onClick.AddListener(() =>
+                            OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, chatEntry));
+                    }
+                    else
+                    {
+                        chatEntry.messageBubbleElement.reactionButton.gameObject.SetActive(false);
+                    }
                 }
 
                 float padding = viewModel.ShowDateDivider ? chatEntry.dateDividerElement.sizeDelta.y : prefabConf.mPadding;

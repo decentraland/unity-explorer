@@ -8,6 +8,7 @@ using DCL.Chat.ChatReactions.Debug;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Presenters;
 using DCL.Chat.ChatServices;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
@@ -83,6 +84,12 @@ namespace DCL.Chat
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
             this.chatCommandRegistry = chatCommandRegistry;
+
+            bool isChatReactionsEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED);
+
+            view.ChatReactionButton.gameObject.SetActive(isChatReactionsEnabled);
+            view.ConversationToolbarView2.SetBottomSpaceForReactionsButton(isChatReactionsEnabled);
+            view.MessageFeedView.SetReactionsEnabled(isChatReactionsEnabled);
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
@@ -214,13 +221,17 @@ namespace DCL.Chat
                 chatContextMenuService,
                 chatCommandRegistry.GetChannelMembersCommand);
 
-            var situationalReactionPresenter = new SituationalReactionPresenter(
-                reactionSimulation,
-                reactionsConfig,
-                reactionDebugState,
-                reactionDebugController,
-                view.ChatReactionButton.ReactionButton);
-            
+            SituationalReactionPresenter? situationalReactionPresenter = null;
+            if (isChatReactionsEnabled)
+            {
+                situationalReactionPresenter = new SituationalReactionPresenter(
+                    reactionSimulation,
+                    reactionsConfig,
+                    reactionDebugState,
+                    reactionDebugController,
+                    view.ChatReactionButton.ReactionButton);
+            }
+
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
             uiScope.Add(messageFeedPresenter);
@@ -228,7 +239,8 @@ namespace DCL.Chat
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionHandler);
             uiScope.Add(reactionsPresenter);
-            uiScope.Add(situationalReactionPresenter);
+            if (situationalReactionPresenter != null)
+                uiScope.Add(situationalReactionPresenter);
             uiScope.Add(emojiPanelPresenter);
             
             var mediator = new ChatUIMediator(

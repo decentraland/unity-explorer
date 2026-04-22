@@ -49,7 +49,10 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton.gameObject.SetActive(true);
-            reactionButton?.gameObject.SetActive(true);
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                reactionButton?.gameObject.SetActive(true);
+
             OnPointerEnterEvent?.Invoke();
         }
 

@@ -1,6 +1,7 @@
 using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
@@ -125,7 +126,7 @@ namespace DCL.Chat
             if (viewModel.ShowDateDivider)
                 dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
 
-            if (messageReactionsView != null)
+            if (messageReactionsView != null && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
             {
                 messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
                 messageReactionsView.UpdateReactions(viewModel.Reactions);

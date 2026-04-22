@@ -5,6 +5,7 @@ using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Views;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Prefs;
 using DCL.Settings.Settings;
@@ -36,6 +37,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         private readonly ChatReactionsSelectorView situationalSelectorView;
         private readonly ChatReactionRecentsService recentsService;
         private readonly IEventBus eventBus;
+        private readonly bool isChatReactionsEnabled;
         private ReactionMode currentMode = ReactionMode.Situational;
 
         private Transform? messageAnchor;
@@ -66,6 +68,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             this.eventBus = eventBus;
             this.situationalSelectorView = situationalSelectorView;
             this.recentsService = recentsService;
+            isChatReactionsEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED);
 
             panelPositioner = new ReactionPanelPositioner(
                 messageSelectorView.RectTransform,
@@ -262,6 +265,9 @@ namespace DCL.Chat.ChatReactions.Presenters
 
         public void Show()
         {
+            if (!isChatReactionsEnabled)
+                return;
+
             HideBar();
             buttonPresenter.Show();
         }
