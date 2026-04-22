@@ -255,6 +255,44 @@ namespace DCL.SDKComponents.Tween.Tests
         }
 
         [Test]
+        public async Task RotateContinuousAroundXAxisRotatesAroundXNotZ()
+        {
+            // direction.x is non-zero → imaginary part points along X → should rotate around X
+            // Old bug: (direction * Vector3.up) rotated Y by 90° around X → gave Z axis instead
+            var rotDir = CreateQuaternion(UnityEngine.Quaternion.AngleAxis(90f, UnityEngine.Vector3.right));
+            Entity testEntity = CreateContinuousTween<RotateContinuous>(0, rotateDirection: rotDir, speed: 90f);
+
+            await RunSystemForSeconds(1000, testEntity);
+
+            var tweener = (QuaternionTweener)world.Get<SDKTweenComponent>(testEntity).CustomTweener;
+            // After ~90° around X from identity: x ≈ 0.707, z ≈ 0
+            Assert.Greater(tweener.CurrentValue.x, 0.3f, "Rotation should be around the X axis (x component should be significant).");
+            Assert.AreEqual(0f, tweener.CurrentValue.z, 0.2f, "Z component should be near zero for X-axis rotation.");
+        }
+
+        [Test]
+        public async Task RotateContinuousPositiveAndNegativeYDirectionsAreOpposite()
+        {
+            // Old bug: both +Y and -Y mapped to Vector3.up (identity under Y-axis rotation) → same axis
+            var posYDir = CreateQuaternion(UnityEngine.Quaternion.AngleAxis(90f, UnityEngine.Vector3.up));
+            var negYDir = CreateQuaternion(UnityEngine.Quaternion.AngleAxis(90f, -UnityEngine.Vector3.up));
+
+            Entity posEntity = CreateContinuousTween<RotateContinuous>(0, rotateDirection: posYDir, speed: 90f);
+            Entity negEntity = CreateContinuousTween<RotateContinuous>(0, rotateDirection: negYDir, speed: 90f);
+
+            // Both entities must have IsDirty reset each frame, otherwise the tween is
+            // re-created every tick and never advances past the identity quaternion.
+            await RunSystemForSeconds(1000, posEntity, negEntity);
+
+            var posY = ((QuaternionTweener)world.Get<SDKTweenComponent>(posEntity).CustomTweener).CurrentValue.y;
+            var negY = ((QuaternionTweener)world.Get<SDKTweenComponent>(negEntity).CustomTweener).CurrentValue.y;
+
+            // After ~90° around +Y: y ≈ +0.707; after ~90° around -Y: y ≈ -0.707
+            Assert.Greater(posY, 0.3f, "+Y direction should produce a positive Y quaternion component.");
+            Assert.Less(negY, -0.3f, "-Y direction should produce a negative Y quaternion component.");
+        }
+
+        [Test]
         public async Task MoveContinuousMovesAndCompletesAfterDuration()
         {
             var dir = CreateVector3(1, 0, 0);
@@ -578,7 +616,7 @@ namespace DCL.SDKComponents.Tween.Tests
                 W = unityQuaternion.w,
             };
 
-        private async Task RunSystemForSeconds(int durationInMs, Entity testEntity)
+        private async Task RunSystemForSeconds(int durationInMs, params Entity[] testEntities)
         {
             int updateInterval = 1;
             float currentInterval = 0;
@@ -587,8 +625,11 @@ namespace DCL.SDKComponents.Tween.Tests
                 await Task.Delay(updateInterval);
                 currentInterval += updateInterval;
                 system!.Update(updateInterval);
-                var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);
-                pbTween.IsDirty = false; // simulate dirty reset system
+                foreach (Entity testEntity in testEntities)
+                {
+                    var pbTween = world.TryGetRef<PBTween>(testEntity, out bool exists);
+                    pbTween.IsDirty = false; // simulate dirty reset system
+                }
             }
         }
     }

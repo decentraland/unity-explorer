@@ -55,6 +55,11 @@ namespace DCL.Diagnostics
         public const string SCENE_LOADING = nameof(SCENE_LOADING);
 
         /// <summary>
+        ///     Messages related to the scene admins and their operations
+        /// </summary>
+        public const string SCENE_ADMINS = nameof(SCENE_ADMINS);
+
+        /// <summary>
         ///     Messages related to the scene UI
         /// </summary>
         public const string SCENE_UI = nameof(SCENE_UI);
