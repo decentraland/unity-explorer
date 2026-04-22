@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
+using System;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -31,8 +32,26 @@ namespace DCL.AvatarRendering.Loading.Components
         public new string? GetEntityId() =>
             DTO.id;
 
-        public bool IsUnisex() =>
-            DTO.Metadata.AbstractData.representations.Length > 1;
+        public bool IsUnisex()
+        {
+            if (DTO.Metadata.AbstractData.representations.Length == 0) return false;
+            if (DTO.Metadata.AbstractData.representations.Length > 1) return true;
+
+            bool femaleFound = false, maleFound = false;
+
+            foreach (AvatarAttachmentDTO.Representation representation in DTO.Metadata.AbstractData.representations)
+            {
+                foreach (string bodyShape in representation.bodyShapes)
+                {
+                    if (string.Equals(bodyShape, BodyShape.FEMALE, StringComparison.OrdinalIgnoreCase))
+                        femaleFound = true;
+                    else if (string.Equals(bodyShape, BodyShape.MALE, StringComparison.OrdinalIgnoreCase))
+                        maleFound = true;
+                }
+            }
+
+            return femaleFound && maleFound;
+        }
 
         public new URN GetUrn() =>
             DTO.Metadata.id;
