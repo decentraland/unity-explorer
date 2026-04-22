@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
-            }),
+            }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
