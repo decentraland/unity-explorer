@@ -21,6 +21,9 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private const int MAX_MESSAGES_PER_SECOND = 10;
         private const int RATE_LIMIT_WINDOW_MS = 1000;
         private const int MAX_TOPIC_LENGTH = 512;
+        private const int MSG_TYPE_BYTE_SIZE = 1;
+        private const int TOPIC_LENGTH_PREFIX_BYTES = sizeof(ushort);
+        private const int MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE = MSG_TYPE_BYTE_SIZE + TOPIC_LENGTH_PREFIX_BYTES;
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
         private const string EMPTY_ARRAY = "[]";
 
@@ -162,16 +165,16 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 byte[] dataBytes = Encoding.UTF8.GetBytes(data);
 
                 // Wire format: [MsgType.CommsData 1 byte][topicLen 2 bytes LE][topic UTF-8][data UTF-8].
-                int payloadLength = 2 + topicBytes.Length + dataBytes.Length;
+                int payloadLength = TOPIC_LENGTH_PREFIX_BYTES + topicBytes.Length + dataBytes.Length;
 
-                if (1 + payloadLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                if (MSG_TYPE_BYTE_SIZE + payloadLength > IJsOperations.LIVEKIT_MAX_SIZE)
                     return;
 
-                Span<byte> encoded = stackalloc byte[1 + payloadLength];
+                Span<byte> encoded = stackalloc byte[MSG_TYPE_BYTE_SIZE + payloadLength];
                 encoded[0] = (byte)ISceneCommunicationPipe.MsgType.CommsData;
-                BinaryPrimitives.WriteUInt16LittleEndian(encoded[1..], (ushort)topicBytes.Length);
-                topicBytes.AsSpan().CopyTo(encoded[3..]);
-                dataBytes.AsSpan().CopyTo(encoded[(3 + topicBytes.Length)..]);
+                BinaryPrimitives.WriteUInt16LittleEndian(encoded[MSG_TYPE_BYTE_SIZE..], (ushort)topicBytes.Length);
+                topicBytes.AsSpan().CopyTo(encoded[MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE..]);
+                dataBytes.AsSpan().CopyTo(encoded[(MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE + topicBytes.Length)..]);
 
                 sceneCommunicationPipe.SendMessage(
                     encoded, sceneId,
@@ -244,18 +247,18 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             ReadOnlySpan<byte> span = message.Data;
 
-            if (span.Length < 2) return;
+            if (span.Length < TOPIC_LENGTH_PREFIX_BYTES) return;
 
             ushort topicLength = BinaryPrimitives.ReadUInt16LittleEndian(span);
 
-            if (span.Length < 2 + topicLength) return;
+            if (span.Length < TOPIC_LENGTH_PREFIX_BYTES + topicLength) return;
 
-            string topic = Encoding.UTF8.GetString(span.Slice(2, topicLength));
+            string topic = Encoding.UTF8.GetString(span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength));
 
             if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
                 return;
 
-            string data = Encoding.UTF8.GetString(span[(2 + topicLength)..]);
+            string data = Encoding.UTF8.GetString(span[(TOPIC_LENGTH_PREFIX_BYTES + topicLength)..]);
             queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
         }
 

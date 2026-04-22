@@ -31,19 +31,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private const float MIN_SPEAKER_HOLD_SECONDS = 1.5f;
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
-        private const string PRESENTATION_BOT_PREFIX = "presentation-bot:";
 
         private readonly IRoom room;
-        private readonly List<(LivekitAudioSource source, Weak<AudioStream> stream, StreamKey key)> audioSources = new ();
-        private readonly List<StreamKey> streamKeysBuffer = new ();
+        private readonly Dictionary<StreamKey, (LivekitAudioSource source, Weak<AudioStream> stream)> audioSources = new ();
         private Weak<IVideoStream> currentVideoStream = Weak<IVideoStream>.Null;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
+        private VideoEntity? currentVideo;
         private Vector3 audioPosition;
-        private string? currentVideoIdentity;
         private float videoSwitchedAtTime;
         private float lastAudioScanTime;
-        private bool hasLiveAudio;
         private bool disposed;
 
         public bool MediaOpened =>
@@ -56,7 +53,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => currentVideoStream.Resource.Has;
 
-        private bool isAudioOpened => hasLiveAudio;
+        private bool isAudioOpened => audioSources.Count > 0;
 
         public LivekitPlayer(IRoom streamingRoom)
         {
@@ -75,11 +72,10 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                // If a specific user stream died, fallback to current-stream (first available track)
-                if (playingAddress.Value.IsUserStream(out _))
-                    ReopenVideoStream(LivekitAddress.CurrentStream());
-                else
-                    ReopenVideoStream(playingAddress.Value);
+                // Scenes only author UserStream or CurrentStream addresses, so whether the previous
+                // target was a specific user that went offline or a current-stream that had no tracks,
+                // the recovery is the same: fall back to first-available.
+                ReopenVideoStream(LivekitAddress.CurrentStream());
             }
 
             // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
@@ -93,36 +89,31 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
-            // Remove dead audio sources immediately (no lock needed).
             bool anyDied = false;
+            List<StreamKey>? deadKeys = null;
 
-            for (int i = audioSources.Count - 1; i >= 0; i--)
+            foreach (var kvp in audioSources)
             {
-                if (!audioSources[i].stream.Resource.Has)
-                {
-                    anyDied = true;
-                    var source = audioSources[i].source;
+                if (kvp.Value.stream.Resource.Has) continue;
 
-                    if (source != null)
-                        OBJECT_POOL.Release(source);
+                anyDied = true;
+                (deadKeys ??= new List<StreamKey>()).Add(kvp.Key);
 
-                    audioSources.RemoveAt(i);
-                }
+                if (kvp.Value.source != null)
+                    OBJECT_POOL.Release(kvp.Value.source);
             }
 
-            hasLiveAudio = audioSources.Count > 0;
+            if (deadKeys != null)
+                foreach (StreamKey k in deadKeys)
+                    audioSources.Remove(k);
 
             // When a stream died, rescan immediately to replace it.
             // Otherwise, throttle rescans to discover new participants without per-frame lock acquisition.
-            if (!anyDied)
-            {
-                if (UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
-                    return;
-            }
+            if (!anyDied && UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
+                return;
 
             lastAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
-            OpenAllAudioStreams();
-            hasLiveAudio = audioSources.Count > 0;
+            OpenMissingAudioStreams();
         }
 
         public void OpenMedia(LivekitAddress livekitAddress)
@@ -130,20 +121,14 @@ namespace DCL.SDKComponents.MediaStream
             CloseCurrentStream();
             lastAudioScanTime = 0f;
 
-            currentVideoIdentity = null;
-
             currentVideoStream = livekitAddress.Match(
                 this,
-                onUserStream: static (self, userStream) =>
-                {
-                    self.currentVideoIdentity = userStream.Identity;
-                    return self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
-                },
+                onUserStream: static (self, userStream) => self.OpenUserVideoStream(userStream),
+                onPresentationBotStream: static (self, bot) => self.OpenPresentationBotVideoStream(bot),
                 onCurrentStream: static self => self.FirstVideoTrackingIdentity()
             );
 
-            OpenAllAudioStreams();
-            hasLiveAudio = audioSources.Count > 0;
+            OpenMissingAudioStreams();
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
@@ -152,15 +137,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private void ReopenVideoStream(LivekitAddress livekitAddress)
         {
-            currentVideoIdentity = null;
-
             currentVideoStream = livekitAddress.Match(
                 this,
-                onUserStream: static (self, userStream) =>
-                {
-                    self.currentVideoIdentity = userStream.Identity;
-                    return self.room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
-                },
+                onUserStream: static (self, userStream) => self.OpenUserVideoStream(userStream),
+                onPresentationBotStream: static (self, bot) => self.OpenPresentationBotVideoStream(bot),
                 onCurrentStream: static self => self.FirstVideoTrackingIdentity()
             );
 
@@ -168,41 +148,20 @@ namespace DCL.SDKComponents.MediaStream
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
-        private void OpenAllAudioStreams()
+        private Weak<IVideoStream> OpenUserVideoStream(UserStream userStream)
         {
-            CollectAllAudioTracks(streamKeysBuffer);
-
-            foreach (StreamKey key in streamKeysBuffer)
-            {
-                if (HasAudioSourceForKey(key))
-                    continue;
-
-                Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
-
-                if (!audioStream.Resource.Has)
-                    continue;
-
-                LivekitAudioSource source = OBJECT_POOL.Get();
-                source.Construct(audioStream);
-                source.SetVolume(Volume);
-                source.transform.position = audioPosition;
-                source.Play();
-                audioSources.Add((source, audioStream, key));
-            }
+            currentVideo = VideoEntity.FromUser(userStream);
+            return room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
         }
 
-        private bool HasAudioSourceForKey(StreamKey key)
+        private Weak<IVideoStream> OpenPresentationBotVideoStream(PresentationBotStream bot)
         {
-            foreach (var (_, _, existingKey) in audioSources)
-                if (existingKey.Equals(key)) return true;
-
-            return false;
+            currentVideo = VideoEntity.FromPresentationBot(bot);
+            return room.VideoStreams.ActiveStream(new StreamKey(bot.Identity, bot.Sid));
         }
 
-        private void CollectAllAudioTracks(List<StreamKey> output)
+        private void OpenMissingAudioStreams()
         {
-            output.Clear();
-
             lock (room.Participants)
             {
                 foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
@@ -213,8 +172,27 @@ namespace DCL.SDKComponents.MediaStream
                         continue;
 
                     foreach ((string sid, TrackPublication track) in participant.Tracks)
-                        if (track.Kind == TrackKind.KindAudio)
-                            output.Add(new StreamKey(identity, sid));
+                    {
+                        if (track.Kind != TrackKind.KindAudio)
+                            continue;
+
+                        var key = new StreamKey(identity, sid);
+
+                        if (audioSources.ContainsKey(key))
+                            continue;
+
+                        Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
+
+                        if (!audioStream.Resource.Has)
+                            continue;
+
+                        LivekitAudioSource source = OBJECT_POOL.Get();
+                        source.Construct(audioStream);
+                        source.SetVolume(Volume);
+                        source.transform.position = audioPosition;
+                        source.Play();
+                        audioSources[key] = (source, audioStream);
+                    }
                 }
             }
         }
@@ -225,28 +203,28 @@ namespace DCL.SDKComponents.MediaStream
 
             if (result.HasValue == false)
             {
-                currentVideoIdentity = null;
+                currentVideo = null;
                 return Weak<IVideoStream>.Null;
             }
 
-            currentVideoIdentity = result.Value.identity;
+            currentVideo = VideoEntity.FromIdentity(result.Value.identity, result.Value.sid);
             return room.VideoStreams.ActiveStream(result.Value);
         }
 
         private void TryFollowActiveSpeaker()
         {
-            if (playingAddress!.Value.IsUserStream(out _)) return;
+            if (playingAddress is not { } playing) return;
+            if (playing.IsUserStream(out _)) return;
 
             // If a presentation bot is active, try to switch to it and don't follow speakers.
             if (TrySwitchToPresentationBot()) return;
 
             // If currently showing a presentation bot, don't switch away to a speaker.
-            if (currentVideoIdentity != null && currentVideoIdentity.StartsWith(PRESENTATION_BOT_PREFIX)) return;
+            if (currentVideo?.IsPresentationBot == true) return;
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
-            string? activeSpeaker = null;
-            List<string>? activeSpeakersSnapshot = null;
+            List<string> activeSpeakersSnapshot;
 
             try
             {
@@ -254,7 +232,8 @@ namespace DCL.SDKComponents.MediaStream
 
                 // ActiveSpeakers is backed by a plain List<string> in the livekit-sdk
                 // (DefaultActiveSpeakers) mutated on the FFI thread without synchronization.
-                // Snapshot to a local list so iteration is safe on the main thread.
+                // The SDK owns this list, so a lock on our side would not protect FFI-thread writes —
+                // snapshot-under-retry is the best defence available without an SDK change.
                 activeSpeakersSnapshot = new List<string>(room.ActiveSpeakers);
             }
             catch (InvalidOperationException)
@@ -263,21 +242,18 @@ namespace DCL.SDKComponents.MediaStream
                 return;
             }
 
-            foreach (string speakerIdentity in activeSpeakersSnapshot)
-            {
-                activeSpeaker = speakerIdentity;
-                break;
-            }
+            if (activeSpeakersSnapshot.Count == 0) return;
 
-            if (activeSpeaker == null) return;
-            if (activeSpeaker == currentVideoIdentity) return;
+            string activeSpeaker = activeSpeakersSnapshot[0];
+
+            if (activeSpeaker == currentVideo?.Identity) return;
 
             StreamKey? videoTrack = FindVideoTrackForParticipant(activeSpeaker);
 
             if (videoTrack == null) return;
 
             currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
-            currentVideoIdentity = activeSpeaker;
+            currentVideo = VideoEntity.FromIdentity(activeSpeaker, videoTrack.Value.sid);
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
@@ -318,7 +294,7 @@ namespace DCL.SDKComponents.MediaStream
                         if (value.Kind == kind)
                         {
                             // Presentation bot always has priority.
-                            if (remoteParticipantIdentity.StartsWith(PRESENTATION_BOT_PREFIX))
+                            if (remoteParticipantIdentity.IsPresentationBotIdentity())
                                 return new StreamKey(remoteParticipantIdentity, sid);
 
                             fallback ??= new StreamKey(remoteParticipantIdentity, sid);
@@ -333,7 +309,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool TrySwitchToPresentationBot()
         {
             // Already on the presentation bot.
-            if (currentVideoIdentity != null && currentVideoIdentity.StartsWith(PRESENTATION_BOT_PREFIX))
+            if (currentVideo?.IsPresentationBot == true)
                 return true;
 
             StreamKey? botTrack = FindPresentationBotVideoTrack();
@@ -341,7 +317,7 @@ namespace DCL.SDKComponents.MediaStream
             if (botTrack == null) return false;
 
             currentVideoStream = room.VideoStreams.ActiveStream(botTrack.Value);
-            currentVideoIdentity = botTrack.Value.identity;
+            currentVideo = VideoEntity.FromPresentationBot(new PresentationBotStream(botTrack.Value.identity, botTrack.Value.sid));
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
             return true;
         }
@@ -352,7 +328,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
                 {
-                    if (!identity.StartsWith(PRESENTATION_BOT_PREFIX))
+                    if (!identity.IsPresentationBotIdentity())
                         continue;
 
                     var participant = room.Participants.RemoteParticipant(identity);
@@ -372,7 +348,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private void ReleaseAllAudioSources()
         {
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
             {
                 // Source might already be destroyed when closing the game with a running livekit stream.
                 if (source != null)
@@ -386,8 +362,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             // Doesn't need to dispose the stream, because it's responsibility of the owning room.
             currentVideoStream = Weak<IVideoStream>.Null;
-            currentVideoIdentity = null;
-            hasLiveAudio = false;
+            currentVideo = null;
             playerState = PlayerState.STOPPED;
             ReleaseAllAudioSources();
         }
@@ -418,7 +393,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             playerState = PlayerState.PLAYING;
 
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
                 source.Play();
         }
 
@@ -427,7 +402,7 @@ namespace DCL.SDKComponents.MediaStream
             playerState = PlayerState.PAUSED;
 
             // There is no "pause" for a streaming source.
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
                 source.Stop();
         }
 
@@ -435,7 +410,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             playerState = PlayerState.STOPPED;
 
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
                 source.Stop();
         }
 
@@ -443,7 +418,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             Volume = target;
 
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
                 source.SetVolume(target);
         }
 
@@ -458,7 +433,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             audioPosition = position;
 
-            foreach (var (source, _, _) in audioSources)
+            foreach (var (source, _) in audioSources.Values)
                 source.transform.position = position;
         }
 
@@ -468,10 +443,10 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public AudioSource? ExposedAudioSource()
         {
-            if (audioSources.Count == 0)
-                return null;
+            foreach (var (source, _) in audioSources.Values)
+                return source.gameObject.GetComponent<AudioSource>();
 
-            return audioSources[0].source.gameObject.GetComponent<AudioSource>();
+            return null;
         }
     }
 }
