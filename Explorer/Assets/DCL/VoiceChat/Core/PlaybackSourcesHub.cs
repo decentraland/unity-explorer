@@ -68,12 +68,6 @@ namespace DCL.VoiceChat
             }
         }
 
-        internal void SetMuteAll(bool mute)
-        {
-            foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in streams.Values)
-                pair.source.AudioSource.mute = mute;
-        }
-
         internal void Stop()
         {
             foreach ((Weak<AudioStream> stream, LivekitAudioSource source) pair in streams.Values)

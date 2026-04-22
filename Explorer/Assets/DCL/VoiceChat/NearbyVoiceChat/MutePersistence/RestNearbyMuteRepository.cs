@@ -29,6 +29,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         public async UniTask<List<string>> GetAllMutedUsersAsync(CancellationToken ct) =>
             await PaginateMutesAsync(FetchPageAsync, ct);
 
+        // Extracted for testability of PaginateMutesAsync function
         private UniTask<GetMutesResponse> FetchPageAsync(int offset, CancellationToken ct) =>
             webRequestController
                 .SignedFetchGetAsync($"{mutesUrl}?limit={PAGE_SIZE}&offset={offset}", string.Empty, ct)

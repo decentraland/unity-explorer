@@ -4,7 +4,6 @@ using DCL.Friends.UserBlocking;
 using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
-using DCL.LiveKit.Public;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -12,7 +11,6 @@ using LiveKit.Rooms.TrackPublications;
 using RichTypes;
 using System;
 using System.Collections.Generic;
-using AudioStreamInfo = LiveKit.Rooms.Streaming.Audio.AudioStreamInfo;
 
 namespace DCL.VoiceChat
 {
@@ -31,9 +29,6 @@ namespace DCL.VoiceChat
         private readonly ObjectProxy<IUserBlockingCache>? blockingCacheProxy;
 
         private bool isDisposed;
-        internal bool isSuppressed { get; private set; }
-
-        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> RemoteStreams => playbackSourcesHub.Streams;
 
         /// <param name="blockingCacheProxy">
         /// When supplied, streams from blocked users are skipped in <see cref="TryAddStream"/>.
@@ -56,9 +51,6 @@ namespace DCL.VoiceChat
             StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
-
-        public void ActiveStreamsInfo(List<StreamInfo<AudioStreamInfo>> output) =>
-            voiceChatRoom.AudioStreams.ListInfo(output);
 
         public async UniTaskVoid StartListeningAsync()
         {
@@ -126,20 +118,6 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unsubscribed from {participant.Identity}{(isLocalLoopback ? " (loopback)" : " (new remote)")}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}{(isLocalLoopback ? " (loopback)" : " (new remote)")}"); }
-        }
-
-        internal void MuteAll()
-        {
-            if (isSuppressed) return;
-            isSuppressed = true;
-            playbackSourcesHub.SetMuteAll(true);
-        }
-
-        internal void UnmuteAll()
-        {
-            if (!isSuppressed) return;
-            isSuppressed = false;
-            playbackSourcesHub.SetMuteAll(false);
         }
 
         internal void RemoveStreamsByIdentity(string identity) =>
