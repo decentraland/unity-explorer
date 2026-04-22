@@ -88,7 +88,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             UpdateEmoteTagsQuery(World);
             UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
-            DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
         }
 
@@ -389,13 +388,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent) =>
             characterController.enabled = !emoteComponent.IsPlayingEmote;
-
-        [Query]
-        private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
-        {
-            if (emote.CurrentEmoteReference && emote.CurrentEmoteReference.legacy)
-                avatarView.AvatarAnimator.enabled = false;
-        }
 
         [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)

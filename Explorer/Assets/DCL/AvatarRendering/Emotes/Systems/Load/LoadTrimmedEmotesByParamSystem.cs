@@ -20,7 +20,6 @@ namespace DCL.AvatarRendering.Emotes.Load
     public partial class LoadTrimmedEmotesByParamSystem : LoadTrimmedElementsByIntentionSystem<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention, ITrimmedEmote, TrimmedEmoteDTO, IEmote, EmoteDTO>
     {
         private readonly IEmoteStorage emoteStorage;
-        private readonly IURLBuilder builderPromiseUrlBuilder = new URLBuilder();
 
         public LoadTrimmedEmotesByParamSystem(
             World world,
@@ -55,7 +54,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             {
                 if (trimmedEmote is not IEmote emote) continue;
 
-                BuilderEmoteAssetPromiseFactory.TryCreate(World!, emote, partition, emoteStorage, builderPromiseUrlBuilder);
+                BuilderEmoteAssetPromiseFactory.TryCreate(World!, emote, partition, emoteStorage, urlBuilder);
             }
         }
     }

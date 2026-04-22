@@ -53,30 +53,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void LegacyAnimation_IsPreCreatedInAwake()
-        {
-            Assert.IsNotNull(avatarBase.LegacyAnimation,
-                "AvatarBase.Awake must pre-create the legacy Animation component so the first PlayLegacyEmote doesn't AddComponent<Animation>() live (which silently no-ops the playback for that frame).");
-            Assert.IsFalse(avatarBase.IsLegacyAnimationPlaying,
-                "Pre-created Animation must stay idle until a clip is explicitly played.");
-        }
-
-        [Test]
         public void IsLegacyAnimationPlaying_ReturnsFalse_WhenLegacyAnimationExistsButIsNotPlaying()
         {
             avatarBase.AddOrGetLegacyAnimation();
 
             Assert.IsFalse(avatarBase.IsLegacyAnimationPlaying,
                 "An idle Animation component must not gate the Mecanim animator or its setters.");
-        }
-
-        [Test]
-        public void StopLegacyAnimation_IsNoOp_WhenLegacyAnimationIsIdle()
-        {
-            Assert.IsNotNull(avatarBase.LegacyAnimation);
-
-            Assert.DoesNotThrow(() => avatarBase.StopLegacyAnimation(),
-                "StopLegacyAnimation is called eagerly by EmotePlayer.AcquireEmoteReferences on every Play — it must be safe when the Animation is idle.");
         }
 
         [Test]
