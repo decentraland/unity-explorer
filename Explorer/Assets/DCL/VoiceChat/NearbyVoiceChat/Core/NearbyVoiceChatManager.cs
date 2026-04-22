@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
+using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
@@ -30,11 +32,16 @@ namespace DCL.VoiceChat
 
         private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
+
         private readonly NearbyVoiceChatStateModel stateModel;
+        private readonly NearbyMuteService muteService;
+        private readonly IUserBlockingCache userBlockingCache;
+
         private readonly MicrophoneTrackPublisher micPublisher;
         private readonly RemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
+        private readonly IDisposable loadingStageSubscription;
         private readonly IDisposable? nearbyStateSubscription;
 
         private CancellationTokenSource? activationCts;
@@ -47,11 +54,16 @@ namespace DCL.VoiceChat
             VoiceChatConfiguration configuration,
             ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            NearbyVoiceChatStateModel stateModel)
+            NearbyVoiceChatStateModel stateModel,
+            NearbyMuteService muteService,
+            IUserBlockingCache userBlockingCache,
+            ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
+            this.muteService = muteService;
+            this.userBlockingCache = userBlockingCache;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -64,10 +76,12 @@ namespace DCL.VoiceChat
                     lkSource.AudioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
                     lkSource.ApplySpatialSettings(configuration);
                     activeAudioSources[key.identity] = lkSource;
+
+                    lkSource.AudioSource.mute = muteService.IsMuted(key.identity);
                 },
                 onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
 
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub);
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, userBlockingCache);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -80,6 +94,20 @@ namespace DCL.VoiceChat
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
+            muteService.MuteStateChanged += OnMuteStateChanged;
+
+            userBlockingCache.UserBlocked += OnUserBlocked;
+            userBlockingCache.UserBlocksYou += OnUserBlocked;
+            userBlockingCache.UserUnblocked += OnUserUnblocked;
+            userBlockingCache.UserUnblocksYou += OnUserUnblocked;
+
+            // Suppress while world is still loading so we do not attempt to connect before the player spawns.
+            // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
+            if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+                stateModel.Suppress(SuppressionReason.LOADING);
+
+            loadingStageSubscription = loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
+
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Initialized, waiting for Island Room connection");
             Connect();
         }
@@ -91,7 +119,15 @@ namespace DCL.VoiceChat
 
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
+            loadingStageSubscription.Dispose();
             nearbyStateSubscription?.Dispose();
+
+            muteService.MuteStateChanged -= OnMuteStateChanged;
+
+            userBlockingCache.UserBlocked -= OnUserBlocked;
+            userBlockingCache.UserBlocksYou -= OnUserBlocked;
+            userBlockingCache.UserUnblocked -= OnUserUnblocked;
+            userBlockingCache.UserUnblocksYou -= OnUserUnblocked;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -138,6 +174,14 @@ namespace DCL.VoiceChat
                 stateModel.Suppress(SuppressionReason.CALL);
             else if (status.IsNotConnected())
                 stateModel.Resume(SuppressionReason.CALL);
+        }
+
+        private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
+        {
+            if (stage == LoadingStatus.LoadingStage.Completed)
+                stateModel.Resume(SuppressionReason.LOADING);
+            else
+                stateModel.Suppress(SuppressionReason.LOADING);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
@@ -271,6 +315,29 @@ namespace DCL.VoiceChat
                     catch (OperationCanceledException) { return; }
                 }
             }
+        }
+
+        private void OnMuteStateChanged(string walletId, bool isMuted) =>
+            remoteListener.SetMuteForIdentity(walletId, isMuted);
+
+        private void OnUserBlocked(string userId)
+        {
+            if (disposed) return;
+
+            remoteListener.RemoveStreamsByIdentity(userId);
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
+        }
+
+        private void OnUserUnblocked(string userId)
+        {
+            if (disposed) return;
+
+            // Only re-add while listening — suppressed/disabled states will rehydrate via StartListeningAsync on resume.
+            if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING))
+                return;
+
+            remoteListener.AddStreamsForIdentityAsync(userId).Forget();
+            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Restoring nearby audio for unblocked user {userId}");
         }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)

@@ -2,7 +2,6 @@
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -19,7 +18,7 @@ namespace DCL.Chat.ChatServices
     {
         private readonly IRoomHub roomHub;
         private readonly ChatEventBus eventBus;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCache;
+        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly HashSet<string> onlineParticipants = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<string> blockedOnlineParticipants = new (PoolConstants.AVATARS_COUNT);
@@ -34,7 +33,7 @@ namespace DCL.Chat.ChatServices
         }
 
         public NearbyUserStateService(IRoomHub roomHub, ChatEventBus eventBus,
-            ObjectProxy<IUserBlockingCache> userBlockingCache)
+            IUserBlockingCache userBlockingCache)
         {
             this.roomHub = roomHub;
             this.eventBus = eventBus;
@@ -54,12 +53,10 @@ namespace DCL.Chat.ChatServices
             roomHub.IslandRoom().ConnectionStateChanged += OnRoomConnectionStateChange;
             roomHub.SceneRoom().Room().ConnectionStateChanged += OnRoomConnectionStateChange;
 
-            if (!userBlockingCache.Configured) return;
-
-            userBlockingCache.StrictObject.UserBlocked += BlockedSetOffline;
-            userBlockingCache.StrictObject.UserBlocksYou += BlockedSetOffline;
-            userBlockingCache.StrictObject.UserUnblocked += UnblockedSetOnline;
-            userBlockingCache.StrictObject.UserUnblocksYou += UnblockedSetOnline;
+            userBlockingCache.UserBlocked += BlockedSetOffline;
+            userBlockingCache.UserBlocksYou += BlockedSetOffline;
+            userBlockingCache.UserUnblocked += UnblockedSetOnline;
+            userBlockingCache.UserUnblocksYou += UnblockedSetOnline;
         }
 
         public void CopyOnlineParticipantsTo(HashSet<string> destination)
@@ -91,12 +88,10 @@ namespace DCL.Chat.ChatServices
 
             lock (onlineParticipants) { onlineParticipants.Clear(); }
 
-            if (!userBlockingCache.Configured) return;
-
-            userBlockingCache.StrictObject.UserBlocked -= BlockedSetOffline;
-            userBlockingCache.StrictObject.UserBlocksYou -= BlockedSetOffline;
-            userBlockingCache.StrictObject.UserUnblocked -= UnblockedSetOnline;
-            userBlockingCache.StrictObject.UserUnblocksYou -= UnblockedSetOnline;
+            userBlockingCache.UserBlocked -= BlockedSetOffline;
+            userBlockingCache.UserBlocksYou -= BlockedSetOffline;
+            userBlockingCache.UserUnblocked -= UnblockedSetOnline;
+            userBlockingCache.UserUnblocksYou -= UnblockedSetOnline;
         }
 
         private void RefreshAllOnlineParticipants(IReadOnlyCollection<string> participantIdentities)
@@ -107,7 +102,7 @@ namespace DCL.Chat.ChatServices
                 blockedOnlineParticipants.Clear();
 
                 foreach (string participantIdentity in participantIdentities)
-                    if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(participantIdentity))
+                    if (userBlockingCache.UserIsBlocked(participantIdentity))
                         blockedOnlineParticipants.Add(participantIdentity);
                     else
                         onlineParticipants.Add(participantIdentity);
@@ -128,7 +123,7 @@ namespace DCL.Chat.ChatServices
         {
             lock (onlineParticipants)
             {
-                bool participantIsBlocked = userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(participant.Identity);
+                bool participantIsBlocked = userBlockingCache.UserIsBlocked(participant.Identity);
 
                 if (update == UpdateFromParticipant.Connected)
                 {
