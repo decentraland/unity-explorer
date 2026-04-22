@@ -56,7 +56,7 @@ namespace SceneRunner.Admins
         private readonly ISceneData sceneData;
 
         private readonly CancellationTokenSource cts = new ();
-        private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
+        private readonly DCLSemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
         private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
         
         private bool initialLoadFinished;
