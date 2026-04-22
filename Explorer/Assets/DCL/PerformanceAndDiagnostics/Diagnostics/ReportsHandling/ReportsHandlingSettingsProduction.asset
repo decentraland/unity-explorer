@@ -418,16 +418,6 @@ MonoBehaviour:
       Severity: 4
     - Category: DONATIONS
       Severity: 1
-    - Category: SCENE_ADMINS
-      Severity: 4
-    - Category: SCENE_ADMINS
-      Severity: 1
-    - Category: RUNTIME_DEEPLINKS
-      Severity: 1
-    - Category: RUNTIME_DEEPLINKS
-      Severity: 4
-    - Category: SCENE_ADMINS
-      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
