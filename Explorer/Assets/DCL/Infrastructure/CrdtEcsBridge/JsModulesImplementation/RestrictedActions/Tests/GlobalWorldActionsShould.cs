@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -8,21 +9,20 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Profiles.Bunches;
-using DCL.SceneRunner.Scene;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Entity = Arch.Core.Entity;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.SceneRunner.Scene;
+using DCL.Utility;
+using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
-using Entity = Arch.Core.Entity;
-using Object = UnityEngine.Object;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Dispose();
 
             if (playerGameObject != null)
-                Object.DestroyImmediate(playerGameObject);
+                UnityEngine.Object.DestroyImmediate(playerGameObject);
         }
 
         [Test]
@@ -196,7 +196,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var emoteUrn = new URN("urn:emote:id");
             var isLooping = true;
 
-            globalWorldActions.TriggerEmote(emoteUrn, isLooping, AvatarEmoteMask.AemFullBody);
+            globalWorldActions.TriggerEmote(emoteUrn, isLooping);
 
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
             var intent = world.Get<CharacterEmoteIntent>(playerEntity);
@@ -215,7 +215,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
             var emoteUrn = new URN("urn:emote:id");
 
-            globalWorldActions.TriggerEmote(emoteUrn, false, AvatarEmoteMask.AemFullBody);
+            globalWorldActions.TriggerEmote(emoteUrn, false);
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
             Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
@@ -236,7 +236,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, CancellationToken.None);
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
@@ -257,7 +257,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, CancellationToken.None);
 
             LogAssert.Expect(LogType.Error, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '_emote.glb'");
 
@@ -281,7 +281,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, CancellationToken.None);
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
@@ -296,7 +296,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };
             var hash = "emote_hash_invisible";
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, CancellationToken.None);
 
             Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
@@ -305,25 +305,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         // Mocks
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
-            public List<(URN emoteId, bool isLooping, AvatarEmoteMask mask)> SentEmotes = new ();
+            public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
 
-            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
-                throw new NotImplementedException();
-
-            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) // Parameter name from interface
+            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
             {
-                SentEmotes.Add((urn, loopCyclePassed, mask));
+                SentEmotes.Add((urn, loopCyclePassed));
             }
-
-            public void SendStop() =>
-                throw new NotImplementedException();
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
-
-            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
-                throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData
