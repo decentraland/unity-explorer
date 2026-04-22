@@ -147,6 +147,9 @@ namespace DCL.Tests
         {
             const string pattern = @"'\.GetLocalizedString\(\)'";
             ValidateNoForbiddenApiUsed(pattern, "Use async version instead.", ignorePaths: null);
+
+            const string PATTERN_WAIT_FOR_COMPLITION = @"'\.WaitForComplition\(\)'";
+            ValidateNoForbiddenApiUsed(PATTERN_WAIT_FOR_COMPLITION, "Use async version instead.", ignorePaths: null);
         }
 
         [Test]
