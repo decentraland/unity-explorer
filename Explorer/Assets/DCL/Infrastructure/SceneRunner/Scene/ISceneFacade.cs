@@ -4,6 +4,7 @@ using DCL.PluginSystem.World;
 using System;
 using System.Threading;
 using UnityEngine;
+using SceneRunner.Admins;
 
 namespace SceneRunner.Scene
 {
@@ -14,6 +15,7 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
+        SceneAdmins SceneAdmins { get; }
         bool IsEmpty { get; }
 
         void Initialize();

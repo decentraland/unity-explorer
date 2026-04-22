@@ -203,6 +203,7 @@ Systems write to `IECSToCRDTWriter` (`PutMessage`, `AppendMessage`, `DeleteMessa
 
 ## Gotchas
 
+- **`getMutableOrNull` marks the component dirty.** In scene-side TypeScript (SDK), calling `getMutableOrNull` on a component marks it dirty in the CRDT system, which sets `IsDirty = true` on the Explorer side. **Never use `getMutableOrNull` for read-only access** (e.g., reading values to render a UI panel). Use `getOrNull` instead. Calling `getMutableOrNull` every frame in a UI render function causes the component to be permanently dirty, triggering full property re-application and side effects like re-triggering bursts, restarting animations, or redundant material operations.
 - **V8 engines are not poolable.** Each scene creates a new `V8ScriptEngine`; when disposed, the engine is gone. This creates GC pressure but `ScriptEngine` is not reusable. ClearScript handles unmanaged cleanup.
 - **No thread affinity.** After any `await` in scene code, the thread may change. Never cache `Thread.CurrentThread` or use thread-local storage.
 - **API implementations must be thread-agnostic.** Shared resources must be thread-safe. This applies to all `JsApiWrapper<T>` implementations.
