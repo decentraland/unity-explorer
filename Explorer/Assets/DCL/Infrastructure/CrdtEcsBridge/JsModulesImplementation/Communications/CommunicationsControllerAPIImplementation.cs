@@ -2,7 +2,6 @@
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
-using System.IO;
 using System.Text;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -35,7 +34,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             int totalLength = dataOffset + message.Data.Length;
 
             if (totalLength > IJsOperations.LIVEKIT_MAX_SIZE)
-                throw new InternalBufferOverflowException(
+                throw new Exception(
                     "Received a message larger than LIVEKIT_MAX_SIZE");
 
             message.Data.CopyTo(array.Array.AsSpan(dataOffset));

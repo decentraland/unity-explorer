@@ -162,7 +162,7 @@ namespace DCL.Tests
             };
             ValidateNoForbiddenApiUsed(
                     pattern,
-                    "Guard File IO operations under #if !UNITY_WEBGL and update the test.",
+                    "If you sure the file won't be used in webgl then guard File IO operations under #if !UNITY_WEBGL and update the test.",
                     ignorePaths
                     );
         }
