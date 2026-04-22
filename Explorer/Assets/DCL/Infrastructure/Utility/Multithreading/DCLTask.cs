@@ -21,15 +21,13 @@ namespace Utility.Multithreading
 
 
 #if UNITY_WEBGL
-        public static async UniTask RunOnThreadPool(
+        public static UniTask RunOnThreadPool(
                 Func<UniTask> action,
                 bool configureAwait = true,
-                CancellationToken cancellationToken = default)
-        {
-            await action();
-        }
+                CancellationToken cancellationToken = default) =>
+            action();
 #else
-        public static async UniTask RunOnThreadPool(
+        public static UniTask RunOnThreadPool(
                 Func<UniTask> action,
                 bool configureAwait = true,
                 CancellationToken cancellationToken = default) =>
@@ -54,6 +52,20 @@ namespace Utility.Multithreading
             UniTask.RunOnThreadPool(func, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
 #endif
 
+        // Basically created for Explorer/Assets/DCL/Infrastructure/SceneRunner/SceneFacade.cs
+#if UNITY_WEBGL
+        public static UniTask Delay(
+                int sleepMS,
+                CancellationToken cancellationToken = default) =>
+            UniTask.Delay(sleepMS, ct);
+#else
+        public static System.Threading.Tasks.Task Delay(
+                int sleepMS,
+                CancellationToken cancellationToken = default) =>
+            System.Threading.Tasks.Task.Delay(sleepMS, cancellationToken);
+#endif
+        // end created for
+
 #if UNITY_WEBGL
         public static UniTask RunOnThreadPool(
                 Action action,
@@ -64,7 +76,7 @@ namespace Utility.Multithreading
             return UniTask.CompletedTask;
         }
 #else
-        public static async UniTask RunOnThreadPool(
+        public static UniTask RunOnThreadPool(
                 Action action,
                 bool configureAwait = true,
                 CancellationToken cancellationToken = default) =>
