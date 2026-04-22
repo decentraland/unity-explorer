@@ -62,6 +62,36 @@ namespace DCL.AuthenticationScreenFlow
 
         private int hideAnimHash = UIAnimationHashes.OUT;
 
+        public void SetBodyTypeDropdownOpen(bool isOpen)
+        {
+            BodyTypeDropdownPanel.SetActive(isOpen);
+            ChevronIcon.localRotation = Quaternion.Euler(0, 0, isOpen ? 180f : 0f);
+        }
+
+        public void UpdateBodyTypeUI(bool isMale)
+        {
+            BodyTypeLabel.text = isMale ? GetLocalizedBodyType(true) : GetLocalizedBodyType(false);
+
+            DropdownManIcon.SetActive(isMale);
+            DropdownWomanIcon.SetActive(!isMale);
+
+            CheckmarkIconA.SetActive(isMale);
+            CheckmarkIconB.SetActive(!isMale);
+        }
+
+        private static string GetLocalizedBodyType(bool isMale)
+        {
+            string key = isMale ? "BODY_TYPE_A" : "BODY_TYPE_B";
+            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
+            try
+            {
+                var localized = new UnityEngine.Localization.LocalizedString("Authentication", key);
+                string result = localized.GetLocalizedString();
+                return !string.IsNullOrEmpty(result) ? result : fallback;
+            }
+            catch { return fallback; }
+        }
+
         public void Show()
         {
             ShowAsync(CancellationToken.None).Forget();

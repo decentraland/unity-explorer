@@ -110,9 +110,8 @@ namespace DCL.AuthenticationScreenFlow
             view.BodyTypeDropdownButton.onClick.AddListener(ToggleBodyTypeDropdown);
             view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
             view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
-            view.BodyTypeDropdownPanel.SetActive(false);
-            view.ChevronIcon.localRotation = Quaternion.identity;
-            UpdateBodyTypeUI();
+            view.SetBodyTypeDropdownOpen(false);
+            view.UpdateBodyTypeUI(selectedBodyType.Equals(BodyShape.MALE));
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -263,46 +262,16 @@ namespace DCL.AuthenticationScreenFlow
         private void ToggleBodyTypeDropdown()
         {
             bool isOpen = !view.BodyTypeDropdownPanel.activeSelf;
-            view.BodyTypeDropdownPanel.SetActive(isOpen);
-            // Flip chevron: 180° when open, 0° when closed
-            view.ChevronIcon.localRotation = Quaternion.Euler(0, 0, isOpen ? 180f : 0f);
+            view.SetBodyTypeDropdownOpen(isOpen);
         }
 
         private void SelectBodyType(BodyShape bodyShape)
         {
             selectedBodyType = bodyShape;
-            view.BodyTypeDropdownPanel.SetActive(false);
-            view.ChevronIcon.localRotation = Quaternion.identity;
-            UpdateBodyTypeUI();
+            view.SetBodyTypeDropdownOpen(false);
+            view.UpdateBodyTypeUI(bodyShape.Equals(BodyShape.MALE));
             // Regenerate avatar with the new body type
             UpdateCharacterPreview(CreateRandomAvatar());
-        }
-
-        private void UpdateBodyTypeUI()
-        {
-            bool isMale = selectedBodyType.Equals(BodyShape.MALE);
-            view.BodyTypeLabel.text = GetLocalizedBodyType(isMale);
-
-            // Toggle man/woman icon in the dropdown button
-            view.DropdownManIcon.SetActive(isMale);
-            view.DropdownWomanIcon.SetActive(!isMale);
-
-            // Toggle checkmark on selected option
-            view.CheckmarkIconA.SetActive(isMale);
-            view.CheckmarkIconB.SetActive(!isMale);
-        }
-
-        private static string GetLocalizedBodyType(bool isMale)
-        {
-            string key = isMale ? "BODY_TYPE_A" : "BODY_TYPE_B";
-            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
-            try
-            {
-                var localized = new UnityEngine.Localization.LocalizedString("Authentication", key);
-                string result = localized.GetLocalizedString();
-                return !string.IsNullOrEmpty(result) ? result : fallback;
-            }
-            catch { return fallback; }
         }
 
         private void OnToggleChanged(bool _) =>
