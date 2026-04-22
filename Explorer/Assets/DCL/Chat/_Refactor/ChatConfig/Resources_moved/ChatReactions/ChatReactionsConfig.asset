@@ -25,9 +25,7 @@ MonoBehaviour:
   StreamRemotePlayers: 0
   StreamCommandEmitRate: 15
   StreamCommandSendBudget: 10
-  MaxReceiveQueueDepth: 120
-  DynamicStaggerRampStart: 15
-  MinStaggerInterval: 0
-  MaxRemoteUIReactionsPerSec: 10
+  SituationalReceiveStaggerInterval: 0.16
+  MaxPerAvatarQueued: 64
   DynamicScalingEnabled: 0
   WorldPoolTargetUtilization: 0.7

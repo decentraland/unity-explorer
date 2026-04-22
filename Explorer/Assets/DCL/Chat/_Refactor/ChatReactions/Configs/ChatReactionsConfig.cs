@@ -65,22 +65,21 @@ namespace DCL.Chat.ChatReactions.Configs
         [Range(1f, 60f)]
         public float StreamCommandSendBudget = 10f;
 
-        [Header("DEBUG — RECEIVE LIMITING")]
-        [Note("Max queued remote reactions. Newest dropped when exceeded. 0 = unlimited.")]
-        [Range(0, 500)]
-        public int MaxReceiveQueueDepth = 120;
-
-        [Note("Queue depth where dynamic stagger ramp begins. Must be less than MaxReceiveQueueDepth for the ramp to take effect.")]
-        [Range(0, 100)]
-        public int DynamicStaggerRampStart = 15;
-
-        [Note("Stagger floor at max queue depth. 0 = drain all instantly.")]
+        [Header("SITUATIONAL RECEIVE")]
+        [Note("Seconds between each particle when draining a remote avatar's cascade. " +
+              "Applies per-avatar — every avatar cascades independently at this rate. " +
+              "Tune so drain time (interval × batch size) is slightly longer than the sender's inter-batch " +
+              "arrival time (NetworkDebounceSeconds + network latency) — keeps the cascade continuously " +
+              "populated and avoids visible pauses between batches. " +
+              "Lower = snappier but risks pauses. Higher = slower cascade but smoother under sustained spam.")]
         [Range(0f, 0.5f)]
-        public float MinStaggerInterval;
+        public float SituationalReceiveStaggerInterval = 0.15f;
 
-        [Note("Max remote reactions/s shown in UI lane. World particles use per-avatar cap. 0 = unlimited.")]
-        [Range(0f, 200f)]
-        public float MaxRemoteUIReactionsPerSec = 120f;
+        [Note("Safety cap on how many pending particles one remote avatar can queue. " +
+              "Only matters if a single sender spams faster than the cascade drains. " +
+              "Oldest entries drop when exceeded. 0 = unlimited.")]
+        [Range(0, 256)]
+        public int MaxPerAvatarQueued = 64;
 
         [Header("DYNAMIC SCALING")]
         [Note("Master toggle for pool-pressure-based per-avatar cap scaling. " +

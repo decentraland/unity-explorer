@@ -26,7 +26,8 @@ namespace DCL.Chat.ChatReactions.Tests
             config = ScriptableObject.CreateInstance<ChatReactionsConfig>();
             config.MessageReactions = messageConfig;
             config.WorldLane = worldLaneConfig;
-            config.MaxRemoteUIReactionsPerSec = 0f;
+            messageConfig.NetworkFlushThreshold = 10;
+            config.MaxPerAvatarQueued = 0;
         }
 
         [TearDown]
@@ -40,7 +41,7 @@ namespace DCL.Chat.ChatReactions.Tests
         [Test]
         public void DrainAllImmediatelyWhenStaggerDisabled()
         {
-            var target = CreateTarget(baseStagger: 0f);
+            var target = CreateTarget(stagger: 0f);
 
             target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
             target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
@@ -48,158 +49,167 @@ namespace DCL.Chat.ChatReactions.Tests
             target.Tick(0.016f);
 
             Assert.That(processed.Count, Is.EqualTo(2));
-            Assert.That(processed[0].EmojiIndex, Is.EqualTo(1));
-            Assert.That(processed[1].EmojiIndex, Is.EqualTo(2));
+            Assert.That(processed.Exists(p => p.EmojiIndex == 1 && p.WalletId == "wallet_a"), Is.True);
+            Assert.That(processed.Exists(p => p.EmojiIndex == 2 && p.WalletId == "wallet_b"), Is.True);
         }
 
         [Test]
-        public void StaggerDrainOnePerInterval()
+        public void StaggerDrainsOneParticlePerIntervalForSingleAvatar()
         {
-            var target = CreateTarget(baseStagger: 0.1f);
+            var target = CreateTarget(stagger: 0.1f);
 
-            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
-            target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
-            target.HandleRemoteReaction(MakeArgs("wallet_c", emojiIndex: 3, count: 1));
+            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 3));
 
-            // First tick (0.05s): timer 0 - 0.05 = -0.05 <= 0 → drain #1, timer becomes 0.05
             target.Tick(0.05f);
-            Assert.That(processed.Count, Is.EqualTo(1));
+            Assert.That(processed.Count, Is.EqualTo(1), "First particle pops on first tick");
 
-            // Second tick (0.04s): timer 0.05 - 0.04 = 0.01 > 0 → no drain
             target.Tick(0.04f);
-            Assert.That(processed.Count, Is.EqualTo(1), "Should not drain — timer still positive");
+            Assert.That(processed.Count, Is.EqualTo(1), "Timer still positive — no drain");
 
-            // Third tick (0.02s): timer 0.01 - 0.02 = -0.01 <= 0 → drain #2
             target.Tick(0.02f);
-            Assert.That(processed.Count, Is.EqualTo(2));
+            Assert.That(processed.Count, Is.EqualTo(2), "Timer expired — second particle pops");
         }
 
         [Test]
-        public void ClampCountToMaxExpand()
+        public void TwoAvatarsDrainInParallelAtSameRate()
         {
-            var target = CreateTarget(baseStagger: 0f);
+            var target = CreateTarget(stagger: 0.1f);
+
+            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 3));
+            target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 2, count: 3));
+
+            target.Tick(0.05f);
+            Assert.That(processed.Count, Is.EqualTo(2), "Both avatars pop one particle on the same tick");
+
+            int aCount = 0;
+            int bCount = 0;
+            foreach (var p in processed)
+            {
+                if (p.WalletId == "wallet_a") aCount++;
+                else if (p.WalletId == "wallet_b") bCount++;
+            }
+            Assert.That(aCount, Is.EqualTo(1));
+            Assert.That(bCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ClampCountToNetworkFlushThreshold()
+        {
+            messageConfig.NetworkFlushThreshold = 10;
+            var target = CreateTarget(stagger: 0f);
 
             target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 7, count: 50));
             target.Tick(0.016f);
 
-            Assert.That(processed.Count, Is.EqualTo(20));
+            Assert.That(processed.Count, Is.EqualTo(10), "Batch clamped to NetworkFlushThreshold");
 
-            for (int i = 0; i < processed.Count; i++)
+            foreach (var p in processed)
             {
-                Assert.That(processed[i].EmojiIndex, Is.EqualTo(7));
-                Assert.That(processed[i].Count, Is.EqualTo(1));
+                Assert.That(p.EmojiIndex, Is.EqualTo(7));
+                Assert.That(p.Count, Is.EqualTo(1));
             }
         }
 
         [Test]
-        public void ResetStaggerTimerWhenQueueEmpties()
+        public void DropOldestWhenPerAvatarCapExceeded()
         {
-            var target = CreateTarget(baseStagger: 0.1f);
-
-            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
-            target.Tick(0.2f);
-
-            target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
-            target.Tick(0.001f);
-
-            Assert.That(processed.Count, Is.EqualTo(2));
-        }
-
-        [Test]
-        public void DropEntriesWhenQueueExceedsMaxDepth()
-        {
-            var target = CreateTarget(baseStagger: 0f, maxQueueDepth: 3);
+            config.MaxPerAvatarQueued = 3;
+            var target = CreateTarget(stagger: 0f);
 
             for (int i = 0; i < 5; i++)
                 target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: i, count: 1));
 
             target.Tick(0.016f);
 
-            Assert.That(processed.Count, Is.EqualTo(3));
-            Assert.That(processed[0].EmojiIndex, Is.EqualTo(0));
-            Assert.That(processed[1].EmojiIndex, Is.EqualTo(1));
-            Assert.That(processed[2].EmojiIndex, Is.EqualTo(2));
+            Assert.That(processed.Count, Is.EqualTo(3), "Queue capped at 3");
+            Assert.That(processed[0].EmojiIndex, Is.EqualTo(2), "Oldest two dropped, queue holds emojis 2,3,4");
+            Assert.That(processed[1].EmojiIndex, Is.EqualTo(3));
+            Assert.That(processed[2].EmojiIndex, Is.EqualTo(4));
         }
 
         [Test]
-        public void AllowUnlimitedQueueWhenMaxDepthIsZero()
+        public void PerAvatarCapDoesNotAffectOtherAvatars()
         {
-            var target = CreateTarget(baseStagger: 0f, maxQueueDepth: 0);
+            config.MaxPerAvatarQueued = 2;
+            var target = CreateTarget(stagger: 0f);
 
-            target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: 1, count: 25));
+            for (int i = 0; i < 5; i++)
+                target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: i, count: 1));
+
+            target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 99, count: 1));
+
             target.Tick(0.016f);
 
-            Assert.That(processed.Count, Is.EqualTo(20)); // clamped by MAX_EXPAND, not depth
+            int aCount = 0;
+            int bCount = 0;
+            foreach (var p in processed)
+            {
+                if (p.WalletId == "wallet_a") aCount++;
+                else if (p.WalletId == "wallet_b") bCount++;
+            }
+
+            Assert.That(aCount, Is.EqualTo(2), "wallet_a capped at 2");
+            Assert.That(bCount, Is.EqualTo(1), "wallet_b unaffected");
         }
 
         [Test]
-        public void CapExpandedCountAtMaxDepth()
+        public void ZeroPerAvatarCapMeansUnlimited()
         {
-            var target = CreateTarget(baseStagger: 0f, maxQueueDepth: 5);
+            config.MaxPerAvatarQueued = 0;
+            messageConfig.NetworkFlushThreshold = 10;
+            var target = CreateTarget(stagger: 0f);
 
-            target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: 3, count: 10));
+            target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: 1, count: 10));
+
             target.Tick(0.016f);
 
-            Assert.That(processed.Count, Is.EqualTo(5));
+            Assert.That(processed.Count, Is.EqualTo(10));
         }
 
         [Test]
-        public void UseBaseStaggerWhenQueueBelowRampStart()
+        public void FreshCascadeTimerStartsAtZeroAfterAvatarDrainsAndReturns()
         {
-            var target = CreateTarget(baseStagger: 0.1f, maxQueueDepth: 50, rampStart: 10);
+            var target = CreateTarget(stagger: 0.1f);
 
             target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 1, count: 1));
-            target.HandleRemoteReaction(MakeArgs("wallet_b", emojiIndex: 2, count: 1));
 
             target.Tick(0.05f);
             Assert.That(processed.Count, Is.EqualTo(1));
 
-            target.Tick(0.04f);
-            Assert.That(processed.Count, Is.EqualTo(1), "Base stagger should prevent drain");
-        }
+            target.Tick(1.0f); // long idle — cascade already removed
 
-        [Test]
-        public void UseMinStaggerWhenQueueAtMaxDepth()
-        {
-            var target = CreateTarget(baseStagger: 0.1f, maxQueueDepth: 5, rampStart: 2, minStagger: 0f);
-
-            for (int i = 0; i < 5; i++)
-                target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: i, count: 1));
-
+            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 2, count: 1));
             target.Tick(0.001f);
 
-            Assert.That(processed.Count, Is.EqualTo(5), "Min stagger 0 should drain all immediately");
+            Assert.That(processed.Count, Is.EqualTo(2), "Fresh cascade starts with timer 0 and drains on first tick");
         }
 
         [Test]
-        public void FallBackToBaseStaggerWhenRampStartExceedsMaxDepth()
+        public void MultipleBatchesFromSameAvatarQueueUp()
         {
-            var target = CreateTarget(baseStagger: 0.1f, maxQueueDepth: 50, rampStart: 100);
+            var target = CreateTarget(stagger: 0.1f);
 
-            for (int i = 0; i < 50; i++)
-                target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: i, count: 1));
+            target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: 1, count: 2));
+            target.HandleRemoteReaction(MakeArgs("wallet", emojiIndex: 2, count: 2));
 
-            target.Tick(0.05f);
-            Assert.That(processed.Count, Is.EqualTo(1), "Should use base stagger when rampStart >= maxDepth");
+            target.Tick(1.0f); // long enough to drain all four
+
+            Assert.That(processed.Count, Is.EqualTo(4));
+            Assert.That(processed[0].EmojiIndex, Is.EqualTo(1));
+            Assert.That(processed[1].EmojiIndex, Is.EqualTo(1));
+            Assert.That(processed[2].EmojiIndex, Is.EqualTo(2));
+            Assert.That(processed[3].EmojiIndex, Is.EqualTo(2));
         }
 
-        private SituationalRemoteTarget CreateTarget(
-            float baseStagger = 0f,
-            int maxQueueDepth = 0,
-            int rampStart = 0,
-            float minStagger = 0f)
+        private SituationalRemoteTarget CreateTarget(float stagger)
         {
-            config.MaxReceiveQueueDepth = maxQueueDepth;
-            config.DynamicStaggerRampStart = rampStart;
-            config.MinStaggerInterval = minStagger;
-            messageConfig.ReceiveStaggerInterval = baseStagger;
+            config.SituationalReceiveStaggerInterval = stagger;
 
             var spawner = Substitute.For<IWorldReactionSpawner>();
             var avatarPos = Substitute.For<IAvatarReactionPosition>();
             var worldReactor = new LocalPlayerWorldReactor(spawner, config.WorldLane, avatarPos);
             worldReactor.WorldReactionsEnabled = false;
 
-            // UI simulation is never reached: ShowRemoteUIReactions is set to false below.
             var target = new SituationalRemoteTarget(config, worldReactor, null!);
             target.ShowRemoteUIReactions = false;
             target.RemoteReactionProcessed += args => processed.Add(args);

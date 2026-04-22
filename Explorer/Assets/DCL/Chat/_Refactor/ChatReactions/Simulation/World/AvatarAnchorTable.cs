@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -221,7 +222,7 @@ namespace DCL.Chat.ChatReactions.Simulation.World
             // Debug nearby anchors keep their last-known position from Allocate().
             // They don't exist in the avatar system, so GetHeadPosition would return null
             // and cause the anchor to be deactivated every frame.
-            if (walletId != null && walletId.StartsWith(DEBUG_WALLET_PREFIX))
+            if (walletId != null && walletId.StartsWith(DEBUG_WALLET_PREFIX, StringComparison.Ordinal))
                 return positions[slotIndex];
 
             return avatarPosition.GetHeadPosition(walletId!);

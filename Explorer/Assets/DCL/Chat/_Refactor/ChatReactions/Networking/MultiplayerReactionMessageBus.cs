@@ -63,8 +63,6 @@ namespace DCL.Chat.ChatReactions.Networking
             float timestamp = overrideTimestamp > 0f ? overrideTimestamp : Time.unscaledTime;
             int sendCount = Mathf.Max(1, count);
 
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Sending situational reaction: emoji={emojiIndex} count={sendCount} ts={timestamp}");
-
             SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.IslandPipe());
             SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.ScenePipe());
         }
@@ -155,8 +153,6 @@ namespace DCL.Chat.ChatReactions.Networking
                 }
 
                 int count = Mathf.Max(1, receivedMessage.Payload.Count);
-
-                ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[MultiplayerReactionBus] Received situational reaction: emoji={emojiIndex} count={count} from={receivedMessage.FromWalletId}");
 
                 ReactionReceived?.Invoke(new ReactionReceivedArgs(
                     receivedMessage.FromWalletId,

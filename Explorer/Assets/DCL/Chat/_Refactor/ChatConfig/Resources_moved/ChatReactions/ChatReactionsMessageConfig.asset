@@ -18,7 +18,6 @@ MonoBehaviour:
   <ReactionLimitMessage>k__BackingField: This message has reached the reaction limit.
   <NetworkDebounceSeconds>k__BackingField: 0.3
   <NetworkFlushThreshold>k__BackingField: 10
-  <ReceiveStaggerInterval>k__BackingField: 0.2
   <HoverScale>k__BackingField: 1
   <HoverAnimDuration>k__BackingField: 0.1
   <TooltipHoverDelay>k__BackingField: 0.3

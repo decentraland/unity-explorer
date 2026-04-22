@@ -5,32 +5,33 @@ using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Simulation.UI;
 using DCL.Chat.ChatReactions.Simulation.World;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions.Core
 {
     /// <summary>
-    /// Receives remote situational reactions from the network bus, buffers them
-    /// through a stagger interval, and processes each one (world burst + optional UI).
+    /// Receives remote situational reactions and plays them back as independent
+    /// per-avatar cascades. Each remote avatar gets its own queue + drain timer,
+    /// so bursts from many avatars render in parallel instead of interleaving
+    /// through a single global pipe.
+    ///
+    /// Bounding:
+    /// - World spawns are bounded by MaxParticlesPerAvatar + world pool capacity.
+    /// - UI spawns are bounded by UILane.MaxVisibleParticles.
+    /// - Per-avatar queue is bounded by MaxPerAvatarQueued (oldest-drop safety cap).
     /// </summary>
     internal sealed class SituationalRemoteTarget : IRemoteReactionTarget
     {
-        private const int MAX_EXPAND = 20;
-
         private readonly ChatReactionsConfig config;
         private readonly LocalPlayerWorldReactor worldReactor;
         private readonly ChatReactionUISimulation uiSimulation;
-        private readonly TokenBucketRateLimiter remoteUIBudget;
-        private readonly Queue<ReactionReceivedArgs> queue = new (MAX_EXPAND);
-        private float staggerTimer;
 
-        /// <summary>
-        /// When false, incoming remote reactions are not shown in the UI lane.
-        /// </summary>
+        private readonly Dictionary<string, PerAvatarCascade> cascades = new (32);
+        private readonly Stack<PerAvatarCascade> cascadePool = new (32);
+        private readonly List<string> drainedScratch = new (32);
+
         public bool ShowRemoteUIReactions { get; set; } = true;
 
-        /// <summary>
-        /// Fired after an incoming remote reaction is processed and displayed.
-        /// </summary>
         public event Action<ReactionReceivedArgs>? RemoteReactionProcessed;
 
         public SituationalRemoteTarget(
@@ -41,86 +42,114 @@ namespace DCL.Chat.ChatReactions.Core
             this.config = config;
             this.worldReactor = worldReactor;
             this.uiSimulation = uiSimulation;
-            remoteUIBudget = new TokenBucketRateLimiter(config.MaxRemoteUIReactionsPerSec);
         }
 
         public void HandleRemoteReaction(ReactionReceivedArgs args)
         {
-            int maxDepth = config.MaxReceiveQueueDepth;
-            int count = Mathf.Clamp(args.Count, 1, MAX_EXPAND);
+            Profiler.BeginSample("ChatReactions.Remote.Handle");
 
-            for (int i = 0; i < count; i++)
+            int batchCap = config.MessageReactions.NetworkFlushThreshold;
+            int count = batchCap > 0 ? Mathf.Min(args.Count, batchCap) : Mathf.Max(args.Count, 1);
+
+            if (count > 0)
             {
-                if (maxDepth > 0 && queue.Count >= maxDepth)
-                    break;
+                PerAvatarCascade cascade = GetOrCreateCascade(args.WalletId);
+                int perAvatarCap = config.MaxPerAvatarQueued;
 
-                queue.Enqueue(new ReactionReceivedArgs(
-                    args.WalletId, args.EmojiIndex, 1,
-                    args.Type, args.MessageId, args.IsRemoval));
+                for (int i = 0; i < count; i++)
+                {
+                    if (perAvatarCap > 0 && cascade.Particles.Count >= perAvatarCap)
+                        cascade.Particles.Dequeue();
+
+                    cascade.Particles.Enqueue(args.EmojiIndex);
+                }
             }
+
+            Profiler.EndSample();
         }
 
         public void Tick(float dt)
         {
-            remoteUIBudget.Refill(dt, config.MaxRemoteUIReactionsPerSec);
-            DrainQueue(dt);
-        }
+            if (cascades.Count == 0) return;
 
-        private void DrainQueue(float dt)
-        {
-            if (queue.Count == 0)
+            Profiler.BeginSample("ChatReactions.Remote.Drain");
+
+            float interval = config.SituationalReceiveStaggerInterval;
+
+            foreach (var kvp in cascades)
             {
-                staggerTimer = 0f;
-                return;
+                PerAvatarCascade cascade = kvp.Value;
+
+                if (interval <= 0f)
+                {
+                    while (cascade.Particles.Count > 0)
+                        ProcessOneParticle(kvp.Key, cascade.Particles.Dequeue());
+                }
+                else
+                {
+                    cascade.Timer -= dt;
+
+                    while (cascade.Timer <= 0f && cascade.Particles.Count > 0)
+                    {
+                        ProcessOneParticle(kvp.Key, cascade.Particles.Dequeue());
+                        cascade.Timer += interval;
+                    }
+                }
+
+                if (cascade.Particles.Count == 0)
+                    drainedScratch.Add(kvp.Key);
             }
 
-            float staggerInterval = ComputeEffectiveStagger();
-
-            if (staggerInterval <= 0f)
+            for (int i = 0; i < drainedScratch.Count; i++)
             {
-                while (queue.Count > 0)
-                    ProcessRemoteReaction(queue.Dequeue());
+                string walletId = drainedScratch[i];
 
-                return;
+                if (cascades.TryGetValue(walletId, out PerAvatarCascade drained))
+                {
+                    cascades.Remove(walletId);
+                    ReturnCascade(drained);
+                }
             }
 
-            staggerTimer -= dt;
+            drainedScratch.Clear();
 
-            while (staggerTimer <= 0f && queue.Count > 0)
-            {
-                ProcessRemoteReaction(queue.Dequeue());
-                staggerTimer += staggerInterval;
-            }
+            Profiler.EndSample();
         }
 
-        private void ProcessRemoteReaction(ReactionReceivedArgs args)
+        private void ProcessOneParticle(string walletId, int emojiIndex)
         {
-            worldReactor.TriggerRemoteBurst(args.WalletId, args.EmojiIndex, args.Count);
+            worldReactor.TriggerRemoteBurst(walletId, emojiIndex, 1);
 
-            bool budgetUnlimited = config.MaxRemoteUIReactionsPerSec <= 0f;
+            if (ShowRemoteUIReactions)
+                uiSimulation.TriggerUIReaction(emojiIndex, 1);
 
-            if (ShowRemoteUIReactions && (budgetUnlimited || remoteUIBudget.TryConsume()))
-                uiSimulation.TriggerUIReaction(args.EmojiIndex, args.Count);
-
-            RemoteReactionProcessed?.Invoke(args);
+            if (RemoteReactionProcessed != null)
+                RemoteReactionProcessed.Invoke(new ReactionReceivedArgs(
+                    walletId, emojiIndex, 1, ReactionType.Situational, string.Empty));
         }
 
-        private float ComputeEffectiveStagger()
+        private PerAvatarCascade GetOrCreateCascade(string walletId)
         {
-            float baseStagger = config.MessageReactions.ReceiveStaggerInterval;
-            int maxDepth = config.MaxReceiveQueueDepth;
-            int rampStart = config.DynamicStaggerRampStart;
+            if (cascades.TryGetValue(walletId, out PerAvatarCascade existing))
+                return existing;
 
-            if (maxDepth <= 0 || queue.Count <= rampStart)
-                return baseStagger;
+            PerAvatarCascade cascade = cascadePool.Count > 0 ? cascadePool.Pop() : new PerAvatarCascade();
+            cascade.Timer = 0f;
+            cascades[walletId] = cascade;
+            return cascade;
+        }
 
-            float minStagger = config.MinStaggerInterval;
+        private void ReturnCascade(PerAvatarCascade cascade)
+        {
+            cascade.Particles.Clear();
+            cascade.Timer = 0f;
+            cascadePool.Push(cascade);
+        }
 
-            if (queue.Count >= maxDepth)
-                return minStagger;
-
-            float t = (float)(queue.Count - rampStart) / (maxDepth - rampStart);
-            return Mathf.Lerp(baseStagger, minStagger, t);
+        private sealed class PerAvatarCascade
+        {
+            public readonly Queue<int> Particles = new (16);
+            public float Timer;
         }
     }
 }

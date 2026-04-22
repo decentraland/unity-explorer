@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace DCL.Chat.ChatReactions.Networking
 {
@@ -85,6 +86,8 @@ namespace DCL.Chat.ChatReactions.Networking
             if (bufferedEmojis.Count == 0)
                 return;
 
+            Profiler.BeginSample("ChatReactions.Network.Flush");
+
             float baseTimestamp = Time.unscaledTime;
             int offset = 0;
             int totalCount = 0;
@@ -100,6 +103,8 @@ namespace DCL.Chat.ChatReactions.Networking
             bufferedEmojis.Clear();
 
             Flushed?.Invoke(uniqueCount, totalCount, baseTimestamp);
+
+            Profiler.EndSample();
         }
     }
 }

@@ -43,11 +43,6 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(0, 50)]
         [field: SerializeField] public int NetworkFlushThreshold { get; internal set; } = 10;
 
-        [field: Note("Minimum interval (seconds) between processing queued incoming situational reactions. " +
-                     "Creates a visual cascade instead of all reactions appearing at once. 0 = disabled (process all immediately).")]
-        [field: Range(0f, 0.5f)]
-        [field: SerializeField] public float ReceiveStaggerInterval { get; internal set; } = 0.08f;
-
         [field: Header("HOVER")]
         [field: Note("Scale applied to reaction count pills on pointer hover.")]
         [field: SerializeField] public float HoverScale { get; private set; } = 1.2f;
