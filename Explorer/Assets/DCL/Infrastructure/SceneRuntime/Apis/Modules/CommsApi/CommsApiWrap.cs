@@ -70,9 +70,17 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
 
         /// <summary>
-        /// Recreates the JsonTextWriter after a mid-write exception leaves its
-        /// internal depth stack corrupted. The allocation is negligible — this
-        /// runs only on error paths that already allocated an exception object.
+        /// Replaces <see cref="stringWriter"/> and <see cref="writer"/> after an exception
+        /// in <see cref="GetActiveVideoStreams"/> or <see cref="ConsumeMessages"/>.
+        ///
+        /// JsonTextWriter keeps an internal depth/token stack so it can emit matching
+        /// closers and separators. If an exception is thrown between a WriteStartObject /
+        /// WriteStartArray and its matching end, that stack is left unbalanced — reusing
+        /// the same writer on the next call throws JsonWriterException or silently emits
+        /// malformed JSON. This is internal library state; we cannot "rewind" it.
+        ///
+        /// Discarding and recreating on the exception path is cheaper than wrapping each
+        /// Write* call in try/catch on the happy path.
         /// </summary>
         private void ResetWriter()
         {
