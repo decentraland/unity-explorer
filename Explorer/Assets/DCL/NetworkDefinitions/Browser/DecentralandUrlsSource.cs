@@ -67,6 +67,12 @@ namespace DCL.Browser.DecentralandUrls
                 Url(DecentralandUrl.ArchipelagoHotScenes);
                 Url(DecentralandUrl.Genesis);
                 Url(DecentralandUrl.Gatekeeper);
+                Url(DecentralandUrl.GateKeeperSceneAdapter);
+                Url(DecentralandUrl.LocalGateKeeperSceneAdapter);
+                Url(DecentralandUrl.ChatAdapter);
+                Url(DecentralandUrl.GatekeeperStatus);
+                Url(DecentralandUrl.BannedUsers);
+                Url(DecentralandUrl.SceneAdmins);
                 Url(DecentralandUrl.RemotePeers);
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
