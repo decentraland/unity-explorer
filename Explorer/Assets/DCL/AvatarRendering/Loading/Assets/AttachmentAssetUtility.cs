@@ -12,6 +12,10 @@ namespace DCL.AvatarRendering.Loading.Assets
 {
     public static class AttachmentAssetUtility
     {
+        // Mirrors ComputeShaderConstants.BASE_BONE_COUNT (DCL.AvatarRendering.AvatarShape asmdef).
+        // Duplicated here because Loading cannot reference AvatarShape (cyclic asmdef dep).
+        private const int AVATAR_SKELETON_BONE_COUNT = 62;
+
         public static void ReleaseAssets(this IAttachmentsAssetsCache cache, IList<CachedAttachment> instantiatedWearables)
         {
             foreach (CachedAttachment cachedWearable in instantiatedWearables)
@@ -86,19 +90,8 @@ namespace DCL.AvatarRendering.Loading.Assets
             }
         }
 
-        private static bool HasRendererInHierarchy(Transform transform)
-        {
-            if (transform.GetComponent<Renderer>() != null)
-                return true;
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                if (HasRendererInHierarchy(transform.GetChild(i)))
-                    return true;
-            }
-
-            return false;
-        }
+        private static bool HasRendererInHierarchy(Transform transform) =>
+            transform.GetComponentInChildren<Renderer>(true) != null;
 
         private static bool HasSpringBoneInHierarchy(Transform transform) =>
             transform.GetComponentInChildren<SpringBoneJointComponent>();
@@ -113,7 +106,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 Transform child = root.GetChild(i);
                 if (!boneIndexLookup.TryGetValue(child, out int boneIndex)) continue;
-                if (boneIndex < 62) continue;
+                if (boneIndex < AVATAR_SKELETON_BONE_COUNT) continue;
 
                 // If the child has its own component, it's an independent root — skip
                 if (child.GetComponent<SpringBoneJointComponent>() != null) continue;

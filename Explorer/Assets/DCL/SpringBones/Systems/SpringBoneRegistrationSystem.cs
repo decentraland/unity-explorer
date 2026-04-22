@@ -44,17 +44,15 @@ namespace DCL.SpringBones
             AvatarBase avatarBase,
             ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
-            var slotIndices = ListPool<int>.Get();
-            var syncPairs = ListPool<(Transform, Transform)>.Get();
+            var slots = ListPool<SpringBoneSlot>.Get();
 
-            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase, ref transformMatrixComponent, slotIndices, syncPairs);
+            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase, ref transformMatrixComponent, slots);
 
             World.Add(entity, new SpringBoneRegistrationComponent
             {
-                SlotIndices = slotIndices,
+                Slots = slots,
                 AvatarVersion = avatarShapeComponent.InstantiationVersion,
                 StructuralHash = avatarShapeComponent.StructuralHash,
-                SyncPairs = syncPairs,
             });
         }
 
@@ -68,25 +66,16 @@ namespace DCL.SpringBones
         {
             if (avatarShapeComponent.InstantiationVersion == registration.AvatarVersion) return;
 
+            // The avatar was rebuilt: Transform refs captured in our slots may now point at recycled
+            // or destroyed GameObjects (attachment cache can evict between release and re-instantiation),
+            // so always unregister and register fresh. Visual pop is acceptable on rebuild.
             registration.AvatarVersion = avatarShapeComponent.InstantiationVersion;
+            registration.StructuralHash = avatarShapeComponent.StructuralHash;
 
-            if (avatarShapeComponent.StructuralHash != registration.StructuralHash)
-            {
-                // Wearables changed — full unregister + re-register in spring bone service
-                registration.StructuralHash = avatarShapeComponent.StructuralHash;
+            UnregisterSlots(registration.Slots);
 
-                UnregisterSlots(registration.SlotIndices);
-                registration.SyncPairs.Clear();
-
-                RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase,
-                    ref transformMatrixComponent, registration.SlotIndices, registration.SyncPairs);
-            }
-            else
-            {
-                // Same wearables but avatar was rebuilt (e.g. preview reopen) —
-                // service slots still valid, just re-append transforms to the fresh bone array.
-                ReAppendSpringBoneTransforms(avatarShapeComponent.InstantiatedWearables, ref transformMatrixComponent);
-            }
+            RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase,
+                ref transformMatrixComponent, registration.Slots);
         }
 
         [Query]
@@ -98,22 +87,8 @@ namespace DCL.SpringBones
         private void CleanUpOnDispose(ref SpringBoneRegistrationComponent registration) =>
             CleanUp(ref registration);
 
-        private static void ReAppendSpringBoneTransforms(IList<CachedAttachment> wearables,
-            ref AvatarTransformMatrixComponent transformMatrixComponent)
-        {
-            using var scope = ListPool<Transform>.Get(out var springBoneTransforms);
-
-            foreach (CachedAttachment wearable in wearables)
-                foreach (SpringBoneData springBone in wearable.SpringBones)
-                    springBoneTransforms.Add(springBone.ManagedTransform);
-
-            if (springBoneTransforms.Count > 0)
-                transformMatrixComponent.bones.Append(springBoneTransforms);
-        }
-
         private void RegisterSprings(IList<CachedAttachment> wearables, AvatarBase avatarBase,
-            ref AvatarTransformMatrixComponent transformMatrixComponent,
-            List<int> slotIndices, List<(Transform, Transform)> syncPairs)
+            ref AvatarTransformMatrixComponent transformMatrixComponent, List<SpringBoneSlot> slots)
         {
             Transform[] skeleton = avatarBase.AvatarSkinnedMeshRenderer.bones;
 
@@ -123,7 +98,10 @@ namespace DCL.SpringBones
             {
                 using var chainJointsScope = ListPool<Transform>.Get(out var chainJoints);
                 using var chainConfigsScope = ListPool<SpringBoneJointConfig>.Get(out var chainConfigs);
-                using var chainTailsScope = ListPool<Unity.Mathematics.float3>.Get(out var chainTails);
+                using var chainTailsScope = ListPool<float3>.Get(out var chainTails);
+
+                Transform currentWearableParent = null;
+                Transform currentAvatarParent = null;
 
                 foreach (SpringBoneData springBone in wearable.SpringBones)
                 {
@@ -132,43 +110,32 @@ namespace DCL.SpringBones
 
                     if (springBone.IsRoot)
                     {
-                        // Flush any pending chain from a previous root in this wearable
                         if (chainJoints.Count > 0)
                         {
-                            int slotIndex = RegisterChain(chainJoints, chainConfigs, chainTails);
-                            slotIndices.Add(slotIndex);
+                            FlushChain(slots, chainJoints, chainConfigs, chainTails, currentWearableParent, currentAvatarParent);
                             chainJoints.Clear();
                             chainConfigs.Clear();
                             chainTails.Clear();
                         }
 
-                        // Sync wearable parent to avatar skeleton bone
-                        Transform wearableParent = springBone.ManagedTransform.parent;
-                        Transform avatarParent = skeleton[springBone.AvatarSkeletonParentBoneIndex];
-                        wearableParent.SetPositionAndRotation(avatarParent.position, avatarParent.rotation);
+                        currentWearableParent = springBone.ManagedTransform.parent;
+                        currentAvatarParent = skeleton[springBone.AvatarSkeletonParentBoneIndex];
+                        currentWearableParent.SetPositionAndRotation(currentAvatarParent.position, currentAvatarParent.rotation);
 
-                        Vector3 parentOfWearableLossyScale = wearableParent.parent != null ? wearableParent.parent.lossyScale : Vector3.one;
-                        Vector3 avatarLossyScale = avatarParent.lossyScale;
-                        wearableParent.localScale = new Vector3(
+                        Vector3 parentOfWearableLossyScale = currentWearableParent.parent != null ? currentWearableParent.parent.lossyScale : Vector3.one;
+                        Vector3 avatarLossyScale = currentAvatarParent.lossyScale;
+                        currentWearableParent.localScale = new Vector3(
                             avatarLossyScale.x / parentOfWearableLossyScale.x,
                             avatarLossyScale.y / parentOfWearableLossyScale.y,
                             avatarLossyScale.z / parentOfWearableLossyScale.z);
-                        syncPairs.Add((wearableParent, avatarParent));
                     }
 
                     chainJoints.Add(springBone.ManagedTransform);
                     chainConfigs.Add(BuildJointConfig(springBone));
                 }
 
-                // Register the last chain of this wearable
                 if (chainJoints.Count > 0)
-                {
-                    // Compute tail positions now that parent sync is done
-                    ComputeInitialTailPositions(chainJoints, chainTails);
-
-                    int lastSlot = RegisterChain(chainJoints, chainConfigs, chainTails);
-                    slotIndices.Add(lastSlot);
-                }
+                    FlushChain(slots, chainJoints, chainConfigs, chainTails, currentWearableParent, currentAvatarParent);
             }
 
             if (springBoneTransforms.Count > 0)
@@ -178,9 +145,21 @@ namespace DCL.SpringBones
             }
         }
 
+        private void FlushChain(List<SpringBoneSlot> slots,
+            List<Transform> chainJoints, List<SpringBoneJointConfig> chainConfigs, List<float3> chainTails,
+            Transform wearableParent, Transform avatarParent)
+        {
+            int slotIndex = RegisterChain(chainJoints, chainConfigs, chainTails);
+            slots.Add(new SpringBoneSlot
+            {
+                SlotIndex = slotIndex,
+                WearableParent = wearableParent,
+                AvatarParent = avatarParent,
+            });
+        }
+
         private int RegisterChain(List<Transform> joints, List<SpringBoneJointConfig> configs, List<float3> tails)
         {
-            // Compute tail positions and bone axis/length for the configs
             for (int j = 0; j < joints.Count; j++)
             {
                 var config = configs[j];
@@ -212,7 +191,7 @@ namespace DCL.SpringBones
                 tails.ToArray());
         }
 
-        static void ComputeInitialTailPositions(List<Transform> joints, List<float3> tails)
+        private static void ComputeInitialTailPositions(List<Transform> joints, List<float3> tails)
         {
             tails.Clear();
 
@@ -225,40 +204,31 @@ namespace DCL.SpringBones
             }
         }
 
-        static SpringBoneJointConfig BuildJointConfig(SpringBoneData data)
-        {
-            return new SpringBoneJointConfig
+        private static SpringBoneJointConfig BuildJointConfig(SpringBoneData data) =>
+            new ()
             {
                 Stiffness = data.Stiffness,
                 Drag = data.Drag,
                 GravityDir = data.GravityDir,
                 GravityPower = data.GravityPower,
                 LocalRotation = data.InitialLocalRotation,
-                // BoneAxis and Length are computed later in RegisterChain
             };
-        }
 
-        private void UnregisterSlots(List<int> slotIndices)
+        private void UnregisterSlots(List<SpringBoneSlot> slots)
         {
-            foreach (int slotIndex in slotIndices)
-                springBoneService.UnregisterSpring(slotIndex);
+            foreach (SpringBoneSlot slot in slots)
+                springBoneService.UnregisterSpring(slot.SlotIndex);
 
-            slotIndices.Clear();
+            slots.Clear();
         }
 
         private void CleanUp(ref SpringBoneRegistrationComponent registration)
         {
-            if (registration.SlotIndices != null)
+            if (registration.Slots != null)
             {
-                UnregisterSlots(registration.SlotIndices);
-                ListPool<int>.Release(registration.SlotIndices);
-                registration.SlotIndices = null;
-            }
-
-            if (registration.SyncPairs != null)
-            {
-                ListPool<(Transform, Transform)>.Release(registration.SyncPairs);
-                registration.SyncPairs = null;
+                UnregisterSlots(registration.Slots);
+                ListPool<SpringBoneSlot>.Release(registration.Slots);
+                registration.Slots = null;
             }
         }
     }

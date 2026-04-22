@@ -183,7 +183,7 @@ namespace DCL.SpringBones
                 CurrentTails = currentTails,
                 NextTails = nextTails,
                 DeltaTime = deltaTime,
-            }.Schedule(slotCapacity, 1, pullHandle);
+            }.Schedule(slotCapacity, 8, pullHandle);
 
             JobHandle pushHandle = new PushSpringBoneTransformsJob
             {

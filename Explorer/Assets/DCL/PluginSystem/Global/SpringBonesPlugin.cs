@@ -5,8 +5,6 @@ namespace DCL.PluginSystem.Global
 {
     public class SpringBonesPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private const int MAX_SIMULATED_SPRING_BONE_AVATARS = 10;
-
         private readonly SpringBoneService springBoneService = new ();
         private readonly SpringBoneSimulationSettings simulationSettings;
 
@@ -22,7 +20,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, MAX_SIMULATED_SPRING_BONE_AVATARS, simulationSettings);
+            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, simulationSettings);
             SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService);
         }
     }

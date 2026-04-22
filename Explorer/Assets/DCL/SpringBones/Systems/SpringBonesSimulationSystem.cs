@@ -18,15 +18,13 @@ namespace DCL.SpringBones
     public partial class SpringBonesSimulationSystem : BaseUnityLoopSystem
     {
         private readonly SpringBoneService springBoneService;
-        private readonly int maxSimulatedAvatars;
         private readonly SpringBoneSimulationSettings simulationSettings;
-        private readonly List<(float sqrDistance, List<int> slotIndices)> avatarDistances = new ();
+        private readonly List<(float sqrDistance, List<SpringBoneSlot> slots)> avatarDistances = new ();
         private bool wasEnabled = true;
 
-        internal SpringBonesSimulationSystem(World world, SpringBoneService springBoneService, int maxSimulatedAvatars, SpringBoneSimulationSettings simulationSettings) : base(world)
+        internal SpringBonesSimulationSystem(World world, SpringBoneService springBoneService, SpringBoneSimulationSettings simulationSettings) : base(world)
         {
             this.springBoneService = springBoneService;
-            this.maxSimulatedAvatars = maxSimulatedAvatars;
             this.simulationSettings = simulationSettings;
         }
 
@@ -36,44 +34,37 @@ namespace DCL.SpringBones
             {
                 if (wasEnabled)
                 {
-                    // Simulation just turned off — deactivate all slots so PrepareSimulation resets bones to rest pose
                     springBoneService.DeactivateAllSlots();
                     springBoneService.PrepareSimulation();
                     wasEnabled = false;
                 }
 
-                // Keep syncing wearable parent transforms to skeleton bones so hair/cloth follow avatar animation
                 SyncParentBonesQuery(World);
                 return;
             }
             wasEnabled = true;
 
-            // 1. Collect distances for all avatars with spring bones
             avatarDistances.Clear();
             CollectRemoteAvatarDistancesQuery(World);
             CollectPlayerAvatarDistancesQuery(World);
             AlwaysSimulateNonPartitionedQuery(World);
 
-            // 2. Sort by distance ascending
             avatarDistances.Sort(static (a, b) => a.sqrDistance.CompareTo(b.sqrDistance));
 
-            // 3. Mark all slots inactive, then activate nearest N
             springBoneService.DeactivateAllSlots();
 
-            int count = Math.Min(maxSimulatedAvatars, avatarDistances.Count);
+            int count = Math.Min(simulationSettings.MaxSimulatedAvatars, avatarDistances.Count);
 
             for (int i = 0; i < count; i++)
             {
-                var slotIndices = avatarDistances[i].slotIndices;
+                var slots = avatarDistances[i].slots;
 
-                for (int s = 0; s < slotIndices.Count; s++)
-                    springBoneService.SetSlotActive(slotIndices[s], true);
+                for (int s = 0; s < slots.Count; s++)
+                    springBoneService.SetSlotActive(slots[s].SlotIndex, true);
             }
 
-            // 4. Sync parent bones (transform sync for all, SetParentData only for active)
             SyncParentBonesQuery(World);
 
-            // 5. Handle inactive→active transitions, then simulate
             springBoneService.PrepareSimulation();
             springBoneService.Simulate(t);
         }
@@ -82,12 +73,10 @@ namespace DCL.SpringBones
         [None(typeof(DeleteEntityIntention), typeof(PlayerComponent))]
         private void CollectRemoteAvatarDistances(ref SpringBoneRegistrationComponent registration, ref PartitionComponent partition)
         {
-            if (registration.SlotIndices == null || registration.SlotIndices.Count == 0) return;
-
-            // Cull avatars behind camera
+            if (registration.Slots == null || registration.Slots.Count == 0) return;
             if (partition.IsBehind) return;
 
-            avatarDistances.Add((partition.RawSqrDistance, registration.SlotIndices));
+            avatarDistances.Add((partition.RawSqrDistance, registration.Slots));
         }
 
         [Query]
@@ -95,41 +84,34 @@ namespace DCL.SpringBones
         [None(typeof(DeleteEntityIntention))]
         private void CollectPlayerAvatarDistances(ref SpringBoneRegistrationComponent registration)
         {
-            if (registration.SlotIndices == null || registration.SlotIndices.Count == 0) return;
-            avatarDistances.Add((0f, registration.SlotIndices));
+            if (registration.Slots == null || registration.Slots.Count == 0) return;
+            avatarDistances.Add((0f, registration.Slots));
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PartitionComponent), typeof(PlayerComponent))]
         private void AlwaysSimulateNonPartitioned(ref SpringBoneRegistrationComponent registration)
         {
-            if (registration.SlotIndices == null || registration.SlotIndices.Count == 0) return;
+            if (registration.Slots == null || registration.Slots.Count == 0) return;
 
             // Preview/UI avatars: no partition, always simulate with top priority
-            avatarDistances.Add((0f, registration.SlotIndices));
+            avatarDistances.Add((0f, registration.Slots));
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void SyncParentBones(ref SpringBoneRegistrationComponent registration)
         {
-            for (int i = 0; i < registration.SyncPairs.Count; i++)
+            if (registration.Slots == null) return;
+
+            foreach (SpringBoneSlot slot in registration.Slots)
             {
-                var (wearableParent, avatarParent) = registration.SyncPairs[i];
+                slot.WearableParent.SetPositionAndRotation(slot.AvatarParent.position, slot.AvatarParent.rotation);
 
-                // Always sync transform so rest-pose bones follow avatar skeleton
-                wearableParent.SetPositionAndRotation(avatarParent.position, avatarParent.rotation);
-
-                // Only feed parent data to simulation for active slots
-                if (i < registration.SlotIndices.Count)
+                if (springBoneService.IsSlotActive(slot.SlotIndex))
                 {
-                    int slotIndex = registration.SlotIndices[i];
-
-                    if (springBoneService.IsSlotActive(slotIndex))
-                    {
-                        springBoneService.SetParentData(slotIndex,
-                            avatarParent.rotation, avatarParent.localToWorldMatrix);
-                    }
+                    springBoneService.SetParentData(slot.SlotIndex,
+                        slot.AvatarParent.rotation, slot.AvatarParent.localToWorldMatrix);
                 }
             }
         }
