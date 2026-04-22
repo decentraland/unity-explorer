@@ -280,7 +280,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void UpdateBodyTypeUI()
         {
-            bool isMale = selectedBodyType == BodyShape.MALE;
+            bool isMale = selectedBodyType.Equals(BodyShape.MALE);
             view.BodyTypeLabel.text = GetLocalizedBodyType(isMale);
 
             // Toggle man/woman icon in the dropdown button
@@ -323,7 +323,7 @@ namespace DCL.AuthenticationScreenFlow
             // If base wearables loaded from backend - use randomizer
             if (loadedWearables != null && loadedWearables.Count > 0)
             {
-                Dictionary<string, List<URN>> wearablesByCategory = bodyShape == BodyShape.MALE
+                Dictionary<string, List<URN>> wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
                     ? maleWearablesByCategory!
                     : femaleWearablesByCategory!;
 
