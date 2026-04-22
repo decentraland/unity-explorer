@@ -115,11 +115,8 @@ namespace DCL.AuthenticationScreenFlow
                     }
                     else
                     {
-                        // New user without profile — show onboarding (randomize + username + ToS).
-                        // Works for all login methods: OTP (has email), MetaMask/Social from auth web (no email).
-                        // The email is only used for optional newsletter subscription.
                         profile = CreateRandomProfile(identity.Address.ToString());
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
                     }
                 }
                 catch (OperationCanceledException e)

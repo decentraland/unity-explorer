@@ -111,6 +111,7 @@ namespace DCL.AuthenticationScreenFlow
             view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
             view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
             view.BodyTypeDropdownPanel.SetActive(false);
+            view.ChevronIcon.localRotation = Quaternion.identity;
             UpdateBodyTypeUI();
 
             // Toggle listeners for terms agreement
@@ -279,8 +280,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private void UpdateBodyTypeUI()
         {
-            bool isMale = selectedBodyType.Equals(BodyShape.MALE);
-            view.BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
+            bool isMale = selectedBodyType == BodyShape.MALE;
+            view.BodyTypeLabel.text = GetLocalizedBodyType(isMale);
 
             // Toggle man/woman icon in the dropdown button
             view.DropdownManIcon.SetActive(isMale);
@@ -289,6 +290,19 @@ namespace DCL.AuthenticationScreenFlow
             // Toggle checkmark on selected option
             view.CheckmarkIconA.SetActive(isMale);
             view.CheckmarkIconB.SetActive(!isMale);
+        }
+
+        private static string GetLocalizedBodyType(bool isMale)
+        {
+            string key = isMale ? "BODY_TYPE_A" : "BODY_TYPE_B";
+            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
+            try
+            {
+                var localized = new UnityEngine.Localization.LocalizedString("Authentication", key);
+                string result = localized.GetLocalizedString();
+                return !string.IsNullOrEmpty(result) ? result : fallback;
+            }
+            catch { return fallback; }
         }
 
         private void OnToggleChanged(bool _) =>
@@ -309,7 +323,7 @@ namespace DCL.AuthenticationScreenFlow
             // If base wearables loaded from backend - use randomizer
             if (loadedWearables != null && loadedWearables.Count > 0)
             {
-                Dictionary<string, List<URN>> wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
+                Dictionary<string, List<URN>> wearablesByCategory = bodyShape == BodyShape.MALE
                     ? maleWearablesByCategory!
                     : femaleWearablesByCategory!;
 
