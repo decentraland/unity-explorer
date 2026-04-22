@@ -7,6 +7,7 @@ using DCL.Settings.Settings;
 using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
@@ -33,12 +34,10 @@ namespace DCL.VoiceChat
             Source = TrackSource.SourceMicrophone,
         };
 
-        private static string micVolumeName = nameof(AudioMixerExposedParam.Microphone_Volume);
+        private const string MIC_VOLUME_NAME = nameof(AudioMixerExposedParam.Microphone_Volume);
 
         private readonly IRoom voiceChatRoom;
         private readonly VoiceChatConfiguration configuration;
-        private readonly VoiceChatMicrophoneHandler microphoneHandler;
-        private readonly VoiceChatType voiceChatType;
         private readonly string tag;
 
         private readonly DCLSemaphoreSlim semaphoreSlim = new (1, 1);
@@ -47,19 +46,23 @@ namespace DCL.VoiceChat
 
         public Weak<MicrophoneRtcAudioSource> CurrentMicrophone => microphoneTrack?.Source ?? Weak<MicrophoneRtcAudioSource>.Null;
         internal bool isPublished => microphoneTrack.HasValue;
+        internal bool isRecording => CurrentMicrophone.Resource is { Has: true, Value: { IsRecording: true } };
+
+        /// <summary>
+        ///     Raised whenever the active microphone source changes: a new source after successful publish,
+        ///     or <see cref="Weak{T}.Null"/> after unpublish/cleanup (including the error path in <see cref="PublishAsync"/>).
+        /// </summary>
+        public event Action<Weak<MicrophoneRtcAudioSource>>? SourceChanged;
 
         private bool isDisposed;
 
         public MicrophoneTrackPublisher(
             IRoom voiceChatRoom,
             VoiceChatConfiguration configuration,
-            VoiceChatMicrophoneHandler microphoneHandler,
             VoiceChatType voiceChatType)
         {
             this.voiceChatRoom = voiceChatRoom;
             this.configuration = configuration;
-            this.microphoneHandler = microphoneHandler;
-            this.voiceChatType = voiceChatType;
             tag = $"{nameof(MicrophoneTrackPublisher)}({voiceChatType})";
         }
 
@@ -77,7 +80,8 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Publishes the local microphone track to the room.
         ///     Creates the <see cref="MicrophoneRtcAudioSource"/> via shared helper;
-        ///     conditionally starts it based on <paramref name="micAutoStart"/> and current mic-enabled state.
+        ///     starts recording immediately when <paramref name="micAutoStart"/> is true — callers decide
+        ///     whether the mic should be recording on publish based on their own state.
         /// </summary>
         public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
@@ -91,18 +95,23 @@ namespace DCL.VoiceChat
 
             try
             {
+                LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+
+                if (localParticipant == null)
+                    throw new InvalidOperationException($"{tag} Local participant is not available yet");
+
                 MicrophoneRtcAudioSource rtcAudioSource = await CreateMicrophoneSourceAsync(configuration, ct);
 
-                if (micAutoStart && microphoneHandler.IsMicrophoneEnabled.Value)
+                if (micAutoStart)
                     rtcAudioSource.Start();
 
-                ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(
-                    voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
+                ITrack track = voiceChatRoom.LocalTracks.CreateAudioTrack(localParticipant.Name, rtcAudioSource);
 
                 microphoneTrack = new MicrophoneTrack(track, new Owned<MicrophoneRtcAudioSource>(rtcAudioSource));
-                microphoneHandler.Assign(microphoneTrack.Value.Source, voiceChatType);
 
-                voiceChatRoom.Participants.LocalParticipant().PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
+                SourceChanged?.Invoke(microphoneTrack.Value.Source);
+
+                localParticipant.PublishTrack(track, DEFAULT_PUBLISH_OPTIONS, ct);
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track published successfully");
             }
@@ -122,25 +131,45 @@ namespace DCL.VoiceChat
 
             try
             {
-                voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack.Value.Track, true);
+                LKParticipant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+
+                if (localParticipant == null)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Cannot unpublish: local participant is not available");
+                    return;
+                }
+
+                localParticipant.UnpublishTrack(microphoneTrack.Value.Track, true);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track unpublished");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Failed to unpublish: {ex.Message}"); }
             finally { CleanupLocalTrack(); }
         }
 
+        internal void StartMicrophone()
+        {
+            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
+            if (source.Has) source.Value.Start();
+        }
+
+        internal void StopMicrophone()
+        {
+            Option<MicrophoneRtcAudioSource> source = CurrentMicrophone.Resource;
+            if (source.Has) source.Value.Stop();
+        }
+
         private void CleanupLocalTrack()
         {
-            microphoneHandler.ClearSource(voiceChatType);
+            StopMicrophone();
+            SourceChanged?.Invoke(Weak<MicrophoneRtcAudioSource>.Null);
             microphoneTrack?.Dispose();
             microphoneTrack = null;
         }
 
-        private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(
-            VoiceChatConfiguration configuration, CancellationToken ct)
+        private static async UniTask<MicrophoneRtcAudioSource> CreateMicrophoneSourceAsync(VoiceChatConfiguration configuration, CancellationToken ct)
         {
             if (Application.platform is RuntimePlatform.WindowsPlayer or RuntimePlatform.WindowsEditor)
-                configuration.AudioMixerGroup.audioMixer.SetFloat(micVolumeName, 13);
+                configuration.AudioMixerGroup.audioMixer.SetFloat(MIC_VOLUME_NAME, 13);
 
 #if UNITY_STANDALONE_OSX
             bool hasPermissions = await VoiceChatPermissions.GuardAsync(ct);
@@ -156,12 +185,11 @@ namespace DCL.VoiceChat
 
             Result<MicrophoneRtcAudioSource> result = MicrophoneRtcAudioSource.New(
                 reachable.Value,
-                (configuration.AudioMixerGroup.audioMixer, micVolumeName),
+                (configuration.AudioMixerGroup.audioMixer, MIC_VOLUME_NAME),
                 configuration.microphonePlaybackToSpeakers);
 
             if (!result.Success)
-                throw new InvalidOperationException(
-                    $"Failed to create RTC audio source: {result.ErrorMessage}");
+                throw new InvalidOperationException($"Failed to create RTC audio source: {result.ErrorMessage}");
 
             return result.Value;
         }

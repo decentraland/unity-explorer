@@ -18,6 +18,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -25,6 +26,7 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using UnityEngine.Pool;
 using UnityEngine.Scripting;
 using Utility;
 using Utility.Multithreading;
@@ -114,6 +116,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 }
             }
 
+            RemoveDuplicates(intention.TargetCollection);
+
             analytics.OnRequestFinished(intention.TargetCollection.Count);
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
@@ -125,6 +129,30 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
+        }
+
+        private void RemoveDuplicates(List<SceneEntityDefinition> list)
+        {
+            if (list.Count <= 1)
+                return;
+
+            var seenIds = HashSetPool<string>.Get();
+            seenIds.EnsureCapacity(list.Count);
+
+            int write = 0;
+
+            for (int read = 0; read < list.Count; read++)
+            {
+                var item = list[read];
+
+                if (seenIds.Add(item.id))
+                    list[write++] = item;
+            }
+
+            if (write < list.Count)
+                list.RemoveRange(write, list.Count - write);
+
+            HashSetPool<string>.Release(seenIds);
         }
 
         [Preserve]

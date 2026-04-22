@@ -58,6 +58,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
+using SceneRunner.Admins;
 
 namespace SceneRunner.Tests
 {
@@ -385,7 +386,9 @@ namespace SceneRunner.Tests
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
                     new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>()) { }
+                Substitute.For<ISceneRuntime>(),
+                SceneAdmins.NewTestInstance()
+                ) { }
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>
