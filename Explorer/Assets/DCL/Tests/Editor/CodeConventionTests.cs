@@ -186,14 +186,53 @@ namespace DCL.Tests
             ShouldNotUseNativeWebSocket(fileContent, filePath);
         }
 
+        private static string ResolvedRgPathViaShell()
+        {
+
+#if UNITY_EDITOR_WIN
+            const string FILE_NAME = "cmd.exe";
+            const string ARGUMENTS = "/c where rg";
+#else
+
+#if UNITY_EDITOR_OSX
+            const string FILE_NAME = "/bin/zsh";
+#elif UNITY_EDITOR_LINUX
+            const string FILE_NAME = "/bin/bash";
+#endif
+
+            const string ARGUMENTS = "-lc \"which rg\"";
+
+#endif // UNITY_EDITOR_WIN
+
+
+            ProcessStartInfo finder = new ProcessStartInfo
+            {
+                FileName = FILE_NAME,
+                Arguments = ARGUMENTS,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+
+            using var p = Process.Start(finder);
+            p.WaitForExit();
+            string output = p!.StandardOutput.ReadToEnd();
+            
+            if (p.ExitCode == 1)
+                Assert.Fail($"rg not found. Result is: {output}, code is: {p.ExitCode}, {p.HasExited}, error: {p.StandardError.ReadToEnd()}");
+            
+            return output.Trim();
+        }
+
         private static ProcessStartInfo NewRgProcessInfo(string pattern)
         {
             string projectRoot = Directory.GetCurrentDirectory();
+            string rgPath = ResolvedRgPathViaShell();
 
             // Use rg because C# FileStream is very slow + avoid overhead of NUnit per file
             var psi = new ProcessStartInfo
             {
-                FileName = "/opt/homebrew/bin/rg", // PATH envvar is not inherited into Unity Process, full path is used
+                FileName = rgPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
