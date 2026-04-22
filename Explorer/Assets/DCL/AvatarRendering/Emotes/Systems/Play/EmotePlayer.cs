@@ -1,10 +1,13 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using ECS.StreamableLoading.GLTF;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 using UnityEngine.Pool;
 using Utility.Animations;
 using Object = UnityEngine.Object;
@@ -34,12 +37,30 @@ namespace DCL.AvatarRendering.Emotes.Play
                     audioSourcePool.Release(references.audioSource);
 
                 references.audioSource = null;
+
+                if (references.playableGraph.IsValid())
+                {
+                    Debug.Log("(Maurizio) EmotePlayer: destroying PlayableGraph on pool release");
+                    references.playableGraph.Destroy();
+                    references.playableGraph = default;
+                    references.playableController = default;
+                    references.playableClip = default;
+                    references.playableSourceAnimator = null;
+                    references.playableLoop = false;
+                    references.playableClipLength = 0f;
+                }
             };
         }
 
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
+            if (mainAsset.GetComponent<LegacyImportedAnimationsMarker>() != null)
+            {
+                Debug.Log($"(Maurizio) EmotePlayer.Play: legacy-imported scene emote '{mainAsset.name}' reached the non-masked path — ignoring. Scene emotes are expected to flow through PlayMasked.");
+                return false;
+            }
+
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (IsSameLoopingEmote(emoteInUse, mainAsset, emoteComponent.EmoteLoop, isLooping))
@@ -58,6 +79,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         public bool PlayMasked(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterMaskedEmoteComponent maskedEmote)
         {
+            if (mainAsset.TryGetComponent<LegacyImportedAnimationsMarker>(out var marker))
+                return PlayMaskedPlayableEmote(mainAsset, marker, audioAsset, isLooping, isSpatial, in view, ref maskedEmote);
+
             EmoteReferences? emoteInUse = maskedEmote.CurrentEmoteReference;
 
             if (IsSameLoopingEmote(emoteInUse, mainAsset, maskedEmote.EmoteLoop, isLooping))
@@ -149,7 +173,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                if (mainAsset.GetComponentInChildren<Animator>(true))
+                bool hasAnimator = mainAsset.GetComponentInChildren<Animator>(true);
+                bool hasLegacyMarker = mainAsset.GetComponent<LegacyImportedAnimationsMarker>() != null;
+
+                if (hasAnimator || hasLegacyMarker)
                     pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
                 else
                     return null;
@@ -190,6 +217,9 @@ namespace DCL.AvatarRendering.Emotes.Play
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
+
+            if (mainGameObject.TryGetComponent<LegacyImportedAnimationsMarker>(out var legacyMarker))
+                return CreateLegacyPlayableEmoteReference(mainGameObject, legacyMarker);
 
             Animator animatorComp = mainGameObject.GetComponentInChildren<Animator>(true);
             AnimationClip[] animationClips = animatorComp.runtimeAnimatorController.animationClips;
@@ -232,6 +262,112 @@ namespace DCL.AvatarRendering.Emotes.Play
             animatorComp.fireEvents = false;
 
             return references;
+        }
+
+        /// <summary>
+        /// Instantiated emote GameObject for the scene-emote Playable fork. The avatar animation is
+        /// driven via a PlayableGraph on the avatar's own Animator (built in PlayMaskedPlayableEmote),
+        /// so the emote GameObject itself has no meaningful local animator or renderers to display.
+        /// </summary>
+        private static EmoteReferences CreateLegacyPlayableEmoteReference(GameObject mainGameObject, LegacyImportedAnimationsMarker marker)
+        {
+            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
+
+            // Nothing to render from the emote GO itself — the avatar skeleton is driven remotely.
+            foreach (Renderer renderer in mainGameObject.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.enabled = false;
+                renderer.forceRenderingOff = true;
+            }
+
+            references.Initialize(marker.AvatarClip, null, null, 0);
+            return references;
+        }
+
+        private bool PlayMaskedPlayableEmote(GameObject mainAsset, LegacyImportedAnimationsMarker marker,
+            AudioClip? audioAsset, bool isLooping, bool isSpatial,
+            in IAvatarView view, ref CharacterMaskedEmoteComponent maskedEmote)
+        {
+            Debug.Log($"(Maurizio) PlayMaskedPlayableEmote: mainAsset='{mainAsset.name}' mask={maskedEmote.Mask} looping={isLooping} hasAvatarClip={(marker.AvatarClip != null)} hasPropClip={(marker.PropClip != null)}");
+
+            if (marker.AvatarClip == null)
+            {
+                Debug.Log("(Maurizio) PlayMaskedPlayableEmote: no avatar clip on marker, aborting");
+                return false;
+            }
+
+            if (marker.PropClip != null)
+                Debug.Log("(Maurizio) PlayMaskedPlayableEmote: prop clip present but not supported in the Playable fork (v1)");
+
+            EmoteReferences? prior = maskedEmote.CurrentEmoteReference;
+            if (IsSameLoopingEmote(prior, mainAsset, maskedEmote.EmoteLoop, isLooping))
+                return true;
+
+            EmoteReferences? refs = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, prior);
+            if (refs == null)
+            {
+                Debug.Log("(Maurizio) PlayMaskedPlayableEmote: AcquireEmoteReferences returned null");
+                return false;
+            }
+
+            Animator avatarAnimator = view.AvatarAnimator;
+            if (avatarAnimator == null || avatarAnimator.runtimeAnimatorController == null)
+            {
+                Debug.Log("(Maurizio) PlayMaskedPlayableEmote: avatar Animator or its runtimeAnimatorController is null");
+                return false;
+            }
+
+            var graph = PlayableGraph.Create($"SceneEmote_{mainAsset.name}");
+            graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            var output = AnimationPlayableOutput.Create(graph, "Animation", avatarAnimator);
+
+            var controllerPlayable = AnimatorControllerPlayable.Create(graph, avatarAnimator.runtimeAnimatorController);
+            var clipPlayable = AnimationClipPlayable.Create(graph, marker.AvatarClip);
+            clipPlayable.SetApplyFootIK(false);
+            // Looping is handled in EmoteReferences.LateUpdate via manual time wrap — Duration here is
+            // only meaningful for the non-looping case so Unity knows when the Playable is "done".
+            clipPlayable.SetDuration(isLooping ? double.PositiveInfinity : marker.AvatarClip.length);
+
+            var mixer = AnimationLayerMixerPlayable.Create(graph, 2);
+            graph.Connect(controllerPlayable, 0, mixer, 0);
+            graph.Connect(clipPlayable,       0, mixer, 1);
+            mixer.SetInputWeight(0, 1f);
+            mixer.SetInputWeight(1, 1f);
+
+            AvatarMask? layerMask = GetMaskSet()?.Get(maskedEmote.Mask);
+            if (layerMask != null)
+                mixer.SetLayerMaskFromAvatarMask(1, layerMask);
+            else
+                Debug.Log($"(Maurizio) PlayMaskedPlayableEmote: no AvatarMask for {maskedEmote.Mask} in SceneEmoteMaskSet, emote will override full skeleton");
+
+            output.SetSourcePlayable(mixer);
+            graph.Play();
+
+            refs.playableGraph = graph;
+            refs.playableController = controllerPlayable;
+            refs.playableClip = clipPlayable;
+            refs.playableSourceAnimator = avatarAnimator;
+            refs.playableLoop = isLooping;
+            refs.playableClipLength = marker.AvatarClip.length;
+
+            emotesInUse.Add(refs, pools[mainAsset]);
+            maskedEmote.CurrentEmoteReference = refs;
+            maskedEmote.EmoteLoop = isLooping;
+            return true;
+        }
+
+        private static SceneEmoteMaskSet? cachedMaskSet;
+        private static bool maskSetLoadAttempted;
+
+        private static SceneEmoteMaskSet? GetMaskSet()
+        {
+            if (maskSetLoadAttempted) return cachedMaskSet;
+            maskSetLoadAttempted = true;
+            cachedMaskSet = Resources.Load<SceneEmoteMaskSet>("SceneEmoteMaskSet");
+            if (cachedMaskSet == null)
+                Debug.Log("(Maurizio) GetMaskSet: Resources.Load<SceneEmoteMaskSet>(\"SceneEmoteMaskSet\") returned null — drop the asset into a Resources folder named \"SceneEmoteMaskSet.asset\"");
+            return cachedMaskSet;
         }
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)

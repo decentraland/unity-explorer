@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8f05b45b127a4db2bd41fdf3743ccb9, type: 3}
+  m_Name: SceneEmoteMaskSet
+  m_EditorClassIdentifier: DCL.Plugins::DCL.AvatarRendering.Emotes.Play.SceneEmoteMaskSet
+  fullBody: {fileID: 31900000, guid: aba7e7ffdec1d41918d01bfbdf494a09, type: 2}
+  upperBody: {fileID: 31900000, guid: e90dbfec155d04a4394c724999f0d8e6, type: 2}

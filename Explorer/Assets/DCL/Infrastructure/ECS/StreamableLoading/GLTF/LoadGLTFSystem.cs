@@ -59,13 +59,16 @@ namespace ECS.StreamableLoading.GLTF
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
-            // In player builds, GLTFast cannot produce Mecanim clips at runtime (needs AnimationClip.SetCurve,
-            // which is Editor-only in runtime). When a scene emote is loaded in local-scene-development on a
-            // build, import as Legacy and convert the resulting clips to Mecanim after load.
+            // In player builds, GLTFast cannot produce Mecanim clips at runtime (it relies on
+            // AnimationClip.SetCurve, which is Editor-only in runtime). For scene emotes loaded in
+            // local-scene-development on a player build, we import clips as Legacy and tag the root
+            // with a LegacyImportedAnimationsMarker; EmotePlayer's Playable-graph fork plays the
+            // legacy clip directly via AnimationClipPlayable on the avatar's Animator, without ever
+            // needing to mutate the clip.
             bool useLegacyImportForMecanim =
                 intention.MecanimAnimationClips
-                && isLocalSceneDevelopment
-                && !Application.isEditor;
+                && isLocalSceneDevelopment;
+                // && !Application.isEditor;
 
             AnimationMethod animationMethod = intention.MecanimAnimationClips && !useLegacyImportForMecanim
                 ? AnimationMethod.Mecanim
@@ -93,10 +96,16 @@ namespace ECS.StreamableLoading.GLTF
 
             await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-            // When GLTFast loads a GLB locally with Mecanim it may not create a RuntimeAnimatorController;
-            // in that case we build one from BaseAnimatorController and the imported clips.
             if (intention.MecanimAnimationClips)
-                ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer, useLegacyImportForMecanim);
+            {
+                if (useLegacyImportForMecanim)
+                    // Forked path: tag with marker; playback layer handles the legacy clip via PlayableGraph.
+                    AttachLegacyEmoteMarker(gltfImport, rootContainer);
+                else
+                    // Normal Mecanim path: when GLTFast loads a GLB locally without a RuntimeAnimatorController,
+                    // build one from BaseAnimatorController and the imported clips.
+                    ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer);
+            }
 
             // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
             if (patchTexturesFormat)
@@ -112,56 +121,22 @@ namespace ECS.StreamableLoading.GLTF
         }
 
         /// <summary>
-        /// Builds an AnimatorOverrideController from Resources/BaseAnimatorController and the GLTF animation
-        /// clips when the imported root lacks one.
-        ///
-        /// When <paramref name="convertFromLegacy"/> is true, the GLB was imported via AnimationMethod.Legacy
-        /// (GLTFast attaches a UnityEngine.Animation component with legacy clips instead of an Animator). We
-        /// remove that component, add an Animator, and for each clip that gets assigned to an override slot
-        /// we clone it via Object.Instantiate and flip clone.legacy = false — AnimationClip.legacy is a
-        /// playback-system selector over the same curve data, and the importer-marked original is effectively
-        /// read-only.
+        /// If the GLB has an Animator but no RuntimeAnimatorController (e.g. loaded locally by GLTFast),
+        /// builds an AnimatorOverrideController from Resources/BaseAnimatorController and the GLTF animation clips.
         /// </summary>
-        private static void ApplyBaseAnimatorControllerWhenNeeded(GltfImport gltfImport, GameObject rootContainer, bool convertFromLegacy)
+        private static void ApplyBaseAnimatorControllerWhenNeeded(GltfImport gltfImport, GameObject rootContainer)
         {
-            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
-            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: root='{rootContainer.name}' convertFromLegacy={convertFromLegacy} clipCount={(gltfClips == null ? 0 : gltfClips.Length)}");
-
-            if (gltfClips == null || gltfClips.Length == 0)
-            {
-                Debug.Log("(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: no clips, aborting");
-                return;
-            }
-
             Animator? animator = rootContainer.GetComponentInChildren<Animator>(true);
-
-            if (animator != null && animator.runtimeAnimatorController != null)
-            {
-                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: animator '{animator.name}' already has controller, leaving it alone");
+            if (animator == null || animator.runtimeAnimatorController != null)
                 return;
-            }
-
-            if (animator == null)
-            {
-                Animation? legacyAnim = rootContainer.GetComponentInChildren<Animation>(true);
-                GameObject host = legacyAnim != null ? legacyAnim.gameObject : rootContainer;
-
-                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: no Animator found. legacyAnimationFound={(legacyAnim != null)} host='{host.name}'");
-
-                if (legacyAnim != null)
-                    UnityEngine.Object.Destroy(legacyAnim);
-
-                animator = host.AddComponent<Animator>();
-            }
-            else
-                Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: animator '{animator.name}' found without controller, will assign one");
 
             RuntimeAnimatorController? baseController = Resources.Load<RuntimeAnimatorController>("BaseAnimatorController");
             if (baseController == null)
-            {
-                Debug.Log("(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: BaseAnimatorController not found in Resources, aborting");
                 return;
-            }
+
+            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
+            if (gltfClips == null || gltfClips.Length == 0)
+                return;
 
             AnimationClip? avatarClip = null;
             AnimationClip? propClip = null;
@@ -174,14 +149,6 @@ namespace ECS.StreamableLoading.GLTF
                         avatarClip = clip;
                     else if (clip != null && clip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
                         propClip = clip;
-
-            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: picked avatarClip='{(avatarClip != null ? avatarClip.name : "null")}' propClip='{(propClip != null ? propClip.name : "null")}'");
-
-            if (convertFromLegacy)
-            {
-                if (avatarClip != null) avatarClip = ToMecanim(avatarClip);
-                if (propClip != null) propClip = ToMecanim(propClip);
-            }
 
             var overrideController = new AnimatorOverrideController(baseController);
             var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
@@ -204,16 +171,72 @@ namespace ECS.StreamableLoading.GLTF
 
             overrideController.ApplyOverrides(overrides);
             animator.runtimeAnimatorController = overrideController;
-
-            Debug.Log($"(Maurizio) ApplyBaseAnimatorControllerWhenNeeded: assigned AnimatorOverrideController to '{animator.name}' (overrideSlots={overrides.Count})");
         }
 
-        private static AnimationClip ToMecanim(AnimationClip legacyClip)
+        /// <summary>
+        /// Tags the imported root with a <see cref="LegacyImportedAnimationsMarker"/> carrying Mecanim-flagged
+        /// clones of the imported legacy clips. The Playables API refuses legacy-flagged clips with
+        /// "ArgumentException: Legacy clips cannot be used in Playables.", so we clone via
+        /// Object.Instantiate and flip clone.legacy = false. AnimationClip.legacy is a playback-system
+        /// selector over the same curve data, and a freshly Instantiated clip is not "in use" by any
+        /// Animation/Animator, so the setter is accepted. The importer-owned originals are left alone.
+        /// Also destroys the UnityEngine.Animation component(s) GLTFast attached for the Legacy import,
+        /// since playback runs through the avatar's Animator via PlayableGraph.
+        /// </summary>
+        private static void AttachLegacyEmoteMarker(GltfImport gltfImport, GameObject rootContainer)
         {
-            AnimationClip clone = UnityEngine.Object.Instantiate(legacyClip);
-            clone.name = legacyClip.name;
+            AnimationClip[]? gltfClips = gltfImport.GetAnimationClips();
+            int clipCount = gltfClips == null ? 0 : gltfClips.Length;
+            Debug.Log($"(Maurizio) AttachLegacyEmoteMarker: root='{rootContainer.name}' clipCount={clipCount}");
+
+            if (gltfClips == null || gltfClips.Length == 0)
+            {
+                Debug.Log("(Maurizio) AttachLegacyEmoteMarker: no clips, skipping marker");
+                return;
+            }
+
+            AnimationClip? avatarClip = null;
+            AnimationClip? propClip = null;
+
+            if (gltfClips.Length == 1)
+                avatarClip = gltfClips[0];
+            else
+                foreach (AnimationClip clip in gltfClips)
+                    if (clip != null && clip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
+                        avatarClip = clip;
+                    else if (clip != null && clip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
+                        propClip = clip;
+
+            // Remove the Animation component(s) GLTFast attached for the Legacy import — the clips stay
+            // alive (owned by GltfImport), but we don't want the Animation component auto-playing them
+            // and we want them to stop being "in use" before we (would ever) touch the originals.
+            Animation[] legacyAnimations = rootContainer.GetComponentsInChildren<Animation>(true);
+            for (int i = 0; i < legacyAnimations.Length; i++)
+                UnityEngine.Object.Destroy(legacyAnimations[i]);
+
+            // Clone + flip legacy on the clones so AnimationClipPlayable.Create accepts them.
+            AnimationClip? avatarClipMecanim = CloneAsMecanim(avatarClip);
+            AnimationClip? propClipMecanim = CloneAsMecanim(propClip);
+
+            var marker = rootContainer.AddComponent<LegacyImportedAnimationsMarker>();
+            marker.AvatarClip = avatarClipMecanim;
+            marker.PropClip = propClipMecanim;
+
+            Debug.Log($"(Maurizio) AttachLegacyEmoteMarker: avatarClip='{(avatarClipMecanim != null ? avatarClipMecanim.name : "null")}' avatarLegacy={(avatarClipMecanim != null && avatarClipMecanim.legacy)} propClip='{(propClipMecanim != null ? propClipMecanim.name : "null")}' propLegacy={(propClipMecanim != null && propClipMecanim.legacy)} destroyedAnimationComponents={legacyAnimations.Length}");
+        }
+
+        /// <summary>
+        /// Clones a legacy-flagged AnimationClip via Object.Instantiate and flips the clone's
+        /// <see cref="AnimationClip.legacy"/> to false so it can be fed to the Playables API.
+        /// Returns null when the input is null.
+        /// </summary>
+        private static AnimationClip? CloneAsMecanim(AnimationClip? legacy)
+        {
+            if (legacy == null) return null;
+
+            AnimationClip clone = UnityEngine.Object.Instantiate(legacy);
+            clone.name = legacy.name; // Instantiate appends "(Clone)"
             clone.legacy = false;
-            Debug.Log($"(Maurizio) ToMecanim: cloned '{legacyClip.name}' (sourceLegacy={legacyClip.legacy}) -> cloneLegacy={clone.legacy}");
             return clone;
         }
 
