@@ -82,9 +82,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
             catch (InvalidProtocolBufferException)
             {
-                // External participants (e.g. cast2 webapp presentation bots) send raw JSON
-                // on the shared IDataPipe. These are not protobuf packets, so parsing fails.
-                // This is expected and not an error.
+                // Defensive fallback for non-DCL participants that publish non-protobuf data
+                // on the shared IDataPipe. DCL clients (including cast2) speak protobuf, and
+                // CommsApi traffic routes via MsgType.CommsData — neither reaches here.
             }
             catch (Exception e)
             {
