@@ -9,6 +9,7 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -64,6 +65,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -100,7 +102,8 @@ namespace DCL.AuthenticationScreenFlow
             AudioClipConfig backgroundMusic,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -119,6 +122,7 @@ namespace DCL.AuthenticationScreenFlow
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public override void Dispose()
@@ -163,7 +167,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 fsm.AddStates(
                     otpVerificationState,
-                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
+                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
                 );
             }
 

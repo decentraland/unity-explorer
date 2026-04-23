@@ -8,7 +8,6 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
-using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
@@ -23,12 +22,9 @@ using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
-using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
 using ECS;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using DCL.CharacterCamera;
 using DCL.InWorldCamera;
@@ -61,7 +57,6 @@ namespace DCL.UI.Sidebar
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
 
-        private readonly HttpEventsApiService eventsApiService;
         private readonly CancellationTokenSource profileWidgetCts = new ();
         private readonly CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
@@ -89,8 +84,7 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
-            ChatEventBus chatEventBus,
-            HttpEventsApiService eventsApiService)
+            ChatEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -108,7 +102,6 @@ namespace DCL.UI.Sidebar
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
-            this.eventsApiService = eventsApiService;
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -350,21 +343,6 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(false);
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
-        }
-
-        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                Result<IReadOnlyList<EventsApi.EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
-                                                                                                   .SuppressToResultAsync(ReportCategory.EVENTS);
-
-                if (ct.IsCancellationRequested)
-                    return;
-
-                viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
-                await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
-            }
         }
 
 #region Sidebar button handlers
