@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -83,6 +84,63 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
             ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
+        }
+
+        [Test]
+        public void ForgetInFlightLoadingOnSrcChange()
+        {
+            var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "new-src" };
+            var cts = new CancellationTokenSource();
+            var c = new GltfContainerComponent
+            {
+                Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("old-src", "old_hash", cts), PartitionComponent.TOP_PRIORITY),
+                State = LoadingState.Loading,
+            };
+
+            // No StreamableLoadingResult added — the promise is still in-flight
+            Entity loadingEntity = c.Promise.Entity;
+            Assume.That(world.IsAlive(loadingEntity), Is.True);
+            Assume.That(cts.IsCancellationRequested, Is.False);
+
+            Entity entity = world.Create(sdkComponent, c);
+
+            system.Update(0);
+
+            // Loading entity is destroyed so it cannot resolve into an orphaned GltfContainerAsset later
+            Assert.That(world.IsAlive(loadingEntity), Is.False);
+            Assert.That(cts.IsCancellationRequested, Is.True);
+
+            Assert.That(world.TryGet(entity, out GltfContainerComponent updated), Is.True);
+            Assert.That(updated.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
+            Assert.That(updated.State, Is.EqualTo(LoadingState.Unknown));
+        }
+
+        [Test]
+        public void DisposeRawGltfOnComponentRemovalInsteadOfCaching()
+        {
+            var c = new GltfContainerComponent();
+            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("raw-src", "raw_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+
+            // Simulate a raw GLTF that LoadGLTFSystem reference-counted and handed to GltfContainerAsset
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Root"));
+            gltfData.AddReference();
+
+            var asset = GltfContainerAsset.Create(new GameObject("container"), assetData: gltfData);
+            world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+            c.State = LoadingState.Finished;
+
+            Entity entity = world.Create(c, new CRDTEntity(100));
+
+            system.Update(0);
+
+            Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
+
+            // Raw GLTFs must not be returned to the shared pool — the cache is irrelevant for NoCache assets in LSD
+            cache.DidNotReceive().Dereference(Arg.Any<string>(), Arg.Any<GltfContainerAsset>());
+
+            // GLTFData was dereferenced and disposed through GltfContainerAsset.Dispose
+            Assert.That(gltfData.CanBeDisposed(), Is.True, "GLTFData.RefCount should have been decremented by the container's Dispose");
+            Assert.That(asset.AssetData, Is.Null, "GltfContainerAsset.Dispose should null out AssetData");
         }
 
         [Test]
