@@ -9,6 +9,7 @@ using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -65,8 +66,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                cache.Dereference(component.Hash, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
+
+                // Raw GLTFs use NoCache so the underlying data is not shared — dispose directly
+                // instead of returning to the cache (which would leak in LSD where TryGet is never called)
+                if (result.Asset.AssetData is GLTFData)
+                    result.Asset.Dispose();
+                else
+                    cache.Dereference(component.Hash, result.Asset);
             }
         }
 
