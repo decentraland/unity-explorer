@@ -26,6 +26,7 @@ namespace DCL.VoiceChat.Nearby
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly NearbyVoiceChatStateModel nearbyStateModel;
+        private readonly NearbyMuteService muteService;
         private readonly IDisposable stateSubscription;
 
         private readonly HashSet<string> previousActiveSpeakers = new ();
@@ -38,17 +39,20 @@ namespace DCL.VoiceChat.Nearby
             IReadOnlyEntityParticipantTable entityParticipantTable,
             World world,
             Entity playerEntity,
-            NearbyVoiceChatStateModel nearbyStateModel)
+            NearbyVoiceChatStateModel nearbyStateModel,
+            NearbyMuteService muteService)
         {
             this.islandRoom = islandRoom;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
             this.nearbyStateModel = nearbyStateModel;
+            this.muteService = muteService;
 
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            muteService.MuteStateChanged += OnMuteStateChanged;
 
             stateSubscription = nearbyStateModel.State.Subscribe(ApplyLocalPublishingFromState);
         }
@@ -61,6 +65,7 @@ namespace DCL.VoiceChat.Nearby
             islandRoom.TrackSubscribed -= OnTrackSubscribed;
             islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            muteService.MuteStateChanged -= OnMuteStateChanged;
 
             stateSubscription.Dispose();
         }
@@ -69,13 +74,25 @@ namespace DCL.VoiceChat.Nearby
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             if (publication.Kind == TrackKind.KindAudio && entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: islandRoom.ActiveSpeakers.Contains(participant.Identity)));
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(
+                    isSpeaking: islandRoom.ActiveSpeakers.Contains(participant.Identity),
+                    isHushed: muteService.IsMuted(participant.Identity)));
         }
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
             if (publication.Kind == TrackKind.KindAudio && entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
                 world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
+        }
+
+        private void OnMuteStateChanged(string walletId, bool isMuted)
+        {
+            if (!entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry)) return;
+            if (!world.Has<VoiceChatNametagComponent>(entry.Entity)) return;
+
+            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(
+                isSpeaking: islandRoom.ActiveSpeakers.Contains(walletId),
+                isHushed: isMuted));
         }
 
         private void ApplyLocalPublishingFromState(NearbyVoiceChatState state)
@@ -113,7 +130,7 @@ namespace DCL.VoiceChat.Nearby
 
                 if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry)
                     && world.Has<VoiceChatNametagComponent>(entry.Entity))
-                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false));
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false, isHushed: muteService.IsMuted(identity)));
             }
 
             // Speakers who started speaking: flip IsSpeaking to true (wave).
@@ -122,7 +139,7 @@ namespace DCL.VoiceChat.Nearby
                 if (identity == localPlayer) continue;
 
                 if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry))
-                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: true));
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: true, isHushed: muteService.IsMuted(identity)));
             }
 
             previousActiveSpeakers.Clear();

@@ -228,7 +228,7 @@ namespace DCL.PluginSystem.Global
 
                 nearbyNametagsHandler = new NearbyVoiceChatNametagsHandler(
                     islandRoom, entityParticipantTable, world,
-                    playerEntity, nearbyStateModel);
+                    playerEntity, nearbyStateModel, nearbyMuteService);
                 pluginScope.Add(nearbyNametagsHandler);
 
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);

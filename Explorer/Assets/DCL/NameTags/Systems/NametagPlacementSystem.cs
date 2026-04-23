@@ -147,7 +147,7 @@ namespace DCL.Nametags
             {
                 nametagHolder.Nametag.VoiceChat = false;
                 nametagHolder.Nametag.Speaking = false;
-                // nametagHolder.Nametag.Hushed = false;
+                nametagHolder.Nametag.Hushed = false;
 
                 World.Remove<VoiceChatNametagComponent>(e);
             }
@@ -155,7 +155,7 @@ namespace DCL.Nametags
             {
                 nametagHolder.Nametag.VoiceChat = true;
                 nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
-                // nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && voiceChatComponent.IsHushed;
+                nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed;
                 voiceChatComponent.IsDirty = false;
             }
         }
