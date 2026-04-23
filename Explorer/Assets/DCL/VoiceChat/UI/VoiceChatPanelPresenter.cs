@@ -83,7 +83,7 @@ namespace DCL.VoiceChat
             VoiceChatPanelState previous = stateBeforeFullscreen.Value;
             stateBeforeFullscreen = null;
 
-            // Always leave HIDDEN — NONE re-activates the panel container without focus side effects
+            // Never restore to HIDDEN; NONE re-activates the panel container without focus side-effects
             VoiceChatPanelState restoreTo = previous is VoiceChatPanelState.NONE or VoiceChatPanelState.HIDDEN
                 ? VoiceChatPanelState.NONE
                 : VoiceChatPanelState.UNFOCUSED;
