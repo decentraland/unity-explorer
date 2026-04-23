@@ -166,12 +166,6 @@ namespace DCL.Chat.ChatReactions.Editor
             Label("Stream UI Lane", StateText(config.StreamUILane));
             Label("Stream Local Player", StateText(config.StreamLocalPlayer));
             Label("Stream Remote Players", StateText(config.StreamRemotePlayers));
-
-
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Message Reactions", EditorStyles.miniBoldLabel);
-            Label("Tooltip Mock Users", StateText(config.MessageReactions.TooltipMockUsersEnabled));
-            Label("Tooltip Mock Loading", StateText(config.MessageReactions.TooltipMockLoadingEnabled));
             EditorGUI.indentLevel--;
 
             DrawSeparator();

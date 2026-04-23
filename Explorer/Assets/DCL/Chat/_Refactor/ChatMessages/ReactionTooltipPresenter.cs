@@ -127,30 +127,14 @@ namespace DCL.Chat.ChatMessages
                     lastReactors.Add(wallet);
             }
 
-#if UNITY_EDITOR
-            int mockUserCount = messageConfig.TooltipMockUsersEnabled
-                ? messageConfig.TooltipMockUserCount
-                : 0;
-
-            if (messageConfig.TooltipMockLoadingEnabled)
-            {
-                view.ShowLoading(uvRect, atlasConfig.Atlas, pillTransform);
-                asyncCts = new CancellationTokenSource();
-                MockLoadThenShowAsync(mockUserCount, asyncCts.Token).Forget();
-                return;
-            }
-#else
-            const int mockUserCount = 0;
-#endif
-
             bool allResolved = ResolveDisplayNames(out bool ownIncluded);
-            string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, emojiIndex);
+            string text = textBuilder.Build(displayNames, ownIncluded, emojiIndex);
             view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
 
             if (!allResolved)
             {
                 asyncCts = new CancellationTokenSource();
-                ResolveAndUpdateAsync(mockUserCount, asyncCts.Token).Forget();
+                ResolveAndUpdateAsync(asyncCts.Token).Forget();
             }
         }
 
@@ -172,45 +156,20 @@ namespace DCL.Chat.ChatMessages
             shownEmojiIndex == emojiIndex
             && string.Equals(shownMessageId, messageId, StringComparison.Ordinal);
 
-#if UNITY_EDITOR
-        private async UniTaskVoid MockLoadThenShowAsync(int mockUserCount, CancellationToken ct)
+        private async UniTaskVoid ResolveAndUpdateAsync(CancellationToken ct)
         {
             try
             {
-                await UniTask.Delay(
-                    TimeSpan.FromSeconds(messageConfig.TooltipMockLoadingDelay),
-                    cancellationToken: ct);
+                List<Profile.CompactInfo> fetched = await profileRepository.GetProfilesAsync(unresolvedWallets, ct);
 
                 if (ct.IsCancellationRequested) return;
 
-                bool allResolved = ResolveDisplayNames(out bool ownIncluded);
-                string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
-                view.UpdateText(text);
-
-                if (!allResolved)
-                    await ResolveProfilesAndRebuildTextAsync(mockUserCount, ct);
+                ResolveDisplayNames(out bool ownIncluded, fetched);
+                string updatedText = textBuilder.Build(displayNames, ownIncluded, shownEmojiIndex);
+                view.UpdateText(updatedText);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
-        }
-#endif
-
-        private async UniTaskVoid ResolveAndUpdateAsync(int mockUserCount, CancellationToken ct)
-        {
-            try { await ResolveProfilesAndRebuildTextAsync(mockUserCount, ct); }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.CHAT_MESSAGES); }
-        }
-
-        private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
-        {
-            List<Profile.CompactInfo> fetched = await profileRepository.GetProfilesAsync(unresolvedWallets, ct);
-
-            if (ct.IsCancellationRequested) return;
-
-            ResolveDisplayNames(out bool ownIncluded, fetched);
-            string updatedText = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
-            view.UpdateText(updatedText);
         }
 
         private bool ResolveDisplayNames(out bool ownIncluded, IReadOnlyList<Profile.CompactInfo>? fetched = null)

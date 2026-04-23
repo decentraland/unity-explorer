@@ -32,18 +32,8 @@ namespace DCL.Chat.ChatMessages
             SetVisible(true);
         }
 
-        public void ShowLoading(Rect emojiUvRect, Texture atlas, RectTransform pillTransform)
-        {
-            emojiImage.texture = atlas;
-            emojiImage.uvRect = emojiUvRect;
-            ShowLoadingContent();
-            positioner?.PositionAbovePill(pillTransform);
-            SetVisible(true);
-        }
-
         public void UpdateText(string text)
         {
-            ShowResolvedContent();
             namesText.text = text;
         }
 
@@ -54,24 +44,12 @@ namespace DCL.Chat.ChatMessages
 
         private void ShowContent(string text, Rect emojiUvRect, Texture atlas)
         {
-            ShowResolvedContent();
+            if (loadingIndicator != null)
+                loadingIndicator.SetActive(false);
+
             namesText.text = text;
             emojiImage.texture = atlas;
             emojiImage.uvRect = emojiUvRect;
-        }
-
-        private void ShowResolvedContent()
-        {
-            loadingIndicator.SetActive(false);
-            namesText.gameObject.SetActive(true);
-            emojiImage.gameObject.SetActive(true);
-        }
-
-        private void ShowLoadingContent()
-        {
-            loadingIndicator.SetActive(true);
-            namesText.gameObject.SetActive(false);
-            emojiImage.gameObject.SetActive(false);
         }
 
         private void SetVisible(bool visible)

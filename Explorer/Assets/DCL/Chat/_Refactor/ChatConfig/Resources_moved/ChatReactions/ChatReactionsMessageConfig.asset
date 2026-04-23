@@ -30,28 +30,3 @@ MonoBehaviour:
   <TooltipArrowMaxX>k__BackingField: 140
   <TooltipArrowXOffset>k__BackingField: 10
   <TooltipActionTextColor>k__BackingField: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
-  TooltipMockLoadingEnabled: 1
-  TooltipMockLoadingDelay: 0.5
-  TooltipMockUsersEnabled: 1
-  TooltipMockUserCount: 0
-  TooltipMockUserNames:
-  - CryptoWhale
-  - MetaBuilder
-  - PixelPioneer
-  - VoxelVoyager
-  - NFTNomad
-  - ChainChaser
-  - BlockBaron
-  - EtherExplorer
-  - TokenTraveler
-  - DeFiDreamer
-  - WebWanderer
-  - CodeCrafter
-  - DigitalDrifter
-  - ByteBandit
-  - HashHunter
-  - LedgerLion
-  - MintMaster
-  - RealmRider
-  - SynthSurfer
-  - WarpWalker

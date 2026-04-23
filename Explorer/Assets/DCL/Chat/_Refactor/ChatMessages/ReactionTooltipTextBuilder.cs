@@ -30,37 +30,21 @@ namespace DCL.Chat.ChatMessages
             actionColorOpenTag = $"<color=#{ColorUtility.ToHtmlStringRGBA(messageConfig.TooltipActionTextColor)}>";
         }
 
-        public string Build(IReadOnlyList<string> displayNames, bool ownIncluded, int mockUserCount, int emojiIndex)
+        public string Build(IReadOnlyList<string> displayNames, bool ownIncluded, int emojiIndex)
         {
             sb.Clear();
 
-            int count = 0;
-            string[] mockNames = messageConfig.TooltipMockUserNames;
-
-            if (mockNames.Length > 0)
-            {
-                for (int i = 0; i < mockUserCount; i++)
-                {
-                    if (count > 0)
-                        sb.Append(", ");
-
-                    sb.Append(mockNames[Random.Range(0, mockNames.Length)]);
-                    count++;
-                }
-            }
-
             for (int i = 0; i < displayNames.Count; i++)
             {
-                if (count > 0)
+                if (i > 0)
                     sb.Append(", ");
 
                 sb.Append(displayNames[i]);
-                count++;
             }
 
             if (ownIncluded)
             {
-                if (count > 0)
+                if (displayNames.Count > 0)
                     sb.Append(" and ");
 
                 sb.Append("you");
