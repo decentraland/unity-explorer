@@ -153,19 +153,12 @@ namespace DCL.Nametags
                 return;
             }
 
-            if (voiceChatComponent.Type == VoiceChatType.NEARBY)
-            {
-                // Nearby: badge is always visible while publishing (dots when silent, wave when active).
-                nametagHolder.Nametag.VoiceChat = true;
-                nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
-                nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed;
-            }
-            else
-            {
-                // Private/Community: badge is only shown while speaking (legacy behavior).
-                nametagHolder.Nametag.VoiceChat = voiceChatComponent.IsSpeaking;
-                nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
-            }
+            // Nearby: badge is always visible while publishing (dots when silent, wave when active).
+            // Private/Community: badge is only shown while speaking (legacy behavior).
+            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY ? true : voiceChatComponent.IsSpeaking;
+
+            nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
+            nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed; // hushed is cleared to false when changing room
 
             voiceChatComponent.IsDirty = false;
         }
