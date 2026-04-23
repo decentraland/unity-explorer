@@ -6,7 +6,7 @@ namespace Editor
     {
         private static readonly string SETTING_COPY_PDB_FILES = "CopyPDBFiles";
 
-        internal static string platformName => "Standalone";
+        private static string PlatformName => "Standalone";
 
         internal static bool CopyPDBFiles
         {
