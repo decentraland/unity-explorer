@@ -31,22 +31,19 @@ namespace DCL.Chat.ChatReactions.Core
             public readonly ChatMessageReactionService MessageReactionService;
             public readonly ChatReactionDebugState DebugState;
             public readonly SituationalReactionDebugController DebugController;
-            public readonly StreamReactionsEmitter StreamEmitter;
 
             internal Result(
                 SituationalReactionFacade facade,
                 ISituationalReactionSimulation simulation,
                 ChatMessageReactionService messageReactionService,
                 ChatReactionDebugState debugState,
-                SituationalReactionDebugController debugController,
-                StreamReactionsEmitter streamEmitter)
+                SituationalReactionDebugController debugController)
             {
                 Facade = facade;
                 Simulation = simulation;
                 MessageReactionService = messageReactionService;
                 DebugState = debugState;
                 DebugController = debugController;
-                StreamEmitter = streamEmitter;
             }
         }
 
@@ -141,7 +138,7 @@ namespace DCL.Chat.ChatReactions.Core
             scope.Add(debugView);
 #endif
 
-            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController, streamEmitter);
+            return new Result(situationalReactionFacade, simulationLoop, messageReactionService, debugState, debugController);
         }
 
         private static IReactionMessageBus CreateReactionBus(

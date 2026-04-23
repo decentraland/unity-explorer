@@ -1,6 +1,5 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
-using DCL.Chat.ChatReactions.Core;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
@@ -142,7 +141,6 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
-        private readonly ChatReactionsContainer chatReactionsContainer;
 
         public IMVCManager MvcManager { get; }
 
@@ -185,8 +183,7 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler,
-            ChatReactionsContainer chatReactionsContainer)
+            BannedNotificationHandler bannedNotificationHandler)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -205,12 +202,10 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
-            this.chatReactionsContainer = chatReactionsContainer;
         }
 
         public override void Dispose()
         {
-            chatReactionsContainer.Dispose();
             bannedNotificationHandler.Dispose();
             chatMessagesBus.Dispose();
             profileBroadcast.Dispose();
@@ -558,8 +553,6 @@ namespace Global.Dynamic
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
             var currentChannelService = new CurrentChannelService();
 
-            var chatReactionsContainer = new ChatReactionsContainer();
-
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -575,8 +568,6 @@ namespace Global.Dynamic
                 new AppArgsCommand(appArgs),
                 new SceneAdminsChatCommand(staticContainer.ScenesCache),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
-                new StreamReactionsChatCommand(chatReactionsContainer),
-                new FakeReactionsChatCommand(chatReactionsContainer),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -919,7 +910,6 @@ namespace Global.Dynamic
                     messagePipesHub,
                     bootstrapContainer.Environment,
                     bootstrapContainer.Analytics.Controller,
-                    chatReactionsContainer,
                     currentChannelService),
                 new ExplorePanelPlugin(
                     chatEventBus,
@@ -1344,8 +1334,7 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler,
-                chatReactionsContainer
+                bannedNotificationHandler
             );
 
             // Init itself

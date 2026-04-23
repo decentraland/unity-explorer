@@ -101,7 +101,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAnalyticsController analytics;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
-        private readonly ChatReactionsContainer chatReactionsContainer;
 
         private ChatMainSharedAreaController? chatSharedAreaController;
         private ChatCommandRegistry? commandRegistry;
@@ -147,7 +146,6 @@ namespace DCL.PluginSystem.Global
             IMessagePipesHub messagePipesHub,
             DecentralandEnvironment decentralandEnvironment,
             IAnalyticsController analytics,
-            ChatReactionsContainer chatReactionsContainer,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -186,7 +184,6 @@ namespace DCL.PluginSystem.Global
             this.messagePipesHub = messagePipesHub;
             this.decentralandEnvironment = decentralandEnvironment;
             this.analytics = analytics;
-            this.chatReactionsContainer = chatReactionsContainer;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -219,7 +216,7 @@ namespace DCL.PluginSystem.Global
 
             var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
 
-            chatReactionsContainer.Initialize(
+            ChatReactionsFactory.Result reactions = ChatReactionsFactory.Create(
                 settings.ReactionsConfig,
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
                 avatarReactionPosition,
@@ -228,9 +225,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 chatHistory,
                 decentralandEnvironment,
-                settings.ChatSettingsAsset);
-
-            ChatReactionsFactory.Result reactions = chatReactionsContainer.Result!.Value;
+                settings.ChatSettingsAsset,
+                pluginScope);
 
             messageReactionService = reactions.MessageReactionService;
 

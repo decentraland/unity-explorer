@@ -33,8 +33,6 @@ namespace DCL.Chat.ChatReactions.Core
             }
         }
 
-        internal StreamReactionsEmitter StreamEmitter => streamEmitter;
-
         public SituationalSimulationLoop(
             ChatReactionUISimulation uiSimulation,
             ChatReactionWorldSimulation worldSimulation,
