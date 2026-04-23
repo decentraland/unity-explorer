@@ -145,10 +145,7 @@ namespace DCL.Nametags
 
             if (voiceChatComponent.IsRemoving)
             {
-                nametagHolder.Nametag.VoiceChat = false;
-                nametagHolder.Nametag.Speaking = false;
-                nametagHolder.Nametag.Hushed = false;
-
+                nametagHolder.Nametag.VoiceChat = nametagHolder.Nametag.Speaking = nametagHolder.Nametag.Hushed = false;
                 World.Remove<VoiceChatNametagComponent>(e);
                 return;
             }

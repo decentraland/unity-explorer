@@ -12,9 +12,11 @@ namespace DCL.VoiceChat
 
         public VoiceChatNametagComponent(bool isSpeaking, VoiceChatType type, bool isHushed = false)
         {
+            Type = type;
+
             IsSpeaking = isSpeaking;
             IsHushed = isHushed;
-            Type = type;
+
             IsDirty = true;
             IsRemoving = false;
         }
