@@ -126,24 +126,38 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void UpdateExistingComponentWhenAudioSourceChanges()
         {
-            // Arrange — Alice already has a nearby component
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, Vector3.zero);
+            // Arrange — Alice already has a nearby component; position her away from origin
+            // so we can verify the NEW source also gets synced there (not stuck at origin).
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Vector3 remotePos = new Vector3(10, 0, 5);
+            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, remotePos);
             LivekitAudioSource oldSource = CreateLivekitAudioSource();
 
             SetupParticipant(PARTICIPANT_A, remoteEntity);
             activeAudioSources[PARTICIPANT_A] = oldSource;
 
-            system.Update(0);
+            system.Update(0); // assign
+            system.Update(0); // sync positions onto oldSource
 
-            // Act — audio source replaced (e.g. reconnection to island room)
+            // Act — audio source replaced (simulates Island Room reconnect creating a fresh LivekitAudioSource)
             LivekitAudioSource newSource = CreateLivekitAudioSource();
             activeAudioSources[PARTICIPANT_A] = newSource;
 
             system.Update(0);
 
-            // Assert — existing component updated in-place, no structural change needed
+            // Assert — existing component updated in-place
             ref readonly NearbyAudioSourceComponent comp = ref world.Get<NearbyAudioSourceComponent>(remoteEntity);
             Assert.That(comp.LivekitAudioSource, Is.EqualTo(newSource));
+
+            // Regression guard: the NEW source must be synced to the remote head position,
+            // not left at its spawn origin (0,0,0). This reproduces the "audio stuck at origin
+            // after reconnect" bug that was caused by a stale cached Transform reference.
+            Vector3 expectedHeadPos = remotePos + new Vector3(0, 1.75f, 0);
+            Assert.That(newSource.transform.position.x, Is.EqualTo(expectedHeadPos.x).Within(0.01f));
+            Assert.That(newSource.transform.position.y, Is.EqualTo(expectedHeadPos.y).Within(0.01f));
+            Assert.That(newSource.transform.position.z, Is.EqualTo(expectedHeadPos.z).Within(0.01f));
         }
 
         // ── Source Cleanup ──────────────────────────────────────────

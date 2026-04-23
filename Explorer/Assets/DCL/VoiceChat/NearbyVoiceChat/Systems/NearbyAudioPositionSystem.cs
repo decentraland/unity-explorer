@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
@@ -82,8 +83,12 @@ namespace DCL.VoiceChat.Nearby.Systems
                 if (World.Has<NearbyAudioSourceComponent>(entry.Entity))
                 {
                     ref NearbyAudioSourceComponent component = ref World.Get<NearbyAudioSourceComponent>(entry.Entity);
+
+                    if (component.LivekitAudioSource == null)
+                        ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT,
+                            $"Re-binding NearbyAudioSourceComponent for {kvp.Key} over a destroyed LivekitAudioSource (typical after Island Room reconnect)");
+
                     component.LivekitAudioSource = kvp.Value;
-                    component.Transform = kvp.Value.transform;
                 }
                 else
                 {
@@ -119,13 +124,24 @@ namespace DCL.VoiceChat.Nearby.Systems
                 return;
             }
 
+            // Unity null-check: LivekitAudioSource GameObject may have been destroyed (e.g. Island Room reconnect
+            // disposed the old source before activeAudioSources was re-synced for this frame). Without this guard,
+            // position writes would silently target a destroyed Transform and throw MissingReferenceException.
+            if (nearbyAudio.LivekitAudioSource == null)
+            {
+                ReportHub.LogWarning(ReportCategory.NEARBY_VOICE_CHAT,
+                    $"NearbyAudioSourceComponent for {nearbyAudio.ParticipantIdentity} points to a destroyed LivekitAudioSource — scheduling cleanup");
+                entitiesToCleanUp.Add(entity);
+                return;
+            }
+
             Vector3 remoteAvatarHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
                 ? avatarBase.HeadAnchorPoint.position
                 : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
-            nearbyAudio.Transform.position = sourcePos;
+            nearbyAudio.LivekitAudioSource.transform.position = sourcePos;
 
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
             nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);

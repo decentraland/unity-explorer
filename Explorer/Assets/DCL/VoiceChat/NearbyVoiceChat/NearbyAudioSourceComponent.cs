@@ -1,5 +1,4 @@
 using LiveKit.Rooms.Streaming.Audio;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -12,14 +11,11 @@ namespace DCL.VoiceChat
         public readonly string ParticipantIdentity;
 
         public LivekitAudioSource LivekitAudioSource;
-        public Transform Transform;
 
         public NearbyAudioSourceComponent(string participantIdentity, LivekitAudioSource livekitAudioSource)
         {
             ParticipantIdentity = participantIdentity;
             LivekitAudioSource = livekitAudioSource;
-
-            Transform = livekitAudioSource.transform;
         }
     }
 }
