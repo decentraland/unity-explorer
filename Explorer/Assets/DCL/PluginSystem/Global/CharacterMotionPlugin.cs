@@ -17,6 +17,7 @@ using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
 {
     public class CharacterMotionPlugin : IDCLGlobalPlugin<CharacterMotionSettings>
     {
+        private readonly IRealmData realmData;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private GameObject destinationMarkerPrefab;
 
         public CharacterMotionPlugin(
+            IRealmData realmData,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCache,
             IMovementMessageBus teleportBroadcast)
         {
+            this.realmData = realmData;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
@@ -129,7 +133,7 @@ namespace DCL.PluginSystem.Global
                 UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
-            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast, realmData);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CharacterVelocityDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);

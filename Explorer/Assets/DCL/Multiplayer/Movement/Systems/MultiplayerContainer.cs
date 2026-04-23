@@ -41,10 +41,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 this.liveKitMovementMessageBus = liveKitMovementMessageBus;
             }
 
-            public void BroadcastTeleport(Vector3 worldPosition)
+            public void BroadcastTeleport(string realmName, Vector3 worldPosition)
             {
-                pulseMultiplayerBus.BroadcastTeleport(worldPosition);
-                liveKitMovementMessageBus.BroadcastTeleport(worldPosition);
+                pulseMultiplayerBus.BroadcastTeleport(realmName, worldPosition);
+                liveKitMovementMessageBus.BroadcastTeleport(realmName, worldPosition);
             }
 
             public void Send(NetworkMovementMessage message)

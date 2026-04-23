@@ -103,18 +103,18 @@ namespace Decentraland.Pulse {
             "CgpzdWJqZWN0X2lkGAEgASgNEhMKC3NlcnZlcl90aWNrGAIgASgNEjMKBnJl",
             "YXNvbhgDIAEoDjIjLmRlY2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0b3BSZWFz",
             "b24SEAoIc2VxdWVuY2UYBCABKA0SNQoMcGxheWVyX3N0YXRlGAUgASgLMh8u",
-            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlIlcKD1RlbGVwb3J0UmVx",
+            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlImYKD1RlbGVwb3J0UmVx",
             "dWVzdBIUCgxwYXJjZWxfaW5kZXgYASABKAUSLgoIcG9zaXRpb24YAiABKAsy",
-            "HC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMifgoRVGVsZXBvcnRQZXJm",
-            "b3JtZWQSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghzZXF1ZW5jZRgCIAEoDRIT",
-            "CgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0ZRgEIAEoCzIfLmRlY2VudHJh",
-            "bGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSqEAQoUUGxheWVyQW5pbWF0aW9uRmxh",
-            "Z3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJ",
-            "TE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5ORUQQEBIMCghIRUFE",
-            "X1lBVxAgEg4KCkhFQURfUElUQ0gQQCpOCgpHbGlkZVN0YXRlEg8KC1BST1Bf",
-            "Q0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENM",
-            "T1NJTkdfUFJPUBADKi8KD0Vtb3RlU3RvcFJlYXNvbhINCglDT01QTEVURUQQ",
-            "ABINCglDQU5DRUxMRUQQAWIGcHJvdG8z"));
+            "HC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSDQoFcmVhbG0YAyABKAki",
+            "fgoRVGVsZXBvcnRQZXJmb3JtZWQSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghz",
+            "ZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0ZRgE",
+            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSqEAQoUUGxh",
+            "eWVyQW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJ",
+            "TE9OR19KVU1QEAISDQoJTE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NU",
+            "VU5ORUQQEBIMCghIRUFEX1lBVxAgEg4KCkhFQURfUElUQ0gQQCpOCgpHbGlk",
+            "ZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoH",
+            "R0xJRElORxACEhAKDENMT1NJTkdfUFJPUBADKi8KD0Vtb3RlU3RvcFJlYXNv",
+            "bhINCglDT01QTEVURUQQABINCglDQU5DRUxMRUQQAWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -135,7 +135,7 @@ namespace Decentraland.Pulse {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStop), global::Decentraland.Pulse.EmoteStop.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStarted), global::Decentraland.Pulse.EmoteStarted.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "EmoteId", "PlayerState" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStopped), global::Decentraland.Pulse.EmoteStopped.Parser, new[]{ "SubjectId", "ServerTick", "Reason", "Sequence", "PlayerState" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "ParcelIndex", "Position" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportRequest), global::Decentraland.Pulse.TeleportRequest.Parser, new[]{ "ParcelIndex", "Position", "Realm" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportPerformed), global::Decentraland.Pulse.TeleportPerformed.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null)
           }));
     }
@@ -6491,7 +6491,8 @@ namespace Decentraland.Pulse {
   }
 
   /// <summary>
-  /// Client → Server
+  /// Client → Server. Also announces the peer's realm; peers in different realms never see each
+  /// other. Must be the first gameplay message after handshake. Same-realm re-teleports are valid.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class TeleportRequest : pb::IMessage<TeleportRequest>
@@ -6530,6 +6531,7 @@ namespace Decentraland.Pulse {
     public TeleportRequest(TeleportRequest other) : this() {
       parcelIndex_ = other.parcelIndex_;
       position_ = other.position_ != null ? other.position_.Clone() : null;
+      realm_ = other.realm_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -6563,6 +6565,21 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "realm" field.</summary>
+    public const int RealmFieldNumber = 3;
+    private string realm_ = "";
+    /// <summary>
+    /// Non-empty realm identifier. Rejected if empty.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Realm {
+      get { return realm_; }
+      set {
+        realm_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -6580,6 +6597,7 @@ namespace Decentraland.Pulse {
       }
       if (ParcelIndex != other.ParcelIndex) return false;
       if (!object.Equals(Position, other.Position)) return false;
+      if (Realm != other.Realm) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -6589,6 +6607,7 @@ namespace Decentraland.Pulse {
       int hash = 1;
       if (ParcelIndex != 0) hash ^= ParcelIndex.GetHashCode();
       if (position_ != null) hash ^= Position.GetHashCode();
+      if (Realm.Length != 0) hash ^= Realm.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -6615,6 +6634,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(18);
         output.WriteMessage(Position);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -6633,6 +6656,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(18);
         output.WriteMessage(Position);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -6648,6 +6675,9 @@ namespace Decentraland.Pulse {
       }
       if (position_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Position);
+      }
+      if (Realm.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Realm);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6669,6 +6699,9 @@ namespace Decentraland.Pulse {
           Position = new global::Decentraland.Common.Vector3();
         }
         Position.MergeFrom(other.Position);
+      }
+      if (other.Realm.Length != 0) {
+        Realm = other.Realm;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -6700,6 +6733,10 @@ namespace Decentraland.Pulse {
             input.ReadMessage(Position);
             break;
           }
+          case 26: {
+            Realm = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -6728,6 +6765,10 @@ namespace Decentraland.Pulse {
               Position = new global::Decentraland.Common.Vector3();
             }
             input.ReadMessage(Position);
+            break;
+          }
+          case 26: {
+            Realm = input.ReadString();
             break;
           }
         }
