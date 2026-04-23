@@ -143,18 +143,21 @@ namespace DCL.Nametags
             if (!voiceChatComponent.IsDirty)
                 return;
 
-            nametagHolder.Nametag.VoiceChat = true;//voiceChatComponent.IsSpeaking && !voiceChatComponent.IsHushed;
-            // nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && voiceChatComponent.IsHushed;
-
             if (voiceChatComponent.IsRemoving)
             {
-                nametagHolder.Nametag.VoiceChat = false; //voiceChatComponent.IsSpeaking && !voiceChatComponent.IsHushed;
+                nametagHolder.Nametag.VoiceChat = false;
+                nametagHolder.Nametag.Speaking = false;
+                // nametagHolder.Nametag.Hushed = false;
 
                 World.Remove<VoiceChatNametagComponent>(e);
-                return;
             }
-
-            voiceChatComponent.IsDirty = false;
+            else
+            {
+                nametagHolder.Nametag.VoiceChat = true;
+                nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
+                // nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && voiceChatComponent.IsHushed;
+                voiceChatComponent.IsDirty = false;
+            }
         }
 
         [Query]

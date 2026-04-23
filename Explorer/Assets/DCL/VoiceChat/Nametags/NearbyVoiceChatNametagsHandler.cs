@@ -7,6 +7,7 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
+using System.Collections.Generic;
 using Utility.Arch;
 
 namespace DCL.VoiceChat.Nearby
@@ -26,6 +27,9 @@ namespace DCL.VoiceChat.Nearby
         private readonly Entity playerEntity;
         private readonly NearbyVoiceChatStateModel nearbyStateModel;
         private readonly IDisposable stateSubscription;
+
+        private readonly HashSet<string> previousActiveSpeakers = new ();
+        private readonly HashSet<string> currentActiveSpeakers = new ();
 
         private bool disposed;
 
@@ -47,7 +51,6 @@ namespace DCL.VoiceChat.Nearby
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
 
             stateSubscription = nearbyStateModel.State.Subscribe(ApplyLocalPublishingFromState);
-            // ApplyLocalPublishingFromState(nearbyStateModel.State.Value);
         }
 
         public void Dispose()
@@ -77,29 +80,53 @@ namespace DCL.VoiceChat.Nearby
 
         private void ApplyLocalPublishingFromState(NearbyVoiceChatState state)
         {
-            world.AddOrSet(playerEntity, state is NearbyVoiceChatState.SPEAKING
-                ? new VoiceChatNametagComponent(isSpeaking: nearbyStateModel.IsLocalSpeaking)
-                : new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
+            if (state is NearbyVoiceChatState.SPEAKING)
+            {
+                string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
+                bool isSpeaking = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer);
+                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: isSpeaking));
+            }
+            else
+                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
         }
 
         private void OnActiveSpeakersUpdated()
         {
-            // Update local
             string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
-            bool isLocalActive = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer)
-                                                                    && nearbyStateModel.State.Value == NearbyVoiceChatState.SPEAKING;
+            bool localInSpeakingState = nearbyStateModel.State.Value == NearbyVoiceChatState.SPEAKING;
 
-            world.AddOrSet(playerEntity, isLocalActive
-                ? new VoiceChatNametagComponent(isSpeaking: nearbyStateModel.IsLocalSpeaking)
-                : new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
+            currentActiveSpeakers.Clear();
 
             foreach (string? identity in islandRoom.ActiveSpeakers)
+                if (!string.IsNullOrEmpty(identity))
+                    currentActiveSpeakers.Add(identity);
+
+            // Local: update IsSpeaking only while publishing (State==SPEAKING). Leaving SPEAKING is handled by ApplyLocalPublishingFromState.
+            if (localInSpeakingState && !string.IsNullOrEmpty(localPlayer))
+                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: currentActiveSpeakers.Contains(localPlayer)));
+
+            // Speakers who stopped speaking: flip IsSpeaking to false (dots). Component stays until TrackUnsubscribed removes it.
+            foreach (string identity in previousActiveSpeakers)
             {
-                if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry) && identity != localPlayer)
-                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(true));
+                if (currentActiveSpeakers.Contains(identity)) continue;
+                if (identity == localPlayer) continue;
+
+                if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry)
+                    && world.Has<VoiceChatNametagComponent>(entry.Entity))
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false));
             }
 
-            // set not speaking others
+            // Speakers who started speaking: flip IsSpeaking to true (wave).
+            foreach (string identity in currentActiveSpeakers)
+            {
+                if (identity == localPlayer) continue;
+
+                if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry))
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: true));
+            }
+
+            previousActiveSpeakers.Clear();
+            previousActiveSpeakers.UnionWith(currentActiveSpeakers);
         }
     }
 }

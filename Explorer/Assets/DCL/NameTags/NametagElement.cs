@@ -12,6 +12,7 @@ namespace DCL.Nametags
         private const string USS_VERIFIED = USS_BLOCK + "--verified";
         private const string USS_OFFICIAL = USS_BLOCK + "--official";
         private const string USS_VOICE_CHAT = USS_BLOCK + "--voice-chat";
+        private const string USS_SPEAKING = USS_BLOCK + "--speaking";
         private const string USS_HUSHED = USS_BLOCK + "--hushed";
         private const string USS_DM = USS_BLOCK + "--dm";
         private const string USS_MENTION = USS_BLOCK + "--mention";
@@ -77,6 +78,13 @@ namespace DCL.Nametags
         {
             get => ClassListContains(USS_VOICE_CHAT);
             set => EnableInClassList(USS_VOICE_CHAT, value);
+        }
+
+        [UxmlAttribute]
+        public bool Speaking
+        {
+            get => ClassListContains(USS_SPEAKING);
+            set => EnableInClassList(USS_SPEAKING, value);
         }
 
         [UxmlAttribute]
@@ -257,7 +265,7 @@ namespace DCL.Nametags
                     // NOTE: This might need optimization
                     middle.RegisterCallback<TransitionEndEvent, NametagElement>((_, ne) =>
                     {
-                        if (ne.ClassListContains(USS_VOICE_CHAT))
+                        if (ne.ClassListContains(USS_SPEAKING))
                             ne.voiceChatBadge.ToggleInClassList(USS_BADGE_VOICE_CHAT_ALT);
                         else
                             ne.voiceChatBadge.RemoveFromClassList(USS_BADGE_VOICE_CHAT_ALT);

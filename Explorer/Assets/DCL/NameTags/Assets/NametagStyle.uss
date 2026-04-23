@@ -240,11 +240,11 @@
     transition-duration: 0.3s;
 }
 
-.nametag--voice-chat .nametag__badge-voice-chat-side {
+.nametag--voice-chat.nametag--speaking .nametag__badge-voice-chat-side {
     height: 6px;
 }
 
-.nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-side {
+.nametag--speaking .nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-side {
     height: 12px;
 }
 
@@ -259,11 +259,11 @@
     transition-duration: 0.3s;
 }
 
-.nametag--voice-chat .nametag__badge-voice-chat-middle {
+.nametag--voice-chat.nametag--speaking .nametag__badge-voice-chat-middle {
     height: 12px;
 }
 
-.nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-middle {
+.nametag--speaking .nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-middle {
     height: 6px;
 }
 
