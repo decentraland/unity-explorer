@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         private Weak<IVideoStream> currentVideoStream = Weak<IVideoStream>.Null;
         private PlayerState playerState;
         private LivekitAddress? playingAddress;
-        private VideoEntity? currentVideo;
+        private LivekitAddress? currentVideo;
         private Vector3 audioPosition;
         private float videoSwitchedAtTime;
         private float lastAudioScanTime;
@@ -150,13 +150,13 @@ namespace DCL.SDKComponents.MediaStream
 
         private Weak<IVideoStream> OpenUserVideoStream(UserStream userStream)
         {
-            currentVideo = VideoEntity.FromUser(userStream);
+            currentVideo = LivekitAddress.FromUserStream(userStream);
             return room.VideoStreams.ActiveStream(new StreamKey(userStream.Identity, userStream.Sid));
         }
 
         private Weak<IVideoStream> OpenPresentationBotVideoStream(PresentationBotStream bot)
         {
-            currentVideo = VideoEntity.FromPresentationBot(bot);
+            currentVideo = LivekitAddress.FromPresentationBotStream(bot);
             return room.VideoStreams.ActiveStream(new StreamKey(bot.Identity, bot.Sid));
         }
 
@@ -207,7 +207,7 @@ namespace DCL.SDKComponents.MediaStream
                 return Weak<IVideoStream>.Null;
             }
 
-            currentVideo = VideoEntity.FromIdentity(result.Value.identity, result.Value.sid);
+            currentVideo = LivekitAddress.FromIdentity(result.Value.identity, result.Value.sid);
             return room.VideoStreams.ActiveStream(result.Value);
         }
 
@@ -253,7 +253,7 @@ namespace DCL.SDKComponents.MediaStream
             if (videoTrack == null) return;
 
             currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
-            currentVideo = VideoEntity.FromIdentity(activeSpeaker, videoTrack.Value.sid);
+            currentVideo = LivekitAddress.FromIdentity(activeSpeaker, videoTrack.Value.sid);
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
@@ -317,7 +317,7 @@ namespace DCL.SDKComponents.MediaStream
             if (botTrack == null) return false;
 
             currentVideoStream = room.VideoStreams.ActiveStream(botTrack.Value);
-            currentVideo = VideoEntity.FromPresentationBot(new PresentationBotStream(botTrack.Value.identity, botTrack.Value.sid));
+            currentVideo = LivekitAddress.FromPresentationBotStream(new PresentationBotStream(botTrack.Value.identity, botTrack.Value.sid));
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
             return true;
         }
@@ -439,10 +439,15 @@ namespace DCL.SDKComponents.MediaStream
 
         /// <summary>
         /// MUST be used in place, caller doesn't take ownership of the reference.
-        /// Returns the first available audio source for audio visualization purposes.
+        /// Returns any one of the currently-playing audio sources for visualization purposes.
+        /// With multiple remote participants, LivekitPlayer holds one audio source per
+        /// participant track; this method is non-deterministic about which one is returned.
         /// </summary>
-        public AudioSource? ExposedAudioSource()
+        public AudioSource? AnyExposedAudioSource()
         {
+            // Could be cached in LivekitAudioSource in future.
+            // Strongly NOT RECOMMENDED to cache it here (LivekitPlayer.cs)
+            // to avoid implementation coupling and possiblity of caching bugs.
             foreach (var (source, _) in audioSources.Values)
                 return source.gameObject.GetComponent<AudioSource>();
 

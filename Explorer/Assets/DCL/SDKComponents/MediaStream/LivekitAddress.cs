@@ -54,6 +54,14 @@ namespace DCL.SDKComponents.MediaStream
             onCurrentStream: static () => string.IsNullOrEmpty(LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM)
         );
 
+        public bool IsPresentationBot => IsPresentationBotStream(out _);
+
+        public string? Identity => Match<string?>(
+            onUserStream: static userStream => userStream.Identity,
+            onPresentationBotStream: static bot => bot.Identity,
+            onCurrentStream: static () => null
+        );
+
         public static LivekitAddress New(string rawAddress)
         {
             if (rawAddress.IsLivekitAddress() == false)
@@ -63,5 +71,10 @@ namespace DCL.SDKComponents.MediaStream
                 ? CurrentStream()
                 : FromUserStream(new UserStream(rawAddress));
         }
+
+        public static LivekitAddress FromIdentity(string identity, string sid) =>
+            identity.IsPresentationBotIdentity()
+                ? FromPresentationBotStream(new PresentationBotStream(identity, sid))
+                : FromUserStream(new UserStream(identity, sid));
     }
 }
