@@ -11,7 +11,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Utility.Types;
+using RichTypes;
 
 namespace SceneRunner.Admins
 {

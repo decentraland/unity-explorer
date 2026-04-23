@@ -5,20 +5,21 @@ using System;
 using System.IO;
 using System.Text;
 using SceneRunner.Admins;
+using RichTypes;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         private readonly IInstancePoolsProvider byteArrayPool;
-        private readonly SceneAdmins sceneAdmins;
+        private readonly Option<SceneAdmins> sceneAdmins;
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
                 ISceneCommunicationPipe messagePipesHub, 
                 IJsOperations jsOperations,
                 IInstancePoolsProvider byteArrayPool,
-                SceneAdmins sceneAdmins
+                Option<SceneAdmins> sceneAdmins
                 )
             : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {
@@ -50,23 +51,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             // Filtered data is already a view of the target array
             Span<byte> filteredUnbounded = array.Array.AsSpan(dataOffset);
 
-            // Message is considered safe if it's from a scene admin // TODO call Api to check if wallet is an admin
-            bool? adminResult = sceneAdmins.IsAdmin(message.FromWalletId);
-            // Consider the user as non-admin until we know for sure
-            bool isFromSceneAdmin = adminResult == null ? false : adminResult.Value; 
-
+            bool isTrustedSource = IsTrustedSource(message.FromWalletId);
 
             // TODO This logic mostly duplicates CommunicationsControllerAPIImplementationBase.SendBinary we should standardise it later
             // Filter CRDT messages before receiving
             if (commsMessageType == CommsMessageType.CRDT)
             {
-                int filteredLength = FilterCRDTMessage(sourceData, filteredUnbounded, isTrustedSource: isFromSceneAdmin);
+                int filteredLength = FilterCRDTMessage(sourceData, filteredUnbounded, isTrustedSource);
                 totalLength += filteredLength;
             }
             // Filter RES_CRDT_STATE messages before receiving
             else if (commsMessageType == CommsMessageType.RES_CRDT_STATE)
             {
-                int filteredLength = FilterCRDTStateMessage(sourceData, filteredUnbounded, isTrustedSource: isFromSceneAdmin);
+                int filteredLength = FilterCRDTStateMessage(sourceData, filteredUnbounded, isTrustedSource);
                 totalLength += filteredLength;
             }
             // No filter in the case of REQ_CRDT_STATE
@@ -82,6 +79,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             array.SetLength(totalLength);
             base.Enqueue(array);
+        }
+
+        private bool IsTrustedSource(string walletId)
+        {
+            if (sceneAdmins.Has)
+            {
+                // Message is considered safe if it's from a scene admin
+                bool? adminResult = sceneAdmins.Value.IsAdmin(walletId);
+                // Consider the user as non-admin until we know for sure
+                return adminResult == null ? false : adminResult.Value; 
+            }
+
+            return true; // sceneAdmins are not applicable in cases like LSD
         }
     }
 }
