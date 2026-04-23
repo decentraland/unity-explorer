@@ -1,11 +1,8 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks;
 using System;
 using System.Collections.Generic;
 using Utility.Arch;
@@ -13,9 +10,10 @@ using Utility.Arch;
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Drives <see cref="VoiceChatNametagComponent"/> for every participant currently publishing audio in the Island Room,
-    ///     so nametags can render the sound-wave indicator for everyone connected to nearby voice.
-    ///     <see cref="VoiceChatNametagComponent.IsSpeaking"/> toggles between the animated wave and the idle dots (publishing, but silent).
+    ///     Drives <see cref="VoiceChatNametagComponent"/> for nearby voice chat based on <see cref="IRoom.ActiveSpeakers"/>.
+    ///     Remote participants get an indicator only while actively speaking (wave, or hush icon when muted by us);
+    ///     it disappears when they fall silent. The local player gets dots while <see cref="NearbyVoiceChatState.OPEN_MIC"/>
+    ///     is active, driven by state rather than speech, so the user can see their own "mic is open" affordance.
     /// </summary>
     public class NearbyVoiceChatNametagsHandler : IDisposable
     {
@@ -51,9 +49,8 @@ namespace DCL.VoiceChat.Nearby
             this.nearbyStateModel = nearbyStateModel;
             this.muteService = muteService;
 
-            islandRoom.TrackSubscribed += OnTrackSubscribed;
-            islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            islandRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
 
             muteService.MuteStateChanged += OnMuteStateChanged;
 
@@ -65,33 +62,22 @@ namespace DCL.VoiceChat.Nearby
             if (disposed) return;
             disposed = true;
 
-            islandRoom.TrackSubscribed -= OnTrackSubscribed;
-            islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            islandRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
 
             stateSubscription.Dispose();
         }
 
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
-            if (publication.Kind != TrackKind.KindAudio) return;
-            if (!IsNearbyActive()) return;
-            if (!entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry)) return;
+            if (update != UpdateFromParticipant.Disconnected) return;
 
-            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(
-                isSpeaking: islandRoom.ActiveSpeakers.Contains(participant.Identity),
-                type: VoiceChatType.NEARBY,
-                isHushed: muteService.IsMuted(participant.Identity)));
-        }
-
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
-        {
-            if (publication.Kind != TrackKind.KindAudio) return;
+            activeSpeakers.Remove(participant.Identity);
 
             if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true });
+                world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
         }
 
         private void OnMuteStateChanged(string walletId, bool isMuted)
@@ -117,12 +103,11 @@ namespace DCL.VoiceChat.Nearby
 
                 case NearbyVoiceChatState.IDLE:
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true });
+                    OnActiveSpeakersUpdated();
                     break;
 
                 case NearbyVoiceChatState.OPEN_MIC:
-                    string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
-                    bool isSpeaking = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer);
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: isSpeaking, type: VoiceChatType.NEARBY));
+                    OnActiveSpeakersUpdated();
                     break;
             }
         }
@@ -133,14 +118,14 @@ namespace DCL.VoiceChat.Nearby
 
             string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
 
-            // Handle local separately (never stored in the sets).
+            // Local: dots/wave driven by OPEN_MIC state (remote branch below skips local).
             if (nearbyStateModel.State.Value == NearbyVoiceChatState.OPEN_MIC)
             {
                 bool localSpeaking = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer);
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(localSpeaking, VoiceChatType.NEARBY));
             }
 
-            // Populate and start nametag sound wave anim for new speakers.
+            // Populate and start nametag sound wave anim for new remote speakers.
             // activeSpeakers.Remove returns true when speaker was in previous set → continuing speaker, skip re-write
             // After this loop activeSpeakers contains only those who stopped speaking.
             newActiveSpeakers.Clear();
@@ -154,11 +139,11 @@ namespace DCL.VoiceChat.Nearby
                     world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY, isHushed: muteService.IsMuted(identity)));
             }
 
-            // Speakers who stopped: flip IsSpeaking to false (green dots).
+            // Remote speakers who stopped: remove the indicator entirely. Nametags are speech-only for remotes.
             foreach (string identity in activeSpeakers)
             {
                 if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry) && world.Has<VoiceChatNametagComponent>(entry.Entity))
-                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY, isHushed: muteService.IsMuted(identity)));
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true });
             }
 
             activeSpeakers.Clear();
