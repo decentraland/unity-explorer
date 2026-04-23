@@ -12,7 +12,6 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.SceneBannedUsers;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
 using DCL.LiveKit.Public;
@@ -30,7 +29,7 @@ namespace DCL.Chat.MessageBus
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
         private readonly ChatMessageRateLimiter? messageRateLimiter;
@@ -47,14 +46,14 @@ namespace DCL.Chat.MessageBus
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
             ChatMessageFactory messageFactory,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             DecentralandEnvironment decentralandEnvironment,
             IWeb3IdentityCache identityCache,
             IRoomHub roomHub)
         {
             this.messagePipesHub = messagePipesHub;
             messageDeduplication = new MessageDeduplication<double>();
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
 
@@ -199,7 +198,7 @@ namespace DCL.Chat.MessageBus
         }
 
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
-            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
+            userBlockingCache.HideChatMessages && userBlockingCache.UserIsBlocked(walletAddress);
 
         private void OnBufferedMessageReleased(ChatMessage message)
         {

@@ -10,7 +10,6 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using DCL.LiveKit.Public;
@@ -28,7 +27,7 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly MultiplayerDebugSettings settings;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesScheduler messageScheduler;
@@ -41,11 +40,11 @@ namespace DCL.Multiplayer.Emotes
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings settings,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            IUserBlockingCache userBlockingCache)
         {
             this.messagePipesHub = messagePipesHub;
             this.settings = settings;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
 
             messageScheduler = new EmotesScheduler();
 
@@ -156,7 +155,7 @@ namespace DCL.Multiplayer.Emotes
         }
 
         private bool IsUserBlocked(string userAddress) =>
-            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
+            userBlockingCache.UserIsBlocked(userAddress);
 
         private void Inbox(string walletId, URN emoteURN, float timestamp, AvatarEmoteMask mask)
         {
