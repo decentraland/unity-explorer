@@ -70,10 +70,7 @@ namespace Editor
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
 
-            // Emit UnityPlayer.pdb into the build output so Sentry can symbolicate engine frames.
-            // Without this, stack traces show raw offsets like "UnityPlayer +0x07d152c".
-            // No-op for macOS builds — dSYM handling there is separate.
-            EditorUserBuildSettings.SetPlatformSettings("Standalone", "CopyPDBFiles", "true");
+            DesktopStandaloneSettings.CopyPDBFiles = true;
         }
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
