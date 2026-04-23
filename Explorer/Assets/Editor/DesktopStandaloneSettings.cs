@@ -4,7 +4,7 @@ namespace Editor
 {
     internal static class DesktopStandaloneSettings
     {
-        private static readonly string SETTING_COPY_PDB_FILES = "CopyPDBFiles";
+        private const string SETTING_COPY_PDB_FILES = "CopyPDBFiles";
 
         private static string PlatformName => "Standalone";
 
