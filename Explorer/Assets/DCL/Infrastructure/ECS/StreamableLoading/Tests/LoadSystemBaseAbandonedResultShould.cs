@@ -1,6 +1,8 @@
 using Arch.Core;
+using Arch.SystemGroups.Metadata;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
@@ -87,7 +89,7 @@ namespace ECS.StreamableLoading.Tests
             public override int GetHashCode() => 0;
         }
 
-        private partial class TestLoadSystem : LoadSystemBase<StubAsset, StubIntention>
+        private class TestLoadSystem : LoadSystemBase<StubAsset, StubIntention>
         {
             public readonly UniTaskCompletionSource<StreamableLoadingResult<StubAsset>> Gate = new ();
             public int DisposeAbandonedCount { get; private set; }
@@ -108,6 +110,11 @@ namespace ECS.StreamableLoading.Tests
                 DisposeAbandonedCount++;
                 LastDisposedAsset = asset;
             }
+
+            // BaseUnityLoopSystem relies on a source-generated attribute info for runtime metadata. The generator only
+            // emits it for non-nested, partial systems; this test helper is nested and has no attributes, so return
+            // null and let BaseUnityLoopSystem.GetReportCategory fall back to ReportCategory.ECS.
+            protected override AttributesInfoBase GetMetadataInternal() => null!;
         }
     }
 }
