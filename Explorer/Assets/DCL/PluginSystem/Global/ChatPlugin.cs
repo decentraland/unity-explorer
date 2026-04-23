@@ -222,7 +222,7 @@ namespace DCL.PluginSystem.Global
                 mainUIView.ChatMainView.SituationalReactionView.LaneCanvas,
                 avatarReactionPosition,
                 messagePipesHub,
-                userBlockingCacheProxy,
+                userBlockingCache,
                 web3IdentityCache,
                 chatHistory,
                 decentralandEnvironment,

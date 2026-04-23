@@ -26,7 +26,7 @@ namespace DCL.Chat.ChatReactions.Networking
         private const int MAX_VALID_EMOJI_INDEX = 4096;
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly string routingUser;
         private readonly CancellationTokenSource cts = new ();
@@ -37,12 +37,12 @@ namespace DCL.Chat.ChatReactions.Networking
 
         internal MultiplayerReactionMessageBus(
             IMessagePipesHub messagePipesHub,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             IWeb3IdentityCache identityCache,
             string routingUser)
         {
             this.messagePipesHub = messagePipesHub;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.identityCache = identityCache;
             this.routingUser = routingUser;
 
@@ -227,6 +227,6 @@ namespace DCL.Chat.ChatReactions.Networking
         }
 
         private bool IsUserBlocked(string userAddress) =>
-            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
+            userBlockingCache.UserIsBlocked(userAddress);
     }
 }
