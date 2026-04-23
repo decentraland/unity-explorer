@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatMessageFactory chatMessageFactory;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
@@ -115,7 +115,7 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
@@ -150,7 +150,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.chatMessageFactory = chatMessageFactory;
@@ -240,7 +240,7 @@ namespace DCL.PluginSystem.Global
             var chatUserStateService = new PrivateConversationUserStateService(
                 currentChannelService,
                 chatEventBus,
-                userBlockingCacheProxy,
+                userBlockingCache,
                 friendsServiceProxy,
                 settings.ChatSettingsAsset,
                 privacySettings,
@@ -266,7 +266,7 @@ namespace DCL.PluginSystem.Global
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade, chatClickDetectionHandler);
 
-            var nearbyUserStateService = new NearbyUserStateService(roomHub, chatEventBus, userBlockingCacheProxy);
+            var nearbyUserStateService = new NearbyUserStateService(roomHub, chatEventBus, userBlockingCache);
 
 
             var communityUserStateService = new CommunityUserStateService(
@@ -275,7 +275,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 chatHistory,
                 web3IdentityCache,
-                userBlockingCacheProxy);
+                userBlockingCache);
 
             pluginScope.Add(communityUserStateService);
 

@@ -1,14 +1,9 @@
-
-using DCL.Utility;
 using System;
 
 namespace DCL.Friends.UserBlocking
 {
     public interface IUserBlockingCache
     {
-        ReadOnlyHashSet<string> BlockedUsers { get; }
-        ReadOnlyHashSet<string> BlockedByUsers { get; }
-
         // <summary>
         //     Event triggered when you block another user
         // </summary>

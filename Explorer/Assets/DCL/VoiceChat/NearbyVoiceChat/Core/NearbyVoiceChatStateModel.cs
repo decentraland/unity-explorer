@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.Prefs;
 using DCL.Utilities;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,7 @@ namespace DCL.VoiceChat.Nearby
     {
         CALL,
         SCENE,
+        LOADING,
     }
 
     public class NearbyVoiceChatStateModel : IDisposable
@@ -90,6 +90,9 @@ namespace DCL.VoiceChat.Nearby
 
             if (state.Value != NearbyVoiceChatState.SUPPRESSED)
             {
+                if (state.Value == NearbyVoiceChatState.SPEAKING)
+                    StopSpeaking();
+
                 preBlockedState = state.Value;
                 SetState(NearbyVoiceChatState.SUPPRESSED);
             }
@@ -125,9 +128,6 @@ namespace DCL.VoiceChat.Nearby
         {
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"State change {state.Value} -> {newState}");
             state.Value = newState;
-
-            if (newState is NearbyVoiceChatState.DISABLED or NearbyVoiceChatState.IDLE)
-                DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.DISABLED);
         }
     }
 }
