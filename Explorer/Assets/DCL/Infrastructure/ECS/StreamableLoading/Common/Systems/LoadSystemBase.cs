@@ -222,7 +222,14 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingState state)
         {
             if (IsWorldInvalid(entity, state.AcquiredBudget))
+            {
+                // Successful results that were built after the owning entity died must be disposed here
+                // — otherwise assets with Unity/GPU resources (e.g. GLTFData) leak because GC cannot reclaim them.
+                if (result is { Succeeded: true })
+                    DisposeAbandonedResult(result.Value.Asset!);
+
                 return;
+            }
 
             state.DisposeBudgetIfExists();
 
