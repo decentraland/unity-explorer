@@ -50,6 +50,7 @@ namespace DCL.Chat.ChatReactions.Core
         public static Result Create(
             ChatReactionsConfig reactionsConfig,
             RectTransform uiLaneRect,
+            Canvas uiLaneCanvas,
             IAvatarReactionPosition avatarPosition,
             IMessagePipesHub messagePipesHub,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
@@ -69,7 +70,7 @@ namespace DCL.Chat.ChatReactions.Core
                 web3IdentityCache,
                 reactionsConfig.MessageReactions.MaxDistinctReactionsPerMessage);
             
-            var uiSimulation = new ChatReactionUISimulation(reactionsConfig, uiLaneRect);
+            var uiSimulation = new ChatReactionUISimulation(reactionsConfig, uiLaneRect, uiLaneCanvas);
             var worldSimulation = new ChatReactionWorldSimulation(reactionsConfig, avatarPosition);
             
             var worldReactor = new LocalPlayerWorldReactor(worldSimulation,

@@ -219,6 +219,7 @@ namespace DCL.PluginSystem.Global
             ChatReactionsFactory.Result reactions = ChatReactionsFactory.Create(
                 settings.ReactionsConfig,
                 mainUIView.ChatMainView.SituationalReactionView.LaneRect,
+                mainUIView.ChatMainView.SituationalReactionView.LaneCanvas,
                 avatarReactionPosition,
                 messagePipesHub,
                 userBlockingCacheProxy,

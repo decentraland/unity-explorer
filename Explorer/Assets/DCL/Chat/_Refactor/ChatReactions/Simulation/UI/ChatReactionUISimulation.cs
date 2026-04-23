@@ -25,6 +25,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         private readonly UIReactionSpawnResolver spawnResolver;
         private readonly UIReactionStreamEmitter streamEmitter;
         private readonly ChatReactionFlightController? flightController;
+        private readonly Canvas laneCanvas;
         private readonly System.Random rng;
         private readonly int atlasTotalTiles;
 
@@ -37,9 +38,10 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
 
         public void SetDefaultSpawnRect(RectTransform rect) { defaultSpawnRect = rect; }
 
-        public ChatReactionUISimulation(ChatReactionsConfig config, RectTransform laneRect)
+        public ChatReactionUISimulation(ChatReactionsConfig config, RectTransform laneRect, Canvas laneCanvas)
         {
             this.config = config;
+            this.laneCanvas = laneCanvas;
             rng = new System.Random();
             atlasTotalTiles = config.SafeTotalTiles;
 
@@ -86,6 +88,10 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
         public void Draw(Camera cam)
         {
             if (cam == null || uiStore.Count == 0) return;
+
+            // Gates on the chat shared-area canvas state — covers both the InWorldCamera
+            // ToggleUIRequest path and the Show/Hide UI shortcut, via MVC's SetCanvasActive.
+            if (!laneCanvas.isActiveAndEnabled) return;
 
             Profiler.BeginSample("ChatReactions.UI.Draw");
             renderer.Draw(cam, uiStore.Buffer, uiStore.Count, 0, config.UILane.DepthFromCamera);

@@ -121,6 +121,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -824,6 +825,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4792811004708052566, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4837618148869299418, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -848,6 +853,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4857014566419387309, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
+      propertyPath: <LaneCanvas>k__BackingField
+      value: 
+      objectReference: {fileID: 5143499938453638449}
     - target: {fileID: 4933283716450059618, guid: 54208472bd274f14a90c06641252c2dc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
