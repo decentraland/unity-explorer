@@ -28,6 +28,9 @@ namespace DCL.VoiceChat.Nearby
 
         private NearbyVoiceChatState preBlockedState;
 
+        public event Action EnterChat;
+        public event Action ExitChat;
+
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
         public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
 
@@ -59,12 +62,16 @@ namespace DCL.VoiceChat.Nearby
         public void Enable()
         {
             if (state.Value == NearbyVoiceChatState.DISABLED)
+            {
                 SetState(NearbyVoiceChatState.IDLE);
+                EnterChat?.Invoke();
+            }
         }
 
         public void Disable()
         {
             SetState(NearbyVoiceChatState.DISABLED);
+            ExitChat?.Invoke();
         }
 
         // Speaking

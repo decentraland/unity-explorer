@@ -143,11 +143,13 @@ namespace DCL.Nametags
             if (!voiceChatComponent.IsDirty)
                 return;
 
-            nametagHolder.Nametag.VoiceChat = voiceChatComponent.IsSpeaking && !voiceChatComponent.IsHushed;
-            nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && voiceChatComponent.IsHushed;
+            nametagHolder.Nametag.VoiceChat = true;//voiceChatComponent.IsSpeaking && !voiceChatComponent.IsHushed;
+            // nametagHolder.Nametag.Hushed = voiceChatComponent.IsSpeaking && voiceChatComponent.IsHushed;
 
             if (voiceChatComponent.IsRemoving)
             {
+                nametagHolder.Nametag.VoiceChat = false; //voiceChatComponent.IsSpeaking && !voiceChatComponent.IsHushed;
+
                 World.Remove<VoiceChatNametagComponent>(e);
                 return;
             }

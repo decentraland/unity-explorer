@@ -1,19 +1,22 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks;
 using System;
 using Utility.Arch;
 
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    /// Bridges Island Room active-speaker events to <see cref="VoiceChatNametagComponent"/> on avatar entities
-    /// for the Nearby (proximity) voice chat stack. Handles both remote players (via <see cref="ActiveSpeakersDiffTracker"/>)
-    /// and the local player directly. Sets <see cref="VoiceChatNametagComponent.IsHushed"/> for muted speakers so the
-    /// nametag shows the hushed icon only while they are speaking. Suppresses nametag indicators while a Private or
-    /// Community call is active, or while Nearby voice chat is SUPPRESSED/DISABLED.
+    ///     Drives <see cref="VoiceChatNametagComponent"/> for every participant currently publishing
+    ///     audio in the Island Room, so nametags can render the sound-wave indicator for everyone
+    ///     connected to nearby voice. <see cref="VoiceChatNametagComponent.IsSpeaking"/> toggles between
+    ///     the animated wave (identity is in <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>)
+    ///     and the idle dots (publishing, but silent).
     /// </summary>
     public class NearbyVoiceChatNametagsHandler : IDisposable
     {
@@ -21,38 +24,30 @@ namespace DCL.VoiceChat.Nearby
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly NearbyMuteService muteService;
-        private readonly ActiveSpeakersDiffTracker tracker;
-        private readonly IDisposable callStatusSubscription;
-        private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> nearbyStateSubscription;
+        private readonly NearbyVoiceChatStateModel nearbyStateModel;
+        private readonly IDisposable stateSubscription;
 
         private bool disposed;
-        private bool suppressed;
-        private bool disconnected;
-        private bool localPlayerSpeaking;
 
         public NearbyVoiceChatNametagsHandler(
             IRoom islandRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             World world,
-            IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             Entity playerEntity,
-            NearbyMuteService muteService,
             NearbyVoiceChatStateModel nearbyStateModel)
         {
             this.islandRoom = islandRoom;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.muteService = muteService;
+            this.nearbyStateModel = nearbyStateModel;
 
-            tracker = new ActiveSpeakersDiffTracker(entityParticipantTable, world);
-
+            islandRoom.TrackSubscribed += OnTrackSubscribed;
+            islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
-            islandRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
-            callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
-            muteService.MuteStateChanged += OnMuteStateChanged;
-            nearbyStateSubscription = nearbyStateModel.State.Subscribe(OnNearbyStateChanged);
+
+            stateSubscription = nearbyStateModel.State.Subscribe(ApplyLocalPublishingFromState);
+            // ApplyLocalPublishingFromState(nearbyStateModel.State.Value);
         }
 
         public void Dispose()
@@ -60,125 +55,51 @@ namespace DCL.VoiceChat.Nearby
             if (disposed) return;
             disposed = true;
 
-            callStatusSubscription.Dispose();
-            nearbyStateSubscription.Dispose();
+            islandRoom.TrackSubscribed -= OnTrackSubscribed;
+            islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
-            islandRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
-            muteService.MuteStateChanged -= OnMuteStateChanged;
 
-            tracker.MarkAllRemoving();
-            MarkLocalPlayerRemoving();
+            stateSubscription.Dispose();
         }
 
-        private bool IsSuppressed => suppressed || disconnected;
+        // Nametags Placement
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio && entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: islandRoom.ActiveSpeakers.Contains(participant.Identity)));
+        }
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio && entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
+        }
+
+        private void ApplyLocalPublishingFromState(NearbyVoiceChatState state)
+        {
+            world.AddOrSet(playerEntity, state is NearbyVoiceChatState.SPEAKING
+                ? new VoiceChatNametagComponent(isSpeaking: nearbyStateModel.IsLocalSpeaking)
+                : new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
+        }
 
         private void OnActiveSpeakersUpdated()
         {
-            if (IsSuppressed) return;
+            // Update local
+            string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
+            bool isLocalActive = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer)
+                                                                    && nearbyStateModel.State.Value == NearbyVoiceChatState.SPEAKING;
 
-            tracker.Update(islandRoom.ActiveSpeakers);
-            ApplyHushedStateToActiveSpeakers();
-            UpdateLocalPlayerSpeakingState();
-        }
+            world.AddOrSet(playerEntity, isLocalActive
+                ? new VoiceChatNametagComponent(isSpeaking: nearbyStateModel.IsLocalSpeaking)
+                : new VoiceChatNametagComponent(isSpeaking: false) { IsRemoving = true });
 
-        private void ApplyHushedStateToActiveSpeakers()
-        {
-            foreach (string speakerId in islandRoom.ActiveSpeakers)
+            foreach (string? identity in islandRoom.ActiveSpeakers)
             {
-                if (!muteService.IsMuted(speakerId)) continue;
-                if (!entityParticipantTable.TryGet(speakerId, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
-
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(true, isHushed: true));
-            }
-        }
-
-        private void UpdateLocalPlayerSpeakingState()
-        {
-            string? localIdentity = islandRoom.Participants.LocalParticipant()?.Identity;
-
-            bool isSpeaking = !string.IsNullOrEmpty(localIdentity) && IsIdentityAmongActiveSpeakers(localIdentity);
-
-            if (isSpeaking == localPlayerSpeaking)
-                return;
-
-            localPlayerSpeaking = isSpeaking;
-            world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
-        }
-
-        private void OnMuteStateChanged(string walletId, bool isMuted)
-        {
-            if (IsSuppressed) return;
-            if (!IsIdentityAmongActiveSpeakers(walletId)) return;
-
-            if (entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(true, isHushed: isMuted));
-        }
-
-        private bool IsIdentityAmongActiveSpeakers(string identity)
-        {
-            foreach (string speakerId in islandRoom.ActiveSpeakers)
-            {
-                if (speakerId == identity)
-                    return true;
+                if (entityParticipantTable.TryGet(identity, out IReadOnlyEntityParticipantTable.Entry entry) && identity != localPlayer)
+                    world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(true));
             }
 
-            return false;
-        }
-
-        private void MarkLocalPlayerRemoving()
-        {
-            localPlayerSpeaking = false;
-            world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
-        }
-
-        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
-        {
-            if (update == UpdateFromParticipant.Disconnected)
-                tracker.RemoveParticipant(participant.Identity);
-        }
-
-        private void OnNearbyStateChanged(NearbyVoiceChatState nearbyState)
-        {
-            bool isNowDisconnected = nearbyState is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED;
-
-            if (isNowDisconnected && !disconnected)
-            {
-                disconnected = true;
-                tracker.MarkAllRemoving();
-                MarkLocalPlayerRemoving();
-            }
-            else if (!isNowDisconnected && disconnected)
-            {
-                disconnected = false;
-
-                if (!suppressed)
-                {
-                    tracker.Update(islandRoom.ActiveSpeakers);
-                    ApplyHushedStateToActiveSpeakers();
-                    UpdateLocalPlayerSpeakingState();
-                }
-            }
-        }
-
-        private void OnCallStatusChanged(VoiceChatStatus status)
-        {
-            if (status.IsInCall())
-            {
-                suppressed = true;
-                tracker.MarkAllRemoving();
-                MarkLocalPlayerRemoving();
-            }
-            else if (status.IsNotConnected())
-            {
-                suppressed = false;
-
-                if (!disconnected)
-                {
-                    tracker.Update(islandRoom.ActiveSpeakers);
-                    ApplyHushedStateToActiveSpeakers();
-                    UpdateLocalPlayerSpeakingState();
-                }
-            }
+            // set not speaking others
         }
     }
 }
