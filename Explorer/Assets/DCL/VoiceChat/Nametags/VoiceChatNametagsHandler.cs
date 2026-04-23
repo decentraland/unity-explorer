@@ -19,10 +19,11 @@ namespace DCL.VoiceChat
         private readonly Entity playerEntity;
         private readonly IDisposable statusSubscription;
 
-        private HashSet<string> activeSpeakers = new ();
+        private readonly HashSet<string> activeSpeakers = new ();
+        private readonly HashSet<string> newActiveSpeakers = new ();
         private bool disposed;
 
-        private VoiceChatType CurrentType => voiceChatOrchestratorState.CurrentVoiceChatType.Value;
+        private VoiceChatType currentType => voiceChatOrchestratorState.CurrentVoiceChatType.Value;
 
         public VoiceChatNametagsHandler(
             IRoom voiceChatRoom,
@@ -54,29 +55,29 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            var newActiveSpeakers = new HashSet<string>();
-
+            // After this loop activeSpeakers contains only those who stopped speaking.
+            newActiveSpeakers.Clear();
             foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
             {
                 newActiveSpeakers.Add(speakerId);
 
-                if (!activeSpeakers.Contains(speakerId)) { SetIsSpeaking(speakerId, true); }
+                if (!activeSpeakers.Remove(speakerId))
+                    SetIsSpeaking(speakerId, true);
             }
 
             foreach (string oldSpeakerId in activeSpeakers)
-            {
-                if (!newActiveSpeakers.Contains(oldSpeakerId)) { SetIsSpeaking(oldSpeakerId, false); }
-            }
+                SetIsSpeaking(oldSpeakerId, false);
 
-            activeSpeakers = newActiveSpeakers;
+            activeSpeakers.Clear();
+            activeSpeakers.UnionWith(newActiveSpeakers);
         }
 
         private void SetIsSpeaking(string participantId, bool isSpeaking)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking, CurrentType));
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking, currentType));
             else if (voiceChatRoom.Participants.LocalParticipant()?.Identity == participantId)
-                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking, CurrentType));
+                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking, currentType));
         }
 
         private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
@@ -99,20 +100,20 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, CurrentType));
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType));
                     OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, CurrentType) { IsRemoving = true });
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
                     activeSpeakers.Clear();
 
                     foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false, CurrentType) { IsRemoving = true });
+                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
                     }
 
                     break;
