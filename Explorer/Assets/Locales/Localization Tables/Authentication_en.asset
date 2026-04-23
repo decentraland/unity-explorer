@@ -115,6 +115,14 @@ MonoBehaviour:
     m_Localized: NEXT
     m_Metadata:
       m_Items: []
+  - m_Id: 443316891551806206
+    m_Localized: BODY TYPE A
+    m_Metadata:
+      m_Items: []
+  - m_Id: 674482998896883396
+    m_Localized: BODY TYPE B
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
