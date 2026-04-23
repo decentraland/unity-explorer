@@ -16,8 +16,8 @@ namespace DCL.Chat.ChatMessages
     {
         private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly ChatMessageReactionService messageReactionService;
-        private readonly ReactionTooltipPresenter? tooltipPresenter;
-        private readonly ReactionLimitToastView? limitToastView;
+        private readonly ReactionTooltipPresenter tooltipPresenter;
+        private readonly ReactionLimitToastView limitToastView;
         private readonly string limitToastMessage;
         private readonly CurrentChannelService currentChannelService;
 
@@ -27,9 +27,9 @@ namespace DCL.Chat.ChatMessages
         internal MessageReactionInteractionPresenter(
             ChatReactionsPresenter reactionsPresenter,
             ChatMessageReactionService messageReactionService,
-            ReactionTooltipPresenter? tooltipPresenter,
+            ReactionTooltipPresenter tooltipPresenter,
             CurrentChannelService currentChannelService,
-            ReactionLimitToastView? limitToastView = null,
+            ReactionLimitToastView limitToastView,
             string limitToastMessage = "")
         {
             this.reactionsPresenter = reactionsPresenter;
