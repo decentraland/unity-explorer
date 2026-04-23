@@ -60,12 +60,8 @@ namespace DCL.Chat.History
             }
         }
 
-        public IReadOnlyCollection<string>? GetReactors(int emojiIndex)
-        {
-            return reactions.TryGetValue(emojiIndex, out HashSet<string>? wallets)
-                ? wallets
-                : null;
-        }
+        public IReadOnlyCollection<string>? GetReactors(int emojiIndex) =>
+            reactions.GetValueOrDefault(emojiIndex);
 
         public void Clear()
         {

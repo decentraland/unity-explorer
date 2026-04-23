@@ -143,7 +143,7 @@ namespace DCL.Chat.ChatMessages
             const int mockUserCount = 0;
 #endif
 
-            bool allResolved = ResolveDisplayNamesFromCache(out bool ownIncluded);
+            bool allResolved = ResolveDisplayNames(out bool ownIncluded);
             string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, emojiIndex);
             view.Show(text, uvRect, atlasConfig.Atlas, pillTransform);
 
@@ -183,7 +183,7 @@ namespace DCL.Chat.ChatMessages
 
                 if (ct.IsCancellationRequested) return;
 
-                bool allResolved = ResolveDisplayNamesFromCache(out bool ownIncluded);
+                bool allResolved = ResolveDisplayNames(out bool ownIncluded);
                 string text = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
                 view.UpdateText(text);
 
@@ -204,17 +204,16 @@ namespace DCL.Chat.ChatMessages
 
         private async UniTask ResolveProfilesAndRebuildTextAsync(int mockUserCount, CancellationToken ct)
         {
-            // Populates the profile cache as a side effect; return value intentionally discarded
-            await profileRepository.GetProfilesAsync(unresolvedWallets, ct);
+            List<Profile.CompactInfo> fetched = await profileRepository.GetProfilesAsync(unresolvedWallets, ct);
 
             if (ct.IsCancellationRequested) return;
 
-            ResolveDisplayNamesFromCache(out bool ownIncluded);
+            ResolveDisplayNames(out bool ownIncluded, fetched);
             string updatedText = textBuilder.Build(displayNames, ownIncluded, mockUserCount, shownEmojiIndex);
             view.UpdateText(updatedText);
         }
 
-        private bool ResolveDisplayNamesFromCache(out bool ownIncluded)
+        private bool ResolveDisplayNames(out bool ownIncluded, IReadOnlyList<Profile.CompactInfo>? fetched = null)
         {
             displayNames.Clear();
             unresolvedWallets.Clear();
@@ -231,23 +230,44 @@ namespace DCL.Chat.ChatMessages
                     continue;
                 }
 
-                if (profileCache.TryGetCompact(wallet, out Profile.CompactInfo profile)
-                    && profile.DisplayName.Length > 0)
+                // A cached or just-fetched profile means we've already asked the repository.
+                // Even if its DisplayName is empty, do not re-queue — the next fetch would return the same thing.
+                if (TryGetProfile(fetched, wallet, out Profile.CompactInfo profile))
                 {
-                    displayNames.Add(profile.DisplayName);
+                    displayNames.Add(profile.DisplayName.Length > 0
+                        ? profile.DisplayName
+                        : ShortenWallet(wallet));
+                    continue;
                 }
-                else
-                {
-                    string fallback = wallet.Length > 8
-                        ? string.Concat(wallet[..6], "...", wallet[^4..])
-                        : wallet;
-                    displayNames.Add(fallback);
-                    unresolvedWallets.Add(wallet);
-                    allResolved = false;
-                }
+
+                displayNames.Add(ShortenWallet(wallet));
+                unresolvedWallets.Add(wallet);
+                allResolved = false;
             }
 
             return allResolved;
         }
+
+        private bool TryGetProfile(
+            IReadOnlyList<Profile.CompactInfo>? fetched, string wallet, out Profile.CompactInfo profile)
+        {
+            if (fetched != null)
+            {
+                for (int i = 0; i < fetched.Count; i++)
+                {
+                    Profile.CompactInfo candidate = fetched[i];
+                    if (string.Equals(candidate.UserId, wallet, StringComparison.OrdinalIgnoreCase))
+                    {
+                        profile = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            return profileCache.TryGetCompact(wallet, out profile);
+        }
+
+        private static string ShortenWallet(string wallet) =>
+            wallet.Length > 8 ? string.Concat(wallet[..6], "...", wallet[^4..]) : wallet;
     }
 }
