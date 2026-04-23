@@ -9,7 +9,7 @@ namespace DCL.VoiceChat.Nearby
     {
         DISABLED,
         IDLE, // default state where user is connected to nearby chat and can hear its participants
-        SPEAKING,
+        OPEN_MIC,
         SUPPRESSED, // when you have another more priority voice chat - Private or Community
     }
 
@@ -71,12 +71,12 @@ namespace DCL.VoiceChat.Nearby
         public void StartSpeaking()
         {
             if (state.Value == NearbyVoiceChatState.IDLE)
-                SetState(NearbyVoiceChatState.SPEAKING);
+                SetState(NearbyVoiceChatState.OPEN_MIC);
         }
 
         public void StopSpeaking()
         {
-            if (state.Value == NearbyVoiceChatState.SPEAKING)
+            if (state.Value == NearbyVoiceChatState.OPEN_MIC)
                 SetState(NearbyVoiceChatState.IDLE);
         }
 
@@ -90,7 +90,7 @@ namespace DCL.VoiceChat.Nearby
 
             if (state.Value != NearbyVoiceChatState.SUPPRESSED)
             {
-                if (state.Value == NearbyVoiceChatState.SPEAKING)
+                if (state.Value == NearbyVoiceChatState.OPEN_MIC)
                     StopSpeaking();
 
                 preBlockedState = state.Value;

@@ -117,7 +117,7 @@ namespace DCL.VoiceChat.Nearby
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true });
                     break;
 
-                case NearbyVoiceChatState.SPEAKING:
+                case NearbyVoiceChatState.OPEN_MIC:
                     string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
                     bool isSpeaking = !string.IsNullOrEmpty(localPlayer) && islandRoom.ActiveSpeakers.Contains(localPlayer);
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking: isSpeaking, type: VoiceChatType.NEARBY));
@@ -140,14 +140,14 @@ namespace DCL.VoiceChat.Nearby
 
 
         private bool IsNearbyActive() =>
-            nearbyStateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING;
+            nearbyStateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC;
 
         private void OnActiveSpeakersUpdated()
         {
             if (!IsNearbyActive()) return;
 
             string localPlayer = islandRoom.Participants.LocalParticipant().Identity;
-            bool localInSpeakingState = nearbyStateModel.State.Value == NearbyVoiceChatState.SPEAKING;
+            bool localInSpeakingState = nearbyStateModel.State.Value == NearbyVoiceChatState.OPEN_MIC;
 
             currentActiveSpeakers.Clear();
 
