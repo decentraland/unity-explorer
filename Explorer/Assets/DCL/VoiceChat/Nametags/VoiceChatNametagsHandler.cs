@@ -13,6 +13,7 @@ namespace DCL.VoiceChat
     public class VoiceChatNametagsHandler : IDisposable
     {
         private readonly IRoom voiceChatRoom;
+        private readonly IVoiceChatOrchestratorState voiceChatOrchestratorState;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World world;
         private readonly Entity playerEntity;
@@ -20,6 +21,8 @@ namespace DCL.VoiceChat
 
         private HashSet<string> activeSpeakers = new ();
         private bool disposed;
+
+        private VoiceChatType CurrentType => voiceChatOrchestratorState.CurrentVoiceChatType.Value;
 
         public VoiceChatNametagsHandler(
             IRoom voiceChatRoom,
@@ -29,6 +32,7 @@ namespace DCL.VoiceChat
             Entity playerEntity)
         {
             this.voiceChatRoom = voiceChatRoom;
+            this.voiceChatOrchestratorState = voiceChatOrchestratorState;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -70,9 +74,9 @@ namespace DCL.VoiceChat
         private void SetIsSpeaking(string participantId, bool isSpeaking)
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
+                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking, CurrentType));
             else if (voiceChatRoom.Participants.LocalParticipant()?.Identity == participantId)
-                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
+                world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking, CurrentType));
         }
 
         private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
@@ -95,20 +99,20 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false));
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, CurrentType));
                     OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, CurrentType) { IsRemoving = true });
                     activeSpeakers.Clear();
 
                     foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
+                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false, CurrentType) { IsRemoving = true });
                     }
 
                     break;
