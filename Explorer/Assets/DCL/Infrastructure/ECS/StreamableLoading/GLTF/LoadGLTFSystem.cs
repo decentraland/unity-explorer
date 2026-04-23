@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -54,47 +55,82 @@ namespace ECS.StreamableLoading.GLTF
             using IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget!);
             gltFastDownloadProvider.SetContentMappings(intention.ContentMappings);
 
-            var gltfImport = new GltfImport(
-                downloadProvider: gltFastDownloadProvider,
-                logger: gltfConsoleLogger,
-                materialGenerator: gltfMaterialGenerator);
+            GltfImport? gltfImport = null;
+            GameObject? rootContainer = null;
 
-            var gltFastSettings = new ImportSettings
+            try
             {
-                NodeNameMethod = NameImportMethod.OriginalUnique,
-                AnisotropicFilterLevel = 0,
-                GenerateMipMaps = false,
-                AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy,
-                TexturesReadable = true,
-            };
+                gltfImport = new GltfImport(
+                    downloadProvider: gltFastDownloadProvider,
+                    logger: gltfConsoleLogger,
+                    materialGenerator: gltfMaterialGenerator);
 
-            bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
-            if (!success) return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
+                var gltFastSettings = new ImportSettings
+                {
+                    NodeNameMethod = NameImportMethod.OriginalUnique,
+                    AnisotropicFilterLevel = 0,
+                    GenerateMipMaps = false,
+                    AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy,
+                    TexturesReadable = true,
+                };
 
-            // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
-            var rootContainer = new GameObject(gltfImport.GetSceneName(0));
+                bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
 
-            // Let the upper layer decide what to do with the root
-            rootContainer.SetActive(false);
+                if (!success)
+                {
+                    gltfImport.Dispose();
+                    gltfImport = null;
+                    return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
+                }
 
-            await InstantiateGltfAsync(gltfImport, rootContainer.transform);
+                // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
+                rootContainer = new GameObject(gltfImport.GetSceneName(0));
 
-            // When GLTFast loads a GLB locally with Mecanim it may not create a RuntimeAnimatorController;
-            // in that case we build one from BaseAnimatorController and the imported clips.
-            if (intention.MecanimAnimationClips)
-                ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer);
+                // Let the upper layer decide what to do with the root
+                rootContainer.SetActive(false);
 
-            // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
-            if (patchTexturesFormat)
-                PatchTexturesForWearable(gltfImport);
+                await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-            // Capture hierarchy paths for local scene development debugging
-            var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
+                // When GLTFast loads a GLB locally with Mecanim it may not create a RuntimeAnimatorController;
+                // in that case we build one from BaseAnimatorController and the imported clips.
+                if (intention.MecanimAnimationClips)
+                    ApplyBaseAnimatorControllerWhenNeeded(gltfImport, rootContainer);
 
-            var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
-            gltfData.AddReference();
-            return new StreamableLoadingResult<GLTFData>(gltfData);
+                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
+                if (patchTexturesFormat)
+                    PatchTexturesForWearable(gltfImport);
 
+                // Capture hierarchy paths for local scene development debugging
+                var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
+
+                // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch block does not double-dispose
+                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
+                gltfImport = null;
+                rootContainer = null;
+                gltfData.AddReference();
+                return new StreamableLoadingResult<GLTFData>(gltfData);
+            }
+            catch
+            {
+                if (rootContainer != null)
+                    UnityObjectUtils.SafeDestroy(rootContainer);
+
+                gltfImport?.Dispose();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// LoadSystemBase invokes this when a successful result is abandoned (e.g. cancellation after Load completes).
+        /// Because we use NoCache, the caller holds the only reference we added via AddReference — dereference and
+        /// dispose here, otherwise the GameObject and GltfImport outlive the scene.
+        /// </summary>
+        protected override void DisposeAbandonedResult(GLTFData asset)
+        {
+            asset.Dereference();
+
+            if (asset.CanBeDisposed())
+                asset.Dispose();
         }
 
         /// <summary>

@@ -49,6 +49,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
             {
+                // Release the GLTFData that LoadGLTFSystem reference-counted; otherwise the GameObject
+                // and GltfImport stay alive after the loading entity is destroyed.
+                if (gltfDataResult.Succeeded && gltfDataResult.Asset is { } gltfData)
+                {
+                    gltfData.Dereference();
+
+                    if (gltfData.CanBeDisposed())
+                        gltfData.Dispose();
+                }
+
                 World.Destroy(entity);
                 return;
             }
