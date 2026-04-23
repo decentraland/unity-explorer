@@ -21,7 +21,7 @@ namespace DCL.VoiceChat
         private readonly EventSubscriptionScope presenterScope = new();
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        private bool wasVisibleBeforeFullscreen;
+        private VoiceChatPanelState? stateBeforeFullscreen;
 
         public VoiceChatPanelPresenter(VoiceChatPanelView view,
             ProfileRepositoryWrapper profileDataProvider,
@@ -69,7 +69,7 @@ namespace DCL.VoiceChat
         {
             if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
 
-            wasVisibleBeforeFullscreen = voiceChatPanelState.Value is not (VoiceChatPanelState.HIDDEN or VoiceChatPanelState.NONE);
+            stateBeforeFullscreen ??= voiceChatPanelState.Value;
 
             voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.HIDDEN, force: true);
             clickDetectionHandler.Pause();
@@ -78,11 +78,17 @@ namespace DCL.VoiceChat
         private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
             if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
-            if (!wasVisibleBeforeFullscreen) return;
+            if (stateBeforeFullscreen is null) return;
 
-            wasVisibleBeforeFullscreen = false;
+            VoiceChatPanelState previous = stateBeforeFullscreen.Value;
+            stateBeforeFullscreen = null;
 
-            voiceChatOrchestrator.ChangePanelState(VoiceChatPanelState.UNFOCUSED, force: true);
+            // Always leave HIDDEN — NONE re-activates the panel container without focus side effects
+            VoiceChatPanelState restoreTo = previous is VoiceChatPanelState.NONE or VoiceChatPanelState.HIDDEN
+                ? VoiceChatPanelState.NONE
+                : VoiceChatPanelState.UNFOCUSED;
+
+            voiceChatOrchestrator.ChangePanelState(restoreTo, force: true);
             clickDetectionHandler.Resume();
         }
 
