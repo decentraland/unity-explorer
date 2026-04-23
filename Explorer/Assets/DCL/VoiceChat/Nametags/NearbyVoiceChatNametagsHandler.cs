@@ -13,14 +13,14 @@ using Utility.Arch;
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Drives <see cref="VoiceChatNametagComponent"/> for every participant currently publishing
-    ///     audio in the Island Room, so nametags can render the sound-wave indicator for everyone
-    ///     connected to nearby voice. <see cref="VoiceChatNametagComponent.IsSpeaking"/> toggles between
-    ///     the animated wave (identity is in <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers"/>)
-    ///     and the idle dots (publishing, but silent).
+    ///     Drives <see cref="VoiceChatNametagComponent"/> for every participant currently publishing audio in the Island Room,
+    ///     so nametags can render the sound-wave indicator for everyone connected to nearby voice.
+    ///     <see cref="VoiceChatNametagComponent.IsSpeaking"/> toggles between the animated wave and the idle dots (publishing, but silent).
     /// </summary>
     public class NearbyVoiceChatNametagsHandler : IDisposable
     {
+        private static readonly QueryDescription NAMETAGS_QUERY = new QueryDescription().WithAll<VoiceChatNametagComponent>();
+
         private readonly IRoom islandRoom;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World world;
@@ -129,16 +129,15 @@ namespace DCL.VoiceChat.Nearby
         {
             // Bulk pass: only entities still owned by nearby (Type == NEARBY) get cleared.
             // Private/community handler overwrites the component with its own Type, so this pass skips them.
-            world.Query(in nearbyOwnedQuery, (ref VoiceChatNametagComponent c) =>
+            world.Query(in NAMETAGS_QUERY, (ref VoiceChatNametagComponent c) =>
             {
-                if (c.Type != VoiceChatType.NEARBY) return;
-                c = new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true };
+                if (c.Type == VoiceChatType.NEARBY)
+                    c = new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY) { IsRemoving = true };
             });
 
             previousActiveSpeakers.Clear();
         }
 
-        private static readonly QueryDescription nearbyOwnedQuery = new QueryDescription().WithAll<VoiceChatNametagComponent>();
 
         private bool IsNearbyActive() =>
             nearbyStateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING;
