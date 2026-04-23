@@ -10,6 +10,7 @@ namespace DCL.Audio
 
 		public event Action<float> OnWorldVolumeChanged;
 		public event Action<float> OnMasterVolumeChanged;
+		public event Action<float> OnVoiceChatVolumeChanged;
 
 		public void SetWorldVolume(float volume)
 		{
@@ -19,6 +20,11 @@ namespace DCL.Audio
 		public void SetMasterVolume(float volume)
 		{
 			OnMasterVolumeChanged?.Invoke(volume);
+		}
+
+		public void SetVoiceChatVolume(float volume)
+		{
+			OnVoiceChatVolumeChanged?.Invoke(volume);
 		}
 
 		public float GetSerializedWorldVolume()

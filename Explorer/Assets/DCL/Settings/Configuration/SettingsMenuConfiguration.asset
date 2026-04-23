@@ -391,9 +391,9 @@ MonoBehaviour:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName:
-          m_SubObjectType:
-          m_SubObjectGUID:
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Sun Shadows
@@ -403,23 +403,6 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 7
-    - rid: 2404945524685013200
-      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <FeatureId>k__BackingField: 0
-        <View>k__BackingField:
-          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName:
-          m_SubObjectType:
-          m_SubObjectGUID:
-          m_EditorAssetChanged: 0
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Sun Lens Flare
-          <Description>k__BackingField: Enables a lens flare effect on the sun light.
-            Disable this to remove the effect and gain a minor performance improvement.
-          <IsEnabled>k__BackingField: 1
-          defaultIsOn: 1
-        <Feature>k__BackingField: 11
     - rid: 2404945524685013118
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -478,7 +461,7 @@ MonoBehaviour:
             for nearby objects, improving close-up shadow detail and performance.
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 30
+          minValue: 40
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 60
@@ -501,6 +484,23 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 9
+    - rid: 2404945524685013200
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Sun Lens Flare
+          <Description>k__BackingField: Enables a lens flare effect on the sun light.
+            Disable this to remove the effect and gain a minor performance improvement.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 11
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

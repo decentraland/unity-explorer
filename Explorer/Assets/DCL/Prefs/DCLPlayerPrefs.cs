@@ -140,6 +140,13 @@ namespace DCL.Prefs
         [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
+
+        [MenuItem("Decentraland/PlayerPrefs/Reset Nearby Voice Intro Tip")]
+        private static void ResetNearbyVoiceIntroTip()
+        {
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, save: true);
+            Debug.Log("Nearby Voice Intro Tip has been reset.");
+        }
 #endif
     }
 }

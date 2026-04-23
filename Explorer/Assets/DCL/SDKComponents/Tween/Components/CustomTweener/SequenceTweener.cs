@@ -4,7 +4,6 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using DCL.ECSComponents;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.SDKComponents.Tween;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,6 +31,8 @@ namespace DCL.SDKComponents.Tween.Components
             finished = false;
             sequence = DOTween.Sequence();
             sequence.Pause();
+            // Always set a target transform so that .Kill is able to properly stop the tween, otherwise it won't work on these unnamed tweens (unlike it happens on CanvasGroup.DOFade() for example)
+            sequence.SetTarget(transform);
 
             AppendTweenStep(firstTween, firstTween.Duration / 1000f, transform, material);
 
@@ -65,7 +66,7 @@ namespace DCL.SDKComponents.Tween.Components
                     transform.localPosition = Vector3.Lerp(r.PositionStart, r.PositionEnd, t);
                     transform.localRotation = Quaternion.Slerp(r.RotationStart, r.RotationEnd, t);
                     transform.localScale = Vector3.Lerp(r.ScaleStart, r.ScaleEnd, t);
-                }).SetAutoKill(false).Pause();
+                }).SetTarget(transform).SetAutoKill(false).Pause();
                 tween.SetEase(ease);
                 sequence.Append(tween);
                 return;
@@ -128,6 +129,9 @@ namespace DCL.SDKComponents.Tween.Components
                     }
                     break;
             }
+
+            // Always set a target transform so that .Kill is able to properly stop the tween, otherwise it won't work on these unnamed tweens (unlike it happens on CanvasGroup.DOFade() for example)
+            returnTween?.SetTarget(transform);
 
             return returnTween;
         }
