@@ -58,7 +58,6 @@ namespace DCL.UI.Sidebar
         private readonly bool isNearbyVoiceChatEnabled;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
-        private readonly CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
@@ -157,7 +156,6 @@ namespace DCL.UI.Sidebar
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
-            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
