@@ -142,6 +142,8 @@ namespace DCL.Chat
                 emojiContainer.emojiButtonPrefab,
                 inputBlock);
 
+            reactionsConfig.Atlas.Initialize();
+
             int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
                 reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
             int maxRecent = reactionsConfig.MessageReactions.MaxRecentEmojis;
