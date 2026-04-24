@@ -19,6 +19,11 @@ module.exports.subscribeToTopic = async function (message) {
 }
 
 // message: { topic: string }
+module.exports.unsubscribeFromTopic = async function (message) {
+    CommsApi.UnsubscribeFromTopic(message.topic);
+}
+
+// message: { topic: string }
 // Returns: Array<{ sender: string, data: string }>
 module.exports.consumeMessages = async function (message) {
     const json = CommsApi.ConsumeMessages(message.topic);

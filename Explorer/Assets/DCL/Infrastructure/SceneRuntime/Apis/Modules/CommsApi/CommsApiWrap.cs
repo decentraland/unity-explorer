@@ -177,6 +177,17 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         }
 
         /// <summary>
+        /// Registers unsubscribtion intent. Messages on this topic will be not received after the operation.
+        /// Called from JS via ClearScript.
+        /// </summary>
+        [UsedImplicitly]
+        public void UnsubscribeFromTopic(string topic)
+        {
+            topicBuffers.TryRemove(topic, out ConcurrentQueue<BufferedDataMessage> _output);
+            // 'output' object is droped and will be collected by GC (it's assumed nothing else holds the reference)
+        }
+
+        /// <summary>
         /// Returns and drains all buffered messages for a topic as a JSON array.
         /// Called from JS via ClearScript.
         /// </summary>
