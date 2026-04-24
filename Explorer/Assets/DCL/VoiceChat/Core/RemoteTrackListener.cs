@@ -165,9 +165,7 @@ namespace DCL.VoiceChat
             return true;
         }
 
-        // Unity keeps existing AudioSource instances bound to the previous output device after a macOS Bluetooth
-        // reconnect cycle — only freshly created sources route to the new device. Rebuild every active remote source
-        // so incoming audio is heard again.
+        // Unity binds AudioSource instances to the output device at creation time; rebuild them on device change so reconnected Bluetooth headphones are heard.
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             if (!deviceWasChanged || isDisposed) return;
