@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Chat.ChatServices;
 using DCL.Emoji;
 using DCL.UI.CustomInputField;
@@ -10,34 +10,31 @@ namespace DCL.Chat.ChatInput
     public class EmojiPanelChatInputState : IndependentMVCState, IDisposable
     {
         private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly EmojiPanelView emojiPanelView;
         private readonly ChatInputView.EmojiContainer emojiContainer;
         private readonly CustomInputField inputField;
         private readonly ChatClickDetectionHandler clickDetectionHandler;
 
-        public EmojiPanelChatInputState(ChatInputView view, EmojiMapping emojiMapping)
+        public EmojiPanelChatInputState(ChatInputView view, EmojiPanelPresenter emojiPanelPresenter, EmojiPanelView emojiPanelView)
         {
             emojiContainer = view.emojiContainer;
-
-            emojiPanelPresenter = new EmojiPanelPresenter(
-                emojiContainer.emojiPanel,
-                emojiContainer.emojiPanelConfiguration,
-                emojiMapping,
-                emojiContainer.emojiSectionViewPrefab,
-                emojiContainer.emojiButtonPrefab
-            );
+            this.emojiPanelPresenter = emojiPanelPresenter;
+            this.emojiPanelView = emojiPanelView;
 
             inputField = view.inputField;
 
-            clickDetectionHandler = new ChatClickDetectionHandler(emojiContainer.emojiPanel.transform);
-            clickDetectionHandler.OnClickOutside += Deactivate;
+            clickDetectionHandler = new ChatClickDetectionHandler(
+                emojiPanelView.transform,
+                emojiContainer.emojiPanelButton.transform);
+            clickDetectionHandler.OnClickOutside += HandleClickOutside;
             clickDetectionHandler.Pause();
         }
 
         protected override void Activate()
         {
+            emojiPanelView.ResetToDefaultPosition();
             emojiPanelPresenter.SetPanelVisibility(true);
             emojiContainer.emojiPanelButton.SetState(true);
-            emojiContainer.emojiPanel.EmojiContainer.gameObject.SetActive(true);
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
             clickDetectionHandler.Resume();
 
@@ -48,7 +45,6 @@ namespace DCL.Chat.ChatInput
         {
             emojiPanelPresenter.SetPanelVisibility(false);
             emojiContainer.emojiPanelButton.SetState(false);
-            emojiContainer.emojiPanel.EmojiContainer.gameObject.SetActive(false);
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
             clickDetectionHandler.Pause();
         }
@@ -62,7 +58,9 @@ namespace DCL.Chat.ChatInput
 
         public void Dispose()
         {
-            emojiPanelPresenter.Dispose();
+            clickDetectionHandler.Dispose();
         }
+
+        private void HandleClickOutside() => TryDeactivate();
     }
 }

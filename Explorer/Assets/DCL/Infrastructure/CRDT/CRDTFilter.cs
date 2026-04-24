@@ -14,13 +14,11 @@ namespace CRDT
         private const uint VIDEO_CONTROL_STATE = 2092194694;   // asset-packs::VideoControlState
         private const uint PHYSICS_COMBINED_IMPULSE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_IMPULSE;    // Player-specific physics impulse
         private const uint PHYSICS_COMBINED_FORCE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_FORCE;      // Player-specific physics force
-        private const uint VIDEO_PLAYER_COMPONENT_ID = DCL.ECS7.ComponentID.VIDEO_PLAYER; // 1043
-
 
         /// <summary>
         /// Output must be equal or bigger than memory
         /// </summary>
-        public static void FilterSceneMessageBatch(ReadOnlySpan<byte> memory, Span<byte> output, bool isTrustedSource, out int totalWrite)
+        public static void FilterSceneMessageBatch(ReadOnlySpan<byte> memory, Span<byte> output, out int totalWrite)
         {
             totalWrite = 0;
 
@@ -32,7 +30,7 @@ namespace CRDT
             output = output.Slice(CRDT_STATE_LENGTH);
 
             // Filter the CRDT messages
-            FilterCRDTMessages(memory, output, isTrustedSource, out int filteredLength);
+            FilterCRDTMessages(memory, output, out int filteredLength);
             totalWrite += filteredLength;
         }
 
@@ -42,7 +40,7 @@ namespace CRDT
         /// The format is: [message type byte] + [1 byte: address length] + [address bytes] + [raw CRDT messages]
         /// Output must be equal or bigger than memory
         /// </summary>
-        public static void FilterCRDTState(ReadOnlySpan<byte> memory, Span<byte> output, bool isTrustedSource, out int totalWrite)
+        public static void FilterCRDTState(ReadOnlySpan<byte> memory, Span<byte> output, out int totalWrite)
         {
             totalWrite = 0;
 
@@ -76,7 +74,7 @@ namespace CRDT
 
             // Filter the CRDT messages into the output after the address
             int outputCrdtOffset = MIN_OFFSET + addressLength;
-            FilterCRDTMessages(crdtMessages, output.Slice(outputCrdtOffset), isTrustedSource, out int filteredLength);
+            FilterCRDTMessages(crdtMessages, output.Slice(outputCrdtOffset), out int filteredLength);
             totalWrite += filteredLength; // Already counted: type byte + address length + address bytes, now add filtered data
         }
 
@@ -94,9 +92,8 @@ namespace CRDT
         /// Filters CRDT messages from a span, removing messages with no-sync component IDs.
         /// Handles PUT_COMPONENT_NETWORK, DELETE_COMPONENT_NETWORK, and APPEND_COMPONENT.
         /// This is the core filtering logic shared by both FilterSceneMessageBatch and FilterCRDTState.
-        /// isTrustedSource considered true when message sources from local participant (self, from the client) or from a scene admin
         /// </summary>
-        private static void FilterCRDTMessages(ReadOnlySpan<byte> crdtMessages, Span<byte> output, bool isTrustedSource, out int totalWrite)
+        private static void FilterCRDTMessages(ReadOnlySpan<byte> crdtMessages, Span<byte> output, out int totalWrite)
         {
             totalWrite = 0;
 
@@ -117,15 +114,8 @@ namespace CRDT
 
                 uint bodyLength = CRDTMessageTypeUtils.TypeLengthBytes(messageType, crdtMessages);
 
-                uint componentId = ReadComponentId(crdtMessages);
                 bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
-                                  && IsNoSyncComponent(componentId);
-
-                // Drop video components from untrusted sources
-                if (isTrustedSource == false && componentId == VIDEO_PLAYER_COMPONENT_ID)
-                {
-                    shouldDrop = true;
-                }
+                                  && IsNoSyncComponent(ReadComponentId(crdtMessages));
 
                 if (!shouldDrop)
                 {
