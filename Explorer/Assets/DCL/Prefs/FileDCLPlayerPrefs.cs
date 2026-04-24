@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,52 +9,88 @@ using UnityEngine;
 
 namespace DCL.Prefs
 {
-    public class FileDCLPlayerPrefs : IDCLPrefs
+    public class FileDCLPlayerPrefs : IDCLPrefs, IDisposable
     {
         private const int CONCURRENT_CLIENTS = 16;
         private const string PREFS_FILENAME = "userdata_{0}.json";
+        private const string CLAIM_FILENAME = "userdata_{0}.claim";
+
+        // Grace period before an empty claim file (e.g. crashed mid-claim) is treated as stale.
+        // The window between CreateNew and PID write is typically microseconds.
+        private static readonly TimeSpan STALE_EMPTY_CLAIM_AGE = TimeSpan.FromSeconds(30);
 
         private readonly FileStream fileStream;
+        private readonly FileStream claimStream;
+        private readonly string claimPath;
         private readonly UserData userData;
 
         private readonly UnityDCLPlayerPrefs unityPrefs;
 
         private bool dataChanged;
+        private bool disposed;
 
         public static int PrefsInstanceNumber { get; private set; }
 
-        public FileDCLPlayerPrefs()
+        public FileDCLPlayerPrefs() : this(Application.persistentDataPath) { }
+
+        internal FileDCLPlayerPrefs(string baseDir)
         {
             PrefsInstanceNumber = -1;
 
+            SlotClaim selfClaim = BuildSelfClaim();
+
             for (var i = 0; i < CONCURRENT_CLIENTS; i++)
+            {
+                string dataPath = Path.Combine(baseDir, string.Format(PREFS_FILENAME, i));
+                string currentClaimPath = Path.Combine(baseDir, string.Format(CLAIM_FILENAME, i));
+
+                if (!TryClaim(currentClaimPath, selfClaim, out FileStream acquiredClaim))
+                    continue;
+
                 try
                 {
-                    string path = Path.Combine(Application.persistentDataPath, string.Format(PREFS_FILENAME, i));
-
-                    // Note that FileShare.None should lock the file to other processes, and it does,
-                    // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
-                    fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                    fileStream.Lock(0, 0);
-
-                    // Store the instance number that was successfully locked
-                    PrefsInstanceNumber = i;
-
-                    // We use this to migrate existing keys, but only for the first running instance
-                    if (i == 0)
-                        unityPrefs = new UnityDCLPlayerPrefs();
-
-                    break;
+                    fileStream = File.Open(dataPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
                 }
-                catch (IOException) { fileStream?.Dispose(); }
+                catch (IOException)
+                {
+                    // Couldn't open the data file even though we own the claim. Release the claim and try the next slot.
+                    try { acquiredClaim.Dispose(); } catch { /* ignored */ }
+                    try { File.Delete(currentClaimPath); } catch { /* ignored */ }
+                    continue;
+                }
+
+                claimStream = acquiredClaim;
+                claimPath = currentClaimPath;
+                PrefsInstanceNumber = i;
+
+                // Migrate legacy Unity PlayerPrefs only on the primary instance.
+                if (i == 0)
+                    unityPrefs = new UnityDCLPlayerPrefs();
+
+                break;
+            }
 
             if (fileStream == null)
                 throw new Exception("Failed to open unityPrefs file");
 
-            // Load data
             using var reader = new StreamReader(fileStream, Encoding.UTF8, true, 1024, true);
             string json = reader.ReadToEnd();
             userData = JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+
+            try { SaveSync(); } catch { /* ignored */ }
+            try { fileStream?.Dispose(); } catch { /* ignored */ }
+            try { claimStream?.Dispose(); } catch { /* ignored */ }
+
+            if (!string.IsNullOrEmpty(claimPath))
+            {
+                try { File.Delete(claimPath); } catch { /* ignored */ }
+            }
         }
 
         public void SetString(string key, string value)
@@ -243,6 +280,143 @@ namespace DCL.Prefs
 
             unityPrefs.DeleteKey(key);
             unityPrefs.Save();
+        }
+
+        // Claim-file slot ownership: FileMode.CreateNew is kernel-atomic on both Windows (CREATE_NEW)
+        // and POSIX (O_CREAT|O_EXCL), so exactly one concurrent caller wins the race. Stale claims
+        // (owner PID no longer alive or running a different executable) are reclaimable.
+        private static bool TryClaim(string path, SlotClaim selfClaim, out FileStream stream)
+        {
+            stream = null;
+
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                try
+                {
+                    stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                }
+                catch (IOException)
+                {
+                    if (!IsClaimStale(path)) return false;
+
+                    try { File.Delete(path); }
+                    catch (IOException) { return false; }
+                    continue;
+                }
+
+                // Write owner info immediately so peers see a populated claim.
+                try
+                {
+                    byte[] payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(selfClaim));
+                    stream.Write(payload, 0, payload.Length);
+                    stream.Flush(true);
+                }
+                catch
+                {
+                    try { stream.Dispose(); } catch { /* ignored */ }
+                    try { File.Delete(path); } catch { /* ignored */ }
+                    stream = null;
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsClaimStale(string path)
+        {
+            string json;
+            try { json = File.ReadAllText(path); }
+            catch (IOException) { return false; }   // unreadable (e.g. owner holds FileShare.None on Windows) — treat as live
+            catch { return true; }                  // malformed path / unexpected — treat as stale
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                // Claim file exists but is empty. Either a peer is mid-claim (narrow window between CreateNew
+                // and PID write), or a previous owner crashed inside that window. Fall back to file age.
+                try
+                {
+                    TimeSpan age = DateTime.UtcNow - File.GetLastWriteTimeUtc(path);
+                    return age > STALE_EMPTY_CLAIM_AGE;
+                }
+                catch { return false; }
+            }
+
+            SlotClaim claim;
+            try { claim = JsonConvert.DeserializeObject<SlotClaim>(json); }
+            catch { return true; }
+
+            return !IsClaimLive(claim);
+        }
+
+        private static bool IsClaimLive(SlotClaim claim)
+        {
+            if (claim.Pid <= 0) return false;
+
+            Process process;
+            try { process = Process.GetProcessById(claim.Pid); }
+            catch (ArgumentException) { return false; }
+            catch { return true; } // unknown failure — be conservative, don't reclaim
+
+            try
+            {
+                using (process)
+                {
+                    if (process.HasExited) return false;
+
+                    // Guard against PID reuse by a different process.
+                    if (!string.IsNullOrEmpty(claim.ProcessName) &&
+                        !string.Equals(process.ProcessName, claim.ProcessName, StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    if (!string.IsNullOrEmpty(claim.MainModulePath))
+                    {
+                        try
+                        {
+                            string livePath = process.MainModule?.FileName;
+                            if (!string.IsNullOrEmpty(livePath))
+                                return string.Equals(livePath, claim.MainModulePath, StringComparison.OrdinalIgnoreCase);
+                        }
+                        catch { /* MainModule unreadable — fall through to name-only match */ }
+                    }
+
+                    return true;
+                }
+            }
+            catch { return true; }
+        }
+
+        private static SlotClaim BuildSelfClaim()
+        {
+            var claim = new SlotClaim { ProcessName = string.Empty, MainModulePath = string.Empty };
+
+            try
+            {
+                using Process self = Process.GetCurrentProcess();
+                claim.Pid = self.Id;
+
+                try { claim.ProcessName = self.ProcessName ?? string.Empty; }
+                catch { /* ignored */ }
+
+                try { claim.MainModulePath = self.MainModule?.FileName ?? string.Empty; }
+                catch { /* MainModule can throw on macOS without entitlements */ }
+            }
+            catch
+            {
+                // If we can't even read our own PID, leave the claim with Pid=0 which other processes will treat as stale.
+            }
+
+            return claim;
+        }
+
+        [Serializable]
+        internal struct SlotClaim
+        {
+            public int Pid;
+            public string ProcessName;
+            public string MainModulePath;
         }
 
         [Serializable]
