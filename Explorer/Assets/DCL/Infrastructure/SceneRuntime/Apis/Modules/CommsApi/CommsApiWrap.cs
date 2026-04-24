@@ -202,6 +202,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         [UsedImplicitly]
         public void SubscribeToTopic(string topic)
         {
+            // method is called relatively rare, allocation new Queue is acceptable, pooling not required
             topicBuffers.TryAdd(topic, new ConcurrentQueue<BufferedDataMessage>());
         }
 
