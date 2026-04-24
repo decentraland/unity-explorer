@@ -71,10 +71,7 @@ namespace DCL.Profiles
             // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
             public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
-            /// <summary>
-            ///     Tracks the in-flight face snapshot download owned by this profile. Allows O(1) cancellation
-            ///     on profile update and inheritance across profile replacements for the same user+URL.
-            /// </summary>
+            // Tracks the in-flight face snapshot download; O(1) cancellation on update and ownership transfer on profile replacement.
             public AssetPromise<TextureData, GetTextureIntention>? PicturePromise { get; set; }
 
             public CompactInfo(string userId) : this(userId, "", false, "", null) { }
