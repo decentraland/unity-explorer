@@ -16,7 +16,6 @@ namespace DCL.Prefs
         private const string CLAIM_FILENAME = "userdata_{0}.claim";
 
         // Grace period before an empty claim file (e.g. crashed mid-claim) is treated as stale.
-        // The window between CreateNew and PID write is typically microseconds.
         private static readonly TimeSpan STALE_EMPTY_CLAIM_AGE = TimeSpan.FromSeconds(30);
 
         private readonly FileStream fileStream;
@@ -53,7 +52,6 @@ namespace DCL.Prefs
                 }
                 catch (IOException)
                 {
-                    // Couldn't open the data file even though we own the claim. Release the claim and try the next slot.
                     try { acquiredClaim.Dispose(); } catch { /* ignored */ }
                     try { File.Delete(currentClaimPath); } catch { /* ignored */ }
                     continue;
@@ -304,7 +302,6 @@ namespace DCL.Prefs
                     continue;
                 }
 
-                // Write owner info immediately so peers see a populated claim.
                 try
                 {
                     byte[] payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(selfClaim));
@@ -330,7 +327,7 @@ namespace DCL.Prefs
             string json;
             try { json = File.ReadAllText(path); }
             catch (IOException) { return false; }   // unreadable (e.g. owner holds FileShare.None on Windows) — treat as live
-            catch { return true; }                  // malformed path / unexpected — treat as stale
+            catch { return true; }
 
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -358,7 +355,7 @@ namespace DCL.Prefs
             Process process;
             try { process = Process.GetProcessById(claim.Pid); }
             catch (ArgumentException) { return false; }
-            catch { return true; } // unknown failure — be conservative, don't reclaim
+            catch { return true; }
 
             try
             {
@@ -379,7 +376,7 @@ namespace DCL.Prefs
                             if (!string.IsNullOrEmpty(livePath))
                                 return string.Equals(livePath, claim.MainModulePath, StringComparison.OrdinalIgnoreCase);
                         }
-                        catch { /* MainModule unreadable — fall through to name-only match */ }
+                        catch { /* fall through to name-only match */ }
                     }
 
                     return true;
@@ -405,7 +402,7 @@ namespace DCL.Prefs
             }
             catch
             {
-                // If we can't even read our own PID, leave the claim with Pid=0 which other processes will treat as stale.
+                // If we can't read our own PID, leave the claim with Pid=0 which other processes will treat as stale.
             }
 
             return claim;
