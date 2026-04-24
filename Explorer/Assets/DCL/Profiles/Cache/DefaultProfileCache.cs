@@ -58,9 +58,10 @@ namespace DCL.Profiles
             if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)
                 return;
 
+            // Detach on the source after transfer so Dispose doesn't cancel or dereference work we just moved.
             to.ProfilePicture = from.ProfilePicture;
+            from.ProfilePicture = null;
 
-            // Detach the in-flight promise from the source so its Dispose doesn't cancel work we just transferred.
             if (from.IsFull(out Profile? fromFull) && to.IsFull(out Profile? toFull))
             {
                 toFull.PicturePromise = fromFull.PicturePromise;
