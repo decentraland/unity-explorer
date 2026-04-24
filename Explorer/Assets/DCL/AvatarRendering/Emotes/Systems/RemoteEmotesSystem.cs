@@ -3,14 +3,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
-using System;
-using UnityEngine;
 using UnityEngine.Pool;
-using Utility.PriorityQueue;
+using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.RemotePlayersMovementSystem;
 
 namespace DCL.AvatarRendering.Emotes
 {

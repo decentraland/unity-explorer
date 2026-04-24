@@ -1,8 +1,9 @@
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;
 using Decentraland.Pulse;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {

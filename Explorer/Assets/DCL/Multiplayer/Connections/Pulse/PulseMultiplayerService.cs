@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using Decentraland.Pulse;
 using Google.Protobuf;
 using Newtonsoft.Json;
@@ -18,8 +19,7 @@ namespace DCL.Multiplayer.Connections.Pulse
     public class PulseMultiplayerService : IPulseMultiplayerService
     {
         private const int PORT = 7777;
-        private const int MAX_CONNECT_ATTEMPTS = 3;
-        private const int RECONNECTION_DELAY_MS = 10000;
+        private static readonly RetryPolicy CONNECTION_RETRY_POLICY = RetryPolicy.WithRetries(int.MaxValue, 1000, 2);
 
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly Dictionary<ServerMessage.MessageOneofCase, Action<IncomingMessage>> syncHandlers = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
 
-        private Func<DisconnectReason, bool>? disconnectHandler;
+        private Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)>? disconnectHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
         private volatile bool isAuthenticated;
 
@@ -59,7 +59,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             syncHandlers.Add(type, handler);
         }
 
-        public void RegisterDisconnectHandler(Func<DisconnectReason, bool> handler)
+        public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler)
         {
             disconnectHandler = handler;
         }
@@ -107,17 +107,34 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
         {
-            for (var attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++)
+            var attempt = 1;
+
+            while (true)
             {
                 try
                 {
                     await ConnectInternalAsync(ct);
                     return;
                 }
-                catch (TimeoutException) when (attempt < MAX_CONNECT_ATTEMPTS)
+                catch (TimeoutException)
                 {
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt}/{MAX_CONNECT_ATTEMPTS} timed out, retrying...");
+                    (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attempt, CONNECTION_RETRY_POLICY, true, null);
+
+                    if (canBeRepeated)
+                    {
+                        ReportHub.Log(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt} timed out, retrying in {retryDelay}");
+
+                        // Task instead of UniTask is used to respect the original thread / synchronization context to avoid continuation on the main thread
+                        await Task.Delay(retryDelay, ct);
+                    }
+                    else
+                    {
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection won't be restored after attempt {attempt}");
+                        return;
+                    }
                 }
+
+                attempt++;
             }
         }
 
@@ -163,44 +180,44 @@ namespace DCL.Multiplayer.Connections.Pulse
             // and would resume on the main thread; Task.Delay respects the null
             // SynchronizationContext of thread pool threads.
             UniTask.RunOnThreadPool(async () =>
-            {
-                try
-                {
-                    await foreach (MessagePipeEvent evt in pipe.ReadEventsAsync(connectionCt))
                     {
-                        if (evt.IsDisconnectEvent(out MessagePipeEvent.DisconnectEvent disconnectEvent))
-                        {
-                            bool shouldReconnect = disconnectHandler?.Invoke(disconnectEvent) ?? false;
-
-                            if (shouldReconnect && !parentCt.IsCancellationRequested)
-                            {
-                                ResetConnectionLifecycle();
-
-                                ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
-
-                                await Task.Delay(RECONNECTION_DELAY_MS, parentCt);
-
-                                try { await ConnectAsync(parentCt); }
-                                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
-                            }
-
-                            break;
-                        }
-
-                        if (!evt.IsMessage(out IncomingMessage message)) continue;
-
                         try
                         {
-                            if (syncHandlers.TryGetValue(message.Message.MessageCase, out Action<IncomingMessage>? handler))
-                                handler(message);
+                            await foreach (MessagePipeEvent evt in pipe.ReadEventsAsync(connectionCt))
+                            {
+                                if (evt.IsDisconnectEvent(out MessagePipeEvent.DisconnectEvent disconnectEvent))
+                                {
+                                    (bool reconnectionAllowed, TimeSpan reconnectionDelay) = disconnectHandler?.Invoke(disconnectEvent) ?? (false, TimeSpan.Zero);
+
+                                    if (reconnectionAllowed && !parentCt.IsCancellationRequested)
+                                    {
+                                        ResetConnectionLifecycle();
+
+                                        ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
+
+                                        await Task.Delay(reconnectionDelay, parentCt);
+
+                                        try { await ConnectAsync(parentCt); }
+                                        catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+                                    }
+
+                                    break;
+                                }
+
+                                if (!evt.IsMessage(out IncomingMessage message)) continue;
+
+                                try
+                                {
+                                    if (syncHandlers.TryGetValue(message.Message.MessageCase, out Action<IncomingMessage>? handler))
+                                        handler(message);
+                                }
+                                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+                                finally { evt.Dispose(); }
+                            }
                         }
-                        catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
-                        finally { evt.Dispose(); }
-                    }
-                }
-                catch (OperationCanceledException) { }
-            }, configureAwait: false, cancellationToken: connectionCt)
-           .Forget();
+                        catch (OperationCanceledException) { }
+                    }, configureAwait: false, cancellationToken: connectionCt)
+                   .Forget();
         }
 
         private string BuildAuthChain()

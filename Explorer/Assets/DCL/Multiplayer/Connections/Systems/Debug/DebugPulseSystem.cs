@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Movement;
 using DCL.Web3;
 using ECS.Abstract;
 

@@ -1,6 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
@@ -26,7 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     public class MultiplayerContainer : IDisposable
     {

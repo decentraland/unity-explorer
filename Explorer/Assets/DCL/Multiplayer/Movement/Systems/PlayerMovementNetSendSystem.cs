@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Prefs;
 using ECS.Abstract;
@@ -14,7 +13,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]

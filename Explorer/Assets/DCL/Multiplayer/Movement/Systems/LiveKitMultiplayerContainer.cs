@@ -11,7 +11,7 @@ using DCL.Profiles.Self;
 using DCL.Utilities;
 using System;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     internal class LiveKitMultiplayerContainer : IDisposable
     {

@@ -17,7 +17,7 @@ using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility.PriorityQueue;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]

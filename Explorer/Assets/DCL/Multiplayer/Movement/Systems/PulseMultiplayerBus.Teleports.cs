@@ -1,13 +1,13 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {

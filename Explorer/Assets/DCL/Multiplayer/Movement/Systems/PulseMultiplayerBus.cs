@@ -1,5 +1,5 @@
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Web3;
@@ -7,7 +7,7 @@ using DCL.Web3.Identities;
 using Decentraland.Pulse;
 using System;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus : IMovementMessageBus, IEmotesMessageBus, IDisposable
     {
@@ -35,7 +35,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             ParcelEncoder parcelEncoder,
             PulseIncomingProfileAnnouncements incomingProfiles,
             PulseRemoveIntentions removeIntentions,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            ReconnectionSettings settings)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -44,6 +45,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
+            this.settings = settings;
         }
 
         private Web3Address ResolveSelfMirrorWallet(string userId)

@@ -1,8 +1,7 @@
 using CrdtEcsBridge.Components.Conversion;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;
 using Decentraland.Pulse;
 using Pulse.Transport;
@@ -12,7 +11,7 @@ using UnityEngine;
 using Utility;
 using GlideState = Decentraland.Pulse.GlideState;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
@@ -124,7 +123,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 if (delta.BaselineSeq > lastMovement.sequence)
                 {
                     if (TryRequestResync(delta.SubjectId, lastMovement.sequence))
-                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
+                        ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Packet loss detected, resync requested for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
 
                     // If Client should apply deltas optimistically remove this "return"
                     // The corresponding changes on the server will be required
@@ -141,13 +140,13 @@ namespace DCL.Multiplayer.Connections.Pulse
                 else
                 {
                     // The old "Resync" delta received - ignore it
-                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Old Resync for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Old Resync for {delta.SubjectId}. Received seq: {delta.NewSeq}, Baseline seq: {delta.BaselineSeq}, Known seq: {lastMovement.sequence}");
                     return;
                 }
             }
             else
             {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, Known seq: {lastMovement.sequence}");
+                ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Delta player state received is old {delta.SubjectId}. Received seq: {delta.NewSeq}, Known seq: {lastMovement.sequence}");
                 return;
             }
 
@@ -190,7 +189,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                 lastMovementMessages[subjectId] = (sequence, movementMessage);
 
             if (pendingResyncs.Remove(subjectId))
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
+                ReportHub.Log(ReportCategory.MULTIPLAYER, $"[{serverTick}] Packet loss detected, resync requested for {subjectId}. Received seq: {sequence}, Known seq: {lastMessage.sequence}");
         }
 
         private NetworkMovementMessage MergeIntoNetworkMovementMessage(NetworkMovementMessage last, PlayerStateDeltaTier0 delta)

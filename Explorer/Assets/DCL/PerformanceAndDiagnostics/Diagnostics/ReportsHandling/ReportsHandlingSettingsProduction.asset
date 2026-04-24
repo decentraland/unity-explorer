@@ -428,6 +428,10 @@ MonoBehaviour:
       Severity: 4
     - Category: SCENE_ADMINS
       Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
@@ -798,6 +802,8 @@ MonoBehaviour:
       Severity: 4
     - Category: ASSET_PRE_LOAD
       Severity: 1
+    - Category: MULTIPLAYER
+      Severity: 0
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
@@ -11,7 +11,7 @@ using Decentraland.Pulse;
 using Pulse.Transport;
 using System.Collections.Generic;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {

@@ -12,7 +12,7 @@ using System.Threading;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     public class LiveKitMovementMessageBus : IMovementMessageBus, IDisposable
     {

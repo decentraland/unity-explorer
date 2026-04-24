@@ -13,41 +13,39 @@ MonoBehaviour:
   m_Name: World Plugins Container
   m_EditorClassIdentifier: 
   settings:
-  - rid: 6784895267130048515
-  - rid: 1268264040174714880
-  - rid: 4753057106328551424
-  - rid: 847852733734322176
-  - rid: 1045841226745774107
-  - rid: 1045841258647388162
   - rid: 758312499805421571
-  - rid: 857448815798779906
-  - rid: 4769369655026384898
-  - rid: 892605770607624195
+  - rid: 1045841226745774107
   - rid: 892605770607624196
-  - rid: 7615904969758605314
-  - rid: 634089542387236867
-  - rid: 1970080267461197826
-  - rid: 3414978285727645698
+  - rid: 1268264040174714880
+  - rid: 1045841258647388162
   - rid: 3414978285727645699
-  - rid: 6144113899072913497
+  - rid: 1970080267461197826
+  - rid: 634089542387236867
+  - rid: 6784895267130048515
+  - rid: 4769369655026384898
+  - rid: 7615904969758605314
+  - rid: 892605770607624195
   - rid: 4938242198007709791
+  - rid: 3414978285727645698
   - rid: 250124815058075745
+  - rid: 847852733734322176
+  - rid: 4753057106328551424
+  - rid: 6144113899072913497
+  - rid: 857448815798779906
   references:
     version: 2
     RefIds:
     - rid: 250124815058075745
-      type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Connections.Pulse, asm: DCL.Plugins}
+      type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Movement, asm: DCL.Plugins}
       data:
         <ENetTransportOptions>k__BackingField:
           <ConnectTimeoutMs>k__BackingField: 10000
           <ServiceTimeoutMs>k__BackingField: 1
           <BufferSize>k__BackingField: 4096
-        <LandscapeData>k__BackingField:
-          m_AssetGUID: 
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
+        <ReconnectionSettings>k__BackingField:
+          <DefaultRetryDelayMs>k__BackingField: 3000
+          <AuthExhaustionRetryDelayMs>k__BackingField: 10000
+          <ServerFullRetryDelayMs>k__BackingField: 60000
     - rid: 634089542387236867
       type: {class: MapRendererContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:

@@ -2,8 +2,8 @@
 using DCL.FeatureFlags;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.Pulse.ENet;
-using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.PluginSystem;
@@ -14,7 +14,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Multiplayer.Connections.Pulse
+namespace DCL.Multiplayer.Movement
 {
     internal class PulseContainer : DCLWorldContainer<PulseContainer.Settings>
     {
@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
             pulseMultiplayerService = FeatureEnabled ? new PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource) : new IPulseMultiplayerService.Dummy();
 
-            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache);
+            pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox, parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings);
             pulseMultiplayerBus.SubscribeToIncomingMessages();
 
             pulseProfilePropagationBus = FeatureEnabled ? new PulseProfilePropagationBus(pulseMultiplayerService) : new IProfilePropagation.Dummy();
@@ -90,7 +90,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             public ENetTransportOptions ENetTransportOptions { get; private set; }
 
             [field: SerializeField]
-            public LandscapeDataRef LandscapeData { get; private set; }
+            public PulseMultiplayerBus.ReconnectionSettings ReconnectionSettings { get; private set; }
         }
     }
 }

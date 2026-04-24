@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler);
 
-        public void RegisterDisconnectHandler(Func<DisconnectReason, bool> handler);
+        public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler);
 
         public void UnregisterAllHandlers();
 
@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler) { }
 
-            public void RegisterDisconnectHandler(Func<DisconnectReason, bool> handler) { }
+            public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler) { }
 
             public void UnregisterAllHandlers() { }
 

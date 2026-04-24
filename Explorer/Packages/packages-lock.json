@@ -97,7 +97,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "20d0f434e357a93f19df09abd0adee43c215f437"
+      "hash": "1a07c6cf8d93a25556e190313fae83b2f899a3af"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
