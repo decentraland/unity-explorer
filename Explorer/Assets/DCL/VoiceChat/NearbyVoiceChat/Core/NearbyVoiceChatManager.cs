@@ -30,14 +30,6 @@ namespace DCL.VoiceChat
     {
         private const string TAG = nameof(NearbyVoiceChatManager);
 
-#if UNITY_EDITOR
-        /// <summary>
-        /// Editor-only reference to the active nearby audio sources dictionary.
-        /// Used by the "Decentraland/Voice Chat/Validate Nearby Audio Sources" menu to diagnose GameObject/dict drift.
-        /// </summary>
-        public static ConcurrentDictionary<string, LivekitAudioSource>? EditorActiveAudioSources;
-#endif
-
         private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
 
@@ -72,10 +64,6 @@ namespace DCL.VoiceChat
             this.stateModel = stateModel;
             this.muteService = muteService;
             this.userBlockingCache = userBlockingCache;
-
-#if UNITY_EDITOR
-            EditorActiveAudioSources = activeAudioSources;
-#endif
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -128,10 +116,6 @@ namespace DCL.VoiceChat
         {
             if (disposed) return;
             disposed = true;
-
-#if UNITY_EDITOR
-            EditorActiveAudioSources = null;
-#endif
 
             activationCts.SafeCancelAndDispose();
             callStatusSubscription.Dispose();
