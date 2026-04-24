@@ -14,6 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly JToken sessionId;
         private readonly JToken launcherAnonymousId;
+        private readonly string? campaignAnonUserId;
 
         private readonly JToken dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly JToken rendererVersion;
@@ -23,10 +24,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private readonly bool isLocalSceneDevelopment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, string installSource, DCLVersion dclVersion)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, string installSource, DCLVersion dclVersion, string? campaignAnonUserId = null)
         {
             this.sessionId = sessionId;
             this.launcherAnonymousId = launcherAnonymousId;
+            this.campaignAnonUserId = campaignAnonUserId;
 
             runtime = ChooseRuntime(appArgs);
             this.installSource = installSource;
@@ -58,6 +60,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent["runtime"] = runtime;
             trackEvent["operating_system"] = os;
             trackEvent["is_local_scene"] = isLocalSceneDevelopment;
+
+            if (!string.IsNullOrEmpty(campaignAnonUserId))
+                trackEvent["campaign_anon_user_id"] = campaignAnonUserId;
         }
     }
 
@@ -65,18 +70,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         public readonly string LauncherAnonymousId;
         public readonly string SessionId;
+        public readonly string? CampaignAnonUserId;
 
-        private LauncherTraits(string launcherAnonymousId, string sessionId)
+        private LauncherTraits(string launcherAnonymousId, string sessionId, string? campaignAnonUserId)
         {
             LauncherAnonymousId = launcherAnonymousId;
             SessionId = sessionId;
+            CampaignAnonUserId = campaignAnonUserId;
         }
 
         public static LauncherTraits FromAppArgs(IAppArgs appArgs)
         {
             appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
             appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
-            return new LauncherTraits(launcherAnonymousId!, sessionId!);
+            appArgs.TryGetValue(AppArgsFlags.Analytics.CAMPAIGN_ANON_USER_ID, out string? campaignAnonUserId);
+            return new LauncherTraits(launcherAnonymousId!, sessionId!, campaignAnonUserId);
         }
     }
 }

@@ -32,6 +32,11 @@ namespace DCL.Multiplayer.Deduplication
             registeredStamps.Add(new RegisteredStamp(walletId, timestamp));
         }
 
+        public void Remove(string walletId, T timestamp)
+        {
+            registeredStamps.Remove(new RegisteredStamp(walletId, timestamp));
+        }
+
         [Serializable]
         internal struct RegisteredStamp : IEquatable<RegisteredStamp>
         {

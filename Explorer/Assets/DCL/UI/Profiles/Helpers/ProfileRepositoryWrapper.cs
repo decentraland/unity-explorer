@@ -1,7 +1,7 @@
-
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.WebRequests;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -18,7 +18,6 @@ namespace DCL.UI.Profiles.Helpers
         // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
         // It is incremental, as the time to process it varies depending on the traffic
         private static readonly RetryPolicy RETRY_POLICY = RetryPolicy.Enforce(10, 10_000, 2, IWebRequestController.IGNORE_NOT_FOUND);
-
 
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
@@ -38,5 +37,7 @@ namespace DCL.UI.Profiles.Helpers
         public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>
             profileRepository.GetCompactAsync(userId, ct);
 
+        public UniTask<List<Profile.CompactInfo>> GetProfilesAsync(IReadOnlyList<string> userIds, CancellationToken ct) =>
+            profileRepository.GetCompactAsync(userIds, ct);
     }
 }

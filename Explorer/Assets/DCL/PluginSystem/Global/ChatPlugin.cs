@@ -12,6 +12,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -31,11 +32,16 @@ using System.Threading;
 using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatConfig;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
+using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.ChatArea;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Settings;
@@ -44,6 +50,8 @@ using DCL.Translation.Processors;
 using DCL.Translation.Service;
 using DCL.WebRequests;
 using System.Collections.Generic;
+using DCL.Character.Components;
+using DCL.Chat.ChatReactions.Configs;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -88,6 +96,9 @@ namespace DCL.PluginSystem.Global
         private readonly ITranslationSettings translationSettings;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMessagePipesHub messagePipesHub;
+        private readonly DecentralandEnvironment decentralandEnvironment;
+        private readonly IAnalyticsController analytics;
         private readonly CurrentChannelService? externalCurrentChannelService;
         private readonly DCLInput dclInput;
 
@@ -95,6 +106,7 @@ namespace DCL.PluginSystem.Global
         private ChatCommandRegistry? commandRegistry;
         private ChatHistoryStorage? chatStorage;
         private FallbackFontsProvider? fallbackFontsProvider;
+        private ChatMessageReactionService? messageReactionService;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -131,6 +143,9 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
+            IMessagePipesHub messagePipesHub,
+            DecentralandEnvironment decentralandEnvironment,
+            IAnalyticsController analytics,
             CurrentChannelService? externalCurrentChannelService = null)
         {
             this.mvcManager = mvcManager;
@@ -166,6 +181,9 @@ namespace DCL.PluginSystem.Global
             this.translationSettings = translationSettings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.messagePipesHub = messagePipesHub;
+            this.decentralandEnvironment = decentralandEnvironment;
+            this.analytics = analytics;
             this.externalCurrentChannelService = externalCurrentChannelService;
             this.dclInput = DCLInput.Instance;
 
@@ -175,7 +193,11 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            if (messageReactionService != null && chatStorage != null)
+                messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
+
             chatStorage?.Dispose();
+
             pluginScope.Dispose();
             fallbackFontsProvider?.Dispose();
             pluginCts.SafeCancelAndDispose();
@@ -192,10 +214,36 @@ namespace DCL.PluginSystem.Global
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
 
+            var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
+
+            ChatReactionsFactory.Result reactions = ChatReactionsFactory.Create(
+                settings.ReactionsConfig,
+                mainUIView.ChatMainView.SituationalReactionView.LaneRect,
+                mainUIView.ChatMainView.SituationalReactionView.LaneCanvas,
+                avatarReactionPosition,
+                messagePipesHub,
+                userBlockingCache,
+                web3IdentityCache,
+                chatHistory,
+                decentralandEnvironment,
+                settings.ChatSettingsAsset,
+                pluginScope);
+
+            messageReactionService = reactions.MessageReactionService;
+
+            var chatReactionsAnalytics = new ChatReactionsAnalytics(analytics,
+                messageReactionService,
+                reactions.Facade,
+                settings.ChatSettingsAsset);
+            
+            pluginScope.Add(chatReactionsAnalytics);
+
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity?.Address ?? string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
+
+                messageReactionService.ReactionPersistenceRequested += chatStorage.OnReactionPersistenceRequested;
             }
 
             var translationPolicy = new ConversationTranslationPolicy(translationSettings);
@@ -260,7 +308,9 @@ namespace DCL.PluginSystem.Global
                     chatPanelView.TitlebarView.BackFromMemberList.transform,
                     chatPanelView.InputView.inputField.transform,
                     chatViewRectTransform,
-                    mainUIView.SidebarView.unreadMessagesButton.transform);
+                    mainUIView.SidebarView.unreadMessagesButton.transform,
+                    chatPanelView.ChatReactionButton.transform,
+                    chatPanelView.EmojiPanelView.transform);
 
             pluginScope.Add(chatClickDetectionHandler);
 
@@ -334,7 +384,17 @@ namespace DCL.PluginSystem.Global
                 chatSharedAreaEventBus,
                 translationSettings,
                 translationMemory,
-                translationCache
+                translationCache,
+                reactions.Facade,
+                reactions.Simulation,
+                settings.ReactionsConfig,
+                reactions.DebugState,
+                reactions.DebugController,
+                settings.ChatSettingsAsset,
+                messageReactionService,
+                web3IdentityCache,
+                profileCache,
+                inputBlock
             );
 
             pluginScope.Add(chatPanelPresenter);
@@ -433,6 +493,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public List<AssetReferenceT<TMP_FontAsset>> FallbackFonts { get; private set; } = null!;
 
         [Header("Audio")]
-        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
+
+        [field: Header("Reactions")]
+        [field: SerializeField] public ChatReactionsConfig ReactionsConfig { get; private set; }
     }
 }

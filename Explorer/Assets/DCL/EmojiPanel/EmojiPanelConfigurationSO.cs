@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using Utility;
@@ -62,21 +63,36 @@ namespace DCL.Emoji
                 {
                     log.ProcessedEmojis++;
 
-                    string[] baseCodesHex = emoji.@base.Select(x => x.ToString("X")).ToArray();
+                    string[] baseCodesHex = emoji.@base.Select(x => x.ToString("x4")).ToArray();
+                    string primaryHex = baseCodesHex[0];
                     List<(TMP_SpriteCharacter, int)> matches = usableEmojis.Select(x => (x, 0))
-                                                                           .Where(x => baseCodesHex.Any(hexCode => x.x.name.Contains(hexCode, StringComparison.InvariantCultureIgnoreCase)))
+                                                                           .Where(x => baseCodesHex.Any(hexCode => x.x.name.Equals(hexCode, StringComparison.InvariantCultureIgnoreCase)))
                                                                            .ToList();
 
                     foreach (string baseCodeHex in baseCodesHex)
                         for (int i = 0; i < matches.Count; i++)
-                            if (matches[i].Item1.name.Contains(baseCodeHex, StringComparison.InvariantCultureIgnoreCase))
+                            if (matches[i].Item1.name.Equals(baseCodeHex, StringComparison.InvariantCultureIgnoreCase))
                                 matches[i] = (matches[i].Item1, matches[i].Item2 + 1);
 
-                    TMP_SpriteCharacter bestMatch = SearchHighestMatch(matches);
+                    TMP_SpriteCharacter bestMatch = SearchHighestMatch(matches, primaryHex);
+                    string shortcode = emoji.shortcodes.Length > 0 ? emoji.shortcodes[0] : "?";
+                    string baseCodes = string.Join("+", emoji.@base.Select(x => $"U+{x:X4}"));
 
                     if (bestMatch == null)
                     {
                         log.DiscardedEmojis++;
+
+                        if (matches.Count == 0)
+                        {
+                            log.NoMatchCount++;
+                            log.AppendDiscard($"NO_GLYPH_MATCH  :{shortcode}: [{baseCodes}] — no sprite name contains any of [{string.Join(", ", baseCodesHex)}]");
+                        }
+                        else
+                        {
+                            log.AmbiguousCount++;
+                            log.AppendDiscard($"AMBIGUOUS_MATCH :{shortcode}: [{baseCodes}] — {matches.Count} glyphs tied at score {matches[0].Item2}: [{string.Join(", ", matches.Select(m => $"{m.Item1.name}(U+{m.Item1.unicode:X4})"))}]");
+                        }
+
                         continue;
                     }
 
@@ -90,6 +106,8 @@ namespace DCL.Emoji
                     if (!savedEmojis.Add(unicode))
                     {
                         log.DiscardedEmojis++;
+                        log.DuplicateCount++;
+                        log.AppendDiscard($"DUPLICATE       :{shortcode}: [{baseCodes}] — glyph U+{unicode:X4} already claimed by an earlier emoji");
                         continue;
                     }
 
@@ -100,7 +118,7 @@ namespace DCL.Emoji
             }
         }
 
-        private TMP_SpriteCharacter SearchHighestMatch(List<(TMP_SpriteCharacter, int)> matches)
+        private TMP_SpriteCharacter SearchHighestMatch(List<(TMP_SpriteCharacter, int)> matches, string primaryHex)
         {
             if (matches.Count == 0)
                 return null;
@@ -109,9 +127,16 @@ namespace DCL.Emoji
 
             matches.Sort((a, b) => b.Item2.CompareTo(a.Item2));
 
-            //If we have two glyphs with the same match count, we cannot decide which one to use, so we discard the emoji
+            // If top two glyphs have the same score, break the tie by preferring
+            // the glyph whose name matches the first base codepoint (the primary emoji).
+            // This handles ZWJ sequences like astronaut (person+rocket) → picks person.
             if (matches[0].Item2 == matches[1].Item2)
-                return null;
+            {
+                var primary = matches.FirstOrDefault(m =>
+                    m.Item1.name.Equals(primaryHex, StringComparison.InvariantCultureIgnoreCase));
+
+                return primary.Item1; // null if no match on primary — still discards
+            }
 
             return matches[0].Item1;
         }
@@ -137,9 +162,35 @@ namespace DCL.Emoji
             public int MatchedEmojis;
             public int DiscardedEmojis;
             public int MultipleShortcodes;
+            public int NoMatchCount;
+            public int AmbiguousCount;
+            public int DuplicateCount;
 
-            public override string ToString() =>
-                $"Emojis in sprite asset: {TotalEmojisInSprites}\nProcessed emojis: {ProcessedEmojis}\nMatched emojis: {MatchedEmojis}\nDiscarded emojis: {DiscardedEmojis}\nEmojis with multiple shortcodes: {MultipleShortcodes}";
+            private readonly StringBuilder discardDetails = new ();
+
+            public void AppendDiscard(string detail) =>
+                discardDetails.AppendLine($"  {detail}");
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("═══ EMOJI PANEL IMPORT REPORT ═══");
+                sb.AppendLine($"Sprite asset glyphs: {TotalEmojisInSprites}");
+                sb.AppendLine($"JSON emojis processed: {ProcessedEmojis}");
+                sb.AppendLine($"Matched: {MatchedEmojis}");
+                sb.AppendLine($"Discarded: {DiscardedEmojis} (no match: {NoMatchCount}, ambiguous: {AmbiguousCount}, duplicate: {DuplicateCount})");
+                sb.AppendLine($"Multiple shortcodes: {MultipleShortcodes}");
+
+                if (discardDetails.Length > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("─── DISCARDED EMOJIS ───");
+                    sb.Append(discardDetails);
+                }
+
+                sb.Append("═════════════════════════════════");
+                return sb.ToString();
+            }
         }
 #endif
     }
