@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using REnum;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -71,10 +72,9 @@ namespace DCL.SDKComponents.MediaStream
             }
             else
             {
-                // Scenes only author UserStream or CurrentStream addresses, so whether the previous
                 // target was a specific user that went offline or a current-stream that had no tracks,
-                // the recovery is the same: fall back to first-available.
-                ReopenCurrentVideoStream(LivekitAddress.CurrentStream());
+                // the recovery is: fall back to first-available.
+                OpenVideoStream(LivekitAddress.CurrentStream());
             }
 
             // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
@@ -113,24 +113,20 @@ namespace DCL.SDKComponents.MediaStream
             CloseCurrentStream();
             lastAudioScanTime = 0f;
 
+            OpenVideoStream(livekitAddress);
+            OpenMissingAudioStreams();
+            playerState = PlayerState.PLAYING;
+        }
+
+        private void OpenVideoStream(LivekitAddress livekitAddress)
+        {
             currentVideoStream = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) => self.OpenUserVideoStream(userStream),
                 onPresentationBotStream: static (self, bot) => self.OpenPresentationBotVideoStream(bot),
                 onCurrentStream: static self => self.FirstVideoTrackingIdentity()
             );
-
-            OpenMissingAudioStreams();
-
-            playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
-            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
-        }
-
-        private void ReopenCurrentVideoStream()
-        {
-            currentVideoStream = FirstVideoTrackingIdentity();
-            playingAddress = LivekitAddress.CurrentStream(); // TODO should place it here? should manually override?
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
