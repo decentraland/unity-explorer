@@ -151,7 +151,7 @@ namespace DCL.Nametags
             }
 
             // Nearby: badge is always visible while publishing (dots when silent, wave when active).
-            // Private/Community: badge is only shown while speaking (legacy behavior).
+            // Private/Community: badge is only shown while speaking (legacy behavior - will be replaced by 3 dots in future).
             nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY ? true : voiceChatComponent.IsSpeaking;
 
             nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;

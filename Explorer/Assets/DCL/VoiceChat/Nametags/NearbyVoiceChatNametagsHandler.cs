@@ -50,7 +50,7 @@ namespace DCL.VoiceChat.Nearby
             this.muteService = muteService;
 
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
-            islandRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
+            islandRoom.Participants.UpdatesFromParticipant += RemoveDisconnected;
 
             muteService.MuteStateChanged += OnMuteStateChanged;
 
@@ -63,14 +63,14 @@ namespace DCL.VoiceChat.Nearby
             disposed = true;
 
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
-            islandRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
+            islandRoom.Participants.UpdatesFromParticipant -= RemoveDisconnected;
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
 
             stateSubscription.Dispose();
         }
 
-        private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
+        private void RemoveDisconnected(LKParticipant participant, UpdateFromParticipant update)
         {
             if (update != UpdateFromParticipant.Disconnected) return;
 
