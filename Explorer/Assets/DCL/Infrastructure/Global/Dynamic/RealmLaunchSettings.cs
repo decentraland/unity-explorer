@@ -104,7 +104,18 @@ namespace Global.Dynamic
                                            && IsRealmAValidUrl(realmParamValue);
 
             if (isLocalSceneDevelopment)
-                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.USE_REMOTE_AB) || useRemoteAssetsBundles);
+            {
+                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles);
+
+                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
+                    ParseLSDRemoteABServer(serverValue);
+
+                if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_WORLD, out string? worldValue))
+                {
+                    remoteHibridWorld = worldValue!;
+                    remoteHybridSceneContentServer = HybridSceneContentServer.World;
+                }
+            }
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
             else
@@ -129,6 +140,12 @@ namespace Global.Dynamic
             initialRealm = InitialRealm.Custom;
             useRemoteAssetsBundles = useRemoteAB;
             isLocalSceneDevelopmentRealm = true;
+        }
+
+        private void ParseLSDRemoteABServer(string serverValue)
+        {
+            if (Enum.TryParse<HybridSceneContentServer>(serverValue, true, out var server))
+                remoteHybridSceneContentServer = server;
         }
 
         private void ParsePositionAppParameter(string targetPositionParam)
