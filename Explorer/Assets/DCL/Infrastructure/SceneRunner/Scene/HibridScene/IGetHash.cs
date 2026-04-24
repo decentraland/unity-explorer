@@ -36,7 +36,7 @@ namespace SceneRunner.Scene
                 }
             }
             catch (OperationCanceledException) { throw; }
-            catch (Exception _) { }
+            catch (Exception) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -76,7 +76,8 @@ namespace SceneRunner.Scene
                     return (true, sceneHash);
                 }
             }
-            catch (Exception _) { }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -95,7 +96,8 @@ namespace SceneRunner.Scene
 
                 return (true, getSceneDefinition[0].id!);
             }
-            catch (Exception _) { }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
