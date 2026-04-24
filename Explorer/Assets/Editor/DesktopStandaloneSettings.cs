@@ -11,7 +11,7 @@ namespace Editor
         internal static bool CopyPDBFiles
         {
             get => EditorUserBuildSettings.GetPlatformSettings(platformName, SETTING_COPY_PDB_FILES).ToLower() == "true";
-            set => EditorUserBuildSettings.SetPlatformSettings(platformName, SETTING_COPY_PDB_FILES, value.ToString().ToLower());
+            set => EditorUserBuildSettings.SetPlatformSettings(PlatformName, SETTING_COPY_PDB_FILES, value.ToString().ToLower());
         }
     }
 }
