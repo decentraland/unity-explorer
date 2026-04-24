@@ -4,6 +4,7 @@ using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRunner.Admins;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
