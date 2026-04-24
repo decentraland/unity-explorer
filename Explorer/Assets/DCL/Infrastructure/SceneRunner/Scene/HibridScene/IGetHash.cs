@@ -21,23 +21,22 @@ namespace SceneRunner.Scene
             try
             {
                 var getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest/about")), ct, reportCategory)
-                    .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                                                         .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (string? contentDefinition in getAbout.configurations.scenesUrn)
                 {
                     var url = contentDomain.Append(URLPath.FromString(IpfsHelper.ParseUrn(contentDefinition).EntityId));
 
                     var getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
-                        .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                                       .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
                     if (!getSceneDefinition.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
                     return (true, sceneHash);
                 }
             }
-            catch (Exception _)
-            {
-            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception _) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -61,24 +60,23 @@ namespace SceneRunner.Scene
             try
             {
                 var aboutUrl = $"{worldContentServerBaseUrl.TrimEnd('/')}/{world}/about";
+
                 var getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString(aboutUrl)), ct, reportCategory)
-                    .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                                                         .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (string? contentDefinition in getAbout.configurations.scenesUrn)
                 {
                     var sceneDefinitionURL = contentDomain.Append(URLPath.FromString(IpfsHelper.ParseUrn(contentDefinition).EntityId));
 
                     var getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(sceneDefinitionURL), ct, reportCategory)
-                        .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                                       .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
                     if (!getSceneDefinition.Contains(coordinate)) continue;
                     string sceneHash = IpfsHelper.ParseUrn(contentDefinition).EntityId;
                     return (true, sceneHash);
                 }
             }
-            catch (Exception _)
-            {
-            }
+            catch (Exception _) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
@@ -93,16 +91,14 @@ namespace SceneRunner.Scene
             {
                 var getSceneDefinition = await webRequestController.PostAsync(new CommonArguments(URLAddress.FromString("https://peer.decentraland.org/content/entities/active/")), GenericPostArguments.CreateJson($"{{\"pointers\": [\"{coordinate.x},{coordinate.y}\" ]}}"),
                                                                         ct, reportCategory)
-                    .CreateFromJson<SceneEntityDefinition[]>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                                                   .CreateFromJson<SceneEntityDefinition[]>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
                 return (true, getSceneDefinition[0].id!);
             }
-            catch (Exception _)
-            {
-            }
+            catch (Exception _) { }
 
             ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with coordinates {coordinate} failed. You wont get the asset bundles");
             return (false, "");
         }
     }
 }
-
