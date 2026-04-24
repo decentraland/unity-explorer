@@ -468,7 +468,7 @@ PrefabInstance:
     - target: {fileID: 1722315438415649328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1722315438415649328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -479,16 +479,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1722315438415649328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3606088431747410853, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
+    - target: {fileID: 3606088431747410853, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5752101683759274867, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: aspectRatioFitter
       value: 
       objectReference: {fileID: 3338162840180194069}
+    - target: {fileID: 7004437502137540868, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: thumbnailBackground
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -605,7 +613,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1722315438415649328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+    - {fileID: 7465909787489353167, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
