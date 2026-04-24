@@ -180,7 +180,7 @@ namespace DCL.SDKComponents.MediaStream
         private void TryFollowVideoStreamToActiveSpeaker(LivekitAddress address)
         {
             if (address.IsUserStream(out _)) return; // if stream dedicated user then don't auto-follow
-            
+
             if (cvs?.IsFromPresentationBot() ?? false) return; // already streams high-priority presentation bot
 
             StreamKey? targetKey = BestFollowCandidate();
@@ -207,7 +207,7 @@ namespace DCL.SDKComponents.MediaStream
                 // attempt to switch only if hold exceeds
                 if (delta > MIN_SPEAKER_HOLD_SECONDS)
                 {
-                    foreach (string activeSpeaker in room.ActiveSpeakers) 
+                    foreach (string activeSpeaker in room.ActiveSpeakers)
                     {
                         if (activeSpeaker == cvs?.fromIdentity)
                             break; // we don't need to switch if he is already playing

@@ -36,13 +36,8 @@ namespace DCL.SDKComponents.MediaStream
         public static readonly LivekitAddress EMPTY = CurrentStream();
 
         public bool IsEmpty => Match(
-            onUserStream: static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
+            static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
             onCurrentStream: static () => string.IsNullOrEmpty(LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM)
-        );
-
-        public string? Identity => Match<string?>(
-            onUserStream: static userStream => userStream.Identity,
-            onCurrentStream: static () => null
         );
 
         public static LivekitAddress New(string rawAddress)
