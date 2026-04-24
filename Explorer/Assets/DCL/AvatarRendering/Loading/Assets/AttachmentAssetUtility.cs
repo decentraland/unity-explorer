@@ -1,6 +1,5 @@
-﻿using DCL.Diagnostics;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.Optimization.Pools;
-using GLTFast;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,9 +23,13 @@ namespace DCL.AvatarRendering.Loading.Assets
             instantiatedWearables.Clear();
         }
 
-        public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
+        public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache,
+            AttachmentRegularAsset originalAsset,
+            Transform parent,
+            bool outlineCompatible,
+            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBonesParams = null)
         {
-            CachedAttachment wearable = InstantiateOrGetCached(attachmentsAssetsCache, originalAsset, parent, outlineCompatible);
+            CachedAttachment wearable = InstantiateOrGetCached(attachmentsAssetsCache, originalAsset, parent, outlineCompatible, springBonesParams);
 
             ProcessWearableChildren(parent, wearable);
 
@@ -37,7 +40,11 @@ namespace DCL.AvatarRendering.Loading.Assets
             return wearable;
         }
 
-        private static CachedAttachment InstantiateOrGetCached(IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
+        private static CachedAttachment InstantiateOrGetCached(IAttachmentsAssetsCache attachmentsAssetsCache,
+            AttachmentRegularAsset originalAsset,
+            Transform parent,
+            bool outlineCompatible,
+            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
             if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
             {
@@ -54,9 +61,9 @@ namespace DCL.AvatarRendering.Loading.Assets
             foreach (var T in meshRenderers.Value) Object.DestroyImmediate(T.gameObject);
 
             // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
-            RemoveBonesGameObjects(instantiatedWearable.transform);
+            RemoveBonesGameObjects(instantiatedWearable.transform, springBoneParams);
 
-            var springBones = BuildSpringBoneData(instantiatedWearable);
+            var springBones = BuildSpringBoneData(instantiatedWearable, springBoneParams);
             return new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
         }
 
@@ -74,7 +81,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             }
         }
 
-        private static void RemoveBonesGameObjects(Transform wearableRoot)
+        private static void RemoveBonesGameObjects(Transform wearableRoot, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
             using PoolExtensions.Scope<List<Renderer>> pooledList = wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
 
@@ -85,7 +92,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 Transform child = wearableRoot.GetChild(i);
 
-                if (!HasRendererInHierarchy(child) && !HasSpringBoneInHierarchy(child))
+                if (!HasRendererInHierarchy(child) && !HasSpringBoneInHierarchy(child, springBoneParams))
                     Object.Destroy(child.gameObject);
             }
         }
@@ -93,13 +100,26 @@ namespace DCL.AvatarRendering.Loading.Assets
         private static bool HasRendererInHierarchy(Transform transform) =>
             transform.GetComponentInChildren<Renderer>(true) != null;
 
-        private static bool HasSpringBoneInHierarchy(Transform transform) =>
-            transform.GetComponentInChildren<SpringBoneJointComponent>();
+        private static bool HasSpringBoneInHierarchy(Transform transform, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
+        {
+            if (springBoneParams == null || springBoneParams.Count == 0)
+                return false;
+
+            if (springBoneParams.ContainsKey(transform.name))
+                return true;
+
+            for (int i = 0; i < transform.childCount; i++)
+                if (HasSpringBoneInHierarchy(transform.GetChild(i), springBoneParams))
+                    return true;
+
+            return false;
+        }
 
         private static void CollectSpringBoneChain(
             Transform root,
-            SpringBoneJointComponent rootConfig,
+            SpringBoneParamsDto rootConfig,
             Dictionary<Transform, int> boneIndexLookup,
+            IReadOnlyDictionary<string, SpringBoneParamsDto> springBoneParams,
             List<SpringBoneData> result)
         {
             for (int i = 0; i < root.childCount; i++)
@@ -108,25 +128,28 @@ namespace DCL.AvatarRendering.Loading.Assets
                 if (!boneIndexLookup.TryGetValue(child, out int boneIndex)) continue;
                 if (boneIndex < AVATAR_SKELETON_BONE_COUNT) continue;
 
-                // If the child has its own component, it's an independent root — skip
-                if (child.GetComponent<SpringBoneJointComponent>() != null) continue;
+                // If the child has its own entry in the payload, it's an independent root — skip
+                if (springBoneParams.ContainsKey(child.name)) continue;
 
                 result.Add(new SpringBoneData(
                     child,
                     isRoot: false,
                     boneIndexLookup[child.parent],
-                    rootConfig.Stiffness,
-                    rootConfig.Drag,
-                    rootConfig.GravityDir,
-                    rootConfig.GravityPower,
+                    rootConfig.stiffness,
+                    rootConfig.drag,
+                    rootConfig.gravityDir,
+                    rootConfig.gravityPower,
                     child.localRotation));
 
-                CollectSpringBoneChain(child, rootConfig, boneIndexLookup, result);
+                CollectSpringBoneChain(child, rootConfig, boneIndexLookup, springBoneParams, result);
             }
         }
 
-        private static SpringBoneData[] BuildSpringBoneData(GameObject wearable)
+        private static SpringBoneData[] BuildSpringBoneData(GameObject wearable, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
+            if (springBoneParams == null || springBoneParams.Count == 0)
+                return Array.Empty<SpringBoneData>();
+
             using var resultScope = ListPool<SpringBoneData>.Get(out var result);
 
             var skeleton = wearable.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -138,21 +161,20 @@ namespace DCL.AvatarRendering.Loading.Assets
 
             foreach (var bone in skeleton.bones)
             {
-                SpringBoneJointComponent jointAuthoring = bone.GetComponent<SpringBoneJointComponent>();
-                if (!jointAuthoring) continue;
+                if (!springBoneParams.TryGetValue(bone.name, out SpringBoneParamsDto paramsDto)) continue;
 
                 result.Add(new SpringBoneData(bone,
-                    jointAuthoring.IsRoot,
+                    paramsDto.isRoot,
                     boneIndexLookup[bone.parent],
-                    jointAuthoring.Stiffness,
-                    jointAuthoring.Drag,
-                    jointAuthoring.GravityDir,
-                    jointAuthoring.GravityPower,
+                    paramsDto.stiffness,
+                    paramsDto.drag,
+                    paramsDto.gravityDir,
+                    paramsDto.gravityPower,
                     bone.localRotation));
 
                 // Collect untagged children that inherit this root's spring bone parameters
-                if (jointAuthoring.IsRoot)
-                    CollectSpringBoneChain(bone, jointAuthoring, boneIndexLookup, result);
+                if (paramsDto.isRoot)
+                    CollectSpringBoneChain(bone, paramsDto, boneIndexLookup, springBoneParams, result);
             }
 
             return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();

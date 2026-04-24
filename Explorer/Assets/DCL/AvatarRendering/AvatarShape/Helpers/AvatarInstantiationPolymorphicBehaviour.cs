@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -50,8 +51,10 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 {
                     var regularAsset = (AttachmentRegularAsset)mainAsset;
 
+                    IReadOnlyDictionary<string, SpringBoneParamsDto>? boneParams = ResolveSpringBoneParams(resultWearable, avatarShapeComponent.BodyShape);
+
                     var instantiatedWearable =
-                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible());
+                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible(), boneParams);
 
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
@@ -60,6 +63,40 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     return instantiatedWearable;
                 }
             }
+        }
+
+        private static IReadOnlyDictionary<string, SpringBoneParamsDto>? ResolveSpringBoneParams(IWearable wearable, BodyShape bodyShape)
+        {
+            WearableDTO? wearableDto = wearable.Model.Asset;
+            if (wearableDto == null) return null;
+
+            SpringBonesDto? springBones = wearableDto.springBones;
+            if (springBones?.models == null) return null;
+
+            string bodyShapeStr = bodyShape;
+            var representations = wearableDto.Metadata.AbstractData.representations;
+
+            for (int i = 0; i < representations.Length; i++)
+            {
+                string[] shapes = representations[i].bodyShapes;
+                bool match = false;
+
+                for (int j = 0; j < shapes.Length; j++)
+                {
+                    if (shapes[j] != bodyShapeStr) continue;
+                    match = true;
+                    break;
+                }
+
+                if (!match) continue;
+
+                if (springBones.models.TryGetValue(representations[i].mainFile, out var map))
+                    return map;
+
+                break;
+            }
+
+            return null;
         }
 
         public static void Dereference(this in AvatarShapeComponent avatarShapeComponent)
