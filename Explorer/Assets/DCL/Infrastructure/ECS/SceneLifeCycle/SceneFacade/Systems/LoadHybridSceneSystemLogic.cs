@@ -76,7 +76,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             try
             {
-                string sceneId = hybridSceneHashedContent?.remoteSceneID!;
+                string sceneId = hybridSceneHashedContent!.remoteSceneID!;
                 string manifestPath = $"manifest/{sceneId}{PlatformUtils.GetCurrentPlatform()}.json";
                 URLAddress manifestUrl = assetBundleURL.Append(URLPath.FromString(manifestPath));
 

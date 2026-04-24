@@ -42,7 +42,7 @@ namespace ECS.SceneLifeCycle.Systems
             ReportHub.LogProductionInfo( $"Loading scene '{definition?.GetLogSceneName()}' began");
 
             var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory, ct);
-            // First process the the scene metadata.
+            // First process the scene metadata.
             // Fixes possible race conditions with the setup of the scene definition, especially on Hybrid mode (LSD+remote ABs)
             await OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             await UniTask.SwitchToMainThread(ct);
