@@ -1,6 +1,7 @@
-﻿using DCL.Chat.ChatFriends;
+using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions.Presenters;
 using DCL.VoiceChat;
 using DG.Tweening;
 
@@ -15,8 +16,11 @@ namespace DCL.Chat
         private readonly ChatChannelsPresenter channelListPresenter;
         private readonly ChatMessageFeedPresenter messageFeedPresenter;
         private readonly ChatMemberFeedPresenter memberFeedPresenter;
+        private readonly ChatReactionsPresenter reactionsPresenter;
 
         internal readonly ChatInputPresenter chatInputPresenter;
+
+        public bool IsReactionPopupActive => reactionsPresenter.IsReactionPopupActive;
 
         public ChatUIMediator(
             ChatPanelView panelView,
@@ -26,8 +30,8 @@ namespace DCL.Chat
             ChatMessageFeedPresenter messageFeedPresenter,
             ChatInputPresenter chatInputPresenter,
             ChatMemberFeedPresenter memberFeedPresenter,
-            CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter
-            )
+            CommunityVoiceChatSubTitleButtonPresenter subTitleButtonPresenter,
+            ChatReactionsPresenter reactionsPresenter)
         {
             this.panelView = panelView;
             this.config = config;
@@ -37,6 +41,7 @@ namespace DCL.Chat
             this.chatInputPresenter = chatInputPresenter;
             this.memberFeedPresenter = memberFeedPresenter;
             this.subTitleButtonPresenter = subTitleButtonPresenter;
+            this.reactionsPresenter = reactionsPresenter;
         }
 
         public void SetupForDefaultState(bool animate)
@@ -52,6 +57,7 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: false, animate);
 
             subTitleButtonPresenter.Show();
+            reactionsPresenter.Show();
         }
 
         public void SetupForFocusedState()
@@ -67,6 +73,7 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: true, animate: false);
 
             subTitleButtonPresenter.Show();
+            reactionsPresenter.Show();
         }
 
         public void SetupForMembersState()
@@ -82,6 +89,7 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: false, animate: false);
 
             subTitleButtonPresenter.Hide();
+            reactionsPresenter.Hide();
         }
 
         public void SetupForMinimizedState()
@@ -97,6 +105,7 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: false, animate: true);
 
             subTitleButtonPresenter.Hide();
+            reactionsPresenter.Hide();
         }
 
         public void SetupForHiddenState()
@@ -112,6 +121,7 @@ namespace DCL.Chat
             SetPanelsFocus(isFocused: false, animate: false);
 
             subTitleButtonPresenter.Hide();
+            reactionsPresenter.Hide();
         }
 
         internal void SetPanelsFocus(bool isFocused, bool animate)
