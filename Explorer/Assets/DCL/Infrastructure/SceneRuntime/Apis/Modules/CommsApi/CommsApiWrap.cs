@@ -19,7 +19,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
     {
         private const int MAX_MESSAGES_PER_SECOND = 10;
         private const int RATE_LIMIT_WINDOW_MS = 1000;
-        private const int MAX_TOPIC_LENGTH = 512;
+        private const int MAX_TOPIC_BYTES_LENGTH = 512;
         private const int MSG_TYPE_BYTE_SIZE = 1;
         private const int TOPIC_LENGTH_PREFIX_BYTES = sizeof(ushort);
         private const int MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE = MSG_TYPE_BYTE_SIZE + TOPIC_LENGTH_PREFIX_BYTES;
@@ -135,24 +135,39 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 if (!TryConsumeRateLimit(topic))
                     return;
 
-                byte[] topicBytes = Encoding.UTF8.GetBytes(topic);
+                int topicBytesCount = Encoding.UTF8.GetByteCount(topic);
 
-                if (topicBytes.Length > MAX_TOPIC_LENGTH)
+                if (topicBytesCount > MAX_TOPIC_BYTES_LENGTH)
                     return;
 
-                byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+                int dataBytesCount = Encoding.UTF8.GetByteCount(data);
 
                 // Wire format: [MsgType.CommsData 1 byte][topicLen 2 bytes LE][topic UTF-8][data UTF-8].
-                int payloadLength = TOPIC_LENGTH_PREFIX_BYTES + topicBytes.Length + dataBytes.Length;
+                int payloadLength = TOPIC_LENGTH_PREFIX_BYTES + topicBytesCount + dataBytesCount;
 
-                if (MSG_TYPE_BYTE_SIZE + payloadLength > IJsOperations.LIVEKIT_MAX_SIZE)
+                int totalLength = MSG_TYPE_BYTE_SIZE + payloadLength;
+
+                if (totalLength > IJsOperations.LIVEKIT_MAX_SIZE)
                     return;
 
-                Span<byte> encoded = stackalloc byte[MSG_TYPE_BYTE_SIZE + payloadLength];
+                Span<byte> encoded = stackalloc byte[totalLength];
+
+                // write MsgType
                 encoded[0] = (byte)ISceneCommunicationPipe.MsgType.CommsData;
-                BinaryPrimitives.WriteUInt16LittleEndian(encoded[MSG_TYPE_BYTE_SIZE..], (ushort)topicBytes.Length);
-                topicBytes.AsSpan().CopyTo(encoded[MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE..]);
-                dataBytes.AsSpan().CopyTo(encoded[(MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE + topicBytes.Length)..]);
+
+                // write topic length
+                Span<byte> encodedWriteTarget = encoded.Slice(MSG_TYPE_BYTE_SIZE);
+                BinaryPrimitives.WriteUInt16LittleEndian(encodedWriteTarget, (ushort)topicBytesCount);
+
+                // write topic
+                encodedWriteTarget = encodedWriteTarget.Slice(TOPIC_LENGTH_PREFIX_BYTES);
+                int writtenTopicBytes = Encoding.UTF8.GetBytes(topic, encodedWriteTarget);
+                UnityEngine.Assertions.Assert.AreEqual(topicBytesCount, writtenTopicBytes);
+
+                // write data
+                encodedWriteTarget = encodedWriteTarget.Slice(topicBytesCount);
+                int writtenDataBytes = Encoding.UTF8.GetBytes(data, encodedWriteTarget);
+                UnityEngine.Assertions.Assert.AreEqual(dataBytesCount, writtenDataBytes);
 
                 sceneCommunicationPipe.SendMessage(
                     encoded, sceneId,
@@ -245,11 +260,11 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             string topic = Encoding.UTF8.GetString(span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength));
 
-            if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
-                return;
-
-            string data = Encoding.UTF8.GetString(span[(TOPIC_LENGTH_PREFIX_BYTES + topicLength)..]);
-            queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
+            if (topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
+            {
+                string data = Encoding.UTF8.GetString(span[(TOPIC_LENGTH_PREFIX_BYTES + topicLength)..]);
+                queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
+            }
         }
 
         private bool TryConsumeRateLimit(string topic)
