@@ -28,21 +28,8 @@ namespace DCL.SDKComponents.MediaStream
             raw;
     }
 
-    public readonly struct PresentationBotStream
-    {
-        public readonly string Identity;
-        public readonly string Sid;
-
-        public PresentationBotStream(string identity, string sid)
-        {
-            this.Identity = identity;
-            this.Sid = sid;
-        }
-    }
-
     [REnum]
     [REnumField(typeof(UserStream))]
-    [REnumField(typeof(PresentationBotStream))]
     [REnumFieldEmpty("CurrentStream")]
     public partial struct LivekitAddress
     {
@@ -50,15 +37,11 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsEmpty => Match(
             onUserStream: static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
-            onPresentationBotStream: static bot => string.IsNullOrEmpty(bot.Identity) || string.IsNullOrEmpty(bot.Sid),
             onCurrentStream: static () => string.IsNullOrEmpty(LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM)
         );
 
-        public bool IsPresentationBot => IsPresentationBotStream(out _);
-
         public string? Identity => Match<string?>(
             onUserStream: static userStream => userStream.Identity,
-            onPresentationBotStream: static bot => bot.Identity,
             onCurrentStream: static () => null
         );
 
@@ -71,10 +54,5 @@ namespace DCL.SDKComponents.MediaStream
                 ? CurrentStream()
                 : FromUserStream(new UserStream(rawAddress));
         }
-
-        public static LivekitAddress FromIdentity(string identity, string sid) =>
-            identity.IsPresentationBotIdentity()
-                ? FromPresentationBotStream(new PresentationBotStream(identity, sid))
-                : FromUserStream(new UserStream(identity, sid));
     }
 }
