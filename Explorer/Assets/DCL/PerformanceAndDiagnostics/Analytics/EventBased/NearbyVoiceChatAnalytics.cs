@@ -53,9 +53,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                 return;
             }
 
-            // Only IDLE ↔ DISABLED transitions are user-driven (via Enable/Disable from the widget toggle).
-            // Any transition involving SUPPRESSED is system-driven (call/scene/loading) and must be skipped.
-            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.DISABLED)
+            // Toggle events — user-driven via the widget HearOthersToggle.
+            // - Disable() is unconditional, so toggle-off can fire from IDLE or SPEAKING.
+            // - Enable() is gated to DISABLED, so toggle-on is only DISABLED → IDLE.
+            // Transitions involving SUPPRESSED are system-driven (call/scene/loading) and are skipped.
+            if (next == NearbyVoiceChatState.DISABLED && (prev == NearbyVoiceChatState.IDLE || prev == NearbyVoiceChatState.SPEAKING))
                 TrackToggle(enabled: false);
             else if (prev == NearbyVoiceChatState.DISABLED && next == NearbyVoiceChatState.IDLE)
                 TrackToggle(enabled: true);

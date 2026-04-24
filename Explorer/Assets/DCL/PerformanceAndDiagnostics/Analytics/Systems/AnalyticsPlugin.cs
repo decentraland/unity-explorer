@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Profiles.Tables;
@@ -8,11 +9,13 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Profiling;
 using DCL.RealmNavigation;
+using DCL.Translation;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using Utility;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -28,10 +31,17 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly IEventBus eventBus;
+        private readonly IScenesCache scenesCache;
+        private readonly ITranslationSettings translationSettings;
         private readonly NearbyVoiceChatStateModel? nearbyVoiceStateModel;
         private readonly NearbyMuteService? nearbyMuteService;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+        private AutoTranslateAnalytics? autoTranslateAnalytics;
+        private OutfitsAnalytics outfitsAnalytics;
+        private GiftAnalytics giftAnalytics;
+        private HomeMarkerAnalytics homeMarkerAnalytics;
         private NearbyVoiceChatAnalytics? nearbyVoiceChatAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
@@ -46,6 +56,8 @@ namespace DCL.PluginSystem.Global
             ICameraReelStorageService cameraReelStorageService,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IScenesCache scenesCache,
+            IEventBus eventBus,
+            ITranslationSettings translationSettings,
             NearbyVoiceChatStateModel? nearbyVoiceStateModel = null,
             NearbyMuteService? nearbyMuteService = null
         )
@@ -59,6 +71,9 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.cameraReelStorageService = cameraReelStorageService;
             this.entityParticipantTable = entityParticipantTable;
+            this.eventBus = eventBus;
+            this.translationSettings = translationSettings;
+            this.scenesCache = scenesCache;
             this.nearbyVoiceStateModel = nearbyVoiceStateModel;
             this.nearbyMuteService = nearbyMuteService;
 
@@ -76,6 +91,11 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             walkedDistanceAnalytics.Initialize();
+
+            autoTranslateAnalytics = new AutoTranslateAnalytics(analytics, eventBus, translationSettings);
+            outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
+            giftAnalytics = new GiftAnalytics(analytics, eventBus);
+            homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
 
             if (nearbyVoiceStateModel != null && nearbyMuteService != null)
                 nearbyVoiceChatAnalytics = new NearbyVoiceChatAnalytics(analytics, nearbyVoiceStateModel, nearbyMuteService);

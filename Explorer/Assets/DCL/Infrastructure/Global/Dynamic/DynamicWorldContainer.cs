@@ -1300,6 +1300,8 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
+                        chatEventBus,
+                        translationSettings,
                         nearbyStateModel,
                         nearbyMuteService
                     )
