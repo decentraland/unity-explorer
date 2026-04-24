@@ -19,10 +19,11 @@ namespace SceneRuntime.Apis.Modules.CommsApi
     {
         private const int MAX_MESSAGES_PER_SECOND = 10;
         private const int RATE_LIMIT_WINDOW_MS = 1000;
+
         private const int MAX_TOPIC_BYTES_LENGTH = 512;
         private const int MSG_TYPE_BYTE_SIZE = 1;
         private const int TOPIC_LENGTH_PREFIX_BYTES = sizeof(ushort);
-        private const int MSG_TYPE_AND_TOPIC_LENGTH_PREFIX_SIZE = MSG_TYPE_BYTE_SIZE + TOPIC_LENGTH_PREFIX_BYTES;
+
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
         private const string EMPTY_ARRAY = "[]";
 
