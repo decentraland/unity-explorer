@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Friends.UserBlocking;
+using DCL.FeatureFlags;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -32,6 +33,7 @@ namespace DCL.Settings.Configuration
             GRAPHICS_VSYNC_TOGGLE_FEATURE,
             HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
             HEAD_SYNC_FEATURE,
+            CHAT_REACTIONS_ENABLED_FEATURE,
             HDR_FEATURE,
             BLOOM_FEATURE,
             AVATAR_OUTLINE_FEATURE,
@@ -75,6 +77,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
                 ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
+                ToggleFeatures.CHAT_REACTIONS_ENABLED_FEATURE => CreateChatReactionsController(viewInstance, chatSettingsAsset),
                 ToggleFeatures.HDR_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
                 ToggleFeatures.BLOOM_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetBloom, x => x.Bloom),
                 ToggleFeatures.AVATAR_OUTLINE_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetAvatarOutline, x => x.AvatarOutline),
@@ -91,6 +94,24 @@ namespace DCL.Settings.Configuration
 
             controller.SetView(viewInstance);
             return controller;
+        }
+
+        private static SettingsFeatureController CreateChatReactionsController(
+            SettingsToggleModuleView view, ChatSettingsAsset chatSettingsAsset)
+        {
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                return new ChatReactionsEnabledController(view, chatSettingsAsset);
+
+            view.gameObject.SetActive(false);
+
+            chatSettingsAsset.SetReactionsEnabled(false);
+
+            return new NoOpSettingsFeatureController();
+        }
+
+        private sealed class NoOpSettingsFeatureController : SettingsFeatureController
+        {
+            public override void Dispose() { }
         }
 
         private static SimpleQualitySettingFeatureController CreateSimpleToggle(
