@@ -501,7 +501,7 @@ MonoBehaviour:
             Disable this to remove the effect and gain a minor performance improvement.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 12
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -586,7 +586,7 @@ MonoBehaviour:
             automatically.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 13
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -640,7 +640,7 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 4
+        <Feature>k__BackingField: 14
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

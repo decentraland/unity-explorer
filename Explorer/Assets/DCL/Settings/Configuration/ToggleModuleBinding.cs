@@ -33,7 +33,6 @@ namespace DCL.Settings.Configuration
             GRAPHICS_VSYNC_TOGGLE_FEATURE,
             HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
             HEAD_SYNC_FEATURE,
-            CHAT_REACTIONS_ENABLED_FEATURE,
             HDR_FEATURE,
             BLOOM_FEATURE,
             AVATAR_OUTLINE_FEATURE,
@@ -43,8 +42,10 @@ namespace DCL.Settings.Configuration
             FULLSCREEN_FEATURE,
             PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE,
             SUN_LENS_FLARE_FEATURE,
-            DOUBLE_TAP_TO_MOVE
-            // add other features...
+            DOUBLE_TAP_TO_MOVE,
+            CHAT_REACTIONS_ENABLED_FEATURE
+            // Append new features at the END. Inserting in the middle shifts
+            // serialized ordinals in SettingsMenuConfiguration.asset and silently misroutes every toggle below.
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
