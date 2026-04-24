@@ -82,7 +82,7 @@
       "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#fix/collections-thread-safety",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -90,7 +90,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "ecf91956ccf788abc2dd748f105cd336d771b8d8"
+      "hash": "ae10f6e48b5bc0c8da83a34423197c6d01f6d9a4"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
