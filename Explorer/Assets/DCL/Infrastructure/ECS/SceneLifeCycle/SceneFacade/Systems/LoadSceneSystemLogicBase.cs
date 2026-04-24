@@ -41,14 +41,12 @@ namespace ECS.SceneLifeCycle.Systems
 
             ReportHub.LogProductionInfo( $"Loading scene '{definition?.GetLogSceneName()}' began");
 
-            var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory);
-            UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
+            var hashedContent = await GetSceneHashedContentAsync(definition, ipfsPath.BaseUrl, reportCategory, ct);
+            UniTask<bool> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
             var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
-            (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
-
-            PostProcessDefinition(definition);
+            (_, ReadOnlyMemory<byte> mainCrdt, IInitialSceneState? ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
@@ -96,9 +94,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected virtual void PostProcessDefinition(SceneEntityDefinition definition) { }
-
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
@@ -115,7 +111,7 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Loads scene metadata from a separate endpoint to ensure it contains "baseUrl" and overrides the existing metadata
         ///     with new one
         /// </summary>
-        protected async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
+        protected virtual async UniTask<bool> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
         {
             const string NAME = "scene.json";
 
@@ -123,7 +119,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 //What happens if we dont have a scene.json file? Will the default one work?
                 ReportHub.LogWarning(reportCategory.WithStaticDebounce(), $"scene.json does not exist for scene {sceneID}, no override is possible");
-                return default;
+                return false;
             }
 
             var target = intention.DefinitionComponent.Definition.metadata;
@@ -141,7 +137,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 
-            return default;
+            return true;
         }
     }
 }

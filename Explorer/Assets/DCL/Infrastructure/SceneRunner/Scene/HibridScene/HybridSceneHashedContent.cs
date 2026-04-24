@@ -14,18 +14,17 @@ namespace SceneRunner.Scene
     public class HybridSceneHashedContent : ISceneContent
     {
         private readonly URLDomain contentBaseUrl;
-        private Dictionary<string, string> fileToHash;
+        private readonly Dictionary<string, string> fileToHash;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
-        public string remoteSceneID;
+        public string? remoteSceneID;
 
         private readonly IWebRequestController webRequestController;
 
         private readonly URLDomain abDomain;
 
-
-        private readonly List<string> filesToGetFromLocalHost = new()
+        private readonly List<string> filesToGetFromLocalHost = new ()
         {
             "scene.json", "main.crdt"
         };
@@ -35,7 +34,7 @@ namespace SceneRunner.Scene
             URLDomain abDomain)
         {
             filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
-            fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Length, StringComparer.OrdinalIgnoreCase);
+            fileToHash = new Dictionary<string, string>(contentDefinitions.content.Length, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
 
@@ -79,14 +78,17 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory)
+        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
         {
+            if (remoteSceneID == null)
+                throw new ArgumentNullException(nameof(remoteSceneID));
+
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
             try
             {
-                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), new CancellationToken(), reportCategory)
-                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
+                                                                      .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
@@ -94,11 +96,7 @@ namespace SceneRunner.Scene
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
             }
-            catch (Exception e)
-            {
-                ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
-            }
-
+            catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
         }
 
         private bool IsTexture(string contentDefinitionFile)
@@ -108,9 +106,11 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory, string? worldContentServerBaseUrl = null)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory,
+            CancellationToken ct, string? worldContentServerBaseUrl = null)
         {
             IGetHash getHash;
+
             switch (remoteContentServer)
             {
                 case HybridSceneContentServer.Genesis:
@@ -127,7 +127,8 @@ namespace SceneRunner.Scene
                     return false;
             }
 
-            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory);
+            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory, ct);
+
             if (success)
             {
                 remoteSceneID = sceneHash;
