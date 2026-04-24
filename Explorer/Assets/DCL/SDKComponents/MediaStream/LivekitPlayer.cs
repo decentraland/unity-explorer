@@ -217,37 +217,20 @@ namespace DCL.SDKComponents.MediaStream
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
-            List<string> activeSpeakersSnapshot;
-
-            try
+            // indexed operator is not available, pick first and drop the iteration
+            foreach (string activeSpeaker in room.ActiveSpeakers) 
             {
-                if (room.ActiveSpeakers.Count == 0) return;
+                if (activeSpeaker == currentVideo?.Identity) return;
 
-                // ActiveSpeakers is backed by a plain List<string> in the livekit-sdk
-                // (DefaultActiveSpeakers) mutated on the FFI thread without synchronization.
-                // The SDK owns this list, so a lock on our side would not protect FFI-thread writes —
-                // snapshot-under-retry is the best defence available without an SDK change.
-                activeSpeakersSnapshot = new List<string>(room.ActiveSpeakers);
+                StreamKey? videoTrack = FindVideoTrackForParticipant(activeSpeaker);
+
+                if (videoTrack == null) return;
+
+                currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
+                currentVideo = LivekitAddress.FromIdentity(activeSpeaker, videoTrack.Value.sid);
+                videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
+                break;
             }
-            catch (InvalidOperationException)
-            {
-                // Collection modified during snapshot; retry next frame.
-                return;
-            }
-
-            if (activeSpeakersSnapshot.Count == 0) return;
-
-            string activeSpeaker = activeSpeakersSnapshot[0];
-
-            if (activeSpeaker == currentVideo?.Identity) return;
-
-            StreamKey? videoTrack = FindVideoTrackForParticipant(activeSpeaker);
-
-            if (videoTrack == null) return;
-
-            currentVideoStream = room.VideoStreams.ActiveStream(videoTrack.Value);
-            currentVideo = LivekitAddress.FromIdentity(activeSpeaker, videoTrack.Value.sid);
-            videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
         private StreamKey? FindVideoTrackForParticipant(string identity)
