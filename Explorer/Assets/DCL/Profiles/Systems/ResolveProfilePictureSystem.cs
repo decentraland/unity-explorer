@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -23,6 +24,7 @@ namespace DCL.Profiles
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void CompleteProfilePictureDownload(Profile profile)
         {
             if (profile.PicturePromise is not { } promise) return;
