@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Utilities;
 using DCL.Web3;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -69,6 +70,12 @@ namespace DCL.Profiles
 
             // TODO it's not unified with SpriteCache from where UI requests profile thumbnails
             public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
+
+            /// <summary>
+            ///     Tracks the in-flight face snapshot download owned by this profile. Allows O(1) cancellation
+            ///     on profile update and inheritance across profile replacements for the same user+URL.
+            /// </summary>
+            public AssetPromise<TextureData, GetTextureIntention>? PicturePromise { get; set; }
 
             public CompactInfo(string userId) : this(userId, "", false, "", null) { }
 
@@ -274,8 +281,14 @@ namespace DCL.Profiles
             public override int GetHashCode() =>
                 HashCode.Combine(name, userId, hasClaimedName);
 
-            public void Dispose() =>
+            public void Dispose()
+            {
+                // Cancel the in-flight download if any; LoadSystemBase will clean up the loading entity on its own when it observes cancellation.
+                PicturePromise?.LoadingIntention.CancellationTokenSource.Cancel();
+                PicturePromise = null;
+
                 ProfilePicture.TryDereference();
+            }
         }
     }
 }

@@ -41,11 +41,8 @@ namespace DCL.Profiles
 
                 if (existingProfile != profile)
                 {
-                    // Inherit ProfilePicture (as it's dynamically resolved)
-                    if (existingProfile.GetKind() < profile.GetKind() && existingProfile.FaceSnapshotUrl == profile.FaceSnapshotUrl)
-                        profile.ProfilePicture = existingProfile.ProfilePicture;
-                    else
-                        existingProfile.Dispose();
+                    InheritDynamicState(existingProfile, profile);
+                    existingProfile.Dispose();
                 }
             }
 
@@ -53,6 +50,22 @@ namespace DCL.Profiles
             userNameToIdMap[profile.DisplayName] = id;
 
             UpdateProfilingCounter();
+        }
+
+        private static void InheritDynamicState(ProfileTier from, ProfileTier to)
+        {
+            // Only inherit if the snapshot URL hasn't changed — otherwise the old picture/promise is stale.
+            if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)
+                return;
+
+            to.ProfilePicture = from.ProfilePicture;
+
+            // Detach the in-flight promise from the source so its Dispose doesn't cancel work we just transferred.
+            if (from.IsFull(out Profile? fromFull) && to.IsFull(out Profile? toFull))
+            {
+                toFull.PicturePromise = fromFull.PicturePromise;
+                fromFull.PicturePromise = null;
+            }
         }
 
         public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)
