@@ -52,7 +52,6 @@ namespace DCL.SpringBones
             {
                 Slots = slots,
                 AvatarVersion = avatarShapeComponent.InstantiationVersion,
-                StructuralHash = avatarShapeComponent.StructuralHash,
             });
         }
 
@@ -70,7 +69,6 @@ namespace DCL.SpringBones
             // or destroyed GameObjects (attachment cache can evict between release and re-instantiation),
             // so always unregister and register fresh. Visual pop is acceptable on rebuild.
             registration.AvatarVersion = avatarShapeComponent.InstantiationVersion;
-            registration.StructuralHash = avatarShapeComponent.StructuralHash;
 
             UnregisterSlots(registration.Slots);
 
@@ -105,6 +103,11 @@ namespace DCL.SpringBones
 
                 foreach (SpringBoneData springBone in wearable.SpringBones)
                 {
+                    // Skip any non-root bones that appear before the first root in this wearable.
+                    // Without a root we have no parent transforms to drive the chain.
+                    if (!springBone.IsRoot && currentWearableParent == null)
+                        continue;
+
                     springBoneTransforms.Add(springBone.ManagedTransform);
                     springBone.ManagedTransform.localRotation = springBone.InitialLocalRotation;
 
@@ -185,10 +188,7 @@ namespace DCL.SpringBones
 
             ComputeInitialTailPositions(joints, tails);
 
-            return springBoneService.RegisterSpring(
-                joints.ToArray(),
-                configs.ToArray(),
-                tails.ToArray());
+            return springBoneService.RegisterSpring(joints, configs, tails);
         }
 
         private static void ComputeInitialTailPositions(List<Transform> joints, List<float3> tails)

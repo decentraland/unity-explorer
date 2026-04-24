@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -13,6 +14,7 @@ namespace DCL.SpringBones
         const int INITIAL_SLOT_CAPACITY = 32;
 
         readonly Transform dummyTransform;
+        readonly Stack<int> freeSlots = new ();
 
         int slotCapacity;
         Transform[] managedTransforms; // parallel to TAA, for main-thread access
@@ -26,6 +28,7 @@ namespace DCL.SpringBones
         NativeArray<SpringBoneParentData> parentData;
         NativeArray<bool> slotActive;
         NativeArray<bool> slotWasActive;
+        bool disposed;
 
         public SpringBoneService()
         {
@@ -33,10 +36,10 @@ namespace DCL.SpringBones
             dummyTransform = go.transform;
 
             slotCapacity = INITIAL_SLOT_CAPACITY;
-            AllocateArrays();
+            AllocateArrays(0);
         }
 
-        void AllocateArrays()
+        void AllocateArrays(int previousCapacity)
         {
             int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
 
@@ -53,22 +56,21 @@ namespace DCL.SpringBones
             slotActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
             slotWasActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
 
-            // Build TAA filled with dummies
-            var taaTransforms = new Transform[totalJoints];
-            for (int i = 0; i < totalJoints; i++) taaTransforms[i] = dummyTransform;
-            taa = new TransformAccessArray(taaTransforms);
+            taa = new TransformAccessArray(managedTransforms);
+
+            // Seed free-list with all fresh slots (descending so lowest pops first)
+            for (int i = slotCapacity - 1; i >= previousCapacity; i--)
+                freeSlots.Push(i);
         }
 
-        public int RegisterSpring(Transform[] jointTransforms, SpringBoneJointConfig[] configs, float3[] initialTailPositions)
+        public int RegisterSpring(IReadOnlyList<Transform> jointTransforms, IReadOnlyList<SpringBoneJointConfig> configs, IReadOnlyList<float3> initialTailPositions)
         {
-            int jointCount = jointTransforms.Length;
+            int jointCount = jointTransforms.Count;
 
-            int slotIndex = FindEmptySlot();
-            if (slotIndex < 0)
-            {
+            if (freeSlots.Count == 0)
                 Grow();
-                slotIndex = FindEmptySlot();
-            }
+
+            int slotIndex = freeSlots.Pop();
 
             slotJointCounts[slotIndex] = jointCount;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
@@ -86,14 +88,21 @@ namespace DCL.SpringBones
 
             // Fill remaining joints in slot with dummies
             for (int j = jointCount; j < MAX_JOINTS_PER_SPRING; j++)
+            {
                 taa[baseIndex + j] = dummyTransform;
+                managedTransforms[baseIndex + j] = dummyTransform;
+            }
 
             return slotIndex;
         }
 
         public void UnregisterSpring(int slotIndex)
         {
+            if (disposed) return;
+
             slotJointCounts[slotIndex] = 0;
+            slotActive[slotIndex] = false;
+            slotWasActive[slotIndex] = false;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
 
             for (int j = 0; j < MAX_JOINTS_PER_SPRING; j++)
@@ -101,6 +110,8 @@ namespace DCL.SpringBones
                 taa[baseIndex + j] = dummyTransform;
                 managedTransforms[baseIndex + j] = dummyTransform;
             }
+
+            freeSlots.Push(slotIndex);
         }
 
         public void DeactivateAllSlots()
@@ -201,17 +212,11 @@ namespace DCL.SpringBones
             (prevTails, currentTails, nextTails) = (currentTails, nextTails, prevTails);
         }
 
-        int FindEmptySlot()
-        {
-            for (int i = 0; i < slotCapacity; i++)
-                if (slotJointCounts[i] == 0) return i;
-            return -1;
-        }
-
         void Grow()
         {
-            int newCapacity = slotCapacity * 2;
-            int oldTotalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
+            int oldCapacity = slotCapacity;
+            int newCapacity = oldCapacity * 2;
+            int oldTotalJoints = oldCapacity * MAX_JOINTS_PER_SPRING;
             int newTotalJoints = newCapacity * MAX_JOINTS_PER_SPRING;
 
             // Allocate new arrays and copy old data
@@ -230,10 +235,10 @@ namespace DCL.SpringBones
             NativeArray<float3>.Copy(currentTails, newCurrentTails, oldTotalJoints);
             NativeArray<float3>.Copy(nextTails, newNextTails, oldTotalJoints);
             NativeArray<SpringBoneJointConfig>.Copy(jointConfigs, newJointConfigs, oldTotalJoints);
-            NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, slotCapacity);
-            NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, slotCapacity);
-            NativeArray<bool>.Copy(slotActive, newSlotActive, slotCapacity);
-            NativeArray<bool>.Copy(slotWasActive, newSlotWasActive, slotCapacity);
+            NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, oldCapacity);
+            NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, oldCapacity);
+            NativeArray<bool>.Copy(slotActive, newSlotActive, oldCapacity);
+            NativeArray<bool>.Copy(slotWasActive, newSlotWasActive, oldCapacity);
 
             // Dispose old
             transforms.Dispose();
@@ -266,10 +271,17 @@ namespace DCL.SpringBones
             managedTransforms = newManagedTransforms;
 
             taa = new TransformAccessArray(newManagedTransforms);
+
+            for (int i = newCapacity - 1; i >= oldCapacity; i--)
+                freeSlots.Push(i);
         }
 
         public void Dispose()
         {
+            if (disposed) return;
+
+            disposed = true;
+
             if (transforms.IsCreated) transforms.Dispose();
             if (prevTails.IsCreated) prevTails.Dispose();
             if (currentTails.IsCreated) currentTails.Dispose();

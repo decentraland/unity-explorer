@@ -14,6 +14,5 @@ namespace DCL.SpringBones
     {
         public List<SpringBoneSlot> Slots;
         public int AvatarVersion;
-        public int StructuralHash;
     }
 }
