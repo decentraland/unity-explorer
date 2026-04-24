@@ -202,7 +202,7 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Audio output device changed — rebuilt {rebuilt} remote audio source(s)");
             }
-            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to rebuild audio sources after device change: {ex.Message}"); }
+            catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Failed to rebuild audio sources after device change", ex), ReportCategory.VOICE_CHAT); }
         }
     }
 }
