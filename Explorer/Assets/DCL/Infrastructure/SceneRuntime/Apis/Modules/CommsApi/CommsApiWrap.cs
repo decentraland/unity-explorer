@@ -250,6 +250,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         /// </summary>
         private void OnDataReceived(ISceneCommunicationPipe.DecodedMessage message)
         {
+            // TODO: implement GetAlternateLookup on ReadOnlySpan<char/byte> to avoid allocation of temp string instances
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2.getalternatelookup
             ReadOnlySpan<byte> span = message.Data;
 
             if (span.Length < TOPIC_LENGTH_PREFIX_BYTES) return;
