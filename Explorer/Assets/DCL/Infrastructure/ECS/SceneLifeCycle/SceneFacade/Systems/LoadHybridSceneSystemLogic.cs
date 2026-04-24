@@ -7,8 +7,8 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Components;
 using Global.Dynamic;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -50,9 +50,8 @@ namespace ECS.SceneLifeCycle.Systems
         {
             bool success = await base.OverrideSceneMetadataAsync(sceneContent, intention, reportCategory, sceneID, ct);
 
-            if (success)
-                if (hybridSceneHashedContent?.remoteSceneID != null)
-                    intention.DefinitionComponent.Definition.id = hybridSceneHashedContent.remoteSceneID;
+            if (success && hybridSceneHashedContent?.remoteSceneID != null)
+                intention.DefinitionComponent.Definition.id = hybridSceneHashedContent.remoteSceneID;
 
             return success;
         }
@@ -77,16 +76,17 @@ namespace ECS.SceneLifeCycle.Systems
         {
             try
             {
-                string manifestPath = $"manifest/{definition.id}{PlatformUtils.GetCurrentPlatform()}.json";
+                string sceneId = hybridSceneHashedContent?.remoteSceneID!;
+                string manifestPath = $"manifest/{sceneId}{PlatformUtils.GetCurrentPlatform()}.json";
                 URLAddress manifestUrl = assetBundleURL.Append(URLPath.FromString(manifestPath));
 
                 SceneAbDto manifest = await webRequestController.GetAsync(new CommonArguments(manifestUrl), ct, reportCategory)
                                                                 .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
 
                 definition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(manifest.Version, manifest.Date);
-                definition.assetBundleManifestVersion.InjectContent(definition.id!, definition.content);
+                definition.assetBundleManifestVersion.InjectContent(sceneId, definition.content);
             }
-            catch (System.Exception e) { ReportHub.LogException(e, ReportCategory.SCENE_LOADING); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.SCENE_LOADING); }
         }
     }
 }
