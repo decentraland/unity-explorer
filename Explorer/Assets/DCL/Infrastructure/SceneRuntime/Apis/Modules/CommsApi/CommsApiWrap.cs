@@ -24,6 +24,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private const int MSG_TYPE_BYTE_SIZE = 1;
         private const int TOPIC_LENGTH_PREFIX_BYTES = sizeof(ushort);
 
+        private const int TOPIC_BUFFER_MAX_MESSAGE_COUNT = 1024;
+
         private const string EMPTY_RESPONSE = "{\"streams\":[]}";
         private const string EMPTY_ARRAY = "[]";
 
@@ -265,6 +267,12 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             if (topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
             {
+                // DROP OLD POLICY. Dequeues oldest item to insert new one
+                if (queue.Count >= TOPIC_BUFFER_MAX_MESSAGE_COUNT)
+                {
+                    queue.TryDequeue(out _);
+                }
+
                 string data = Encoding.UTF8.GetString(span[(TOPIC_LENGTH_PREFIX_BYTES + topicLength)..]);
                 queue.Enqueue(new BufferedDataMessage(message.FromWalletId, data));
             }
