@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
