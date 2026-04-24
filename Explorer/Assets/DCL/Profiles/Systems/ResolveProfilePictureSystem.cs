@@ -27,36 +27,33 @@ namespace DCL.Profiles
         {
             if (profile.PicturePromise is not { } promise) return;
 
-            if (promise.IsCancellationRequested(World))
+            // Consume first: if the download already finished, the asset must be handled here even when cancellation was requested (late-cancel race).
+            if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                profile.PicturePromise = null;
-                return;
-            }
-
-            if (!promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
-            {
-                // TryConsume may have cached Result on the struct; persist that state back to the owner.
-                profile.PicturePromise = promise;
-                return;
-            }
-
-            try
-            {
-                // Guard: the Profile may have been pooled and reused for a different user by the time the texture resolved.
-                if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
-                    profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
-                else
+                try
+                {
+                    // Guard: the Profile may have been pooled and reused for a different user by the time the texture resolved.
+                    if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
+                        profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                    else
+                        result.Asset?.Dispose();
+                }
+                catch (Exception e)
+                {
                     result.Asset?.Dispose();
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
+                }
+                finally
+                {
+                    profile.PicturePromise = null;
+                }
+
+                return;
             }
-            catch (Exception e)
-            {
-                result.Asset?.Dispose();
-                ReportHub.LogException(e, ReportCategory.PROFILE);
-            }
-            finally
-            {
+
+            // Load hasn't completed yet; if cancellation was signaled, ForgetLoading cleans up the loading entity.
+            if (promise.IsCancellationRequested(World))
                 profile.PicturePromise = null;
-            }
         }
     }
 }
