@@ -113,13 +113,11 @@ namespace DCL.AuthenticationScreenFlow
                         profile.HasConnectedWeb3 = true;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
                     }
-                    else if (!string.IsNullOrEmpty(email)) // in case of OTP flow we create new Profile and proceed
+                    else
                     {
                         profile = CreateRandomProfile(identity.Address.ToString());
-                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct));
+                        machine.Enter<LobbyForNewAccountAuthState, (Profile, string, bool, CancellationToken)>((profile, email, false, ct)); // email is only used for optional newsletter subscription
                     }
-                    else
-                        throw new ProfileNotFoundException();
                 }
                 catch (OperationCanceledException e)
                 {
