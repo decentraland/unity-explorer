@@ -1,7 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.GLTF;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
@@ -97,12 +96,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
+            // Raw GLTFs and AB data both now live in ref-counted caches (GltfLoadCache and AssetBundleCache).
+            // Dereference here; actual disposal of the underlying GltfImport / AssetBundle happens when the
+            // cache's Unload drains the entry after ref count hits zero.
             AssetData?.Dereference();
-
-            // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
-            if (AssetData is GLTFData)
-                AssetData.Dispose();
-
             AssetData = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);

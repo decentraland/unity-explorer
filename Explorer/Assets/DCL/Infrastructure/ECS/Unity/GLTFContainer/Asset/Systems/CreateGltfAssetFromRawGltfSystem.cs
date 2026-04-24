@@ -76,26 +76,33 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            var result = GltfContainerAsset.Create(gltfData.Root, gltfData, hierarchyPaths: gltfData.HierarchyPaths);
+            // Instantiate a per-consumer copy of the template hierarchy. Mesh, Material, Texture and AnimationClip
+            // references are shared with gltfData.Root — Object.Instantiate only clones GameObjects and Component
+            // metadata, not the underlying asset data. This mirrors Utils.TryCreateGltfObject for the AB path and
+            // is what lets 50 entities share one GltfImport's mesh/texture memory instead of loading 50 copies.
+            GameObject cloneRoot = Object.Instantiate(gltfData.Root);
+            cloneRoot.SetActive(false);
+
+            var result = GltfContainerAsset.Create(cloneRoot, gltfData, hierarchyPaths: gltfData.HierarchyPaths);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
-                gltfData.Root.GetComponentsInChildren(true, instanceRenderers.Value);
+                cloneRoot.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
             using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
-                gltfData.Root.GetComponentsInChildren(true, animationScope.Value);
+                cloneRoot.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
             }
 
             // Collect all Animators as they are used in Animation System
             using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
             {
-                gltfData.Root.GetComponentsInChildren(true, animatorScope.Value);
+                cloneRoot.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
             }
 
@@ -104,7 +111,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
                 List<MeshFilter> list = meshFilterScope.Value;
-                gltfData.Root.GetComponentsInChildren(true, list);
+                cloneRoot.GetComponentsInChildren(true, list);
 
                 foreach (MeshFilter meshFilter in list)
                 {
@@ -132,7 +139,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             // Collect colliders from skinned mesh renderers
             using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
             {
-                gltfData.Root.GetComponentsInChildren(true, instanceRenderers.Value);
+                cloneRoot.GetComponentsInChildren(true, instanceRenderers.Value);
 
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
                 {

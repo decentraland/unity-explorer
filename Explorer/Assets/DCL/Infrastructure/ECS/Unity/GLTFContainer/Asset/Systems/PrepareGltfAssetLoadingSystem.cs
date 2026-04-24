@@ -41,7 +41,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
-            bool allowCaching = options is { LocalSceneDevelopment: false, PreviewingBuilderCollection: false };
+            // Previously LSD forced a fresh load every time by disabling cache lookups. With per-consumer cloning in
+            // CreateGltfAssetFromRawGltfSystem and the ref-counted GltfLoadCache, cache reuse is safe in LSD too —
+            // the hash changes automatically when the scene manifest changes on hot reload, so cached entries are
+            // only returned when the source content hasn't actually changed. Builder preview still bypasses so
+            // authors see the latest collection state without depending on hash invalidation.
+            bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))

@@ -103,11 +103,12 @@ namespace ECS.StreamableLoading.GLTF
                 // Capture hierarchy paths for local scene development debugging
                 var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
 
-                // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch block does not double-dispose
+                // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch block does not double-dispose.
+                // Reference counting is now handled by the cache: LoadSystemBase.ApplyLoadedResult calls cache.AddReference once per
+                // consumer entity, and each consumer's GltfContainerAsset.Dispose dereferences on teardown.
                 var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
                 gltfImport = null;
                 rootContainer = null;
-                gltfData.AddReference();
                 return new StreamableLoadingResult<GLTFData>(gltfData);
             }
             catch
@@ -121,16 +122,14 @@ namespace ECS.StreamableLoading.GLTF
         }
 
         /// <summary>
-        /// LoadSystemBase invokes this when a successful result is abandoned (e.g. cancellation after Load completes).
-        /// Because we use NoCache, the caller holds the only reference we added via AddReference — dereference and
-        /// dispose here, otherwise the GameObject and GltfImport outlive the scene.
+        /// LoadSystemBase invokes this when a successful result is abandoned (e.g. cancellation after Load completes
+        /// but before any consumer's ApplyLoadedResult added a reference). If any consumer has already claimed it the
+        /// ref count is > 0 and we leave teardown to them.
         /// </summary>
         protected override void DisposeAbandonedResult(GLTFData asset)
         {
-            asset.Dereference();
-
             if (asset.CanBeDisposed())
-                asset.Dispose();
+                asset.Dispose(force: true);
         }
 
         /// <summary>

@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Tests
     public class LoadSystemBaseAbandonedResultShould
     {
         [Test]
-        public async Task DisposeSuccessfulResultWhenEntityDestroyedDuringFlow()
+        public async Task DisposeAbandonedResultWhenIntentionCancelledMidFlow()
         {
             using var mockedReportScope = new MockedReportScope();
 
@@ -38,11 +38,12 @@ namespace ECS.StreamableLoading.Tests
 
             try
             {
+                var cts = new CancellationTokenSource();
                 var intention = new StubIntention
                 {
                     CommonArguments = new CommonLoadingArguments(
                         CommunicationData.URLHelpers.URLAddress.EMPTY,
-                        cancellationTokenSource: new CancellationTokenSource(),
+                        cancellationTokenSource: cts,
                         attempts: 1,
                         permittedSources: AssetSource.EMBEDDED,
                         currentSource: AssetSource.EMBEDDED),
@@ -57,18 +58,20 @@ namespace ECS.StreamableLoading.Tests
                 Assume.That(system.FlowStarted, Is.True, "Flow should have started awaiting the gate");
                 Assume.That(system.DisposeAbandonedCount, Is.EqualTo(0));
 
-                // Destroy the entity BEFORE the flow completes, then let it complete with a successful result
-                world.Destroy(promise.Entity);
+                // Cancel the intention FIRST, then release the gate with a successful result.
+                // FlowInternalAsync returns successfully, then CacheableFlowAsync's next ct-respecting await (SwitchToMainThread)
+                // throws OCE → catch calls DisposeAbandonedResult with the built asset.
+                cts.Cancel();
 
                 var asset = new StubAsset();
                 system.Gate.TrySetResult(new StreamableLoadingResult<StubAsset>(asset));
 
-                // Yield repeatedly so all continuations (SwitchToMainThread, PutAsync.Forget, finally block) run
+                // Yield repeatedly so all continuations (SwitchToMainThread OCE, catch block, finally) run
                 for (int i = 0; i < 10; i++)
                     await UniTask.Yield();
 
                 Assert.That(system.DisposeAbandonedCount, Is.EqualTo(1),
-                    "DisposeAbandonedResult must be invoked for a successful result whose owning entity died before FinalizeLoading");
+                    "DisposeAbandonedResult must be invoked when CacheableFlowAsync catches OCE with a successful result");
                 Assert.That(system.LastDisposedAsset, Is.SameAs(asset));
             }
             finally

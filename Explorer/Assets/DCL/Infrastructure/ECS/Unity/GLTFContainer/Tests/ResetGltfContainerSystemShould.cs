@@ -116,16 +116,17 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
-        public void DisposeRawGltfOnComponentRemovalInsteadOfCaching()
+        public void ReturnRawGltfToCacheOnComponentRemoval()
         {
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("raw-src", "raw_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
 
-            // Simulate a raw GLTF that LoadGLTFSystem reference-counted and handed to GltfContainerAsset
-            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Root"));
+            // Simulate a raw GLTF whose GltfContainerAsset wraps a per-consumer Root clone. The shared GLTFData is
+            // ref-counted by the cache (emulating what LoadSystemBase.ApplyLoadedResult does for real loads).
+            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Template"));
             gltfData.AddReference();
 
-            var asset = GltfContainerAsset.Create(new GameObject("container"), assetData: gltfData);
+            var asset = GltfContainerAsset.Create(new GameObject("RawGLTF-Clone"), assetData: gltfData);
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State = LoadingState.Finished;
 
@@ -135,12 +136,10 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
 
-            // Raw GLTFs must not be returned to the shared pool — the cache is irrelevant for NoCache assets in LSD
-            cache.DidNotReceive().Dereference(Arg.Any<string>(), Arg.Any<GltfContainerAsset>());
-
-            // GLTFData was dereferenced and disposed through GltfContainerAsset.Dispose
-            Assert.That(gltfData.CanBeDisposed(), Is.True, "GLTFData.RefCount should have been decremented by the container's Dispose");
-            Assert.That(asset.AssetData, Is.Null, "GltfContainerAsset.Dispose should null out AssetData");
+            // Raw GLTFs now participate in the same pool as AB assets — cache.Dereference keeps the container alive
+            // for reuse instead of destroying it immediately. GltfContainerAssetsCache.Unload drains under memory
+            // pressure; GltfContainerAsset.Dispose (which dereferences the underlying GLTFData) runs then.
+            cache.Received(1).Dereference("raw_hash", asset);
         }
 
         [Test]
