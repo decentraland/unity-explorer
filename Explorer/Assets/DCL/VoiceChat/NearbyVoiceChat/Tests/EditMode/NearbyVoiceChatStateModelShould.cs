@@ -9,14 +9,19 @@ namespace DCL.VoiceChat.Nearby.Tests
     ///
     /// States:
     ///   DISABLED  — feature is off, no audio processing
-    ///   HEARING   — listening to nearby players, mic is muted
+    ///   IDLE   — listening to nearby players, mic is muted
     ///   SPEAKING  — listening + mic is publishing to nearby players
     ///   SUPPRESSED — temporarily paused because a higher-priority call (Community/Private) is active
     ///
     /// Typical lifecycle:
-    ///   DISABLED → Enable() → HEARING → StartSpeaking() → SPEAKING
-    ///   → Suppress() → SUPPRESSED → Resume() → SPEAKING
-    ///   → StopSpeaking() → HEARING → Disable() → DISABLED
+    ///   DISABLED → Enable() → IDLE → StartSpeaking() → SPEAKING
+    ///   → Suppress() → SUPPRESSED (via forced IDLE) → Resume() → IDLE
+    ///   → Disable() → DISABLED
+    ///
+    /// Suppression rule: SPEAKING is always force-stopped on Suppress, so Resume returns to IDLE
+    /// (or DISABLED if that was the user preference before suppression). This keeps the tear-down
+    /// path uniform regardless of how speaking was triggered (widget toggle or push-to-talk) and
+    /// requires the user to explicitly re-activate the mic after the higher-priority chat ends.
     /// </summary>
     public class NearbyVoiceChatStateModelShould
     {
@@ -72,7 +77,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StartSpeaking();
             stateChanges.Clear();
 
-            // Act — calling Enable while already speaking should not reset to HEARING
+            // Act — calling Enable while already speaking should not reset to IDLE
             model.Enable();
 
             // Assert
@@ -118,7 +123,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act — trying to speak while feature is off
             model.StartSpeaking();
 
-            // Assert — should stay DISABLED, speaking requires HEARING state first
+            // Assert — should stay DISABLED, speaking requires IDLE state first
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.DISABLED));
         }
 
@@ -127,7 +132,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Arrange
             model.Enable();
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
             // Act — trying to speak while suppressed by another call
             model.StartSpeaking();
@@ -174,7 +179,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.Enable();
 
             // Act — player joins a Community or Private voice call
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
             // Assert — nearby chat pauses, resources released
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
@@ -188,7 +193,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StartSpeaking();
 
             // Act — incoming private call, nearby must yield
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
             // Assert
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
@@ -197,21 +202,21 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void NotOverwritePreSuppressedStateOnDoubleSuppression()
         {
-            // Arrange — player was speaking, then suppressed
+            // Arrange — player was speaking, then suppressed (force-stopped to IDLE before SUPPRESSED)
             model.Enable();
             model.StartSpeaking();
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
             stateChanges.Clear();
 
             // Act — another suppression event (should be idempotent)
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
-            // Assert — no state change, pre-blocked state (SPEAKING) preserved
+            // Assert — no state change, pre-blocked state (IDLE) preserved
             Assert.That(stateChanges, Is.Empty);
 
-            // Verify resume still returns to SPEAKING (the original pre-blocked state)
-            model.Resume();
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            // Verify resume returns to IDLE (mic is not auto-restored — user must re-activate)
+            model.Resume(SuppressionReason.CALL);
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
         }
 
         [Test]
@@ -219,28 +224,64 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Arrange — was hearing, then suppressed
             model.Enable();
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
             // Act — higher-priority call ended
-            model.Resume();
+            model.Resume(SuppressionReason.CALL);
 
             // Assert — back to hearing nearby players
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
         }
 
         [Test]
-        public void ResumeToSpeakingAfterSuppression()
+        public void ResumeToIdleAfterSuppressionFromSpeaking()
         {
             // Arrange — was speaking, then suppressed by incoming call
             model.Enable();
             model.StartSpeaking();
-            model.Suppress();
+            model.Suppress(SuppressionReason.CALL);
 
             // Act — call ended, nearby resumes
-            model.Resume();
+            model.Resume(SuppressionReason.CALL);
 
-            // Assert — mic restored to active state
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            // Assert — mic is NOT auto-restored. The user must explicitly re-activate it:
+            //   * for PTT: the release event can be missed during SUPPRESSED, so auto-restore would leak the mic;
+            //   * for toggle: designers require the user to consciously opt back in after another chat ended.
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+        }
+
+        [Test]
+        public void EmitStopSpeakingTransitionOnSuppressFromSpeaking()
+        {
+            // Arrange
+            model.Enable();
+            model.StartSpeaking();
+            stateChanges.Clear();
+
+            // Act — suppression arrives while SPEAKING
+            model.Suppress(SuppressionReason.CALL);
+
+            // Assert — SPEAKING → IDLE (forced stop) → SUPPRESSED, so downstream listeners
+            // (e.g. mic publisher) tear down cleanly instead of only seeing SPEAKING → SUPPRESSED.
+            Assert.That(stateChanges, Is.EqualTo(new[]
+            {
+                NearbyVoiceChatState.IDLE,
+                NearbyVoiceChatState.SUPPRESSED,
+            }));
+        }
+
+        [Test]
+        public void ResumeToDisabledWhenUserPreferenceWasDisabled()
+        {
+            // Arrange — user has the feature disabled, then LOADING suppression kicks in on startup
+            using var disabledModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.DISABLED);
+            disabledModel.Suppress(SuppressionReason.LOADING);
+
+            // Act — loading completes
+            disabledModel.Resume(SuppressionReason.LOADING);
+
+            // Assert — user preference preserved, feature does not silently turn itself on
+            Assert.That(disabledModel.State.Value, Is.EqualTo(NearbyVoiceChatState.DISABLED));
         }
 
         [Test]
@@ -251,7 +292,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateChanges.Clear();
 
             // Act — no-op when not suppressed
-            model.Resume();
+            model.Resume(SuppressionReason.CALL);
 
             // Assert
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
@@ -271,16 +312,12 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StartSpeaking();
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
 
-            // Player receives a private call → nearby suppressed
-            model.Suppress();
+            // Player receives a private call → nearby suppressed (SPEAKING force-stopped to IDLE first)
+            model.Suppress(SuppressionReason.CALL);
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
 
-            // Private call ends → nearby resumes with mic still on
-            model.Resume();
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
-
-            // Player deactivates microphone → back to hearing only
-            model.StopSpeaking();
+            // Private call ends → nearby resumes to IDLE (user must re-activate mic explicitly)
+            model.Resume(SuppressionReason.CALL);
             Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
 
             // Player leaves island → feature disabled
@@ -296,19 +333,18 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act
             model.Enable();
             model.StartSpeaking();
-            model.Suppress();
-            model.Resume();
-            model.StopSpeaking();
+            model.Suppress(SuppressionReason.CALL);
+            model.Resume(SuppressionReason.CALL);
             model.Disable();
 
             // Assert — every meaningful transition was observed
             Assert.That(stateChanges, Is.EqualTo(new[]
             {
-                NearbyVoiceChatState.IDLE,   // Enable
+                NearbyVoiceChatState.IDLE,       // Enable
                 NearbyVoiceChatState.SPEAKING,   // StartSpeaking
-                NearbyVoiceChatState.SUPPRESSED, // Suppress
-                NearbyVoiceChatState.SPEAKING,   // Resume (back to pre-blocked)
-                NearbyVoiceChatState.IDLE,    // StopSpeaking
+                NearbyVoiceChatState.IDLE,       // Suppress — force-stop SPEAKING
+                NearbyVoiceChatState.SUPPRESSED, // Suppress — enter suppression
+                NearbyVoiceChatState.IDLE,       // Resume — user preference was IDLE
                 NearbyVoiceChatState.DISABLED,   // Disable
             }));
         }
@@ -323,7 +359,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act — all no-ops: Enable while active, StopSpeaking while hearing, Resume while not suppressed
             model.Enable();
             model.StopSpeaking();
-            model.Resume();
+            model.Resume(SuppressionReason.CALL);
 
             // Assert
             Assert.That(stateChanges, Is.Empty);

@@ -46,6 +46,13 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
                 Type = SceneRestrictions.SKYBOX_TIME_UI_BLOCKED,
                 Action = action,
             };
+
+        public static SceneRestriction CreateNearbyVoiceChatBlocked(SceneRestrictionsAction action) =>
+            new ()
+            {
+                Type = SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED,
+                Action = action,
+            };
     }
 
     public enum SceneRestrictions
@@ -56,6 +63,7 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         PASSPORT_CANNOT_BE_OPENED,
         EXPERIENCES_BLOCKED,
         SKYBOX_TIME_UI_BLOCKED,
+        NEARBY_VOICE_CHAT_BLOCKED,
     }
 
     public enum SceneRestrictionsAction
