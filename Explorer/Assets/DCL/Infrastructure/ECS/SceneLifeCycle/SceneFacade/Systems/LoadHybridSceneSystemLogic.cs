@@ -2,9 +2,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Utility;
 using DCL.WebRequests;
 using Global.Dynamic;
 using SceneRunner.Scene;
+using System.Threading;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -43,6 +45,12 @@ namespace ECS.SceneLifeCycle.Systems
         protected override string GetAssetBundleSceneId(string _) =>
             hybridSceneHashedContent!.remoteSceneID;
 
+        protected override void PostProcessDefinition(SceneEntityDefinition definition)
+        {
+            if (hybridSceneHashedContent?.remoteSceneID != null)
+                definition.id = hybridSceneHashedContent.remoteSceneID;
+        }
+
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory)
         {
             hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
@@ -52,9 +60,35 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain,
                     reportCategory);
+
+                await FetchRemoteManifestAsync(definition, reportCategory);
             }
 
             return hybridSceneHashedContent;
+        }
+
+        private async UniTask FetchRemoteManifestAsync(SceneEntityDefinition definition, ReportData reportCategory)
+        {
+            try
+            {
+                string manifestPath = $"manifest/{definition.id}{PlatformUtils.GetCurrentPlatform()}.json";
+                URLAddress manifestUrl = assetBundleURL.Append(URLPath.FromString(manifestPath));
+
+                UnityEngine.Debug.Log($"[HybridScene] Fetching AB manifest from {manifestUrl.Value}");
+
+                SceneAbDto manifest = await webRequestController.GetAsync(
+                        new CommonArguments(manifestUrl, RetryPolicy.WithRetries(1)), CancellationToken.None, reportCategory)
+                    .CreateFromJson<SceneAbDto>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchBackToMainThread);
+
+                definition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(manifest.Version, manifest.Date);
+                definition.assetBundleManifestVersion.InjectContent(definition.id, definition.content);
+
+                UnityEngine.Debug.Log($"[HybridScene] AB manifest version: {manifest.Version}, date: {manifest.Date}");
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogError($"[HybridScene] Failed to fetch AB manifest: {e.Message}");
+            }
         }
     }
 }

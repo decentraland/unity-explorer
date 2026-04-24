@@ -48,6 +48,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             (_, var mainCrdt, var ISSAssets) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt, ISSContainedAssetsPromise);
 
+            PostProcessDefinition(definition);
+
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
@@ -93,6 +95,8 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
+
+        protected virtual void PostProcessDefinition(SceneEntityDefinition definition) { }
 
         protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
 

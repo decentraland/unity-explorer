@@ -71,7 +71,7 @@ namespace Global.Dynamic
 
         public HybridSceneParams CreateHybridSceneParams()
         {
-            if (initialRealm == InitialRealm.Localhost)
+            if (initialRealm == InitialRealm.Localhost || isLocalSceneDevelopmentRealm)
             {
                 return new HybridSceneParams
                 {
@@ -104,7 +104,7 @@ namespace Global.Dynamic
                                            && IsRealmAValidUrl(realmParamValue);
 
             if (isLocalSceneDevelopment)
-                SetLocalSceneDevelopmentRealm(realmParamValue);
+                SetLocalSceneDevelopmentRealm(realmParamValue, appParameters.HasFlag(AppArgsFlags.USE_REMOTE_AB) || useRemoteAssetsBundles);
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
             else
@@ -123,11 +123,11 @@ namespace Global.Dynamic
             initialRealm = InitialRealm.World;
         }
 
-        private void SetLocalSceneDevelopmentRealm(string targetRealm)
+        private void SetLocalSceneDevelopmentRealm(string targetRealm, bool useRemoteAB)
         {
             customRealm = targetRealm;
             initialRealm = InitialRealm.Custom;
-            useRemoteAssetsBundles = false;
+            useRemoteAssetsBundles = useRemoteAB;
             isLocalSceneDevelopmentRealm = true;
         }
 
