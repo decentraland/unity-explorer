@@ -41,11 +41,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             prevState = next;
 
             // IDLE → SPEAKING: new speaking session. Ignore focus-resumed — it's a continuation, not a fresh use.
-            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.SPEAKING)
+            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.SPEAKING
+                                                  && stateModel.CurrentActivation != NearbyVoiceActivation.FOCUS_RESUMED)
             {
-                if (stateModel.CurrentActivation == NearbyVoiceActivation.FOCUS_RESUMED)
-                    return;
-
                 analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK, new JObject
                 {
                     { "activation", ActivationToString(stateModel.CurrentActivation) },
@@ -57,7 +55,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             // - Disable() is unconditional, so toggle-off can fire from IDLE or SPEAKING.
             // - Enable() is gated to DISABLED, so toggle-on is only DISABLED → IDLE.
             // Transitions involving SUPPRESSED are system-driven (call/scene/loading) and are skipped.
-            if (next == NearbyVoiceChatState.DISABLED && (prev == NearbyVoiceChatState.IDLE || prev == NearbyVoiceChatState.SPEAKING))
+            if (next == NearbyVoiceChatState.DISABLED && prev is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
                 TrackToggle(enabled: false);
             else if (prev == NearbyVoiceChatState.DISABLED && next == NearbyVoiceChatState.IDLE)
                 TrackToggle(enabled: true);
