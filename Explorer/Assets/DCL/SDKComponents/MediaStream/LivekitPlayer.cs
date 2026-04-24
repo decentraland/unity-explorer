@@ -67,7 +67,6 @@ namespace DCL.SDKComponents.MediaStream
 
             if (IsVideoOpened)
             {
-                // Video is alive — try to follow the active speaker (CurrentStream only)
                 TryFollowActiveSpeaker();
             }
             else
@@ -75,7 +74,7 @@ namespace DCL.SDKComponents.MediaStream
                 // Scenes only author UserStream or CurrentStream addresses, so whether the previous
                 // target was a specific user that went offline or a current-stream that had no tracks,
                 // the recovery is the same: fall back to first-available.
-                ReopenVideoStream(LivekitAddress.CurrentStream());
+                ReopenCurrentVideoStream(LivekitAddress.CurrentStream());
             }
 
             // UpdateMediaPlayerSystem has two separate queries: UpdateAudioStream (for PBAudioStream)
@@ -128,16 +127,10 @@ namespace DCL.SDKComponents.MediaStream
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
-        private void ReopenVideoStream(LivekitAddress livekitAddress)
+        private void ReopenCurrentVideoStream()
         {
-            currentVideoStream = livekitAddress.Match(
-                this,
-                onUserStream: static (self, userStream) => self.OpenUserVideoStream(userStream),
-                onPresentationBotStream: static (self, bot) => self.OpenPresentationBotVideoStream(bot),
-                onCurrentStream: static self => self.FirstVideoTrackingIdentity()
-            );
-
-            playingAddress = livekitAddress;
+            currentVideoStream = FirstVideoTrackingIdentity();
+            playingAddress = LivekitAddress.CurrentStream(); // TODO should place it here? should manually override?
             videoSwitchedAtTime = UnityEngine.Time.realtimeSinceStartup;
         }
 
@@ -155,37 +148,35 @@ namespace DCL.SDKComponents.MediaStream
 
         private void OpenMissingAudioStreams()
         {
-            lock (room.Participants)
+            foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
             {
-                foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
-                {
-                    var participant = room.Participants.RemoteParticipant(identity);
+                var participant = room.Participants.RemoteParticipant(identity);
 
-                    if (participant == null)
+                if (participant == null)
+                    continue;
+
+                // participant.Tracks are thread-safe
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
+                {
+                    if (track.Kind != TrackKind.KindAudio)
                         continue;
 
-                    foreach ((string sid, TrackPublication track) in participant.Tracks)
-                    {
-                        if (track.Kind != TrackKind.KindAudio)
-                            continue;
+                    var key = new StreamKey(identity, sid);
 
-                        var key = new StreamKey(identity, sid);
+                    if (audioSources.ContainsKey(key))
+                        continue;
 
-                        if (audioSources.ContainsKey(key))
-                            continue;
+                    Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
 
-                        Weak<AudioStream> audioStream = room.AudioStreams.ActiveStream(key);
+                    if (!audioStream.Resource.Has)
+                        continue;
 
-                        if (!audioStream.Resource.Has)
-                            continue;
-
-                        LivekitAudioSource source = OBJECT_POOL.Get();
-                        source.Construct(audioStream);
-                        source.SetVolume(Volume);
-                        source.transform.position = audioPosition;
-                        source.Play();
-                        audioSources[key] = (source, audioStream);
-                    }
+                    LivekitAudioSource source = OBJECT_POOL.Get();
+                    source.Construct(audioStream);
+                    source.SetVolume(Volume);
+                    source.transform.position = audioPosition;
+                    source.Play();
+                    audioSources[key] = (source, audioStream);
                 }
             }
         }
@@ -217,7 +208,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (UnityEngine.Time.realtimeSinceStartup - videoSwitchedAtTime < MIN_SPEAKER_HOLD_SECONDS) return;
 
-            // indexed operator is not available, pick first and drop the iteration
+            // indexed operator is not available for ActiveSpeackers, pick first and drop the iteration
             foreach (string activeSpeaker in room.ActiveSpeakers) 
             {
                 if (activeSpeaker == currentVideo?.Identity) return;
@@ -235,17 +226,17 @@ namespace DCL.SDKComponents.MediaStream
 
         private StreamKey? FindVideoTrackForParticipant(string identity)
         {
-            lock (room.Participants)
+            // See: solved https://github.com/decentraland/unity-explorer/issues/3796
+            // room.Participants is thread-safe
+            var participant = room.Participants.RemoteParticipant(identity);
+
+            if (participant == null) return null;
+
+            // TODO participant.Tracks thread-safety
+            foreach ((string sid, TrackPublication track) in participant.Tracks)
             {
-                var participant = room.Participants.RemoteParticipant(identity);
-
-                if (participant == null) return null;
-
-                foreach ((string sid, TrackPublication track) in participant.Tracks)
-                {
-                    if (track.Kind == TrackKind.KindVideo)
-                        return new StreamKey(identity, sid);
-                }
+                if (track.Kind == TrackKind.KindVideo)
+                    return new StreamKey(identity, sid);
             }
 
             return null;
@@ -253,33 +244,29 @@ namespace DCL.SDKComponents.MediaStream
 
         private StreamKey? FirstAvailableTrackSid(TrackKind kind)
         {
-            // See: https://github.com/decentraland/unity-explorer/issues/3796
-            lock (room.Participants)
+            StreamKey? fallback = null;
+
+            foreach ((string remoteParticipantIdentity, _) in room.Participants.RemoteParticipantIdentities())
             {
-                StreamKey? fallback = null;
+                var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
 
-                foreach ((string remoteParticipantIdentity, _) in room.Participants.RemoteParticipantIdentities())
+                if (participant == null)
+                    continue;
+
+                foreach ((string sid, TrackPublication value) in participant.Tracks)
                 {
-                    var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
-
-                    if (participant == null)
-                        continue;
-
-                    foreach ((string sid, TrackPublication value) in participant.Tracks)
+                    if (value.Kind == kind)
                     {
-                        if (value.Kind == kind)
-                        {
-                            // Presentation bot always has priority.
-                            if (remoteParticipantIdentity.IsPresentationBotIdentity())
-                                return new StreamKey(remoteParticipantIdentity, sid);
+                        // Presentation bot always has priority.
+                        if (remoteParticipantIdentity.IsPresentationBotIdentity())
+                            return new StreamKey(remoteParticipantIdentity, sid);
 
-                            fallback ??= new StreamKey(remoteParticipantIdentity, sid);
-                        }
+                        fallback ??= new StreamKey(remoteParticipantIdentity, sid);
                     }
                 }
-
-                return fallback;
             }
+
+            return fallback;
         }
 
         private bool TrySwitchToPresentationBot()
@@ -300,22 +287,19 @@ namespace DCL.SDKComponents.MediaStream
 
         private StreamKey? FindPresentationBotVideoTrack()
         {
-            lock (room.Participants)
+            foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
             {
-                foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
+                if (!identity.IsPresentationBotIdentity())
+                    continue;
+
+                var participant = room.Participants.RemoteParticipant(identity);
+
+                if (participant == null) continue;
+
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
                 {
-                    if (!identity.IsPresentationBotIdentity())
-                        continue;
-
-                    var participant = room.Participants.RemoteParticipant(identity);
-
-                    if (participant == null) continue;
-
-                    foreach ((string sid, TrackPublication track) in participant.Tracks)
-                    {
-                        if (track.Kind == TrackKind.KindVideo)
-                            return new StreamKey(identity, sid);
-                    }
+                    if (track.Kind == TrackKind.KindVideo)
+                        return new StreamKey(identity, sid);
                 }
             }
 
