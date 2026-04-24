@@ -69,9 +69,7 @@ namespace DCL.Browser.DecentralandUrls
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
 
-            // Override the gatekeeper base URL for cross-environment debugging (e.g. Zone gatekeeper while app runs in Org).
-            // All composed gatekeeper URLs (GateKeeperSceneAdapter, ChatAdapter, GatekeeperStatus, BannedUsers, SceneAdmins) inherit this.
-            // LocalGateKeeperSceneAdapter is a separate hardcoded URL, so it must be overridden explicitly.
+            // TODO address it later, direct cache injection as a behaviour looks unelegant
             if (!string.IsNullOrEmpty(gatekeeperBaseOverride))
             {
                 cache[DecentralandUrl.Gatekeeper] = new UrlData(CacheBehaviour.STATIC, gatekeeperBaseOverride);
