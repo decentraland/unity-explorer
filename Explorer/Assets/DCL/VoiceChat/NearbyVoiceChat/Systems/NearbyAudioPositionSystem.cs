@@ -33,6 +33,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private readonly bool logDiagnostics;
 
         private readonly List<Entity> entitiesToCleanUp = new (4);
         private readonly List<(Entity entity, string key, LivekitAudioSource source)> entitiesToAdd = new (4);
@@ -43,10 +44,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         internal NearbyAudioPositionSystem(World world,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources) : base(world)
+            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
+            bool logDiagnostics) : base(world)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.activeAudioSources = activeAudioSources;
+            this.logDiagnostics = logDiagnostics;
         }
 
         public override void Initialize()
@@ -84,9 +87,10 @@ namespace DCL.VoiceChat.Nearby.Systems
                 {
                     ref NearbyAudioSourceComponent component = ref World.Get<NearbyAudioSourceComponent>(entry.Entity);
 
-                    if (component.LivekitAudioSource == null)
-                        ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT,
-                            $"Re-binding NearbyAudioSourceComponent for {kvp.Key} over a destroyed LivekitAudioSource (typical after Island Room reconnect)");
+                    // Diagnostic canary: a destroyed LivekitAudioSource here means the invariant broke.
+                    // Log so regressions surface; re-binding still heals the state. Gated by --debug app arg
+                    if (logDiagnostics && component.LivekitAudioSource == null)
+                        ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Re-binding NearbyAudioSourceComponent for {kvp.Key} over a destroyed LivekitAudioSource (typical after Island Room reconnect)");
 
                     component.LivekitAudioSource = kvp.Value;
                 }
@@ -120,17 +124,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             if (!activeAudioSources.ContainsKey(nearbyAudio.ParticipantIdentity))
             {
-                entitiesToCleanUp.Add(entity);
-                return;
-            }
-
-            // Unity null-check: LivekitAudioSource GameObject may have been destroyed (e.g. Island Room reconnect
-            // disposed the old source before activeAudioSources was re-synced for this frame). Without this guard,
-            // position writes would silently target a destroyed Transform and throw MissingReferenceException.
-            if (nearbyAudio.LivekitAudioSource == null)
-            {
-                ReportHub.LogWarning(ReportCategory.NEARBY_VOICE_CHAT,
-                    $"NearbyAudioSourceComponent for {nearbyAudio.ParticipantIdentity} points to a destroyed LivekitAudioSource — scheduling cleanup");
                 entitiesToCleanUp.Add(entity);
                 return;
             }

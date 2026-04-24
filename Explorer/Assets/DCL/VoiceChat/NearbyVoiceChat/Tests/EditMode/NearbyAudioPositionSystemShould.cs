@@ -51,7 +51,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var playerGo = CreateTrackedGameObject("TestPlayer");
             playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
+            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources, logDiagnostics: true);
             system.Initialize();
         }
 

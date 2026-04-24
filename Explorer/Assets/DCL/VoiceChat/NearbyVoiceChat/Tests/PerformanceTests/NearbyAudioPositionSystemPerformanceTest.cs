@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.Nearby
             playerGo.transform.position = new Vector3(0, 1.75f, 0);
             world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources);
+            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources, logDiagnostics: false);
             system.Initialize();
         }
 
