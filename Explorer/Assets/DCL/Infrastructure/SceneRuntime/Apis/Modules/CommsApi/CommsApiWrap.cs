@@ -1,12 +1,11 @@
 using CrdtEcsBridge.JsModulesImplementation.Communications;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using JetBrains.Annotations;
 using LiveKit.Proto;
-using LiveKit.Rooms.TrackPublications;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
@@ -33,9 +32,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         private readonly string sceneId;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onDataReceivedCached;
 
-        private readonly StringBuilder stringBuilder;
-        private StringWriter stringWriter;
-        private JsonTextWriter writer;
+        private readonly CommsWriter commsWriter = new ();
 
         private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
         private readonly ConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
@@ -51,9 +48,6 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             this.sceneCommunicationPipe = sceneCommunicationPipe;
             sceneId = sceneData.SceneEntityDefinition.id!;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
-            stringBuilder = new StringBuilder();
-            stringWriter = new StringWriter(stringBuilder);
-            writer = new JsonTextWriter(stringWriter);
 
             onDataReceivedCached = OnDataReceived;
             sceneCommunicationPipe.AddSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
@@ -64,31 +58,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, ISceneCommunicationPipe.MsgType.CommsData, onDataReceivedCached);
             topicBuffers.Clear();
             publishRateLimiters.Clear();
-            stringBuilder.Clear();
-            writer.Close();
-            stringWriter.Dispose();
-        }
-
-        /// <summary>
-        /// Replaces <see cref="stringWriter"/> and <see cref="writer"/> after an exception
-        /// in <see cref="GetActiveVideoStreams"/> or <see cref="ConsumeMessages"/>.
-        ///
-        /// JsonTextWriter keeps an internal depth/token stack so it can emit matching
-        /// closers and separators. If an exception is thrown between a WriteStartObject /
-        /// WriteStartArray and its matching end, that stack is left unbalanced — reusing
-        /// the same writer on the next call throws JsonWriterException or silently emits
-        /// malformed JSON. This is internal library state; we cannot "rewind" it.
-        ///
-        /// Discarding and recreating on the exception path is cheaper than wrapping each
-        /// Write* call in try/catch on the happy path.
-        /// </summary>
-        private void ResetWriter()
-        {
-            try { writer.Close(); }
-            catch { /* writer may already be corrupted */ }
-
-            stringWriter = new StringWriter(stringBuilder);
-            writer = new JsonTextWriter(stringWriter);
+            commsWriter.Dispose();
         }
 
         public string GetActiveVideoStreams()
@@ -97,7 +67,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             {
                 lock (this)
                 {
-                    stringBuilder.Clear();
+                    using CommsWriter.Scope scope = commsWriter.Begin();
+                    JsonTextWriter writer = scope.Writer;
 
                     writer.WriteStartObject();
                     writer.WritePropertyName("streams");
@@ -138,13 +109,12 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                     writer.WriteEndArray();
                     writer.WriteEndObject();
 
-                    return stringWriter.ToString();
+                    return scope.Complete();
                 }
             }
             catch (Exception e)
             {
                 sceneExceptionsHandler.OnEngineException(e);
-                ResetWriter();
                 return EMPTY_RESPONSE;
             }
         }
@@ -220,7 +190,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                 lock (this)
                 {
-                    stringBuilder.Clear();
+                    using CommsWriter.Scope scope = commsWriter.Begin();
+                    JsonTextWriter writer = scope.Writer;
 
                     writer.WriteStartArray();
 
@@ -236,13 +207,12 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
                     writer.WriteEndArray();
 
-                    return stringWriter.ToString();
+                    return scope.Complete();
                 }
             }
             catch (Exception e)
             {
                 sceneExceptionsHandler.OnEngineException(e);
-                ResetWriter();
                 return EMPTY_ARRAY;
             }
         }
@@ -305,6 +275,91 @@ namespace SceneRuntime.Apis.Modules.CommsApi
             {
                 SenderIdentity = senderIdentity;
                 Data = data;
+            }
+        }
+
+        /// <summary>
+        /// Encapsulates for integrity, and correctness of JsonTextWriter writer, avoids state corruption.
+        /// Implements RAII pattern to ensure the guarantees.
+        /// NOT thread-safe.
+        /// </summary>
+        private class CommsWriter : IDisposable
+        {
+            private readonly StringBuilder stringBuilder;
+            private StringWriter stringWriter;
+            private JsonTextWriter writer;
+
+
+            public CommsWriter()
+            {
+                stringBuilder = new StringBuilder();
+                stringWriter = new StringWriter(stringBuilder);
+                writer = new JsonTextWriter(stringWriter);
+            }
+
+            public void Dispose()
+            {
+                stringBuilder.Clear();
+                writer.Close();
+                stringWriter.Dispose();
+            }
+
+            /// <summary>
+            /// Recreates JsonTextWriter after exceptions to avoid corrupted internal state
+            /// (unbalance depth/token stack causing invalid JSON or exceptions)
+            /// </summary>
+            private void ResetWriter()
+            {
+                try { writer.Close(); }
+                catch
+                { /* writer may already be corrupted */
+                }
+
+                stringWriter.Dispose();
+
+                stringWriter = new StringWriter(stringBuilder);
+                writer = new JsonTextWriter(stringWriter);
+            }
+
+            public Scope Begin()
+            {
+                stringBuilder.Clear(); // always clear buffer at begin
+                return new Scope(this);
+            }
+
+            public ref struct Scope
+            {
+                private readonly CommsWriter commsWriter;
+                private bool isComplete;
+
+                public JsonTextWriter Writer => commsWriter.writer;
+
+                public Scope(CommsWriter commsWriter) : this()
+                {
+                    this.commsWriter = commsWriter;
+                    this.isComplete = false;
+                }
+
+                public string Complete()
+                {
+                    if (isComplete)
+                    {
+                        ReportHub.LogError(
+                            ReportCategory.COMMS_API,
+                            "Cannot complete twice, make sure complete is called once per scope"
+                        );
+                    }
+
+                    isComplete = true;
+                    return commsWriter.stringWriter.ToString();
+                }
+
+                public void Dispose()
+                {
+                    // drop JsonTextWriter if complition was not performed gracefully.
+                    if (isComplete == false)
+                        commsWriter.ResetWriter();
+                }
             }
         }
     }
