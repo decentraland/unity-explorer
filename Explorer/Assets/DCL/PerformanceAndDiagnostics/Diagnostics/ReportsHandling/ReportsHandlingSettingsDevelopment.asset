@@ -274,8 +274,6 @@ MonoBehaviour:
       Severity: 4
     - Category: LANDSCAPE
       Severity: 4
-    - Category: LIGHT_SOURCE
-      Severity: 4
     - Category: LIVEKIT
       Severity: 4
     - Category: LOD
@@ -419,8 +417,6 @@ MonoBehaviour:
     - Category: JAVASCRIPT
       Severity: 1
     - Category: LANDSCAPE
-      Severity: 1
-    - Category: LIGHT_SOURCE
       Severity: 1
     - Category: LIVEKIT
       Severity: 1
@@ -660,10 +656,18 @@ MonoBehaviour:
       Severity: 4
     - Category: DONATIONS
       Severity: 1
-    - Category: VOICE_CHAT
-      Severity: 3
-    - Category: VOICE_CHAT
+    - Category: LIVEKIT
       Severity: 2
+    - Category: LIGHT_SOURCE
+      Severity: 0
+    - Category: LIGHT_SOURCE
+      Severity: 4
+    - Category: LIGHT_SOURCE
+      Severity: 1
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 4
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 0
   sentryMatrix:
     entries: []
   debounceEnabled: 1
