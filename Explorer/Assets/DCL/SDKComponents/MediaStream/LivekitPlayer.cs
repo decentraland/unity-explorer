@@ -89,27 +89,20 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
-            bool anyDied = false;
-            List<StreamKey>? deadKeys = null;
+            using var _ = ListPool<StreamKey>.Get(out List<StreamKey> deadKeys);
 
             foreach (var kvp in audioSources)
             {
                 if (kvp.Value.stream.Resource.Has) continue;
-
-                anyDied = true;
-                (deadKeys ??= new List<StreamKey>()).Add(kvp.Key);
-
-                if (kvp.Value.source != null)
-                    OBJECT_POOL.Release(kvp.Value.source);
+                deadKeys.Add(kvp.Key);
+                if (kvp.Value.source != null) OBJECT_POOL.Release(kvp.Value.source);
             }
 
-            if (deadKeys != null)
-                foreach (StreamKey k in deadKeys)
-                    audioSources.Remove(k);
+            foreach (StreamKey k in deadKeys) audioSources.Remove(k);
 
             // When a stream died, rescan immediately to replace it.
             // Otherwise, throttle rescans to discover new participants without per-frame lock acquisition.
-            if (!anyDied && UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
+            if (deadKeys.Count == 0 && UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
                 return;
 
             lastAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
