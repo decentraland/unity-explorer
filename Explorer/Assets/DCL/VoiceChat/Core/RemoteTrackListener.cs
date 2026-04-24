@@ -11,6 +11,7 @@ using LiveKit.Rooms.TrackPublications;
 using RichTypes;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -41,12 +42,16 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.playbackSourcesHub = playbackSourcesHub;
             this.userBlockingCache = userBlockingCache;
+
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         }
 
         public void Dispose()
         {
             if (isDisposed) return;
             isDisposed = true;
+
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
 
             StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
@@ -158,6 +163,46 @@ namespace DCL.VoiceChat
 
             playbackSourcesHub.AddOrReplaceStream(key, stream);
             return true;
+        }
+
+        // Unity keeps existing AudioSource instances bound to the previous output device after a macOS Bluetooth
+        // reconnect cycle — only freshly created sources route to the new device. Rebuild every active remote source
+        // so incoming audio is heard again.
+        private void OnAudioConfigurationChanged(bool deviceWasChanged)
+        {
+            if (!deviceWasChanged || isDisposed) return;
+            if (playbackSourcesHub.Streams.Count == 0) return;
+
+            RebuildRemoteSourcesAsync().Forget();
+        }
+
+        private async UniTaskVoid RebuildRemoteSourcesAsync()
+        {
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
+            if (isDisposed) return;
+
+            try
+            {
+                var keysToRebuild = new List<StreamKey>(playbackSourcesHub.Streams.Count);
+                foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> pair in playbackSourcesHub.Streams)
+                    keysToRebuild.Add(pair.Key);
+
+                var rebuilt = 0;
+
+                foreach (StreamKey key in keysToRebuild)
+                {
+                    if (!playbackSourcesHub.Streams.TryGetValue(key, out (Weak<AudioStream> stream, LivekitAudioSource source) entry))
+                        continue;
+
+                    playbackSourcesHub.AddOrReplaceStream(key, entry.stream);
+                    rebuilt++;
+                }
+
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Audio output device changed — rebuilt {rebuilt} remote audio source(s)");
+            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to rebuild audio sources after device change: {ex.Message}"); }
         }
     }
 }
