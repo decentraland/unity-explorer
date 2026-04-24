@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Chat.ChatCommands;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
@@ -29,6 +29,8 @@ namespace DCL.Chat.ChatInput
         private readonly PasteToastState pasteToastState;
         private readonly SuggestionPanelChatInputState suggestionPanelState;
         private readonly EmojiPanelChatInputState emojiPanelState;
+        private readonly EmojiPanelPresenter emojiPanelPresenter;
+        private readonly EmojiPanelView emojiPanelView;
         private readonly CustomInputField inputField;
 
         private CancellationTokenSource? suggestionCloseCts;
@@ -42,6 +44,8 @@ namespace DCL.Chat.ChatInput
             ChatEventBus chatEventBus,
             SendMessageCommand sendMessageCommand,
             EmojiMapping emojiMapping,
+            EmojiPanelPresenter emojiPanelPresenter,
+            EmojiPanelView emojiPanelView,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             CancellationToken stateMachineDisposalCt)
@@ -50,10 +54,12 @@ namespace DCL.Chat.ChatInput
             this.view = view;
             this.chatEventBus = chatEventBus;
             this.sendMessageCommand = sendMessageCommand;
+            this.emojiPanelPresenter = emojiPanelPresenter;
 
             pasteToastState = new PasteToastState(view, stateMachineDisposalCt);
             suggestionPanelState = new SuggestionPanelChatInputState(view, emojiMapping, profileRepositoryWrapper, getParticipantProfilesCommand);
-            emojiPanelState = new EmojiPanelChatInputState(view, emojiMapping);
+            emojiPanelState = new EmojiPanelChatInputState(view, emojiPanelPresenter, emojiPanelView);
+            this.emojiPanelView = emojiPanelView;
             inputField = view.inputField;
         }
 
@@ -81,6 +87,7 @@ namespace DCL.Chat.ChatInput
 
             inputField.onDeselect.AddListener(OnInputDeselected);
             view.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
+            emojiPanelPresenter.PanelVisibilityChanged += OnEmojiPanelVisibilityChanged;
             view.UpdateCharacterCount();
         }
 
@@ -96,6 +103,7 @@ namespace DCL.Chat.ChatInput
             inputField.PasteShortcutPerformed -= OnPasteShortcut;
             view.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
             inputField.onDeselect.RemoveListener(OnInputDeselected);
+            emojiPanelPresenter.PanelVisibilityChanged -= OnEmojiPanelVisibilityChanged;
             eventsScope.Dispose();
 
             pasteToastState.TryDeactivate();
@@ -234,9 +242,21 @@ namespace DCL.Chat.ChatInput
             isLocked = locked;
         }
 
+        private void OnEmojiPanelVisibilityChanged(bool isVisible)
+        {
+            // Only handle external closes (message reactions, reactions bar).
+            // When closed via the chat input emoji button, ToggleEmojiPanel already manages lock + focus.
+            if (!isVisible && !emojiPanelState.IsActive)
+            {
+                LockInputField(true);
+                view.SelectInputField();
+            }
+        }
+
         private void OnInputDeselected(string text)
         {
-            if (isLocked)
+            // Don't steal focus when the emoji panel is open (regardless of who opened it)
+            if (isLocked && !emojiPanelView.IsVisible)
                 view.SelectInputField();
         }
     }

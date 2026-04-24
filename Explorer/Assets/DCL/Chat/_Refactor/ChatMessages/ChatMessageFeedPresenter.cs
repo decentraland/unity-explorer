@@ -7,6 +7,8 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Presenters;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
@@ -36,6 +38,9 @@ namespace DCL.Chat.ChatMessages
         private readonly TranslateMessageCommand translateMessageCommand;
         private readonly RevertToOriginalCommand revertToOriginalCommand;
         private readonly ChatScrollToBottomPresenter scrollToBottomPresenter;
+        private readonly ChatMessageReactionService messageReactionService;
+        private readonly MessageReactionInteractionPresenter reactionInteraction;
+        private readonly ChatReactionsPresenter reactionsPresenter;
         private readonly EventSubscriptionScope scope = new ();
         private readonly ChatConfig.ChatConfig chatConfig;
 
@@ -73,7 +78,12 @@ namespace DCL.Chat.ChatMessages
             CreateMessageViewModelCommand createMessageViewModelCommand,
             MarkMessagesAsReadCommand markMessagesAsReadCommand,
             TranslateMessageCommand translateMessageCommand,
-            RevertToOriginalCommand revertToOriginalCommand)
+            RevertToOriginalCommand revertToOriginalCommand,
+            ChatReactionsPresenter reactionsPresenter,
+            ChatMessageReactionService messageReactionService,
+            ReactionTooltipPresenter? tooltipPresenter = null,
+            ReactionLimitToastView? limitToastView = null,
+            string limitToastMessage = "")
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -89,6 +99,16 @@ namespace DCL.Chat.ChatMessages
             this.markMessagesAsReadCommand = markMessagesAsReadCommand;
             this.translateMessageCommand = translateMessageCommand;
             this.revertToOriginalCommand = revertToOriginalCommand;
+            this.messageReactionService = messageReactionService;
+            this.reactionsPresenter = reactionsPresenter;
+
+            reactionInteraction = new MessageReactionInteractionPresenter(
+                reactionsPresenter,
+                messageReactionService,
+                tooltipPresenter,
+                currentChannelService,
+                limitToastView,
+                limitToastMessage);
 
             scrollToBottomPresenter = new ChatScrollToBottomPresenter(view.ChatScrollToBottomView,
                 currentChannelService);
@@ -145,6 +165,7 @@ namespace DCL.Chat.ChatMessages
         {
             scrollToBottomPresenter.Dispose();
             loadChannelCts.SafeCancelAndDispose();
+            reactionInteraction.Dispose();
 
             view.OnTranslateMessageRequested -= OnTranslateMessage;
             view.OnRevertMessageRequested -= OnRevertMessage;
@@ -163,7 +184,6 @@ namespace DCL.Chat.ChatMessages
                 CancellationToken.None);
         }
 
-        // NEW: Handler for the revert request
         private void OnRevertMessage(string messageId)
         {
             var viewModel = FindViewModelById(messageId);
@@ -212,37 +232,63 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel != destinationChannel)
                 return;
-
-            // 1. Capture the state BEFORE making any changes
-            bool wasAtBottom = view.IsAtBottom();
-
+            
+            bool popupHoldsScroll = reactionsPresenter.IsMessageModePopupActive && view.IsScrollable();
+            bool wasAtBottom = view.IsAtBottom() && !popupHoldsScroll;
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
-            // 2. Perform the actions for the message feed itself (no button logic here)
-            (bool isTopMostMessage, ChatMessage? previousMessage) = GetMessageHistoryCommand.GetTopMostAndPreviousMessage(destinationChannel.Messages, index);
-            ChatMessageViewModel newMessageViewModel = createMessageViewModelCommand.Execute(addedMessage, previousMessage, isTopMostMessage);
+            int separatorIndexBeforeInsert = separatorFixedIndexFromBottom;
+            ChatMessageViewModel newViewModel = InsertNewMessageViewModel(destinationChannel, addedMessage, index);
+            bool needsSeparator = UpdateSeparatorAfterNewMessage(wasAtBottom, isSentByOwnUser, separatorIndexBeforeInsert);
 
-            int previousNewMessagesSeparatorIndex = separatorFixedIndexFromBottom;
-            bool separatorWasVisible = previousNewMessagesSeparatorIndex > -1;
-            RemoveNewMessagesSeparator();
+            if (wasAtBottom)
+                reactionInteraction.Deactivate();
 
-            newMessageViewModel.PendingToAnimate = true;
-            if (translationMemory.TryGet(addedMessage.MessageId, out var translation))
+            view.ReconstructScrollView(false, preserveScrollPosition: popupHoldsScroll);
+            ScrollToBottomIfNeeded(needsSeparator);
+
+            scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
+
+            if (!isFocused)
+                view.RestartChatEntriesFadeout();
+        }
+
+        private ChatMessageViewModel InsertNewMessageViewModel(ChatChannel channel, ChatMessage message, int index)
+        {
+            (bool isTopMostMessage, ChatMessage? previousMessage) =
+                GetMessageHistoryCommand.GetTopMostAndPreviousMessage(channel.Messages, index);
+
+            ChatMessageViewModel vm = createMessageViewModelCommand.Execute(message, previousMessage, isTopMostMessage);
+            vm.PendingToAnimate = true;
+
+            if (translationMemory.TryGet(message.MessageId, out var translation))
             {
-                newMessageViewModel.TranslationState = translation.State;
-                newMessageViewModel.TranslatedText = translation.TranslatedBody;
+                vm.TranslationState = translation.State;
+                vm.TranslatedText = translation.TranslatedBody;
             }
 
-            viewModels.Insert(index, newMessageViewModel);
+            RemoveNewMessagesSeparator();
+
+            viewModels.Insert(index, vm);
+            vm.Reactions = currentChannelService.CurrentChannel.GetReactions(vm.Message.MessageId);
+
             if (viewModelsMap != null)
-                viewModelsMap[newMessageViewModel.Message.MessageId] = newMessageViewModel;
+                viewModelsMap[vm.Message.MessageId] = vm;
 
-            // Handle separator logic (this is unrelated to the button)
-            bool qualifiedForAddingSeparator = !wasAtBottom && !isSentByOwnUser;
+            return vm;
+        }
 
-            if (qualifiedForAddingSeparator)
+        /// <summary>
+        /// Repositions the unread separator after a new message is inserted.
+        /// Returns true if the separator was placed (meaning the user hasn't scrolled to bottom).
+        /// </summary>
+        private bool UpdateSeparatorAfterNewMessage(bool wasAtBottom, bool isSentByOwnUser, int previousSeparatorIndex)
+        {
+            bool separatorWasVisible = previousSeparatorIndex > -1;
+            bool needsSeparator = !wasAtBottom && !isSentByOwnUser;
+
+            if (needsSeparator)
             {
-                // Mark only those messages that were viewed
                 if (messageCountWhenSeparatorViewed.HasValue)
                     markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!, messageCountWhenSeparatorViewed.Value);
 
@@ -250,28 +296,20 @@ namespace DCL.Chat.ChatMessages
             }
             else if (separatorWasVisible)
             {
-                // If the separator was already visible increment its index to preserve its visual position
-                separatorFixedIndexFromBottom = previousNewMessagesSeparatorIndex + 1;
+                separatorFixedIndexFromBottom = previousSeparatorIndex + 1;
                 viewModels.Insert(separatorFixedIndexFromBottom, separatorViewModel);
             }
 
             messageCountWhenSeparatorViewed = null;
+            return needsSeparator;
+        }
 
-            // 3. Update the view and auto-scroll if necessary
-            view.ReconstructScrollView(false);
+        private void ScrollToBottomIfNeeded(bool hasSeparator)
+        {
+            if (hasSeparator) return;
 
-            if (!qualifiedForAddingSeparator)
-            {
-                markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
-                view.ShowLastMessage();
-            }
-
-            // 4. Delegate the event to the specialized presenter. It will handle all the logic. It should be done after messages are marked as read
-            scrollToBottomPresenter.OnMessageReceived(isSentByOwnUser, wasAtBottom);
-
-            // 5. Handle the fade-out for unfocused chat
-            if (!isFocused)
-                view.RestartChatEntriesFadeout();
+            markMessagesAsReadCommand.Execute(currentChannelService.CurrentChannel!);
+            view.ShowLastMessage();
         }
 
         private void ScrollToNewMessagesSeparator()
@@ -331,10 +369,6 @@ namespace DCL.Chat.ChatMessages
                             viewModel.Message.Message, CancellationToken.None)
                     ));
                 }
-            }
-            else
-            {
-                //contextMenu.verticalLayoutPadding
             }
 
             var request = new ShowContextMenuRequest
@@ -399,13 +433,6 @@ namespace DCL.Chat.ChatMessages
                 ReportHub.LogWarning(ReportCategory.CHAT_HISTORY, $"{nameof(UpdateChannelMessages)} called but User State Service is NOT set. Aborting.");
                 return;
             }
-            else if (currentChannelService.UserStateService == null)
-            {
-                ReportHub.LogWarning(ReportCategory.CHAT_HISTORY,
-                    $"{nameof(UpdateChannelMessages)} called, but {nameof(currentChannelService.UserStateService)} is null. Aborting.");
-
-                return;
-            }
 
             loadChannelCts = loadChannelCts.SafeRestart();
 
@@ -422,6 +449,9 @@ namespace DCL.Chat.ChatMessages
                 {
                     ReleaseAndClearAllModels();
                     await getMessageHistoryCommand.ExecuteAsync(viewModels, currentChannelService.CurrentChannelId, ct);
+
+                    BindReactionsToViewModels();
+
                     TryAddNewMessagesSeparatorAfterPendingMessages();
 
                     RebuildFastIndexIfNeeded();
@@ -478,6 +508,14 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom += MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged += OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked += OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked += reactionInteraction.OnReactionButtonClicked;
+
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillClicked>(
+                e => reactionInteraction.OnReactionPillClicked(e.MessageId, e.EmojiIndex)));
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillHoverEnter>(
+                e => reactionInteraction.OnReactionHoverEnter(e.EmojiIndex, e.PillRect, e.MessageId)));
+            scope.Add(view.reactionEventBus.Subscribe<ReactionPillEvents.ReactionPillHoverExit>(
+                e => reactionInteraction.OnReactionHoverExit(e.EmojiIndex)));
 
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersUpdated));
@@ -490,6 +528,8 @@ namespace DCL.Chat.ChatMessages
 
             scrollToBottomPresenter.RequestScrollAction += OnRequestScrollAction;
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
+
+            currentChannelService.CurrentChannel.ReactionChanged += OnReactionChanged;
         }
 
         private void Unsubscribe()
@@ -499,10 +539,14 @@ namespace DCL.Chat.ChatMessages
             view.OnScrolledToBottom -= MarkCurrentChannelAsRead;
             view.OnScrollPositionChanged -= OnScrollPositionChanged;
             view.OnScrollToBottomButtonClicked -= OnScrollToBottomButtonClicked;
+            view.OnReactionButtonClicked -= reactionInteraction.OnReactionButtonClicked;
+            reactionInteraction.Deactivate();
 
             scope.Dispose();
             scrollToBottomPresenter.RequestScrollAction -= OnRequestScrollAction;
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
+
+            currentChannelService.CurrentChannel.ReactionChanged -= OnReactionChanged;
         }
 
         private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent upd)
@@ -515,6 +559,16 @@ namespace DCL.Chat.ChatMessages
         {
             if (upd.Qualifies(currentChannelService.CurrentChannel))
                 view.RefreshVisibleElements();
+        }
+
+        private void OnReactionChanged(string messageId)
+        {
+            var viewModel = FindViewModelById(messageId);
+            if (viewModel == null) return;
+
+            viewModel.Reactions = currentChannelService.CurrentChannel.GetReactions(messageId);
+            reactionInteraction.HideTooltip();
+            view.ReconstructScrollView(false);
         }
 
         private void OnRequestScrollAction()
@@ -621,6 +675,22 @@ namespace DCL.Chat.ChatMessages
                 return vm;
 
             return LinearFindViewModelById(messageId); // safe fallback when index is disabled
+        }
+
+        private void BindReactionsToViewModels()
+        {
+            ChatChannel? channel = currentChannelService.CurrentChannel;
+            if (channel == null) return;
+
+            messageReactionService.RegisterChannelMessages(channel);
+
+            for (int i = 0; i < viewModels.Count; i++)
+            {
+                var vm = viewModels[i];
+                if (ReferenceEquals(vm, separatorViewModel)) continue;
+
+                vm.Reactions = channel.GetReactions(vm.Message.MessageId);
+            }
         }
 
         private void ClearTranslationsForCurrentChannel()

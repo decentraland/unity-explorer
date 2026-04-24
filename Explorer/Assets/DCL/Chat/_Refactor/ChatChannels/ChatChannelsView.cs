@@ -29,6 +29,15 @@ namespace DCL.Chat
 
         private ChatConversationsToolbarViewItemPool? chatConversationsToolbarViewItemPool;
 
+        private const float REACTIONS_BUTTON_BOTTOM_PADDING = 48f;
+        public void SetBottomSpaceForReactionsButton(bool reserveSpace)
+        {
+            var rect = (RectTransform)scrollView.transform;
+            Vector2 offsetMin = rect.offsetMin;
+            offsetMin.y = reserveSpace ? REACTIONS_BUTTON_BOTTOM_PADDING : 0f;
+            rect.offsetMin = offsetMin;
+        }
+
         /// <summary>
         /// Marks an item as selected.
         /// </summary>
