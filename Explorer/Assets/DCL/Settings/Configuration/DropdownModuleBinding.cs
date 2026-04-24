@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Friends.UserBlocking;
+using DCL.FeatureFlags;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
@@ -96,9 +97,7 @@ namespace DCL.Settings.Configuration
                 DropdownFeatures.CHAT_DMS_MODES_FEATURE => new ChatPrivacySettingsController(viewInstance,
                     chatSettingsAsset),
 
-                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => new ChatBubblesVisibilityController(viewInstance,
-                    chatSettingsAsset,
-                    settingsEventListener),
+                DropdownFeatures.CHAT_BUBBLES_MODES_FEATURE => CreateChatBubblesController(viewInstance, chatSettingsAsset, settingsEventListener),
 
                 DropdownFeatures.VOICECHAT_INPUT_DEVICE => new InputDeviceController(viewInstance),
 
@@ -115,6 +114,17 @@ namespace DCL.Settings.Configuration
 
             controller.SetView(viewInstance);
             return controller;
+        }
+
+        private static SettingsFeatureController CreateChatBubblesController(
+            SettingsDropdownModuleView view,
+            ChatSettingsAsset chatSettingsAsset,
+            ISettingsModuleEventListener settingsEventListener)
+        {
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                view.ModuleTitle.text = "In-World Chat Bubbles";
+
+            return new ChatBubblesVisibilityController(view, chatSettingsAsset, settingsEventListener);
         }
 
         /// <summary>

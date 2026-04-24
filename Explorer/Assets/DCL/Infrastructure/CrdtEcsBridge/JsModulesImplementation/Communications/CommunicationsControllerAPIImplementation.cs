@@ -16,7 +16,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
-                ISceneCommunicationPipe messagePipesHub, 
+                ISceneCommunicationPipe messagePipesHub,
                 IJsOperations jsOperations,
                 IInstancePoolsProvider byteArrayPool,
                 Option<SceneAdmins> sceneAdmins
@@ -40,14 +40,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             array.Array[0] = (byte)walletIdLength;
             int dataOffset = walletIdLength + 1;
-            int totalLength = dataOffset; 
+            int totalLength = dataOffset;
 
             // At this point data is already without MsgType (Explorer routing is truncated a step above).
 
-            // read first byte as SDK routing 
+            // read first byte as SDK routing
             CommsMessageType commsMessageType = (CommsMessageType)message.Data[0];
             // Copy and filter batch
-            ReadOnlySpan<byte> sourceData = message.Data;       
+            ReadOnlySpan<byte> sourceData = message.Data;
             // Filtered data is already a view of the target array
             Span<byte> filteredUnbounded = array.Array.AsSpan(dataOffset);
 
@@ -88,7 +88,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 // Message is considered safe if it's from a scene admin
                 bool? adminResult = sceneAdmins.Value.IsAdmin(walletId);
                 // Consider the user as non-admin until we know for sure
-                return adminResult == null ? false : adminResult.Value; 
+                return adminResult == null ? false : adminResult.Value;
             }
 
             return true; // sceneAdmins are not applicable in cases like LSD
