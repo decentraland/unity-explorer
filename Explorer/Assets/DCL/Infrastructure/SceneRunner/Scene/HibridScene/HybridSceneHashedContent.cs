@@ -96,6 +96,7 @@ namespace SceneRunner.Scene
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
         }
 
