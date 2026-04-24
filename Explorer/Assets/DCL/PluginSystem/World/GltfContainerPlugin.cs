@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
-        private readonly bool useRemoteAssetBundles;
+        private readonly bool useAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             ILaunchMode launchMode,
-            bool useRemoteAssetBundles,
+            bool useAssetBundles,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.World
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.launchMode = launchMode;
-            this.useRemoteAssetBundles = useRemoteAssetBundles;
+            this.useAssetBundles = useAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.World
                 new PrepareGltfAssetLoadingSystem.Options
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
-                    UseRemoveAssetBundles = useRemoteAssetBundles,
+                    UseAssetBundles = useAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 

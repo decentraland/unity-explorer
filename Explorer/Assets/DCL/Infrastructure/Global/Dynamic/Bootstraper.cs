@@ -120,7 +120,7 @@ namespace Global.Dynamic
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.CompositeWeb3Provider,
                 bootstrapContainer.LaunchMode,
-                bootstrapContainer.UseRemoteAssetBundles,
+                bootstrapContainer.UseRemoteAssetBundles || bootstrapContainer.UseLocalAssetBundles,
                 world,
                 playerEntity,
                 memoryCap,

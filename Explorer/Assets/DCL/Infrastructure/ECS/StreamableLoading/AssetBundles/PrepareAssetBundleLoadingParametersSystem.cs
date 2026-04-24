@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly ISceneData sceneData;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL, URLDomain? customAssetBundleURL = null) : base(world, streamingAssetURL, assetBundlesURL, customAssetBundleURL)
         {
             this.sceneData = sceneData;
         }

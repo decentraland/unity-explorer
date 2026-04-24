@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
 
-        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL) { }
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, URLDomain? customAssetBundleURL = null) : base(world, streamingAssetURL, assetBundlesURL, customAssetBundleURL) { }
 
         protected override void Update(float t)
         {

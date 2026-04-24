@@ -43,6 +43,8 @@ namespace Global.Dynamic
 
         private bool isLocalSceneDevelopmentRealm;
 
+        public bool UseLocalAssetBundles { get; private set; }
+
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
                                          // This is for development purposes only,
@@ -93,6 +95,8 @@ namespace Global.Dynamic
 
             if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
                 ParsePositionAppParameter(parcelToTeleportOverride);
+
+            UseLocalAssetBundles = applicationParameters.HasFlag(AppArgsFlags.LOCAL_AB_PATH);
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)

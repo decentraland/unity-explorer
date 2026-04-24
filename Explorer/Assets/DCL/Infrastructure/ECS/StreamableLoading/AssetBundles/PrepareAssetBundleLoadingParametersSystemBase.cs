@@ -22,11 +22,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly URLDomain streamingAssetURL;
         private readonly URLDomain assetBundlesURL;
+        private readonly URLDomain? customAssetBundleURL;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL, URLDomain? customAssetBundleURL = null) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
             this.assetBundlesURL = assetBundlesURL;
+            this.customAssetBundleURL = customAssetBundleURL;
         }
 
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
@@ -42,7 +44,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = 1;
                 ca.CurrentSource = AssetSource.EMBEDDED;
-                ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
+                ca.URL = ResolveEmbeddedUrl(assetBundleIntention.Hash, ca.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
 
                 return;
@@ -71,13 +73,27 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
+        private URLAddress ResolveEmbeddedUrl(string hash, URLSubdirectory customSubdirectory)
+        {
+            if (customAssetBundleURL != null)
+            {
+                URLAddress customUrl = BuildEmbeddedUrl(customAssetBundleURL.Value, hash, customSubdirectory);
+                string filePath = customUrl.Value.Replace("file://", "");
+
+                if (System.IO.File.Exists(filePath))
+                    return customUrl;
+            }
+
+            return BuildEmbeddedUrl(streamingAssetURL, hash, customSubdirectory);
+        }
+
+        private static URLAddress BuildEmbeddedUrl(URLDomain baseUrl, string hash, URLSubdirectory customSubdirectory) =>
 
             // There is a special case when it comes to the shaders:
             // they are shared and custom subdirectory should be ignored, otherwise we would need to store a copy in every subdirectory
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
-                ? streamingAssetURL.Append(URLPath.FromString(hash))
-                : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
+                ? baseUrl.Append(URLPath.FromString(hash))
+                : baseUrl.Append(customSubdirectory).Append(URLPath.FromString(hash));
 
         public unsafe Hash128 ComputeHash(string hash, string buildDate)
         {

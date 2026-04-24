@@ -51,7 +51,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoveAssetBundles: false };
+            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseAssetBundles: false };
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
@@ -62,7 +62,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         {
             public bool LocalSceneDevelopment;
 
-            public bool UseRemoveAssetBundles;
+            public bool UseAssetBundles;
 
             public bool PreviewingBuilderCollection;
         }
