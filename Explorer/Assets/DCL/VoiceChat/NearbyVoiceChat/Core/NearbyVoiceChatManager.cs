@@ -87,7 +87,6 @@ namespace DCL.VoiceChat
             islandRoom.TrackSubscribed += OnTrackSubscribed;
             islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
-
             Application.focusChanged += OnApplicationFocusChanged;
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneDeviceChanged;
 

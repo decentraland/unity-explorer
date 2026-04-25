@@ -128,6 +128,16 @@ namespace DCL.VoiceChat.Nearby.Systems
                 return;
             }
 
+            // Race window after Island Room renewal: the GameObject backing the source can be
+            // destroyed while activeAudioSources still holds the reference for one frame.
+            // AssignPendingSources rebinds it on the next tick, but until then we must skip
+            // the read-path so a single poisoned entity does not break sync for the others.
+            if (nearbyAudio.LivekitAudioSource == null)
+            {
+                entitiesToCleanUp.Add(entity);
+                return;
+            }
+
             Vector3 remoteAvatarHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
                 ? avatarBase.HeadAnchorPoint.position
                 : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);

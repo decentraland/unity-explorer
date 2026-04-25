@@ -182,6 +182,97 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.False);
         }
 
+        // ── Stale / destroyed LivekitAudioSource (race after Island Room renewal) ──
+        //
+        // Contract under test (implementation-agnostic):
+        //   1. A poisoned source for one participant must not stop position sync for the others
+        //      in the same frame.
+        //   2. Once the underlying dictionary entry is renewed (LiveKit re-subscribed the track),
+        //      position sync for that participant must converge to the avatar's head within a
+        //      bounded number of frames.
+        //
+        // Both tests describe what stress-test users perceived (frozen audio for everyone after
+        // Island Room renewal) without prescribing how the system has to recover.
+
+        [Test]
+        public void KeepSyncingHealthyParticipantsWhenAnotherSourceWasDestroyedSameFrame()
+        {
+            // Arrange — Alice and Bob both nearby, both with active audio sources
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Vector3 alicePos = new Vector3(5, 0, 0);
+            Vector3 bobPos = new Vector3(-3, 0, 7);
+            Entity aliceEntity = CreateRemoteEntity(PARTICIPANT_A, alicePos);
+            Entity bobEntity = CreateRemoteEntity(PARTICIPANT_B, bobPos);
+            LivekitAudioSource aliceSource = CreateLivekitAudioSource();
+            LivekitAudioSource bobSource = CreateLivekitAudioSource();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+            SetupParticipant(PARTICIPANT_B, bobEntity);
+            activeAudioSources[PARTICIPANT_A] = aliceSource;
+            activeAudioSources[PARTICIPANT_B] = bobSource;
+
+            system.Update(0); // assign components
+            system.Update(0); // sync once so we have a baseline
+
+            // Reproduce the race observed in logs: PlaybackSourcesHub disposed Alice's
+            // GameObject (Island Room renewal stopped tracks) before its onSourceRemoved
+            // callback removed the dictionary entry. Bob is unaffected by the renewal.
+            Object.DestroyImmediate(aliceSource.gameObject);
+
+            // Move Bob so we can verify the new sync (not just a cached previous-frame value)
+            Vector3 newBobPos = new Vector3(-3, 0, 12);
+            world.Get<CharacterTransform>(bobEntity).Transform.position = newBobPos;
+
+            // Act
+            system.Update(0);
+
+            // Assert — Alice's broken source must not block Bob's per-frame sync
+            Vector3 expectedBobHead = newBobPos + new Vector3(0, 1.75f, 0);
+            Assert.That(bobSource.transform.position.x, Is.EqualTo(expectedBobHead.x).Within(0.01f),
+                "the per-frame loop must keep updating other participants even when one source is destroyed");
+            Assert.That(bobSource.transform.position.y, Is.EqualTo(expectedBobHead.y).Within(0.01f));
+            Assert.That(bobSource.transform.position.z, Is.EqualTo(expectedBobHead.z).Within(0.01f));
+        }
+
+        [Test]
+        public void ConvergeOnFreshSourcePositionAfterStaleOneWasDestroyedAndReplaced()
+        {
+            // Arrange — Alice's source assigned and synced
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Vector3 alicePos = new Vector3(7, 0, 2);
+            Entity aliceEntity = CreateRemoteEntity(PARTICIPANT_A, alicePos);
+            LivekitAudioSource staleSource = CreateLivekitAudioSource();
+            SetupParticipant(PARTICIPANT_A, aliceEntity);
+            activeAudioSources[PARTICIPANT_A] = staleSource;
+
+            system.Update(0);
+            system.Update(0);
+
+            // The race: source GameObject destroyed while dictionary entry still references it.
+            // We let the system tick once in this poisoned state (this is the frame where bugs surface).
+            Object.DestroyImmediate(staleSource.gameObject);
+            try { system.Update(0); } catch { /* a robust impl will not throw, but we focus the assertion below */ }
+
+            // Then LiveKit re-subscribes the track and PlaybackSourcesHub creates a fresh LivekitAudioSource
+            LivekitAudioSource freshSource = CreateLivekitAudioSource();
+            activeAudioSources[PARTICIPANT_A] = freshSource;
+
+            // Act — system gets a few frames to reconverge (we don't care HOW: cleanup+reattach,
+            // ref re-bind, defensive null check — all must converge to the same observable result)
+            for (int frame = 0; frame < 3; frame++)
+                system.Update(0);
+
+            // Assert — fresh source is now positioned at Alice's head, sync resumed
+            Vector3 expectedHeadPos = alicePos + new Vector3(0, 1.75f, 0);
+            Assert.That(freshSource.transform.position.x, Is.EqualTo(expectedHeadPos.x).Within(0.01f),
+                "after a poisoned frame followed by a fresh dictionary entry, position sync must reconverge");
+            Assert.That(freshSource.transform.position.y, Is.EqualTo(expectedHeadPos.y).Within(0.01f));
+            Assert.That(freshSource.transform.position.z, Is.EqualTo(expectedHeadPos.z).Within(0.01f));
+        }
+
         // ── Position Sync ───────────────────────────────────────────
 
         [Test]
