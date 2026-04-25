@@ -43,7 +43,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             ildBinding = new ElementBinding<float>(configuration.nearbyIldStrength,
                 evt => { configuration.nearbyIldStrength = evt.newValue; });
 
-            debugBuilder.TryAddWidget("Voice Chat - Nearby")
+            debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.NEARBY_VOICE_CHAT)
                        ?.AddControl(new DebugConstLabelDef("Spatialize"), new DebugToggleDef(spatializeBinding))
                         .AddControl(new DebugConstLabelDef("Smooth Panning"), new DebugToggleDef(smoothPanningBinding))
                         .AddFloatSliderField("ILD Strength", ildBinding, 0f, 1f);

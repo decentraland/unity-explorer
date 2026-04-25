@@ -234,12 +234,17 @@ namespace DCL.PluginSystem.Global
                     playerEntity, nearbyStateModel, nearbyMuteService);
                 pluginScope.Add(nearbyNametagsHandler);
 
+                // UI
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
                 pluginScope.Add(nearbyButtonController);
 
                 nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
 
+                // DEBUG
+                pluginScope.Add(new NearbyVoiceChatDebugContainer(debugContainer, islandRoom, nearbyStateModel, nearbyAudioSources, entityParticipantTable, world));
+
+                // Intro FLUX
                 nearbyTipCts = new CancellationTokenSource();
                 RunNearbyVoiceTipAsync(nearbyVoiceTipView, loadingStatus, nearbyVoiceChatButtonView, nearbyTipCts.Token).Forget();
             }
