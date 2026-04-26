@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
-using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -31,7 +30,7 @@ namespace DCL.VoiceChat
         private bool isDisposed;
 
         /// <param name="userBlockingCache">
-        /// When supplied, streams from blocked users are skipped in <see cref="TryAddStream"/>.
+        /// When supplied, streams from blocked users are skipped in <see cref="TryAddAudioStream"/>.
         /// Pass <c>null</c> for rooms that should hear everyone (Community, private call).
         /// </param>
         public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub,
@@ -63,7 +62,7 @@ namespace DCL.VoiceChat
 
                 foreach (KeyValuePair<string, LKParticipant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
-                    if (TryAddStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
+                    if (TryAddAudioStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity.Key}");
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
@@ -98,7 +97,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
+                if (TryAddAudioStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}"); }
@@ -126,7 +125,7 @@ namespace DCL.VoiceChat
         /// <summary>
         /// Re-adds playback streams for an identity that was previously removed (e.g. after unblock).
         /// LiveKit keeps the track subscribed, so <see cref="IRoom.TrackSubscribed"/> does not fire again —
-        /// we need to look up the participant and re-invoke <see cref="TryAddStream"/> explicitly.
+        /// we need to look up the participant and re-invoke <see cref="TryAddAudioStream"/> explicitly.
         /// </summary>
         internal async UniTaskVoid AddStreamsForIdentityAsync(string identity)
         {
@@ -139,7 +138,7 @@ namespace DCL.VoiceChat
                     return;
 
                 foreach ((string sid, TrackPublication publication) in participant.Tracks)
-                    if (TryAddStream(publication.Kind, new StreamKey(identity, sid)))
+                    if (TryAddAudioStream(publication.Kind, new StreamKey(identity, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Re-added stream for {identity}");
             }
             catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Failed to re-add streams for {identity}", ex), ReportCategory.VOICE_CHAT); }
@@ -148,7 +147,7 @@ namespace DCL.VoiceChat
         internal void SetMuteForIdentity(string identity, bool mute) =>
             playbackSourcesHub.SetMuteForIdentity(identity, mute);
 
-        private bool TryAddStream(TrackKind kind, StreamKey key)
+        private bool TryAddAudioStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
             if (userBlockingCache?.UserIsBlocked(key.identity) == true) return false;

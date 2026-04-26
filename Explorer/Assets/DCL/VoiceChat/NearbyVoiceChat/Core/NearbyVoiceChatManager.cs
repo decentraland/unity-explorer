@@ -66,8 +66,7 @@ namespace DCL.VoiceChat
             this.userBlockingCache = userBlockingCache;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
-
-            var nearbyHub = new PlaybackSourcesHub(
+            remoteListener = new RemoteTrackListener(islandRoom, configuration, new PlaybackSourcesHub(
                 parentNameSuffix: "Nearby",
                 configuration.ChatAudioMixerGroup,
                 spatial: true,
@@ -79,9 +78,7 @@ namespace DCL.VoiceChat
 
                     lkSource.AudioSource.mute = muteService.IsMuted(key.identity);
                 },
-                onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
-
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, userBlockingCache);
+                onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _)), userBlockingCache);
 
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
             islandRoom.TrackSubscribed += OnTrackSubscribed;
@@ -246,9 +243,6 @@ namespace DCL.VoiceChat
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, LKDisconnectReason? reason)
         {
             // Cancel in-flight mic publish immediately so PublishAsync observes it via its CancellationToken
-            if (update == ConnectionUpdate.Disconnected)
-                activationCts.SafeCancelAndDispose();
-
             OnConnectionUpdatedInternalAsync(update, reason).Forget();
             return;
 
@@ -264,6 +258,8 @@ namespace DCL.VoiceChat
                 {
                     if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                         ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
+
+                    activationCts.SafeCancelAndDispose();
 
                     Disconnect();
                 }

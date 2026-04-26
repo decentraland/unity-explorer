@@ -102,26 +102,26 @@ namespace DCL.PluginSystem.Global
                 wavRemoteUpdateCts = new CancellationTokenSource();
                 CancellationToken token = wavRemoteUpdateCts.Token;
 
-                while (token.IsCancellationRequested == false)
-                    try
-                    {
-                        bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: token).SuppressCancellationThrow();
-                        if (cancelled) return;
-
-                        ProcessMicrophone();
-
-                        wavRemotesBuffer.Clear();
-
-                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in playbackSourcesHub.Streams)
-                            ProcessElement(key, value.stream, value.source);
-
-                        wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
-                    }
-                    catch
-                    {
-                        wavRemoteUpdateCts?.Cancel();
-                        break;
-                    }
+                // while (token.IsCancellationRequested == false)
+                //     try
+                //     {
+                //         bool cancelled = await UniTask.Delay(pollDelay, cancellationToken: token).SuppressCancellationThrow();
+                //         if (cancelled) return;
+                //
+                //         ProcessMicrophone();
+                //
+                //         wavRemotesBuffer.Clear();
+                //
+                //         foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in playbackSourcesHub.Streams)
+                //             ProcessElement(key, value.stream, value.source);
+                //
+                //         wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
+                //     }
+                //     catch
+                //     {
+                //         wavRemoteUpdateCts?.Cancel();
+                //         break;
+                //     }
 
                 return;
 
