@@ -16,6 +16,7 @@ using ECS.SceneLifeCycle;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
@@ -74,6 +75,7 @@ namespace DCL.PluginSystem.Global
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
+        private NearbyAudioStreamRegistry? nearbyAudioStreamRegistry;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatNametagsHandler? nearbyNametagsHandler;
         private NearbyVoiceChatStateModel? nearbyStateModel;
@@ -202,6 +204,9 @@ namespace DCL.PluginSystem.Global
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
                 IRoom islandRoom = roomHub.IslandRoom();
+
+                nearbyAudioStreamRegistry = new NearbyAudioStreamRegistry(islandRoom);
+                pluginScope.Add(nearbyAudioStreamRegistry);
 
                 NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
                     ? NearbyVoiceChatState.DISABLED
