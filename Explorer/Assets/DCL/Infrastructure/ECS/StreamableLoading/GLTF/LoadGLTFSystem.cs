@@ -90,9 +90,12 @@ namespace ECS.StreamableLoading.GLTF
 
                 await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
+                // Wearable path needs source textures readable so PatchTexturesForWearable can build
+                // RGBA32 copies; the gltf-container path doesn't, so drop the CPU mirror to halve RAM.
                 if (patchTexturesFormat)
                     PatchTexturesForWearable(gltfImport);
+                else
+                    DropTexturesCpuMirror(gltfImport);
 
                 // Capture hierarchy paths for local scene development debugging
                 var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
@@ -124,6 +127,21 @@ namespace ECS.StreamableLoading.GLTF
         {
             if (asset.CanBeDisposed())
                 asset.Dispose(force: true);
+        }
+
+        /// <summary>
+        ///     Drops the CPU-side mirror of GLTFast's loaded textures. Safe post-Load because
+        ///     sampler variants are already cloned and nothing in the gltf-container path samples
+        ///     pixels afterwards (materials bind to GPU; EnsureRGBA32Format uses Graphics.Blit).
+        /// </summary>
+        private static void DropTexturesCpuMirror(GltfImport gltfImport)
+        {
+            for (int i = 0; i < gltfImport.TextureCount; i++)
+            {
+                Texture2D? tex = gltfImport.GetTexture(i);
+                if (tex != null && tex.isReadable)
+                    tex.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+            }
         }
 
         private void PatchTexturesForWearable(GltfImport gltfImport)

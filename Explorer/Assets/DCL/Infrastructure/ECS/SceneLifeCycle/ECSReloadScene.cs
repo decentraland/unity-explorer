@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -20,16 +21,19 @@ namespace ECS.SceneLifeCycle
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly bool localSceneDevelopment;
+        private readonly ICacheCleaner cacheCleaner;
 
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
             Entity playerEntity,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            ICacheCleaner cacheCleaner)
         {
             this.scenesCache = scenesCache;
             this.world = world;
             this.playerEntity = playerEntity;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.cacheCleaner = cacheCleaner;
         }
 
         public async UniTask<ISceneFacade?> TryReloadSceneAsync(CancellationToken ct)
@@ -92,6 +96,10 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
+                // Force-drain dereferenced caches on LSD reload — periodic UnloadCache is gated on
+                // memory pressure (~65%) which a dev session rarely hits, so stale pool entries
+                // would otherwise accumulate across reloads with changing hashes.
+                cacheCleaner.UnloadCache(budgeted: false);
                 Resources.UnloadUnusedAssets();
 
                 await WaitUntilNewSceneIsFullyLoadedAsync();
