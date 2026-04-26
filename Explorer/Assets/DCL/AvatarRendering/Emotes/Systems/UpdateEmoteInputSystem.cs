@@ -6,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
@@ -106,7 +105,7 @@ namespace DCL.AvatarRendering.Emotes
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 
-            messageBus.Send(emoteId, false, AvatarEmoteMask.AemFullBody);
+            messageBus.Send(emoteId, false);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
