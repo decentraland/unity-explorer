@@ -232,15 +232,11 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel != destinationChannel)
                 return;
-            
+
             bool popupHoldsScroll = reactionsPresenter.IsMessageModePopupActive && view.IsScrollable();
             bool wasAtBottom = view.IsAtBottom() && !popupHoldsScroll;
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
-            // Hide unconditionally: Deactivate() below is gated by wasAtBottom to protect the
-            // selector popup, but the tooltip's pill anchor goes stale after ReconstructScrollView
-            // regardless of scroll position, and Unity won't re-fire pointer enter/exit on a
-            // stationary cursor when the underlying geometry shifts.
             reactionInteraction.HideTooltip();
 
             int separatorIndexBeforeInsert = separatorFixedIndexFromBottom;
