@@ -44,8 +44,6 @@ namespace DCL.Settings.Configuration
             SUN_LENS_FLARE_FEATURE,
             DOUBLE_TAP_TO_MOVE,
             CHAT_REACTIONS_ENABLED_FEATURE
-            // Append new features at the END. Inserting in the middle shifts
-            // serialized ordinals in SettingsMenuConfiguration.asset and silently misroutes every toggle below.
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
