@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
@@ -33,7 +32,6 @@ namespace DCL.VoiceChat
 
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyMuteService muteService;
-        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly MicrophoneTrackPublisher micPublisher;
 
@@ -52,14 +50,12 @@ namespace DCL.VoiceChat
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
             NearbyMuteService muteService,
-            IUserBlockingCache userBlockingCache,
             ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
             this.muteService = muteService;
-            this.userBlockingCache = userBlockingCache;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -72,11 +68,6 @@ namespace DCL.VoiceChat
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
 
             muteService.MuteStateChanged += OnMuteStateChanged;
-
-            userBlockingCache.UserBlocked += OnUserBlocked;
-            userBlockingCache.UserBlocksYou += OnUserBlocked;
-            userBlockingCache.UserUnblocked += OnUserUnblocked;
-            userBlockingCache.UserUnblocksYou += OnUserUnblocked;
 
             // Suppress while world is still loading so we do not attempt to connect before the player spawns.
             // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
@@ -100,11 +91,6 @@ namespace DCL.VoiceChat
             nearbyStateSubscription?.Dispose();
 
             muteService.MuteStateChanged -= OnMuteStateChanged;
-
-            userBlockingCache.UserBlocked -= OnUserBlocked;
-            userBlockingCache.UserBlocksYou -= OnUserBlocked;
-            userBlockingCache.UserUnblocked -= OnUserUnblocked;
-            userBlockingCache.UserUnblocksYou -= OnUserUnblocked;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
@@ -279,13 +265,9 @@ namespace DCL.VoiceChat
             }
         }
 
-        // Mute/block integration with the ECS pipeline lands in a follow-up PR (PRD §Mute / block integration).
-        // Until then these handlers no-op so the manager stays decoupled from the per-source audio path.
+        // Mute integration with the ECS pipeline lands in a follow-up PR (PRD §Mute / block integration).
+        // Block teardown is owned by NearbyAudioCleanupSystem (pull-based via IUserBlockingCache).
         private void OnMuteStateChanged(string walletId, bool isMuted) { }
-
-        private void OnUserBlocked(string userId) { }
-
-        private void OnUserUnblocked(string userId) { }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)
         {

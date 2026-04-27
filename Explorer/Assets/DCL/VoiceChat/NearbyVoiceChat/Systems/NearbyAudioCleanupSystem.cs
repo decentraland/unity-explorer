@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Friends.UserBlocking;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -17,10 +18,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Single owner of structural changes for Nearby audio-source entities.
-    ///     Per tick scans all audio entities and tears them down on either:
+    ///     Per tick scans all audio entities and tears them down on any of:
     ///     - <b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead, flagged with
     ///       <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>;
-    ///     - <b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.
+    ///     - <b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>;
+    ///     - <b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns <c>true</c>
+    ///       for the bound <c>walletId</c> (covers both "I block them" and "they block me").
     ///     Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
     ///     <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
     ///     Implements <see cref="IFinalizeWorldSystem"/> to dispose any survivors at world finalization.
@@ -31,12 +34,14 @@ namespace DCL.VoiceChat.Nearby.Systems
     {
         private readonly INearbyAudioStreamRegistry registry;
         private readonly Dictionary<StreamKey, Entity> bindings;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly List<Entity> entitiesToCleanUp = new (16);
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
+            this.userBlockingCache = userBlockingCache;
         }
 
         protected override void Update(float t)
@@ -64,7 +69,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(DeleteEntityIntention))]
         private void FlagDeadAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
         {
-            if (IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key))
+            if (IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
                 entitiesToCleanUp.Add(audioEntity);
         }
 

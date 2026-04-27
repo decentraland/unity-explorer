@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
@@ -7,6 +8,7 @@ using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
 using System.Collections.Concurrent;
@@ -21,7 +23,7 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// Documents <see cref="NearbyAudioCleanupSystem"/> contract:
     ///
     /// - Owns ALL structural changes to Nearby audio-source entities (binding system creates, cleanup destroys).
-    /// - Pull-based detection: per tick, two triggers per entity — avatar gone, stream gone — with first-match-wins.
+    /// - Pull-based detection: per tick, three triggers per entity — avatar gone, stream gone, identity blocked — with first-match-wins.
     /// - Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
     ///   <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
     /// - <see cref="ECS.LifeCycle.IFinalizeWorldSystem.FinalizeComponents"/> disposes any survivors and clears bindings.
@@ -38,6 +40,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private FakeStreamRegistry registry = null!;
         private Dictionary<StreamKey, Entity> bindings = null!;
+        private IUserBlockingCache userBlockingCache = null!;
         private readonly List<GameObject> gameObjects = new (16);
 
         [SetUp]
@@ -47,8 +50,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();
+            userBlockingCache = Substitute.For<IUserBlockingCache>();
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings);
+            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache);
         }
 
         protected override void OnTearDown()
@@ -130,6 +134,21 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(world.IsAlive(audioEntity), Is.False);
             Assert.That(source == null, Is.True);
+            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+        }
+
+        // ── Trigger #3: blocked identity ────────────────────────────
+
+        [Test]
+        public void BlockedIdentityCausesCleanup()
+        {
+            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            userBlockingCache.UserIsBlocked(PARTICIPANT_A).Returns(true);
+
+            system.Update(0);
+
+            Assert.That(world.IsAlive(audioEntity), Is.False);
+            Assert.That(source == null, Is.True, "LivekitAudioSource must be destroyed");
             Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
         }
 

@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
@@ -7,6 +8,7 @@ using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
 using System.Collections.Concurrent;
@@ -35,6 +37,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private FakeStreamRegistry registry;
         private Dictionary<StreamKey, Entity> bindings;
+        private IUserBlockingCache userBlockingCache;
 
         private VoiceChatConfiguration configuration;
 
@@ -47,9 +50,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();
+            userBlockingCache = Substitute.For<IUserBlockingCache>();
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, configuration);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, configuration);
         }
 
         protected override void OnTearDown()
@@ -168,6 +172,45 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void BlockedIdentitySkipsCreation()
+        {
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateAvatarEntity(WALLET);
+            registry.Add(WALLET, SID);
+            userBlockingCache.UserIsBlocked(WALLET).Returns(true);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "blocked identity must not allocate an audio entity");
+            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False,
+                "skipped creation must not poison the bindings index");
+        }
+
+        [Test]
+        public void UnblockReBindsOnNextTick()
+        {
+            // The registry is untouched across the block/unblock flip; binding system must
+            // re-create the audio entity once the block is lifted on the next tick.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateAvatarEntity(WALLET);
+            registry.Add(WALLET, SID);
+            userBlockingCache.UserIsBlocked(WALLET).Returns(true);
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(0), "blocked tick must not allocate");
+
+            userBlockingCache.UserIsBlocked(WALLET).Returns(false);
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(1), "unblock must re-bind on the next tick");
         }
 
         [Test]

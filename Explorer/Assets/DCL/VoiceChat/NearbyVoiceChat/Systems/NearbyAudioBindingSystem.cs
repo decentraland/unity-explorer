@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Nearby.Audio;
@@ -32,16 +33,18 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private readonly INearbyAudioStreamRegistry registry;
         private readonly Dictionary<StreamKey, Entity> bindings;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly VoiceChatConfiguration configuration;
 
         private readonly List<(Entity avatarEntity, StreamKey key)> pendingCreations = new (16);
 
         private readonly Transform sourcesRoot;
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, VoiceChatConfiguration configuration) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, VoiceChatConfiguration configuration) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
+            this.userBlockingCache = userBlockingCache;
             this.configuration = configuration;
 
             sourcesRoot = new GameObject("VoiceChatSources_Nearby").transform;
@@ -61,6 +64,11 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
+
+            // Skip blocked identities before allocating into pendingCreations — covers both
+            // "I block them" and "they block me" via UserBlockingCache. Cleanup system handles
+            // already-bound entities; this filter prevents creation in the first place.
+            if (userBlockingCache.UserIsBlocked(walletId)) return;
 
             ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(walletId);
             if (sids == null) return;
