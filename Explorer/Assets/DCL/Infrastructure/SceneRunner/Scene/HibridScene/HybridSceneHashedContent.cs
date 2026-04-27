@@ -54,7 +54,7 @@ namespace SceneRunner.Scene
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
                 //Textures are not fetched by asset bundles
-                if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
+                if (filesToGetFromLocalHost.Contains(contentPath) || IsNonConvertedAsset(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
                     resolvedContentURLs[contentPath] = (true, result);
@@ -92,7 +92,7 @@ namespace SceneRunner.Scene
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
-                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file) && !IsTexture(contentDefinition.file))
+                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file) && !IsNonConvertedAsset(contentDefinition.file))
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
             }
@@ -100,11 +100,17 @@ namespace SceneRunner.Scene
             catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
         }
 
-        private bool IsTexture(string contentDefinitionFile)
+        /// <summary>
+        ///     Files that are not converted to asset bundles and should be fetched from the local content server.
+        /// </summary>
+        private static bool IsNonConvertedAsset(string file)
         {
-            return contentDefinitionFile.EndsWith("jpg", StringComparison.OrdinalIgnoreCase) ||
-                   contentDefinitionFile.EndsWith("jpeg", StringComparison.OrdinalIgnoreCase) ||
-                   contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
+            return file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase);
         }
 
         public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory,

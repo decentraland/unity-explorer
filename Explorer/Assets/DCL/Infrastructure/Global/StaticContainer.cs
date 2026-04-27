@@ -281,7 +281,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, container.MediaContainer.mediaFactoryBuilder),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
-                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy, exposedPlayerTransform),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
