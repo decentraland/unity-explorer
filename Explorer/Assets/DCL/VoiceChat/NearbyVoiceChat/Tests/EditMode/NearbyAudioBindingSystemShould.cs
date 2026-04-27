@@ -11,11 +11,13 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 
 namespace DCL.VoiceChat.Nearby.Tests
 {
@@ -367,6 +369,12 @@ namespace DCL.VoiceChat.Nearby.Tests
                 return streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
                     ? owned.Downgrade()
                     : Weak<AudioStream>.Null;
+            }
+
+            public bool IsStreamGone(StreamKey key)
+            {
+                ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
+                return sids == null || !sids.ContainsKey(key.sid);
             }
 
             public void Dispose() { }

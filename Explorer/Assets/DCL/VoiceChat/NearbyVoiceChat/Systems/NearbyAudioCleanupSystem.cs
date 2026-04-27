@@ -33,6 +33,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     public partial class NearbyAudioCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly INearbyAudioStreamRegistry registry;
+
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;

@@ -11,11 +11,13 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
+using Object = UnityEngine.Object;
 
 namespace DCL.VoiceChat.Nearby.Tests
 {
@@ -356,6 +358,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 Weak<AudioStream>.Null;
+
+            public bool IsStreamGone(StreamKey key) =>
+                throw new NotImplementedException();
 
             public void Dispose() { }
         }
