@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -9,6 +10,7 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using DCL.LiveKit.Public;
@@ -16,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -25,22 +28,24 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly IMessagePipesHub messagePipesHub;
         private readonly MultiplayerDebugSettings settings;
-        private readonly IUserBlockingCache userBlockingCache;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesScheduler messageScheduler;
         private uint nextIncrementalId = 1;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
+
         private readonly MutexSync sync = new();
 
         public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings settings,
-            IUserBlockingCache userBlockingCache)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.messagePipesHub = messagePipesHub;
             this.settings = settings;
-            this.userBlockingCache = userBlockingCache;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
 
             messageScheduler = new EmotesScheduler();
 
@@ -57,37 +62,70 @@ namespace DCL.Multiplayer.Emotes
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
 
-        public void Send(URN emote, bool loopCyclePassed)
+        public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+            new (sync, emoteStopIntentions);
+
+        public void Send(URN emote, bool loopCyclePassed, AvatarEmoteMask mask)
         {
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
             float timestamp = Time.unscaledTime;
 
-            SendTo(emote, timestamp, messagePipesHub.IslandPipe());
-            SendTo(emote, timestamp, messagePipesHub.ScenePipe());
+            SendTo(emote, timestamp, mask, messagePipesHub.IslandPipe());
+            SendTo(emote, timestamp, mask, messagePipesHub.ScenePipe());
 
             if (settings.SelfSending)
-                SelfSendWithDelayAsync(emote, timestamp).Forget();
+                SelfSendWithDelayAsync(emote, timestamp, mask).Forget();
         }
 
         public void OnPlayerRemoved(string walletId) =>
             messageScheduler.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe)
+        private void SendTo(URN emoteId, float timestamp, AvatarEmoteMask mask, IMessagePipe messagePipe)
         {
             MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
 
             emote.Payload.IncrementalId = nextIncrementalId++;
             emote.Payload.Urn = emoteId;
             emote.Payload.Timestamp = timestamp;
+            emote.Payload.Mask = (uint)mask;
+            // Message objects are pooled/reused; ensure no stale optional fields leak from previous uses (e.g. SendStop()).
+            emote.Payload.ClearIsStopping();
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
 
-        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, AvatarEmoteMask mask)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp);
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, mask);
+        }
+
+        public void SendStop()
+        {
+            if (cancellationTokenSource.IsCancellationRequested)
+                throw new Exception("EmoteMessagesBus is disposed");
+
+            float timestamp = Time.unscaledTime;
+
+            SendStopTo(timestamp, messagePipesHub.IslandPipe());
+            SendStopTo(timestamp, messagePipesHub.ScenePipe());
+
+            if (settings.SelfSending)
+                SelfSendStopWithDelayAsync(timestamp).Forget();
+        }
+        private void SendStopTo(float timestamp, IMessagePipe messagePipe)
+        {
+            MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
+            emote.Payload.IncrementalId = nextIncrementalId++;
+            emote.Payload.Timestamp = timestamp;
+            emote.Payload.IsStopping = true;
+            emote.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
+        }
+        private async UniTaskVoid SelfSendStopWithDelayAsync(float timestamp)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
+            InboxStop(RemotePlayerMovementComponent.TEST_ID, timestamp);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -105,25 +143,43 @@ namespace DCL.Multiplayer.Emotes
                     ? receivedMessage.Payload.Timestamp
                     : Time.unscaledTime;
 
-                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp);
+                if (receivedMessage.Payload is { HasIsStopping: true, IsStopping: true })
+                {
+                    InboxStop(receivedMessage.FromWalletId, timestamp);
+                    return;
+                }
+
+                AvatarEmoteMask mask = EnumUtils.FromInt<AvatarEmoteMask>((int)receivedMessage.Payload.Mask);
+
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, timestamp, mask);
             }
         }
 
         private bool IsUserBlocked(string userAddress) =>
-            userBlockingCache.UserIsBlocked(userAddress);
+            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, float timestamp)
+        private void Inbox(string walletId, URN emoteURN, float timestamp, AvatarEmoteMask mask)
         {
             if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;
 
             using (sync.GetScope())
-                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp));
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp, mask));
         }
 
-        public void SaveForRetry(RemoteEmoteIntention intention)
+        private void InboxStop(string walletId, float timestamp)
         {
-            emoteIntentions.Add(intention);
+            if (messageScheduler.TryPass(walletId, timestamp) == false)
+                return;
+
+            using (sync.GetScope())
+                emoteStopIntentions.Add(new RemoteEmoteStopIntention(walletId, timestamp));
         }
+
+        public void SaveForRetry(RemoteEmoteIntention intention) =>
+            emoteIntentions.Add(intention);
+
+        public void SaveForRetry(RemoteEmoteStopIntention stopIntention) =>
+            emoteStopIntentions.Add(stopIntention);
     }
 }

@@ -633,7 +633,11 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
+
+            // Configure proxies for scene-side masked emote system
+            staticContainer.EmoteStorageProxy.SetObject(emotesCache);
+            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
@@ -801,7 +805,8 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
-                    trimmedEmoteCatalog),
+                    trimmedEmoteCatalog,
+                staticContainer.EmotePlayerProxy),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
