@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("DCL.Prefs.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]
