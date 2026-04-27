@@ -2910,7 +2910,7 @@ MonoBehaviour:
   m_SoftnessRange:
     m_Min: 0
     m_Max: 1
-  m_DownSamplingRate: 1
+  m_DownSamplingRate: 0
   m_AntiAliasingThreshold: 0
   m_Alpha: -1
   m_Softness: -1
