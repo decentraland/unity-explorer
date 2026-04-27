@@ -266,7 +266,7 @@ MonoBehaviour:
             performance.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 4
+        <Feature>k__BackingField: 5
     - rid: 2404945502817747083
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -285,7 +285,7 @@ MonoBehaviour:
             performance on weaker devices.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 6
     - rid: 2404945502817747084
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -303,7 +303,7 @@ MonoBehaviour:
             performance gain.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 6
+        <Feature>k__BackingField: 7
     - rid: 2404945502817747108
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -403,7 +403,7 @@ MonoBehaviour:
             improve performance.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 7
+        <Feature>k__BackingField: 8
     - rid: 2404945524685013118
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -484,7 +484,7 @@ MonoBehaviour:
             can significantly improve performance in light-heavy scenes.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 9
+        <Feature>k__BackingField: 10
     - rid: 2404945524685013200
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -501,7 +501,7 @@ MonoBehaviour:
             Disable this to remove the effect and gain a minor performance improvement.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 13
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -586,7 +586,7 @@ MonoBehaviour:
             automatically.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 14
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -792,7 +792,7 @@ MonoBehaviour:
             or windowed.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 10
+        <Feature>k__BackingField: 11
     - rid: 7533463652475600993
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -809,4 +809,4 @@ MonoBehaviour:
             play or even the closeby scenes will
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 12

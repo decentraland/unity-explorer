@@ -27,24 +27,25 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public class ToggleModuleBinding : SettingsModuleBinding<SettingsToggleModuleView, SettingsToggleModuleView.Config, ToggleModuleBinding.ToggleFeatures>
     {
+        // Values are persisted as ints in SettingsMenuConfiguration.asset.
+        // Never renumber or reuse a value; new entries must pick the next unused integer.
         public enum ToggleFeatures
         {
-            CHAT_SOUNDS_FEATURE,
-            GRAPHICS_VSYNC_TOGGLE_FEATURE,
-            HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE,
-            HEAD_SYNC_FEATURE,
-            CHAT_REACTIONS_ENABLED_FEATURE,
-            HDR_FEATURE,
-            BLOOM_FEATURE,
-            AVATAR_OUTLINE_FEATURE,
-            SUN_SHADOWS_FEATURE,
-            SCENE_SHADOWS_FEATURE,
-            SCENE_LIGHTS_FEATURE,
-            FULLSCREEN_FEATURE,
-            PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE,
-            SUN_LENS_FLARE_FEATURE,
-            DOUBLE_TAP_TO_MOVE
-            // add other features...
+            CHAT_SOUNDS_FEATURE = 0,
+            GRAPHICS_VSYNC_TOGGLE_FEATURE = 1,
+            HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE = 2,
+            HEAD_SYNC_FEATURE = 3,
+            CHAT_REACTIONS_ENABLED_FEATURE = 4,
+            HDR_FEATURE = 5,
+            BLOOM_FEATURE = 6,
+            AVATAR_OUTLINE_FEATURE = 7,
+            SUN_SHADOWS_FEATURE = 8,
+            SCENE_SHADOWS_FEATURE = 9,
+            SCENE_LIGHTS_FEATURE = 10,
+            FULLSCREEN_FEATURE = 11,
+            PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE = 12,
+            SUN_LENS_FLARE_FEATURE = 13,
+            DOUBLE_TAP_TO_MOVE = 14,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
