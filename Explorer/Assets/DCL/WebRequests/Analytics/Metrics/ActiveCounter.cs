@@ -94,6 +94,8 @@ namespace DCL.WebRequests.Analytics.Metrics
                 Request = request.UnityWebRequest,
                 StartTime = startTime,
                 ShortenedUrl = shortenedURL,
+                FullUrl = fullURL,
+                Method = request.UnityWebRequest.method,
                 Duration = 0,
             });
         }

@@ -39,10 +39,10 @@ namespace DCL.Chat.MessageBus
         public void Send(ChatChannel channel, string message, ChatMessageOrigin origin, double timestamp)
         {
             this.origin.Send(channel, message, origin, timestamp);
-            SendSelf(channel, message);
+            SendSelf(channel, message, timestamp);
         }
 
-        private void SendSelf(ChatChannel channel, string chatMessage)
+        private void SendSelf(ChatChannel channel, string chatMessage, double timestamp)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
@@ -52,7 +52,9 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, DateTime.UtcNow.ToOADate());
+            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, timestamp);
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[SelfResend] LOCAL copy: timestamp={timestamp} messageId={newMessage.MessageId}");
 
             MessageAdded?.Invoke(channel.Id, channel.ChannelType, newMessage);
         }

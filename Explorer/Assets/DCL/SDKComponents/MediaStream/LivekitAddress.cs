@@ -28,29 +28,15 @@ namespace DCL.SDKComponents.MediaStream
             raw;
     }
 
-    public readonly struct PresentationBotStream
-    {
-        public readonly string Identity;
-        public readonly string Sid;
-
-        public PresentationBotStream(string identity, string sid)
-        {
-            this.Identity = identity;
-            this.Sid = sid;
-        }
-    }
-
     [REnum]
     [REnumField(typeof(UserStream))]
-    [REnumField(typeof(PresentationBotStream))]
     [REnumFieldEmpty("CurrentStream")]
     public partial struct LivekitAddress
     {
         public static readonly LivekitAddress EMPTY = CurrentStream();
 
         public bool IsEmpty => Match(
-            onUserStream: static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
-            onPresentationBotStream: static bot => string.IsNullOrEmpty(bot.Identity) || string.IsNullOrEmpty(bot.Sid),
+            static stream => string.IsNullOrEmpty(stream.Identity) || string.IsNullOrEmpty(stream.Sid),
             onCurrentStream: static () => string.IsNullOrEmpty(LiveKitMediaExtensions.LIVEKIT_CURRENT_STREAM)
         );
 

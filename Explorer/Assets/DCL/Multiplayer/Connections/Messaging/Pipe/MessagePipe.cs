@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
-            }),
+            }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
@@ -204,6 +204,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.MovementCompressed => (packet.MovementCompressed as T).EnsureNotNull(),
                 Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.Reaction => (packet.Reaction as T).EnsureNotNull(),
+                Packet.MessageOneofCase.ChatReaction => (packet.ChatReaction as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => null,
                 _ => null,
             };

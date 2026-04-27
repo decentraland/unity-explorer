@@ -206,9 +206,9 @@ namespace DCL.SDKComponents.MediaStream
                     return;
             }
 
-            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer))
             {
-                if (livekitPlayer != null && !livekitPlayer.IsVideoOpened)
+                if (!livekitPlayer.IsVideoOpened)
                 {
                     RenderBlackTexture(ref assignedTexture);
                     return;
