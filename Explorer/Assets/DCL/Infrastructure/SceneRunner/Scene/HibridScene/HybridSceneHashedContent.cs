@@ -108,8 +108,6 @@ namespace SceneRunner.Scene
                 foreach (string localFile in fileToHash.Keys)
                     if (!remoteFiles.Contains(localFile))
                         filesToGetFromLocalHost.Add(localFile);
-
-                HashSetPool<string>.Release(remoteFiles);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
