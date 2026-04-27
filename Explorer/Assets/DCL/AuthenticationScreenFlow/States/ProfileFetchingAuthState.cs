@@ -19,10 +19,13 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class ProfileFetchingAuthState : AuthStateBase, IPayloadedState<ProfileFetchingPayload>
     {
+        private static readonly TimeSpan PROFILE_FETCH_TIMEOUT = TimeSpan.FromSeconds(15);
+
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache identityCache;
         private readonly ProfileFetchingAuthView view;
         private Exception? profileFetchException;
 
@@ -31,13 +34,15 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState,
-            ISelfProfile selfProfile) : base(viewInstance)
+            ISelfProfile selfProfile,
+            IWeb3IdentityCache identityCache) : base(viewInstance)
         {
             view = viewInstance.ProfileFetchingAuthView;
             this.machine = machine;
             this.controller = controller;
             this.currentState = currentState;
             this.selfProfile = selfProfile;
+            this.identityCache = identityCache;
         }
 
         public void Enter(ProfileFetchingPayload payload)
@@ -64,6 +69,7 @@ namespace DCL.AuthenticationScreenFlow
                                     OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
                                     ProfileNotFoundException ex => new SpanErrorInfo($"Profile not found during {nameof(ProfileFetchingAuthState)}", ex),
                                     NotAllowedUserException ex => new SpanErrorInfo(ex.Message, ex),
+                                    TimeoutException ex => new SpanErrorInfo($"Profile fetch timed out during {nameof(ProfileFetchingAuthState)}", ex),
                                     Exception ex => new SpanErrorInfo($"Unexpected error during {nameof(ProfileFetchingAuthState)}", ex),
                                 };
 
@@ -103,7 +109,8 @@ namespace DCL.AuthenticationScreenFlow
                         Depth =  STATE_SPAN_DEPTH + 1,
                     });
 
-                    Profile? profile = await selfProfile.ProfileAsync(ct);
+                    // Timeout surfaces catalyst stalls as CONNECTION_ERROR instead of a frozen spinner.
+                    Profile? profile = await selfProfile.ProfileAsync(ct).Timeout(PROFILE_FETCH_TIMEOUT);
 
                     if (profile != null)
                     {
@@ -112,6 +119,13 @@ namespace DCL.AuthenticationScreenFlow
                         // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
                         profile.HasConnectedWeb3 = true;
                         machine.Enter<LobbyForExistingAccountAuthState, (Profile, bool, CancellationToken)>((profile, isCached, ct));
+                    }
+                    else if (isCached)
+                    {
+                        // Auto-login restored an identity that has no deployed profile (abandoned onboarding). Clear it and return to login selection.
+                        identityCache.Clear();
+                        profileFetchException = new ProfileNotFoundException();
+                        machine.Enter<LoginSelectionAuthState, int>(SLIDE);
                     }
                     else
                     {
@@ -128,6 +142,11 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     profileFetchException = e;
                     machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+                }
+                catch (TimeoutException e)
+                {
+                    profileFetchException = e;
+                    machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
                 }
                 catch (Exception e)
                 {

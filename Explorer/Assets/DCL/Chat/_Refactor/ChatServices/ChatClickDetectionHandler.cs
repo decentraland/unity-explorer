@@ -76,6 +76,10 @@ namespace DCL.Chat.ChatServices
                 OnClickOutside?.Invoke();
         }
 
+        public void AddIgnoredTransform(Transform t) => ignoredElementsSet.Add(t);
+
+        public void RemoveIgnoredTransform(Transform t) => ignoredElementsSet.Remove(t);
+
         private bool IsIgnored(GameObject clickedObject)
         {
             if (!clickedObject) return false;

@@ -14,6 +14,8 @@ namespace DCL.Chat.ChatStates
 
         public virtual void OnFocusRequested() { }
 
+        public virtual void OnBlurRequested() { }
+
         public virtual void OnMinimizeRequested() { }
 
         public virtual void OnToggleMembers() { }

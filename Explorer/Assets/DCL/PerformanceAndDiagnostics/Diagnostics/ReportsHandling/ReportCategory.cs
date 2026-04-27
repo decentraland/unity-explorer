@@ -80,6 +80,11 @@ namespace DCL.Diagnostics
         public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
+        ///     COMMS Api
+        /// </summary>
+        public const string COMMS_API = nameof(COMMS_API);
+
+        /// <summary>
         ///     Chat livekit requests
         /// </summary>
         public const string COMMS_CHAT_HANDLER = nameof(COMMS_CHAT_HANDLER);

@@ -17,11 +17,8 @@ namespace DCL.Multiplayer.Emotes
         {
             if (lastProcessedTimestamps.TryGetValue(walletId, out float storedTimestamp))
             {
-                if (timestamp < storedTimestamp)
-                    return false;
-
                 lastProcessedTimestamps[walletId] = timestamp;
-                return true;
+                return timestamp > storedTimestamp;
             }
 
             lastProcessedTimestamps.Add(walletId, timestamp);
