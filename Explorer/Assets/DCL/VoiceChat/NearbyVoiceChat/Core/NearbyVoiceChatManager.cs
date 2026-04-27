@@ -31,7 +31,6 @@ namespace DCL.VoiceChat
         private readonly IRoom islandRoom;
 
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly NearbyMuteService muteService;
 
         private readonly MicrophoneTrackPublisher micPublisher;
 
@@ -49,13 +48,11 @@ namespace DCL.VoiceChat
             VoiceChatConfiguration configuration,
             IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
             NearbyVoiceChatStateModel stateModel,
-            NearbyMuteService muteService,
             ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
-            this.muteService = muteService;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
@@ -66,8 +63,6 @@ namespace DCL.VoiceChat
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
-
-            muteService.MuteStateChanged += OnMuteStateChanged;
 
             // Suppress while world is still loading so we do not attempt to connect before the player spawns.
             // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
@@ -89,8 +84,6 @@ namespace DCL.VoiceChat
             callStatusSubscription.Dispose();
             loadingStageSubscription.Dispose();
             nearbyStateSubscription?.Dispose();
-
-            muteService.MuteStateChanged -= OnMuteStateChanged;
 
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
@@ -264,10 +257,6 @@ namespace DCL.VoiceChat
                 }
             }
         }
-
-        // Mute integration with the ECS pipeline lands in a follow-up PR (PRD §Mute / block integration).
-        // Block teardown is owned by NearbyAudioCleanupSystem (pull-based via IUserBlockingCache).
-        private void OnMuteStateChanged(string walletId, bool isMuted) { }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)
         {

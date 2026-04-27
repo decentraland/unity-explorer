@@ -3,10 +3,12 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
 using DCL.Character.Components;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
@@ -35,6 +37,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private Entity cameraEntity;
         private Entity playerEntity;
+        private INearbyMuteCache muteCache = null!;
+        private NearbyMuteService muteService = null!;
 
         [SetUp]
         public void SetUp()
@@ -48,7 +52,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             var playerGo = CreateTrackedGameObject("TestPlayer");
             playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world);
+            muteCache = Substitute.For<INearbyMuteCache>();
+            muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
+
+            system = new NearbyAudioPositionSystem(world, muteService);
             system.Initialize();
         }
 
@@ -107,6 +114,72 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(audioSource.transform.position.x, Is.EqualTo(expected.x).Within(0.01f));
             Assert.That(audioSource.transform.position.y, Is.EqualTo(expected.y).Within(0.01f));
             Assert.That(audioSource.transform.position.z, Is.EqualTo(expected.z).Within(0.01f));
+        }
+
+        // ── Mute Per-Frame ──────────────────────────────────────────
+
+        [Test]
+        public void MutedIdentityHasMutedAudioSource()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.mute = false;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.IsMuted(PARTICIPANT_A).Returns(true);
+
+            system.Update(0);
+
+            Assert.That(lkSource.AudioSource.mute, Is.True);
+        }
+
+        [Test]
+        public void MuteToggleIsSelfHealing()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.mute = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            // muted → tick → muted
+            muteCache.IsMuted(PARTICIPANT_A).Returns(true);
+            system.Update(0);
+            Assert.That(lkSource.AudioSource.mute, Is.True, "Expected mute=true after first tick");
+
+            // flip to unmuted → tick → unmuted (no edge-trigger gating)
+            muteCache.IsMuted(PARTICIPANT_A).Returns(false);
+            system.Update(0);
+            Assert.That(lkSource.AudioSource.mute, Is.False, "Expected mute=false after toggle to unmuted");
+
+            // flip back to muted → tick → muted (per-frame, not one-shot)
+            muteCache.IsMuted(PARTICIPANT_A).Returns(true);
+            system.Update(0);
+            Assert.That(lkSource.AudioSource.mute, Is.True, "Expected mute=true after toggle back");
+        }
+
+        [Test]
+        public void UnmutedIdentityHasUnmutedAudioSource()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            // Start muted as the binding system would — first successful tick must release it.
+            lkSource.AudioSource.mute = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.IsMuted(PARTICIPANT_A).Returns(false);
+
+            system.Update(0);
+
+            Assert.That(lkSource.AudioSource.mute, Is.False);
         }
 
         // ── Helpers ─────────────────────────────────────────────────

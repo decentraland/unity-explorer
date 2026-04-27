@@ -16,19 +16,27 @@ namespace DCL.VoiceChat.Nearby.Systems
     /// <summary>
     ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
     ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
+    ///     Per-frame mute enforcement: <see cref="NearbyMuteService.IsMuted"/> is queried for every audio entity
+    ///     and written to <see cref="AudioSource.mute"/>. This is self-healing on toggle (no event plumbing) and
+    ///     subsumes the old "first-sync unmute" hack — the binding system starts with <c>mute = true</c> so the
+    ///     first successful tick recomputes it (avoids the world-origin burst between <c>Play()</c> and sync).
     ///     Carries no lifecycle responsibility — structural changes for audio entities are owned by
-    ///     <see cref="NearbyAudioCleanupSystem"/>. One-frame stale reads (linked avatar gone for one tick) are
-    ///     acceptable because the start-mute pattern keeps audio inaudible until the first successful sync.
+    ///     <see cref="NearbyAudioCleanupSystem"/>.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
+        private readonly NearbyMuteService muteService;
+
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
         private bool isFirstPerson;
 
-        internal NearbyAudioPositionSystem(World world) : base(world) { }
+        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService) : base(world)
+        {
+            this.muteService = muteService;
+        }
 
         public override void Initialize()
         {
@@ -76,9 +84,9 @@ namespace DCL.VoiceChat.Nearby.Systems
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
             nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
 
-            // First successful position sync — release the start-mute set in NearbyAudioBindingSystem.
-            if (nearbyAudio.LivekitAudioSource.AudioSource.mute)
-                nearbyAudio.LivekitAudioSource.AudioSource.mute = false;
+            // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute
+            // on first successful tick (when IsMuted returns false).
+            nearbyAudio.LivekitAudioSource.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
         }
 
         private static (float azimuth, float elevation) CalculateSpatialAngles(Transform listenerTransform, Vector3 sourcePosition)

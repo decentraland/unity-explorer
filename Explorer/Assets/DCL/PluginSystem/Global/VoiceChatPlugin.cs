@@ -151,7 +151,7 @@ namespace DCL.PluginSystem.Global
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
                 NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, voiceChatConfiguration);
-                NearbyAudioPositionSystem.InjectToWorld(ref builder);
+                NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!);
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!);
                 NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
@@ -236,7 +236,7 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, nearbyMuteService, loadingStatus);
+                    nearbyStateModel, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyNametagsHandler = new NearbyVoiceChatNametagsHandler(

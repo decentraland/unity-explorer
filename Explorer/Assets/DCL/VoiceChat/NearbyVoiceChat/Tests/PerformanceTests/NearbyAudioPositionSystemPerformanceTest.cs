@@ -3,10 +3,12 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
 using DCL.Character.Components;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
@@ -42,7 +44,8 @@ namespace DCL.VoiceChat.Nearby
             playerGo.transform.position = new Vector3(0, 1.6f, 0);
             world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world);
+            var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
+            system = new NearbyAudioPositionSystem(world, muteService);
             system.Initialize();
         }
 
