@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Jobs;
+using Utility;
 
 namespace DCL.SpringBones
 {
@@ -29,6 +30,12 @@ namespace DCL.SpringBones
         NativeArray<bool> slotActive;
         NativeArray<bool> slotWasActive;
         bool disposed;
+
+#if UNITY_INCLUDE_TESTS
+        public int SlotCapacity => slotCapacity;
+        public int FreeSlotsCount => freeSlots.Count;
+        public bool IsDisposed => disposed;
+#endif
 
         public SpringBoneService()
         {
@@ -293,8 +300,7 @@ namespace DCL.SpringBones
             if (slotWasActive.IsCreated) slotWasActive.Dispose();
             if (taa.isCreated) taa.Dispose();
 
-            if (dummyTransform != null)
-                UnityEngine.Object.Destroy(dummyTransform.gameObject);
+            UnityObjectUtils.SafeDestroyGameObject(dummyTransform);
         }
     }
 }
