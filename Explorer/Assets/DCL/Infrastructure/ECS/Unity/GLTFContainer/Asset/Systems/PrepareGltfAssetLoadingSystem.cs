@@ -10,8 +10,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using SceneRunner.Scene;
 using UnityEngine;
-using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -24,17 +24,22 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.sceneData = sceneData;
             this.options = options;
         }
 
         protected override void Update(float t)
         {
             PrepareQuery(World);
+
+            if (options is {LocalSceneDevelopment: true, UseRemoteAssetBundles: true })
+                FallbackToRawGltfQuery(World);
         }
 
         [Query]
@@ -51,19 +56,32 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoveAssetBundles: false };
+            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoteAssetBundles: false };
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
         }
 
+        /// <summary>
+        ///     AB loading failed in LSD mode — fall back to loading raw GLTF from the local content server.
+        /// </summary>
+        [Query]
+        [None(typeof(GetGLTFIntention))]
+        private void FallbackToRawGltf(in Entity entity, ref GetGltfContainerAssetIntention intention, ref StreamableLoadingResult<GltfContainerAsset> result)
+        {
+            if (result.Succeeded) return;
+
+            // Tried to load remotely, the AB is missing, then try to load locally
+            sceneData.SceneContent.SwitchToLocal(intention.Name);
+            World.Remove<StreamableLoadingResult<GltfContainerAsset>>(entity);
+            World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
+        }
+
         public struct Options
         {
             public bool LocalSceneDevelopment;
-
-            public bool UseRemoveAssetBundles;
-
+            public bool UseRemoteAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

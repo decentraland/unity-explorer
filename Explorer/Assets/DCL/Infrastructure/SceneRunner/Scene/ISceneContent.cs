@@ -9,5 +9,7 @@ namespace SceneRunner.Scene
         bool TryGetContentUrl(string contentPath, out URLAddress result);
 
         bool TryGetHash(string name, out string hash);
+
+        void SwitchToLocal(string contentPath) { }
     }
 }

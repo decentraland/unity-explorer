@@ -73,9 +73,13 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetHash(string name, out string hash)
+        public bool TryGetHash(string name, out string hash) =>
+            fileToHash.TryGetValue(name, out hash);
+
+        public void SwitchToLocal(string contentPath)
         {
-            return fileToHash.TryGetValue(name, out hash);
+            filesToGetFromLocalHost.Add(contentPath);
+            resolvedContentURLs.Remove(contentPath);
         }
 
         public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
