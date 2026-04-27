@@ -25,7 +25,7 @@ namespace SceneRunner.Scene
 
         private readonly URLDomain abDomain;
 
-        private readonly HashSet<string> filesToGetFromLocalHost = new ()
+        private readonly HashSet<string> filesToGetFromLocalHost = new (StringComparer.OrdinalIgnoreCase)
         {
             "scene.json", "main.crdt"
         };
