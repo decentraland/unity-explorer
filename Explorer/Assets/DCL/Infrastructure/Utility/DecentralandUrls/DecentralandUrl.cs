@@ -144,5 +144,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         SocialServiceMutes = 87,
 
         SceneAdmins = 88,
+
+        Gatekeeper = 89,
     }
 }
