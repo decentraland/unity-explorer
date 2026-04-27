@@ -75,26 +75,21 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void FlagDeadAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
         {
             // Listening-gate trigger fires for every entity unconditionally — checked first as the cheapest predicate.
-            if (IsListeningDisabled() || IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
+            if (stateModel.IsListeningDisabled || userBlockingCache.UserIsBlocked(comp.Key.identity) ||
+                registry.IsStreamGone(comp.Key) || IsAvatarGone(comp.AvatarEntity))
+            {
                 entitiesToCleanUp.Add(audioEntity);
-        }
+            }
 
-        private bool IsListeningDisabled() =>
-            stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED;
+            return;
+            bool IsAvatarGone(Entity avatarEntity) =>
+                !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity) || !World.Has<AvatarBase>(avatarEntity);
+        }
 
         [Query]
         private void CollectAllAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent _)
         {
             entitiesToCleanUp.Add(audioEntity);
-        }
-
-        private bool IsAvatarGone(Entity avatarEntity) =>
-            !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity) || !World.Has<AvatarBase>(avatarEntity);
-
-        private bool IsStreamGone(StreamKey key)
-        {
-            ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(key.identity);
-            return sids == null || !sids.ContainsKey(key.sid);
         }
 
         private void TearDown(Entity audioEntity)

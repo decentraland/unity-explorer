@@ -23,5 +23,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         /// reads Unity audio settings and performs a synchronous FFI request.
         /// </summary>
         Weak<AudioStream> GetActiveStream(StreamKey key);
+
+        bool IsStreamGone(StreamKey key);
     }
 }

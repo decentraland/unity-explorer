@@ -62,6 +62,12 @@ namespace DCL.VoiceChat.Nearby.Audio
         public Weak<AudioStream> GetActiveStream(StreamKey key) =>
             room.AudioStreams.ActiveStream(key);
 
+        public bool IsStreamGone(StreamKey key)
+        {
+            ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
+            return sids == null || !sids.ContainsKey(key.sid);
+        }
+
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
         {
             if (update == ConnectionUpdate.Disconnected)

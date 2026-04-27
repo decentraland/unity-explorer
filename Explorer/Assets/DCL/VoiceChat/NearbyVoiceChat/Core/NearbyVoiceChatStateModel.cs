@@ -44,6 +44,8 @@ namespace DCL.VoiceChat.Nearby
             set => isLocalSpeaking = value;
         }
 
+        public bool IsListeningDisabled => state.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED;
+
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
             state = new ReactiveProperty<NearbyVoiceChatState>(initialState);

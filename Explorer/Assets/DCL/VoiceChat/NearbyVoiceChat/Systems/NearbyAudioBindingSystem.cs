@@ -58,14 +58,11 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // Listening gate: skip the entire avatar query when nearby chat is SUPPRESSED or DISABLED.
             // Cleanup system handles the symmetric teardown of any already-bound entities.
-            if (!IsListeningEnabled()) return;
+            if (stateModel.IsListeningDisabled) return;
 
             CollectPendingCreationsQuery(World);
             DrainPendingCreations();
         }
-
-        private bool IsListeningEnabled() =>
-            stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC;
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -121,7 +118,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             LivekitAudioSource lkSource = LivekitAudioSource.New(true, isSpatial: true);
             lkSource.Construct(stream);
 
-            AudioMixerGroup? mixerGroup = configuration.ChatAudioMixerGroup;
+            AudioMixerGroup mixerGroup = configuration.ChatAudioMixerGroup;
             AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
             audioSource.outputAudioMixerGroup = mixerGroup;
             audioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
