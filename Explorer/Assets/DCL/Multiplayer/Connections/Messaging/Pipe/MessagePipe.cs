@@ -80,6 +80,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
             }
+            catch (InvalidProtocolBufferException)
+            {
+                // Defensive fallback for non-DCL participants that publish non-protobuf data
+                // on the shared IDataPipe. DCL clients (including cast2) speak protobuf, and
+                // CommsApi traffic routes via MsgType.CommsData — neither reaches here.
+            }
             catch (Exception e)
             {
                 ReportHub.LogError(
