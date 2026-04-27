@@ -1,0 +1,110 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.VoiceChat.Nearby.Audio;
+using ECS.Abstract;
+using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
+using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using Utility;
+
+namespace DCL.VoiceChat.Nearby.Systems
+{
+    /// <summary>
+    ///     Single owner of structural changes for Nearby audio-source entities.
+    ///     Per tick scans all audio entities and tears them down on either:
+    ///     - <b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead, flagged with
+    ///       <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>;
+    ///     - <b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.
+    ///     Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
+    ///     <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
+    ///     Implements <see cref="IFinalizeWorldSystem"/> to dispose any survivors at world finalization.
+    /// </summary>
+    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateAfter(typeof(NearbyAudioPositionSystem))]
+    public partial class NearbyAudioCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    {
+        private readonly INearbyAudioStreamRegistry registry;
+        private readonly Dictionary<StreamKey, Entity> bindings;
+        private readonly List<Entity> entitiesToCleanUp = new (16);
+
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings) : base(world)
+        {
+            this.registry = registry;
+            this.bindings = bindings;
+        }
+
+        protected override void Update(float t)
+        {
+            entitiesToCleanUp.Clear();
+            FlagDeadAudioEntitiesQuery(World);
+
+            // Structural changes only after the query has released all ref/in/out reads — see CLAUDE.md §5.
+            foreach (Entity audioEntity in entitiesToCleanUp)
+                TearDown(audioEntity);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            entitiesToCleanUp.Clear();
+            CollectAllAudioEntitiesQuery(World);
+
+            foreach (Entity audioEntity in entitiesToCleanUp)
+                DisposeSourceOnly(audioEntity);
+
+            bindings.Clear();
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void FlagDeadAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
+        {
+            if (IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key))
+                entitiesToCleanUp.Add(audioEntity);
+        }
+
+        [Query]
+        private void CollectAllAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent _)
+        {
+            entitiesToCleanUp.Add(audioEntity);
+        }
+
+        private bool IsAvatarGone(Entity avatarEntity) =>
+            !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity) || !World.Has<AvatarBase>(avatarEntity);
+
+        private bool IsStreamGone(StreamKey key)
+        {
+            ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(key.identity);
+            return sids == null || !sids.ContainsKey(key.sid);
+        }
+
+        private void TearDown(Entity audioEntity)
+        {
+            NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
+            DisposeSource(comp.LivekitAudioSource);
+            bindings.Remove(comp.Key);
+            World.Destroy(audioEntity);
+        }
+
+        private void DisposeSourceOnly(Entity audioEntity)
+        {
+            NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
+            DisposeSource(comp.LivekitAudioSource);
+        }
+
+        private static void DisposeSource(LivekitAudioSource? source)
+        {
+            if (source != null)
+            {
+                source.Stop();
+                source.Free();
+                UnityObjectUtils.SafeDestroyGameObject(source);
+            }
+        }
+    }
+}

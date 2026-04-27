@@ -6,28 +6,24 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using LiveKit.Rooms.Streaming.Audio;
-using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/> and
-    ///     drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
-    ///     Defensively flags audio-source entities for cleanup when the linked avatar lost its <see cref="AvatarBase"/>
-    ///     or its <see cref="Profile.UserId"/> drifted away from the bound <see cref="StreamKey"/>.
+    ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
+    ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
+    ///     Carries no lifecycle responsibility — structural changes for audio entities are owned by
+    ///     <see cref="NearbyAudioCleanupSystem"/>. One-frame stale reads (linked avatar gone for one tick) are
+    ///     acceptable because the start-mute pattern keeps audio inaudible until the first successful sync.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
-        private readonly List<Entity> entitiesToCleanUp = new (4);
-
         private SingleInstanceEntity cameraEntity;
         private SingleInstanceEntity playerEntity;
         private bool isFirstPerson;
@@ -42,16 +38,10 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            entitiesToCleanUp.Clear();
-
             // The AudioListener is on the camera, but spatial gain should be relative to the player's head.
             // In ThirdPerson these positions differ, so we track both to reproject remote sources before applying spatial audio.
             (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
             SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
-
-            // Structural changes only after all ref/in/out reads have released — see CLAUDE.md §5.
-            foreach (Entity entity in entitiesToCleanUp)
-                World.Destroy(entity);
         }
 
         private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
@@ -69,27 +59,13 @@ namespace DCL.VoiceChat.Nearby.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos,
-            Entity audioEntity, ref NearbyAudioSourceComponent nearbyAudio)
+            ref NearbyAudioSourceComponent nearbyAudio)
         {
-            if (nearbyAudio.LivekitAudioSource == null)
-            {
-                entitiesToCleanUp.Add(audioEntity);
+            // Defensive against the one-frame race window between an upstream system invalidating the avatar
+            // and NearbyAudioCleanupSystem running. Either branch leaves the audio source at its previous position;
+            // the start-mute keeps it inaudible until the first successful sync.
+            if (!World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase) || avatarBase == null)
                 return;
-            }
-
-            Entity avatarEntity = nearbyAudio.AvatarEntity;
-
-            if (!World.IsAlive(avatarEntity)
-                || World.Has<DeleteEntityIntention>(avatarEntity)
-                || !World.TryGet(avatarEntity, out Profile? profile)
-                || profile == null
-                || profile.UserId != nearbyAudio.Key.identity
-                || !World.TryGet(avatarEntity, out AvatarBase? avatarBase)
-                || avatarBase == null)
-            {
-                entitiesToCleanUp.Add(audioEntity);
-                return;
-            }
 
             Vector3 remoteAvatarHeadPos = avatarBase.HeadAnchorPoint.position;
 

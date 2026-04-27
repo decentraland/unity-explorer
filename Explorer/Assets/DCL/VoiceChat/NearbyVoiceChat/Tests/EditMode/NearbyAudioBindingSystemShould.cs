@@ -34,6 +34,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry;
+        private Dictionary<StreamKey, Entity> bindings;
+
         private VoiceChatConfiguration configuration;
 
         private readonly List<GameObject> gameObjects = new (32);
@@ -44,17 +46,33 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
+            bindings = new Dictionary<StreamKey, Entity>();
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
 
-            system = new NearbyAudioBindingSystem(world, registry, configuration);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, configuration);
         }
 
         protected override void OnTearDown()
         {
+            // Reap LivekitAudioSource instances spawned inside the system itself (parented to its private
+            // sourcesRoot, not tracked in our gameObjects list). Leaving them alive across tests is fatal:
+            // Unity keeps invoking OnAudioFilterRead on the audio thread, and by then the underlying world,
+            // stream, and registry have been torn down — producing NREs on a foreign thread.
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (src == null) continue;
+
+                src.Stop();
+                src.Free();
+                Object.DestroyImmediate(src.gameObject);
+            }
+
             foreach (GameObject go in gameObjects)
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
+
+            bindings.Clear();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
 
@@ -152,6 +170,26 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(CountAudioEntities(), Is.EqualTo(0));
         }
 
+        [Test]
+        public void RaceOnSpawnSkipsCreation()
+        {
+            // The track was unsubscribed between GetAudioSids (collection pass) and GetActiveStream (resolve step).
+            // The binding system must observe Weak<AudioStream>.Null and skip creation rather than spawn a ghost source.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateAvatarEntity(WALLET);
+            registry.Add(WALLET, SID);
+            registry.MarkStreamAsUnsubscribed(WALLET, SID);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "Weak<AudioStream>.Null on resolve must not create an audio entity");
+            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False,
+                "skipped creation must not poison the bindings index");
+        }
+
         // ── Helpers ─────────────────────────────────────────────────
 
         private int CountAudioEntities() =>
@@ -188,6 +226,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
             private readonly Dictionary<string, ConcurrentDictionary<string, byte>> sidsByIdentity = new ();
+            private readonly Dictionary<StreamKey, Owned<AudioStream>> streamsByKey = new ();
+            private readonly HashSet<StreamKey> unsubscribed = new ();
 
             public void Add(string walletId, string sid)
             {
@@ -198,13 +238,30 @@ namespace DCL.VoiceChat.Nearby.Tests
                 }
 
                 sids.TryAdd(sid, 0);
+
+                var key = new StreamKey(walletId, sid);
+                if (!streamsByKey.ContainsKey(key))
+                    streamsByKey[key] = new Owned<AudioStream>(null!);
             }
+
+            /// <summary>
+            /// Simulates the race window where the registry still reports the sid in <see cref="GetAudioSids"/>
+            /// but the underlying track was unsubscribed before <see cref="GetActiveStream"/> was called.
+            /// </summary>
+            public void MarkStreamAsUnsubscribed(string walletId, string sid) =>
+                unsubscribed.Add(new StreamKey(walletId, sid));
 
             public ConcurrentDictionary<string, byte>? GetAudioSids(string walletId) =>
                 sidsByIdentity.TryGetValue(walletId, out var sids) ? sids : null;
 
-            public Weak<AudioStream> GetActiveStream(StreamKey key) =>
-                Weak<AudioStream>.Null;
+            public Weak<AudioStream> GetActiveStream(StreamKey key)
+            {
+                if (unsubscribed.Contains(key)) return Weak<AudioStream>.Null;
+
+                return streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
+                    ? owned.Downgrade()
+                    : Weak<AudioStream>.Null;
+            }
 
             public void Dispose() { }
         }

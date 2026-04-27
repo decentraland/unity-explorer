@@ -31,16 +31,17 @@ namespace DCL.VoiceChat.Nearby.Systems
         internal const int MAX_CREATIONS_PER_FRAME = 10;
 
         private readonly INearbyAudioStreamRegistry registry;
+        private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly VoiceChatConfiguration configuration;
 
-        private readonly Dictionary<StreamKey, Entity> bindings = new (32);
         private readonly List<(Entity avatarEntity, StreamKey key)> pendingCreations = new (16);
 
         private readonly Transform sourcesRoot;
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, VoiceChatConfiguration configuration) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, VoiceChatConfiguration configuration) : base(world)
         {
             this.registry = registry;
+            this.bindings = bindings;
             this.configuration = configuration;
 
             sourcesRoot = new GameObject("VoiceChatSources_Nearby").transform;
@@ -83,10 +84,16 @@ namespace DCL.VoiceChat.Nearby.Systems
                 if (bindings.ContainsKey(key)) continue;
 
                 Weak<AudioStream> stream = registry.GetActiveStream(key);
+
+                // Race on spawn: the track was unsubscribed between GetAudioSids (collection pass) and GetActiveStream
+                // (resolve step). Skipping here avoids a one-frame ghost LivekitAudioSource that the cleanup system
+                // would otherwise reap on the next tick — see PRD-cleanup §"race-on-spawn guard".
+                if (!stream.Resource.Has) continue;
+
                 LivekitAudioSource source = CreateAndPlaySource(key, stream);
 
                 Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-                bindings[key] = audioEntity;
+                bindings.Add(key, audioEntity);
                 budget--;
             }
         }

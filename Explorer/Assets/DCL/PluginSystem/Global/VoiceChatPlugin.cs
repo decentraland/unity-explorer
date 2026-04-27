@@ -18,10 +18,12 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using DCL.UI;
 using DCL.Utilities;
@@ -75,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyAudioStreamRegistry? nearbyAudioStreamRegistry;
+        private Dictionary<StreamKey, Entity>? nearbyAudioBindings;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatNametagsHandler? nearbyNametagsHandler;
         private NearbyVoiceChatStateModel? nearbyStateModel;
@@ -147,8 +150,9 @@ namespace DCL.PluginSystem.Global
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, voiceChatConfiguration);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, voiceChatConfiguration);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder);
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!);
                 NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }
@@ -207,6 +211,8 @@ namespace DCL.PluginSystem.Global
 
                 nearbyAudioStreamRegistry = new NearbyAudioStreamRegistry(islandRoom);
                 pluginScope.Add(nearbyAudioStreamRegistry);
+
+                nearbyAudioBindings = new Dictionary<StreamKey, Entity>(32);
 
                 NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
                     ? NearbyVoiceChatState.DISABLED
