@@ -41,6 +41,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private FakeStreamRegistry registry = null!;
         private Dictionary<StreamKey, Entity> bindings = null!;
         private IUserBlockingCache userBlockingCache = null!;
+        private NearbyVoiceChatStateModel stateModel = null!;
         private readonly List<GameObject> gameObjects = new (16);
 
         [SetUp]
@@ -51,8 +52,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache);
+            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel);
         }
 
         protected override void OnTearDown()
@@ -61,8 +63,8 @@ namespace DCL.VoiceChat.Nearby.Tests
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
-
             bindings.Clear();
+            stateModel.Dispose();
 
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
@@ -150,6 +152,52 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.IsAlive(audioEntity), Is.False);
             Assert.That(source == null, Is.True, "LivekitAudioSource must be destroyed");
             Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+        }
+
+        // ── Trigger #4: listening gate ──────────────────────────────
+
+        [Test]
+        public void SuppressedStateTearsDownAllAudioEntities()
+        {
+            const int COUNT = 3;
+            var sources = new List<LivekitAudioSource>(COUNT);
+
+            for (int i = 0; i < COUNT; i++)
+            {
+                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                sources.Add(source);
+            }
+
+            stateModel.Suppress(SuppressionReason.CALL);
+
+            system.Update(0);
+
+            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(0));
+            Assert.That(bindings, Is.Empty);
+            foreach (LivekitAudioSource source in sources)
+                Assert.That(source == null, Is.True, "LivekitAudioSource must be physically destroyed");
+        }
+
+        [Test]
+        public void DisabledStateTearsDownAllAudioEntities()
+        {
+            const int COUNT = 3;
+            var sources = new List<LivekitAudioSource>(COUNT);
+
+            for (int i = 0; i < COUNT; i++)
+            {
+                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                sources.Add(source);
+            }
+
+            stateModel.Disable();
+
+            system.Update(0);
+
+            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(0));
+            Assert.That(bindings, Is.Empty);
+            foreach (LivekitAudioSource source in sources)
+                Assert.That(source == null, Is.True);
         }
 
         // ── Compound ────────────────────────────────────────────────

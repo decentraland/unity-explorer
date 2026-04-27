@@ -34,17 +34,19 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly INearbyAudioStreamRegistry registry;
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
+        private readonly NearbyVoiceChatStateModel stateModel;
         private readonly VoiceChatConfiguration configuration;
 
         private readonly List<(Entity avatarEntity, StreamKey key)> pendingCreations = new (16);
 
         private readonly Transform sourcesRoot;
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, VoiceChatConfiguration configuration) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, VoiceChatConfiguration configuration) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
+            this.stateModel = stateModel;
             this.configuration = configuration;
 
             sourcesRoot = new GameObject("VoiceChatSources_Nearby").transform;
@@ -53,9 +55,17 @@ namespace DCL.VoiceChat.Nearby.Systems
         protected override void Update(float t)
         {
             pendingCreations.Clear();
+
+            // Listening gate: skip the entire avatar query when nearby chat is SUPPRESSED or DISABLED.
+            // Cleanup system handles the symmetric teardown of any already-bound entities.
+            if (!IsListeningEnabled()) return;
+
             CollectPendingCreationsQuery(World);
             DrainPendingCreations();
         }
+
+        private bool IsListeningEnabled() =>
+            stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC;
 
         [Query]
         [None(typeof(DeleteEntityIntention))]

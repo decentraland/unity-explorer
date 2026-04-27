@@ -38,6 +38,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private FakeStreamRegistry registry;
         private Dictionary<StreamKey, Entity> bindings;
         private IUserBlockingCache userBlockingCache;
+        private NearbyVoiceChatStateModel stateModel;
 
         private VoiceChatConfiguration configuration;
 
@@ -51,9 +52,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, configuration);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, configuration);
         }
 
         protected override void OnTearDown()
@@ -77,6 +79,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             gameObjects.Clear();
 
             bindings.Clear();
+            stateModel.Dispose();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
 
@@ -211,6 +214,64 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(1), "unblock must re-bind on the next tick");
+        }
+
+        [Test]
+        public void SuppressedStateSkipsCreation()
+        {
+            const int AVATARS = 5;
+            for (int i = 0; i < AVATARS; i++)
+            {
+                string wallet = $"wallet-{i}";
+                CreateAvatarEntity(wallet);
+                registry.Add(wallet, "sid-1");
+            }
+
+            stateModel.Suppress(SuppressionReason.CALL);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "SUPPRESSED state must short-circuit creation regardless of registry / avatar readiness");
+        }
+
+        [Test]
+        public void DisabledStateSkipsCreation()
+        {
+            const int AVATARS = 5;
+            for (int i = 0; i < AVATARS; i++)
+            {
+                string wallet = $"wallet-{i}";
+                CreateAvatarEntity(wallet);
+                registry.Add(wallet, "sid-1");
+            }
+
+            stateModel.Disable();
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ResumeRebindsFromRegistry()
+        {
+            // Suppress before any tick — registry stays populated, no entity created.
+            // On Resume the binding system must rehydrate from the same registry snapshot.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateAvatarEntity(WALLET);
+            registry.Add(WALLET, SID);
+            stateModel.Suppress(SuppressionReason.CALL);
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(0), "suppressed tick must not allocate");
+
+            stateModel.Resume(SuppressionReason.CALL);
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(1), "resume must re-bind from the untouched registry");
         }
 
         [Test]

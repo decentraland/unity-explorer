@@ -23,7 +23,10 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///       <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>;
     ///     - <b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>;
     ///     - <b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns <c>true</c>
-    ///       for the bound <c>walletId</c> (covers both "I block them" and "they block me").
+    ///       for the bound <c>walletId</c> (covers both "I block them" and "they block me");
+    ///     - <b>Trigger #4 (listening gate)</b> — <see cref="NearbyVoiceChatStateModel"/> is in
+    ///       <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;
+    ///       fires for every audio entity regardless of per-entity flags.
     ///     Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
     ///     <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
     ///     Implements <see cref="IFinalizeWorldSystem"/> to dispose any survivors at world finalization.
@@ -35,13 +38,15 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly INearbyAudioStreamRegistry registry;
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
+        private readonly NearbyVoiceChatStateModel stateModel;
         private readonly List<Entity> entitiesToCleanUp = new (16);
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
+            this.stateModel = stateModel;
         }
 
         protected override void Update(float t)
@@ -69,9 +74,13 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(DeleteEntityIntention))]
         private void FlagDeadAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
         {
-            if (IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
+            // Listening-gate trigger fires for every entity unconditionally — checked first as the cheapest predicate.
+            if (IsListeningDisabled() || IsAvatarGone(comp.AvatarEntity) || IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
                 entitiesToCleanUp.Add(audioEntity);
         }
+
+        private bool IsListeningDisabled() =>
+            stateModel.State.Value is NearbyVoiceChatState.SUPPRESSED or NearbyVoiceChatState.DISABLED;
 
         [Query]
         private void CollectAllAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent _)
