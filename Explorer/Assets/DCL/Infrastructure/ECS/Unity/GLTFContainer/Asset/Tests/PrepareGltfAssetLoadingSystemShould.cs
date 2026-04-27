@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using DCL.Diagnostics;
+using Arch.Core;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -11,7 +10,6 @@ using ECS.Unity.GLTFContainer.Asset.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -23,12 +21,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     {
         private IGltfContainerAssetsCache cache;
         private ISceneData sceneData;
+        private ISceneContent sceneContent;
 
         [SetUp]
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
             sceneData = Substitute.For<ISceneData>();
+            sceneContent = Substitute.For<ISceneContent>();
+            sceneData.SceneContent.Returns(sceneContent);
             system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, default);
         }
 
@@ -67,6 +68,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void CreateAssetBundleIntentionWhenLsdWithRemoteAb()
         {
+            sceneContent.IsRawAsset("TEST").Returns(false);
+
             system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
                 LocalSceneDevelopment = true,
@@ -83,10 +86,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         }
 
         [Test]
-        public void FallbackToRawGltfWhenAbFailsInLsdWithRemoteAb()
+        public void CreateGltfIntentionForRawAssetWhenLsdWithRemoteAb()
         {
-            var sceneContent = Substitute.For<ISceneContent>();
-            sceneData.SceneContent.Returns(sceneContent);
+            sceneContent.IsRawAsset("models/local_only.glb").Returns(true);
 
             system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
             {
@@ -94,53 +96,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
                 UseRemoteAssetBundles = true,
             });
 
-            var intent = new GetGltfContainerAssetIntention("models/tree.glb", "TEST_HASH", new CancellationTokenSource());
-            Entity e = world.Create(intent,
-                new StreamableLoadingResult<GltfContainerAsset>(new ReportData(ReportCategory.GLTF_CONTAINER), new Exception("AB not found")));
+            var intent = new GetGltfContainerAssetIntention("models/local_only.glb", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
 
             system.Update(0);
 
-            sceneContent.Received(1).SwitchToLocal("models/tree.glb");
-            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
+            Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
-        }
-
-        [Test]
-        public void NotFallbackToRawGltfInPlayMode()
-        {
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, default);
-
-            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
-            Entity e = world.Create(intent,
-                new StreamableLoadingResult<GltfContainerAsset>(new ReportData(ReportCategory.GLTF_CONTAINER), new Exception("AB not found")));
-
-            system.Update(0);
-
-            // Failed result should remain — no fallback in play mode
-            Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.True);
-            Assert.That(world.Has<GetGLTFIntention>(e), Is.False);
-        }
-
-        [Test]
-        public void NotFallbackWhenResultSucceeded()
-        {
-            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
-
-            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, new PrepareGltfAssetLoadingSystem.Options
-            {
-                LocalSceneDevelopment = true,
-                UseRemoteAssetBundles = true,
-            });
-
-            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
-            Entity e = world.Create(intent, new StreamableLoadingResult<GltfContainerAsset>(asset));
-
-            system.Update(0);
-
-            // Successful result should not trigger fallback
-            Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
-            Assert.That(result.Succeeded, Is.True);
-            Assert.That(world.Has<GetGLTFIntention>(e), Is.False);
         }
 
         [Test]

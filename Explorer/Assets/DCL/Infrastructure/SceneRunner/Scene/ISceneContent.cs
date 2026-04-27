@@ -10,6 +10,6 @@ namespace SceneRunner.Scene
 
         bool TryGetHash(string name, out string hash);
 
-        void SwitchToLocal(string contentPath) { }
+        bool IsRawAsset(string contentPath) => false;
     }
 }

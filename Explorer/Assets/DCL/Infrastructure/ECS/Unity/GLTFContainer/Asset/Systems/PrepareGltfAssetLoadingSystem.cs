@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
@@ -37,9 +37,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         protected override void Update(float t)
         {
             PrepareQuery(World);
-
-            if (options is {LocalSceneDevelopment: true, UseRemoteAssetBundles: true })
-                FallbackToRawGltfQuery(World);
         }
 
         [Query]
@@ -56,26 +53,20 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoteAssetBundles: false };
+            bool loadRawGltf = options.PreviewingBuilderCollection;
+
+            if (options.LocalSceneDevelopment)
+            {
+                if (options.UseRemoteAssetBundles)
+                    loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                else
+                    loadRawGltf = true;
+            }
+
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
-        }
-
-        /// <summary>
-        ///     AB loading failed in LSD mode — fall back to loading raw GLTF from the local content server.
-        /// </summary>
-        [Query]
-        [None(typeof(GetGLTFIntention))]
-        private void FallbackToRawGltf(in Entity entity, ref GetGltfContainerAssetIntention intention, ref StreamableLoadingResult<GltfContainerAsset> result)
-        {
-            if (result.Succeeded) return;
-
-            // Tried to load remotely, the AB is missing, then try to load locally
-            sceneData.SceneContent.SwitchToLocal(intention.Name);
-            World.Remove<StreamableLoadingResult<GltfContainerAsset>>(entity);
-            World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
         }
 
         public struct Options
