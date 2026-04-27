@@ -1,15 +1,16 @@
 using Arch.Core;
-using DCL.Character.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
-using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Tables;
+using DCL.Character.Components;
+using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
-using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
+using Avatar = DCL.Profiles.Avatar;
 using Unity.PerformanceTesting;
 using UnityEngine;
 
@@ -17,30 +18,31 @@ namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
     /// Benchmarks <see cref="NearbyAudioPositionSystem.Update"/> with varying participant counts.
-    /// Measures main-thread cost of position sync + spatial angle calculation.
+    /// Measures main-thread cost of position sync + spatial angle calculation under the new
+    /// dedicated audio-source entity layout.
     /// </summary>
     [Category("Performance")]
     public class NearbyAudioPositionSystemPerformanceTest : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
-        private IReadOnlyEntityParticipantTable entityParticipantTable;
-        private ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
-        private readonly List<GameObject> gameObjects = new (128);
+        private static readonly FieldInfo HEAD_ANCHOR_FIELD =
+            typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        private readonly List<GameObject> gameObjects = new (256);
 
         [SetUp]
         public void SetUp()
         {
-            entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
-            activeAudioSources = new ConcurrentDictionary<string, LivekitAudioSource>();
+            EcsTestsUtils.SetUpFeaturesRegistry();
 
             var cameraGo = CreateTrackedGameObject("PerfCamera");
             var camera = cameraGo.AddComponent<Camera>();
             world.Create(new CameraComponent(camera));
 
             var playerGo = CreateTrackedGameObject("PerfPlayer");
-            playerGo.transform.position = new Vector3(0, 1.75f, 0);
+            playerGo.transform.position = new Vector3(0, 1.6f, 0);
             world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources, logDiagnostics: false);
+            system = new NearbyAudioPositionSystem(world);
             system.Initialize();
         }
 
@@ -50,6 +52,8 @@ namespace DCL.VoiceChat.Nearby
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
+
+            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         [Test]
@@ -59,9 +63,10 @@ namespace DCL.VoiceChat.Nearby
         [TestCase(100)]
         public void UpdateWithNParticipants(int participantCount)
         {
-            SetupParticipants(participantCount);
+            for (int i = 0; i < participantCount; i++)
+                CreateBoundAudioSource(i);
 
-            // First update assigns NearbyAudioSourceComponent to all entities
+            // Warm one frame so any first-tick branches settle into steady state
             system.Update(0);
 
             Measure
@@ -72,31 +77,28 @@ namespace DCL.VoiceChat.Nearby
                .Run();
         }
 
-        private void SetupParticipants(int count)
+        private void CreateBoundAudioSource(int index)
         {
-            for (int i = 0; i < count; i++)
-            {
-                string id = $"wallet-perf-{i}";
+            string id = $"wallet-perf-{index}";
 
-                var remoteGo = CreateTrackedGameObject($"Remote_{i}");
-                remoteGo.transform.position = Random.insideUnitSphere * 15f;
-                Entity entity = world.Create(new CharacterTransform(remoteGo.transform));
+            var avatarGo = CreateTrackedGameObject($"Avatar_{index}");
+            avatarGo.transform.position = Random.insideUnitSphere * 15f;
 
-                LivekitAudioSource source = LivekitAudioSource.New();
-                gameObjects.Add(source.gameObject);
+            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
+            var headAnchorGo = CreateTrackedGameObject($"HeadAnchor_{index}");
+            headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
+            headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
+            HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-                var entry = new IReadOnlyEntityParticipantTable.Entry(id, entity, RoomSource.ISLAND);
+            Entity avatarEntity = world.Create(
+                new Profile(id, id, new Avatar()),
+                avatarBase,
+                new CharacterTransform(avatarGo.transform));
 
-                entityParticipantTable
-                   .TryGet(id, out Arg.Any<IReadOnlyEntityParticipantTable.Entry>())
-                   .Returns(callInfo =>
-                    {
-                        callInfo[1] = entry;
-                        return true;
-                    });
+            LivekitAudioSource source = LivekitAudioSource.New();
+            gameObjects.Add(source.gameObject);
 
-                activeAudioSources[id] = source;
-            }
+            world.Create(new NearbyAudioSourceComponent(new StreamKey(id, "sid"), avatarEntity, source));
         }
 
         private GameObject CreateTrackedGameObject(string name)

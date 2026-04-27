@@ -53,7 +53,6 @@ namespace DCL.PluginSystem.Global
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
-        private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
         private readonly NearbyMuteService? nearbyMuteService;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
@@ -148,7 +147,8 @@ namespace DCL.PluginSystem.Global
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
-                NearbyAudioPositionSystem.InjectToWorld(ref builder, entityParticipantTable, nearbyAudioSources, hasDebugFlag);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, voiceChatConfiguration);
+                NearbyAudioPositionSystem.InjectToWorld(ref builder);
                 NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }
@@ -229,7 +229,7 @@ namespace DCL.PluginSystem.Global
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
-                    nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
+                    voiceChatOrchestrator.CurrentCallStatus,
                     nearbyStateModel, nearbyMuteService, userBlockingCache, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
@@ -246,7 +246,7 @@ namespace DCL.PluginSystem.Global
                 pluginScope.Add(nearbyWidgetController);
 
                 // DEBUG
-                pluginScope.Add(new NearbyVoiceChatDebugContainer(debugContainer, islandRoom, nearbyStateModel, nearbyAudioSources, entityParticipantTable, world));
+                pluginScope.Add(new NearbyVoiceChatDebugContainer(debugContainer, islandRoom, nearbyStateModel, nearbyAudioStreamRegistry, entityParticipantTable, world));
 
                 // Intro FLUX
                 nearbyTipCts = new CancellationTokenSource();

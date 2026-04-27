@@ -7,11 +7,10 @@ using DCL.LiveKit.Public;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.Audio;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.Streaming.Audio;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -33,7 +32,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly IRoom islandRoom;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private readonly INearbyAudioStreamRegistry streamRegistry;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
 
@@ -65,13 +64,13 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugBuilder,
             IRoom islandRoom,
             NearbyVoiceChatStateModel stateModel,
-            ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
+            INearbyAudioStreamRegistry streamRegistry,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world)
         {
             this.islandRoom = islandRoom;
             this.stateModel = stateModel;
-            this.activeAudioSources = activeAudioSources;
+            this.streamRegistry = streamRegistry;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
 
@@ -151,14 +150,20 @@ namespace DCL.PluginSystem.Global
             activeSpeakersBinding.Value = speakersCount;
             speakersListBinding.SetAndUpdate(speakersBuffer);
 
-            ulong audioSourceCount = (ulong)activeAudioSources.Count;
+            ulong audioSourceCount = 0;
+            if (isConnected)
+                foreach (KeyValuePair<string, LKParticipant> entry in islandRoom.Participants.RemoteParticipantIdentities())
+                {
+                    var sids = streamRegistry.GetAudioSids(entry.Key);
+                    if (sids != null) audioSourceCount += (ulong)sids.Count;
+                }
             activeAudioSourcesBinding.Value = audioSourceCount;
 
             ulong componentCount = (ulong)world.CountEntities(in COMPONENT_QUERY);
             nearbyComponentsBinding.Value = componentCount;
 
-            // activeAudioSources is the source of truth (LiveKit native side); ECS components mirror it.
-            // A persistent mismatch points at the stale-reference bug after Island Room renewal.
+            // Registry mirrors LiveKit's native audio publications; ECS components are bound by NearbyAudioBindingSystem.
+            // A persistent mismatch points at a binding-pipeline regression (avatar entity gone, wallet drift, throttle backlog).
             bool isMismatched = audioSourceCount != componentCount;
             mismatchBinding.Value = isMismatched
                 ? $"<color=red>{audioSourceCount} sources vs {componentCount} components</color>"

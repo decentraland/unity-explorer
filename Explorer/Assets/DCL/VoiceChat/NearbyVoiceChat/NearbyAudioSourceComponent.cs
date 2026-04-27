@@ -1,20 +1,24 @@
+using Arch.Core;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Marks a remote entity as having an associated nearby audio source.
-    /// Position is synced each frame by <see cref="NearbyAudioPositionSystem"/>.
+    /// Lives on a dedicated audio-source entity. Bound 1:1 to a (participant, sid) pair.
+    /// <see cref="NearbyAudioPositionSystem"/> reads <see cref="AvatarEntity"/> per frame to fetch
+    /// the head transform; nothing else owns the avatar entity reference.
     /// </summary>
     public struct NearbyAudioSourceComponent
     {
-        public readonly string ParticipantIdentity;
+        public readonly StreamKey Key;
+        public readonly Entity AvatarEntity;
+        public readonly LivekitAudioSource LivekitAudioSource;
 
-        public LivekitAudioSource LivekitAudioSource;
-
-        public NearbyAudioSourceComponent(string participantIdentity, LivekitAudioSource livekitAudioSource)
+        public NearbyAudioSourceComponent(StreamKey key, Entity avatarEntity, LivekitAudioSource livekitAudioSource)
         {
-            ParticipantIdentity = participantIdentity;
+            Key = key;
+            AvatarEntity = avatarEntity;
             LivekitAudioSource = livekitAudioSource;
         }
     }

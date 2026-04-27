@@ -1,35 +1,36 @@
 using Arch.Core;
-using DCL.Character.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
-using DCL.Multiplayer.Connections.Rooms;
-using DCL.Multiplayer.Profiles.Tables;
+using DCL.Character.Components;
+using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
-using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents the Nearby Audio Position System behavior:
+    /// Documents the Nearby Audio Position System behavior under the ECS-driven binding pipeline:
     ///
-    /// - Assigns <see cref="NearbyAudioSourceComponent"/> to remote entities who participate in Nearby Chat
-    /// - Syncs AudioSource positions with avatar head positions each frame for 3D spatial audio
-    /// - Cleans up components when a participant leaves or their audio source is removed
-    /// - Safely handles ECS structural changes (two-pass pattern to avoid ref invalidation)
+    /// - Reads avatar position via <see cref="NearbyAudioSourceComponent.AvatarEntity"/>.
+    /// - Cleans up audio-source entities when the linked avatar lost its <see cref="AvatarBase"/>
+    ///   or its <see cref="Profile.UserId"/> drifted away from the bound <see cref="StreamKey"/>.
+    /// - Reprojects spatial position to the player head in third-person.
     /// </summary>
     public class NearbyAudioPositionSystemShould : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
         private const string PARTICIPANT_A = "wallet-alice";
         private const string PARTICIPANT_B = "wallet-bob";
 
-        private IReadOnlyEntityParticipantTable entityParticipantTable;
-        private ConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private static readonly FieldInfo HEAD_ANCHOR_FIELD =
+            typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private readonly List<GameObject> gameObjects = new (8);
 
@@ -39,19 +40,16 @@ namespace DCL.VoiceChat.Nearby.Tests
         [SetUp]
         public void SetUp()
         {
-            entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
-            activeAudioSources = new ConcurrentDictionary<string, LivekitAudioSource>();
+            EcsTestsUtils.SetUpFeaturesRegistry();
 
-            // Camera entity — AudioListener lives on the camera
             var cameraGo = CreateTrackedGameObject("TestCamera");
             var camera = cameraGo.AddComponent<Camera>();
             cameraEntity = world.Create(new CameraComponent(camera));
 
-            // Player entity — represents local player's body
             var playerGo = CreateTrackedGameObject("TestPlayer");
             playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
-            system = new NearbyAudioPositionSystem(world, entityParticipantTable, activeAudioSources, logDiagnostics: true);
+            system = new NearbyAudioPositionSystem(world);
             system.Initialize();
         }
 
@@ -61,216 +59,8 @@ namespace DCL.VoiceChat.Nearby.Tests
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
-        }
 
-        // ── Source Assignment ────────────────────────────────────────
-        [Test]
-        public void AssignAudioSourceComponentToRemoteParticipant()
-        {
-            // Arrange — remote player "Alice" joined the island and has an active audio source
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, new Vector3(5, 0, 3));
-            LivekitAudioSource audioSource = CreateLivekitAudioSource();
-
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = audioSource;
-
-            // Act
-            system.Update(0);
-
-            // Assert — system assigned a NearbyAudioSourceComponent to track spatial audio
-            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.True);
-
-            ref readonly NearbyAudioSourceComponent comp = ref world.Get<NearbyAudioSourceComponent>(remoteEntity);
-            Assert.That(comp.ParticipantIdentity, Is.EqualTo(PARTICIPANT_A));
-            Assert.That(comp.LivekitAudioSource, Is.EqualTo(audioSource));
-        }
-
-        [Test]
-        public void AssignAudioSourceToMultipleParticipantsSimultaneously()
-        {
-            // Arrange — two remote players nearby
-            Entity entityA = CreateRemoteEntity(PARTICIPANT_A, new Vector3(3, 0, 0));
-            Entity entityB = CreateRemoteEntity(PARTICIPANT_B, new Vector3(-3, 0, 0));
-
-            SetupParticipant(PARTICIPANT_A, entityA);
-            SetupParticipant(PARTICIPANT_B, entityB);
-            activeAudioSources[PARTICIPANT_A] = CreateLivekitAudioSource();
-            activeAudioSources[PARTICIPANT_B] = CreateLivekitAudioSource();
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<NearbyAudioSourceComponent>(entityA), Is.True);
-            Assert.That(world.Has<NearbyAudioSourceComponent>(entityB), Is.True);
-        }
-
-        [Test]
-        public void NotAssignAudioSourceToEntityMarkedForDeletion()
-        {
-            // Arrange — entity is being destroyed (e.g. player disconnected)
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, Vector3.zero);
-            world.Add<DeleteEntityIntention>(remoteEntity);
-
-
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = CreateLivekitAudioSource();
-
-            // Act
-            system.Update(0);
-
-            // Assert — component not assigned to dying entity
-            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.False);
-        }
-
-        [Test]
-        public void UpdateExistingComponentWhenAudioSourceChanges()
-        {
-            // Arrange — Alice already has a nearby component; position her away from origin
-            // so we can verify the NEW source also gets synced there (not stuck at origin).
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
-            Vector3 remotePos = new Vector3(10, 0, 5);
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, remotePos);
-            LivekitAudioSource oldSource = CreateLivekitAudioSource();
-
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = oldSource;
-
-            system.Update(0); // assign
-            system.Update(0); // sync positions onto oldSource
-
-            // Act — audio source replaced (simulates Island Room reconnect creating a fresh LivekitAudioSource)
-            LivekitAudioSource newSource = CreateLivekitAudioSource();
-            activeAudioSources[PARTICIPANT_A] = newSource;
-
-            system.Update(0);
-
-            // Assert — existing component updated in-place
-            ref readonly NearbyAudioSourceComponent comp = ref world.Get<NearbyAudioSourceComponent>(remoteEntity);
-            Assert.That(comp.LivekitAudioSource, Is.EqualTo(newSource));
-
-            // Regression guard: the NEW source must be synced to the remote head position,
-            // not left at its spawn origin (0,0,0). This reproduces the "audio stuck at origin
-            // after reconnect" bug that was caused by a stale cached Transform reference.
-            Vector3 expectedHeadPos = remotePos + new Vector3(0, 1.75f, 0);
-            Assert.That(newSource.transform.position.x, Is.EqualTo(expectedHeadPos.x).Within(0.01f));
-            Assert.That(newSource.transform.position.y, Is.EqualTo(expectedHeadPos.y).Within(0.01f));
-            Assert.That(newSource.transform.position.z, Is.EqualTo(expectedHeadPos.z).Within(0.01f));
-        }
-
-        // ── Source Cleanup ──────────────────────────────────────────
-
-        [Test]
-        public void RemoveComponentWhenParticipantLeavesNearby()
-        {
-            // Arrange — Alice was nearby, had an assigned audio source
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, new Vector3(5, 0, 0));
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = CreateLivekitAudioSource();
-
-            system.Update(0);
-            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.True);
-
-            // Act — Alice's audio stream ended (left island, moved out of range, etc.)
-            activeAudioSources.TryRemove(PARTICIPANT_A, out _);
-
-            system.Update(0);
-
-            // Assert — component cleaned up, entity continues to exist without spatial audio
-            Assert.That(world.Has<NearbyAudioSourceComponent>(remoteEntity), Is.False);
-        }
-
-        // ── Stale / destroyed LivekitAudioSource (race after Island Room renewal) ──
-        //
-        // Contract under test (implementation-agnostic):
-        //   1. A poisoned source for one participant must not stop position sync for the others
-        //      in the same frame.
-        //   2. Once the underlying dictionary entry is renewed (LiveKit re-subscribed the track),
-        //      position sync for that participant must converge to the avatar's head within a
-        //      bounded number of frames.
-        //
-        // Both tests describe what stress-test users perceived (frozen audio for everyone after
-        // Island Room renewal) without prescribing how the system has to recover.
-
-        [Test]
-        public void KeepSyncingHealthyParticipantsWhenAnotherSourceWasDestroyedSameFrame()
-        {
-            // Arrange — Alice and Bob both nearby, both with active audio sources
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
-            Vector3 alicePos = new Vector3(5, 0, 0);
-            Vector3 bobPos = new Vector3(-3, 0, 7);
-            Entity aliceEntity = CreateRemoteEntity(PARTICIPANT_A, alicePos);
-            Entity bobEntity = CreateRemoteEntity(PARTICIPANT_B, bobPos);
-            LivekitAudioSource aliceSource = CreateLivekitAudioSource();
-            LivekitAudioSource bobSource = CreateLivekitAudioSource();
-            SetupParticipant(PARTICIPANT_A, aliceEntity);
-            SetupParticipant(PARTICIPANT_B, bobEntity);
-            activeAudioSources[PARTICIPANT_A] = aliceSource;
-            activeAudioSources[PARTICIPANT_B] = bobSource;
-
-            system.Update(0); // assign components
-            system.Update(0); // sync once so we have a baseline
-
-            // Reproduce the race observed in logs: PlaybackSourcesHub disposed Alice's
-            // GameObject (Island Room renewal stopped tracks) before its onSourceRemoved
-            // callback removed the dictionary entry. Bob is unaffected by the renewal.
-            Object.DestroyImmediate(aliceSource.gameObject);
-
-            // Move Bob so we can verify the new sync (not just a cached previous-frame value)
-            Vector3 newBobPos = new Vector3(-3, 0, 12);
-            world.Get<CharacterTransform>(bobEntity).Transform.position = newBobPos;
-
-            // Act
-            system.Update(0);
-
-            // Assert — Alice's broken source must not block Bob's per-frame sync
-            Vector3 expectedBobHead = newBobPos + new Vector3(0, 1.75f, 0);
-            Assert.That(bobSource.transform.position.x, Is.EqualTo(expectedBobHead.x).Within(0.01f),
-                "the per-frame loop must keep updating other participants even when one source is destroyed");
-            Assert.That(bobSource.transform.position.y, Is.EqualTo(expectedBobHead.y).Within(0.01f));
-            Assert.That(bobSource.transform.position.z, Is.EqualTo(expectedBobHead.z).Within(0.01f));
-        }
-
-        [Test]
-        public void ConvergeOnFreshSourcePositionAfterStaleOneWasDestroyedAndReplaced()
-        {
-            // Arrange — Alice's source assigned and synced
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
-            Vector3 alicePos = new Vector3(7, 0, 2);
-            Entity aliceEntity = CreateRemoteEntity(PARTICIPANT_A, alicePos);
-            LivekitAudioSource staleSource = CreateLivekitAudioSource();
-            SetupParticipant(PARTICIPANT_A, aliceEntity);
-            activeAudioSources[PARTICIPANT_A] = staleSource;
-
-            system.Update(0);
-            system.Update(0);
-
-            // The race: source GameObject destroyed while dictionary entry still references it.
-            // We let the system tick once in this poisoned state (this is the frame where bugs surface).
-            Object.DestroyImmediate(staleSource.gameObject);
-            try { system.Update(0); } catch { /* a robust impl will not throw, but we focus the assertion below */ }
-
-            // Then LiveKit re-subscribes the track and PlaybackSourcesHub creates a fresh LivekitAudioSource
-            LivekitAudioSource freshSource = CreateLivekitAudioSource();
-            activeAudioSources[PARTICIPANT_A] = freshSource;
-
-            // Act — system gets a few frames to reconverge (we don't care HOW: cleanup+reattach,
-            // ref re-bind, defensive null check — all must converge to the same observable result)
-            for (int frame = 0; frame < 3; frame++)
-                system.Update(0);
-
-            // Assert — fresh source is now positioned at Alice's head, sync resumed
-            Vector3 expectedHeadPos = alicePos + new Vector3(0, 1.75f, 0);
-            Assert.That(freshSource.transform.position.x, Is.EqualTo(expectedHeadPos.x).Within(0.01f),
-                "after a poisoned frame followed by a fresh dictionary entry, position sync must reconverge");
-            Assert.That(freshSource.transform.position.y, Is.EqualTo(expectedHeadPos.y).Within(0.01f));
-            Assert.That(freshSource.transform.position.z, Is.EqualTo(expectedHeadPos.z).Within(0.01f));
+            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         // ── Position Sync ───────────────────────────────────────────
@@ -278,65 +68,112 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void SyncAudioSourcePositionToAvatarHeadInFirstPerson()
         {
-            // Arrange — first-person camera, remote player at known position
             ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
             cam.Mode = CameraMode.FirstPerson;
 
-            Vector3 remotePos = new Vector3(10, 0, 5);
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, remotePos);
+            Vector3 avatarPos = new Vector3(10, 0, 5);
+            Vector3 headPos = avatarPos + new Vector3(0, 1.6f, 0);
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, avatarPos, headPos);
             LivekitAudioSource audioSource = CreateLivekitAudioSource();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
 
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = audioSource;
-
-            // First update: assign component
             system.Update(0);
 
-            // Act — second update: sync positions
-            system.Update(0);
-
-            // Assert — audio source positioned at avatar head (fallback height = 1.75m since no AvatarBase)
-            Vector3 expectedHeadPos = remotePos + new Vector3(0, 1.75f, 0);
-            Assert.That(audioSource.transform.position.x, Is.EqualTo(expectedHeadPos.x).Within(0.01f));
-            Assert.That(audioSource.transform.position.y, Is.EqualTo(expectedHeadPos.y).Within(0.01f));
-            Assert.That(audioSource.transform.position.z, Is.EqualTo(expectedHeadPos.z).Within(0.01f));
+            Assert.That(audioSource.transform.position.x, Is.EqualTo(headPos.x).Within(0.01f));
+            Assert.That(audioSource.transform.position.y, Is.EqualTo(headPos.y).Within(0.01f));
+            Assert.That(audioSource.transform.position.z, Is.EqualTo(headPos.z).Within(0.01f));
         }
 
         [Test]
         public void ReprojectAudioSourcePositionInThirdPerson()
         {
-            // Arrange — third-person camera (AudioListener on camera, but gain relative to player head)
             ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
             cam.Mode = CameraMode.ThirdPerson;
 
-            // Player at origin, camera offset behind
             var playerGo = CreateTrackedGameObject("PlayerFocus");
-            playerGo.transform.position = new Vector3(0, 1.75f, 0);
+            playerGo.transform.position = new Vector3(0, 1.6f, 0);
             world.Set(playerEntity, new PlayerComponent(playerGo.transform));
 
-            Vector3 remotePos = new Vector3(8, 0, 4);
-            Entity remoteEntity = CreateRemoteEntity(PARTICIPANT_A, remotePos);
+            Vector3 avatarPos = new Vector3(8, 0, 4);
+            Vector3 remoteHead = avatarPos + new Vector3(0, 1.6f, 0);
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, avatarPos, remoteHead);
             LivekitAudioSource audioSource = CreateLivekitAudioSource();
-
-            SetupParticipant(PARTICIPANT_A, remoteEntity);
-            activeAudioSources[PARTICIPANT_A] = audioSource;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
 
             system.Update(0);
 
-            // Act
-            system.Update(0);
-
-            // Assert — position is reprojected relative to camera, not raw avatar position
-            //          sourcePos = listenerPos + (remoteHead - playerHead)
-            //                    = (0,0,0) + ((8,1.75,4) - (0,1.75,0)) = (8, 0, 4)
-            Vector3 remoteHead = remotePos + new Vector3(0, 1.75f, 0);
-            Vector3 playerHead = playerGo.transform.position;
             Vector3 listenerPos = cam.Camera.transform.position;
-            Vector3 expected = listenerPos + (remoteHead - playerHead);
+            Vector3 expected = listenerPos + (remoteHead - playerGo.transform.position);
 
             Assert.That(audioSource.transform.position.x, Is.EqualTo(expected.x).Within(0.01f));
             Assert.That(audioSource.transform.position.y, Is.EqualTo(expected.y).Within(0.01f));
             Assert.That(audioSource.transform.position.z, Is.EqualTo(expected.z).Within(0.01f));
+        }
+
+        [Test]
+        public void SkipAudioEntityWhenAvatarMarkedForDeletion()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add<DeleteEntityIntention>(avatarEntity);
+
+            LivekitAudioSource audioSource = CreateLivekitAudioSource();
+            audioSource.transform.position = new Vector3(99, 99, 99);
+            Entity audioEntity = CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
+
+            system.Update(0);
+
+            // Audio entity is cleaned up — wallet/AvatarBase paths trip on dying avatar.
+            Assert.That(world.IsAlive(audioEntity), Is.False);
+        }
+
+        // ── Cleanup paths ───────────────────────────────────────────
+
+        [Test]
+        public void WalletIdMismatchOnAvatarEntityCleansUpAudioEntity()
+        {
+            // Avatar entity reports a different UserId than the StreamKey identity bound on the audio entity
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_B, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource audioSource = CreateLivekitAudioSource();
+            Entity audioEntity = CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
+
+            system.Update(0);
+
+            Assert.That(world.IsAlive(audioEntity), Is.False,
+                "audio entity bound to a key whose identity drifted from the linked avatar must be destroyed");
+        }
+
+        [Test]
+        public void MissingAvatarBaseOnLinkedEntityCleansUpAudioEntity()
+        {
+            // Profile-only entity — no AvatarBase (avatar pool exhausted scenario)
+            Entity avatarEntity = world.Create(new Profile(PARTICIPANT_A, "Alice", new Avatar()));
+            LivekitAudioSource audioSource = CreateLivekitAudioSource();
+            Entity audioEntity = CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
+
+            system.Update(0);
+
+            Assert.That(world.IsAlive(audioEntity), Is.False,
+                "no avatar = no spatial source: position cannot be computed without AvatarBase head anchor");
+        }
+
+        [Test]
+        public void DestroyedLivekitAudioSourceCleansUpAudioEntity()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource audioSource = CreateLivekitAudioSource();
+            Entity audioEntity = CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, audioSource);
+
+            Object.DestroyImmediate(audioSource.gameObject);
+
+            system.Update(0);
+
+            Assert.That(world.IsAlive(audioEntity), Is.False);
         }
 
         // ── Helpers ─────────────────────────────────────────────────
@@ -348,11 +185,27 @@ namespace DCL.VoiceChat.Nearby.Tests
             return go;
         }
 
-        private Entity CreateRemoteEntity(string participantId, Vector3 position)
+        private Entity CreateAvatarEntity(string walletId, Vector3 avatarPos, Vector3 headAnchorPos)
         {
-            var go = CreateTrackedGameObject($"Remote_{participantId}");
-            go.transform.position = position;
-            return world.Create(new CharacterTransform(go.transform));
+            var avatarGo = CreateTrackedGameObject($"Remote_{walletId}");
+            avatarGo.transform.position = avatarPos;
+
+            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
+            var headAnchorGo = CreateTrackedGameObject($"HeadAnchor_{walletId}");
+            headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
+            headAnchorGo.transform.position = headAnchorPos;
+            HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
+
+            return world.Create(
+                new Profile(walletId, walletId, new Avatar()),
+                avatarBase,
+                new CharacterTransform(avatarGo.transform));
+        }
+
+        private Entity CreateAudioEntity(string identity, string sid, Entity avatarEntity, LivekitAudioSource source)
+        {
+            var key = new StreamKey(identity, sid);
+            return world.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
         }
 
         private LivekitAudioSource CreateLivekitAudioSource()
@@ -360,17 +213,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             LivekitAudioSource source = LivekitAudioSource.New();
             gameObjects.Add(source.gameObject);
             return source;
-        }
-
-        private void SetupParticipant(string walletId, Entity entity)
-        {
-            var entry = new IReadOnlyEntityParticipantTable.Entry(walletId, entity, RoomSource.ISLAND);
-            entityParticipantTable.TryGet(walletId, out Arg.Any<IReadOnlyEntityParticipantTable.Entry>())
-                                  .Returns(callInfo =>
-                                  {
-                                      callInfo[1] = entry;
-                                      return true;
-                                  });
         }
     }
 }
