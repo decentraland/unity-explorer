@@ -61,6 +61,27 @@ namespace Global.AppArgs
                     return;
 
                 NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+
+                string? dclenv = query[AppArgsFlags.ENVIRONMENT];
+                if (!string.IsNullOrEmpty(dclenv) && !appParameters.ContainsKey(AppArgsFlags.ENVIRONMENT))
+                    appParameters[AppArgsFlags.ENVIRONMENT] = dclenv;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.STARTUP,$"[WebGL] Failed to parse URL query for '{AppArgsFlags.ENVIRONMENT}': {e.Message}");
+            }
+
+            try
+            {
+                string? currentUrl = Application.absoluteURL;
+                if (string.IsNullOrEmpty(currentUrl))
+                    return;
+
+                if (!Uri.TryCreate(currentUrl, UriKind.Absolute, out Uri? uri) || string.IsNullOrEmpty(uri!.Query))
+                    return;
+
+                NameValueCollection query = HttpUtility.ParseQueryString(uri.Query);
+
                 string? world = query[WORLD_QUERY_PARAM];
                 if (!string.IsNullOrEmpty(world))
                 {
