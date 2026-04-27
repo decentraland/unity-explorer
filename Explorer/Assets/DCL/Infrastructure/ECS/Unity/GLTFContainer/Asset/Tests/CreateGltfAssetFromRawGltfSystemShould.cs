@@ -58,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Assert.That(gltfData.CanBeDisposed(), Is.True, "Cancelled consumer must drop its reference");
             Assert.That(rootGo != null, Is.True, "Root must remain alive — cache still owns the entry");
 
-            // Cache drain (e.g. M2's eager drain on LSD reload) finishes disposal exactly once.
+            // Cache drain (e.g. the eager drain on LSD reload) finishes disposal exactly once.
             var unlimitedBudget = Substitute.For<IPerformanceBudget>();
             unlimitedBudget.TrySpendBudget().Returns(true);
             cache.Unload(unlimitedBudget, int.MaxValue);
@@ -69,10 +69,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void CloneTemplateRootPerConsumer()
         {
-            // Simulate the F1 dedup path: two entities receive the same GLTFData reference (like piggy-backers on
-            // a single ongoing request). Each must end up with its own Root GameObject so they can be parented to
-            // different entity transforms independently — otherwise FinalizeGltfContainerLoadingSystem would reparent
-            // the same Root twice and only one entity would render correctly.
+            // Two entities receive the same GLTFData reference (piggy-backers on a single ongoing request).
+            // Each must end up with its own Root GameObject so they can be parented to different entity
+            // transforms independently — otherwise FinalizeGltfContainerLoadingSystem would reparent the
+            // same Root twice and only one entity would render correctly.
             var template = new GameObject("RawGLTF-Template");
             var gltfData = new GLTFData(null!, template);
             // Two consumers → two ApplyLoadedResult AddReference calls

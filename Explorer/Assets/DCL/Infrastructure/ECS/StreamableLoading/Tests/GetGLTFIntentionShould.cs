@@ -21,7 +21,7 @@ namespace ECS.StreamableLoading.Tests
         public void EqualsFalseWhenOnlyNameMatches()
         {
             // Two scenes can legitimately reference the same Src path with different content hashes.
-            // The pre-F4 OR equality treated these as equal and cross-contaminated cache entries.
+            // OR-equality on (Hash, Name) would treat these as equal and cross-contaminate cache entries.
             var a = GetGLTFIntention.Create("models/tree.glb", "hash-1");
             var b = GetGLTFIntention.Create("models/tree.glb", "hash-2");
 
@@ -74,9 +74,9 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public void DictionaryFindsExistingEntryWhenKeyEqualsByValue()
         {
-            // Round-trips the F4 regression: F1's GltfLoadCache and OngoingRequests are keyed by
-            // GetGLTFIntention. If Equals/GetHashCode disagree, a follow-up consumer constructs an
-            // equal intention but TryGetValue misses, spawning a duplicate load.
+            // GltfLoadCache and OngoingRequests are keyed by GetGLTFIntention. If Equals/GetHashCode
+            // disagree, a follow-up consumer constructs an equal intention but TryGetValue misses,
+            // spawning a duplicate load.
             var dict = new Dictionary<GetGLTFIntention, string>
             {
                 [GetGLTFIntention.Create("models/tree.glb", "hash-1")] = "load-1",

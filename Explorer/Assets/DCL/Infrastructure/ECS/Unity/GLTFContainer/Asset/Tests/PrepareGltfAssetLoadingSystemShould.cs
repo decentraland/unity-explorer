@@ -74,8 +74,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void LoadFromCacheInLocalSceneDevelopment()
         {
-            // F3: previously LSD set allowCaching=false and ignored pooled entries; with per-consumer cloning
-            // in CreateGltfAssetFromRawGltfSystem, cache reuse is safe in LSD too.
+            // LSD must hit the GltfContainerAssetsCache like any other path — per-consumer cloning in
+            // CreateGltfAssetFromRawGltfSystem makes cache reuse safe across multiple entities.
             BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoveAssetBundles = false });
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);

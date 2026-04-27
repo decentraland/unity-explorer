@@ -37,9 +37,7 @@ namespace ECS.StreamableLoading.GLTF
 
         // Identity: Hash + Name. Hash alone would be enough for content identity, but matching the
         // sibling GetGltfContainerAssetIntention's shape (Name + Hash) keeps the two layers
-        // consistent. Hash uses ordinal-ignore-case so an upstream toolchain producing uppercase
-        // hashes can't silently miss the dedup; content hashes are lowercase by convention but the
-        // comparison is defensive.
+        // consistent
         public bool Equals(GetGLTFIntention other) =>
             StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) && Name == other.Name;
 
