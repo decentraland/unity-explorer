@@ -301,7 +301,7 @@ namespace DCL.Prefs
             {
                 try
                 {
-                    stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                    stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
                 }
                 catch (IOException)
                 {
@@ -336,7 +336,7 @@ namespace DCL.Prefs
         {
             string json;
             try { json = File.ReadAllText(path); }
-            catch (IOException) { return false; }   // unreadable (e.g. owner holds FileShare.None on Windows) — treat as live
+            catch (IOException) { return false; }   // transient read failure — treat as live to avoid stomping on a peer
             catch { return true; }
 
             if (string.IsNullOrWhiteSpace(json))
