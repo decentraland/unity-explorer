@@ -31,26 +31,39 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         }
 
         [Test]
-        public void DisposeGltfDataWhenIntentionIsCancelled()
+        public void LeaveGltfDataDisposalToCacheWhenIntentionIsCancelled()
         {
+            // Mirror the real flow: PutAsync inserted the asset into GltfLoadCache, then
+            // ApplyLoadedResult called cache.AddReference (refCount = 1). The cancelled consumer
+            // must drop its reference but NOT dispose — otherwise the next cache.Unload would
+            // double-dispose the same entry (GltfImport disposed twice, Root SafeDestroy'd on an
+            // already-destroyed object, totalCount counter decremented twice).
             var cts = new CancellationTokenSource();
             cts.Cancel();
-
             var intention = new GetGltfContainerAssetIntention("raw", "raw_hash", cts);
 
-            // Mirror what LoadSystemBase.ApplyLoadedResult does: cache.AddReference bumps the ref count per consumer.
-            var gltfData = new GLTFData(null!, new GameObject("RawGLTF-Root"));
+            var rawIntention = GetGLTFIntention.Create("raw", "raw_hash");
+            var rootGo = new GameObject("RawGLTF-Root");
+            var gltfData = new GLTFData(null!, rootGo);
+
+            var cache = new GltfLoadCache();
+            cache.Add(rawIntention, gltfData);
             gltfData.AddReference();
 
             Entity entity = world.Create(intention, new StreamableLoadingResult<GLTFData>(gltfData));
 
             system.Update(0);
 
-            // Entity is destroyed to abort the in-flight conversion
-            Assert.That(world.IsAlive(entity), Is.False);
+            Assert.That(world.IsAlive(entity), Is.False, "Loading entity must be destroyed");
+            Assert.That(gltfData.CanBeDisposed(), Is.True, "Cancelled consumer must drop its reference");
+            Assert.That(rootGo != null, Is.True, "Root must remain alive — cache still owns the entry");
 
-            // GLTFData was dereferenced and disposed — otherwise the GameObject and GltfImport outlive the loading entity
-            Assert.That(gltfData.CanBeDisposed(), Is.True, "GLTFData.RefCount should have been decremented to zero");
+            // Cache drain (e.g. M2's eager drain on LSD reload) finishes disposal exactly once.
+            var unlimitedBudget = Substitute.For<IPerformanceBudget>();
+            unlimitedBudget.TrySpendBudget().Returns(true);
+            cache.Unload(unlimitedBudget, int.MaxValue);
+
+            Assert.That(rootGo == null, Is.True, "Cache.Unload must dispose the GLTFData and destroy Root");
         }
 
         [Test]

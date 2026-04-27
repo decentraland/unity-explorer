@@ -49,6 +49,29 @@ namespace ECS.StreamableLoading.Tests
         }
 
         [Test]
+        public void EqualsCaseInsensitiveOnHash()
+        {
+            // Defensive against a toolchain emitting uppercase hashes; content hashes are lowercase
+            // by convention but the comparison must not silently miss on case differences.
+            var a = GetGLTFIntention.Create("models/tree.glb", "abcdef");
+            var b = GetGLTFIntention.Create("models/tree.glb", "ABCDEF");
+
+            Assert.That(a.Equals(b), Is.True);
+            Assert.That(a.GetHashCode(), Is.EqualTo(b.GetHashCode()));
+        }
+
+        [Test]
+        public void EqualsCaseSensitiveOnName()
+        {
+            // Name is the file path — case sensitivity matches OS-style src lookups and the
+            // sibling GetGltfContainerAssetIntention's behaviour.
+            var a = GetGLTFIntention.Create("models/tree.glb", "hash-1");
+            var b = GetGLTFIntention.Create("Models/Tree.glb", "hash-1");
+
+            Assert.That(a.Equals(b), Is.False);
+        }
+
+        [Test]
         public void DictionaryFindsExistingEntryWhenKeyEqualsByValue()
         {
             // Round-trips the F4 regression: F1's GltfLoadCache and OngoingRequests are keyed by

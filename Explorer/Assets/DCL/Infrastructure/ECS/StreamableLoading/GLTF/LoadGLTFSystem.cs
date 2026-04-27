@@ -125,8 +125,10 @@ namespace ECS.StreamableLoading.GLTF
         /// </summary>
         protected override void DisposeAbandonedResult(GLTFData asset)
         {
+            // The guard expresses intent (skip if a consumer claimed the asset); Dispose() repeats
+            // the same CanBeDisposed check internally, so do not pass force: true here.
             if (asset.CanBeDisposed())
-                asset.Dispose(force: true);
+                asset.Dispose();
         }
 
         /// <summary>

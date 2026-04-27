@@ -37,16 +37,18 @@ namespace ECS.StreamableLoading.GLTF
 
         // Identity: Hash + Name. Hash alone would be enough for content identity, but matching the
         // sibling GetGltfContainerAssetIntention's shape (Name + Hash) keeps the two layers
-        // consistent. The previous OR equality (Hash || Name) was unsafe — two scenes can share a
-        // Src path with different content hashes, and LSD hot-reload relies on Hash changing to
-        // evict stale cache entries.
+        // consistent. Hash uses ordinal-ignore-case so an upstream toolchain producing uppercase
+        // hashes can't silently miss the dedup; content hashes are lowercase by convention but the
+        // comparison is defensive.
         public bool Equals(GetGLTFIntention other) =>
-            Hash == other.Hash && Name == other.Name;
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) && Name == other.Name;
 
         public override bool Equals(object? obj) =>
             obj is GetGLTFIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Hash, Name);
+            HashCode.Combine(
+                Hash == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(Hash),
+                Name);
     }
 }

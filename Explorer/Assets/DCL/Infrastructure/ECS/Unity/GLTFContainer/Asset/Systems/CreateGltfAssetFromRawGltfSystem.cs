@@ -50,15 +50,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                // Release the GLTFData that LoadGLTFSystem reference-counted; otherwise the GameObject
-                // and GltfImport stay alive after the loading entity is destroyed.
+                // Release this consumer's reference. Terminal disposal is owned by GltfLoadCache.Unload —
+                // by the time we get here PutAsync has stored the asset in the cache and ApplyLoadedResult
+                // has bumped its reference count, so calling Dispose() here would double-dispose when the
+                // cache later drains the entry.
                 if (gltfDataResult.Succeeded && gltfDataResult.Asset is { } gltfData)
-                {
                     gltfData.Dereference();
-
-                    if (gltfData.CanBeDisposed())
-                        gltfData.Dispose();
-                }
 
                 World.Destroy(entity);
                 return;
