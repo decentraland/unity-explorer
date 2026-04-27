@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
@@ -10,8 +10,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using SceneRunner.Scene;
 using UnityEngine;
-using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -24,11 +24,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.sceneData = sceneData;
             this.options = options;
         }
 
@@ -51,7 +53,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoveAssetBundles: false };
+            bool loadRawGltf = options.PreviewingBuilderCollection;
+
+            if (options.LocalSceneDevelopment)
+            {
+                if (options.UseRemoteAssetBundles)
+                    loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                else
+                    loadRawGltf = true;
+            }
+
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
@@ -61,9 +72,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         public struct Options
         {
             public bool LocalSceneDevelopment;
-
-            public bool UseRemoveAssetBundles;
-
+            public bool UseRemoteAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

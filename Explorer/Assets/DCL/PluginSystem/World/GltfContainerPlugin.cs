@@ -88,10 +88,11 @@ namespace DCL.PluginSystem.World
             PrepareGltfAssetLoadingSystem.InjectToWorld(
                 ref builder,
                 assetsCache,
+                sharedDependencies.SceneData,
                 new PrepareGltfAssetLoadingSystem.Options
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
-                    UseRemoveAssetBundles = useRemoteAssetBundles,
+                    UseRemoteAssetBundles = useRemoteAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 

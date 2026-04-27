@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace SceneRunner.Scene
 {
@@ -24,7 +25,7 @@ namespace SceneRunner.Scene
 
         private readonly URLDomain abDomain;
 
-        private readonly List<string> filesToGetFromLocalHost = new ()
+        private readonly HashSet<string> filesToGetFromLocalHost = new (StringComparer.OrdinalIgnoreCase)
         {
             "scene.json", "main.crdt"
         };
@@ -73,10 +74,11 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetHash(string name, out string hash)
-        {
-            return fileToHash.TryGetValue(name, out hash);
-        }
+        public bool TryGetHash(string name, out string hash) =>
+            fileToHash.TryGetValue(name, out hash);
+
+        public bool IsRawAsset(string contentPath) =>
+            filesToGetFromLocalHost.Contains(contentPath) || IsNonConvertedAsset(contentPath);
 
         public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
         {
@@ -90,11 +92,22 @@ namespace SceneRunner.Scene
                 var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
                                                                       .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
+                var remoteFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
-                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file) && !IsNonConvertedAsset(contentDefinition.file))
+                    remoteFiles.Add(contentDefinition.file);
+
+                    if (fileToHash.ContainsKey(contentDefinition.file)
+                        && !filesToGetFromLocalHost.Contains(contentDefinition.file)
+                        && !IsNonConvertedAsset(contentDefinition.file))
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
+
+                // Files that exist locally but not in the remote definition have no AB on the CDN — load from localhost
+                foreach (string localFile in fileToHash.Keys)
+                    if (!remoteFiles.Contains(localFile))
+                        filesToGetFromLocalHost.Add(localFile);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
