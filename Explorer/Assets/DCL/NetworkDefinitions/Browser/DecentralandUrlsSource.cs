@@ -231,6 +231,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
                 DecentralandUrl.ReportUserForm => $"https://decentraland.{ENV}/report/players?player_address={{0}}&reported_address={{1}}",
                 DecentralandUrl.BannedUsers => $"{Url(DecentralandUrl.Gatekeeper)}/users/{{0}}/bans",
+                DecentralandUrl.SceneAdmins => $"{Url(DecentralandUrl.Gatekeeper)}/scene-admin",
+
 
                 DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
                 DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
