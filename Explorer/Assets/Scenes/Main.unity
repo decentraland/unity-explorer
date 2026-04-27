@@ -381,14 +381,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   launchSettings:
-    initialRealm: 0
+    initialRealm: 6
     targetScene: {x: 0, y: 0}
     EditorSceneStartPosition: 1
     predefinedScenes:
       enabled: 0
       parcels:
       - {x: 100, y: 100}
-    targetWorld: flutterecho.dcl.eth
+    targetWorld: nebi.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -398,10 +398,10 @@ MonoBehaviour:
   decentralandEnvironment: 0
   debugSettings:
     showSplash: 1
-    showAuthentication: 1
+    showAuthentication: 0
     showLoading: 1
-    enableLandscape: 0
-    enableLOD: 0
+    enableLandscape: 1
+    enableLOD: 1
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0

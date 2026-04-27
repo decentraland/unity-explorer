@@ -22,6 +22,9 @@ namespace CrdtEcsBridge.RestrictedActions
 {
     public class RestrictedActionsAPIImplementation : IRestrictedActionsAPI
     {
+        private const string MASKED_EMOTE_FALLBACK_LOG =
+            "Masked emotes are not previewable, falling back to not masked. Deploy your scene to preview them.";
+
         private readonly IMVCManager mvcManager;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
@@ -115,6 +118,8 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return;
 
+            mask = ApplyMaskedFallbackIfNeeded(mask);
+
             if (mask == AvatarEmoteMask.AemFullBody)
                 globalWorldActions.TriggerEmote(predefinedEmote, false, mask);
             else
@@ -128,6 +133,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
+
+            mask = ApplyMaskedFallbackIfNeeded(mask);
 
             try
             {
@@ -168,6 +175,18 @@ namespace CrdtEcsBridge.RestrictedActions
                 masked.EmoteUrn = default; // Permanent stop — don't replay on re-entry
                 sceneWorld.Set(scenePlayerEntity, masked);
             }
+        }
+
+        private AvatarEmoteMask ApplyMaskedFallbackIfNeeded(AvatarEmoteMask mask)
+        {
+            if (mask == AvatarEmoteMask.AemFullBody || !globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData))
+                return mask;
+
+            ReportHub.LogError(
+                new ReportData(ReportCategory.EMOTE, sceneShortInfo: sceneData.SceneShortInfo),
+                MASKED_EMOTE_FALLBACK_LOG);
+
+            return AvatarEmoteMask.AemFullBody;
         }
 
         private void TriggerMaskedEmoteOnSceneWorld(CommunicationData.URLHelpers.URN urn, AvatarEmoteMask mask)

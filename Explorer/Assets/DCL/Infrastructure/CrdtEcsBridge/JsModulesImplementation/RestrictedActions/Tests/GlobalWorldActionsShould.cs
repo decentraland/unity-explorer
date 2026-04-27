@@ -287,6 +287,29 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
         }
 
+        // Truth table for ShouldFallbackMaskedEmotesToFullBody
+        [Test]
+        [TestCase(true, false, false, false, true)]   // local-dev w/o remote ABs → fallback
+        [TestCase(true, true, false, false, false)]   // local-dev w/ remote ABs → no fallback (loads from realm)
+        [TestCase(false, true, true, true, true)]     // builder collection preview on a wearable preview scene → fallback
+        [TestCase(false, true, true, false, false)]   // builder preview flag on, but scene isn't a wearable preview → no fallback
+        [TestCase(false, true, false, true, false)]   // wearable preview flag on, but builder preview off → no fallback
+        [TestCase(false, true, false, false, false)]  // production realm → no fallback
+        public void ShouldFallbackMaskedEmotesToFullBody_TruthTable(
+            bool localSceneDevelopment,
+            bool useRemoteAssetBundles,
+            bool isBuilderCollectionPreview,
+            bool isWearableBuilderCollectionPreview,
+            bool expected)
+        {
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus,
+                localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview);
+
+            var sceneData = new MockSceneData { IsWearableBuilderCollectionPreview = isWearableBuilderCollectionPreview };
+
+            Assert.AreEqual(expected, globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData));
+        }
+
         [Test]
         public void ShouldNotTriggerSceneEmoteIfAvatarNotVisible()
         {
@@ -337,6 +360,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public SceneEntityDefinition SceneEntityDefinition { get; set; } = new ("sceneId", new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
+            public bool IsWearableBuilderCollectionPreview { get; set; }
 
             public bool HasRequiredPermission(string permission) => true;
 

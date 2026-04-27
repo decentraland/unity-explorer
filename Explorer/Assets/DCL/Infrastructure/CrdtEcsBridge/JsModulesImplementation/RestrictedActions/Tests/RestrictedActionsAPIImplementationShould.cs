@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
+using DCL.ECSComponents;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
@@ -292,6 +294,83 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 Arg.Any<Vector3?>(),
                 0f,
                 Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void TryTriggerEmote_WithMask_FallsBackToFullBody_WhenLocalSceneDevelopment()
+        {
+            // Arrange
+            const string EMOTE_URN = "urn:emote:foo";
+            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(true);
+
+            // Act
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Masked emotes are not previewable"));
+            restrictedActionsAPIImplementation.TryTriggerEmote(EMOTE_URN, AvatarEmoteMask.AemUpperBody);
+
+            // Assert: original mask was discarded; full-body trigger was used instead
+            globalWorldActions.Received(1).TriggerEmote(new URN(EMOTE_URN), false, AvatarEmoteMask.AemFullBody);
+            globalWorldActions.DidNotReceive().TriggerEmote(Arg.Any<URN>(), Arg.Any<bool>(), AvatarEmoteMask.AemUpperBody);
+        }
+
+        [Test]
+        public void TryTriggerEmote_WithMask_DoesNotFallBack_WhenNotLocalSceneDevelopment()
+        {
+            // Arrange
+            const string EMOTE_URN = "urn:emote:foo";
+            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryTriggerEmote(EMOTE_URN, AvatarEmoteMask.AemUpperBody);
+
+            // Assert: masked path taken (TriggerEmote on global world is NOT called for masked emotes —
+            // they go through the scene world via TriggerMaskedEmoteOnSceneWorld instead)
+            globalWorldActions.DidNotReceive().TriggerEmote(Arg.Any<URN>(), Arg.Any<bool>(), Arg.Any<AvatarEmoteMask>());
+        }
+
+        [Test]
+        public void TryTriggerSceneEmoteAsync_WithMask_LoadsAsFullBody_WhenLocalSceneDevelopment()
+        {
+            // Arrange
+            const string SRC = "scene/foo_emote.glb";
+            const string HASH = "QmFakeHash";
+            StubSceneContentHash(SRC, HASH);
+            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(true);
+
+            // Act
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Masked emotes are not previewable"));
+            restrictedActionsAPIImplementation.TryTriggerSceneEmoteAsync(SRC, false, AvatarEmoteMask.AemUpperBody, CancellationToken.None).Forget();
+
+            // Assert: scene-emote loader received full-body, not the requested mask
+            globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemFullBody, Arg.Any<CancellationToken>());
+            globalWorldActions.DidNotReceive().TriggerSceneEmoteAsync(Arg.Any<ISceneData>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void TryTriggerSceneEmoteAsync_WithMask_DoesNotFallBack_WhenNotLocalSceneDevelopment()
+        {
+            // Arrange
+            const string SRC = "scene/foo_emote.glb";
+            const string HASH = "QmFakeHash";
+            StubSceneContentHash(SRC, HASH);
+            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(false);
+
+            // Act
+            restrictedActionsAPIImplementation.TryTriggerSceneEmoteAsync(SRC, false, AvatarEmoteMask.AemUpperBody, CancellationToken.None).Forget();
+
+            // Assert: original mask is preserved
+            globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
+        }
+
+        private void StubSceneContentHash(string src, string hash)
+        {
+            var sceneContent = Substitute.For<ISceneContent>();
+            sceneContent.TryGetHash(src, out Arg.Any<string>())
+                        .Returns(call =>
+                         {
+                             call[1] = hash;
+                             return true;
+                         });
+            sceneData.SceneContent.Returns(sceneContent);
         }
     }
 }

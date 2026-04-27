@@ -14,5 +14,14 @@ namespace CrdtEcsBridge.RestrictedActions
         UniTask<(URN Urn, bool IsLooping)?> TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask, CancellationToken ct);
         void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask);
         void StopEmote();
+
+        /// <summary>
+        /// True when masked emotes cannot be loaded/played in the current run mode and must fall back
+        /// to full body. This is the case for any run mode that routes through the legacy local-load
+        /// path (raw GLBs imported as legacy AnimationClip), where Mecanim runtime imports fail
+        /// because GLTFast's path uses AnimationClip.SetCurve which is editor-only.
+        /// Mirrors the loadFromLocalScene condition in TriggerSceneEmoteAsync.
+        /// </summary>
+        bool ShouldFallbackMaskedEmotesToFullBody(ISceneData sceneData);
     }
 }
