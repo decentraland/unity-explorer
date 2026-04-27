@@ -69,7 +69,7 @@ namespace DCL.Prefs
             }
 
             if (fileStream == null)
-                throw new Exception("Failed to open unityPrefs file");
+                throw new Exception($"Failed to acquire any user-data slot (all {CONCURRENT_CLIENTS} slots occupied or inaccessible)");
 
             using var reader = new StreamReader(fileStream, Encoding.UTF8, true, 1024, true);
             string json = reader.ReadToEnd();
@@ -79,10 +79,18 @@ namespace DCL.Prefs
         public void Dispose()
         {
             if (disposed) return;
-            disposed = true;
 
             try { SaveSync(); } catch { /* ignored */ }
-            try { fileStream?.Dispose(); } catch { /* ignored */ }
+
+            // Flip `disposed` under the same lock WriteToDisk takes, so any background
+            // Task.Run(WriteToDisk) queued just before shutdown either writes to a still-live
+            // stream or, after waiting on the lock, observes `disposed` and bails out cleanly.
+            lock (fileStream)
+            {
+                disposed = true;
+                try { fileStream?.Dispose(); } catch { /* ignored */ }
+            }
+
             try { claimStream?.Dispose(); } catch { /* ignored */ }
 
             if (!string.IsNullOrEmpty(claimPath))
@@ -214,6 +222,8 @@ namespace DCL.Prefs
             lock (fileStream)
             lock (userData)
             {
+                if (disposed) return;
+
                 fileStream.Seek(0, SeekOrigin.Begin);
                 fileStream.SetLength(0);
 
@@ -355,6 +365,13 @@ namespace DCL.Prefs
             Process process;
             try { process = Process.GetProcessById(claim.Pid); }
             catch (ArgumentException) { return false; }
+
+            // Conservative: on unexpected failures (e.g. macOS hardened runtime denying
+            // process introspection), keep the slot marked live so we never steal a claim
+            // from a peer we cannot inspect. Trade-off: in fully sandboxed environments
+            // where every Process.GetProcessById throws, all CONCURRENT_CLIENTS slots can
+            // appear permanently occupied to a fresh instance — accepted as the safer
+            // failure mode versus stomping on a live peer.
             catch { return true; }
 
             try
@@ -394,7 +411,7 @@ namespace DCL.Prefs
                 using Process self = Process.GetCurrentProcess();
                 claim.Pid = self.Id;
 
-                try { claim.ProcessName = self.ProcessName ?? string.Empty; }
+                try { claim.ProcessName = self.ProcessName; }
                 catch { /* ignored */ }
 
                 try { claim.MainModulePath = self.MainModule?.FileName ?? string.Empty; }
@@ -411,9 +428,9 @@ namespace DCL.Prefs
         [Serializable]
         internal struct SlotClaim
         {
-            public int Pid;
-            public string ProcessName;
-            public string MainModulePath;
+            public int Pid { get; set; }
+            public string ProcessName { get; set; }
+            public string MainModulePath { get; set; }
         }
 
         [Serializable]

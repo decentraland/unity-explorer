@@ -1,7 +1,9 @@
 using Newtonsoft.Json;
 using NUnit.Framework;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace DCL.Prefs.Tests
 {
@@ -90,6 +92,58 @@ namespace DCL.Prefs.Tests
             prefs.Dispose();
 
             Assert.IsFalse(File.Exists(ClaimPath(0)));
+        }
+
+        [Test]
+        public void GrantDistinctSlotsWhenInstancesRaceToClaim()
+        {
+            const int instanceCount = 8;
+
+            var instances = new FileDCLPlayerPrefs[instanceCount];
+            var failures = new Exception[instanceCount];
+            var threads = new Thread[instanceCount];
+            using var barrier = new Barrier(instanceCount);
+
+            for (var i = 0; i < instanceCount; i++)
+            {
+                int idx = i;
+                threads[idx] = new Thread(() =>
+                {
+                    try
+                    {
+                        barrier.SignalAndWait();
+                        instances[idx] = new FileDCLPlayerPrefs(tempDir);
+                    }
+                    catch (Exception e) { failures[idx] = e; }
+                });
+            }
+
+            try
+            {
+                foreach (Thread t in threads) t.Start();
+                foreach (Thread t in threads) t.Join();
+
+                for (var i = 0; i < instanceCount; i++)
+                    Assert.IsNull(failures[i], $"Thread {i} threw: {failures[i]}");
+
+                // FileMode.CreateNew is kernel-atomic — every racing constructor must land on
+                // a distinct slot, so the on-disk claim file count must equal the thread count.
+                string[] claimFiles = Directory.GetFiles(tempDir, "userdata_*.claim");
+                Assert.AreEqual(instanceCount, claimFiles.Length, "Expected one claim file per concurrent instance.");
+
+                using Process self = Process.GetCurrentProcess();
+
+                foreach (string path in claimFiles)
+                {
+                    var claim = JsonConvert.DeserializeObject<FileDCLPlayerPrefs.SlotClaim>(File.ReadAllText(path));
+                    Assert.AreEqual(self.Id, claim.Pid, $"Claim file {path} not owned by current process.");
+                }
+            }
+            finally
+            {
+                foreach (FileDCLPlayerPrefs prefs in instances)
+                    prefs?.Dispose();
+            }
         }
 
         [Test]
