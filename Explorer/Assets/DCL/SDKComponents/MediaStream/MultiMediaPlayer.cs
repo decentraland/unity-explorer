@@ -308,15 +308,15 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        /// MUST be used in place, caller doesn't take ownership of the referene.
+        /// MUST be used in place, caller doesn't take ownership of the reference.
         /// Caveat: AVProVideo uses direct audio output bypassing Unity's audio system.
         /// It such cases the exposure is not possible through this method.
         /// </summary>
-        public AudioSource? ExposedAudioSource()
+        public AudioSource? AnyExposedAudioSource()
         {
             return Match(
                 static avPro => avPro.AvProMediaPlayer.AudioSource,
-                static livekitPlayer => livekitPlayer.ExposedAudioSource()
+                static livekitPlayer => livekitPlayer.AnyExposedAudioSource()
             );
         }
     }

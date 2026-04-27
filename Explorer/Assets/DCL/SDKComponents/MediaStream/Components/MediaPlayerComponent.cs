@@ -143,7 +143,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool TryAttachLastAudioFrameReadFilterOrUseExisting(out ThreadSafeLastAudioFrameReadFilter? output) 
         {
-            AudioSource? AudioSource = MediaPlayer.ExposedAudioSource();
+            AudioSource? AudioSource = MediaPlayer.AnyExposedAudioSource();
 
             if (AudioSource == null)
             {
