@@ -96,9 +96,9 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                // Force-drain dereferenced caches on LSD reload — periodic UnloadCache is gated on
-                // memory pressure (~65%) which a dev session rarely hits, so stale pool entries
-                // would otherwise accumulate across reloads with changing hashes.
+                // Force-drain dereferenced caches on LSD reload. The local dev server derives hashes
+                // from the file path, not content, so an updated model keeps the same hash and cache
+                // hits would return stale assets. Draining guarantees fresh loads.
                 cacheCleaner.UnloadCache(budgeted: false);
                 Resources.UnloadUnusedAssets();
 
