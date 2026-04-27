@@ -963,7 +963,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 556587912230755051, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1
+      value: 104
       objectReference: {fileID: 0}
     - target: {fileID: 791050805523401173, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -987,11 +987,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 91.47
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 16.75
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -1183,7 +1183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5790594399661718223, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_text
@@ -1219,10 +1219,6 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: 82ca2aeafeec83445b09d76a739f31ac, type: 3}
     - target: {fileID: 8532040109245339427, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9178346762738734868, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
-      propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1270,12 +1266,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ff05dbcd27013f4da6ed6fe6de0cbc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DCL.Social::DCL.VoiceChat.ProximityVoiceChatButtonView
-  <CloseAreaButton>k__BackingField: {fileID: 5740703227619954291}
   button: {fileID: 5839845052108196698}
   unselectedImage: {fileID: 3379401566610532616}
   hoverStateImage: {fileID: 7958809184563542825}
   suppressedTooltip: {fileID: 6448161301622164182}
   <SuppressedText>k__BackingField: {fileID: 8675716467445008219}
+  <CloseAreaButton>k__BackingField: {fileID: 5740703227619954291}
   tooltipAnimation: {fileID: 5937488848181735481}
   hoverTooltip: {fileID: 1550531280301721178}
   greenDotImage: {fileID: 6042763751309408264}
