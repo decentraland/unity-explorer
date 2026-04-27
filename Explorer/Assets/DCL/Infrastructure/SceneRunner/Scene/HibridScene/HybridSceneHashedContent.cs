@@ -92,7 +92,7 @@ namespace SceneRunner.Scene
                 var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
                                                                       .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-                HashSet<string> remoteFiles = HashSetPool<string>.Get();
+                var remoteFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
