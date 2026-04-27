@@ -107,8 +107,8 @@ namespace SceneRunner.Admins
                 RealmMetadata realmMetadata = new RealmMetadata()
                 {
                     hostname = realmData.Hostname,
-                             protocol = realmData.Protocol,
-                             serverName = realmData.RealmName,
+                    protocol = realmData.Protocol,
+                    serverName = realmData.RealmName,
                 };
 
                 Vector2Int baseParcel = sceneData.SceneShortInfo.BaseParcel;
