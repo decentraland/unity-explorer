@@ -12,6 +12,24 @@ using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
+    /// <summary>
+    ///     Thread-safe mirror of the island room's remote audio sids, indexed by participant identity.
+    ///     Acts as the single source of truth that <see cref="DCL.VoiceChat.Nearby.Systems.NearbyAudioBindingSystem"/>
+    ///     polls each tick — no events leak into the ECS pipeline.
+    ///     <para>
+    ///         Lifecycle is tied to the LiveKit room, not to the user's nearby state:
+    ///         <list type="bullet">
+    ///             <item><c>TrackSubscribed</c> / <c>TrackUnsubscribed</c> — incremental sid add/remove.</item>
+    ///             <item><c>ConnectionUpdated(Connected)</c> — full re-hydration from
+    ///                 <see cref="LiveKit.Rooms.Participants.IParticipantsHub.RemoteParticipantIdentities"/>
+    ///                 (covers tracks subscribed before our handler attached).</item>
+    ///             <item><c>ConnectionUpdated(Disconnected)</c> — clear all sids; binding/cleanup systems
+    ///                 reap the orphaned audio entities on the next tick.</item>
+    ///         </list>
+    ///     </para>
+    ///     Suppression / mute / block policies do <b>not</b> touch this registry — they are applied as pull-based
+    ///     filters in the systems layer so resume / unblock instantly re-bind from the unchanged snapshot.
+    /// </summary>
     public sealed class NearbyAudioStreamRegistry : INearbyAudioStreamRegistry
     {
         private readonly IRoom room;

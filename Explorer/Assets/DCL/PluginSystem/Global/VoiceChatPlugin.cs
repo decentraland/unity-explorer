@@ -233,10 +233,7 @@ namespace DCL.PluginSystem.Global
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
 
-                nearbyVoiceChatManager = new NearbyVoiceChatManager(
-                    islandRoom, voiceChatConfiguration,
-                    voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, loadingStatus);
+                nearbyVoiceChatManager = new NearbyVoiceChatManager(nearbyStateModel, islandRoom, voiceChatConfiguration, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyNametagsHandler = new NearbyVoiceChatNametagsHandler(

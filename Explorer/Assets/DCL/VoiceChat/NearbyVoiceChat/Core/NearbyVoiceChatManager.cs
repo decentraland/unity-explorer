@@ -43,12 +43,8 @@ namespace DCL.VoiceChat
 
         private bool disposed;
 
-        public NearbyVoiceChatManager(
-            IRoom islandRoom,
-            VoiceChatConfiguration configuration,
-            IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            NearbyVoiceChatStateModel stateModel,
-            ILoadingStatus loadingStatus)
+        public NearbyVoiceChatManager(NearbyVoiceChatStateModel stateModel, IRoom islandRoom, VoiceChatConfiguration configuration,
+            IReadonlyReactiveProperty<VoiceChatStatus> callStatus, ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
@@ -188,7 +184,11 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, LKDisconnectReason? reason)
         {
-            // Cancel in-flight mic publish immediately so PublishAsync observes it via its CancellationToken
+            // Cancel in-flight mic publish synchronously — the event may arrive off the main thread, and any deferral
+            // until the main-thread hop below lets PublishMicWithRetryAsync start another attempt before observing cancellation.
+            if (update == ConnectionUpdate.Disconnected)
+                activationCts.SafeCancelAndDispose();
+
             OnConnectionUpdatedInternalAsync(update, reason).Forget();
             return;
 
@@ -204,8 +204,6 @@ namespace DCL.VoiceChat
                 {
                     if (VoiceChatDisconnectReasonHelper.IsValidDisconnectReason(disconnectReason))
                         ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Valid disconnect ({disconnectReason}) — no reconnection needed");
-
-                    activationCts.SafeCancelAndDispose();
 
                     Disconnect();
                 }
