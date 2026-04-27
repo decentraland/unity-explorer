@@ -42,10 +42,9 @@ namespace DCL.PluginSystem.World
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
 
-        // Replaces NoCache<GLTFData>.INSTANCE which did not deduplicate concurrent requests. GltfLoadCache uses
-        // RefCountStreamableCacheBase so multiple entities referencing the same hash share a single GltfImport
-        // and its underlying Mesh / Material / Texture allocations. Combined with per-consumer Root cloning in
-        // CreateGltfAssetFromRawGltfSystem, this collapses N full-load copies into one.
+        // Process-wide raw-GLTF cache. Combined with per-consumer Root cloning in
+        // CreateGltfAssetFromRawGltfSystem, multiple entities referencing the same hash share
+        // a single GltfImport and its underlying Mesh / Material / Texture allocations.
         private readonly GltfLoadCache gltfLoadCache = new ();
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,

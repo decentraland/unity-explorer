@@ -100,9 +100,9 @@ namespace ECS.StreamableLoading.GLTF
                 // Capture hierarchy paths for local scene development debugging
                 var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
 
-                // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch block does not double-dispose.
-                // Reference counting is now handled by the cache: LoadSystemBase.ApplyLoadedResult calls cache.AddReference once per
-                // consumer entity, and each consumer's GltfContainerAsset.Dispose dereferences on teardown.
+                // Ownership of gltfImport and rootContainer transfers to GLTFData — null out locals so the catch
+                // block does not double-dispose. Per-consumer ref counting: LoadSystemBase.ApplyLoadedResult
+                // calls cache.AddReference, and each consumer's GltfContainerAsset.Dispose dereferences.
                 var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
                 gltfImport = null;
                 rootContainer = null;
