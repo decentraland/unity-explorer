@@ -856,6 +856,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     passportBridge,
                     chatEventBus,
+                    eventsApiService,
                     staticContainer.SmartWearableCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(

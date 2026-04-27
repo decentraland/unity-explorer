@@ -27,10 +27,14 @@ using MVC;
 using System;
 using System.Threading;
 using DCL.CharacterCamera;
+using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat.UI;
 using ECS.Abstract;
+using System.Collections.Generic;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -56,8 +60,10 @@ namespace DCL.UI.Sidebar
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
+        private readonly HttpEventsApiService eventsApiService;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
+        private CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
@@ -83,7 +89,8 @@ namespace DCL.UI.Sidebar
             IRealmData realmData,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
-            ChatEventBus chatEventBus)
+            ChatEventBus chatEventBus,
+            HttpEventsApiService eventsApiService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -96,6 +103,7 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
+            this.eventsApiService = eventsApiService;
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
@@ -156,6 +164,7 @@ namespace DCL.UI.Sidebar
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
+            checkForLiveEventsCts.SafeCancelAndDispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
@@ -307,6 +316,9 @@ namespace DCL.UI.Sidebar
         {
             //We load the data into the profile widget
             profileButtonPresenter.LoadProfile();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -341,6 +353,21 @@ namespace DCL.UI.Sidebar
             viewInstance?.communitiesButton.gameObject.SetActive(false);
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
+        }
+
+        private async UniTaskVoid FillLiveEventsAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                         .SuppressToResultAsync(ReportCategory.EVENTS);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                viewInstance!.SetLiveEventsCounter(liveEventsResult.Success ? liveEventsResult.Value.Count : 0);
+                await UniTask.Delay(TimeSpan.FromMinutes(3), cancellationToken: ct);
+            }
         }
 
 #region Sidebar button handlers
