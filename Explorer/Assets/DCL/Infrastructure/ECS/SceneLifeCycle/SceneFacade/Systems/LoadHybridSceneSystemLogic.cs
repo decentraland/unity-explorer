@@ -66,13 +66,13 @@ namespace ECS.SceneLifeCycle.Systems
                 await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain,
                     reportCategory, ct);
 
-                await FetchRemoteAssetBundleVersion(definition, reportCategory, ct);
+                await FetchRemoteAssetBundleVersionAsync(definition, reportCategory, ct);
             }
 
             return hybridSceneHashedContent;
         }
 
-        private async UniTask FetchRemoteAssetBundleVersion(SceneEntityDefinition definition, ReportData reportCategory, CancellationToken ct)
+        private async UniTask FetchRemoteAssetBundleVersionAsync(SceneEntityDefinition definition, ReportData reportCategory, CancellationToken ct)
         {
             try
             {
