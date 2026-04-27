@@ -5,7 +5,6 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
-using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -14,8 +13,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Audio;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -35,21 +32,17 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly VoiceChatConfiguration configuration;
+        private readonly NearbyAudioSourceFactory sourceFactory;
 
         private readonly List<(Entity avatarEntity, StreamKey key)> pendingCreations = new (16);
 
-        private readonly Transform sourcesRoot;
-
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, VoiceChatConfiguration configuration) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
-            this.configuration = configuration;
-
-            sourcesRoot = new GameObject("VoiceChatSources_Nearby").transform;
+            this.sourceFactory = sourceFactory;
         }
 
         protected override void Update(float t)
@@ -105,33 +98,12 @@ namespace DCL.VoiceChat.Nearby.Systems
                 // would otherwise reap on the next tick — see PRD-cleanup §"race-on-spawn guard".
                 if (!stream.Resource.Has) continue;
 
-                LivekitAudioSource source = CreateAndPlaySource(key, stream);
+                LivekitAudioSource source = sourceFactory.Create(key, stream);
 
                 Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
                 bindings.Add(key, audioEntity);
                 budget--;
             }
-        }
-
-        private LivekitAudioSource CreateAndPlaySource(StreamKey key, Weak<AudioStream> stream)
-        {
-            LivekitAudioSource lkSource = LivekitAudioSource.New(true, isSpatial: true);
-            lkSource.Construct(stream);
-
-            AudioMixerGroup mixerGroup = configuration.ChatAudioMixerGroup;
-            AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
-            audioSource.outputAudioMixerGroup = mixerGroup;
-            audioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
-            lkSource.ApplySpatialSettings(configuration);
-
-            lkSource.name = $"LivekitSource_{key.identity}";
-            lkSource.transform.SetParent(sourcesRoot);
-
-            // Start muted — NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
-            audioSource.mute = true;
-            lkSource.Play();
-
-            return lkSource;
         }
     }
 }

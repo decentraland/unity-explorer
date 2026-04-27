@@ -42,6 +42,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Dictionary<StreamKey, Entity> bindings = null!;
         private IUserBlockingCache userBlockingCache = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
+        private VoiceChatConfiguration configuration = null!;
+        private NearbyAudioSourceFactory sourceFactory = null!;
         private readonly List<GameObject> gameObjects = new (16);
 
         [SetUp]
@@ -53,8 +55,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             bindings = new Dictionary<StreamKey, Entity>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel);
+            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
         }
 
         protected override void OnTearDown()
@@ -65,6 +69,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             gameObjects.Clear();
             bindings.Clear();
             stateModel.Dispose();
+
+            if (configuration != null) Object.DestroyImmediate(configuration);
 
             EcsTestsUtils.TearDownFeaturesRegistry();
         }

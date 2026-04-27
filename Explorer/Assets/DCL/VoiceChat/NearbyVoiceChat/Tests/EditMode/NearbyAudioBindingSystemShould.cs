@@ -41,6 +41,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private NearbyVoiceChatStateModel stateModel;
 
         private VoiceChatConfiguration configuration;
+        private NearbyAudioSourceFactory sourceFactory;
 
         private readonly List<GameObject> gameObjects = new (32);
 
@@ -54,8 +55,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, configuration);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
         }
 
         protected override void OnTearDown()

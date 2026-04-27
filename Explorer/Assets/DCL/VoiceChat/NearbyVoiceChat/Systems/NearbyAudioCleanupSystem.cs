@@ -9,10 +9,7 @@ using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming;
-using LiveKit.Rooms.Streaming.Audio;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Utility;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -27,8 +24,8 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     - <b>Trigger #4 (listening gate)</b> — <see cref="NearbyVoiceChatStateModel"/> is in
     ///       <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;
     ///       fires for every audio entity regardless of per-entity flags.
-    ///     Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
-    ///     <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
+    ///     Teardown is atomic: <see cref="NearbyAudioSourceFactory.Dispose"/> →
+    ///     <c>bindings.Remove</c> → <c>World.Destroy</c>.
     ///     Implements <see cref="IFinalizeWorldSystem"/> to dispose any survivors at world finalization.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
@@ -39,14 +36,16 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
+        private readonly NearbyAudioSourceFactory sourceFactory;
         private readonly List<Entity> entitiesToCleanUp = new (16);
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
+            this.sourceFactory = sourceFactory;
         }
 
         protected override void Update(float t)
@@ -95,7 +94,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void TearDown(Entity audioEntity)
         {
             NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
-            DisposeSource(comp.LivekitAudioSource);
+            sourceFactory.Dispose(comp.LivekitAudioSource);
             bindings.Remove(comp.Key);
             World.Destroy(audioEntity);
         }
@@ -103,17 +102,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void DisposeSourceOnly(Entity audioEntity)
         {
             NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
-            DisposeSource(comp.LivekitAudioSource);
-        }
-
-        private static void DisposeSource(LivekitAudioSource? source)
-        {
-            if (source != null)
-            {
-                source.Stop();
-                source.Free();
-                UnityObjectUtils.SafeDestroyGameObject(source);
-            }
+            sourceFactory.Dispose(comp.LivekitAudioSource);
         }
     }
 }

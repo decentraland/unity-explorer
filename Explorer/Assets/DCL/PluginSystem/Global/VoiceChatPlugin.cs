@@ -78,6 +78,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyAudioStreamRegistry? nearbyAudioStreamRegistry;
         private Dictionary<StreamKey, Entity>? nearbyAudioBindings;
+        private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatNametagsHandler? nearbyNametagsHandler;
         private NearbyVoiceChatStateModel? nearbyStateModel;
@@ -150,9 +151,9 @@ namespace DCL.PluginSystem.Global
         {
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, voiceChatConfiguration);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!);
-                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!);
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
                 NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }
@@ -213,6 +214,7 @@ namespace DCL.PluginSystem.Global
                 pluginScope.Add(nearbyAudioStreamRegistry);
 
                 nearbyAudioBindings = new Dictionary<StreamKey, Entity>(32);
+                nearbyAudioSourceFactory = new NearbyAudioSourceFactory(voiceChatConfiguration);
 
                 NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
                     ? NearbyVoiceChatState.DISABLED
