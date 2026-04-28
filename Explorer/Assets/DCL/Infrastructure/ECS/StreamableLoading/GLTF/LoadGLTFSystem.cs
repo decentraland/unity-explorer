@@ -23,6 +23,17 @@ namespace ECS.StreamableLoading.GLTF
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
+        private static Transform? rootContainerParent; // Parent GameObject for all instantiated GLTF templates
+
+        private static Transform GetOrCreateRootContainerParent()
+        {
+            if (rootContainerParent != null) return rootContainerParent;
+
+            var go = new GameObject($"POOL_{nameof(GLTFData)}_TEMPLATES");
+            go.SetActive(false);
+            rootContainerParent = go.transform;
+            return rootContainerParent;
+        }
 
         private readonly IWebRequestController webRequestController;
         private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
@@ -87,6 +98,8 @@ namespace ECS.StreamableLoading.GLTF
 
                 // Let the upper layer decide what to do with the root
                 rootContainer.SetActive(false);
+
+                rootContainer.transform.SetParent(GetOrCreateRootContainerParent(), worldPositionStays: false);
 
                 await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
