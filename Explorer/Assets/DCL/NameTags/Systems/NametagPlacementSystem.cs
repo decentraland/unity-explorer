@@ -95,6 +95,7 @@ namespace DCL.Nametags
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
                 return;
 
+            MarkVoiceChatBadgeDirty(e);
             NametagHolder nametagHolder = CreateNameTag(in avatarShape, profile);
             World.Add(e, nametagHolder);
         }
@@ -115,8 +116,18 @@ namespace DCL.Nametags
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
 
+            MarkVoiceChatBadgeDirty(e);
             NametagHolder nametagHolder = CreateNameTag(in avatarShape);
             World.Add(e, nametagHolder);
+        }
+
+        // A freshly attached NametagHolder has stale Speaking/VoiceChat/Hushed visual state from the pool.
+        // Re-dirty any existing voice chat badge so UpdateNametagSpeakingState re-applies it on the new holder.
+        private void MarkVoiceChatBadgeDirty(Entity e)
+        {
+            ref VoiceChatNametagComponent voiceChat = ref World.TryGetRef<VoiceChatNametagComponent>(e, out bool exists);
+            if (exists)
+                voiceChat.IsDirty = true;
         }
 
         [Query]
