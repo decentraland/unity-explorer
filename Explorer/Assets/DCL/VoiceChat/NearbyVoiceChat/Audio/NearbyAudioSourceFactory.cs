@@ -49,6 +49,11 @@ namespace DCL.VoiceChat.Nearby.Audio
         {
             if (source == null) return;
 
+            // Force mute before teardown to avoid an audio click — AudioSource.Stop() cuts the buffer mid-cycle.
+            AudioSource? audioSource = source.AudioSource;
+            if (audioSource != null) audioSource.mute = true;
+            source.SetVolume(0f);
+
             source.Stop();
             source.Free();
             UnityObjectUtils.SafeDestroyGameObject(source);
