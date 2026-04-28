@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.thumbnailLoader = thumbnailLoader;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
-            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.WhatsOnNewEventLink)}?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
 
             view.InitList(thumbnailLoader, cancellationToken);
 

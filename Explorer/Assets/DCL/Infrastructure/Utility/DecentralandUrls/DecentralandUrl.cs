@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ContentModerationReport = 21,
 
         ApiEvents = 22,
-        EventsWebpage = 23,
+        WhatsOnNewEventLink = 23,
 
         ApiAuth = 24,
         AuthSignatureWebApp = 25,
