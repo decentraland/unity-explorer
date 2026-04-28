@@ -595,7 +595,9 @@ ShaderVariantCollection:
   - first: {fileID: 4800000, guid: fe393ace9b354375a9cb14cdbbc28be4, type: 3}
     second:
       variants:
-      - keywords: 
+      - keywords:
+        passType: 0
+      - keywords: OUTLINE_ON
         passType: 0
       - keywords: UNDERLAY_ON
         passType: 0
@@ -657,10 +659,15 @@ ShaderVariantCollection:
         passType: 0
       - keywords: _TERRAIN_BLEND_HEIGHT
         passType: 0
+  - first: {fileID: 4800000, guid: 84ce70d26f48d412ab142adda1b14f22, type: 3}
+    second:
+      variants:
+      - keywords: SOFTMASK_SIMPLE UNDERLAY_ON
+        passType: 0
   - first: {fileID: 4800000, guid: 28d453dc10844f4418372200603a88e5, type: 3}
     second:
       variants:
-      - keywords: 
+      - keywords:
         passType: 0
-      - keywords: 
+      - keywords:
         passType: 13
