@@ -355,6 +355,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f13fd0befee6d48479806b957b3ca94f
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceExpressionConfig.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
     m_Address: DefaultBlack_512_BC7.DDS
     m_ReadOnly: 0
