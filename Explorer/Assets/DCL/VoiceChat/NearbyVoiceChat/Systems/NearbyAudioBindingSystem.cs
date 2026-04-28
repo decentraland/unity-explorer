@@ -45,6 +45,11 @@ namespace DCL.VoiceChat.Nearby.Systems
             this.sourceFactory = sourceFactory;
         }
 
+        protected override void OnDispose()
+        {
+            sourceFactory.DisposeRoot();
+        }
+
         protected override void Update(float t)
         {
             pendingCreations.Clear();

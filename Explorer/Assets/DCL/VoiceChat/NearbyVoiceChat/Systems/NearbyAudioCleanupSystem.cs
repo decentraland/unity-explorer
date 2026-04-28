@@ -1,12 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
-using ECS.LifeCycle;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming;
 using System.Collections.Generic;
@@ -14,31 +14,46 @@ using System.Collections.Generic;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Single owner of structural changes for Nearby audio-source entities.
-    ///     Per tick scans all audio entities and tears them down on any of:
-    ///     - <b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead, flagged with
-    ///       <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>;
-    ///     - <b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>;
-    ///     - <b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns <c>true</c>
-    ///       for the bound <c>walletId</c> (covers both "I block them" and "they block me");
-    ///     - <b>Trigger #4 (listening gate)</b> — <see cref="NearbyVoiceChatStateModel"/> is in
-    ///       <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;
-    ///       fires for every audio entity regardless of per-entity flags.
-    ///     Teardown is atomic: <see cref="NearbyAudioSourceFactory.Dispose"/> →
-    ///     <c>bindings.Remove</c> → <c>World.Destroy</c>.
-    ///     Implements <see cref="IFinalizeWorldSystem"/> to dispose any survivors at world finalization.
+    ///     Canonical detection + teardown for Nearby audio-source entities.
+    ///     <para>
+    ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
+    ///         <list type="bullet">
+    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead, flagged with
+    ///                 <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>.</description></item>
+    ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
+    ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns
+    ///                 <c>true</c> for the bound <c>walletId</c>.</description></item>
+    ///             <item><description><b>Trigger #4 (listening gate)</b> — <see cref="NearbyVoiceChatStateModel"/> is in
+    ///                 <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;
+    ///                 takes a single bulk archetype-move path that marks every live audio entity at once,
+    ///                 bypassing per-entity detection entirely.</description></item>
+    ///         </list>
+    ///         Triggers #1–#3 run via a per-entity source-generated query; Trigger #4 short-circuits to a single
+    ///         <c>World.Add&lt;DeleteEntityIntention&gt;(QueryDescription, default)</c> call.
+    ///     </para>
+    ///     <para>
+    ///         <b>Teardown</b> — reacts to entities now carrying <see cref="DeleteEntityIntention"/>:
+    ///         disposes the <see cref="LivekitAudioSource"/> via <see cref="NearbyAudioSourceFactory"/>
+    ///         (Stop → Free → SafeDestroyGameObject) and removes the <c>(walletId, sid) → entity</c>
+    ///         binding. Physical entity destruction is delegated to <see cref="DestroyEntitiesSystem"/>.
+    ///     </para>
+    ///     <para>
+    ///         <see cref="OnDispose"/> disposes every remaining <see cref="LivekitAudioSource"/> and clears bindings
+    ///         when the world is torn down.
+    ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(NearbyAudioPositionSystem))]
-    public partial class NearbyAudioCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
+    public partial class NearbyAudioCleanupSystem : BaseUnityLoopSystem
     {
-        private readonly INearbyAudioStreamRegistry registry;
+        private static readonly QueryDescription LIVE_AUDIO_QUERY =
+            new QueryDescription().WithAll<NearbyAudioSourceComponent>().WithNone<DeleteEntityIntention>();
 
+        private readonly INearbyAudioStreamRegistry registry;
         private readonly Dictionary<StreamKey, Entity> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyAudioSourceFactory sourceFactory;
-        private readonly List<Entity> entitiesToCleanUp = new (16);
 
         internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
@@ -51,35 +66,29 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            entitiesToCleanUp.Clear();
-            FlagDeadAudioEntitiesQuery(World);
+            // Listening-gate is the cheapest predicate and fires for every live audio entity, so it gets a single bulk
+            // archetype-move instead of N per-entity checks. When closed, per-entity detection is skipped entirely —
+            // the bulk add already marks every match. WithNone<DeleteEntityIntention> keeps it idempotent across ticks.
+            if (stateModel.IsListeningDisabled)
+                World.Add<DeleteEntityIntention>(in LIVE_AUDIO_QUERY);
+            else
+                FlagDoomedAudioEntitiesQuery(World);
 
-            // Structural changes only after the query has released all ref/in/out reads — see CLAUDE.md §5.
-            foreach (Entity audioEntity in entitiesToCleanUp)
-                TearDown(audioEntity);
+            TearDownMarkedAudioEntitiesQuery(World);
         }
 
-        public void FinalizeComponents(in Query query)
+        protected override void OnDispose()
         {
-            entitiesToCleanUp.Clear();
-            CollectAllAudioEntitiesQuery(World);
-
-            foreach (Entity audioEntity in entitiesToCleanUp)
-                DisposeSourceOnly(audioEntity);
-
+            TearDownAllAudioSourcesQuery(World);
             bindings.Clear();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void FlagDeadAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
+        private void FlagDoomedAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
         {
-            // Listening-gate trigger fires for every entity unconditionally — checked first as the cheapest predicate.
-            if (stateModel.IsListeningDisabled || userBlockingCache.UserIsBlocked(comp.Key.identity) ||
-                registry.IsStreamGone(comp.Key) || IsAvatarGone(comp.AvatarEntity))
-            {
-                entitiesToCleanUp.Add(audioEntity);
-            }
+            if (userBlockingCache.UserIsBlocked(comp.Key.identity) || registry.IsStreamGone(comp.Key) || IsAvatarGone(comp.AvatarEntity))
+                World.Add<DeleteEntityIntention>(audioEntity);
 
             return;
             bool IsAvatarGone(Entity avatarEntity) =>
@@ -87,22 +96,16 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         [Query]
-        private void CollectAllAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent _)
+        [All(typeof(DeleteEntityIntention))]
+        private void TearDownMarkedAudioEntities(ref NearbyAudioSourceComponent comp)
         {
-            entitiesToCleanUp.Add(audioEntity);
-        }
-
-        private void TearDown(Entity audioEntity)
-        {
-            NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
             sourceFactory.Dispose(comp.LivekitAudioSource);
             bindings.Remove(comp.Key);
-            World.Destroy(audioEntity);
         }
 
-        private void DisposeSourceOnly(Entity audioEntity)
+        [Query]
+        private void TearDownAllAudioSources(ref NearbyAudioSourceComponent comp)
         {
-            NearbyAudioSourceComponent comp = World.Get<NearbyAudioSourceComponent>(audioEntity);
             sourceFactory.Dispose(comp.LivekitAudioSource);
         }
     }

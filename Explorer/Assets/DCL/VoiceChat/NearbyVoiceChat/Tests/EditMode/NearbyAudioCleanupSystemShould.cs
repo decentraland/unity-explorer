@@ -24,18 +24,22 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// <summary>
     /// Documents <see cref="NearbyAudioCleanupSystem"/> contract:
     ///
-    /// - Owns ALL structural changes to Nearby audio-source entities (binding system creates, cleanup destroys).
-    /// - Pull-based detection: per tick, three triggers per entity — avatar gone, stream gone, identity blocked — with first-match-wins.
-    /// - Teardown is atomic: <see cref="LivekitAudioSource.Stop"/> → <see cref="LivekitAudioSource.Free"/> →
-    ///   <c>SafeDestroyGameObject</c> → <c>bindings.Remove</c> → <c>World.Destroy</c>.
-    /// - <see cref="ECS.LifeCycle.IFinalizeWorldSystem.FinalizeComponents"/> disposes any survivors and clears bindings.
+    /// - Detection marks doomed audio entities with <see cref="DeleteEntityIntention"/>; physical destruction is delegated to
+    ///   <see cref="ECS.LifeCycle.Systems.DestroyEntitiesSystem"/> (deliberately not in this test rig).
+    /// - Pull-based detection: per tick, four triggers per entity — avatar gone, stream gone, identity blocked, listening gate.
+    /// - Teardown reacts to <see cref="DeleteEntityIntention"/>: disposes the <see cref="LivekitAudioSource"/>
+    ///   (Stop → Free → SafeDestroyGameObject) and removes the <c>(walletId, sid) → entity</c> binding.
+    /// - Tests assert the system's own contribution: the entity is marked + the source is disposed + the binding is removed.
+    ///   They deliberately do NOT assert <see cref="World.IsAlive"/>, since this system no longer owns entity destruction.
+    /// - <see cref="NearbyAudioCleanupSystem.Dispose"/> disposes any survivors and clears bindings.
     /// </summary>
     public class NearbyAudioCleanupSystemShould : UnitySystemTestBase<NearbyAudioCleanupSystem>
     {
         private const string PARTICIPANT_A = "wallet-alice";
         private const string SID_1 = "sid-1";
 
-        private static readonly QueryDescription AUDIO_SOURCE_QUERY = new QueryDescription().WithAll<NearbyAudioSourceComponent>();
+        private static readonly QueryDescription LIVE_AUDIO_QUERY =
+            new QueryDescription().WithAll<NearbyAudioSourceComponent>().WithNone<DeleteEntityIntention>();
 
         private static readonly FieldInfo HEAD_ANCHOR_FIELD =
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -87,9 +91,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True, "LivekitAudioSource must be destroyed");
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
@@ -100,9 +102,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
@@ -113,9 +113,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         // ── Trigger #2: stream gone ─────────────────────────────────
@@ -128,9 +126,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
@@ -142,9 +138,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         // ── Trigger #3: blocked identity ────────────────────────────
@@ -157,9 +151,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True, "LivekitAudioSource must be destroyed");
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         // ── Trigger #4: listening gate ──────────────────────────────
@@ -168,44 +160,50 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SuppressedStateTearsDownAllAudioEntities()
         {
             const int COUNT = 3;
-            var sources = new List<LivekitAudioSource>(COUNT);
+            var seeded = new List<(Entity audioEntity, LivekitAudioSource source, string wallet)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                sources.Add(source);
+                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((audioEntity, source, $"wallet-{i}"));
             }
 
             stateModel.Suppress(SuppressionReason.CALL);
 
             system.Update(0);
 
-            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(0));
+            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0), "all audio entities must be marked");
             Assert.That(bindings, Is.Empty);
-            foreach (LivekitAudioSource source in sources)
+            foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
+            {
+                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
                 Assert.That(source == null, Is.True, "LivekitAudioSource must be physically destroyed");
+            }
         }
 
         [Test]
         public void DisabledStateTearsDownAllAudioEntities()
         {
             const int COUNT = 3;
-            var sources = new List<LivekitAudioSource>(COUNT);
+            var seeded = new List<(Entity audioEntity, LivekitAudioSource source, string wallet)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                sources.Add(source);
+                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((audioEntity, source, $"wallet-{i}"));
             }
 
             stateModel.Disable();
 
             system.Update(0);
 
-            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(0));
+            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0));
             Assert.That(bindings, Is.Empty);
-            foreach (LivekitAudioSource source in sources)
+            foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
+            {
+                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
                 Assert.That(source == null, Is.True);
+            }
         }
 
         // ── Compound ────────────────────────────────────────────────
@@ -219,30 +217,31 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.DoesNotThrow(() => system.Update(0));
 
-            Assert.That(world.IsAlive(audioEntity), Is.False);
-            Assert.That(source == null, Is.True);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.False);
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
         public void MassCleanupOnDisconnected()
         {
             const int COUNT = 10;
-            var sources = new List<LivekitAudioSource>(COUNT);
+            var seeded = new List<(Entity audioEntity, LivekitAudioSource source)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                sources.Add(source);
+                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((audioEntity, source));
             }
 
             registry.ClearAll();
 
             system.Update(0);
 
-            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(0));
-            foreach (LivekitAudioSource source in sources)
+            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0));
+            foreach ((Entity audioEntity, LivekitAudioSource source) in seeded)
+            {
+                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
                 Assert.That(source == null, Is.True);
+            }
         }
 
         // ── Idempotency ─────────────────────────────────────────────
@@ -256,15 +255,16 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.IsAlive(audioEntity), Is.True);
+            Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.False);
             Assert.That(source == null, Is.False);
             Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
-            Assert.That(world.CountEntities(in AUDIO_SOURCE_QUERY), Is.EqualTo(1));
+            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(1));
         }
 
-        // ── Finalize ────────────────────────────────────────────────
+        // ── Dispose (world tear-down) ───────────────────────────────
 
         [Test]
-        public void FinalizeDestroysAllRemainingSourcesAndClearsBindings()
+        public void DisposeDestroysAllRemainingSourcesAndClearsBindings()
         {
             const int COUNT = 3;
             var sources = new List<LivekitAudioSource>(COUNT);
@@ -275,16 +275,24 @@ namespace DCL.VoiceChat.Nearby.Tests
                 sources.Add(source);
             }
 
-            // Even with all triggers cold, finalize must dispose everything.
-            system.FinalizeComponents(world.Query(in AUDIO_SOURCE_QUERY));
+            // Even with all triggers cold, dispose must release every source — covers world tear-down survivors.
+            system.Dispose();
 
             foreach (LivekitAudioSource source in sources)
                 Assert.That(source == null, Is.True);
 
-            Assert.That(bindings.ContainsKey(new StreamKey("wallet-0", SID_1)), Is.False);
+            Assert.That(bindings, Is.Empty);
         }
 
         // ── Helpers ─────────────────────────────────────────────────
+
+        private void AssertCleanedUp(Entity audioEntity, LivekitAudioSource source, string walletId, string sid)
+        {
+            Assert.That(world.IsAlive(audioEntity), Is.True, "entity destruction is delegated to DestroyEntitiesSystem and is out of scope here");
+            Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True, "audio entity must be marked for deletion");
+            Assert.That(source == null, Is.True, "LivekitAudioSource must be physically destroyed");
+            Assert.That(bindings.ContainsKey(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
+        }
 
         private (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) SeedBinding(string walletId, string sid)
         {
@@ -359,8 +367,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 Weak<AudioStream>.Null;
 
-            public bool IsStreamGone(StreamKey key) =>
-                throw new NotImplementedException();
+            public bool IsStreamGone(StreamKey key)
+            {
+                ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
+                return sids == null || !sids.ContainsKey(key.sid);
+            }
 
             public void Dispose() { }
         }

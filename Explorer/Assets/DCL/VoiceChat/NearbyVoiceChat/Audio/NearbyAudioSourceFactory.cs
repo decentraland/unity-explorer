@@ -53,5 +53,10 @@ namespace DCL.VoiceChat.Nearby.Audio
             source.Free();
             UnityObjectUtils.SafeDestroyGameObject(source);
         }
+
+        public void DisposeRoot()
+        {
+            UnityObjectUtils.SafeDestroyGameObject(sourcesRoot);
+        }
     }
 }
