@@ -3,6 +3,7 @@ using Google.Protobuf;
 using Pulse.Transport;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
@@ -20,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         UniTask ConnectAsync(string address, int port, CancellationToken ct);
 
-        public void Disconnect(DisconnectReason reason);
+        public Task DisconnectAsync(DisconnectReason reason);
 
         void Send(IMessage message, PacketMode mode);
 

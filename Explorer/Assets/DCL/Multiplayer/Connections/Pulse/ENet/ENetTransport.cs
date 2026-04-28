@@ -19,8 +19,10 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         private readonly byte[] sendBuffer;
 
         private Peer? serverPeer;
-        private Host? client;
+        private Host? host;
         private CancellationTokenSource? lifeCycleCts;
+
+        private bool listenLoopIsActive;
 
         public long BytesSent { get; private set; }
 
@@ -74,20 +76,12 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
         public void Dispose()
         {
-            serverPeer = null;
-
-            lifeCycleCts.SafeCancelAndDispose();
-
-            if (client == null) return;
-
-            // Protect ENet from calls from different threads
+            // Wait synchronously, it will lead to a main thread "freeze" but we don't care - it's called on application exit only
+            // so it will wait as it should
+            DisconnectAsync(DisconnectReason.GRACEFUL, true).Wait();
 
             if (isLibInitialized)
             {
-                // Wait for the last iteration to finish the spin
-                while (client != null)
-                    Thread.Sleep(10);
-
                 Library.Deinitialize();
                 isLibInitialized = false;
             }
@@ -103,17 +97,17 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 isLibInitialized = true;
             }
 
-            client = new Host();
+            host = new Host();
 
             var address = new Address();
             address.SetHost(ip);
             address.Port = (ushort)port;
 
-            client.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
-            serverPeer = client.Connect(address, channelLimit: ENetChannel.COUNT);
+            host.Create(peerLimit: 1, channelLimit: ENetChannel.COUNT);
+            serverPeer = host.Connect(address, channelLimit: ENetChannel.COUNT);
 
             lifeCycleCts = lifeCycleCts.SafeRestartLinked(ct);
-            ListenForIncomingDataAsync(lifeCycleCts.Token).Forget();
+            ListenForIncomingDataAsync(host, lifeCycleCts.Token).Forget();
 
             try
             {
@@ -123,13 +117,55 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             catch (TimeoutException)
             {
                 lifeCycleCts.SafeCancelAndDispose();
+
+                // As there is no direct way to tell Connection Timeout to ENet
+                // at this point it might be [already] connected or not, simply force it to disconnect
+                serverPeer.Value.DisconnectNow((uint)DisconnectReason.NONE);
+                host.Dispose();
+
+                serverPeer = null;
+                host = null;
+
                 throw;
             }
         }
 
-        public void Disconnect(DisconnectReason reason)
+        public Task DisconnectAsync(DisconnectReason reason) =>
+            DisconnectAsync(reason, false);
+
+        /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>
+        private async Task DisconnectAsync(DisconnectReason reason, bool spinThread)
         {
+            // Finish the ListenForIncomingDataAsync loop
+            lifeCycleCts.SafeCancelAndDispose();
+
+            // Wait for the loop to finish in order to prevent race conditions to ENet
+            if (spinThread)
+            {
+                while (Volatile.Read(ref listenLoopIsActive))
+                    Thread.Sleep(10);
+            }
+            else
+            {
+                while (Volatile.Read(ref listenLoopIsActive))
+                    await Task.Yield();
+            }
+
             serverPeer?.Disconnect((uint)reason);
+            FinalizeHost();
+        }
+
+        /// <summary>
+        ///     Makes the current connection unusable
+        /// </summary>
+        private void FinalizeHost()
+        {
+            serverPeer = null;
+
+            // Ensure any final outgoing packets are sent, such as any last moment data and a disconnection event
+            host?.Flush();
+            host?.Dispose();
+            host = null;
         }
 
         public void Send(IMessage message, PacketMode mode)
@@ -140,22 +176,30 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                 SendToPeer(serverPeer.Value, channel, message);
         }
 
-        private UniTask ListenForIncomingDataAsync(CancellationToken ct)
+        /// <summary>
+        ///     The listener loop must be gracefully finalized before other ENet manipulations to prevent race conditions
+        /// </summary>
+        /// <param name="servingHost">The currently serving host, the class field might be changed on disconnection/reconnection</param>
+        private UniTask ListenForIncomingDataAsync(Host servingHost, CancellationToken ct)
         {
+            Volatile.Write(ref listenLoopIsActive, true);
+
             // ENet must be driven on a single dedicated thread
             return UniTask.RunOnThreadPool(async () =>
             {
                 while (!ct.IsCancellationRequested)
                 {
-                    if (client == null) continue;
-
                     // Service does socket I/O + returns one event. Short timeout so we never block outgoing flushes.
-                    if (client.Service(options.ServiceTimeoutMs, out Event netEvent) > 0)
+                    if (servingHost.Service(options.ServiceTimeoutMs, out Event netEvent) > 0)
                         ReceiveIncomingMessage(in netEvent);
+
+                    // ReceiveIncomingMessage can fire the cancellation token
+                    if (ct.IsCancellationRequested)
+                        break;
 
                     // Service only returns one event per call. If multiple packets arrived in that I/O pass,
                     // the rest are queued internally. CheckEvents drains them without redundant socket I/O.
-                    while (client.CheckEvents(out netEvent) > 0)
+                    while (servingHost.CheckEvents(out netEvent) > 0)
                         ReceiveIncomingMessage(in netEvent);
 
                     SendOutgoingMessages();
@@ -163,10 +207,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                     await Task.Yield();
                 }
 
-                // Ensure any final outgoing packets are sent, such as disconnected notifications or any last moment data
-                client?.Flush();
-                client?.Dispose();
-                client = null;
+                Volatile.Write(ref listenLoopIsActive, false);
             }, configureAwait: false, cancellationToken: ct);
         }
 
@@ -181,15 +222,15 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
                     break;
 
                 case EventType.Disconnect:
-                    serverPeer = null;
-                    messagePipe.OnDisconnected((DisconnectReason)netEvent.Data);
+                    FinalizeHost();
                     lifeCycleCts.SafeCancelAndDispose();
+                    messagePipe.OnDisconnected((DisconnectReason)netEvent.Data);
                     break;
 
                 case EventType.Timeout:
-                    serverPeer = null;
-                    messagePipe.OnDisconnected(DisconnectReason.NONE);
+                    FinalizeHost();
                     lifeCycleCts.SafeCancelAndDispose();
+                    messagePipe.OnDisconnected(DisconnectReason.NONE);
                     break;
 
                 case EventType.Receive:

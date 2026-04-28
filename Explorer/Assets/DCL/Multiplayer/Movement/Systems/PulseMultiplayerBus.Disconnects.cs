@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
 
             return reason switch
                    {
-                       DisconnectReason.GRACEFUL or DisconnectReason.AUTH_TIMEOUT or DisconnectReason.AUTH_FAILED => (true, TimeSpan.FromMilliseconds(settings.DefaultRetryDelayMs)),
+                       DisconnectReason.GRACEFUL or DisconnectReason.AUTH_TIMEOUT or DisconnectReason.AUTH_FAILED or DisconnectReason.NONE => (true, TimeSpan.FromMilliseconds(settings.DefaultRetryDelayMs)),
                        DisconnectReason.SERVER_FULL => (true, TimeSpan.FromMilliseconds(settings.ServerFullRetryDelayMs)),
                        DisconnectReason.PRE_AUTH_BUDGET_EXHAUSTED or DisconnectReason.PRE_AUTH_IP_LIMIT_EXHAUSTED => (true, TimeSpan.FromMilliseconds(settings.AuthExhaustionRetryDelayMs)),
                        _ => (false, TimeSpan.Zero),

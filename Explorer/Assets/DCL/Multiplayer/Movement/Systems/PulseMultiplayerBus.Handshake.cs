@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement
 
             if (!success)
             {
-                pulseService.Disconnect();
+                await pulseService.DisconnectAsync();
                 throw new PulseException(error ?? "Handshake failed");
             }
         }

@@ -45,7 +45,6 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             isAuthenticated = false;
             UnregisterAllHandlers();
-            Disconnect();
             transport.Dispose();
         }
 
@@ -79,10 +78,10 @@ namespace DCL.Multiplayer.Connections.Pulse
             await ConnectWithRetriesAsync(ct);
         }
 
-        public void Disconnect()
+        public UniTask DisconnectAsync()
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
-            transport.Disconnect(DisconnectReason.GRACEFUL);
+            return transport.DisconnectAsync(DisconnectReason.GRACEFUL).AsUniTask();
         }
 
         /// <summary>

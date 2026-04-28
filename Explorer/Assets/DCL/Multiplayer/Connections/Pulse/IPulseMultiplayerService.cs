@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public UniTask ConnectAsync(CancellationToken ct);
 
-        public void Disconnect();
+        public UniTask DisconnectAsync();
 
         public void Send(OutgoingMessage outgoingMessage);
 
@@ -48,7 +48,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             public UniTask ConnectAsync(CancellationToken ct) =>
                 UniTask.CompletedTask;
 
-            public void Disconnect() { }
+            public UniTask DisconnectAsync() =>
+                UniTask.CompletedTask;
 
             public void Send(OutgoingMessage outgoingMessage)
             {

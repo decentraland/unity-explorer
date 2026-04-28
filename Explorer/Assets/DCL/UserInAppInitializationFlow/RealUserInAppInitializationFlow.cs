@@ -230,14 +230,14 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
-            pulseMultiplayerService.Disconnect();
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
-            pulseMultiplayerService.Disconnect();
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
