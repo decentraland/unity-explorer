@@ -4,8 +4,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Optimization.Pools;
 using DCL.Platforms;
+using DCL.Optimization.Pools;
 using DCL.Utility;
 using UnityEngine;
 using DCL.WebRequests;
@@ -50,6 +50,8 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
 
+        // This fallback manifest fetch is only used by worlds, which don't query the asset-bundle-registry yet.
+        // Once multi-scene-worlds is merged, worlds will use the registry like catalyst scenes and this path won't be needed.
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
         {
             using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
@@ -57,7 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             urlBuilder.AppendDomain(assetBundleURL)
                       .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
+                      .AppendPath(URLPath.FromString($"{hash}.json"));
 
             URLAddress url = urlBuilder.Build();
             SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url, RetryPolicy.WithRetries(1)), ct, reportCategory)

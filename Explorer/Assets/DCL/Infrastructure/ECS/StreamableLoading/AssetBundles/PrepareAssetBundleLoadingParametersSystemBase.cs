@@ -16,10 +16,12 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private static readonly string[] COMMON_SHADERS =
         {
+            //TODO: Probably scene_ignore and lit_igore are not needed
 #if UNITY_WEBGL
             "dcl/scene_ignore",
             "dcl/universal render pipeline/lit_ignore",
-            "dcl/toon_ignore"
+            "dcl/scene_ignore_webgl",
+            "dcl/universal render pipeline/lit_ignore_webgl",
 #else
             "dcl/scene_ignore_windows",
             "dcl/scene_ignore_mac",
