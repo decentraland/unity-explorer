@@ -290,10 +290,11 @@ namespace DCL.Profiles
                         // Batching is allowed
                         result = await AddToBatch(id, fromCatalyst, pendingBatches, tier, partition).Task.AttachExternalCancellation(ct);
 
-                        // Not found profiles (Catalyst replication delays) will be processed individually by GET
+                        // Not found profiles or version mismatches (Catalyst replication delays) will be processed individually by GET
                         // ⚠️ The following produces potentially a very long-living task ⚠️
                         // ⚠️ One request gives birth to many => potential distribution error, but it's a workaround for catalysts anyway ⚠️
-                        return result == null && delayBatchResolution ? await EnforceSingleGetAsync() : result;
+                        bool versionMismatch = versionSpecified && result != null && result.Value.Version < version;
+                        return (result == null || versionMismatch) && delayBatchResolution ? await EnforceSingleGetAsync() : result;
                     }
                 }
                 finally

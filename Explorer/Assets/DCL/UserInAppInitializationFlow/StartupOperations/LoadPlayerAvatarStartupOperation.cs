@@ -39,7 +39,11 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity = args.FlowParameters.PlayerEntity;
 
             if (world.Has<Profile>(playerEntity))
-                world.Set(playerEntity, profile!);
+            {
+                // Make all systems update again since the previous profile was already stored and processed, but we now updated it
+                profile!.IsDirty = true;
+                world.Set(playerEntity, profile);
+            }
             else
                 world.Add(playerEntity, profile!);
 

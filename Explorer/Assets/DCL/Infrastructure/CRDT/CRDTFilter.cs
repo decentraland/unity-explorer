@@ -16,7 +16,6 @@ namespace CRDT
         private const uint PHYSICS_COMBINED_FORCE = DCL.ECS7.ComponentID.PHYSICS_COMBINED_FORCE;      // Player-specific physics force
         private const uint VIDEO_PLAYER_COMPONENT_ID = DCL.ECS7.ComponentID.VIDEO_PLAYER; // 1043
 
-
         /// <summary>
         /// Output must be equal or bigger than memory
         /// </summary>
@@ -95,7 +94,7 @@ namespace CRDT
         /// Handles PUT_COMPONENT_NETWORK, DELETE_COMPONENT_NETWORK, and APPEND_COMPONENT.
         /// This is the core filtering logic shared by both FilterSceneMessageBatch and FilterCRDTState.
         /// isTrustedSource considered true when message sources from local participant (self, from the client) or from a scene admin
-        /// </summary>
+         /// </summary>
         private static void FilterCRDTMessages(ReadOnlySpan<byte> crdtMessages, Span<byte> output, bool isTrustedSource, out int totalWrite)
         {
             totalWrite = 0;
@@ -115,11 +114,11 @@ namespace CRDT
                 if (remainingBytesToRead > crdtMessages.Length)
                     break;
 
+                uint componentId = ReadComponentId(crdtMessages);
                 uint bodyLength = CRDTMessageTypeUtils.TypeLengthBytes(messageType, crdtMessages);
 
-                uint componentId = ReadComponentId(crdtMessages);
                 bool shouldDrop = messageType is CRDTMessageType.PUT_COMPONENT_NETWORK or CRDTMessageType.DELETE_COMPONENT_NETWORK
-                                  && IsNoSyncComponent(componentId);
+                    && IsNoSyncComponent(componentId);
 
                 // Drop video components from untrusted sources
                 if (isTrustedSource == false && componentId == VIDEO_PLAYER_COMPONENT_ID)

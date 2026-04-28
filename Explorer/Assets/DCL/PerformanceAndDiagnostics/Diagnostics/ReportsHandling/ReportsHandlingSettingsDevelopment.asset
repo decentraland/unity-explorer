@@ -632,12 +632,6 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS_INTERNAL
       Severity: 1
-    - Category: SCENE_ADMINS
-      Severity: 4
-    - Category: SCENE_ADMINS
-      Severity: 1
-    - Category: SCENE_ADMINS
-      Severity: 0
     - Category: NEARBY_VOICE_CHAT
       Severity: 0
     - Category: NEARBY_VOICE_CHAT

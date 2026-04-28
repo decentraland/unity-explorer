@@ -58,7 +58,7 @@ namespace DCL.Chat.History
                 chatMessage.SenderWalletAddress,
                 chatMessage.IsSentByOwnUser,
                 chatMessage.SenderWalletId,
-                DateTime.UtcNow.ToOADate(),
+                chatMessage.SentTimestampRaw,
                 chatMessage.IsMention,
                 false);
 
