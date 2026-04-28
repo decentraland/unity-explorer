@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.VoiceChat.Nearby.Audio;
@@ -18,8 +17,8 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     <para>
     ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
     ///         <list type="bullet">
-    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead, flagged with
-    ///                 <see cref="DeleteEntityIntention"/>, or has lost <see cref="AvatarBase"/>.</description></item>
+    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with
+    ///                 <see cref="DeleteEntityIntention"/>.</description></item>
     ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
     ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns
     ///                 <c>true</c> for the bound <c>walletId</c>.</description></item>
@@ -90,7 +89,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             return;
             bool IsAvatarGone(Entity avatarEntity) =>
-                !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity) || !World.Has<AvatarBase>(avatarEntity);
+                !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity);
         }
 
         [Query]

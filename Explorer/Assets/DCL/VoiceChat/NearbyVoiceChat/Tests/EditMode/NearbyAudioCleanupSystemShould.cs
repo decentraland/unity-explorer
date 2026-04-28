@@ -105,17 +105,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
-        [Test]
-        public void AvatarMissingAvatarBaseCausesCleanup()
-        {
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Remove<AvatarBase>(avatarEntity);
-
-            system.Update(0);
-
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
-        }
-
         // ── Trigger #2: stream gone ─────────────────────────────────
 
         [Test]
