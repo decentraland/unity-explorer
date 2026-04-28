@@ -8,6 +8,7 @@ using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
+using ECS.TestSuite;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
@@ -96,6 +97,10 @@ namespace DCL.VoiceChat.Nearby
 
         private void Awake()
         {
+            // Profile.CompactInfo touches FeaturesRegistry.Instance on construction; same singleton
+            // bootstrap the auto perf-tests do in [SetUp]. TearDownFeaturesRegistry in OnDestroy.
+            EcsTestsUtils.SetUpFeaturesRegistry();
+
             Camera camera = EnsureCameraAndListener();
 
             world = World.Create();
@@ -161,6 +166,8 @@ namespace DCL.VoiceChat.Nearby
             stateModel?.Dispose();
             world?.Dispose();
             if (configuration != null) Object.DestroyImmediate(configuration);
+
+            EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
         // ── Listening-gate sync ─────────────────────────────────────
