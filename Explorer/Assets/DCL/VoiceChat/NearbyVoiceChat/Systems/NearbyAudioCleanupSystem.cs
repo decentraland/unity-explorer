@@ -66,9 +66,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            // Listening-gate is the cheapest predicate and fires for every live audio entity, so it gets a single bulk
-            // archetype-move instead of N per-entity checks. When closed, per-entity detection is skipped entirely —
-            // the bulk add already marks every match. WithNone<DeleteEntityIntention> keeps it idempotent across ticks.
+            // Listening-gate is one bulk archetype-move; per-entity detection is skipped entirely when closed.
             if (stateModel.IsListeningDisabled)
                 World.Add<DeleteEntityIntention>(in LIVE_AUDIO_QUERY);
             else
