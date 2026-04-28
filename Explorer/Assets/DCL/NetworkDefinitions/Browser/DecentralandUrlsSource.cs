@@ -181,6 +181,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ChatAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",
+                DecentralandUrl.WhatsOnEventLink => $"https://decentraland.{ENV}/whats-on/?id={{0}}",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",

@@ -146,5 +146,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         SceneAdmins = 88,
 
         Gatekeeper = 89,
+
+        WhatsOnEventLink = 90,
     }
 }

@@ -4,6 +4,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Utilities;
@@ -26,6 +27,7 @@ namespace DCL.Navmap
         private readonly GoogleUserCalendar userCalendar;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
         private readonly List<EventScheduleElementView> scheduleElements = new ();
@@ -42,6 +44,7 @@ namespace DCL.Navmap
             GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
             ImageControllerProvider imageControllerProvider)
         {
             this.view = view;
@@ -52,6 +55,7 @@ namespace DCL.Navmap
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             thumbnailController = imageControllerProvider.Create(view.Thumbnail);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
@@ -147,8 +151,8 @@ namespace DCL.Navmap
 
         private void AddRecurrentEventToCalendar(DateTime startAt)
         {
-            // Same link as https://decentraland.org/whats-on?id=... website
-            var description = $"jump in: https://decentraland.org/jump/?position={@event?.x},{@event?.y}";
+            string jumpInLink = string.Format(decentralandUrlsSource.Url(DecentralandUrl.JumpInGenesisCityLink), @event?.x, @event?.y);
+            var description = $"jump in: {jumpInLink}";
 
             DateTime nextStartAt = DateTime.Parse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind);
             DateTime nextFinishAt = DateTime.Parse(@event?.next_finish_at, null, DateTimeStyles.RoundtripKind);
