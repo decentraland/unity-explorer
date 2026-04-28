@@ -23,6 +23,7 @@ using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using Global.AppArgs;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -41,6 +42,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
+        private readonly Transform poolsRoot;
 
         // Process-wide raw-GLTF cache. Combined with per-consumer Root cloning in
         // CreateGltfAssetFromRawGltfSystem, multiple entities referencing the same hash share
@@ -55,7 +57,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            Transform poolsRoot)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -65,6 +68,7 @@ namespace DCL.PluginSystem.World
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
             this.appArgs = appArgs;
+            this.poolsRoot = poolsRoot;
 
             cacheCleaner.Register(assetsCache);
             cacheCleaner.Register(gltfLoadCache);
@@ -89,7 +93,8 @@ namespace DCL.PluginSystem.World
                 false,
                 false,
                 localSceneDevelopment,
-                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
+                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData),
+                poolsRoot);
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(

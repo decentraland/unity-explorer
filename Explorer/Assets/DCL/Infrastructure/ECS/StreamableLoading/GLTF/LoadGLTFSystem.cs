@@ -23,17 +23,10 @@ namespace ECS.StreamableLoading.GLTF
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
-        private static Transform? rootContainerParent; // Parent GameObject for all instantiated GLTF templates
 
-        private static Transform GetOrCreateRootContainerParent()
-        {
-            if (rootContainerParent != null) return rootContainerParent;
-
-            var go = new GameObject($"POOL_{nameof(GLTFData)}_TEMPLATES");
-            go.SetActive(false);
-            rootContainerParent = go.transform;
-            return rootContainerParent;
-        }
+        // Parented under the injected pools root so Unity tears it down with the rest of the pool
+        // infrastructure at app exit; not disposed explicitly.
+        private static Transform? rootContainerParent;
 
         private readonly IWebRequestController webRequestController;
         private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
@@ -48,13 +41,22 @@ namespace ECS.StreamableLoading.GLTF
             bool patchTexturesFormat,
             bool importFilesByHash,
             bool isLocalSceneDevelopment,
-            IGltFastDownloadStrategy downloadStrategy) : base(world, cache)
+            IGltFastDownloadStrategy downloadStrategy,
+            Transform poolsRoot) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.patchTexturesFormat = patchTexturesFormat;
             this.importFilesByHash = importFilesByHash;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.downloadStrategy = downloadStrategy;
+
+            if (rootContainerParent == null)
+            {
+                var go = new GameObject($"POOL_{nameof(GLTFData)}_TEMPLATES");
+                go.SetActive(false);
+                go.transform.SetParent(poolsRoot, worldPositionStays: false);
+                rootContainerParent = go.transform;
+            }
         }
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -99,7 +101,7 @@ namespace ECS.StreamableLoading.GLTF
                 // Let the upper layer decide what to do with the root
                 rootContainer.SetActive(false);
 
-                rootContainer.transform.SetParent(GetOrCreateRootContainerParent(), worldPositionStays: false);
+                rootContainer.transform.SetParent(rootContainerParent, worldPositionStays: false);
 
                 await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
