@@ -75,7 +75,7 @@ namespace DCL.DebugUtilities.Views
             url.text = data.ShortenedUrl;
             url.RegisterCallback(onHyperlinkClicked, index);
 
-            method.text = data.Request.method;
+            method.text = data.Method;
             duration.text = DebugLongMarkerElement.FormatValue(data.Duration, DebugLongMarkerDef.Unit.TimeNanoseconds);
 
             switch (data.Duration)
@@ -94,7 +94,7 @@ namespace DCL.DebugUtilities.Views
         private void HyperlinkOnPointerUp(PointerUpEvent evt, int index)
         {
             DebugOngoingWebRequestDef.DebugWebRequestInfo data = dataSource.Requests[index];
-            Application.OpenURL(data.Request.url);
+            Application.OpenURL(data.FullUrl);
         }
 
         void INotifyValueChanged<DebugOngoingWebRequestDef.DataSource>.SetValueWithoutNotify(DebugOngoingWebRequestDef.DataSource newValue) =>
