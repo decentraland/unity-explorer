@@ -1,4 +1,5 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -41,7 +42,82 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            // Queries added in subsequent tasks.
+            if (stateModel.IsListeningDisabled)
+            {
+                FlagNearbyNametagsForRemovalQuery(World);
+                return;
+            }
+
+            UpdateExistingNearbyNametagsQuery(World);
+            AddMissingNearbyNametagsQuery(World);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void FlagNearbyNametagsForRemoval(ref VoiceChatNametagComponent c)
+        {
+            if (c.Type != VoiceChatType.NEARBY || c.IsRemoving) return;
+            c = new VoiceChatNametagComponent(false, VoiceChatType.NEARBY) { IsRemoving = true };
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(AvatarBase))]
+        private void UpdateExistingNearbyNametags(Entity entity, in Profile profile, ref VoiceChatNametagComponent c)
+        {
+            if (c.Type != VoiceChatType.NEARBY) return;
+
+            bool shouldShow = ShouldShow(entity, profile.UserId, out bool isSpeaking, out bool isHushed);
+
+            if (!shouldShow)
+            {
+                if (!c.IsRemoving)
+                    c = new VoiceChatNametagComponent(false, VoiceChatType.NEARBY) { IsRemoving = true };
+                return;
+            }
+
+            if (c.IsSpeaking != isSpeaking || c.IsHushed != isHushed || c.IsRemoving)
+                c = new VoiceChatNametagComponent(isSpeaking, VoiceChatType.NEARBY, isHushed);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(VoiceChatNametagComponent))]
+        [All(typeof(AvatarBase))]
+        private void AddMissingNearbyNametags(Entity entity, in Profile profile)
+        {
+            if (!ShouldShow(entity, profile.UserId, out bool isSpeaking, out bool isHushed)) return;
+
+            World.Add(entity, new VoiceChatNametagComponent(isSpeaking, VoiceChatType.NEARBY, isHushed));
+        }
+
+        private bool ShouldShow(Entity entity, string walletId, out bool isSpeaking, out bool isHushed)
+        {
+            isSpeaking = false;
+            isHushed = false;
+
+            if (string.IsNullOrEmpty(walletId)) return false;
+
+            bool isLocal = entity == playerEntity;
+            if (isLocal)
+            {
+                if (stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC)
+                {
+                    isSpeaking = islandRoom.ActiveSpeakers.Contains(walletId);
+                    isHushed = false;
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (islandRoom.ActiveSpeakers.Contains(walletId))
+            {
+                isSpeaking = true;
+                isHushed = muteService.IsMuted(walletId);
+                return true;
+            }
+
+            return false;
         }
     }
 }

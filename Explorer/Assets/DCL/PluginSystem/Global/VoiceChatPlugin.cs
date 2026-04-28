@@ -80,7 +80,6 @@ namespace DCL.PluginSystem.Global
         private Dictionary<StreamKey, Entity>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
-        private NearbyVoiceChatNametagsHandler? nearbyNametagsHandler;
         private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
@@ -154,6 +153,7 @@ namespace DCL.PluginSystem.Global
                 NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!);
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, roomHub.IslandRoom(), nearbyStateModel!, nearbyMuteService!);
                 NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
             }
         }
@@ -237,11 +237,6 @@ namespace DCL.PluginSystem.Global
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(nearbyStateModel, islandRoom, voiceChatConfiguration, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
-
-                nearbyNametagsHandler = new NearbyVoiceChatNametagsHandler(
-                    islandRoom, entityParticipantTable, world,
-                    playerEntity, nearbyStateModel, nearbyMuteService);
-                pluginScope.Add(nearbyNametagsHandler);
 
                 // UI
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);

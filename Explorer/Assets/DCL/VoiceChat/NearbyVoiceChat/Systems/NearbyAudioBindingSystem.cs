@@ -70,9 +70,8 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
 
-            // Skip blocked identities before allocating into pendingCreations — covers both
-            // "I block them" and "they block me" via UserBlockingCache. Cleanup system handles
-            // already-bound entities; this filter prevents creation in the first place.
+            // Skip blocked identities before allocating into pendingCreations
+            // Cleanup system handles already-bound entities; this filter prevents creation in the first place.
             if (userBlockingCache.UserIsBlocked(walletId)) return;
 
             ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(walletId);
