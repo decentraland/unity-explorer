@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pulse;
+using DCL.Profiles.Self;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -14,9 +15,9 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
-        private readonly Dictionary<string, string> authChainBuffer = new ();
+        private readonly ISelfProfile selfProfile;
 
-        private bool hasConnectedBefore;
+        private readonly Dictionary<string, string> authChainBuffer = new ();
 
         /// <summary>
         ///     Runs the post-transport-connect handshake exchange. Registers a one-shot response
@@ -29,9 +30,9 @@ namespace DCL.Multiplayer.Movement
         {
             var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
             handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
+            handshakePacket.Message.Handshake.ProfileVersion = (await selfProfile.ProfileAsync(ct))?.Version ?? 0;
 
-            handshakePacket.Message.Handshake.ProfileVersion =
-                WriteInitialState(handshakePacket.Message.Handshake);
+            WriteInitialState(handshakePacket.Message.Handshake);
 
             pulseService.Send(handshakePacket);
 
@@ -42,8 +43,6 @@ namespace DCL.Multiplayer.Movement
                 pulseService.Disconnect();
                 throw new PulseException(error ?? "Handshake failed");
             }
-
-            hasConnectedBefore = true;
         }
 
         private string BuildAuthChain()

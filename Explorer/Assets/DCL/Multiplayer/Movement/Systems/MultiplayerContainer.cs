@@ -218,7 +218,7 @@ namespace DCL.Multiplayer.Movement
             ISelfProfile selfProfile,
             CancellationToken ct) =>
             new (
-                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, ct),
+                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, ct),
                 new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings),
                 selfProfile
             );

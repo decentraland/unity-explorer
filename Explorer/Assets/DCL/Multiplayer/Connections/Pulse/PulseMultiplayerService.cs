@@ -194,6 +194,11 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                                         try { await ConnectAsync(parentCt); }
                                         catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
+                                        finally
+                                        {
+                                            if (PlayerLoopHelper.IsMainThread)
+                                                await UniTask.SwitchToThreadPool();
+                                        }
                                     }
 
                                     break;

@@ -2,6 +2,7 @@ using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
+using DCL.Profiles.Self;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
@@ -36,7 +37,8 @@ namespace DCL.Multiplayer.Movement
             PulseIncomingProfileAnnouncements incomingProfiles,
             PulseRemoveIntentions removeIntentions,
             IWeb3IdentityCache identityCache,
-            ReconnectionSettings settings)
+            ReconnectionSettings settings,
+            ISelfProfile selfProfile)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -45,6 +47,7 @@ namespace DCL.Multiplayer.Movement
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
+            this.selfProfile = selfProfile;
             this.settings = settings;
         }
 
