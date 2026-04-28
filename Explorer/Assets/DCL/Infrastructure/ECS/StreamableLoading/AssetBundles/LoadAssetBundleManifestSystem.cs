@@ -4,8 +4,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Platforms;
 using DCL.Optimization.Pools;
-
 using DCL.Utility;
 using UnityEngine;
 using DCL.WebRequests;
