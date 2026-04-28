@@ -180,7 +180,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
                 DecentralandUrl.ChatAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
-                DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/whats-on",
+                DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/whats-on/new-event",
                 DecentralandUrl.WhatsOnEventLink => $"https://decentraland.{ENV}/whats-on/?id={{0}}",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
