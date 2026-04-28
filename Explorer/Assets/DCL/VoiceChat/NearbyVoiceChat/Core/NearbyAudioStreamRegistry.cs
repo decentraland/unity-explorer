@@ -7,6 +7,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using RichTypes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -43,6 +44,8 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             room.TrackSubscribed += OnTrackSubscribed;
             room.TrackUnsubscribed += OnTrackUnsubscribed;
+
+            room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
         }
 
         public void Dispose()
@@ -52,7 +55,14 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.TrackSubscribed -= OnTrackSubscribed;
             room.TrackUnsubscribed -= OnTrackUnsubscribed;
 
+            room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+
             streamsByIdentity.Clear();
+        }
+
+        private void OnActiveSpeakersUpdated()
+        {
+            throw new NotImplementedException();
         }
 
         // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault - ConcurrentDictionary.TryGetValue is more optimized, no virtal call
