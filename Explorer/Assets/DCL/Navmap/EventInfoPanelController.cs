@@ -147,7 +147,7 @@ namespace DCL.Navmap
 
         private void AddRecurrentEventToCalendar(DateTime startAt)
         {
-            // Same link as https://decentraland.org/events/event?id=... website
+            // Same link as https://decentraland.org/whats-on?id=... website
             var description = $"jump in: https://decentraland.org/jump/?position={@event?.x},{@event?.y}";
 
             DateTime nextStartAt = DateTime.Parse(@event?.next_start_at, null, DateTimeStyles.RoundtripKind);
