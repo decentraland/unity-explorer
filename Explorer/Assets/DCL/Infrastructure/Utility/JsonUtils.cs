@@ -67,6 +67,15 @@ namespace DCL.Utility
         {
             if (jObject == null) return fallback;
 
+            if (jObject.Type == JTokenType.Array)
+            {
+                var arr = (JArray)jObject;
+                return new Vector3(
+                    arr.Count > 0 ? arr[0].Value<float>() : 0,
+                    arr.Count > 1 ? arr[1].Value<float>() : 0,
+                    arr.Count > 2 ? arr[2].Value<float>() : 0);
+            }
+
             return new Vector3(
                 jObject["x"]?.Value<float>() ?? 0,
                 jObject["y"]?.Value<float>() ?? 0,

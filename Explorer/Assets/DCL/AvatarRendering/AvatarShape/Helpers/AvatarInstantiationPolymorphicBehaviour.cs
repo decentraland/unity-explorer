@@ -70,33 +70,13 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             WearableDTO? wearableDto = wearable.Model.Asset;
             if (wearableDto == null) return null;
 
-            SpringBonesDto? springBones = wearableDto.springBones;
+            SpringBonesDto? springBones = wearableDto.metadata?.data?.springBones;
             if (springBones?.models == null) return null;
 
-            string bodyShapeStr = bodyShape;
-            var representations = wearableDto.Metadata.AbstractData.representations;
+            if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash) || mainFileHash == null)
+                return null;
 
-            for (int i = 0; i < representations.Length; i++)
-            {
-                string[] shapes = representations[i].bodyShapes;
-                bool match = false;
-
-                for (int j = 0; j < shapes.Length; j++)
-                {
-                    if (shapes[j] != bodyShapeStr) continue;
-                    match = true;
-                    break;
-                }
-
-                if (!match) continue;
-
-                if (springBones.models.TryGetValue(representations[i].mainFile, out var map))
-                    return map;
-
-                break;
-            }
-
-            return null;
+            return springBones.models.TryGetValue(mainFileHash, out var map) ? map : null;
         }
 
         public static void Dereference(this in AvatarShapeComponent avatarShapeComponent)
