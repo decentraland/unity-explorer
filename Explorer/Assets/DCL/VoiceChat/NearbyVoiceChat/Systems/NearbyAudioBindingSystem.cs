@@ -97,9 +97,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                 Weak<AudioStream> stream = registry.GetActiveStream(key);
 
-                // Race on spawn: the track was unsubscribed between GetAudioSids (collection pass) and GetActiveStream
-                // (resolve step). Skipping here avoids a one-frame ghost LivekitAudioSource that the cleanup system
-                // would otherwise reap on the next tick — see PRD-cleanup §"race-on-spawn guard".
+                // Track was unsubscribed between collection (GetAudioSids) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
                 if (!stream.Resource.Has) continue;
 
                 LivekitAudioSource source = sourceFactory.Create(key, stream);

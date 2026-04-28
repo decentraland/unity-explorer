@@ -66,16 +66,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos,
-            ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
         {
-            // Defensive against the one-frame race window between an upstream system invalidating the avatar
-            // and NearbyAudioCleanupSystem running. Either branch leaves the audio source at its previous position;
-            // the start-mute keeps it inaudible until the first successful sync.
-            if (!World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase) || avatarBase == null)
-                return;
+            // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
+            if (!World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase)) return;
 
-            Vector3 remoteAvatarHeadPos = avatarBase.HeadAnchorPoint.position;
+            Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
@@ -84,8 +80,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
             nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
 
-            // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute
-            // on first successful tick (when IsMuted returns false).
+            // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute on first successful tick (when IsMuted is false).
             nearbyAudio.LivekitAudioSource.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
         }
 

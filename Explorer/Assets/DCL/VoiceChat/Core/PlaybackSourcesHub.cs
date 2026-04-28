@@ -28,7 +28,7 @@ namespace DCL.VoiceChat
         private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
         // Read as ConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<StreamKey, byte>> streamKeysByIdentity;
-        // public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
+        public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
 
         public PlaybackSourcesHub(
             string parentNameSuffix,

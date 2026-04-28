@@ -1149,7 +1149,6 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
-                        appArgs.HasDebugFlag(),
                         nearbyMuteService)
                 );
 

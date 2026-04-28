@@ -64,7 +64,6 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly VolumeBus volumeBus;
-        private readonly bool hasDebugFlag;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatPluginSettingsAsset;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
@@ -107,7 +106,6 @@ namespace DCL.PluginSystem.Global
             NearbyVoiceTipView nearbyVoiceTipView,
             VolumeBus volumeBus,
             IUserBlockingCache userBlockingCache,
-            bool hasDebugFlag,
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
@@ -130,7 +128,6 @@ namespace DCL.PluginSystem.Global
             this.nearbyVoiceWidgetView = nearbyVoiceWidgetView;
             this.nearbyVoiceTipView = nearbyVoiceTipView;
             this.volumeBus = volumeBus;
-            this.hasDebugFlag = hasDebugFlag;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
@@ -203,8 +200,8 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
-            // voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), new PlaybackSourcesHub());
-            // pluginScope.Add(voiceChatDebugContainer);
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), new PlaybackSourcesHub());
+            pluginScope.Add(voiceChatDebugContainer);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
