@@ -108,6 +108,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             if (DecodedVisibleSDKColliders != null)
                 COLLIDERS_POOL.Release(DecodedVisibleSDKColliders);
 
+            RENDERERS_POOL.Release(Renderers);
             ANIMATIONS_POOL.Release(Animations);
             ANIMATORS_POOL.Release(Animators);
 
