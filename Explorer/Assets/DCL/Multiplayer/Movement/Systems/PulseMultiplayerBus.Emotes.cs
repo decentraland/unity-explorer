@@ -28,6 +28,10 @@ namespace DCL.Multiplayer.Movement
             if (loopCyclePassed)
                 return;
 
+            // Capture the local emote regardless of session state so a reconnect handshake can
+            // backdate this emote via PlayerInitialState.EmoteStartOffsetMs.
+            StoreLastEmoteStart(urn, durationMs, playerState);
+
             var outgoing = OutgoingMessage.Create(
                 PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStart);
@@ -49,6 +53,8 @@ namespace DCL.Multiplayer.Movement
 
         public void SendStop()
         {
+            ClearLastEmote();
+
             var outgoing = OutgoingMessage.Create(
                 PacketMode.RELIABLE,
                 ClientMessage.MessageOneofCase.EmoteStop);

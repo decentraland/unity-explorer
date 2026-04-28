@@ -1,12 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Chains;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Decentraland.Pulse;
-using Google.Protobuf;
-using Newtonsoft.Json;
 using Pulse.Transport;
 using System;
 using System.Collections.Generic;
@@ -16,6 +12,8 @@ using Utility;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
+    using static IPulseMultiplayerService;
+
     public class PulseMultiplayerService : IPulseMultiplayerService
     {
         private const int PORT = 7777;
@@ -23,24 +21,21 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         private readonly ITransport transport;
         private readonly MessagePipe pipe;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly Dictionary<ServerMessage.MessageOneofCase, Action<IncomingMessage>> syncHandlers = new ();
-        private readonly Dictionary<string, string> authChainBuffer = new ();
+        private readonly Dictionary<ServerMessage.MessageOneofCase, IncomingMessageHandler> syncHandlers = new ();
 
-        private Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)>? disconnectHandler;
+        private DisconnectHandler? disconnectHandler;
+        private HandshakeHandler? handshakeHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
         private volatile bool isAuthenticated;
 
         public PulseMultiplayerService(
             ITransport transport,
             MessagePipe pipe,
-            IWeb3IdentityCache identityCache,
             IDecentralandUrlsSource urlsSource)
         {
             this.transport = transport;
             this.pipe = pipe;
-            this.identityCache = identityCache;
             this.urlsSource = urlsSource;
         }
 
@@ -54,20 +49,26 @@ namespace DCL.Multiplayer.Connections.Pulse
             transport.Dispose();
         }
 
-        public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler)
+        public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler)
         {
-            syncHandlers.Add(type, handler);
+            syncHandlers[type] = handler;
         }
 
-        public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler)
+        public void RegisterDisconnectHandler(DisconnectHandler handler)
         {
             disconnectHandler = handler;
+        }
+
+        public void RegisterHandshakeHandler(HandshakeHandler handler)
+        {
+            handshakeHandler = handler;
         }
 
         public void UnregisterAllHandlers()
         {
             syncHandlers.Clear();
             disconnectHandler = null;
+            handshakeHandler = null;
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
@@ -146,6 +147,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             // Extract fields inside the handler — the underlying proto message is returned to pool after the handler returns.
             var handshakeCompletion = new UniTaskCompletionSource<(bool success, string? error)>();
 
+            // Registered one shot here, not in the handler to prevent a circular dependency
             syncHandlers[ServerMessage.MessageOneofCase.Handshake] = message =>
             {
                 syncHandlers.Remove(ServerMessage.MessageOneofCase.Handshake);
@@ -156,18 +158,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             connectionLifeCycleCts = connectionLifeCycleCts.SafeRestartLinked(ct);
             StartRouting(connectionLifeCycleCts.Token, ct);
 
-            var handshakePacket = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Handshake);
-            handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
-
-            Send(handshakePacket);
-
-            (bool success, string? error) = await handshakeCompletion.Task;
-
-            if (!success)
-            {
-                Disconnect();
-                throw new PulseException(error ?? "Handshake failed");
-            }
+            // Handshake exchange runs through the registered handler (PulseMultiplayerBus owns
+            // request assembly, auth chain construction, response correlation). The handler is
+            // expected to throw on a failed handshake — propagate the exception.
+            if (handshakeHandler != null)
+                await handshakeHandler(handshakeCompletion, ct);
 
             isAuthenticated = true;
         }
@@ -208,7 +203,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                                 try
                                 {
-                                    if (syncHandlers.TryGetValue(message.Message.MessageCase, out Action<IncomingMessage>? handler))
+                                    if (syncHandlers.TryGetValue(message.Message.MessageCase, out IncomingMessageHandler? handler))
                                         handler(message);
                                 }
                                 catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
@@ -218,26 +213,6 @@ namespace DCL.Multiplayer.Connections.Pulse
                         catch (OperationCanceledException) { }
                     }, configureAwait: false, cancellationToken: connectionCt)
                    .Forget();
-        }
-
-        private string BuildAuthChain()
-        {
-            authChainBuffer.Clear();
-
-            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"connect:/:{timestamp}:{{}}");
-            var authChainIndex = 0;
-
-            foreach (AuthLink link in authChain)
-            {
-                authChainBuffer[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
-                authChainIndex++;
-            }
-
-            authChainBuffer["x-identity-timestamp"] = timestamp.ToString();
-            authChainBuffer["x-identity-metadata"] = "{}";
-
-            return JsonConvert.SerializeObject(authChainBuffer);
         }
     }
 }

@@ -74,6 +74,7 @@ namespace DCL.Multiplayer.Movement
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped, HandleEmoteStopped);
 
             pulseService.RegisterDisconnectHandler(HandleDisconnect);
+            pulseService.RegisterHandshakeHandler(HandshakeAsync);
         }
 
         private void RemoveAllPeers()

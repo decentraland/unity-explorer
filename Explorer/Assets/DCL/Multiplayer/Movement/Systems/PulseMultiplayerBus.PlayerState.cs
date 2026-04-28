@@ -21,7 +21,13 @@ namespace DCL.Multiplayer.Movement
 
         public void Send(NetworkMovementMessage message)
         {
-            if (isDisposed || !pulseService.IsAuthenticated) return;
+            if (isDisposed) return;
+
+            // Always retain the latest pose so a reconnect handshake can assert it via
+            // PlayerInitialState — even if the current Pulse session isn't authenticated yet.
+            StoreLastMovement(in message);
+
+            if (!pulseService.IsAuthenticated) return;
 
             // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
 
@@ -286,7 +292,11 @@ namespace DCL.Multiplayer.Movement
         private void WritePlayerStateInput(NetworkMovementMessage message, PlayerStateInput input)
         {
             PlayerState state = input.State ??= new PlayerState();
+            WritePlayerState(message, state, parcelEncoder);
+        }
 
+        internal static void WritePlayerState(NetworkMovementMessage message, PlayerState state, ParcelEncoder parcelEncoder)
+        {
             Vector2Int parcelIndex = message.position.ToParcel();
 
             var relativePosition = new Vector3(

@@ -11,13 +11,17 @@ namespace DCL.Multiplayer.Connections.Pulse
     /// </summary>
     public interface IPulseMultiplayerService : IDisposable
     {
+        public delegate (bool reconnectionAllowed, TimeSpan reconnectionDelay) DisconnectHandler(DisconnectReason disconnectReason);
+        public delegate void IncomingMessageHandler(IncomingMessage message);
+        public delegate UniTask HandshakeHandler(UniTaskCompletionSource<(bool success, string? error)> onHandshakeReceived, CancellationToken ct);
+
         public bool IsAuthenticated { get; }
 
-        public void Dispose();
+        public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler);
 
-        public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler);
+        public void RegisterDisconnectHandler(DisconnectHandler handler);
 
-        public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler);
+        public void RegisterHandshakeHandler(HandshakeHandler handler);
 
         public void UnregisterAllHandlers();
 
@@ -33,9 +37,11 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             public void Dispose() { }
 
-            public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, Action<IncomingMessage> handler) { }
+            public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler) { }
 
-            public void RegisterDisconnectHandler(Func<DisconnectReason, (bool reconnectionAllowed, TimeSpan reconnectionDelay)> handler) { }
+            public void RegisterDisconnectHandler(DisconnectHandler handler) { }
+
+            public void RegisterHandshakeHandler(HandshakeHandler handler) { }
 
             public void UnregisterAllHandlers() { }
 
