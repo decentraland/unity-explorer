@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Canonical detection + teardown for Nearby audio-source entities.
+    ///     Detection + teardown for Nearby audio-source entities.
     ///     <para>
     ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
     ///         <list type="bullet">
@@ -88,8 +88,7 @@ namespace DCL.VoiceChat.Nearby.Systems
                 World.Add<DeleteEntityIntention>(audioEntity);
 
             return;
-            bool IsAvatarGone(Entity avatarEntity) =>
-                !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity);
+            bool IsAvatarGone(Entity avatarEntity) => !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity);
         }
 
         [Query]
