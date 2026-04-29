@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.GLTFast.Wrappers;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -143,14 +142,10 @@ namespace ECS.StreamableLoading.GLTF
                         targetTransform = goTransform;
                     }
 
-                    var instantiator = new DclGameObjectInstantiator(gltfImport, targetTransform);
-                    await gltfImport.InstantiateSceneAsync(instantiator, i);
+                    await gltfImport.InstantiateSceneAsync(targetTransform, i);
                 }
             else
-            {
-                var instantiator = new DclGameObjectInstantiator(gltfImport, rootContainerTransform);
-                await gltfImport.InstantiateSceneAsync(instantiator);
-            }
+                await gltfImport.InstantiateMainSceneAsync(rootContainerTransform);
         }
 
         /// <summary>
