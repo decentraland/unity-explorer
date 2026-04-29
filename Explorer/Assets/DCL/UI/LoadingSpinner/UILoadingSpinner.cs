@@ -24,15 +24,11 @@ namespace DCL.UI.LoadingSpinner
             UpdateValues();
         }
 
-        private void InitializeMaterial()
-        {
-            // Create per spinner material instance
+        private void InitializeMaterial() =>
             img.material = new Material(img.material);
-        }
 
         private void UpdateValues()
         {
-            // Animate the material instance
             Material rendered = img.materialForRendering;
             if (!rendered) return;
 
