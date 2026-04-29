@@ -4,14 +4,13 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.SDKComponents.AudioSources;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.GLTF;
+using System.Collections.Generic;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
     public static class BuilderEmoteAssetPromiseFactory
     {
-        private static readonly BodyShape[] ALL_BODYSHAPES = { BodyShape.MALE, BodyShape.FEMALE };
-
         public static bool TryCreate(World world, IEmote emote, IPartitionComponent partition, IEmoteStorage emoteStorage, IURLBuilder urlBuilder)
         {
             if (string.IsNullOrEmpty(emote.DTO?.ContentDownloadUrl))
@@ -41,14 +40,16 @@ namespace DCL.AvatarRendering.Emotes
             if (!emote.IsUnisex())
                 targetBodyShape = BodyShape.FromStringSafe(emote.DTO.Metadata.AbstractData.representations[0].bodyShapes[0]);
 
+            IReadOnlyList<BodyShape> bodyShapes = BodyShape.VALUES;
+
             foreach (var content in emote.DTO.content)
             {
                 if (content.file.EndsWith(".glb"))
                 {
-                    for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
+                    for (int i = 0; i < bodyShapes.Count; i++)
                     {
-                        BodyShape bodyShape = ALL_BODYSHAPES[i];
-                        if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape!))
+                        BodyShape bodyShape = bodyShapes[i];
+                        if (!emote.IsUnisex() && !targetBodyShape!.Value.Equals(bodyShape))
                             continue;
 
                         if (emote.AssetResults[bodyShape] != null)
@@ -70,10 +71,10 @@ namespace DCL.AvatarRendering.Emotes
                     urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
                     URLAddress url = urlBuilder.Build();
 
-                    for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
+                    for (int i = 0; i < bodyShapes.Count; i++)
                     {
-                        BodyShape bodyShape = ALL_BODYSHAPES[i];
-                        if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape))
+                        BodyShape bodyShape = bodyShapes[i];
+                        if (!emote.IsUnisex() && !targetBodyShape!.Value.Equals(bodyShape))
                             continue;
 
                         var audioPromise = AudioUtils.CreateAudioClipPromise(world, url.Value, audioType, partition);

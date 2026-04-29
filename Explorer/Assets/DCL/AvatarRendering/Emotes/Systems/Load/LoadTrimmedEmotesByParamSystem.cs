@@ -12,6 +12,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -46,16 +47,10 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override TrimmedEmotesResponse AssetFromPreparedIntention(in GetTrimmedEmotesByParamIntention intention) =>
             new (intention.Results, intention.TotalAmount);
 
-        protected override void AfterBuilderItemsLoaded(ref GetTrimmedEmotesByParamIntention intention, IPartitionComponent partition)
+        protected override void AfterBuilderItemsLoaded(IPartitionComponent partition, IReadOnlyList<IEmote> builderItems)
         {
-            if (intention.Results is not { Count: > 0 }) return;
-
-            foreach (ITrimmedEmote trimmedEmote in intention.Results)
-            {
-                if (trimmedEmote is not IEmote emote) continue;
-
-                BuilderEmoteAssetPromiseFactory.TryCreate(World!, emote, partition, emoteStorage, urlBuilder);
-            }
+            for (int i = 0; i < builderItems.Count; i++)
+                BuilderEmoteAssetPromiseFactory.TryCreate(World!, builderItems[i], partition, emoteStorage, urlBuilder);
         }
     }
 }

@@ -147,11 +147,9 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
 
             // Stop full-body emote (global world only, masked emotes are handled by scene-side systems)
-            if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
-            {
+            ref CharacterEmoteComponent emoteComponent = ref world.TryGetRef<CharacterEmoteComponent>(playerEntity, out bool emoteExists);
+            if (emoteExists)
                 emoteComponent.StopEmote = true;
-                world.Set(playerEntity, emoteComponent);
-            }
 
             messageBus.SendStop();
         }

@@ -50,7 +50,6 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
-using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
@@ -100,7 +99,6 @@ using Global.Versioning;
 using DCL.LiveKit.Public;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -633,7 +631,7 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
 
             // Configure proxies for scene-side masked emote system
             staticContainer.EmoteStorageProxy.SetObject(emotesCache);
