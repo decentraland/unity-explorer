@@ -63,12 +63,18 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             World.Remove<IsStreamingAudioTag>(entity);
 
-            // Cascade: maintain invariant I1 (speaking ⊆ streaming) on the same tick.
-            // Must stay inside the "stream actually disappeared" branch — otherwise every
-            // active speaker pays a structural-change pair per tick (Remove here, Add by
-            // Query C next call) for no reason.
+            // Cascade: maintain invariants on the same tick — speaking ⊆ streaming and
+            // (suspended ⊆) inAudibleRange ⊆ streaming. Must stay inside the "stream actually
+            // disappeared" branch — otherwise every active speaker pays a structural-change pair
+            // per tick (Remove here, Add by Query C next call) for no reason.
             if (World.Has<IsActivelySpeakingTag>(entity))
                 World.Remove<IsActivelySpeakingTag>(entity);
+
+            if (World.Has<IsSuspendedTag>(entity))
+                World.Remove<IsSuspendedTag>(entity);
+
+            if (World.Has<InAudibleRangeTag>(entity))
+                World.Remove<InAudibleRangeTag>(entity);
         }
 
         [Query]

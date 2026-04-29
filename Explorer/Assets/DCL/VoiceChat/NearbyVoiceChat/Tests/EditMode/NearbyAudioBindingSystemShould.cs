@@ -125,6 +125,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-alice";
             Entity avatarEntity = world.Create(new Profile(WALLET, WALLET, new Avatar()));
             world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(WALLET, "sid-1");
 
             system.Update(0);
@@ -329,6 +330,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
             world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add<InAudibleRangeTag>(avatarEntity);
             // registry intentionally NOT populated for WALLET
 
             Assert.DoesNotThrow(() => system.Update(0));
@@ -347,6 +349,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
             world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(WALLET, SID);
 
             system.Update(0);
@@ -365,6 +368,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
             world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(WALLET, SID);
             userBlockingCache.UserIsBlocked(WALLET).Returns(true);
 
@@ -372,6 +376,51 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "blocked identity must not allocate even when archetype filter passes");
+        }
+
+        // ── A1: InAudibleRangeTag gate + spawn-disabled ─────────────
+
+        [Test]
+        public void DoesNotBindAvatarWithoutAudibleRangeTagEvenWithStreamingTag()
+        {
+            // A1 archetype filter — Binding's query now requires both IsStreamingAudioTag AND
+            // InAudibleRangeTag. An avatar that streams but is out of audible range must be
+            // skipped at chunk-iteration level even though sids are populated.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            world.Add<IsStreamingAudioTag>(avatarEntity);
+            // intentionally no InAudibleRangeTag — out of range
+            registry.Add(WALLET, SID);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "absent InAudibleRangeTag must skip the avatar at archetype level");
+            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False);
+        }
+
+        [Test]
+        public void SpawnsAudioSourceDisabledInitially()
+        {
+            // Binding spawns sources with both LivekitAudioSource.enabled and AudioSource.enabled
+            // set to false. PositionSystem rectifies on the very next tick if the avatar is in
+            // the active band; this prevents a one-frame audio burst when crossing directly into
+            // the suspend zone (~18–17 m on inward approach).
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateStreamingAvatar(WALLET);
+            registry.Add(WALLET, SID);
+
+            system.Update(0);
+
+            NearbyAudioSourceComponent comp = GetSingleAudioComponent();
+            Assert.That(comp.LivekitAudioSource.enabled, Is.False,
+                "LivekitAudioSource must be spawned disabled — PositionSystem flips on first active tick");
+            Assert.That(comp.LivekitAudioSource.AudioSource.enabled, Is.False,
+                "underlying AudioSource must be spawned disabled — symmetric with the wrapper component");
         }
 
         // ── Helpers ─────────────────────────────────────────────────
@@ -398,14 +447,16 @@ namespace DCL.VoiceChat.Nearby.Tests
             return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
         }
 
-        // After A5.1 the binding query is gated by IsStreamingAudioTag. Tests that expect a
-        // bind-result must seed the marker in addition to the registry entry — that is what
-        // NearbyLivekitBridgeSystem would do in production. This helper keeps that pairing
+        // After A5.1 the binding query is gated by IsStreamingAudioTag; A1 adds InAudibleRangeTag
+        // as a second mandatory clause. Tests that expect a bind-result must seed both markers in
+        // addition to the registry entry — that is what NearbyLivekitBridgeSystem +
+        // NearbyAudibleRangeMarkerSystem would do in production. This helper keeps the pairing
         // explicit and mechanical.
         private Entity CreateStreamingAvatar(string walletId)
         {
             Entity entity = CreateAvatarEntity(walletId);
             world.Add<IsStreamingAudioTag>(entity);
+            world.Add<InAudibleRangeTag>(entity);
             return entity;
         }
 

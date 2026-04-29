@@ -52,6 +52,7 @@ namespace DCL.VoiceChat.Nearby
         private NearbyAudioPositionSystem positionSystem;
         private NearbyAudioCleanupSystem cleanupSystem;
         private NearbyLivekitBridgeSystem markerSystem;
+        private NearbyAudibleRangeMarkerSystem audibleRangeMarkerSystem;
 
         [SetUp]
         public void SetUp()
@@ -80,6 +81,8 @@ namespace DCL.VoiceChat.Nearby
             positionSystem.Initialize();
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
+            audibleRangeMarkerSystem = new NearbyAudibleRangeMarkerSystem(world);
+            audibleRangeMarkerSystem.Initialize();
         }
 
         protected override void OnTearDown()
@@ -89,6 +92,7 @@ namespace DCL.VoiceChat.Nearby
             cleanupSystem?.Dispose();
             positionSystem?.Dispose();
             markerSystem?.Dispose();
+            audibleRangeMarkerSystem?.Dispose();
 
             // Defensive: LivekitAudioSource keeps invoking OnAudioFilterRead on the audio thread
             // even after disposal — reap any straggler not caught above to avoid NREs between runs.
@@ -125,6 +129,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
+                audibleRangeMarkerSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -136,6 +141,7 @@ namespace DCL.VoiceChat.Nearby
                .Method(() =>
                 {
                     markerSystem.Update(0);
+                    audibleRangeMarkerSystem.Update(0);
                     system.Update(0);
                     positionSystem.Update(0);
                     cleanupSystem.Update(0);
@@ -170,6 +176,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
+                audibleRangeMarkerSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -179,6 +186,7 @@ namespace DCL.VoiceChat.Nearby
                .Method(() =>
                 {
                     markerSystem.Update(0);
+                    audibleRangeMarkerSystem.Update(0);
                     system.Update(0);
                     positionSystem.Update(0);
                     cleanupSystem.Update(0);
@@ -209,6 +217,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
+                audibleRangeMarkerSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -220,6 +229,183 @@ namespace DCL.VoiceChat.Nearby
                .MeasurementCount(50)
                .GC()
                .Run();
+        }
+
+        /// <summary>
+        /// A1 distance-distribution scenarios at 100 publishers (post-A5 baseline = "all at origin").
+        /// Avatars are placed deterministically at fixed radii so steady-state cost is dominated
+        /// by archetype membership, not movement churn:
+        /// <para>
+        /// A1-1 — 100 / 0 / 0: all inside 16 m active band (worst case for A1; pure marker toll).
+        /// A1-2 — 30 / 10 / 60: canonical "crowd radius" — 30 active, 10 in suspend band, 60 beyond outer-out.
+        /// A1-3 — 0 / 0 / 100: all beyond outer-out; full-cycle should approach sub-200 µs.
+        /// </para>
+        /// </summary>
+        [Test]
+        [Performance]
+        [TestCase(100, 0, 0)]
+        [TestCase(30, 10, 60)]
+        [TestCase(0, 0, 100)]
+        public void FullCycleSteadyStateWithDistanceDistribution(int activeCount, int suspendCount, int beyondCount)
+        {
+            PopulatePerfWorldByDistance(activeCount, suspendCount, beyondCount);
+
+            int total = activeCount + suspendCount + beyondCount;
+            int rampUpTicks = ComputeRampUpTicks(total);
+            for (int t = 0; t < rampUpTicks; t++)
+            {
+                markerSystem.Update(0);
+                audibleRangeMarkerSystem.Update(0);
+                system.Update(0);
+                positionSystem.Update(0);
+                cleanupSystem.Update(0);
+            }
+
+            Measure
+               .Method(() =>
+                {
+                    markerSystem.Update(0);
+                    audibleRangeMarkerSystem.Update(0);
+                    system.Update(0);
+                    positionSystem.Update(0);
+                    cleanupSystem.Update(0);
+                })
+               .WarmupCount(5)
+               .MeasurementCount(50)
+               .GC()
+               .Run();
+        }
+
+        /// <summary>
+        /// A2 Scenario A2-1 — boundary-churn at 30 publishers oscillating across the 22 m audible-range
+        /// boundary. Goal: prove that after the pool warms up (~30 entries), subsequent crossings
+        /// produce zero `Object.Instantiate` calls — full-cycle ms/tick and GC bytes/tick are the
+        /// observable proxies, with `factory.PoolCountInactive` checked for stable working-set size.
+        /// </summary>
+        [Test]
+        [Performance]
+        public void BoundaryChurnAt30Publishers()
+        {
+            const int PUBLISHERS = 30;
+            const float INSIDE_RADIUS = 15f;  // < 18 m outer-in → gains InAudibleRangeTag
+            const float OUTSIDE_RADIUS = 25f; // > 22 m outer-out → loses InAudibleRangeTag
+
+            var avatarTransforms = new List<Transform>(PUBLISHERS);
+            for (int i = 0; i < PUBLISHERS; i++)
+                avatarTransforms.Add(CreateChurnAvatar($"churn-{i}", i));
+
+            // Warm-up: drive several full inward/outward cycles so the pool fills to its working-set
+            // ceiling (~PUBLISHERS entries). Subsequent measurement cycles must allocate zero new
+            // GameObject + AudioSource + LivekitAudioSource triples — every Create pops from pool.
+            for (int cycle = 0; cycle < 4; cycle++)
+            {
+                MoveTo(avatarTransforms, INSIDE_RADIUS);
+                int rampUpTicks = ComputeRampUpTicks(PUBLISHERS);
+                for (int t = 0; t < rampUpTicks; t++)
+                    TickFullChain();
+
+                MoveTo(avatarTransforms, OUTSIDE_RADIUS);
+                // Cleanup needs at most two ticks: one to flag DeleteEntityIntention, one to tear down.
+                TickFullChain();
+                TickFullChain();
+            }
+
+            int poolWatermark = sourceFactory.PoolCountInactive;
+
+            Measure
+               .Method(() =>
+                {
+                    MoveTo(avatarTransforms, INSIDE_RADIUS);
+                    int rampUpTicks = ComputeRampUpTicks(PUBLISHERS);
+                    for (int t = 0; t < rampUpTicks; t++)
+                        TickFullChain();
+
+                    MoveTo(avatarTransforms, OUTSIDE_RADIUS);
+                    TickFullChain();
+                    TickFullChain();
+                })
+               .WarmupCount(2)
+               .MeasurementCount(20)
+               .GC()
+               .Run();
+
+            Assert.That(sourceFactory.PoolCountInactive, Is.LessThanOrEqualTo(poolWatermark + 5),
+                "pool working set must stay flat across boundary cycles — growth indicates new instantiations leaked into measurement");
+        }
+
+        private void TickFullChain()
+        {
+            markerSystem.Update(0);
+            audibleRangeMarkerSystem.Update(0);
+            system.Update(0);
+            positionSystem.Update(0);
+            cleanupSystem.Update(0);
+        }
+
+        private static void MoveTo(List<Transform> transforms, float radius)
+        {
+            for (int i = 0; i < transforms.Count; i++)
+            {
+                float angle = i * 0.137f;
+                transforms[i].position = new Vector3(radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
+            }
+        }
+
+        private Transform CreateChurnAvatar(string walletId, int idx)
+        {
+            float angle = idx * 0.137f;
+            Vector3 pos = new (15f * Mathf.Cos(angle), 0f, 15f * Mathf.Sin(angle));
+
+            var avatarGo = CreateTrackedGameObject($"Avatar_{walletId}");
+            avatarGo.transform.position = pos;
+
+            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
+            var headAnchorGo = CreateTrackedGameObject($"HeadAnchor_{walletId}");
+            headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
+            headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
+            HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
+
+            world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            registry.Add(walletId, "sid");
+            return avatarGo.transform;
+        }
+
+        private void PopulatePerfWorldByDistance(int activeCount, int suspendCount, int beyondCount)
+        {
+            // Deterministic placement: x-axis ring at fixed radii. Listener is at origin
+            // (PerfPlayer + PerfCamera both at (0,1.6,0)). Distances picked well inside each
+            // hysteresis band so float jitter cannot tip an avatar across a boundary.
+            const float ACTIVE_RADIUS = 8f;   // < 16 m suspend-in
+            const float SUSPEND_RADIUS = 19f; // 17–22 m suspend band
+            const float BEYOND_RADIUS = 30f;  // > 22 m outer-out
+
+            int idx = 0;
+            for (int i = 0; i < activeCount; i++)
+                CreateStreamingAvatarAt($"perf-active-{i}", ACTIVE_RADIUS, idx++);
+            for (int i = 0; i < suspendCount; i++)
+                CreateStreamingAvatarAt($"perf-suspend-{i}", SUSPEND_RADIUS, idx++);
+            for (int i = 0; i < beyondCount; i++)
+                CreateStreamingAvatarAt($"perf-beyond-{i}", BEYOND_RADIUS, idx++);
+        }
+
+        private void CreateStreamingAvatarAt(string walletId, float radius, int idx)
+        {
+            // Spread avatars around the ring so transforms are not stacked — keeps the avatar-base
+            // / head-anchor reads from hitting the same cache line, closer to a real crowd.
+            float angle = idx * 0.137f; // golden-angle-ish, just deterministic spread
+            Vector3 pos = new (radius * Mathf.Cos(angle), 0f, radius * Mathf.Sin(angle));
+
+            var avatarGo = CreateTrackedGameObject($"Avatar_{walletId}");
+            avatarGo.transform.position = pos;
+
+            AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
+            var headAnchorGo = CreateTrackedGameObject($"HeadAnchor_{walletId}");
+            headAnchorGo.transform.SetParent(avatarGo.transform, worldPositionStays: false);
+            headAnchorGo.transform.localPosition = new Vector3(0, 1.6f, 0);
+            HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
+
+            world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            registry.Add(walletId, "sid");
         }
 
         private void PopulatePerfWorld(int participantCount)

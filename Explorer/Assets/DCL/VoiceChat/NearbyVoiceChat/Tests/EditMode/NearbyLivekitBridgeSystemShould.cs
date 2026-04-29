@@ -242,6 +242,37 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void CascadeRemovesAudibleAndSuspendedWhenStreamingTagIsRemovedSameTick()
+        {
+            // A1 §6.9: extends F1's cascade — RemoveStreamingTag must also drop InAudibleRangeTag
+            // and IsSuspendedTag (if present) on stream disappearance, so invariant I2
+            // (InAudibleRangeTag ⊆ IsStreamingAudioTag) holds at every point.
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+            StubStreaming(WALLET, "sid-1");
+
+            system.Update(0);
+            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True, "precondition: streaming tag set");
+
+            // AudibleRangeMarker would have placed these tags in production; seed them directly here.
+            world.Add<InAudibleRangeTag>(e);
+            world.Add<IsSuspendedTag>(e);
+
+            // Stream disappears.
+            registry.GetAudioSids(WALLET).Returns((ConcurrentDictionary<string, byte>?)null);
+
+            // Act
+            system.Update(0);
+
+            // Assert — all dependent tags cascaded off.
+            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False,
+                "cascade must drop audible-range when streaming is removed (invariant I2)");
+            Assert.That(world.Has<IsSuspendedTag>(e), Is.False,
+                "cascade must drop suspended when streaming is removed (invariant I1+I2)");
+        }
+
+        [Test]
         public void AppliesSpeakingTagWhenRegistryReportsActiveSpeakerWithStreamingTag()
         {
             // Arrange

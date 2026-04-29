@@ -182,6 +182,124 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(lkSource.AudioSource.mute, Is.False);
         }
 
+        // ── A1: inactive-state handling (suspend / out-of-range) ────
+
+        [Test]
+        public void DisablesLivekitAndAudioSourceWhenAvatarIsSuspended()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add<IsSuspendedTag>(avatarEntity);
+
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.enabled = true;
+            lkSource.AudioSource.enabled = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            system.Update(0);
+
+            Assert.That(lkSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.enabled, Is.False);
+        }
+
+        [Test]
+        public void DisablesLivekitAndAudioSourceWhenAvatarIsOutOfRange()
+        {
+            // One-frame transient: AudibleRangeMarker (AvatarGroup) drops InAudibleRangeTag on
+            // outer-out crossing; Cleanup (CleanUpGroup) dooms the audio entity later in the same
+            // frame. PositionSystem runs in between and must not invoke the spatial pipeline on
+            // a doomed entity — the !Has<InAudibleRangeTag> clause in `inactive` covers it.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Remove<InAudibleRangeTag>(avatarEntity);
+
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.enabled = true;
+            lkSource.AudioSource.enabled = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            system.Update(0);
+
+            Assert.That(lkSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.enabled, Is.False);
+        }
+
+        [Test]
+        public void ReEnablesBothWhenAvatarIsActiveInRange()
+        {
+            // Active band: InAudibleRangeTag present, no IsSuspendedTag. The spawn-disabled state
+            // from Binding must flip on the first PositionSystem tick.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.enabled = false;
+            lkSource.AudioSource.enabled = false;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            system.Update(0);
+
+            Assert.That(lkSource.enabled, Is.True);
+            Assert.That(lkSource.AudioSource.enabled, Is.True);
+        }
+
+        [Test]
+        public void SkipsSpatialPipelineWhenInactive()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            // Suspended avatar — spatial pipeline must early-return: position not written,
+            // mute not touched. Pin a sentinel position on the source and check it's untouched.
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add<IsSuspendedTag>(avatarEntity);
+
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            Vector3 sentinelPos = new (123.4f, 56.7f, 89.1f);
+            lkSource.transform.position = sentinelPos;
+            lkSource.AudioSource.mute = true; // would be flipped to false by the mute branch if it ran
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.IsMuted(PARTICIPANT_A).Returns(false);
+
+            system.Update(0);
+
+            Assert.That(lkSource.transform.position, Is.EqualTo(sentinelPos),
+                "spatial pipeline must not write transform.position when inactive");
+            Assert.That(lkSource.AudioSource.mute, Is.True,
+                "spatial pipeline must not touch AudioSource.mute when inactive");
+            Assert.That(muteCache.ReceivedCalls(), Is.Empty,
+                "mute service must not be queried when the spatial pipeline is skipped");
+        }
+
+        [Test]
+        public void AppliesIdempotentWritesWhenStateUnchanged()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Add<IsSuspendedTag>(avatarEntity);
+
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            Assert.DoesNotThrow(() =>
+            {
+                system.Update(0);
+                system.Update(0);
+            });
+
+            Assert.That(lkSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.enabled, Is.False);
+        }
+
         // ── Helpers ─────────────────────────────────────────────────
 
         private GameObject CreateTrackedGameObject(string name)
@@ -202,10 +320,18 @@ namespace DCL.VoiceChat.Nearby.Tests
             headAnchorGo.transform.position = headAnchorPos;
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(
+            // A1: PositionSystem early-returns the spatial pipeline unless InAudibleRangeTag is
+            // present and IsSuspendedTag is absent. Default seed is "active in range" so the
+            // existing per-frame contract tests (position sync, mute, reprojection) keep working
+            // without per-test scaffolding. Inactive-state tests opt into the suspend/out-of-range
+            // archetype explicitly.
+            Entity entity = world.Create(
                 new Profile(walletId, walletId, new Avatar()),
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
+
+            world.Add<InAudibleRangeTag>(entity);
+            return entity;
         }
 
         private Entity CreateAudioEntity(string identity, string sid, Entity avatarEntity, LivekitAudioSource source)

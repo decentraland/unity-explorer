@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using LiveKit.Rooms.Streaming.Audio;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -71,17 +72,31 @@ namespace DCL.VoiceChat.Nearby.Systems
             // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
             if (!World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase)) return;
 
+            // Per-frame idempotent inactive-state application — self-healing, same pattern as `mute`.
+            // "inactive" covers both suspend (16–22 m band) and the one-frame transient between an avatar
+            // crossing 22 m outward (RangeMarker drops InAudibleRangeTag in AvatarGroup) and Cleanup
+            // dooming this audio entity in the later CleanUpGroup. Without the range-absence clause,
+            // PositionSystem would run the full spatial pipeline once on a doomed entity.
+            Entity avatar = nearbyAudio.AvatarEntity;
+            bool inactive = World.Has<IsSuspendedTag>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
+
+            LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
+            src.enabled = !inactive;
+            src.AudioSource.enabled = !inactive;
+
+            if (inactive) return;
+
             Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
-            nearbyAudio.LivekitAudioSource.transform.position = sourcePos;
+            src.transform.position = sourcePos;
 
             (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
-            nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
+            src.SetSpatialAngles(azimuth, elevation);
 
             // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute on first successful tick (when IsMuted is false).
-            nearbyAudio.LivekitAudioSource.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
+            src.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
         }
 
         private static (float azimuth, float elevation) CalculateSpatialAngles(Transform listenerTransform, Vector3 sourcePosition)

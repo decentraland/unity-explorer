@@ -1,0 +1,220 @@
+using DCL.Optimization.Pools;
+using DCL.VoiceChat.Nearby.Audio;
+using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
+using NUnit.Framework;
+using RichTypes;
+using System.Collections.Generic;
+using UnityEngine;
+using Object = UnityEngine.Object;
+
+namespace DCL.VoiceChat.Nearby.Tests
+{
+    /// <summary>
+    /// Documents <see cref="NearbyAudioSourceFactory"/> contract under the pool-backed implementation (A2):
+    ///
+    /// - <c>Create</c> returns a fully enabled, playing <see cref="LivekitAudioSource"/> parented under <c>sourcesRoot</c>.
+    /// - <c>Dispose</c> drives the source into the inert POOLED state (GameObject inactive, both components disabled,
+    ///   stream cleared, mute=true / volume=0, parent under POOL_CONTAINER) and recycles it for the next <c>Create</c>.
+    /// - <c>DisposeRoot</c> destroys all pooled instances + the sources-root subtree.
+    /// </summary>
+    public class NearbyAudioSourceFactoryShould
+    {
+        private const string WALLET_A = "wallet-alice";
+        private const string WALLET_B = "wallet-bob";
+        private const string SID_1 = "sid-1";
+        private const string SID_2 = "sid-2";
+
+        private VoiceChatConfiguration configuration = null!;
+        private NearbyAudioSourceFactory factory = null!;
+        private readonly List<LivekitAudioSource> seenSources = new (8);
+
+        [SetUp]
+        public void SetUp()
+        {
+            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            factory = new NearbyAudioSourceFactory(configuration);
+            seenSources.Clear();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            // Destroy any straggler that escaped the factory's lifecycle — pooled sources keep their
+            // GameObjects alive after Dispose and would carry over into the next test, where Unity
+            // could still invoke OnAudioFilterRead on the audio thread.
+            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (src == null) continue;
+                src.Stop();
+                src.Free();
+                Object.DestroyImmediate(src.gameObject);
+            }
+
+            if (configuration != null) Object.DestroyImmediate(configuration);
+        }
+
+        // ── §12.1 — pool-backed factory contract ────────────────────
+
+        [Test]
+        public void CreatesFirstSourceWhenPoolEmpty()
+        {
+            // First Create on an empty pool triggers the creation handler; the resulting source must be
+            // alive, active, and parented under sourcesRoot — A1's spawn-disabled hand-off relies on the
+            // factory returning an enabled instance that BindingSystem then disables.
+            LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            seenSources.Add(source);
+
+            Assert.That(source, Is.Not.Null);
+            Assert.That(source.gameObject.activeSelf, Is.True, "freshly acquired source must be active");
+            Assert.That(source.transform.parent, Is.EqualTo(factory.SourcesRoot), "live source belongs under sourcesRoot");
+        }
+
+        [Test]
+        public void ReusesPooledSourceAfterDispose()
+        {
+            // Tracer bullet for the pool: Create → Dispose → Create returns the same reference.
+            // Demonstrates the factory recycles the GO+AudioSource+LivekitAudioSource triple instead of
+            // round-tripping Object.Instantiate on every audible-range crossing.
+            LivekitAudioSource first = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            factory.Dispose(first);
+
+            LivekitAudioSource second = factory.Create(new StreamKey(WALLET_B, SID_1), Weak<AudioStream>.Null);
+            seenSources.Add(second);
+
+            Assert.That(second, Is.SameAs(first), "pool must hand back the just-released instance");
+        }
+
+        [Test]
+        public void PoolStateInvariantsWhenDisposed()
+        {
+            // §6 inert-state invariants — once Dispose runs, Unity must route neither audio-thread
+            // (OnAudioFilterRead) nor main-thread (OnAudioConfigurationChanged) callbacks to the source.
+            LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            AudioSource audioSource = source.AudioSource;
+
+            factory.Dispose(source);
+
+            Assert.That(source.gameObject.activeSelf, Is.False, "GameObject must be inactive in pool");
+            Assert.That(source.enabled, Is.False, "LivekitAudioSource must be disabled in pool (drops audio config subscription)");
+            Assert.That(audioSource.enabled, Is.False, "AudioSource must be disabled in pool");
+            Assert.That(audioSource.isPlaying, Is.False);
+            Assert.That(audioSource.mute, Is.True);
+            Assert.That(audioSource.volume, Is.EqualTo(0f));
+            Assert.That(source.transform.parent, Is.Not.Null);
+            Assert.That(source.transform.parent.name, Does.StartWith("POOL_CONTAINER_"));
+
+            // Keep alive across teardown — pool owns it now.
+            seenSources.Add(source);
+        }
+
+        [Test]
+        public void LiveStateInvariantsWhenAcquired()
+        {
+            // §7 live-state invariants — immediately post-Create (pre-A1-spawn-disable) the source must
+            // be wired up for playback so PositionSystem can rectify state on the very next tick.
+            LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            seenSources.Add(source);
+
+            AudioSource audioSource = source.AudioSource;
+
+            Assert.That(source.enabled, Is.True);
+            Assert.That(audioSource.enabled, Is.True);
+            Assert.That(audioSource.isPlaying, Is.True);
+            Assert.That(audioSource.mute, Is.True, "PositionSystem unmutes after first sync — initial state is muted");
+            Assert.That(source.transform.parent, Is.EqualTo(factory.SourcesRoot));
+            Assert.That(source.gameObject.name, Does.StartWith("LivekitSource_"));
+        }
+
+        [Test]
+        public void AppliesSettingsOnceAtCreationNotPerAcquire()
+        {
+            // §5.2 regression guard — once-per-instance settings (mixer group, rolloff, spatial) are
+            // applied in the creation handler, not on every acquire. If a future refactor moves them
+            // back into Create, this test catches it: a value mutated externally must survive a recycle.
+            LivekitAudioSource first = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            AudioSource audioSource = first.AudioSource;
+
+            const float MUTATED_SPREAD = 42f;
+            audioSource.spread = MUTATED_SPREAD;
+
+            factory.Dispose(first);
+
+            LivekitAudioSource second = factory.Create(new StreamKey(WALLET_B, SID_1), Weak<AudioStream>.Null);
+            seenSources.Add(second);
+
+            Assert.That(second, Is.SameAs(first), "precondition — same pooled instance");
+            Assert.That(second.AudioSource.spread, Is.EqualTo(MUTATED_SPREAD),
+                "settings must not be re-applied on every acquire — Apply3dAudioSettings would reset spread to 0");
+        }
+
+        [Test]
+        public void DisposeDoesNotDoubleReleaseWhenCalledTwice()
+        {
+            // Teardown races (CleanupSystem.OnDispose then BindingSystem.OnDispose) can route the same
+            // source through Dispose twice. The factory must short-circuit instead of throwing.
+            // PoolConstants.CHECK_COLLECTIONS is false in non-DEBUG_POOLS builds — this test only guards
+            // the default config; under collection-check pools throw deliberately and that is fine.
+            LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+
+            Assert.DoesNotThrow(() => factory.Dispose(source));
+
+            if (PoolConstants.CHECK_COLLECTIONS) return;
+
+            Assert.DoesNotThrow(() => factory.Dispose(source),
+                "second Dispose must short-circuit safely when collection checks are off");
+            seenSources.Add(source);
+        }
+
+        [Test]
+        public void DisposeRootClearsPoolAndDestroysRoot()
+        {
+            // §5.6 — after DisposeRoot the entire feature footprint (live + pooled) is gone.
+            // Pool counters must zero out and sourcesRoot must report Unity-fake-null.
+            LivekitAudioSource a = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            LivekitAudioSource b = factory.Create(new StreamKey(WALLET_A, SID_2), Weak<AudioStream>.Null);
+            LivekitAudioSource c = factory.Create(new StreamKey(WALLET_B, SID_1), Weak<AudioStream>.Null);
+
+            factory.Dispose(a);
+            factory.Dispose(b);
+            factory.Dispose(c);
+
+            Transform sourcesRootBefore = factory.SourcesRoot;
+            factory.DisposeRoot();
+
+            Assert.That(factory.PoolCountInactive, Is.EqualTo(0), "pool must drain on DisposeRoot");
+            Assert.That(sourcesRootBefore == null, Is.True, "sourcesRoot must be Unity-fake-null after destroy");
+        }
+
+        [Test]
+        public void MultipleConcurrentLiveSourcesDoNotShareState()
+        {
+            // Two avatars in audible range simultaneously must produce two distinct instances with
+            // their own per-owner names. The pool widens lazily — second Create on an empty pool
+            // triggers a second creationHandler invocation rather than aliasing the first instance.
+            LivekitAudioSource a = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            LivekitAudioSource b = factory.Create(new StreamKey(WALLET_B, SID_1), Weak<AudioStream>.Null);
+            seenSources.Add(a);
+            seenSources.Add(b);
+
+            Assert.That(a, Is.Not.SameAs(b));
+            Assert.That(a.gameObject.name, Does.Contain(WALLET_A));
+            Assert.That(b.gameObject.name, Does.Contain(WALLET_B));
+        }
+
+        [Test]
+        public void AudioConfigSubscriptionDroppedInPool()
+        {
+            // §6 unsubscription invariant — the audio config subscription is owned by
+            // LivekitAudioSource.OnEnable/OnDisable, so the only observable indicator from outside is
+            // that LivekitAudioSource.enabled is false in POOLED state. That precondition is what
+            // guarantees Unity has invoked OnDisable, which has unsubscribed the event handler.
+            LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
+            factory.Dispose(source);
+            seenSources.Add(source);
+
+            Assert.That(source.enabled, Is.False,
+                "LivekitAudioSource.enabled must be false in pool — OnDisable is the unsubscription point");
+        }
+    }
+}

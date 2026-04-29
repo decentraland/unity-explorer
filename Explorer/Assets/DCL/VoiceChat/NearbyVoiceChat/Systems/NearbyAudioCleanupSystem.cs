@@ -96,12 +96,13 @@ namespace DCL.VoiceChat.Nearby.Systems
             // destruction. Marker absence ≠ specific sid gone either: the marker is per-walletId, so
             // for multi-sid participants the per-sid IsStreamGone fallback is the only granular signal.
             // Both fallbacks must remain.
-            bool avatarGoneOrFullySilent =
+            bool avatarGoneOrOutOfRange =
                 !World.IsAlive(avatar)
                 || World.Has<DeleteEntityIntention>(avatar)
-                || !World.Has<IsStreamingAudioTag>(avatar);
+                || !World.Has<IsStreamingAudioTag>(avatar)
+                || !World.Has<InAudibleRangeTag>(avatar);
 
-            if (avatarGoneOrFullySilent
+            if (avatarGoneOrOutOfRange
                 || registry.IsStreamGone(comp.Key)
                 || userBlockingCache.UserIsBlocked(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);

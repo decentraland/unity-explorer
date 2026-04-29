@@ -98,6 +98,11 @@ namespace DCL.VoiceChat.Nearby
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
 
+            // A1: PositionSystem skips the spatial pipeline unless the avatar carries
+            // InAudibleRangeTag (and lacks IsSuspendedTag). Tag here so the benchmark continues
+            // to measure the full spatial-pipeline path, not the inactive-state early-return.
+            world.Add<InAudibleRangeTag>(avatarEntity);
+
             LivekitAudioSource source = LivekitAudioSource.New();
             gameObjects.Add(source.gameObject);
 

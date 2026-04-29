@@ -165,7 +165,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
             {
                 Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
-                Assert.That(source == null, Is.True, "LivekitAudioSource must be physically destroyed");
+                AssertSourceTornDown(source);
             }
         }
 
@@ -190,7 +190,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
             {
                 Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
-                Assert.That(source == null, Is.True);
+                AssertSourceTornDown(source);
             }
         }
 
@@ -228,7 +228,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             foreach ((Entity audioEntity, LivekitAudioSource source) in seeded)
             {
                 Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
-                Assert.That(source == null, Is.True);
+                AssertSourceTornDown(source);
             }
         }
 
@@ -328,6 +328,40 @@ namespace DCL.VoiceChat.Nearby.Tests
                 "marker-absence must short-circuit before the blocking cache lookup");
         }
 
+        // ── A1: InAudibleRangeTag absence joins the doom shortcut ───
+
+        [Test]
+        public void FlagsAudioEntityWhenAvatarLosesAudibleRangeTag()
+        {
+            // A1 adds a fourth clause to the cheap-shortcut chain — when AudibleRangeMarker drops
+            // InAudibleRangeTag (avatar crossed 22 m outward) Cleanup must doom the audio entity
+            // in the same frame, before the registry / blocking-cache fallbacks fire.
+            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            world.Remove<InAudibleRangeTag>(avatarEntity);
+
+            system.Update(0);
+
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+        }
+
+        [Test]
+        public void DoesNotInvokeRegistryWhenAudibleRangeAbsentPathDooms()
+        {
+            // Cost-shortcut semantics — the marker-absence clause must short-circuit before the
+            // registry lookup fires. Mirrors the streaming-tag short-circuit guard from A5.2.
+            (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
+            world.Remove<InAudibleRangeTag>(avatarEntity);
+
+            registry.ResetCallCounters();
+
+            system.Update(0);
+
+            Assert.That(registry.IsStreamGoneCallCount, Is.EqualTo(0),
+                "InAudibleRangeTag absence must short-circuit before the registry lookup");
+            Assert.That(userBlockingCache.ReceivedCalls(), Is.Empty,
+                "InAudibleRangeTag absence must short-circuit before the blocking cache lookup");
+        }
+
         // ── Idempotency ─────────────────────────────────────────────
 
         [Test]
@@ -363,7 +397,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Dispose();
 
             foreach (LivekitAudioSource source in sources)
-                Assert.That(source == null, Is.True);
+                AssertSourceTornDown(source);
 
             Assert.That(bindings, Is.Empty);
         }
@@ -374,19 +408,32 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             Assert.That(world.IsAlive(audioEntity), Is.True, "entity destruction is delegated to DestroyEntitiesSystem and is out of scope here");
             Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True, "audio entity must be marked for deletion");
-            Assert.That(source == null, Is.True, "LivekitAudioSource must be physically destroyed");
+            AssertSourceTornDown(source, "LivekitAudioSource must be torn down (destroyed in legacy path, parked inactive in pool path)");
             Assert.That(bindings.ContainsKey(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
+        }
+
+        // A2 made source teardown reference-stable: the pool keeps the GO alive after Dispose. Both
+        // paths still satisfy "no further audio-thread or main-thread tick" — fold them into one
+        // helper so the existing trigger tests do not have to know which path is active.
+        private static void AssertSourceTornDown(LivekitAudioSource source, string? message = null)
+        {
+            if (source == null) return; // legacy path — Object.Destroy ran
+
+            Assert.That(source.gameObject.activeSelf, Is.False, message ?? "pooled source must be inactive");
+            Assert.That(source.enabled, Is.False, message ?? "pooled source's wrapper must be disabled");
         }
 
         private (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) SeedBinding(string walletId, string sid)
         {
             Entity avatarEntity = CreateAvatarEntity(walletId);
-            // After A5.2 the cleanup shortcut treats marker absence as a doom signal.
-            // Realistic state when an audio entity exists is "marker present" — Bridge applied it
-            // before Binding spawned the entity. Pair them in the seed so existing trigger tests
-            // exercise the intended fallback (IsStreamGone / UserIsBlocked / lifecycle), not the
-            // marker-absence shortcut by accident.
+            // After A5.2 the cleanup shortcut treats streaming-marker absence as a doom signal;
+            // A1 adds InAudibleRangeTag absence as a fourth shortcut clause. Realistic state for
+            // a live audio entity is both markers present — Bridge applied IsStreamingAudioTag
+            // and AudibleRangeMarker applied InAudibleRangeTag before Binding spawned the entity.
+            // Pair all three in the seed so existing trigger tests exercise the intended fallbacks
+            // (IsStreamGone / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
             world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 
             LivekitAudioSource source = CreateLivekitAudioSource();

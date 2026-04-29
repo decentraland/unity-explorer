@@ -64,7 +64,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag))]
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag), typeof(InAudibleRangeTag))]
         private void CollectPendingCreations(Entity avatarEntity, in Profile profile)
         {
             string walletId = profile.UserId;
@@ -105,6 +105,12 @@ namespace DCL.VoiceChat.Nearby.Systems
                 if (!stream.Resource.Has) continue;
 
                 LivekitAudioSource source = sourceFactory.Create(key, stream);
+
+                // Spawn paused; PositionSystem flips this on the first tick if the avatar is in the active band.
+                // Closes the one-frame window where an avatar entering directly into the suspend zone (~18–17 m)
+                // would burst audio for one frame before PositionSystem rectifies the state.
+                source.enabled = false;
+                source.AudioSource.enabled = false;
 
                 Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
                 bindings.Add(key, audioEntity);
