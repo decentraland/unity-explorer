@@ -175,6 +175,7 @@ namespace DCL.Tests
             {
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentBag.cs",
+                "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentQueue.cs",
             };
             ValidateNoForbiddenApiUsed(pattern, "Use DCLConcurrent insteat version instead.", ignorePaths);
         }
