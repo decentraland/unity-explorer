@@ -47,10 +47,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateModel.Dispose();
         }
 
-        // ── nearby_voice_speak ──────────────────────────────────────
+        // ── nearby_voice_speak_button (toggle on/off via widget Speak button) ───
 
         [Test]
-        public void FireSpeakEventOnIdleToSpeakingWithButton()
+        public void FireSpeakButtonOnFromIdleToSpeaking()
         {
             // Arrange
             stateModel.Enable();
@@ -60,12 +60,49 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
 
             // Assert
-            AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK,
-                p => (string?)p["activation"] == "button");
+            AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
+                p => (bool?)p["enabled"] == true);
         }
 
         [Test]
-        public void FireSpeakEventOnIdleToSpeakingWithPushToTalk()
+        public void FireSpeakButtonOffFromSpeakingToIdle()
+        {
+            // Arrange — user clicked Speak, now stops by clicking again
+            stateModel.Enable();
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            analytics.ClearReceivedCalls();
+
+            // Act
+            stateModel.StopSpeaking();
+
+            // Assert
+            AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
+                p => (bool?)p["enabled"] == false);
+        }
+
+        [Test]
+        public void NotFireSpeakButtonOffOnSuppression()
+        {
+            // Suppression by call/scene/loading internally calls StopSpeaking — system-driven, not user intent.
+            // Arrange — user is mid-speak via button
+            stateModel.Enable();
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            analytics.ClearReceivedCalls();
+
+            // Act — incoming private call suppresses nearby
+            stateModel.Suppress(SuppressionReason.CALL);
+
+            // Assert — no enabled:false fired (the SPEAKING→IDLE inside Suppress is system-driven)
+            analytics.DidNotReceive().Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
+                Arg.Any<JObject>(),
+                Arg.Any<bool>());
+        }
+
+        // ── nearby_voice_speak_ptt (one event per [T] press) ────────
+
+        [Test]
+        public void FireSpeakPttOnIdleToSpeakingWithPushToTalk()
         {
             // Arrange
             stateModel.Enable();
@@ -74,13 +111,34 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act — user holds [T]
             stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
 
-            // Assert
-            AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK,
-                p => (string?)p["activation"] == "push_to_talk");
+            // Assert — fires once on press, no payload required
+            analytics.Received(1).Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT,
+                Arg.Any<JObject?>(),
+                Arg.Any<bool>());
         }
 
         [Test]
-        public void NotFireSpeakEventOnFocusResumed()
+        public void NotFireSpeakButtonOnPushToTalkRelease()
+        {
+            // SPEAKING→IDLE after a PTT press must not emit a button toggle-off event.
+            // Arrange
+            stateModel.Enable();
+            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            analytics.ClearReceivedCalls();
+
+            // Act — user releases [T]
+            stateModel.StopSpeaking();
+
+            // Assert
+            analytics.DidNotReceive().Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
+                Arg.Any<JObject>(),
+                Arg.Any<bool>());
+        }
+
+        [Test]
+        public void NotFireAnySpeakEventOnFocusResumed()
         {
             // Focus-resume is a continuation of a prior speak session, not a fresh use — filter it out.
             // Arrange
@@ -90,29 +148,37 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Act — application regained focus and the mic auto-resumed
             stateModel.StartSpeaking(NearbyVoiceActivation.FOCUS_RESUMED);
 
-            // Assert
+            // Assert — neither speak event variant fires
             analytics.DidNotReceive().Track(
-                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK,
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
                 Arg.Any<JObject>(),
+                Arg.Any<bool>());
+            analytics.DidNotReceive().Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT,
+                Arg.Any<JObject?>(),
                 Arg.Any<bool>());
         }
 
         [Test]
-        public void FireSpeakEventPerFreshSpeakingSession()
+        public void FireSpeakEventsPerFreshSpeakingSession()
         {
             // Arrange
             stateModel.Enable();
             analytics.ClearReceivedCalls();
 
-            // Act — two separate speak sessions, different activations
+            // Act — button session (on/off), then a PTT press
             stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
             stateModel.StopSpeaking();
             stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
 
-            // Assert — one event per fresh IDLE → SPEAKING entry
+            // Assert — button fires twice (on + off), PTT fires once on press
             analytics.Received(2).Track(
-                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK,
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
                 Arg.Any<JObject>(),
+                Arg.Any<bool>());
+            analytics.Received(1).Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT,
+                Arg.Any<JObject?>(),
                 Arg.Any<bool>());
         }
 
@@ -332,8 +398,12 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Assert
             analytics.DidNotReceive().Track(
-                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK,
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON,
                 Arg.Any<JObject>(),
+                Arg.Any<bool>());
+            analytics.DidNotReceive().Track(
+                AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT,
+                Arg.Any<JObject?>(),
                 Arg.Any<bool>());
         }
 

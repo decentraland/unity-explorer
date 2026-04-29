@@ -6,7 +6,8 @@ using System;
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     /// <summary>
-    ///     Tracks nearby voice chat usage: speak activations, proximity voice on/off toggle, and per-user mutes.
+    ///     Tracks nearby voice chat usage: button-toggle and push-to-talk speak events,
+    ///     proximity voice on/off toggle, and per-user mutes.
     ///     Listens to <see cref="NearbyVoiceChatStateModel.State"/> transitions and <see cref="NearbyMuteService.MuteStateChanged"/>.
     /// </summary>
     public class NearbyVoiceChatAnalytics : IDisposable
@@ -40,18 +41,31 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             NearbyVoiceChatState prev = prevState;
             prevState = next;
 
-            // IDLE → SPEAKING: new speaking session. Ignore focus-resumed — it's a continuation, not a fresh use.
-            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.SPEAKING
-                                                  && stateModel.CurrentActivation != NearbyVoiceActivation.FOCUS_RESUMED)
+            // IDLE → SPEAKING: dispatch by activation. FOCUS_RESUMED is a continuation, not a fresh use.
+            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.SPEAKING)
             {
-                analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK, new JObject
+                switch (stateModel.CurrentActivation)
                 {
-                    { "activation", ActivationToString(stateModel.CurrentActivation) },
-                });
+                    case NearbyVoiceActivation.BUTTON:
+                        TrackSpeakButton(enabled: true);
+                        break;
+                    case NearbyVoiceActivation.PUSH_TO_TALK:
+                        analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_PTT);
+                        break;
+                }
                 return;
             }
 
-            // Toggle events — user-driven via the widget HearOthersToggle.
+            // SPEAKING → IDLE: button-toggle off. Skip suppression-driven stops (call/scene/loading) — system, not user.
+            if (prev == NearbyVoiceChatState.SPEAKING && next == NearbyVoiceChatState.IDLE
+                && stateModel.CurrentActivation == NearbyVoiceActivation.BUTTON
+                && stateModel.ActiveSuppression.Value == null)
+            {
+                TrackSpeakButton(enabled: false);
+                return;
+            }
+
+            // Hear-Others toggle — user-driven via the widget HearOthersToggle.
             // - Disable() is unconditional, so toggle-off can fire from IDLE or SPEAKING.
             // - Enable() is gated to DISABLED, so toggle-on is only DISABLED → IDLE.
             // Transitions involving SUPPRESSED are system-driven (call/scene/loading) and are skipped.
@@ -60,6 +74,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             else if (prev == NearbyVoiceChatState.DISABLED && next == NearbyVoiceChatState.IDLE)
                 TrackToggle(enabled: true);
         }
+
+        private void TrackSpeakButton(bool enabled) =>
+            analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_SPEAK_BUTTON, new JObject
+            {
+                { "enabled", enabled },
+            });
 
         private void TrackToggle(bool enabled) =>
             analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_TOGGLE, new JObject
@@ -70,16 +90,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void OnMuteStateChanged(string walletId, bool isMuted) =>
             analytics.Track(AnalyticsEvents.VoiceChat.NEARBY_VOICE_USER_MUTE, new JObject
             {
-                { "identity", walletId },
+                { "wallet_id", walletId },
                 { "is_muted", isMuted },
             });
-
-        private static string ActivationToString(NearbyVoiceActivation activation) =>
-            activation switch
-            {
-                NearbyVoiceActivation.PUSH_TO_TALK => "push_to_talk",
-                NearbyVoiceActivation.BUTTON => "button",
-                _ => activation.ToString().ToLowerInvariant(),
-            };
     }
 }
