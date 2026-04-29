@@ -92,10 +92,7 @@ namespace DCL.VoiceChat
         public void Unpublish() =>
             UnpublishLocked();
 
-        // Atomically replaces the currently published track with a new one bound to the active microphone selection.
-        // The native FFI audio source is pinned to the original mic's channel/sample-rate config at construction,
-        // so a plain SwitchMicrophone on the existing source leaves the published track stuck on the old config.
-        // Republishing rebuilds the FFI handle and the LiveKit track with the new device's parameters.
+        // Republishes the track to rebuild the FFI handle: the native source is pinned to the original device config at track creation.
         public async UniTask SwitchMicrophoneAsync(bool keepRecording, CancellationToken ct)
         {
             using var _ = await semaphoreSlim.LockAsync();

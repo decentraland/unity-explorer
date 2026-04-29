@@ -291,11 +291,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
 
-        // Switching the active microphone mid-call requires republishing the LiveKit track: the native FFI source
-        // is pinned to the original device's channel/sample-rate config when the track is created, so a plain
-        // SwitchMicrophone on the existing source leaves outgoing audio stuck on the old config. We gate on
-        // connectionState because MicrophoneChanged also fires when the user picks a device while not in a call —
-        // SwitchMicrophoneAsync is a no-op without a published track, but the gate avoids spurious work and logs.
+        // Mid-call mic switch needs Unpublish+Republish: the FFI source is pinned to the original device config at track creation.
         private void OnMicrophoneChanged(MicrophoneSelection _)
         {
             if (connectionState is not (ConnectionUpdate.Connected or ConnectionUpdate.Reconnected))
@@ -316,7 +312,7 @@ namespace DCL.VoiceChat
 
                 try { await microphonePublisher.SwitchMicrophoneAsync(keepRecording, ct); }
                 catch (OperationCanceledException) { }
-                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Mic switch failed: {ex.Message}"); }
+                catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Mic switch failed", ex), ReportCategory.VOICE_CHAT); }
             }
         }
 
