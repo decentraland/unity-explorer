@@ -11,37 +11,49 @@ namespace DCL.VoiceChat.Nearby.Audio
 {
     /// <summary>
     ///     Owns construction, reuse, and disposal of Nearby <see cref="LivekitAudioSource"/> instances.
-    ///     Backed by a <see cref="GameObjectPool{T}"/> — instances cycle between a LIVE state under
-    ///     <c>sourcesRoot</c> and a fully inert POOLED state under the pool container (GameObject
-    ///     inactive, both components disabled, stream cleared, no event subscriptions).
+    ///     Backed by a <see cref="GameObjectPool{T}"/> — instances cycle between a LIVE state and a
+    ///     fully inert POOLED state under the pool's container (GameObject inactive, both components
+    ///     disabled, stream cleared, no event subscriptions). The pool's auto-created container doubles
+    ///     as the feature's hierarchy root (renamed to "VoiceChatSources_Nearby") so live and pooled
+    ///     instances are siblings under one parent — no factory-side wrapper transform.
     ///     <para>External API is unchanged from the pre-pool implementation; callers
     ///     (<c>NearbyAudioBindingSystem</c>, <c>NearbyAudioCleanupSystem</c>) need not know pooling exists.</para>
     /// </summary>
     public class NearbyAudioSourceFactory
     {
+        private const string ROOT_NAME = "VoiceChatSources_Nearby";
+
         // Emergency fallback toggle. Flip to false in this branch to bypass pooling and run the
         // pre-A2 instantiate-on-Create / destroy-on-Dispose path — useful as a quick revert if the
-        // pool path uncovers a regression mid-debug. Both paths share sourcesRoot; the pool object
-        // and its container are still constructed but stay empty when USE_POOL is false.
-        // static readonly (not const) so the legacy branch survives compile-time constant folding.
+        // pool path uncovers a regression mid-debug. Both paths still use the pool's container as
+        // their hierarchy root; the pool object stays empty when USE_POOL is false.
+        // static readonly (not const) so flipping the toggle doesn't trip CS0162 unreachable-code
+        // warnings on the legacy branches.
         private static readonly bool USE_POOL = true;
 
         private readonly VoiceChatConfiguration configuration;
-        private readonly Transform sourcesRoot;
         private readonly GameObjectPool<LivekitAudioSource> pool;
 
-        internal Transform SourcesRoot => sourcesRoot;
-        internal int PoolCountInactive => pool.CountInactive;
+        // Single hierarchy root. Equals pool.Container — there is no separate factory-owned wrapper.
+        // Live and pooled instances are both children of this transform; pooled distinguished by
+        // gameObject.activeSelf == false.
+        internal Transform sourcesRoot => pool.Container;
+
+        internal int poolCountInactive => pool.CountInactive;
 
         public NearbyAudioSourceFactory(VoiceChatConfiguration configuration)
         {
             this.configuration = configuration;
-            sourcesRoot = new GameObject("VoiceChatSources_Nearby").transform;
 
+            // rootContainer: null — pool creates its container at scene root. We rename it from the
+            // default "POOL_CONTAINER_LivekitAudioSource" so the editor hierarchy reflects feature
+            // identity instead of the generic pool-wrapper label.
             pool = new GameObjectPool<LivekitAudioSource>(
-                rootContainer: sourcesRoot,
+                rootContainer: null,
                 creationHandler: CreatePooledInstance,
                 onRelease: ResetForPool);
+
+            pool.Container.gameObject.name = ROOT_NAME;
         }
 
         public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream) =>
@@ -60,7 +72,9 @@ namespace DCL.VoiceChat.Nearby.Audio
         public void DisposeRoot()
         {
             if (USE_POOL) pool.Dispose();
-            UnityObjectUtils.SafeDestroyGameObject(sourcesRoot);
+
+            // Cascade-destroys any remaining children (live instances that survived to teardown).
+            UnityObjectUtils.SafeDestroyGameObject(pool.Container);
         }
 
         // ── Pool path ───────────────────────────────────────────────
@@ -79,6 +93,13 @@ namespace DCL.VoiceChat.Nearby.Audio
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
             audioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
             lkSource.ApplySpatialSettings(configuration);
+
+            // Park under the pool's container immediately. LivekitAudioSource.New() makes a parentless
+            // GameObject; pool.HandleRelease will reparent on first Dispose, but until then a fresh
+            // live instance would sit at scene root and DisposeRoot wouldn't cascade through it.
+            // One-time SetParent per instance (creation, not per acquire) — cheap and keeps the
+            // hierarchy invariant: every live or pooled source is a child of pool.Container.
+            lkSource.transform.SetParent(pool.Container, worldPositionStays: false);
 
             return lkSource;
         }
@@ -101,7 +122,12 @@ namespace DCL.VoiceChat.Nearby.Audio
 #if UNITY_EDITOR
             lkSource.name = $"LivekitSource_{key.identity}";
 #endif
-            lkSource.transform.SetParent(sourcesRoot);
+            // No SetParent here — instances are always under pool.Container (parented in
+            // creationHandler, kept there by HandleRelease). Skipping the per-acquire SetParent saves
+            // hierarchy-dirty + world-matrix recalc + OnTransformParentChanged on every audible-range
+            // entry; Unity gates audio on activeInHierarchy, not on parent identity. Editor hierarchy
+            // stays inspectable: live and pooled siblings under one named container, distinguished by
+            // activeSelf.
 
             // Start muted — NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
             audioSource.mute = true;
@@ -154,7 +180,8 @@ namespace DCL.VoiceChat.Nearby.Audio
 #if UNITY_EDITOR
             lkSource.name = $"LivekitSource_{key.identity}";
 #endif
-            lkSource.transform.SetParent(sourcesRoot);
+            // Same hierarchy root as the pool path so DisposeRoot's cascade catches legacy instances too.
+            lkSource.transform.SetParent(pool.Container);
 
             audioSource.mute = true;
             lkSource.Play();

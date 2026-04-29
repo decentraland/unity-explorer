@@ -280,7 +280,7 @@ namespace DCL.VoiceChat.Nearby
         /// A2 Scenario A2-1 — boundary-churn at 30 publishers oscillating across the 22 m audible-range
         /// boundary. Goal: prove that after the pool warms up (~30 entries), subsequent crossings
         /// produce zero `Object.Instantiate` calls — full-cycle ms/tick and GC bytes/tick are the
-        /// observable proxies, with `factory.PoolCountInactive` checked for stable working-set size.
+        /// observable proxies, with `factory.poolCountInactive` checked for stable working-set size.
         /// </summary>
         [Test]
         [Performance]
@@ -310,7 +310,7 @@ namespace DCL.VoiceChat.Nearby
                 TickFullChain();
             }
 
-            int poolWatermark = sourceFactory.PoolCountInactive;
+            int poolWatermark = sourceFactory.poolCountInactive;
 
             Measure
                .Method(() =>
@@ -329,7 +329,7 @@ namespace DCL.VoiceChat.Nearby
                .GC()
                .Run();
 
-            Assert.That(sourceFactory.PoolCountInactive, Is.LessThanOrEqualTo(poolWatermark + 5),
+            Assert.That(sourceFactory.poolCountInactive, Is.LessThanOrEqualTo(poolWatermark + 5),
                 "pool working set must stay flat across boundary cycles — growth indicates new instantiations leaked into measurement");
         }
 

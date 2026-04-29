@@ -19,9 +19,16 @@ namespace DCL.Optimization.Pools
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public GameObjectPool(Transform rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
+        // Auto-created child GameObject ("POOL_CONTAINER_<T>") that parks released instances and any
+        // owner-side hierarchy parent (live instances). Exposed so callers can rename it for editor
+        // diagnostics or destroy it during their own teardown without re-implementing the wrapper.
+        public Transform Container => parentContainer;
+
+        public GameObjectPool(Transform? rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
+            // Transform.SetParent(null) is legal — places the container at scene root; callers that
+            // don't need a wrapper hierarchy can pass null and parent / rename Container themselves.
             parentContainer.SetParent(rootContainer);
 
             if (onRelease != null) this.onRelease += onRelease;

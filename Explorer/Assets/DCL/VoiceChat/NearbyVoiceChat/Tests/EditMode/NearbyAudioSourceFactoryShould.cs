@@ -67,7 +67,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(source, Is.Not.Null);
             Assert.That(source.gameObject.activeSelf, Is.True, "freshly acquired source must be active");
-            Assert.That(source.transform.parent, Is.EqualTo(factory.SourcesRoot), "live source belongs under sourcesRoot");
+            Assert.That(source.transform.IsChildOf(factory.sourcesRoot), Is.True,
+                "live source belongs under sourcesRoot subtree (pool path leaves it under POOL_CONTAINER, legacy path under sourcesRoot direct)");
         }
 
         [Test]
@@ -102,7 +103,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(audioSource.mute, Is.True);
             Assert.That(audioSource.volume, Is.EqualTo(0f));
             Assert.That(source.transform.parent, Is.Not.Null);
-            Assert.That(source.transform.parent.name, Does.StartWith("POOL_CONTAINER_"));
+            Assert.That(source.transform.parent, Is.EqualTo(factory.sourcesRoot),
+                "pooled source must sit under the factory's single hierarchy root (the pool's renamed container)");
 
             // Keep alive across teardown — pool owns it now.
             seenSources.Add(source);
@@ -122,7 +124,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(audioSource.enabled, Is.True);
             Assert.That(audioSource.isPlaying, Is.True);
             Assert.That(audioSource.mute, Is.True, "PositionSystem unmutes after first sync — initial state is muted");
-            Assert.That(source.transform.parent, Is.EqualTo(factory.SourcesRoot));
+            Assert.That(source.transform.IsChildOf(factory.sourcesRoot), Is.True,
+                "live source must sit under sourcesRoot subtree — pool path keeps it under POOL_CONTAINER to avoid SetParent");
             Assert.That(source.gameObject.name, Does.StartWith("LivekitSource_"));
         }
 
@@ -179,10 +182,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             factory.Dispose(b);
             factory.Dispose(c);
 
-            Transform sourcesRootBefore = factory.SourcesRoot;
+            Transform sourcesRootBefore = factory.sourcesRoot;
             factory.DisposeRoot();
 
-            Assert.That(factory.PoolCountInactive, Is.EqualTo(0), "pool must drain on DisposeRoot");
+            Assert.That(factory.poolCountInactive, Is.EqualTo(0), "pool must drain on DisposeRoot");
             Assert.That(sourcesRootBefore == null, Is.True, "sourcesRoot must be Unity-fake-null after destroy");
         }
 

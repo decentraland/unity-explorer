@@ -92,8 +92,11 @@ namespace DCL.VoiceChat.Nearby.Systems
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
             src.transform.position = sourcePos;
 
-            (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
-            src.SetSpatialAngles(azimuth, elevation);
+            if (!src.AudioSource.isVirtual)
+            {
+                (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
+                src.SetSpatialAngles(azimuth, elevation);
+            }
 
             // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute on first successful tick (when IsMuted is false).
             src.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
