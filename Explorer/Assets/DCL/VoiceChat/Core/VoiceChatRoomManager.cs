@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -9,9 +10,10 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
-using LiveKit.Proto;
+using LiveKit.Runtime.Scripts.Audio;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -33,6 +35,8 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneHandler voiceChatMicrophoneHandler;
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable localParticipantIsSpeakerSubscription;
+
+        private CancellationTokenSource? micSwitchCts;
 
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
@@ -64,6 +68,7 @@ namespace DCL.VoiceChat
                 roomHub, voiceChatOrchestrator, configuration, voiceChatRoom);
 
             microphonePublisher.SourceChanged += voiceChatMicrophoneHandler.Assign;
+            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
 
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
@@ -84,7 +89,10 @@ namespace DCL.VoiceChat
             if (isDisposed) return;
             isDisposed = true;
 
+            micSwitchCts.SafeCancelAndDispose();
+
             microphonePublisher.SourceChanged -= voiceChatMicrophoneHandler.Assign;
+            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
@@ -281,6 +289,35 @@ namespace DCL.VoiceChat
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
+        }
+
+        // Switching the active microphone mid-call requires republishing the LiveKit track: the native FFI source
+        // is pinned to the original device's channel/sample-rate config when the track is created, so a plain
+        // SwitchMicrophone on the existing source leaves outgoing audio stuck on the old config. We gate on
+        // connectionState because MicrophoneChanged also fires when the user picks a device while not in a call —
+        // SwitchMicrophoneAsync is a no-op without a published track, but the gate avoids spurious work and logs.
+        private void OnMicrophoneChanged(MicrophoneSelection _)
+        {
+            if (connectionState is not (ConnectionUpdate.Connected or ConnectionUpdate.Reconnected))
+                return;
+
+            micSwitchCts = micSwitchCts.SafeRestart();
+            OnMicrophoneChangedAsync(micSwitchCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OnMicrophoneChangedAsync(CancellationToken ct)
+            {
+                if (!PlayerLoopHelper.IsMainThread)
+                    await UniTask.SwitchToMainThread(ct);
+
+                if (ct.IsCancellationRequested || isDisposed) return;
+
+                bool keepRecording = voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value;
+
+                try { await microphonePublisher.SwitchMicrophoneAsync(keepRecording, ct); }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Mic switch failed: {ex.Message}"); }
+            }
         }
 
         private void OnConnectionLost(LKDisconnectReason? disconnectReason)

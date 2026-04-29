@@ -86,7 +86,32 @@ namespace DCL.VoiceChat
         public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
             using var _ = await semaphoreSlim.LockAsync();
+            await PublishLockedAsync(micAutoStart, ct);
+        }
 
+        public void Unpublish() =>
+            UnpublishLocked();
+
+        // Atomically replaces the currently published track with a new one bound to the active microphone selection.
+        // The native FFI audio source is pinned to the original mic's channel/sample-rate config at construction,
+        // so a plain SwitchMicrophone on the existing source leaves the published track stuck on the old config.
+        // Republishing rebuilds the FFI handle and the LiveKit track with the new device's parameters.
+        public async UniTask SwitchMicrophoneAsync(bool keepRecording, CancellationToken ct)
+        {
+            using var _ = await semaphoreSlim.LockAsync();
+
+            if (!microphoneTrack.HasValue)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Mic switch ignored: no track currently published");
+                return;
+            }
+
+            UnpublishLocked();
+            await PublishLockedAsync(keepRecording, ct);
+        }
+
+        private async UniTask PublishLockedAsync(bool micAutoStart, CancellationToken ct)
+        {
             if (microphoneTrack.HasValue)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track already published");
@@ -125,7 +150,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void Unpublish()
+        private void UnpublishLocked()
         {
             if (!microphoneTrack.HasValue) return;
 
