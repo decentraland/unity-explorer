@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (IsSameLoopingEmote(emoteInUse, mainAsset, emoteComponent.EmoteLoop, isLooping))
                 return true;
 
-            EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, emoteInUse);
+            EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
             if (emoteReferences.legacy)
@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (IsSameLoopingEmote(emoteInUse, mainAsset, maskedEmote.EmoteLoop, isLooping))
                 return true;
 
-            EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isSpatial, in view, emoteInUse);
+            EmoteReferences? emoteReferences = AcquireEmoteReferences(mainAsset, audioAsset, isLooping, isSpatial, in view, emoteInUse);
             if (emoteReferences == null) return false;
 
             if (emoteReferences.legacy)
@@ -161,6 +161,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private EmoteReferences? AcquireEmoteReferences(GameObject mainAsset,
             AudioClip? audioAsset,
+            bool isLooping,
             bool isSpatial,
             in IAvatarView view,
             EmoteReferences? emoteInUse)
@@ -202,7 +203,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;
                 audioSource.transform.position = avatarTransform.position;
-                audioSource.loop = true;
+                audioSource.loop = isLooping;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }
