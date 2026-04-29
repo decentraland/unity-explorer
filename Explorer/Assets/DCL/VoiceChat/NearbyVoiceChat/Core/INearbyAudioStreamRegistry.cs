@@ -25,5 +25,12 @@ namespace DCL.VoiceChat.Nearby.Audio
         Weak<AudioStream> GetActiveStream(StreamKey key);
 
         bool IsStreamGone(StreamKey key);
+
+        /// <summary>
+        /// Returns <c>true</c> if <paramref name="walletId"/> was present in the latest
+        /// <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers.Updated"/> snapshot. Pull-based and
+        /// allocation-free so per-frame ECS systems can call it without touching <see cref="LiveKit.Rooms.IRoom"/>.
+        /// </summary>
+        bool IsActiveSpeaker(string walletId);
     }
 }

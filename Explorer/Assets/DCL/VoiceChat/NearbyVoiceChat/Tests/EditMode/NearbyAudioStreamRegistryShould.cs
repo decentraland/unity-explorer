@@ -2,11 +2,13 @@ using DCL.LiveKit.Public;
 using DCL.VoiceChat.Nearby.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
@@ -24,12 +26,15 @@ namespace DCL.VoiceChat.Nearby.Tests
         private const string SID_VIDEO = "TR_video-1";
 
         private IRoom room = null!;
+        private FakeActiveSpeakers activeSpeakers = null!;
         private NearbyAudioStreamRegistry registry = null!;
 
         [SetUp]
         public void SetUp()
         {
             room = Substitute.For<IRoom>();
+            activeSpeakers = new FakeActiveSpeakers();
+            room.ActiveSpeakers.Returns(activeSpeakers);
             registry = new NearbyAudioStreamRegistry(room);
         }
 
@@ -146,6 +151,45 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void TrackWalletAsActiveSpeakerWhenUpdatedRaisedWithIt()
+        {
+            activeSpeakers.SetActives(WALLET_A);
+
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.True);
+        }
+
+        [Test]
+        public void DropWalletWhenUpdatedRaisedWithoutIt()
+        {
+            activeSpeakers.SetActives(WALLET_A);
+            activeSpeakers.SetActives(/* empty */);
+
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.False);
+        }
+
+        [Test]
+        public void ClearActiveSpeakersOnDisconnected()
+        {
+            activeSpeakers.SetActives(WALLET_A);
+
+            RaiseConnectionUpdated(ConnectionUpdate.Disconnected);
+
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.False);
+        }
+
+        [Test]
+        public void IsolateActiveSpeakersFromAudioSidsIndex()
+        {
+            // Track subscribe must NOT auto-mark the wallet as an active speaker.
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.False);
+
+            // ActiveSpeakers update must NOT auto-add to the audio-sids index.
+            activeSpeakers.SetActives(WALLET_B);
+            Assert.That(registry.GetAudioSids(WALLET_B), Is.Null);
+        }
+
+        [Test]
         public void NotThrowWhenMutationsAreInterleavedWithReadsFromMultipleThreads()
         {
             const int ITERATIONS = 500;
@@ -232,6 +276,23 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
                                     .SetValue(publication, info);
             return publication;
+        }
+
+        private sealed class FakeActiveSpeakers : IActiveSpeakers
+        {
+            private readonly HashSet<string> set = new ();
+            public event Action Updated = delegate { };
+
+            public int Count => set.Count;
+            public IEnumerator<string> GetEnumerator() => set.GetEnumerator();
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+            public void SetActives(params string[] ids)
+            {
+                set.Clear();
+                foreach (string id in ids) set.Add(id);
+                Updated.Invoke();
+            }
         }
     }
 }

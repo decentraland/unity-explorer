@@ -13,12 +13,14 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using RichTypes;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace DCL.VoiceChat.Nearby
 {
@@ -345,6 +347,9 @@ namespace DCL.VoiceChat.Nearby
                 ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
                 return sids == null || !sids.ContainsKey(key.sid);
             }
+
+            public bool IsActiveSpeaker(string walletId) =>
+                throw new NotImplementedException();
 
             public void Dispose() { }
         }

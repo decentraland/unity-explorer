@@ -5,11 +5,9 @@ using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using LiveKit.Rooms;
-using LiveKit.Rooms.ActiveSpeakers;
-using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -25,23 +23,21 @@ namespace DCL.VoiceChat.Nearby.Systems
     public partial class NearbyVoiceChatNametagSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;
-        private readonly IRoom islandRoom;
+        private readonly INearbyAudioStreamRegistry registry;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyMuteService muteService;
 
-        // Per-frame snapshot of ActiveSpeakers.
-        private readonly HashSet<string> activeSpeakersSnapshot = new (64);
         private bool localMicOpen;
 
         internal NearbyVoiceChatNametagSystem(
             World world,
             Entity playerEntity,
-            IRoom islandRoom,
+            INearbyAudioStreamRegistry registry,
             NearbyVoiceChatStateModel stateModel,
             NearbyMuteService muteService) : base(world)
         {
             this.playerEntity = playerEntity;
-            this.islandRoom = islandRoom;
+            this.registry = registry;
             this.stateModel = stateModel;
             this.muteService = muteService;
         }
@@ -53,11 +49,6 @@ namespace DCL.VoiceChat.Nearby.Systems
                 FlagNearbyNametagsForRemovalQuery(World);
                 return;
             }
-
-            IActiveSpeakers speakers = islandRoom.ActiveSpeakers;
-            activeSpeakersSnapshot.Clear();
-            foreach (string id in speakers)
-                activeSpeakersSnapshot.Add(id);
 
             localMicOpen = stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC;
 
@@ -111,13 +102,13 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             if (!localMicOpen) return null;
 
-            bool isSpeaking = activeSpeakersSnapshot.Contains(walletId);
+            bool isSpeaking = registry.IsActiveSpeaker(walletId);
             return new VoiceChatNametagComponent(isSpeaking, VoiceChatType.NEARBY);
         }
 
         private VoiceChatNametagComponent? ResolveRemote(string walletId)
         {
-            if (!activeSpeakersSnapshot.Contains(walletId)) return null;
+            if (!registry.IsActiveSpeaker(walletId)) return null;
 
             bool isHushed = muteService.IsMuted(walletId);
             return new VoiceChatNametagComponent(isSpeaking: true, VoiceChatType.NEARBY, isHushed);

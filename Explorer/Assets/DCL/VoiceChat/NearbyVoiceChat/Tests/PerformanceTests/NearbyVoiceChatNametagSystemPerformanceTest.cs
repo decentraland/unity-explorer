@@ -1,14 +1,12 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.TestSuite;
-using LiveKit.Rooms;
-using LiveKit.Rooms.ActiveSpeakers;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.PerformanceTesting;
@@ -33,7 +31,7 @@ namespace DCL.VoiceChat.Nearby
 
         private readonly List<GameObject> gameObjects = new (256);
 
-        private FakeActiveSpeakers activeSpeakers;
+        private INearbyAudioStreamRegistry registry;
         private NearbyVoiceChatStateModel stateModel;
 
         [SetUp]
@@ -41,16 +39,14 @@ namespace DCL.VoiceChat.Nearby
         {
             EcsTestsUtils.SetUpFeaturesRegistry();
 
-            activeSpeakers = new FakeActiveSpeakers();
-            IRoom islandRoom = Substitute.For<IRoom>();
-            islandRoom.ActiveSpeakers.Returns(activeSpeakers);
+            registry = Substitute.For<INearbyAudioStreamRegistry>();
 
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
 
             Entity playerEntity = world.Create();
 
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
         }
 
         protected override void OnTearDown()
@@ -78,7 +74,7 @@ namespace DCL.VoiceChat.Nearby
 
                 if (i < half)
                 {
-                    activeSpeakers.Add(wallet);
+                    registry.IsActiveSpeaker(wallet).Returns(true);
                     world.Add(e, new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY));
                 }
             }
@@ -110,34 +106,6 @@ namespace DCL.VoiceChat.Nearby
             var go = new GameObject(name);
             gameObjects.Add(go);
             return go;
-        }
-
-        private sealed class FakeActiveSpeakers : IActiveSpeakers
-        {
-            private readonly HashSet<string> set = new ();
-            public event Action Updated = delegate { };
-
-            public int Count => set.Count;
-            public IEnumerator<string> GetEnumerator() => set.GetEnumerator();
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
-            public void Add(string id)
-            {
-                set.Add(id);
-                Updated.Invoke();
-            }
-
-            public void Remove(string id)
-            {
-                set.Remove(id);
-                Updated.Invoke();
-            }
-
-            public void Clear()
-            {
-                set.Clear();
-                Updated.Invoke();
-            }
         }
     }
 }

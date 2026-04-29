@@ -1,12 +1,11 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
-using LiveKit.Rooms;
-using LiveKit.Rooms.ActiveSpeakers;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -27,8 +26,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private static readonly FieldInfo HEAD_ANCHOR_FIELD =
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-        private IRoom islandRoom;
-        private FakeActiveSpeakers activeSpeakers;
+        private INearbyAudioStreamRegistry registry;
         private NearbyVoiceChatStateModel stateModel;
         private INearbyMuteCache muteCache;
         private NearbyMuteService muteService;
@@ -41,10 +39,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             EcsTestsUtils.SetUpFeaturesRegistry();
 
-            activeSpeakers = new FakeActiveSpeakers();
-
-            islandRoom = Substitute.For<IRoom>();
-            islandRoom.ActiveSpeakers.Returns(activeSpeakers);
+            registry = Substitute.For<INearbyAudioStreamRegistry>();
 
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
 
@@ -53,7 +48,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             playerEntity = world.Create();
 
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
         }
 
         [TearDown]
@@ -116,7 +111,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // The bulk teardown rewrites existing components (none here). The avatar pass must not run,
             // so no component is added.
             CreateAvatarEntity("wallet-a");
-            activeSpeakers.Add("wallet-a");
+            registry.IsActiveSpeaker("wallet-a").Returns(true);
 
             stateModel.Suppress(SuppressionReason.CALL);
             system.Update(0);
@@ -148,7 +143,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Entity e = CreateNametaggedAvatarEntity(WALLET,
                 new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY, isHushed: false)
                     { IsDirty = false });
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(true);
 
             system.Update(0);
@@ -170,12 +165,12 @@ namespace DCL.VoiceChat.Nearby.Tests
             world.Add(playerEntity, new VoiceChatNametagComponent(isSpeaking: false, type: VoiceChatType.NEARBY)
                 { IsDirty = false });
 
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
 
             // The state model is constructed at IDLE in SetUp; StartSpeaking() promotes IDLE → OPEN_MIC.
             stateModel.StartSpeaking();
 
-            activeSpeakers.Add(LOCAL);
+            registry.IsActiveSpeaker(LOCAL).Returns(true);
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(playerEntity);
@@ -190,7 +185,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Entity e = CreateNametaggedAvatarEntity(WALLET,
                 new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.NEARBY, isHushed: false)
                     { IsDirty = false });
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(false);
 
             system.Update(0); // first reconcile may dirty if any field differed
@@ -212,7 +207,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Entity e = CreateNametaggedAvatarEntity(WALLET,
                 new VoiceChatNametagComponent(isSpeaking: true, type: VoiceChatType.COMMUNITY)
                     { IsDirty = false });
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(true); // would otherwise flip IsHushed
 
             system.Update(0);
@@ -231,7 +226,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
 
             system.Update(0);
 
@@ -247,7 +242,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
             muteCache.IsMuted(WALLET).Returns(true);
 
             system.Update(0);
@@ -274,7 +269,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string LOCAL = "wallet-local";
             world.Destroy(playerEntity);
             playerEntity = CreateAvatarEntity(LOCAL);
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
 
             stateModel.StartSpeaking();
             // ActiveSpeakers empty.
@@ -292,10 +287,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string LOCAL = "wallet-local";
             world.Destroy(playerEntity);
             playerEntity = CreateAvatarEntity(LOCAL);
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
 
             stateModel.StartSpeaking();
-            activeSpeakers.Add(LOCAL);
+            registry.IsActiveSpeaker(LOCAL).Returns(true);
 
             system.Update(0);
 
@@ -309,10 +304,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string LOCAL = "wallet-local";
             world.Destroy(playerEntity);
             playerEntity = CreateAvatarEntity(LOCAL);
-            system = new NearbyVoiceChatNametagSystem(world, playerEntity, islandRoom, stateModel, muteService);
+            system = new NearbyVoiceChatNametagSystem(world, playerEntity, registry, stateModel, muteService);
 
             // State stays IDLE.
-            activeSpeakers.Add(LOCAL); // even speaking — local must be silent in IDLE
+            registry.IsActiveSpeaker(LOCAL).Returns(true); // even speaking — local must be silent in IDLE
 
             system.Update(0);
 
@@ -324,7 +319,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = world.Create(new Profile(WALLET, WALLET, new Avatar()));
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
 
             system.Update(0);
 
@@ -338,7 +333,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             world.Add<DeleteEntityIntention>(e);
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
 
             system.Update(0);
 
@@ -368,7 +363,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            activeSpeakers.Add(WALLET);
+            registry.IsActiveSpeaker(WALLET).Returns(true);
 
             // 1. Tick under SUPPRESSED — bulk teardown runs but there's nothing to teardown yet
             //    (component was never created since suppressed gate skips add-missing).
@@ -420,34 +415,5 @@ namespace DCL.VoiceChat.Nearby.Tests
             return go;
         }
 
-        // ── Fake IActiveSpeakers ────────────────────────────────────
-
-        private sealed class FakeActiveSpeakers : IActiveSpeakers
-        {
-            private readonly HashSet<string> set = new ();
-            public event System.Action Updated = delegate { };
-
-            public int Count => set.Count;
-            public IEnumerator<string> GetEnumerator() => set.GetEnumerator();
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-
-            public void Add(string id)
-            {
-                set.Add(id);
-                Updated.Invoke();
-            }
-
-            public void Remove(string id)
-            {
-                set.Remove(id);
-                Updated.Invoke();
-            }
-
-            public void Clear()
-            {
-                set.Clear();
-                Updated.Invoke();
-            }
-        }
     }
 }

@@ -7,7 +7,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using RichTypes;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -35,6 +34,7 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private readonly IRoom room;
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> streamsByIdentity = new ();
+        private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
 
         public NearbyAudioStreamRegistry(IRoom room)
         {
@@ -55,15 +55,21 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.TrackSubscribed -= OnTrackSubscribed;
             room.TrackUnsubscribed -= OnTrackUnsubscribed;
 
-            room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            room.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
 
             streamsByIdentity.Clear();
+            activeSpeakers.Clear();
         }
 
         private void OnActiveSpeakersUpdated()
         {
-            throw new NotImplementedException();
+            activeSpeakers.Clear();
+            foreach (string id in room.ActiveSpeakers)
+                activeSpeakers.TryAdd(id, 0);
         }
+
+        public bool IsActiveSpeaker(string walletId) =>
+            activeSpeakers.ContainsKey(walletId);
 
         // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault - ConcurrentDictionary.TryGetValue is more optimized, no virtal call
         public ConcurrentDictionary<string, byte>? GetAudioSids(string walletId) =>
@@ -83,6 +89,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             if (update == ConnectionUpdate.Disconnected)
             {
                 streamsByIdentity.Clear();
+                activeSpeakers.Clear();
                 return;
             }
 
