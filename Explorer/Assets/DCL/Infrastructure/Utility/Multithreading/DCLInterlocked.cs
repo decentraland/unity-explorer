@@ -81,5 +81,21 @@ namespace Utility.Multithreading
             return Interlocked.Exchange(ref location, value);
         }
 #endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int CompareExchange(ref int location, int value, int comparand)
+        {
+            int previous = location;
+            if (previous == comparand) location = value;
+            return previous;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int CompareExchange(ref int location, int value, int comparand)
+        {
+            return Interlocked.CompareExchange(ref location, value, comparand);
+        }
+#endif
     }
 }

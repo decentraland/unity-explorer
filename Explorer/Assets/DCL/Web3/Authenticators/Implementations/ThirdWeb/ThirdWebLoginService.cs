@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading;
 using Thirdweb;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -25,7 +26,7 @@ namespace DCL.Web3.Authenticators
         public IThirdwebWallet? ActiveWallet { get; private set; }
         private InAppWallet? pendingWallet;
 
-        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new (1, 1);
         private readonly ThirdwebClient client;
 
         private UniTaskCompletionSource<bool>? loginCompletionSource;
@@ -104,7 +105,9 @@ namespace DCL.Web3.Authenticators
             await mutex.WaitAsync(ct);
             string email = payload.Email;
 
+#if !UNITY_WEBGL
             SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#endif
 
             try
             {
@@ -146,10 +149,14 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+#if !UNITY_WEBGL
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
                     await UniTask.SwitchToMainThread(CancellationToken.None);
+#else
+                await UniTask.SwitchToMainThread(CancellationToken.None);
+#endif
 
                 mutex.Release();
             }
