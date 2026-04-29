@@ -20,6 +20,8 @@ namespace DCL.DebugUtilities
 
             public DateTime StartTime;
             public string ShortenedUrl;
+            public string FullUrl;
+            public string Method;
 
             // Nanoseconds
             public ulong Duration;
