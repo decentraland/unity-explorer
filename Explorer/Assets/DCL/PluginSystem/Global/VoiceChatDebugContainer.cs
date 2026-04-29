@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.VoiceChat;
 using LiveKit.Audio;
+using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Runtime.Scripts.Audio;
@@ -29,7 +30,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
-        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, MicrophoneTrackPublisher microphonePublisher, RemoteTrackListener remoteListener)
+        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, MicrophoneTrackPublisher microphonePublisher, IRoom voiceChatRoom, PlaybackSourcesHub playbackSourcesHub)
         {
             var unityOutputSampleRate = new ElementBinding<ulong>(0);
 
@@ -111,7 +112,7 @@ namespace DCL.PluginSystem.Global
 
                         wavRemotesBuffer.Clear();
 
-                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in remoteListener.RemoteStreams)
+                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in playbackSourcesHub.Streams)
                             ProcessElement(key, value.stream, value.source);
 
                         wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
@@ -235,7 +236,7 @@ namespace DCL.PluginSystem.Global
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
 #endif
 
-                remoteListener.ActiveStreamsInfo(infoBuffer);
+                voiceChatRoom.AudioStreams.ListInfo(infoBuffer);
                 remoteSpeakers.Value = (ulong)infoBuffer.Count;
 
                 speakersBuffer.Clear();

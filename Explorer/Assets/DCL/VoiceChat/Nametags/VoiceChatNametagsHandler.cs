@@ -71,7 +71,7 @@ namespace DCL.VoiceChat
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
                 world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
-            else if(voiceChatRoom.Participants.LocalParticipant().Identity == participantId)
+            else if (voiceChatRoom.Participants.LocalParticipant()?.Identity == participantId)
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
         }
 
