@@ -6,7 +6,6 @@ using Utility;
 using Utility.Multithreading;
 using System;
 using System.Threading;
-using System.Collections.Concurrent;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DCL.Diagnostics;
@@ -57,7 +56,7 @@ namespace SceneRunner.Admins
 
         private readonly CancellationTokenSource cts = new ();
         private readonly DCLSemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
-        private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
         
         private bool initialLoadFinished;
 
