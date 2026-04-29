@@ -336,8 +336,7 @@ namespace Global.Dynamic
             var builderDTOsURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
             var builderContentURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
 
-            var emotesCache = new MemoryEmotesStorage();
-            staticContainer.CacheCleaner.Register(emotesCache);
+            IEmoteStorage emotesCache = staticContainer.EmoteStorage;
             staticContainer.CacheCleaner.Register(trimmedEmoteCatalog);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
@@ -634,7 +633,6 @@ namespace Global.Dynamic
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
 
             // Configure proxies for scene-side masked emote system
-            staticContainer.EmoteStorageProxy.SetObject(emotesCache);
             staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));

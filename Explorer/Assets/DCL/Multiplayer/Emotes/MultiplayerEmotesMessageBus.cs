@@ -52,10 +52,8 @@ namespace DCL.Multiplayer.Emotes
             this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
         }
 
-        public void Dispose()
-        {
+        public void Dispose() =>
             cancellationTokenSource.SafeCancelAndDispose();
-        }
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
