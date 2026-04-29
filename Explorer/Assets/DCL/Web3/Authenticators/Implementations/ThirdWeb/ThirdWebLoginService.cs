@@ -106,7 +106,7 @@ namespace DCL.Web3.Authenticators
             string email = payload.Email;
 
 #if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
             try

@@ -152,7 +152,7 @@ namespace DCL.Web3.Authenticators
             await mutex.WaitAsync(ct);
 
 #if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
             try
@@ -250,7 +250,7 @@ namespace DCL.Web3.Authenticators
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
 #if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
             try
@@ -348,7 +348,7 @@ namespace DCL.Web3.Authenticators
         private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
 #if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
             try
