@@ -4,6 +4,7 @@ using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -115,6 +116,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                            ),
                        };
             }
+            catch (WebSocketException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
+            catch (IOException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
+            catch (ObjectDisposedException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
             catch (Exception e)
             {
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
