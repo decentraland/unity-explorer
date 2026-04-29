@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
+using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.Utilities;
@@ -133,6 +134,9 @@ namespace DCL.VoiceChat
 
         private void OnApplicationFocusChanged(bool hasFocus)
         {
+            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND, true))
+                return;
+
             if (!hasFocus && stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC && micPublisher.isRecording)
             {
                 micPublisher.StopMicrophone();
