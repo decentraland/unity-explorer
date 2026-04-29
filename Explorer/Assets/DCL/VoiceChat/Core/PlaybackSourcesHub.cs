@@ -13,7 +13,7 @@ using Utility;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Thread-safe hub for managing LiveKit audio playback sources.
+    /// Threadsafe hub for managing LiveKit audio playback sources.
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {
