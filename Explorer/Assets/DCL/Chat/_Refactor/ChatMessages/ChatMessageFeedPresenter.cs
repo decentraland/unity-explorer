@@ -232,10 +232,12 @@ namespace DCL.Chat.ChatMessages
         {
             if (currentChannelService.CurrentChannel != destinationChannel)
                 return;
-            
+
             bool popupHoldsScroll = reactionsPresenter.IsMessageModePopupActive && view.IsScrollable();
             bool wasAtBottom = view.IsAtBottom() && !popupHoldsScroll;
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
+
+            reactionInteraction.HideTooltip();
 
             int separatorIndexBeforeInsert = separatorFixedIndexFromBottom;
             ChatMessageViewModel newViewModel = InsertNewMessageViewModel(destinationChannel, addedMessage, index);
