@@ -64,7 +64,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase))]
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag))]
         private void CollectPendingCreations(Entity avatarEntity, in Profile profile)
         {
             string walletId = profile.UserId;
@@ -74,6 +74,10 @@ namespace DCL.VoiceChat.Nearby.Systems
             // Cleanup system handles already-bound entities; this filter prevents creation in the first place.
             if (userBlockingCache.UserIsBlocked(walletId)) return;
 
+            // Race-safety: NearbyLivekitBridgeSystem applies/removes IsStreamingAudioTag once per tick from
+            // a snapshot of registry.streamsByIdentity. Between Bridge's tick and Binding's tick (same frame,
+            // ordered by [UpdateBefore]) an FFI callback can drop the entry — leaving the marker on the avatar
+            // but the registry returning null. Skip rather than spawn a one-frame ghost source.
             ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(walletId);
             if (sids == null) return;
 

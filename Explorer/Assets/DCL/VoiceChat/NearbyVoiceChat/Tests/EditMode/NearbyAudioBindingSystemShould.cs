@@ -11,7 +11,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
@@ -94,7 +93,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SingleAvatarSingleStreamCreatesOneEntity()
         {
             const string WALLET = "wallet-alice";
-            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            Entity avatarEntity = CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, "sid-1");
 
             system.Update(0);
@@ -111,7 +110,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void MultiStreamPerAvatarCreatesDistinctEntities()
         {
             const string WALLET = "wallet-alice";
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, "sid-1");
             registry.Add(WALLET, "sid-2");
 
@@ -124,7 +123,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void AvatarWithoutAvatarBaseIsSkipped()
         {
             const string WALLET = "wallet-alice";
-            world.Create(new Profile(WALLET, WALLET, new Avatar()));
+            Entity avatarEntity = world.Create(new Profile(WALLET, WALLET, new Avatar()));
+            world.Add<IsStreamingAudioTag>(avatarEntity);
             registry.Add(WALLET, "sid-1");
 
             system.Update(0);
@@ -140,7 +140,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             for (int i = 0; i < AVATARS; i++)
             {
                 string wallet = $"wallet-{i}";
-                CreateAvatarEntity(wallet);
+                CreateStreamingAvatar(wallet);
                 registry.Add(wallet, "sid-1");
             }
 
@@ -158,7 +158,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void IdempotencyDoesNotDuplicateBindings()
         {
             const string WALLET = "wallet-alice";
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, "sid-1");
 
             system.Update(0);
@@ -172,7 +172,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void DeleteEntityIntentionAvatarsAreFilteredOut()
         {
             const string WALLET = "wallet-alice";
-            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            Entity avatarEntity = CreateStreamingAvatar(WALLET);
             world.Add<DeleteEntityIntention>(avatarEntity);
             registry.Add(WALLET, "sid-1");
 
@@ -187,7 +187,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
 
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, SID);
             userBlockingCache.UserIsBlocked(WALLET).Returns(true);
 
@@ -207,7 +207,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
 
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, SID);
             userBlockingCache.UserIsBlocked(WALLET).Returns(true);
 
@@ -227,7 +227,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             for (int i = 0; i < AVATARS; i++)
             {
                 string wallet = $"wallet-{i}";
-                CreateAvatarEntity(wallet);
+                CreateStreamingAvatar(wallet);
                 registry.Add(wallet, "sid-1");
             }
 
@@ -246,7 +246,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             for (int i = 0; i < AVATARS; i++)
             {
                 string wallet = $"wallet-{i}";
-                CreateAvatarEntity(wallet);
+                CreateStreamingAvatar(wallet);
                 registry.Add(wallet, "sid-1");
             }
 
@@ -265,7 +265,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
 
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, SID);
             stateModel.Suppress(SuppressionReason.CALL);
 
@@ -286,7 +286,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
 
-            CreateAvatarEntity(WALLET);
+            CreateStreamingAvatar(WALLET);
             registry.Add(WALLET, SID);
             registry.MarkStreamAsUnsubscribed(WALLET, SID);
 
@@ -296,6 +296,82 @@ namespace DCL.VoiceChat.Nearby.Tests
                 "Weak<AudioStream>.Null on resolve must not create an audio entity");
             Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False,
                 "skipped creation must not poison the bindings index");
+        }
+
+        // ── A5.1: archetype gate via IsStreamingAudioTag ────────────
+
+        [Test]
+        public void DoesNotBindAvatarWithoutStreamingTagEvenIfRegistryHasSids()
+        {
+            // A5.1 archetype filter — Binding's query is gated by IsStreamingAudioTag. An avatar
+            // without the marker must be skipped at the chunk-iteration level, even if the
+            // registry already has sids for it (e.g. between Bridge ticks).
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateAvatarEntity(WALLET); // intentionally no IsStreamingAudioTag
+            registry.Add(WALLET, SID);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "absent IsStreamingAudioTag must skip the avatar at archetype level");
+            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False);
+        }
+
+        [Test]
+        public void DoesNotBindWhenMarkerPresentButRegistryReturnedNull()
+        {
+            // Race-safety guard — between Bridge's tick and Binding's tick (same frame, ordered)
+            // an FFI callback can drop the registry entry, leaving the marker on the avatar.
+            // Binding must observe sids == null and skip creation rather than spawn a ghost.
+            const string WALLET = "wallet-alice";
+
+            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            world.Add<IsStreamingAudioTag>(avatarEntity);
+            // registry intentionally NOT populated for WALLET
+
+            Assert.DoesNotThrow(() => system.Update(0));
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "marker without registry sids must not create a ghost audio entity");
+        }
+
+        [Test]
+        public void BindsAvatarWithStreamingTagAndSids()
+        {
+            // Happy path — explicit sanity for the new gate; mirrors SingleAvatarSingleStreamCreatesOneEntity
+            // but is kept under the A5.1 banner to make the marker dependency unambiguous.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            world.Add<IsStreamingAudioTag>(avatarEntity);
+            registry.Add(WALLET, SID);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(1));
+            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.True);
+        }
+
+        [Test]
+        public void RespectsUserBlockingWhenStreamingTagPresent()
+        {
+            // UserIsBlocked stays a per-entity check inside the body — orthogonal to the marker.
+            // Marker-present + registry-has-sids + blocked => no creation.
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            Entity avatarEntity = CreateAvatarEntity(WALLET);
+            world.Add<IsStreamingAudioTag>(avatarEntity);
+            registry.Add(WALLET, SID);
+            userBlockingCache.UserIsBlocked(WALLET).Returns(true);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "blocked identity must not allocate even when archetype filter passes");
         }
 
         // ── Helpers ─────────────────────────────────────────────────
@@ -320,6 +396,17 @@ namespace DCL.VoiceChat.Nearby.Tests
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+        }
+
+        // After A5.1 the binding query is gated by IsStreamingAudioTag. Tests that expect a
+        // bind-result must seed the marker in addition to the registry entry — that is what
+        // NearbyLivekitBridgeSystem would do in production. This helper keeps that pairing
+        // explicit and mechanical.
+        private Entity CreateStreamingAvatar(string walletId)
+        {
+            Entity entity = CreateAvatarEntity(walletId);
+            world.Add<IsStreamingAudioTag>(entity);
+            return entity;
         }
 
         private GameObject CreateTrackedGameObject(string name)
@@ -376,6 +463,8 @@ namespace DCL.VoiceChat.Nearby.Tests
                 ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
                 return sids == null || !sids.ContainsKey(key.sid);
             }
+
+            public bool IsActiveSpeaker(string walletId) => false;
 
             public void Dispose() { }
         }

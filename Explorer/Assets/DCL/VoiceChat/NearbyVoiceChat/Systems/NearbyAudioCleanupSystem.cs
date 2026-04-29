@@ -84,11 +84,27 @@ namespace DCL.VoiceChat.Nearby.Systems
         [None(typeof(DeleteEntityIntention))]
         private void FlagDoomedAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
         {
-            if (userBlockingCache.UserIsBlocked(comp.Key.identity) || registry.IsStreamGone(comp.Key) || IsAvatarGone(comp.AvatarEntity))
-                World.Add<DeleteEntityIntention>(audioEntity);
+            Entity avatar = comp.AvatarEntity;
 
-            return;
-            bool IsAvatarGone(Entity avatarEntity) => !World.IsAlive(avatarEntity) || World.Has<DeleteEntityIntention>(avatarEntity);
+            // Cheap-first short-circuit. Order matters — IsAlive is a generation-counter compare,
+            // Has<T> is an archetype-bitmap test (both sub-10 ns), IsStreamGone is a ConcurrentDictionary
+            // lookup, UserIsBlocked is heavier still. The dominant doom signal at scale is "avatar's
+            // last sid disappeared" — covered by the marker-absence clause without touching the registry.
+            //
+            // Marker absence ≠ avatar gone: NearbyLivekitBridgeSystem filters its remove-streaming query
+            // with [None<DeleteEntityIntention>], so a doomed avatar keeps the marker until physical
+            // destruction. Marker absence ≠ specific sid gone either: the marker is per-walletId, so
+            // for multi-sid participants the per-sid IsStreamGone fallback is the only granular signal.
+            // Both fallbacks must remain.
+            bool avatarGoneOrFullySilent =
+                !World.IsAlive(avatar)
+                || World.Has<DeleteEntityIntention>(avatar)
+                || !World.Has<IsStreamingAudioTag>(avatar);
+
+            if (avatarGoneOrFullySilent
+                || registry.IsStreamGone(comp.Key)
+                || userBlockingCache.UserIsBlocked(comp.Key.identity))
+                World.Add<DeleteEntityIntention>(audioEntity);
         }
 
         [Query]
