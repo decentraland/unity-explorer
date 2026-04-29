@@ -214,7 +214,7 @@ namespace DCL.PluginSystem.Global
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
             var chatConfig = chatConfigAsset.Value;
 
-            var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable);
+            var avatarReactionPosition = new AvatarReactionPositionProvider(world, playerEntity, entityParticipantTable, settings.ReactionsConfig.WorldLane);
 
             ChatReactionsFactory.Result reactions = ChatReactionsFactory.Create(
                 settings.ReactionsConfig,
