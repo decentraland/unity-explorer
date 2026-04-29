@@ -34,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, installSource, dclVersion));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, installSource, dclVersion, launcherTraits.CampaignAnonUserId));
 
             Initialize(identity);
         }

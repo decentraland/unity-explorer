@@ -86,6 +86,8 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -550,7 +552,14 @@ namespace Global.Dynamic
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
+
+            // LEGACY HACK — do not add new consumers. Kept only for Settings group + ExplorePanelPlugin; pass `userBlockingCache` directly instead. See ObjectProxy<T>.
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+            IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
+            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING)
+                ? new UserBlockingCache(friendsEventBus)
+                : new NullUserBlockingCache();
+            userBlockingCacheProxy.SetObject(userBlockingCache);
             var currentChannelService = new CurrentChannelService();
 
             var chatCommands = new List<IChatCommand>
@@ -566,14 +575,13 @@ namespace Global.Dynamic
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
                 new AppArgsCommand(appArgs),
-                new SceneAdminsChatCommand(staticContainer.ScenesCache),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, userBlockingCacheProxy, bootstrapContainer.Environment, identityCache, roomHub)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, userBlockingCache, bootstrapContainer.Environment, identityCache, roomHub)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -625,11 +633,7 @@ namespace Global.Dynamic
                 new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCacheProxy);
-
-            // Configure proxies for scene-side masked emote system
-            staticContainer.EmoteStorageProxy.SetObject(emotesCache);
-            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
@@ -662,7 +666,6 @@ namespace Global.Dynamic
             var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
-            IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
             var communitiesEventBus = new CommunitiesEventBus();
 
             var profileChangesBus = new ProfileChangesBus();
@@ -687,6 +690,14 @@ namespace Global.Dynamic
 
             var passportBridge = new MVCPassportBridge(mvcManager);
 
+            NearbyMuteService? nearbyMuteService = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyMuteService(
+                    new NearbyMuteCache(),
+                    new RestNearbyMuteRepository(
+                        staticContainer.WebRequestsContainer.WebRequestController,
+                        bootstrapContainer.DecentralandUrlsSource))
+                : null;
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -704,7 +715,8 @@ namespace Global.Dynamic
                 communitiesDataProvider,
                 bootstrapContainer.WebBrowser,
                 bootstrapContainer.DecentralandUrlsSource,
-                selfProfile);
+                selfProfile,
+                nearbyMuteService);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -789,8 +801,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
-                    trimmedEmoteCatalog,
-                staticContainer.EmotePlayerProxy),
+                    trimmedEmoteCatalog),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -811,7 +822,7 @@ namespace Global.Dynamic
                     dynamicSettings.NametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
-                    userBlockingCacheProxy,
+                    userBlockingCache,
                     includeBannedUsersFromScene),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
@@ -891,7 +902,7 @@ namespace Global.Dynamic
                     chatEventBus,
                     identityCache,
                     staticContainer.LoadingStatus,
-                    userBlockingCacheProxy,
+                    userBlockingCache,
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
                     chatMessageFactory,
@@ -907,6 +918,9 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     chatSharedAreaEventBus,
+                    messagePipesHub,
+                    bootstrapContainer.Environment,
+                    bootstrapContainer.Analytics.Controller,
                     currentChannelService),
                 new ExplorePanelPlugin(
                     chatEventBus,
@@ -995,7 +1009,7 @@ namespace Global.Dynamic
                     staticContainer.ImageControllerProvider),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileChangesBus),
                 new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
@@ -1130,7 +1144,9 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceChatButton,
                         mainUIView.SidebarView.NearbyVoiceWidget,
                         mainUIView.SidebarView.NearbyVoiceTip,
-                        bootstrapContainer.VolumeBus)
+                        bootstrapContainer.VolumeBus,
+                        userBlockingCache,
+                        nearbyMuteService)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -1173,7 +1189,7 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     friendsCacheProxy,
-                    userBlockingCacheProxy,
+                    userBlockingCache,
                     profileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
                     bootstrapContainer.WebBrowser,

@@ -31,10 +31,7 @@ module.exports.teleportTo = async function(message) {
 }
 
 module.exports.triggerEmote = async function(message) {
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    await UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote, message.mask);
+    await UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote)
     return {};
 }
 
@@ -73,17 +70,7 @@ module.exports.triggerSceneEmote = async function(message) {
     if (message.loop == undefined) {
         message.loop = false
     }
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop, message.mask);
-    return {
-        success: isSuccess
-    };
-}
-
-module.exports.stopEmote = async function(message) {
-    const isSuccess = UnityRestrictedActionsApi.StopEmote()
+    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop)
     return {
         success: isSuccess
     };

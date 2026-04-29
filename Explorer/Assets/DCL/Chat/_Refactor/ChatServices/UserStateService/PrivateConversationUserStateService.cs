@@ -54,7 +54,7 @@ namespace DCL.Chat.ChatServices
         private const string PRIVACY_SETTING_ALL = "all";
         private const int TIMEOUT_FRIENDS_CONTAINER_MINUTES = 2;
 
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly ObjectProxy<IFriendsService> friendsService;
 
         private readonly ChatSettingsAsset settingsAsset;
@@ -79,7 +79,7 @@ namespace DCL.Chat.ChatServices
         public PrivateConversationUserStateService(
             CurrentChannelService currentChannelService,
             ChatEventBus eventBus,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ObjectProxy<IFriendsService> friendsService,
             ChatSettingsAsset settingsAsset,
             RPCChatPrivacyService rpcChatPrivacyService,
@@ -88,7 +88,7 @@ namespace DCL.Chat.ChatServices
         {
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.friendsService = friendsService;
             this.settingsAsset = settingsAsset;
             this.rpcChatPrivacyService = rpcChatPrivacyService;
@@ -118,8 +118,7 @@ namespace DCL.Chat.ChatServices
                 await rpcChatPrivacyService.GetOwnSocialSettingsAsync(cts.Token);
 
                 await UniTask.WaitUntil(() =>
-                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected &&
-                    userBlockingCacheProxy.Configured, cancellationToken: cts.Token)
+                    chatRoom.Info.ConnectionState == LKConnectionState.ConnConnected, cancellationToken: cts.Token)
                              .Timeout(TimeSpan.FromMinutes(TIMEOUT_FRIENDS_CONTAINER_MINUTES));
 
                 lock (onlineParticipants)
@@ -306,7 +305,7 @@ namespace DCL.Chat.ChatServices
         private bool UserIsConsideredAsOnline(string userId)
         {
             // Quick reject: we have them blocked
-            if (userBlockingCacheProxy.Configured && userBlockingCacheProxy.StrictObject.UserIsBlocked(userId))
+            if (userBlockingCache.UserIsBlocked(userId))
                 return false;
 
             return UserIsConnectedToRoom(userId);

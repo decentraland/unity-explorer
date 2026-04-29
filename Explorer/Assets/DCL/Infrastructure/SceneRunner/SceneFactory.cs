@@ -38,6 +38,7 @@ using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
 using SceneRunner.Admins;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -196,15 +197,21 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
-            SceneAdmins sceneAdmins = new SceneAdmins(
-                    webRequestController,
-                    decentralandUrlsSource,
-                    realmData!,
-                    sceneData
-                    );
+            Option<SceneAdmins> sceneAdmins = Option<SceneAdmins>.None;
 
-            await sceneAdmins.FireRequestAsync(ct);
-            sceneAdmins.StartRequestPollingAsync().Forget();
+            if (realmData.IsLocalSceneDevelopment == false)
+            {
+                SceneAdmins sceneAdminsInstance = new SceneAdmins(
+                        webRequestController,
+                        decentralandUrlsSource,
+                        realmData!,
+                        sceneData
+                        );
+                await sceneAdminsInstance.FireRequestAsync(ct);
+                sceneAdminsInstance.StartRequestPollingAsync().Forget();
+
+                sceneAdmins = Option<SceneAdmins>.Some(sceneAdminsInstance);
+            }
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -235,7 +242,8 @@ namespace SceneRunner
                     sceneData,
                     realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub
                 );
             }
             else
@@ -263,7 +271,8 @@ namespace SceneRunner
                     sceneData,
                     realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub
                 );
             }
 

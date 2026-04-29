@@ -18,12 +18,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
-using Utility.CodeConventions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
-    [IgnoreAsyncNaming("/Explorer/Library/PackageCache/com.atteneder.gltfast@faa0bde05e4f/Runtime/Scripts/Loading/IDownloadProvider.cs does not follow async naming code conventions.")]
     internal abstract class GltFastDownloadProviderBase : IGLTFastDisposableDownloadProvider
     {
         protected const int ATTEMPTS_COUNT = 6;
@@ -43,8 +41,10 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.acquiredBudget = acquiredBudget;
         }
 
-        public void Dispose() =>
+        public void Dispose()
+        {
             acquiredBudget.Release();
+        }
 
         public virtual void SetContentMappings(ContentDefinition[] contentMappings)
         {
@@ -53,9 +53,9 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         protected static string GetUrl(Uri uri) =>
             (uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToString()) ?? string.Empty;
 
-        // Request is used for fetching the GLTF file itself + some external textures. Whenever this
+        // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
         // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
-        public async Task<IDownload> Request(Uri uri)
+        public async Task<IDownload> RequestAsync(Uri uri)
         {
             var downloadUri = GetDownloadUri(uri);
             var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(downloadUri)));
@@ -92,7 +92,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             return new GltfDownloadResult(data, text, error, success);
         }
 
-        public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable)
+        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
             var downloadUri = GetDownloadUri(uri);
             var texturePromise = Promise.Create(world, new GetTextureIntention

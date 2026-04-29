@@ -50,7 +50,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isUserBlockingFeatureEnabled;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache injectedUserBlockingCache;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly DCLInput dclInput;
 
@@ -69,7 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isConnectivityStatusEnabled;
         private readonly bool includeUserBlocking;
 
-        private UniTask[] subscriptions = new UniTask[3];
+        private readonly UniTask[] subscriptions = new UniTask[3];
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache injectedUserBlockingCache,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             IWebBrowser webBrowser,
@@ -107,7 +107,7 @@ namespace DCL.PluginSystem.Global
             this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.injectedUserBlockingCache = injectedUserBlockingCache;
             this.profileRepositoryWrapper = profileDataProvider;
             this.dclInput = DCLInput.Instance;
 
@@ -213,8 +213,7 @@ namespace DCL.PluginSystem.Global
 
             async UniTask InitUserBlockingAsync()
             {
-                userBlockingCache = new UserBlockingCache(friendsEventBus);
-                userBlockingCacheProxy.SetObject(userBlockingCache);
+                userBlockingCache = (UserBlockingCache)injectedUserBlockingCache;
                 socialServiceEventBus.WebSocketConnectionEstablished += SyncBlockingStatus;
 
                 BlockUserPromptView blockUserPromptPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.BlockUserPromptPrefab, ct)).Value;

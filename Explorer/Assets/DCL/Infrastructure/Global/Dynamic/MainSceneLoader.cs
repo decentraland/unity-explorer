@@ -45,6 +45,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -187,7 +188,9 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
+            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -801,6 +804,17 @@ namespace Global.Dynamic
                 ReportHub.Log(data, "Finish checking");
             }
         }
+
+        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
+            mode switch
+            {
+                GatekeeperMode.Org => null,
+                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
+                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                GatekeeperMode.Localhost => "http://localhost:3000",
+                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+            };
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>

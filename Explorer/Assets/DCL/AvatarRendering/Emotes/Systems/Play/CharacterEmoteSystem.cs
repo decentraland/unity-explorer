@@ -15,7 +15,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -25,6 +24,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;
@@ -32,7 +32,6 @@ using UnityEngine;
 using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 using SceneEmoteFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
-using SceneEmoteFromLocalPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -44,8 +43,6 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
-        private static readonly string SCENE_EMOTE_PREFIX_WITH_COLON = GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
-
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
@@ -54,74 +51,43 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
-        private readonly bool localSceneDevelopment;
 
         public CharacterEmoteSystem(
             World world,
             IEmoteStorage emoteStorage,
             IEmotesMessageBus messageBus,
-            EmotePlayer emotePlayer,
+            AudioSource audioSource,
             IDebugContainerBuilder debugContainerBuilder,
             bool localSceneDevelopment,
+            IAppArgs appArgs,
             IScenesCache scenesCache) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
-            this.emotePlayer = emotePlayer;
             this.debugContainerBuilder = debugContainerBuilder;
             this.scenesCache = scenesCache;
-            this.localSceneDevelopment = localSceneDevelopment;
+            emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
         protected override void Update(float t)
         {
-            CancelSceneEmotesBySceneChangeQuery(World);
             CancelEmotesQuery(World);
-            CancelRemoteMaskedEmotesQuery(World);
             CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMoveToWithDurationQuery(World);
             CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
             CancelEmotesByDeletionQuery(World);
-            CancelMaskedEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
-            UpdateRemoteMaskedEmoteTagsQuery(World);
             DisableCharacterControllerQuery(World);
+            DisableAnimatorWhenPlayingLegacyAnimationsQuery(World);
             CleanUpQuery(World);
-        }
-
-        /// <summary>
-        /// Stops scene emotes when the player is no longer in the scene that triggered them.
-        /// </summary>
-        [Query]
-        [All(typeof(PlayerComponent))]
-        [None(typeof(DeleteEntityIntention))]
-        private void CancelSceneEmotesBySceneChange(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
-            if (emoteComponent.CurrentEmoteReference == null) return;
-            if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
-            if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
-
-            StopEmote(ref emoteComponent, avatarView);
-            messageBus.SendStop();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
             StopEmote(ref emoteComponent, avatarView);
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void CancelMaskedEmotesByDeletion(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView)
-        {
-            if (masked.CurrentEmoteReference == null) return;
-
-            // Force-stop regardless of animator state — the entity is being destroyed.
-            masked.StopEmote = true;
-            emotePlayer.TryCancelMaskedEmote(ref masked, avatarView);
-        }
 
         /// <summary>
         /// Stops emote playback whenever the teleport intent is present on the entity.
@@ -144,11 +110,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
-        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
-        {
-            int currentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
-            emoteComponent.SetAnimationTag(currentStateTag);
-        }
+        private void UpdateEmoteTags(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
 
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
@@ -168,17 +131,20 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
-            if (!emoteComponent.IsPlayingEmote)
+            if (!emoteReference.legacy)
             {
-                avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-                return;
+                if (!emoteComponent.IsPlayingEmote)
+                {
+                    avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+                    return;
+                }
+
+                int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
+                bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+
+                if (isOnAnotherTag)
+                    StopEmote(ref emoteComponent, avatarView);
             }
-
-            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
-            bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
-
-            if (isOnAnotherTag)
-                StopEmote(ref emoteComponent, avatarView);
         }
 
         // Related issues:
@@ -222,27 +188,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
             avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
             avatarView.ResetArmatureInclination();
 
             emoteComponent.Reset();
         }
-
-        /// <summary>
-        /// Handles cancellation of masked emotes on remote player entities in the global world.
-        /// Local player masked emotes are handled by SceneMaskedEmoteSystem in each scene world.
-        /// </summary>
-        [Query]
-        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
-        private void CancelRemoteMaskedEmotes(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
-            emotePlayer.TryCancelMaskedEmote(ref masked, avatarView);
-
-        [Query]
-        [None(typeof(PlayerComponent))]
-        private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
-            EmotePlayer.UpdateMaskedEmoteTag(ref masked, avatarView);
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
@@ -260,9 +211,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
-                if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
-                    (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) || avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                if (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
+                    !avatarView.GetAnimatorBool(AnimationHashes.GROUNDED) ||
+                    avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f)
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
@@ -313,45 +265,21 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    emoteComponent.EmoteUrn = emoteId;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    // Capture intent and view values before any structural change that invalidate query-provided refs.
-                    AvatarEmoteMask mask = emoteIntent.Mask;
-                    bool spatial = emoteIntent.Spatial;
-                    IAvatarView view = avatarView;
-
-                    if (mask == AvatarEmoteMask.AemFullBody)
-                    {
-                        emoteComponent.EmoteUrn = emoteId;
-                        emoteComponent.Mask = mask;
-
-                        if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref emoteComponent))
-                            ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
-                    }
-                    else
-                    {
-                        // Masked emotes for remote players are handled here in the global world.
-                        // Local player masked emotes go through SceneMaskedEmoteSystem instead.
-                        if (emoteComponent.CurrentEmoteReference != null)
-                            StopEmote(ref emoteComponent, view);
-
-                        // After AddOrGet the query-provided refs (emoteIntent, avatarView,
-                        // emoteComponent) are potentially dangling, use only local copies.
-                        ref CharacterMaskedEmoteComponent masked = ref World.AddOrGet<CharacterMaskedEmoteComponent>(entity);
-
-                        masked.EmoteUrn = emoteId;
-                        masked.Mask = mask;
-
-                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref masked))
-                            ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
-                    }
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                        ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
 
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
+                {
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
                     CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
+                }
+
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -364,19 +292,24 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void ReplicateLoopingEmotes(ref CharacterEmoteComponent animationComponent, in IAvatarView avatarView)
         {
             int prevTag = animationComponent.CurrentAnimationTag;
-            if (prevTag == 0) return;
-
-            int currentTag = avatarView.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.BASE_LAYER);
+            int currentTag = avatarView.GetAnimatorCurrentStateTag();
 
             if ((prevTag != AnimationHashes.EMOTE || currentTag != AnimationHashes.EMOTE_LOOP)
                 && (prevTag != AnimationHashes.EMOTE_LOOP || currentTag != AnimationHashes.EMOTE)) return;
 
-            messageBus.Send(animationComponent.EmoteUrn, true, animationComponent.Mask);
+            messageBus.Send(animationComponent.EmoteUrn, true);
         }
 
         [Query]
         private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent) =>
             characterController.enabled = !emoteComponent.IsPlayingEmote;
+
+        [Query]
+        private void DisableAnimatorWhenPlayingLegacyAnimations(in IAvatarView avatarView, in CharacterEmoteComponent emote)
+        {
+            if (emote.CurrentEmoteReference && emote.CurrentEmoteReference.legacy)
+                avatarView.AvatarAnimator.enabled = false;
+        }
 
         [Query]
         private void CleanUp(Profile profile, in DeleteEntityIntention deleteEntityIntention)
@@ -389,113 +322,18 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             loadEmoteBuffer[0] = urn;
 
-            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene))
+            if (GetSceneEmoteFromRealmIntention.TryParseFromURN(urn, out string sceneId, out string emoteHash, out bool loop))
             {
-                if (scene == null)
-                    return;
-
-                // Local scene preview path, this is needed if a remote client plays a scene emote this client has not yet played
-                if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
-                {
-                    SceneEmoteFromLocalPromise.Create(World,
-                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop),
-                        PartitionComponent.TOP_PRIORITY);
-
-                    return;
-                }
-
-                // Deployed scenes path (asset bundles)
-                if (scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion == null)
-                    return;
+                if (!scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? scene)) return;
 
                 SceneEmoteFromRealmPromise.Create(World,
-                    new GetSceneEmoteFromRealmIntention(sceneId, scene.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
+                    new GetSceneEmoteFromRealmIntention(sceneId, scene!.SceneData.SceneEntityDefinition.assetBundleManifestVersion!, emoteHash, loop, bodyShape),
                     PartitionComponent.TOP_PRIORITY);
             }
             else
                 EmotePromise.Create(World,
                     EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
                     PartitionComponent.TOP_PRIORITY);
-        }
-
-        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene)
-        {
-            sceneId = string.Empty;
-            parsedEmoteHash = string.Empty;
-            parsedLoop = false;
-            resolvedScene = null;
-
-            ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
-            ReadOnlySpan<char> emotePrefixWithColon = (ReadOnlySpan<char>)SCENE_EMOTE_PREFIX_WITH_COLON;
-
-            if (urnStr.IsEmpty || !urnStr.StartsWith(emotePrefixWithColon, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            ReadOnlySpan<char> payload = urnStr.Slice(emotePrefixWithColon.Length);
-
-            // Parse loop from the right-most "-{bool}" segment
-            int lastDash = payload.LastIndexOf('-');
-
-            if (lastDash <= 0 || lastDash == payload.Length - 1)
-                return false;
-
-            ReadOnlySpan<char> loopSpan = payload.Slice(lastDash + 1);
-
-            if (!bool.TryParse(loopSpan, out parsedLoop))
-                return false;
-
-            ReadOnlySpan<char> payloadWithoutLoop = payload.Slice(0, lastDash);
-
-            // sceneId and emoteHash can contain '-' in local preview,
-            // so we can't just split by "last two dashes". Instead, match against loaded scenes by prefix.
-            foreach (ISceneFacade facade in scenesCache.Scenes)
-            {
-                string candidateName = facade.SceneData.SceneShortInfo.Name;
-
-                if (candidateName.Length == 0)
-                    continue;
-
-                ReadOnlySpan<char> candidatePrefix = (candidateName + "-").AsSpan();
-
-                if (payloadWithoutLoop.StartsWith(candidatePrefix, StringComparison.Ordinal))
-                {
-                    sceneId = candidateName;
-                    parsedEmoteHash = payloadWithoutLoop.Slice(candidatePrefix.Length).ToString();
-                    resolvedScene = facade;
-                    return true;
-                }
-            }
-
-            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
-            // This is primarily for deployed realm format where scene id has no '-'.
-            int firstDash = payloadWithoutLoop.IndexOf('-');
-
-            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
-            {
-                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
-                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
-                scenesCache.TryGetBySceneId(sceneId, out resolvedScene);
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool TryResolveLocalSceneEmotePath(ISceneFacade sceneFacade, string hash, out string emotePath)
-        {
-            var content = sceneFacade.SceneData.SceneEntityDefinition.content;
-
-            for (var i = 0; i < content.Length; i++)
-            {
-                if (content[i].hash.Equals(hash, StringComparison.Ordinal))
-                {
-                    emotePath = content[i].file;
-                    return true;
-                }
-            }
-
-            emotePath = string.Empty;
-            return false;
         }
     }
 }

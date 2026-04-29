@@ -12,8 +12,6 @@ namespace DCL.Friends
         private readonly HashSet<string> blockedUsers = new (StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> blockedByUsers = new (StringComparer.OrdinalIgnoreCase);
 
-        public ReadOnlyHashSet<string> BlockedUsers { get; }
-        public ReadOnlyHashSet<string> BlockedByUsers { get; }
         public event Action<string>? UserBlocked;
         public event Action<string>? UserBlocksYou;
         public event Action<string>? UserUnblocked;
@@ -32,9 +30,6 @@ namespace DCL.Friends
         {
             this.eventBus = eventBus;
 
-            BlockedUsers = new ReadOnlyHashSet<string>(blockedUsers);
-            BlockedByUsers = new ReadOnlyHashSet<string>(blockedByUsers);
-
             eventBus.OnYouBlockedProfile += UserBlockedByYou;
             eventBus.OnYouUnblockedProfile += UserUnblockedByYou;
             eventBus.OnYouBlockedByUser += YouBlockedByUser;
@@ -50,7 +45,7 @@ namespace DCL.Friends
         }
 
         public bool UserIsBlocked(string userId) =>
-            BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
+            blockedUsers.Contains(userId) || blockedByUsers.Contains(userId);
 
         public void Reset(UserBlockingStatus blockingStatus)
         {

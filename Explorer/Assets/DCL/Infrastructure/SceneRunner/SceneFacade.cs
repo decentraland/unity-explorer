@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -31,7 +32,7 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        public SceneAdmins SceneAdmins => deps.SceneAdmins;
+        public Option<SceneAdmins> SceneAdmins => deps.SceneAdmins;
 
         private int intervalMS;
 

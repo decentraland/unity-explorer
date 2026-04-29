@@ -313,11 +313,11 @@ namespace DCL.VoiceChat
                     ChangePanelState(VoiceChatPanelState.NONE);
                     break;
                 case VoiceChatType.PRIVATE:
-                    ChangePanelState(VoiceChatPanelState.SELECTED);
+                    ChangePanelState(VoiceChatPanelState.SELECTED, force: true);
                     activeCallStatusService = privateVoiceChatCallStatusService;
                     break;
                 case VoiceChatType.COMMUNITY:
-                    ChangePanelState(VoiceChatPanelState.SELECTED);
+                    ChangePanelState(VoiceChatPanelState.SELECTED, force: true);
                     activeCallStatusService = communityVoiceChatCallStatusService;
                     break;
             }
