@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 
 namespace Utility.Multithreading
 {
@@ -38,6 +39,8 @@ namespace Utility.Multithreading
             Inner = new (comparer);
         }
 
+        public bool IsEmpty => Inner.IsEmpty;
+
         public void Add(TKey key, TValue value)
         {
 #if UNITY_WEBGL
@@ -53,6 +56,21 @@ namespace Utility.Multithreading
             Inner.Add(item.Key, item.Value);
 #else
             Inner.TryAdd(item.Key, item.Value);
+#endif
+        }
+
+        public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+        {
+#if UNITY_WEBGL
+            if (Inner.TryGetValue(key, out var value) == false)
+            {
+                value = valueFactory(key);
+                Inner[key] = value;
+            }
+
+            return value;
+#else
+            return Inner.GetOrAdd(key, valueFactory);
 #endif
         }
 

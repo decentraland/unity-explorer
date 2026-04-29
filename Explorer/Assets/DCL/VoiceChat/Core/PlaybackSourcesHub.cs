@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
         private readonly Transform parent;
 
         private readonly DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
-        // Read as ConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
+        // Read as DCLConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
         private readonly DCLConcurrentDictionary<string, DCLConcurrentDictionary<StreamKey, byte>> streamKeysByIdentity;
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
 
@@ -60,7 +60,7 @@ namespace DCL.VoiceChat
             }
 
             streamKeysByIdentity
-               .GetOrAdd(key.identity, static _ => new ConcurrentDictionary<StreamKey, byte>())
+               .GetOrAdd(key.identity, static _ => new DCLConcurrentDictionary<StreamKey, byte>())
                .TryAdd(key, 0); // 0 is a dummy value — inner dict is used as a set, only keys matter.
 
             onSourceConfigured?.Invoke(key, source);
@@ -70,7 +70,7 @@ namespace DCL.VoiceChat
         {
             if (streams.TryRemove(key, out (Weak<AudioStream> stream, LivekitAudioSource source) pair))
             {
-                if (streamKeysByIdentity.TryGetValue(key.identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+                if (streamKeysByIdentity.TryGetValue(key.identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 {
                     keys.TryRemove(key, out _);
 
@@ -97,7 +97,7 @@ namespace DCL.VoiceChat
 
         internal void SetMuteForIdentity(string identity, bool mute)
         {
-            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+            if (!streamKeysByIdentity.TryGetValue(identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 return;
 
             foreach (KeyValuePair<StreamKey, byte> kvp in keys)
@@ -107,7 +107,7 @@ namespace DCL.VoiceChat
 
         internal void RemoveStreamsByIdentity(string identity)
         {
-            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+            if (!streamKeysByIdentity.TryGetValue(identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 return;
 
             foreach (KeyValuePair<StreamKey, byte> kvp in keys)
