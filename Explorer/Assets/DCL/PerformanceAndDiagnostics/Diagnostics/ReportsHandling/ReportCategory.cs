@@ -55,6 +55,11 @@ namespace DCL.Diagnostics
         public const string SCENE_LOADING = nameof(SCENE_LOADING);
 
         /// <summary>
+        ///     Messages related to the scene admins and their operations
+        /// </summary>
+        public const string SCENE_ADMINS = nameof(SCENE_ADMINS);
+
+        /// <summary>
         ///     Messages related to the scene UI
         /// </summary>
         public const string SCENE_UI = nameof(SCENE_UI);
@@ -73,6 +78,11 @@ namespace DCL.Diagnostics
         ///     Archipelago and gatekeeper requests
         /// </summary>
         public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
+
+        /// <summary>
+        ///     COMMS Api
+        /// </summary>
+        public const string COMMS_API = nameof(COMMS_API);
 
         /// <summary>
         ///     Chat livekit requests

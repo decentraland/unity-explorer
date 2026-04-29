@@ -43,7 +43,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
-            bool allowCaching = options is { LocalSceneDevelopment: false, PreviewingBuilderCollection: false };
+            // Builder preview bypasses the cache so creators always see the latest collection state.
+            // LSD reuse is safe within a session and is invalidated on `/reload` by ECSReloadScene's
+            // eager cache drain — required because the LSD dev server's hash is path-based, not content-based.
+            bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))

@@ -62,6 +62,7 @@ namespace DCL.UI.ProfileElements
                 userNameElementPresenter.Setup(profile.Value);
                 walletAddressElementPresenter.Setup(profile.Value);
 
+                profileThumbnail.SetLoading(profile.Value.UserNameColor);
                 await GetProfileThumbnailCommand.Instance.ExecuteAsync(profileThumbnail, null, profile.Value, ct);
             }
         }
