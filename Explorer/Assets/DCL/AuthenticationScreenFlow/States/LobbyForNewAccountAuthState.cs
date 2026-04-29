@@ -38,6 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
 
         private Dictionary<string, List<URN>>? maleWearablesByCategory;
         private Dictionary<string, List<URN>>? femaleWearablesByCategory;
@@ -61,7 +62,8 @@ namespace DCL.AuthenticationScreenFlow
             IWearablesProvider wearablesProvider,
             IWebBrowser webBrowser,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewInstance)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -74,6 +76,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -347,6 +350,10 @@ namespace DCL.AuthenticationScreenFlow
                     newUserProfile.Name = view.ProfileNameInputField.Text;
                     Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
+
+                    // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
+                    // freshly created profile is live
+                    profileChangesBus.PushUpdate(newUserProfile);
 
                     await characterPreviewController.PlayJumpInEmoteAndAwaitItAsync();
 
