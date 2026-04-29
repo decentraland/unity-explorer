@@ -19,6 +19,12 @@ namespace DCL.Chat.ChatReactions.Configs
         [field: Range(64, 1023)]
         [field: SerializeField] public int MaxParticles { get; internal set; } = 1023;
 
+        [field: Header("SPAWN")]
+        [field: Note("World-space offset added to the avatar head position before spawning reactions. " +
+                     "Y lifts bursts above the nametag point; XZ rarely useful. " +
+                     "Keeps spawn origin and anchor-follow target aligned.")]
+        [field: SerializeField] public Vector3 AnchorOffset { get; private set; } = new(0f, 0.15f, 0f);
+
         [field: Header("PHYSICS (WORLD SPACE — UNITS, UNITS/SEC, UNITS/SEC²)")]
         [field: Note("How long each particle lives (seconds). Randomised per particle between min and max.")]
         [field: MinMaxRange(0f, 5f)]
