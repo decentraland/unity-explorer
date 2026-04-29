@@ -30,6 +30,8 @@ namespace SceneRunner.Scene
             "scene.json", "main.crdt"
         };
 
+        private HashSet<string>? remoteFilesBuffer;
+
         public HybridSceneHashedContent(IWebRequestController webRequestController,
             SceneEntityDefinition contentDefinitions, URLDomain contentBaseUrl,
             URLDomain abDomain)
@@ -55,7 +57,7 @@ namespace SceneRunner.Scene
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
                 //Textures are not fetched by asset bundles
-                if (filesToGetFromLocalHost.Contains(contentPath) || IsNonConvertedAsset(contentPath))
+                if (filesToGetFromLocalHost.Contains(contentPath) || ShouldBeLocal(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
                     resolvedContentURLs[contentPath] = (true, result);
@@ -78,7 +80,7 @@ namespace SceneRunner.Scene
             fileToHash.TryGetValue(name, out hash);
 
         public bool IsRawAsset(string contentPath) =>
-            filesToGetFromLocalHost.Contains(contentPath) || IsNonConvertedAsset(contentPath);
+            filesToGetFromLocalHost.Contains(contentPath) || ShouldBeLocal(contentPath);
 
         public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
         {
@@ -92,35 +94,35 @@ namespace SceneRunner.Scene
                 var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
                                                                       .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-                var remoteFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                remoteFilesBuffer ??= new HashSet<string>(sceneEntityDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
+                remoteFilesBuffer.Clear();
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
-                    remoteFiles.Add(contentDefinition.file);
+                    remoteFilesBuffer.Add(contentDefinition.file);
 
                     if (fileToHash.ContainsKey(contentDefinition.file)
                         && !filesToGetFromLocalHost.Contains(contentDefinition.file)
-                        && !IsNonConvertedAsset(contentDefinition.file))
+                        && !ShouldBeLocal(contentDefinition.file))
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
 
                 // Files that exist locally but not in the remote definition have no AB on the CDN — load from localhost
                 foreach (string localFile in fileToHash.Keys)
-                    if (!remoteFiles.Contains(localFile))
+                    if (!remoteFilesBuffer.Contains(localFile))
                         filesToGetFromLocalHost.Add(localFile);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
         }
 
-        /// <summary>
-        ///     Files that are not converted to asset bundles and should be fetched from the local content server.
-        /// </summary>
-        private static bool IsNonConvertedAsset(string file)
+        private static bool ShouldBeLocal(string file)
         {
+            // Textures are converted, but there is an unresolved race condition when the texture is used as a dependency, see: https://github.com/decentraland/unity-explorer/pull/3422
             return file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                    file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
                    file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                   // Sounds are not converted, are directly fetched from the content server
                    file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
                    file.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
                    file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase);
