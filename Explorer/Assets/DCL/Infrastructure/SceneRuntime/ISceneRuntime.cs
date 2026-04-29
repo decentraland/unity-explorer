@@ -1,4 +1,5 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CrdtEcsBridge.JsModulesImplementation.Communications;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -75,13 +76,14 @@ namespace SceneRuntime
             ISceneData sceneData,
             IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
-            IRemoteMetadata remoteMetadata
+            IRemoteMetadata remoteMetadata,
+            ISceneCommunicationPipe sceneCommunicationPipe
         )
         {
             sceneRuntime.RegisterEngineAPI(sceneData, engineApi, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
-            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+            sceneRuntime.RegisterCommsApi(roomHub, sceneCommunicationPipe, sceneData, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -114,13 +116,14 @@ namespace SceneRuntime
             ISceneData sceneData,
             IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
-            IRemoteMetadata remoteMetadata
+            IRemoteMetadata remoteMetadata,
+            ISceneCommunicationPipe sceneCommunicationPipe
         )
         {
             sceneRuntime.RegisterEngineAPI( sceneData, engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
-            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+            sceneRuntime.RegisterCommsApi(roomHub, sceneCommunicationPipe, sceneData, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -157,9 +160,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api, sceneRuntime.isDisposingTokenSource));
         }
 
-        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler)
+        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneCommunicationPipe sceneCommunicationPipe, ISceneData sceneData, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource));
+            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneCommunicationPipe, sceneData, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterSignedFetch(

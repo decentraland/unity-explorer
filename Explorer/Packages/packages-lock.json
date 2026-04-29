@@ -31,18 +31,26 @@
       "dependencies": {},
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
+    "com.atteneder.draco": {
+      "version": "4.0.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.4.11"
+      },
+      "url": "https://package.openupm.com"
+    },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/atteneder/glTFast.git",
+      "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.mathematics": "1.2.6",
-        "com.unity.burst": "1.8.24",
-        "com.unity.collections": "1.2.4"
+        "com.unity.burst": "1.6.6"
       },
-      "hash": "faa0bde05e4f0d9cc8bb7a3c85f6a292183952ea"
+      "hash": "c6a7da496f4b0d61ae70487c4ddf4c7e68c64d36"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
@@ -90,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "ecf91956ccf788abc2dd748f105cd336d771b8d8"
+      "hash": "c1d582d62644c33e53e3c521c53663f37ad24fbe"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -118,7 +126,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0132f23fb5d1bfa1634a872ef28e131067df7a69"
+      "hash": "6e25bbeb62282d12580e23793036693f400ed91e"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -223,25 +231,13 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.cloud.draco": {
-      "version": "5.4.3",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.burst": "1.8.24",
-        "com.unity.collections": "1.2.4",
-        "com.unity.mathematics": "1.2.6"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.cloud.ktx": {
-      "version": "3.6.3",
+      "version": "file:com.unity.cloud.ktx",
       "depth": 0,
-      "source": "registry",
+      "source": "embedded",
       "dependencies": {
         "com.unity.modules.unitywebrequest": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.code-analysis": {
       "version": "0.1.2-preview",

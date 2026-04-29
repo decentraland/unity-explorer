@@ -29,6 +29,8 @@ namespace DCL.Chat
         [field: SerializeField] internal TMP_Text timestamp { get; private set; } = null!;
         [field: SerializeField] internal ChatEntryTranslationView translationView { get; private set; } = null!;
         [field: SerializeField] internal Button messageOptionsButton { get; private set; } = null!;
+        [field: SerializeField] internal Button? reactionButton { get; private set; }
+        [field: SerializeField] internal ChatEntryReactionButtonHoverView? reactionButtonHoverView { get; private set; }
 
         public event Action? OnTranslateRequest;
         public event Action? OnRevertRequest;
@@ -47,22 +49,48 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             messageOptionsButton.gameObject.SetActive(true);
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+                reactionButton?.gameObject.SetActive(true);
+
             OnPointerEnterEvent?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             if (!popupOpen)
+            {
                 messageOptionsButton.gameObject.SetActive(false);
+                reactionButton?.gameObject.SetActive(false);
+                reactionButtonHoverView?.ResetState();
+            }
 
             OnPointerExitEvent?.Invoke();
         }
 
         public Vector3 PopupPosition => popupPosition.position;
 
+        public void SetPopupOpen(bool open)
+        {
+            popupOpen = open;
+        }
+
+        /// <summary>
+        /// Sets the visual state for when a reaction selector popup targets this message.
+        /// Keeps the hover buttons visible and marks the reaction button as active.
+        /// </summary>
+        public void SetReactionPopupActive(bool active)
+        {
+            popupOpen = active;
+            reactionButtonHoverView?.SetClicked(active);
+        }
+
         public void Reset()
         {
+            popupOpen = false;
             messageOptionsButton.gameObject.SetActive(false);
+            reactionButton?.gameObject.SetActive(false);
+            reactionButtonHoverView?.ResetState();
         }
 
         public void SetMessageData(string displayText, ChatMessage originalData, TranslationState translationState)

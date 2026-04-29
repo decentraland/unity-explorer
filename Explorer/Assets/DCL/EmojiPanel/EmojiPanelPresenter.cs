@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -12,6 +14,7 @@ namespace DCL.Emoji
     public class EmojiPanelPresenter : IDisposable
     {
         public event Action<string>? EmojiSelected;
+        public event Action<bool>? PanelVisibilityChanged;
 
         private readonly EmojiMapping emojiMapping;
         private readonly EmojiPanelView view;
@@ -25,25 +28,30 @@ namespace DCL.Emoji
 
         private CancellationTokenSource cts = new ();
 
+        public Transform PanelTransform => view.transform;
+
         public EmojiPanelPresenter(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             EmojiMapping emojiMapping,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab)
+            EmojiButton emojiButtonPrefab,
+            IInputBlock? inputBlock = null)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiMapping = emojiMapping;
-            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
+            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab, inputBlock);
             emojiSearchController.SearchTextChanged += OnSearchTextChanged;
             emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
 
             view.EmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
             view.SectionSelected += OnSectionSelected;
+
+            view.SetVisible(false);
         }
 
         private void OnSearchTextChanged(string searchText)
@@ -74,7 +82,26 @@ namespace DCL.Emoji
 
         public void SetPanelVisibility(bool isVisible)
         {
-            view.gameObject.SetActive(isVisible);
+            TMP_InputField searchInput = view.SearchPanelView.inputField;
+
+            if (!isVisible)
+            {
+                if (searchInput.isFocused)
+                    searchInput.DeactivateInputField();
+
+                if (!string.IsNullOrEmpty(searchInput.text))
+                    searchInput.text = string.Empty;
+            }
+
+            view.SetVisible(isVisible);
+
+            if (isVisible)
+            {
+                searchInput.Select();
+                searchInput.ActivateInputField();
+            }
+
+            PanelVisibilityChanged?.Invoke(isVisible);
         }
 
         private void ConfigureEmojiSectionSizes()

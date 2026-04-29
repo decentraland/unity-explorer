@@ -11,7 +11,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Utility.Types;
+using RichTypes;
 
 namespace SceneRunner.Admins
 {
@@ -91,7 +91,7 @@ namespace SceneRunner.Admins
             while (cts.IsCancellationRequested == false)
             {
                 await FireRequestAsync(cts.Token);
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token);
+                await UniTask.Delay(DELAY, cancellationToken: cts.Token).SuppressCancellationThrow();
             }
         }
 
@@ -107,8 +107,8 @@ namespace SceneRunner.Admins
                 RealmMetadata realmMetadata = new RealmMetadata()
                 {
                     hostname = realmData.Hostname,
-                             protocol = realmData.Protocol,
-                             serverName = realmData.RealmName,
+                    protocol = realmData.Protocol,
+                    serverName = realmData.RealmName,
                 };
 
                 Vector2Int baseParcel = sceneData.SceneShortInfo.BaseParcel;
