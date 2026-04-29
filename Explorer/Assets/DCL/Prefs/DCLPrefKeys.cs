@@ -104,5 +104,8 @@ namespace DCL.Prefs
 
         public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
         public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
+
+        public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
+        public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
     }
 }

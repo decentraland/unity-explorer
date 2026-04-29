@@ -7,7 +7,6 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
 using DCL.Quality;
-using DCL.Utilities;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -25,7 +24,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private const float START_FADE_DITHERING = 2.0f;
         private const float END_FADE_DITHERING = 0.5f;
 
-        private ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private IUserBlockingCache userBlockingCache;
         private IRendererFeaturesCache rendererFeaturesCache;
 
@@ -70,15 +68,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Setup mocks
             userBlockingCache = Substitute.For<IUserBlockingCache>();
-            userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
-            userBlockingCacheProxy.SetObject(userBlockingCache);
 
             rendererFeaturesCache = Substitute.For<IRendererFeaturesCache>();
 
             // Create the system under test (with includeBannedUsersFromScene = false to avoid singleton)
             system = new AvatarShapeVisibilitySystem(
                 world,
-                userBlockingCacheProxy,
+                userBlockingCache,
                 rendererFeaturesCache,
                 START_FADE_DITHERING,
                 END_FADE_DITHERING,
@@ -316,17 +312,16 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void NotAddHiddenComponentWhenUserBlockingCacheNotConfigured()
+        public void NotAddHiddenComponentWhenUsingNullBlockingCache()
         {
             // Arrange
             var avatarShape = CreateAvatarShapeComponent();
             AddFakeWearableToAvatarShape(ref avatarShape);
 
-            // Create system with unconfigured proxy
-            var unconfiguredProxy = new ObjectProxy<IUserBlockingCache>();
+            // Create system with null-object cache (equivalent to friends feature disabled)
             var testSystem = new AvatarShapeVisibilitySystem(
                 world,
-                unconfiguredProxy,
+                new NullUserBlockingCache(),
                 rendererFeaturesCache,
                 START_FADE_DITHERING,
                 END_FADE_DITHERING,

@@ -140,5 +140,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         BannedUsers = 85,
 
         EntitiesActiveElements = 86,
+
+        SocialServiceMutes = 87,
+
+        SceneAdmins = 88,
+
+        Gatekeeper = 89,
     }
 }

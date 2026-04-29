@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly bool includeBannedUsersFromScene;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
@@ -106,7 +106,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             bool includeBannedUsersFromScene)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -120,7 +120,7 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.wearableStorage = wearableStorage;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
@@ -184,7 +184,7 @@ namespace DCL.PluginSystem.Global
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, avatarTransformMatrixJobWrapper);
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCacheProxy, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, userBlockingCache, rendererFeaturesCache, startFadeDistanceDithering, endFadeDistanceDithering, includeBannedUsersFromScene);
 
             if (includeGhosts)
                 AvatarGhostCleanupSystem.InjectToWorld(ref builder);

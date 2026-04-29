@@ -129,6 +129,8 @@ MonoBehaviour:
       value: 128530
     - key: ':rolling-eyes:'
       value: 128580
+    - key: ':exhale:'
+      value: 128558
     - key: ':triumph:'
       value: 128548
     - key: ':angry:'
@@ -163,8 +165,6 @@ MonoBehaviour:
       value: 128551
     - key: ':gasp:'
       value: 128550
-    - key: ':mouth-open:'
-      value: 128558
     - key: ':surprised:'
       value: 128559
     - key: ':astonished:'
@@ -519,6 +519,8 @@ MonoBehaviour:
       value: 128716
     - key: ':yoga:'
       value: 129496
+    - key: ':walking-with-cane:'
+      value: 129489
     - key: ':kneeling:'
       value: 129486
     - key: ':standing:'
@@ -613,8 +615,6 @@ MonoBehaviour:
       value: 128118
     - key: ':child:'
       value: 129490
-    - key: ':adult:'
-      value: 129489
     - key: ':elder:'
       value: 129491
     - key: ':blond-hair:'
@@ -637,10 +637,10 @@ MonoBehaviour:
       value: 128107
     - key: ':kiss-people:'
       value: 128143
+    - key: ':kiss-woman-and-man:'
+      value: 128105
     - key: ':kiss-man-and-man:'
       value: 128104
-    - key: ':kiss-woman-and-woman:'
-      value: 128105
     - key: ':people-with-heart:'
       value: 128145
     - key: ':pregnant:'
@@ -2643,6 +2643,30 @@ MonoBehaviour:
       value: 128289
     - key: ':numbers:'
       value: 128290
+    - key: ':#:'
+      value: 35
+    - key: ':asterisk:'
+      value: 42
+    - key: ':zero:'
+      value: 48
+    - key: ':one:'
+      value: 49
+    - key: ':two:'
+      value: 50
+    - key: ':three:'
+      value: 51
+    - key: ':four:'
+      value: 52
+    - key: ':five:'
+      value: 53
+    - key: ':six:'
+      value: 54
+    - key: ':seven:'
+      value: 55
+    - key: ':eight:'
+      value: 56
+    - key: ':nine:'
+      value: 57
     - key: ':ten:'
       value: 128287
     - key: ':diamond-jewel:'
@@ -2729,6 +2753,10 @@ MonoBehaviour:
       value: 10175
     - key: ':wavy-dash:'
       value: 12336
+    - key: ':copyright:'
+      value: 169
+    - key: ':registered:'
+      value: 174
     - key: ':trade-mark:'
       value: 8482
     - key: ':radio-button:'
@@ -2761,19 +2789,57 @@ MonoBehaviour:
       value: 127988
     - key: ':white-flag:'
       value: 127987
-    - key: ':Barbados-flag:'
+    - key: ':Ascension-Island-flag:'
+      value: 127462
+    - key: ':Bosnia-Herzegovina-flag:'
       value: 127463
-    - key: ':Cocos-Islands-flag:'
+    - key: ':Canada-flag:'
       value: 127464
-    - key: ':Estonia-flag:'
+    - key: ':Germany-flag:'
+      value: 127465
+    - key: ':Ceuta-Melilla-flag:'
       value: 127466
-    - key: ':Guernsey-flag:'
+    - key: ':Finland-flag:'
+      value: 127467
+    - key: ':Gabon-flag:'
       value: 127468
-    - key: ':Myanmar-flag:'
+    - key: ':Hong-Kong-SAR-China-flag:'
+      value: 127469
+    - key: ':Canary-Islands-flag:'
+      value: 127470
+    - key: ':Jersey-flag:'
+      value: 127471
+    - key: ':Kenya-flag:'
+      value: 127472
+    - key: ':Laos-flag:'
+      value: 127473
+    - key: ':Morocco-flag:'
       value: 127474
-    - key: ':South-Sudan-flag:'
+    - key: ':Namibia-flag:'
+      value: 127475
+    - key: ':Oman-flag:'
+      value: 127476
+    - key: ':Panama-flag:'
+      value: 127477
+    - key: ':Qatar-flag:'
+      value: 127478
+    - key: ":R\xE9union-flag:"
+      value: 127479
+    - key: ':Saudi-Arabia-flag:'
       value: 127480
-    - key: ':Trinidad-Tobago-flag:'
+    - key: ':Tristan-da-Cunha-flag:'
       value: 127481
+    - key: ':Ukraine-flag:'
+      value: 127482
+    - key: ':Vatican City-flag:'
+      value: 127483
+    - key: ':Wallis-Futuna-flag:'
+      value: 127484
+    - key: ':Kosovo-flag:'
+      value: 127485
+    - key: ':Yemen-flag:'
+      value: 127486
+    - key: ':South-Africa-flag:'
+      value: 127487
   emojiSpriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   emojiJsonMetadata: {fileID: 4900000, guid: 3297bff7ce0b74196b2c71c85c8ee381, type: 3}

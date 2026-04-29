@@ -7,6 +7,7 @@ using DCL.ChatArea;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -22,6 +23,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -51,6 +53,8 @@ namespace DCL.PluginSystem.Global
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly ConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
+        private readonly NearbyMuteService? nearbyMuteService;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
         private readonly NearbyVoiceWidgetView nearbyVoiceWidgetView;
         private readonly NearbyVoiceTipView nearbyVoiceTipView;
@@ -95,8 +99,12 @@ namespace DCL.PluginSystem.Global
             NearbyVoiceChatButtonView nearbyVoiceChatButtonView,
             NearbyVoiceWidgetView nearbyVoiceWidgetView,
             NearbyVoiceTipView nearbyVoiceTipView,
-            VolumeBus volumeBus)
+            VolumeBus volumeBus,
+            IUserBlockingCache userBlockingCache,
+            NearbyMuteService? nearbyMuteService = null)
         {
+            this.nearbyMuteService = nearbyMuteService;
+            this.userBlockingCache = userBlockingCache;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
             this.profileDataProvider = profileDataProvider;
@@ -158,10 +166,12 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(microphoneStateManager);
 
             microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.COMMUNITY);
+
+            var callPlaybackSourcesHub = new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false);
             remoteListener = new RemoteTrackListener(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatConfiguration,
-                new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull(), false));
+                callPlaybackSourcesHub);
 
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager, voiceChatHandler);
             pluginScope.Add(roomManager);
@@ -183,7 +193,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
-            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, remoteListener);
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), callPlaybackSourcesHub);
             pluginScope.Add(voiceChatDebugContainer);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
@@ -197,13 +207,22 @@ namespace DCL.PluginSystem.Global
                 nearbyStateModel = new NearbyVoiceChatStateModel(initialState);
                 pluginScope.Add(nearbyStateModel);
 
+                // Persist the user's on/off preference of the nearby chat.
+                nearbyStateModel.State.Subscribe(newState =>
+                {
+                    if (newState is NearbyVoiceChatState.DISABLED or NearbyVoiceChatState.IDLE)
+                        DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.DISABLED);
+                });
+
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
+
+                nearbyMuteService!.LoadAsync(ct).Forget();
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel);
+                    nearbyStateModel, nearbyMuteService, userBlockingCache, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);

@@ -31,7 +31,10 @@ namespace DCL.Chat.ChatInput
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SendMessageCommand sendMessageCommand,
-            ITextFormatter textFormatter)
+            ITextFormatter textFormatter,
+            EmojiMapping emojiMapping,
+            EmojiPanelPresenter emojiPanelPresenter,
+            EmojiPanelView emojiPanelView)
         {
             this.view = view;
             this.view.Initialize(chatConfig, textFormatter);
@@ -47,7 +50,9 @@ namespace DCL.Chat.ChatInput
                 new TypingEnabledChatInputState(fsm, view,
                     chatEventBus,
                     sendMessageCommand,
-                    new EmojiMapping(view.emojiContainer.emojiPanelConfiguration),
+                    emojiMapping,
+                    emojiPanelPresenter,
+                    emojiPanelView,
                     profileRepositoryWrapper,
                     getParticipantProfilesCommand,
                     fsm.DisposalCt
