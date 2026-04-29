@@ -4,6 +4,7 @@ using ECS;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
+using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -18,17 +19,20 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly string builderContentURL;
         private readonly bool localSceneDevelopment;
+        private readonly Transform poolsRoot;
 
         public GlobalGLTFLoadingPlugin(
             IWebRequestController webRequestController,
             IRealmData realmData,
             string builderContentURL,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            Transform poolsRoot)
         {
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.builderContentURL = builderContentURL;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.poolsRoot = poolsRoot;
         }
 
         public void Dispose() { }
@@ -46,7 +50,8 @@ namespace DCL.PluginSystem.Global
                 true,
                 true,
                 false,
-                downloadStrategy);
+                downloadStrategy,
+                poolsRoot);
         }
     }
 }
