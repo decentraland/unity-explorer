@@ -97,6 +97,10 @@ namespace Global.AppArgs
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "double-click-walk";
 
+        public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
+        public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
+        public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
