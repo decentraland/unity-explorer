@@ -118,7 +118,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             }
             catch (WebSocketException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
             catch (IOException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
-            catch (ObjectDisposedException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
+            catch (ObjectDisposedException e)
+            {
+                // Don't probe the websocket here — it's the disposed object. Property access on a disposed
+                // ClientWebSocket is not contractually safe across runtimes (Mono/IL2CPP/.NET differ).
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
+                    $"WebSocket disposed: {e}"
+                );
+            }
             catch (Exception e)
             {
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
