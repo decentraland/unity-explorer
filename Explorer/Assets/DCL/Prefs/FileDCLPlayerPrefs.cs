@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Plugins.DclNativeProcesses;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -362,39 +363,20 @@ namespace DCL.Prefs
         {
             if (claim.Pid <= 0) return false;
 
-            Process process;
-            try { process = Process.GetProcessById(claim.Pid); }
-            catch (ArgumentException) { return false; }
-
-            // Conservative: on unexpected failures (e.g. macOS hardened runtime denying
-            // process introspection), keep the slot marked live so we never steal a claim
-            // from a peer we cannot inspect. Trade-off: in fully sandboxed environments
-            // where every Process.GetProcessById throws, all CONCURRENT_CLIENTS slots can
-            // appear permanently occupied to a fresh instance — accepted as the safer
-            // failure mode versus stomping on a live peer.
-            catch { return true; }
+            ProcessName processName;
+            try { processName = new ProcessName(claim.Pid); }
+            catch { return false; }
 
             try
             {
-                using (process)
+                using (processName)
                 {
-                    if (process.HasExited) return false;
+                    if (processName.IsEmpty) return false;
 
                     // Guard against PID reuse by a different process.
                     if (!string.IsNullOrEmpty(claim.ProcessName) &&
-                        !string.Equals(process.ProcessName, claim.ProcessName, StringComparison.OrdinalIgnoreCase))
+                        !string.Equals(processName.Name, claim.ProcessName, StringComparison.OrdinalIgnoreCase))
                         return false;
-
-                    if (!string.IsNullOrEmpty(claim.MainModulePath))
-                    {
-                        try
-                        {
-                            string livePath = process.MainModule?.FileName;
-                            if (!string.IsNullOrEmpty(livePath))
-                                return string.Equals(livePath, claim.MainModulePath, StringComparison.OrdinalIgnoreCase);
-                        }
-                        catch { /* fall through to name-only match */ }
-                    }
 
                     return true;
                 }
@@ -404,18 +386,20 @@ namespace DCL.Prefs
 
         private static SlotClaim BuildSelfClaim()
         {
-            var claim = new SlotClaim { ProcessName = string.Empty, MainModulePath = string.Empty };
+            var claim = new SlotClaim { ProcessName = string.Empty };
 
             try
             {
+                // In IL2CPP this only yields the pid
                 using Process self = Process.GetCurrentProcess();
                 claim.Pid = self.Id;
 
-                try { claim.ProcessName = self.ProcessName; }
+                try
+                {
+                    using ProcessName processName = new ProcessName(claim.Pid);
+                    claim.ProcessName = processName.Name;
+                }
                 catch { /* ignored */ }
-
-                try { claim.MainModulePath = self.MainModule?.FileName ?? string.Empty; }
-                catch { /* MainModule can throw on macOS without entitlements */ }
             }
             catch
             {
@@ -430,7 +414,6 @@ namespace DCL.Prefs
         {
             public int Pid { get; set; }
             public string ProcessName { get; set; }
-            public string MainModulePath { get; set; }
         }
 
         [Serializable]
