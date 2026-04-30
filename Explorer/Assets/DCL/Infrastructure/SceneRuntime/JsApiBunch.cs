@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.V8;
 using System;
 using System.Collections.Generic;
@@ -10,9 +9,10 @@ namespace SceneRuntime
     {
         private static readonly TimeSpan FINALIZATION_GRACE_TIMEOUT = TimeSpan.FromSeconds(5);
 
+        internal readonly JsApiCompletionGate gate;
+
         private readonly V8ScriptEngine engine;
         private readonly List<JsApiWrapper> wraps = new ();
-        private readonly JsApiCompletionGate gate;
 
         public JsApiBunch(V8ScriptEngine engine, CancellationTokenSource disposeCts)
         {
@@ -31,12 +31,6 @@ namespace SceneRuntime
         {
             foreach (JsApiWrapper wrap in wraps)
                 wrap.OnSceneIsCurrentChanged(isCurrent);
-        }
-
-        public async UniTask WaitDrainedAsync(PlayerLoopTiming timing)
-        {
-            while (gate.HasPending)
-                await UniTask.Yield(timing);
         }
 
         public void Dispose()

@@ -39,6 +39,8 @@ namespace SceneRuntime
 
         CancellationTokenSource ISceneRuntime.isDisposingTokenSource => isDisposingTokenSource;
 
+        public JsApiCompletionGate JsApiCompletionGate => jsApiBunch.gate;
+
         public SceneRuntimeImpl(
             string sourceCode,
             string initCode,
@@ -137,9 +139,6 @@ namespace SceneRuntime
             isDisposingTokenSource.Cancel();
             isDisposingTokenSource.Dispose();
         }
-
-        public UniTask WaitForPendingPromiseCompletionsAsync(PlayerLoopTiming timing) =>
-            jsApiBunch.WaitDrainedAsync(timing);
 
         public UniTask StartScene()
         {

@@ -38,6 +38,8 @@ namespace SceneRuntime
     {
         internal CancellationTokenSource isDisposingTokenSource { get; }
 
+        public JsApiCompletionGate JsApiCompletionGate { get; }
+
         void Register<T>(string itemName, T target) where T: JsApiWrapper;
 
         UniTask StartScene();
@@ -47,14 +49,6 @@ namespace SceneRuntime
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
         void SetIsDisposing();
-
-        /// <summary>
-        ///     Waits until any in-flight disconnected promise completion finishes touching V8.
-        ///     Must be awaited after <see cref="SetIsDisposing" /> and before disposing the engine,
-        ///     otherwise a thread-pool TrySetResult can race against engine disposal and trigger
-        ///     <c>"The V8 object has been released"</c>.
-        /// </summary>
-        public UniTask WaitForPendingPromiseCompletionsAsync(PlayerLoopTiming timing);
 
         void OnSceneIsCurrentChanged(bool isCurrent);
 
