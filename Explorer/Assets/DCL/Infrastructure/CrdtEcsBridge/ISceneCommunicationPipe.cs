@@ -1,6 +1,4 @@
-﻿using DCL.Multiplayer.Connections.Messaging;
-using Decentraland.Kernel.Comms.Rfc4;
-using System;
+﻿using System;
 using System.Threading;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -11,6 +9,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             String = 1, // SDK scenes MessageBus messages
             Uint8Array = 2,
+            CommsData = 3, // CommsApi publish/subscribe topic-based data
         }
 
         public enum ConnectivityAssertiveness

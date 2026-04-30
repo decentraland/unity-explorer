@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
@@ -10,8 +10,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using SceneRunner.Scene;
 using UnityEngine;
-using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -24,11 +24,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly ISceneData sceneData;
         private readonly Options options;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, Options options) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, ISceneData sceneData, Options options) : base(world)
         {
             this.cache = cache;
+            this.sceneData = sceneData;
             this.options = options;
         }
 
@@ -41,7 +43,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
-            bool allowCaching = options is { LocalSceneDevelopment: false, PreviewingBuilderCollection: false };
+            // Builder preview bypasses the cache so creators always see the latest collection state.
+            // LSD reuse is safe within a session and is invalidated on `/reload` by ECSReloadScene's
+            // eager cache drain — required because the LSD dev server's hash is path-based, not content-based.
+            bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
             if (allowCaching && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
@@ -51,7 +56,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            bool loadRawGltf = options.PreviewingBuilderCollection || options is { LocalSceneDevelopment: true, UseRemoveAssetBundles: false };
+            bool loadRawGltf = options.PreviewingBuilderCollection;
+
+            if (options.LocalSceneDevelopment)
+            {
+                if (options.UseRemoteAssetBundles)
+                    loadRawGltf |= sceneData.SceneContent.IsRawAsset(intention.Name);
+                else
+                    loadRawGltf = true;
+            }
+
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
@@ -61,9 +75,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         public struct Options
         {
             public bool LocalSceneDevelopment;
-
-            public bool UseRemoveAssetBundles;
-
+            public bool UseRemoteAssetBundles;
             public bool PreviewingBuilderCollection;
         }
     }

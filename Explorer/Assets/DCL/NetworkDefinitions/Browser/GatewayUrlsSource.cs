@@ -34,6 +34,7 @@ namespace DCL.Browser
             DecentralandUrl.LocalGateKeeperSceneAdapter,
             DecentralandUrl.ChatAdapter,
             DecentralandUrl.GatekeeperStatus,
+            DecentralandUrl.BannedUsers,
             DecentralandUrl.RemotePeers,
             DecentralandUrl.RemotePeersWorld,
             DecentralandUrl.ArchipelagoStatus,
@@ -83,7 +84,7 @@ namespace DCL.Browser
 
         private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
-        public GatewayUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode) : base(environment, realmData, launchMode)
+        public GatewayUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null) : base(environment, realmData, launchMode, gatekeeperBaseOverride)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
