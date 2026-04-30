@@ -8,7 +8,6 @@ namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
     /// Facade over <see cref="INearbyMuteCache"/> and <see cref="INearbyMuteRepository"/>.
-    /// Shared between <see cref="NearbyVoiceChatManager"/> (subscribes to <see cref="MuteStateChanged"/>)
     /// and the user profile context menu (calls <see cref="SetMutedAsync"/>).
     /// </summary>
     public class NearbyMuteService
@@ -18,15 +17,6 @@ namespace DCL.VoiceChat.Nearby
         private readonly INearbyMuteCache cache;
         private readonly INearbyMuteRepository repository;
 
-        /// <summary>
-        /// Parameters: walletId, isMuted.
-        /// </summary>
-        public event Action<string, bool>? MuteStateChanged
-        {
-            add => cache.MuteStateChanged += value;
-            remove => cache.MuteStateChanged -= value;
-        }
-
         public NearbyMuteService(INearbyMuteCache cache, INearbyMuteRepository repository)
         {
             this.cache = cache;
@@ -34,8 +24,7 @@ namespace DCL.VoiceChat.Nearby
         }
 
         /// <summary>
-        /// Forwarded from <see cref="INearbyMuteCache.Version"/>. Read by
-        /// <c>NearbyAudioPositionSystem</c> to skip per-entity lookups while the cache is unchanged.
+        /// Used to skip per-entity lookups while the cache is unchanged.
         /// </summary>
         public uint CacheVersion => cache.Version;
 

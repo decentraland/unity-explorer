@@ -24,7 +24,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     [UpdateAfter(typeof(NearbyLivekitBridgeSystem))]
     [UpdateBefore(typeof(NearbyAudioBindingSystem))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
-    public partial class NearbyAudibleRangeMarkerSystem : BaseUnityLoopSystem
+    public partial class NearbyAudibleRangeSystem : BaseUnityLoopSystem
     {
         // Squared comparisons throughout — no sqrt per avatar per tick.
         private const float OUTER_OUT_SQR = 22f * 22f;   // crossing outward beyond → remove InAudibleRangeTag
@@ -35,7 +35,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private SingleInstanceEntity playerEntity;
         private SingleInstanceEntity cameraEntity;
 
-        internal NearbyAudibleRangeMarkerSystem(World world) : base(world) { }
+        internal NearbyAudibleRangeSystem(World world) : base(world) { }
 
         public override void Initialize()
         {

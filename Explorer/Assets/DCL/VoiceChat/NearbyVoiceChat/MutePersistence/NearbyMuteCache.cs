@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.VoiceChat.Nearby.MutePersistence
 {
@@ -24,53 +25,49 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         private readonly HashSet<string> mutedWalletIds = new (StringComparer.Ordinal);
         private readonly HashSet<string> sessionUnmuted = new (StringComparer.Ordinal); // Addresses the user explicitly unmuted in this session.
 
-        // volatile so lock-free Version reads on the hot path observe the latest write committed under `gate`.
-        // Starts at 1 so a freshly-constructed component (LastSeenMuteVersion=0) deterministically
-        // mismatches on its first tick — guarantees the pessimistic initial recompute.
-        private volatile uint version = 1;
+        // Starts at 1 so a freshly-constructed component (LastSeenMuteVersion=0) deterministically mismatches on its first tick — guarantees the pessimistic initial recompute.
+        // All writes happen under `gate`; the lock-free Version getter uses Volatile.Read to observe the latest committed value.
+        private uint version = 1;
 
-        public uint Version => version;
-
-        public event Action<string, bool>? MuteStateChanged;
+        public uint Version => Volatile.Read(ref version);
 
         public bool IsMuted(string walletAddress)
         {
-            lock (gate) return mutedWalletIds.Contains(walletAddress);
+            lock (gate)
+            {
+                return mutedWalletIds.Contains(walletAddress);
+            }
         }
 
         public void SetMuted(string walletAddress, bool muted)
         {
             string normalized = walletAddress.ToLowerInvariant();
-            bool changed;
 
             lock (gate)
             {
                 if (muted)
                 {
-                    changed = mutedWalletIds.Add(normalized);
-                    if (changed) version++;
+                    if (mutedWalletIds.Add(normalized))
+                        version++;
+
                     sessionUnmuted.Remove(normalized);
                 }
                 else
                 {
-                    changed = mutedWalletIds.Remove(normalized);
-                    if (changed) version++;
+                    if (mutedWalletIds.Remove(normalized))
+                        version++;
 
-                    // Record intent even if not currently in the cache — Merge must honour it.
-                    sessionUnmuted.Add(normalized);
+                    sessionUnmuted.Add(normalized); // Record intent even if not currently in the cache — Merge must honour it.
                 }
             }
-
-            // Invoked outside the lock — subscribers may re-enter cache APIs or take other locks.
-            if (changed) MuteStateChanged?.Invoke(normalized, muted);
         }
 
         public void Merge(IEnumerable<string> mutedAddresses)
         {
             // Client is source of truth: server snapshot only adds missing entries.
             // Skip addresses the user explicitly unmuted this session, otherwise a stale snapshot would re-mute them.
-            // Two-phase: collect added entries under the lock, then fire events outside it (deadlock-free,
-            // matches SetMuted's discipline). The added list is allocated once per Merge call (init-only path).
+            // Two-phase: collect added entries under the lock, then fire events outside it (deadlock-free, matches SetMuted's discipline).
+            // The added list is allocated once per Merge call (init-only path).
             List<string>? added = null;
 
             lock (gate)
@@ -88,11 +85,6 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
                     }
                 }
             }
-
-            if (added == null) return;
-
-            foreach (string normalized in added)
-                MuteStateChanged?.Invoke(normalized, true);
         }
     }
 }

@@ -121,8 +121,9 @@ namespace DCL.Nametags
             World.Add(e, nametagHolder);
         }
 
-        // A freshly attached NametagHolder has stale Speaking/VoiceChat/Hushed visual state from the pool.
-        // Re-dirty any existing voice chat badge so UpdateNametagSpeakingState re-applies it on the new holder.
+        // The pool resets transient visual state on Release, so a fresh holder always starts clean.
+        // Re-dirty any existing voice chat badge so UpdateNametagSpeakingState re-applies the current state to the new holder,
+        // otherwise IsDirty may already be false and the badge would stay off.
         private void MarkVoiceChatBadgeDirty(Entity e)
         {
             ref VoiceChatNametagComponent voiceChat = ref World.TryGetRef<VoiceChatNametagComponent>(e, out bool exists);

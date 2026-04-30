@@ -148,7 +148,7 @@ namespace DCL.PluginSystem.Global
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
                 NearbyLivekitBridgeSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
-                NearbyAudibleRangeMarkerSystem.InjectToWorld(ref builder);
+                NearbyAudibleRangeSystem.InjectToWorld(ref builder);
                 NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!);
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
@@ -177,10 +177,11 @@ namespace DCL.PluginSystem.Global
 
             microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.COMMUNITY);
 
+            var callPlaybackSourcesHub = new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull());
             remoteListener = new RemoteTrackListener(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatConfiguration,
-                new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull()));
+                callPlaybackSourcesHub);
 
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager, voiceChatHandler);
             pluginScope.Add(roomManager);
@@ -202,7 +203,7 @@ namespace DCL.PluginSystem.Global
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
 
-            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), new PlaybackSourcesHub());
+            voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), callPlaybackSourcesHub);
             pluginScope.Add(voiceChatDebugContainer);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))

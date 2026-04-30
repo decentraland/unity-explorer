@@ -17,27 +17,15 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///     disabled, stream cleared, no event subscriptions). The pool's auto-created container doubles
     ///     as the feature's hierarchy root (renamed to "VoiceChatSources_Nearby") so live and pooled
     ///     instances are siblings under one parent — no factory-side wrapper transform.
-    ///     <para>External API is unchanged from the pre-pool implementation; callers
-    ///     (<c>NearbyAudioBindingSystem</c>, <c>NearbyAudioCleanupSystem</c>) need not know pooling exists.</para>
     /// </summary>
     public class NearbyAudioSourceFactory
     {
         private const string ROOT_NAME = "VoiceChatSources_Nearby";
 
-        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the
-        // legacy instantiate-on-Create / destroy-on-Dispose path so peak voice-chat load can't
-        // grow the resident GO+AudioSource set without bound. The pool's own maxSize only caps
-        // the inactive cache — Get() still mints new instances on demand — so the cap has to
-        // be tracked here.
-        internal const int MAX_LIVE_INSTANCES = 300;
-
-        // Emergency fallback toggle. Flip to false in this branch to bypass pooling and run the
-        // pre-A2 instantiate-on-Create / destroy-on-Dispose path — useful as a quick revert if the
-        // pool path uncovers a regression mid-debug. Both paths still use the pool's container as
-        // their hierarchy root; the pool object stays empty when USE_POOL is false.
-        // static readonly (not const) so flipping the toggle doesn't trip CS0162 unreachable-code
-        // warnings on the legacy branches.
-        private static readonly bool USE_POOL = true;
+        // Emergency fallback toggle. Flip to false in this branch to bypass pooling and run the instantiate-on-Create / destroy-on-Dispose path.
+        private const bool USE_POOL = true;
+        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the legacy instantiate-on-Create / destroy-on-Dispose path
+        private const int MAX_LIVE_INSTANCES = 300;
 
         private readonly VoiceChatConfiguration configuration;
         private readonly GameObjectPool<LivekitAudioSource> pool;
@@ -48,20 +36,17 @@ namespace DCL.VoiceChat.Nearby.Audio
 
         private int liveCount;
 
-        internal Transform sourcesRoot => pool.Container;
         internal int poolCountInactive => pool.CountInactive;
-        internal int liveInstanceCount => liveCount;
 
         public NearbyAudioSourceFactory(VoiceChatConfiguration configuration)
         {
             this.configuration = configuration;
 
-            pool = new GameObjectPool<LivekitAudioSource>(
-                rootContainer: null,
+            pool = new GameObjectPool<LivekitAudioSource>(rootContainer: null,
                 creationHandler: CreatePooledInstance,
                 onRelease: ResetForPool);
 
-            pool.Container.gameObject.name = ROOT_NAME;
+            pool.ParentContainer.gameObject.name = ROOT_NAME;
         }
 
         public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream)
@@ -100,7 +85,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         public void DisposeRoot()
         {
             if (USE_POOL) pool.Dispose();
-            UnityObjectUtils.SafeDestroyGameObject(pool.Container);
+            UnityObjectUtils.SafeDestroyGameObject(pool.ParentContainer);
         }
 
         // ── Pool path ───────────────────────────────────────────────
@@ -116,7 +101,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             audioSource.outputAudioMixerGroup = configuration.ChatAudioMixerGroup;
             audioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
             lkSource.ApplySpatialSettings(configuration);
-            lkSource.transform.SetParent(pool.Container, worldPositionStays: false);
+            lkSource.transform.SetParent(pool.ParentContainer, worldPositionStays: false);
 
             return lkSource;
         }
@@ -196,7 +181,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             lkSource.name = $"LivekitSource_{key.identity}";
 #endif
             // Same hierarchy root as the pool path so DisposeRoot's cascade catches legacy instances too.
-            lkSource.transform.SetParent(pool.Container);
+            lkSource.transform.SetParent(pool.ParentContainer);
 
             audioSource.mute = true;
             lkSource.Play();

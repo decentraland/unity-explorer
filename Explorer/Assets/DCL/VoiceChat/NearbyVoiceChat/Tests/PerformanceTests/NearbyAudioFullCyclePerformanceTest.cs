@@ -52,7 +52,7 @@ namespace DCL.VoiceChat.Nearby
         private NearbyAudioPositionSystem positionSystem;
         private NearbyAudioCleanupSystem cleanupSystem;
         private NearbyLivekitBridgeSystem markerSystem;
-        private NearbyAudibleRangeMarkerSystem audibleRangeMarkerSystem;
+        private NearbyAudibleRangeSystem audibleRangeSystem;
 
         [SetUp]
         public void SetUp()
@@ -85,8 +85,8 @@ namespace DCL.VoiceChat.Nearby
             positionSystem.Initialize();
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
-            audibleRangeMarkerSystem = new NearbyAudibleRangeMarkerSystem(world);
-            audibleRangeMarkerSystem.Initialize();
+            audibleRangeSystem = new NearbyAudibleRangeSystem(world);
+            audibleRangeSystem.Initialize();
         }
 
         protected override void OnTearDown()
@@ -96,7 +96,14 @@ namespace DCL.VoiceChat.Nearby
             cleanupSystem?.Dispose();
             positionSystem?.Dispose();
             markerSystem?.Dispose();
-            audibleRangeMarkerSystem?.Dispose();
+            audibleRangeSystem?.Dispose();
+
+            // Dispose the binding system (which owns NearbyAudioSourceFactory + its pool) BEFORE the
+            // defensive sweep below. Otherwise FindObjectsByType destroys the pool's still-cached
+            // inactive instances first, and the later DestroyWorld → OnDispose → pool.Clear path
+            // hits MissingReferenceException on the dead components. BaseUnityLoopSystem.Dispose is
+            // idempotent, so the auto-dispose during DestroyWorld is a harmless no-op.
+            system?.Dispose();
 
             // Defensive: LivekitAudioSource keeps invoking OnAudioFilterRead on the audio thread
             // even after disposal — reap any straggler not caught above to avoid NREs between runs.
@@ -133,7 +140,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
-                audibleRangeMarkerSystem.Update(0);
+                audibleRangeSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -145,7 +152,7 @@ namespace DCL.VoiceChat.Nearby
                .Method(() =>
                 {
                     markerSystem.Update(0);
-                    audibleRangeMarkerSystem.Update(0);
+                    audibleRangeSystem.Update(0);
                     system.Update(0);
                     positionSystem.Update(0);
                     cleanupSystem.Update(0);
@@ -180,7 +187,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
-                audibleRangeMarkerSystem.Update(0);
+                audibleRangeSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -190,7 +197,7 @@ namespace DCL.VoiceChat.Nearby
                .Method(() =>
                 {
                     markerSystem.Update(0);
-                    audibleRangeMarkerSystem.Update(0);
+                    audibleRangeSystem.Update(0);
                     system.Update(0);
                     positionSystem.Update(0);
                     cleanupSystem.Update(0);
@@ -221,7 +228,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
-                audibleRangeMarkerSystem.Update(0);
+                audibleRangeSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -259,7 +266,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
-                audibleRangeMarkerSystem.Update(0);
+                audibleRangeSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -269,7 +276,7 @@ namespace DCL.VoiceChat.Nearby
                .Method(() =>
                 {
                     markerSystem.Update(0);
-                    audibleRangeMarkerSystem.Update(0);
+                    audibleRangeSystem.Update(0);
                     system.Update(0);
                     positionSystem.Update(0);
                     cleanupSystem.Update(0);
@@ -362,7 +369,7 @@ namespace DCL.VoiceChat.Nearby
             for (int t = 0; t < rampUpTicks; t++)
             {
                 markerSystem.Update(0);
-                audibleRangeMarkerSystem.Update(0);
+                audibleRangeSystem.Update(0);
                 system.Update(0);
                 positionSystem.Update(0);
                 cleanupSystem.Update(0);
@@ -379,7 +386,7 @@ namespace DCL.VoiceChat.Nearby
         private void TickFullChain()
         {
             markerSystem.Update(0);
-            audibleRangeMarkerSystem.Update(0);
+            audibleRangeSystem.Update(0);
             system.Update(0);
             positionSystem.Update(0);
             cleanupSystem.Update(0);
