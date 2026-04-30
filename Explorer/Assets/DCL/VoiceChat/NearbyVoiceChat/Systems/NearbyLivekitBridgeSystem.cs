@@ -73,6 +73,8 @@ namespace DCL.VoiceChat.Nearby.Systems
             // Value-copy walletId out of the in-param BEFORE the registry call, so no in/ref reads
             // cross the structural-change boundary in the cascade branch.
             string userId = profile.UserId;
+            if (string.IsNullOrEmpty(userId)) return;
+
             string[]? current = registry.GetAudioSidsArray(userId);
 
             if (current == null)

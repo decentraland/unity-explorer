@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             this.configuration = configuration;
 
             pool = new GameObjectPool<LivekitAudioSource>(rootContainer: null,
-                creationHandler: CreatePooledInstance,
+                creationHandler: CreateFreshInstance,
                 onRelease: ResetForPool);
 
             pool.ParentContainer.gameObject.name = ROOT_NAME;
@@ -80,8 +80,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             UnityObjectUtils.SafeDestroyGameObject(pool.ParentContainer);
         }
 
-        // ── Pool path ───────────────────────────────────────────────
-        private LivekitAudioSource CreatePooledInstance()
+        private LivekitAudioSource CreateFreshInstance()
         {
 #if UNITY_EDITOR
             LivekitAudioSource lkSource = LivekitAudioSource.New(explicitName: true, isSpatial: true);
@@ -98,27 +97,32 @@ namespace DCL.VoiceChat.Nearby.Audio
             return lkSource;
         }
 
-        private LivekitAudioSource CreatePooled(StreamKey key, Weak<AudioStream> stream)
+        // Wires the source to a stream and starts it muted.
+        // NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
+        private static void ActivateForStream(LivekitAudioSource lkSource, AudioSource audioSource, StreamKey key, Weak<AudioStream> stream)
         {
-            LivekitAudioSource lkSource = pool.Get();
-            AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
-
-            // Re-enable BEFORE Construct/Play so OnEnable re-subscribes to AudioSettings.OnAudioConfigurationChanged
-            // and refreshes outputSampleRate; Play() then has a wired AudioSource to drive.
-            lkSource.enabled = true;
-            audioSource.enabled = true;
-
             lkSource.Construct(stream);
 
 #if UNITY_EDITOR
             lkSource.name = $"LivekitSource_{key.identity}";
 #endif
 
-            // Start muted — NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
             audioSource.mute = true;
-            audioSource.volume = 1f;
             lkSource.Play();
+        }
 
+        private LivekitAudioSource CreatePooled(StreamKey key, Weak<AudioStream> stream)
+        {
+            LivekitAudioSource lkSource = pool.Get();
+            AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
+
+            // Re-enable BEFORE Construct/Play so OnEnable re-subscribes to AudioSettings.OnAudioConfigurationChanged and refreshes outputSampleRate;
+            // Play() then has a wired AudioSource to drive.
+            lkSource.enabled = true;
+            audioSource.enabled = true;
+            audioSource.volume = 1f; // ResetForPool zeroed it.
+
+            ActivateForStream(lkSource, audioSource, key, stream);
             return lkSource;
         }
 
@@ -145,39 +149,12 @@ namespace DCL.VoiceChat.Nearby.Audio
             source.enabled = false;
         }
 
-        // ── Legacy path (fallback) ──────────────────────────────────
-
         private LivekitAudioSource CreateLegacyTracked(StreamKey key, Weak<AudioStream> stream)
         {
-            LivekitAudioSource source = CreateLegacy(key, stream);
-            legacyInstances.Add(source);
-            return source;
-        }
-
-        private LivekitAudioSource CreateLegacy(StreamKey key, Weak<AudioStream> stream)
-        {
-#if UNITY_EDITOR
-            LivekitAudioSource lkSource = LivekitAudioSource.New(explicitName: true, isSpatial: true);
-#else
-            LivekitAudioSource lkSource = LivekitAudioSource.New(explicitName: false, isSpatial: true);
-#endif
-            lkSource.Construct(stream);
-
-            AudioMixerGroup mixerGroup = configuration.ChatAudioMixerGroup;
+            LivekitAudioSource lkSource = CreateFreshInstance();
             AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
-            audioSource.outputAudioMixerGroup = mixerGroup;
-            audioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
-            lkSource.ApplySpatialSettings(configuration);
-
-#if UNITY_EDITOR
-            lkSource.name = $"LivekitSource_{key.identity}";
-#endif
-            // Same hierarchy root as the pool path so DisposeRoot's cascade catches legacy instances too.
-            lkSource.transform.SetParent(pool.ParentContainer);
-
-            audioSource.mute = true;
-            lkSource.Play();
-
+            ActivateForStream(lkSource, audioSource, key, stream);
+            legacyInstances.Add(lkSource);
             return lkSource;
         }
 

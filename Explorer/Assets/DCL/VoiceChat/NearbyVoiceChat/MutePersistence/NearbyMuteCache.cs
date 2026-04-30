@@ -66,7 +66,6 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         {
             // Client is source of truth: server snapshot only adds missing entries.
             // Skip addresses the user explicitly unmuted this session, otherwise a stale snapshot would re-mute them.
-            // Two-phase: collect added entries under the lock, then fire events outside it (deadlock-free, matches SetMuted's discipline).
             // The added list is allocated once per Merge call (init-only path).
             List<string>? added = null;
 
