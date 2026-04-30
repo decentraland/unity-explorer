@@ -219,6 +219,11 @@ namespace SceneRunner
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
+            // Drain disconnected-promise completions before releasing V8 — otherwise a
+            // thread-pool TrySetResult can race against engine.Dispose() and ClearScript's
+            // CompletePromise continuation hits a released V8 isolate.
+            await runtimeInstance.WaitForPendingPromiseCompletionsAsync(PlayerLoopTiming.Initialization);
+
             DisposeInternal();
             SceneData.InitialSceneStateInfo.Dispose();
 

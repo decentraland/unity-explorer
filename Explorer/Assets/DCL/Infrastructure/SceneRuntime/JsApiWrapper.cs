@@ -7,6 +7,10 @@ namespace SceneRuntime
     {
         internal readonly CancellationTokenSource disposeCts;
 
+        // Assigned by JsApiBunch.AddHostObject. Shared across all wrappers in a scene so the
+        // disposer can wait for any in-flight promise completion before releasing V8.
+        internal JsApiCompletionGate? completionGate;
+
         protected JsApiWrapper(CancellationTokenSource disposeCts)
         {
             this.disposeCts = disposeCts;

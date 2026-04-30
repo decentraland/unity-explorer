@@ -15,7 +15,5 @@ namespace SceneRuntime.Apis.Modules.SceneApi
         [UsedImplicitly]
         public object GetSceneInfo() =>
             api.GetSceneInfo();
-
-        public override void Dispose() { }
     }
 }

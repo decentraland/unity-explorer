@@ -50,7 +50,7 @@ namespace SceneRuntime
             resetableSource = new JSTaskResolverResetable();
 
             engine = engineFactory.Create(sceneShortInfo);
-            jsApiBunch = new JsApiBunch(engine);
+            jsApiBunch = new JsApiBunch(engine, isDisposingTokenSource);
 
             var moduleHub = new SceneModuleHub(engine);
 
@@ -137,6 +137,9 @@ namespace SceneRuntime
             isDisposingTokenSource.Cancel();
             isDisposingTokenSource.Dispose();
         }
+
+        public UniTask WaitForPendingPromiseCompletionsAsync(PlayerLoopTiming timing) =>
+            jsApiBunch.WaitDrainedAsync(timing);
 
         public UniTask StartScene()
         {

@@ -27,8 +27,12 @@ namespace SceneRuntime.Apis.Modules.Ethereums
             this.ethereumApi = ethereumApi;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.web3IdentityCache = web3IdentityCache;
-            this.sendCancellationToken = sendCancellationToken ?? new CancellationTokenSource();
-            this.signMessageCancellationToken = signMessageCancellationToken ?? new CancellationTokenSource();
+
+            // Linked to disposeCts so in-flight requests cancel on scene disposal,
+            // not only when EthereumApiWrapper.Dispose() runs (which is too late for the
+            // scene-disposal drain wait).
+            this.sendCancellationToken = sendCancellationToken ?? CancellationTokenSource.CreateLinkedTokenSource(disposeCts.Token);
+            this.signMessageCancellationToken = signMessageCancellationToken ?? CancellationTokenSource.CreateLinkedTokenSource(disposeCts.Token);
         }
 
         public override void Dispose()
@@ -52,7 +56,8 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SignMessage(string message)
         {
-            signMessageCancellationToken = signMessageCancellationToken.SafeRestart();
+            // Restart linked to disposeCts so a sign request cancels on scene disposal.
+            signMessageCancellationToken = signMessageCancellationToken.SafeRestartLinked(disposeCts.Token);
 
             return RequestPersonalSignatureAsync(signMessageCancellationToken.Token)
                .ToDisconnectedPromise(this);

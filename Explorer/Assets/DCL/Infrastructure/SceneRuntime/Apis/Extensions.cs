@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using System;
+using System.Threading;
 
 namespace SceneRuntime.Apis
 {
@@ -16,17 +17,26 @@ namespace SceneRuntime.Apis
         public static object ToDisconnectedPromise<T>(this UniTask<T> uniTask, JsApiWrapper api)
         {
             var completionSource = new UniTaskCompletionSource<T>();
+            JsApiCompletionGate gate = api.completionGate!;
+            CancellationToken ct = api.disposeCts.Token;
 
             UniTask.RunOnThreadPool(async () =>
                     {
+                        // Hold the gate for the entire body. The disposer waits for the gate to
+                        // drain before releasing V8, so TrySetResult / TrySetException — which
+                        // synchronously inline ClearScript's CompletePromise back into V8 —
+                        // are guaranteed to run against a live engine.
+                        if (!gate.TryEnter())
+                            return;
+
                         try
                         {
-                            T result = await uniTask;
+                            T result = await uniTask.AttachExternalCancellation(gate.FinalizationGraceCt);
 
                             if (PlayerLoopHelper.IsMainThread)
                                 await UniTask.SwitchToThreadPool();
 
-                            if (api.disposeCts.IsCancellationRequested)
+                            if (ct.IsCancellationRequested)
                                 return;
 
                             completionSource.TrySetResult(result);
@@ -36,11 +46,12 @@ namespace SceneRuntime.Apis
                             if (PlayerLoopHelper.IsMainThread)
                                 await UniTask.SwitchToThreadPool();
 
-                            if (api.disposeCts.IsCancellationRequested)
+                            if (ct.IsCancellationRequested)
                                 return;
 
                             completionSource.TrySetException(e);
                         }
+                        finally { gate.Exit(); }
                     })
                    .Forget();
 
@@ -53,17 +64,22 @@ namespace SceneRuntime.Apis
         public static object ToDisconnectedPromise(this UniTask uniTask, JsApiWrapper api)
         {
             var completionSource = new UniTaskCompletionSource();
+            JsApiCompletionGate gate = api.completionGate!;
+            CancellationToken ct = api.disposeCts.Token;
 
             UniTask.RunOnThreadPool(async () =>
                     {
+                        if (!gate.TryEnter())
+                            return;
+
                         try
                         {
-                            await uniTask;
+                            await uniTask.AttachExternalCancellation(gate.FinalizationGraceCt);
 
                             if (PlayerLoopHelper.IsMainThread)
                                 await UniTask.SwitchToThreadPool();
 
-                            if (api.disposeCts.IsCancellationRequested)
+                            if (ct.IsCancellationRequested)
                                 return;
 
                             completionSource.TrySetResult();
@@ -73,11 +89,12 @@ namespace SceneRuntime.Apis
                             if (PlayerLoopHelper.IsMainThread)
                                 await UniTask.SwitchToThreadPool();
 
-                            if (api.disposeCts.IsCancellationRequested)
+                            if (ct.IsCancellationRequested)
                                 return;
 
                             completionSource.TrySetException(e);
                         }
+                        finally { gate.Exit(); }
                     })
                    .Forget();
 

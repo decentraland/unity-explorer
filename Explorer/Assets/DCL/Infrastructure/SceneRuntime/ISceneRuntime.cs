@@ -48,6 +48,14 @@ namespace SceneRuntime
 
         void SetIsDisposing();
 
+        /// <summary>
+        ///     Waits until any in-flight disconnected promise completion finishes touching V8.
+        ///     Must be awaited after <see cref="SetIsDisposing" /> and before disposing the engine,
+        ///     otherwise a thread-pool TrySetResult can race against engine disposal and trigger
+        ///     <c>"The V8 object has been released"</c>.
+        /// </summary>
+        public UniTask WaitForPendingPromiseCompletionsAsync(PlayerLoopTiming timing);
+
         void OnSceneIsCurrentChanged(bool isCurrent);
 
         void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);

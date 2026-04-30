@@ -31,7 +31,8 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             double? avatarTargetX, double? avatarTargetY, double? avatarTargetZ,
             double? duration)
         {
-            movePlayerToCancellationToken = movePlayerToCancellationToken.SafeRestart();
+            // Linked to disposeCts so the move cancels on scene disposal.
+            movePlayerToCancellationToken = movePlayerToCancellationToken.SafeRestartLinked(disposeCts.Token);
             return MovePlayerToAsync(movePlayerToCancellationToken.Token).ToDisconnectedPromise(this);
 
             async UniTask<bool> MovePlayerToAsync(CancellationToken ct) =>
@@ -66,7 +67,8 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)
         {
-            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
+            // Linked to disposeCts so the emote cancels on scene disposal.
+            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestartLinked(disposeCts.Token);
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
@@ -80,7 +82,5 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public bool OpenNftDialog(string urn) =>
             api.TryOpenNftDialog(urn);
-
-        public override void Dispose() { }
     }
 }
