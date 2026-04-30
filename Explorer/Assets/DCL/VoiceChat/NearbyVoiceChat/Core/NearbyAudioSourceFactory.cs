@@ -3,6 +3,7 @@ using DCL.Utilities.Extensions;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -23,6 +24,13 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private const string ROOT_NAME = "VoiceChatSources_Nearby";
 
+        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the
+        // legacy instantiate-on-Create / destroy-on-Dispose path so peak voice-chat load can't
+        // grow the resident GO+AudioSource set without bound. The pool's own maxSize only caps
+        // the inactive cache — Get() still mints new instances on demand — so the cap has to
+        // be tracked here.
+        internal const int MAX_LIVE_INSTANCES = 300;
+
         // Emergency fallback toggle. Flip to false in this branch to bypass pooling and run the
         // pre-A2 instantiate-on-Create / destroy-on-Dispose path — useful as a quick revert if the
         // pool path uncovers a regression mid-debug. Both paths still use the pool's container as
@@ -34,8 +42,15 @@ namespace DCL.VoiceChat.Nearby.Audio
         private readonly VoiceChatConfiguration configuration;
         private readonly GameObjectPool<LivekitAudioSource> pool;
 
+        // Tags instances handed out via the legacy fallback path (USE_POOL=false or pool overflow)
+        // so Dispose can route them back through DisposeLegacy instead of the pool.
+        private readonly HashSet<LivekitAudioSource> legacyInstances = new (8);
+
+        private int liveCount;
+
         internal Transform sourcesRoot => pool.Container;
         internal int poolCountInactive => pool.CountInactive;
+        internal int liveInstanceCount => liveCount;
 
         public NearbyAudioSourceFactory(VoiceChatConfiguration configuration)
         {
@@ -49,15 +64,35 @@ namespace DCL.VoiceChat.Nearby.Audio
             pool.Container.gameObject.name = ROOT_NAME;
         }
 
-        public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream) =>
-            USE_POOL ? CreatePooled(key, stream) : CreateLegacy(key, stream);
+        public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream)
+        {
+            if (!USE_POOL) return CreateLegacyTracked(key, stream);
+
+            // Cap on simultaneously-live instances. Once exceeded, peel off into the legacy path:
+            // those overflow sources get destroyed on Dispose instead of returning to the pool, so
+            // the resident set drains back to MAX_LIVE_INSTANCES naturally as users go out of range.
+            if (liveCount >= MAX_LIVE_INSTANCES)
+                return CreateLegacyTracked(key, stream);
+
+            liveCount++;
+            return CreatePooled(key, stream);
+        }
 
         public void Dispose(LivekitAudioSource? source)
         {
             if (source == null) return;
 
+            if (legacyInstances.Remove(source))
+            {
+                DisposeLegacy(source);
+                return;
+            }
+
             if (USE_POOL)
+            {
                 pool.Release(source);
+                if (liveCount > 0) liveCount--;
+            }
             else
                 DisposeLegacy(source);
         }
@@ -134,6 +169,13 @@ namespace DCL.VoiceChat.Nearby.Audio
         }
 
         // ── Legacy path (fallback) ──────────────────────────────────
+
+        private LivekitAudioSource CreateLegacyTracked(StreamKey key, Weak<AudioStream> stream)
+        {
+            LivekitAudioSource source = CreateLegacy(key, stream);
+            legacyInstances.Add(source);
+            return source;
+        }
 
         private LivekitAudioSource CreateLegacy(StreamKey key, Weak<AudioStream> stream)
         {

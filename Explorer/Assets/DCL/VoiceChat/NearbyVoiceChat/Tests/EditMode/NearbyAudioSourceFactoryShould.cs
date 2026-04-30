@@ -206,6 +206,44 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void OverflowFallsBackToLegacyAndDestroysOnDispose()
+        {
+            // Beyond MAX_LIVE_INSTANCES the factory peels off into the legacy path so the resident
+            // GO+AudioSource set can't grow without bound. Overflow instances are destroyed on
+            // Dispose instead of returning to the pool — proven by liveInstanceCount staying at the
+            // cap (overflow Create doesn't increment it) and the GameObject being Unity-fake-null
+            // after Dispose (legacy DisposeLegacy ⇒ SafeDestroyGameObject, not pool.Release).
+            int cap = NearbyAudioSourceFactory.MAX_LIVE_INSTANCES;
+            var poolManaged = new List<LivekitAudioSource>(cap);
+
+            for (var i = 0; i < cap; i++)
+                poolManaged.Add(factory.Create(new StreamKey(WALLET_A, $"sid-{i}"), Weak<AudioStream>.Null));
+
+            Assert.That(factory.liveInstanceCount, Is.EqualTo(cap),
+                "all sub-cap Creates must take the pool path and increment liveInstanceCount");
+
+            LivekitAudioSource overflow = factory.Create(new StreamKey(WALLET_B, "overflow"), Weak<AudioStream>.Null);
+
+            Assert.That(factory.liveInstanceCount, Is.EqualTo(cap),
+                "overflow Create must NOT increment liveInstanceCount — it goes through the legacy path");
+            Assert.That(overflow.gameObject.activeSelf, Is.True, "overflow legacy source must still be live");
+
+            GameObject overflowGo = overflow.gameObject;
+            factory.Dispose(overflow);
+
+            Assert.That(overflowGo == null, Is.True,
+                "overflow source must be destroyed on Dispose, not returned to the pool");
+            Assert.That(factory.poolCountInactive, Is.EqualTo(0),
+                "overflow path bypasses pool.Release — no inactive entries should accrue from the overflow Dispose");
+            Assert.That(factory.liveInstanceCount, Is.EqualTo(cap),
+                "Dispose of an overflow (legacy-tracked) source must not touch the pool's liveInstanceCount");
+
+            // Pool-managed sources still need cleanup for the next test — TearDown's FindObjectsByType
+            // sweep covers them, but stash them so this test's intent is explicit.
+            seenSources.AddRange(poolManaged);
+        }
+
+        [Test]
         public void AudioConfigSubscriptionDroppedInPool()
         {
             // §6 unsubscription invariant — the audio config subscription is owned by
