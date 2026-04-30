@@ -99,7 +99,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             bool avatarGoneOrOutOfRange =
                 !World.IsAlive(avatar)
                 || World.Has<DeleteEntityIntention>(avatar)
-                || !World.Has<IsStreamingAudioTag>(avatar)
+                || !World.Has<StreamingAudioComponent>(avatar)
                 || !World.Has<InAudibleRangeTag>(avatar);
 
             if (avatarGoneOrOutOfRange

@@ -21,7 +21,7 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// reconciled once per tick from the local-player ↔ avatar distance with hysteresis.
     /// Invariants:
     /// I1: <c>IsSuspendedTag ⊆ InAudibleRangeTag</c>.
-    /// I2: <c>InAudibleRangeTag ⊆ IsStreamingAudioTag</c>.
+    /// I2: <c>InAudibleRangeTag ⊆ StreamingAudioComponent</c>.
     /// </summary>
     public class NearbyAudibleRangeMarkerSystemShould : UnitySystemTestBase<NearbyAudibleRangeMarkerSystem>
     {
@@ -202,7 +202,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void DoesNotTagNonStreamingAvatar()
         {
-            // No IsStreamingAudioTag — invariant I2 prevents any range marker from materializing.
+            // No StreamingAudioComponent — invariant I2 prevents any range marker from materializing.
             Entity e = CreateAvatarEntityAtDistance("wallet-no-stream", distance: 10f);
 
             system.Update(0);
@@ -280,7 +280,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             string wallet = $"wallet-{distance}";
             Entity e = CreateAvatarEntityAtDistance(wallet, distance);
-            world.Add<IsStreamingAudioTag>(e);
+            world.Add(e, new StreamingAudioComponent(new[] { "sid-1" }));
             return e;
         }
 

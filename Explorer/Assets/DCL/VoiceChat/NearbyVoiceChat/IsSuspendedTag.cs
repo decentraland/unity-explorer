@@ -6,7 +6,7 @@ namespace DCL.VoiceChat.Nearby
     /// <c>AvatarEntity</c> carries this tag have their <c>LivekitAudioSource</c> and underlying
     /// <see cref="UnityEngine.AudioSource"/> disabled — no audio-thread mixing, no
     /// spatial-panning, no transform updates.
-    /// <para>Invariant: <c>IsSuspendedTag ⊆ InAudibleRangeTag ⊆ IsStreamingAudioTag</c>.
+    /// <para>Invariant: <c>IsSuspendedTag ⊆ InAudibleRangeTag ⊆ StreamingAudioComponent</c>.
     /// Owned by <see cref="DCL.VoiceChat.Nearby.Systems.NearbyAudibleRangeMarkerSystem"/>.</para>
     /// </summary>
     public struct IsSuspendedTag { }

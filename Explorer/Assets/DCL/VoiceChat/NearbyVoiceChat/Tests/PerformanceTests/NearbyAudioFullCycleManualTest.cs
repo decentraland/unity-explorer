@@ -14,7 +14,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -310,18 +309,20 @@ namespace DCL.VoiceChat.Nearby
         // factory — we want the integration cost, not a stubbed-out short-circuit.
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            private readonly Dictionary<string, ConcurrentDictionary<string, byte>> sidsByIdentity = new ();
+            private readonly Dictionary<string, string[]> sidsByIdentity = new ();
             private readonly Dictionary<StreamKey, Owned<AudioStream>> streamsByKey = new ();
 
             public void Add(string walletId, string sid)
             {
-                if (!sidsByIdentity.TryGetValue(walletId, out var sids))
+                if (!sidsByIdentity.TryGetValue(walletId, out string[]? prev))
+                    sidsByIdentity[walletId] = new[] { sid };
+                else if (Array.IndexOf(prev, sid) < 0)
                 {
-                    sids = new ConcurrentDictionary<string, byte>();
-                    sidsByIdentity[walletId] = sids;
+                    string[] next = new string[prev.Length + 1];
+                    Array.Copy(prev, next, prev.Length);
+                    next[prev.Length] = sid;
+                    sidsByIdentity[walletId] = next;
                 }
-
-                sids.TryAdd(sid, 0);
 
                 var key = new StreamKey(walletId, sid);
                 if (!streamsByKey.ContainsKey(key))
@@ -334,8 +335,14 @@ namespace DCL.VoiceChat.Nearby
             public void ClearAll() =>
                 sidsByIdentity.Clear();
 
-            public ConcurrentDictionary<string, byte>? GetAudioSids(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out var sids) ? sids : null;
+            public bool HasAudioStream(string walletId) =>
+                sidsByIdentity.ContainsKey(walletId);
+
+            public ReadOnlySpan<string> GetAudioSids(string walletId) =>
+                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : default;
+
+            public string[]? GetAudioSidsArray(string walletId) =>
+                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
@@ -344,8 +351,9 @@ namespace DCL.VoiceChat.Nearby
 
             public bool IsStreamGone(StreamKey key)
             {
-                ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
-                return sids == null || !sids.ContainsKey(key.sid);
+                if (!sidsByIdentity.TryGetValue(key.identity, out string[]? sids))
+                    return true;
+                return Array.IndexOf(sids, key.sid) < 0;
             }
 
             public bool IsActiveSpeaker(string walletId) =>
