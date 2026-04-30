@@ -24,7 +24,7 @@ namespace DCL.VoiceChat.Nearby.Audio
 
         // Hard cap on live pool-managed instances. Beyond this, Create falls through to the legacy
         // instantiate-on-Create / destroy-on-Dispose path. Set to 0 to bypass pooling entirely.
-        private const int MAX_LIVE_INSTANCES = 300;
+        internal const int MAX_LIVE_INSTANCES = 300;
 
         private readonly VoiceChatConfiguration configuration;
         private readonly GameObjectPool<LivekitAudioSource> pool;
@@ -97,7 +97,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             return lkSource;
         }
 
-        // Wires the source to a stream and starts it muted.
+        // Wires the source to a stream, starts it muted, then suspends it.
         // NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
         private static void ActivateForStream(LivekitAudioSource lkSource, AudioSource audioSource, StreamKey key, Weak<AudioStream> stream)
         {
@@ -109,6 +109,9 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             audioSource.mute = true;
             lkSource.Play();
+
+            audioSource.enabled = false;
+            lkSource.enabled = false;
         }
 
         private LivekitAudioSource CreatePooled(StreamKey key, Weak<AudioStream> stream)

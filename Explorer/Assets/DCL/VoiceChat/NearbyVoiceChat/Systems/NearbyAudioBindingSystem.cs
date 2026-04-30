@@ -17,11 +17,9 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Owns the creation part of the Nearby audio-source lifecycle.
-    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> +
-    ///     <see cref="StreamingAudioComponent"/> + <see cref="InAudibleRangeTag"/>) the system iterates
-    ///     the snapshotted sids on the entity itself and materializes an audio-source entity per
-    ///     <c>(walletId, sid)</c> pair that does not yet have one. Throttled to a fixed budget per frame
-    ///     so a crowd ramp-up does not spike a single tick.
+    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> + <see cref="StreamingAudioComponent"/> + <see cref="InAudibleRangeTag"/>)
+    ///     the system iterates the snapshotted sids on the entity itself and materializes an audio-source entity per <c>(walletId, sid)</c> pair that does not yet have one.
+    ///     Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(NearbyAudibleRangeSystem))]
@@ -72,12 +70,10 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
 
-            // Skip blocked identities before allocating into pendingCreations
-            // Cleanup system handles already-bound entities; this filter prevents creation in the first place.
+            // Skip blocked identities. Cleanup system handles already-bound entities; this filter prevents creation in the first place.
             if (userBlockingCache.UserIsBlocked(walletId)) return;
 
             // Sids ride on the entity itself — no registry call on the per-avatar hot path.
-            // foreach over a string[] lowers to a struct-free for-loop in IL (zero allocations).
             // Bridge guarantees SidsSnapshot is non-null for any entity that has the component.
             foreach (string sid in streaming.SidsSnapshot)
             {
@@ -103,12 +99,6 @@ namespace DCL.VoiceChat.Nearby.Systems
                 if (!stream.Resource.Has) continue;
 
                 LivekitAudioSource source = sourceFactory.Create(key, stream);
-
-                // Spawn paused; PositionSystem flips this on the first tick if the avatar is in the active band.
-                // Closes the one-frame window where an avatar entering directly into the suspend zone (~18–17 m)
-                // would burst audio for one frame before PositionSystem rectifies the state.
-                source.enabled = false;
-                source.AudioSource.enabled = false;
 
                 Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
                 bindings.Add(key, audioEntity);
