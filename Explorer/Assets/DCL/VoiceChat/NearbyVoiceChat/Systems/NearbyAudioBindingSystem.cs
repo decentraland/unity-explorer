@@ -24,7 +24,8 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     so a crowd ramp-up does not spike a single tick.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateAfter(typeof(NearbyAudibleRangeSystem))]
+    [UpdateBefore(typeof(NearbyAudioPositionSystem))]
     public partial class NearbyAudioBindingSystem : BaseUnityLoopSystem
     {
         internal const int MAX_CREATIONS_PER_FRAME = 10;

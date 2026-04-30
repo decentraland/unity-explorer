@@ -17,28 +17,16 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     <para>
     ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
     ///         <list type="bullet">
-    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with
-    ///                 <see cref="DeleteEntityIntention"/>.</description></item>
+    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with  <see cref="DeleteEntityIntention"/>.</description></item>
     ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
-    ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns
-    ///                 <c>true</c> for the bound <c>walletId</c>.</description></item>
-    ///             <item><description><b>Trigger #4 (listening gate)</b> — <see cref="NearbyVoiceChatStateModel"/> is in
-    ///                 <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;
-    ///                 takes a single bulk archetype-move path that marks every live audio entity at once,
-    ///                 bypassing per-entity detection entirely.</description></item>
+    ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns  <c>true</c> for the bound <c>walletId</c>.</description></item>
+    ///             <item><description><b>Trigger #4 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
     ///         </list>
-    ///         Triggers #1–#3 run via a per-entity source-generated query; Trigger #4 short-circuits to a single
-    ///         <c>World.Add&lt;DeleteEntityIntention&gt;(QueryDescription, default)</c> call.
     ///     </para>
     ///     <para>
     ///         <b>Teardown</b> — reacts to entities now carrying <see cref="DeleteEntityIntention"/>:
-    ///         disposes the <see cref="LivekitAudioSource"/> via <see cref="NearbyAudioSourceFactory"/>
-    ///         (Stop → Free → SafeDestroyGameObject) and removes the <c>(walletId, sid) → entity</c>
-    ///         binding. Physical entity destruction is delegated to <see cref="DestroyEntitiesSystem"/>.
-    ///     </para>
-    ///     <para>
-    ///         <see cref="OnDispose"/> disposes every remaining <see cref="LivekitAudioSource"/> and clears bindings
-    ///         when the world is torn down.
+    ///          - disposes the <see cref="LivekitAudioSource"/> to the pool via <see cref="NearbyAudioSourceFactory"/> (Stop → Free → SafeDestroyGameObject)
+    ///          - removes the <c>(walletId, sid) → entity</c> binding. Physical entity destruction is delegated to <see cref="DestroyEntitiesSystem"/>.
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
@@ -76,7 +64,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void OnDispose()
         {
-            TearDownAllAudioSourcesQuery(World);
+            DisposeAllAudioSourcesQuery(World);
             bindings.Clear();
         }
 
@@ -86,27 +74,9 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             Entity avatar = comp.AvatarEntity;
 
-            // Cheap-first short-circuit. Order matters — IsAlive is a generation-counter compare,
-            // Has<T> is an archetype-bitmap test (both sub-10 ns), IsStreamGone is a ConcurrentDictionary
-            // lookup + Array.IndexOf (N≈1), UserIsBlocked is heavier still. The dominant doom signal
-            // at scale is "avatar's last sid disappeared" — covered by the component-absence clause
-            // without touching the registry.
-            //
-            // Component absence ≠ avatar gone: NearbyLivekitBridgeSystem filters its UpdateStreaming
-            // query with [None<DeleteEntityIntention>], so a doomed avatar keeps StreamingAudioComponent
-            // until physical destruction. Component absence ≠ specific sid gone either: the component
-            // is per-walletId (one entry per avatar carries its full sid set), so for multi-sid
-            // participants the per-sid IsStreamGone fallback is the only granular signal. Both
-            // fallbacks must remain.
-            bool avatarGoneOrOutOfRange =
-                !World.IsAlive(avatar)
-                || World.Has<DeleteEntityIntention>(avatar)
-                || !World.Has<StreamingAudioComponent>(avatar)
-                || !World.Has<InAudibleRangeTag>(avatar);
-
-            if (avatarGoneOrOutOfRange
-                || registry.IsStreamGone(comp.Key)
-                || userBlockingCache.UserIsBlocked(comp.Key.identity))
+            // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
+            bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<StreamingAudioComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
+            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);
         }
 
@@ -119,7 +89,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         [Query]
-        private void TearDownAllAudioSources(ref NearbyAudioSourceComponent comp)
+        private void DisposeAllAudioSources(ref NearbyAudioSourceComponent comp)
         {
             sourceFactory.Dispose(comp.LivekitAudioSource);
         }

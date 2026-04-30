@@ -85,7 +85,7 @@ namespace DCL.VoiceChat.Nearby
             positionSystem.Initialize();
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
-            audibleRangeSystem = new NearbyAudibleRangeSystem(world);
+            audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration);
             audibleRangeSystem.Initialize();
         }
 

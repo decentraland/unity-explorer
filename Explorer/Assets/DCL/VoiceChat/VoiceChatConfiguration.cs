@@ -58,5 +58,18 @@ namespace DCL.VoiceChat
         public bool nearbySpatialize = true;
         [Range(0f, 1f)] public float nearbyIldStrength = 0.75f;
         public bool nearbySmoothPanning;
+
+        [Header("NEARBY - Audible Range (meters)")]
+        [Tooltip("Audible-range hysteresis band, in meters.\n" +
+                 "X = inner radius — crossing inward below this distance ADDS the audible-range tag.\n" +
+                 "Y = outer radius — crossing outward beyond this distance REMOVES the audible-range tag.\n" +
+                 "Must satisfy: Y > X > AudibleSuspendBand.Y, so bands strictly nest.")]
+        public Vector2 nearbyAudibleRangeBand = new (18f, 22f);
+
+        [Tooltip("Suspend hysteresis band, in meters.\n" +
+                 "X = inner radius — crossing inward below this distance CLEARS the suspended mark.\n" +
+                 "Y = outer radius — crossing outward beyond this distance MARKS the source suspended.\n" +
+                 "Must satisfy: AudibleRangeBand.X > Y > X > 0.")]
+        public Vector2 nearbyAudibleSuspendBand = new (16f, 17f);
     }
 }

@@ -9,7 +9,9 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -27,15 +29,38 @@ namespace DCL.VoiceChat.Nearby.Systems
     public partial class NearbyAudibleRangeSystem : BaseUnityLoopSystem
     {
         // Squared comparisons throughout — no sqrt per avatar per tick.
-        private const float OUTER_OUT_SQR = 22f * 22f;   // crossing outward beyond → remove InAudibleRangeTag
-        private const float OUTER_IN_SQR = 18f * 18f;    // crossing inward below   → add    InAudibleRangeTag
-        private const float SUSPEND_OUT_SQR = 17f * 17f; // crossing outward beyond → add    IsSuspendedTag
-        private const float SUSPEND_IN_SQR = 16f * 16f;  // crossing inward below   → remove IsSuspendedTag
+        private readonly float outerOutSqr;
+        private readonly float outerInSqr;
+        private readonly float suspendOutSqr;
+        private readonly float suspendInSqr;
 
         private SingleInstanceEntity playerEntity;
         private SingleInstanceEntity cameraEntity;
 
-        internal NearbyAudibleRangeSystem(World world) : base(world) { }
+        internal NearbyAudibleRangeSystem(World world, VoiceChatConfiguration configuration) : base(world)
+        {
+            Vector2 rangeBand = configuration.nearbyAudibleRangeBand;
+            Vector2 suspendBand = configuration.nearbyAudibleSuspendBand;
+
+            AssertHysteresisInvariant(rangeBand, suspendBand);
+
+            // Vector2 convention across both bands: x = inner radius, y = outer radius.
+            outerInSqr = rangeBand.x * rangeBand.x;
+            outerOutSqr = rangeBand.y * rangeBand.y;
+            suspendInSqr = suspendBand.x * suspendBand.x;
+            suspendOutSqr = suspendBand.y * suspendBand.y;
+        }
+
+        // Bands must strictly nest so a single distance can't satisfy contradictory tag transitions
+        // on the same tick. Checked once at construction — values can't drift at runtime.
+        [Conditional("UNITY_ASSERTIONS")]
+        private static void AssertHysteresisInvariant(Vector2 rangeBand, Vector2 suspendBand)
+        {
+            Debug.Assert(rangeBand.y > rangeBand.x, $"NearbyAudibleRange: RangeBand outer ({rangeBand.y}) must be > inner ({rangeBand.x}).");
+            Debug.Assert(rangeBand.x > suspendBand.y, $"NearbyAudibleRange: RangeBand inner ({rangeBand.x}) must be > SuspendBand outer ({suspendBand.y}).");
+            Debug.Assert(suspendBand.y > suspendBand.x, $"NearbyAudibleRange: SuspendBand outer ({suspendBand.y}) must be > inner ({suspendBand.x}).");
+            Debug.Assert(suspendBand.x > 0f, $"NearbyAudibleRange: SuspendBand inner ({suspendBand.x}) must be > 0.");
+        }
 
         public override void Initialize()
         {
@@ -48,24 +73,22 @@ namespace DCL.VoiceChat.Nearby.Systems
             Vector3 listenerPos = GetListenerPosition();
 
             // Order matters:
-            // 1. Tag avatars whose distance just dropped inside the outer-in threshold.
-            // 2. Untag avatars whose distance just crossed the outer-out threshold (cascades suspend removal).
-            // 3. Tag avatars in the suspend band.
-            // 4. Untag avatars whose distance just dropped below suspend-in.
-            AddAudibleRangeTagQuery(World, listenerPos);
-            RemoveAudibleRangeTagQuery(World, listenerPos);
-            AddSuspendedTagQuery(World, listenerPos);
-            RemoveSuspendedTagQuery(World, listenerPos);
+            AddAudibleRangeTagQuery(World, listenerPos); // 1. Tag avatars whose distance just dropped inside the outer-in threshold.
+            RemoveAudibleRangeTagQuery(World, listenerPos); // 2. Untag avatars whose distance just crossed the outer-out threshold (cascades suspend removal).
+            AddSuspendedTagQuery(World, listenerPos); // 3. Tag avatars in the suspend band.
+            RemoveSuspendedTagQuery(World, listenerPos); // 4. Untag avatars whose distance just dropped below suspend-in.
         }
 
-        // Mirrors NearbyAudioPositionSystem's listener-position resolution so the cull boundary
-        // is evaluated against the same spatial reference the player actually hears.
+        // Mirrors NearbyAudioPositionSystem's listener-position resolution so the cull boundary is evaluated against the same spatial reference the player actually hears.
         private Vector3 GetListenerPosition()
         {
             ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
-            if (cam.Mode == CameraMode.FirstPerson) return cam.Camera.transform.position;
-            if (World.TryGet(playerEntity, out PlayerComponent playerComp)) return playerComp.CameraFocus.position;
-            return cam.Camera.transform.position;
+            if (cam.Mode == CameraMode.FirstPerson)
+                return cam.Camera.transform.position;
+
+            return World.TryGet(playerEntity, out PlayerComponent playerComp)
+                ? playerComp.CameraFocus.position
+                : cam.Camera.transform.position;
         }
 
         [Query]
@@ -73,10 +96,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
         private void AddAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
-            float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
-            if (sqr > OUTER_IN_SQR) return;
-
-            World.Add<InAudibleRangeTag>(entity);
+            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude <= outerInSqr)
+                World.Add<InAudibleRangeTag>(entity);
         }
 
         [Query]
@@ -84,14 +105,14 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(StreamingAudioComponent), typeof(InAudibleRangeTag))]
         private void RemoveAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
-            float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
-            if (sqr <= OUTER_OUT_SQR) return;
+            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude > outerOutSqr)
+            {
+                World.Remove<InAudibleRangeTag>(entity);
 
-            World.Remove<InAudibleRangeTag>(entity);
-
-            // Cascade: maintain invariant I1 (suspended ⊆ inAudibleRange) on every observable point.
-            if (World.Has<IsSuspendedTag>(entity))
-                World.Remove<IsSuspendedTag>(entity);
+                // Cascade: maintain invariant I1 (suspended ⊆ inAudibleRange) on every observable point.
+                if (World.Has<IsSuspendedTag>(entity))
+                    World.Remove<IsSuspendedTag>(entity);
+            }
         }
 
         [Query]
@@ -99,10 +120,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(InAudibleRangeTag))]
         private void AddSuspendedTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
-            float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
-            if (sqr < SUSPEND_OUT_SQR) return;
-
-            World.Add<IsSuspendedTag>(entity);
+            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude >= suspendOutSqr)
+                World.Add<IsSuspendedTag>(entity);
         }
 
         [Query]
@@ -110,10 +129,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         [All(typeof(AvatarBase), typeof(InAudibleRangeTag), typeof(IsSuspendedTag))]
         private void RemoveSuspendedTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
-            float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
-            if (sqr >= SUSPEND_IN_SQR) return;
-
-            World.Remove<IsSuspendedTag>(entity);
+            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude < suspendInSqr)
+                World.Remove<IsSuspendedTag>(entity);
         }
     }
 }
