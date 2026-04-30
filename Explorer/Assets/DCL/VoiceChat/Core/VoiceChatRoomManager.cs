@@ -285,10 +285,20 @@ namespace DCL.VoiceChat
                 if (canSpeak)
                 {
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
-                    microphonePublisher.PublishAsync(micAutoStart: voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value, CancellationToken.None).Forget();
+                    PublishMicAsync(voiceChatMicrophoneHandler.IsMicrophoneEnabled.Value).Forget();
                 }
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
+            return;
+
+            // Wrap to surface failures (e.g., RustAudio reporting no reachable mic during a Bluetooth toggle window)
+            // as a managed log instead of a UniTaskScheduler unobserved exception.
+            async UniTaskVoid PublishMicAsync(bool autoStart)
+            {
+                try { await microphonePublisher.PublishAsync(autoStart, CancellationToken.None); }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Initial mic publish failed", ex), ReportCategory.VOICE_CHAT); }
+            }
         }
 
         // Mid-call mic switch needs Unpublish+Republish: the FFI source is pinned to the original device config at track creation.
