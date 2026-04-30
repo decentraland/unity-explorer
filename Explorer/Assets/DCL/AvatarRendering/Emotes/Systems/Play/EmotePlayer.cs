@@ -184,6 +184,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                         // Disable the renderer too for possible performance optimizations such as shadow casting or material changes
                         renderer.enabled = false;
                         renderer.forceRenderingOff = true;
+                        continue;
                     }
 
                     if (forceBackfaceCullingEnabled)
