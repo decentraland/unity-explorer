@@ -22,16 +22,15 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private const string ROOT_NAME = "VoiceChatSources_Nearby";
 
-        // Emergency fallback toggle. Flip to false in this branch to bypass pooling and run the instantiate-on-Create / destroy-on-Dispose path.
-        private const bool USE_POOL = true;
-        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the legacy instantiate-on-Create / destroy-on-Dispose path
+        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the legacy
+        // instantiate-on-Create / destroy-on-Dispose path. Set to 0 to bypass pooling entirely.
         private const int MAX_LIVE_INSTANCES = 300;
 
         private readonly VoiceChatConfiguration configuration;
         private readonly GameObjectPool<LivekitAudioSource> pool;
 
-        // Tags instances handed out via the legacy fallback path (USE_POOL=false or pool overflow)
-        // so Dispose can route them back through DisposeLegacy instead of the pool.
+        // Tags instances handed out via the legacy fallback path (pool overflow) so Dispose can
+        // route them back through DisposeLegacy instead of the pool.
         private readonly HashSet<LivekitAudioSource> legacyInstances = new (8);
 
         private int liveCount;
@@ -51,8 +50,6 @@ namespace DCL.VoiceChat.Nearby.Audio
 
         public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream)
         {
-            if (!USE_POOL) return CreateLegacyTracked(key, stream);
-
             // Cap on simultaneously-live instances. Once exceeded, peel off into the legacy path:
             // those overflow sources get destroyed on Dispose instead of returning to the pool, so
             // the resident set drains back to MAX_LIVE_INSTANCES naturally as users go out of range.
@@ -73,18 +70,13 @@ namespace DCL.VoiceChat.Nearby.Audio
                 return;
             }
 
-            if (USE_POOL)
-            {
-                pool.Release(source);
-                if (liveCount > 0) liveCount--;
-            }
-            else
-                DisposeLegacy(source);
+            pool.Release(source);
+            if (liveCount > 0) liveCount--;
         }
 
         public void DisposeRoot()
         {
-            if (USE_POOL) pool.Dispose();
+            pool.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(pool.ParentContainer);
         }
 
