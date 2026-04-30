@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
             ulong audioSourceCount = 0;
             if (isConnected)
                 foreach (KeyValuePair<string, LKParticipant> entry in islandRoom.Participants.RemoteParticipantIdentities())
-                    audioSourceCount += (ulong)streamRegistry.GetAudioSids(entry.Key).Length;
+                    audioSourceCount += (ulong)(streamRegistry.GetAudioSidsArray(entry.Key)?.Length ?? 0);
             activeAudioSourcesBinding.Value = audioSourceCount;
 
             ulong componentCount = (ulong)world.CountEntities(in COMPONENT_QUERY);

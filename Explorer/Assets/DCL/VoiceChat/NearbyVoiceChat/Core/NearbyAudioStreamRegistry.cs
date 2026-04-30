@@ -45,8 +45,8 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private readonly IRoom room;
 
-        // Reference-equality contract — see class XML. Each value is a freshly-allocated, immutable
-        // string[] published by AddAudioSid / RemoveAudioSid / RehydrateFromRoom. Never mutate.
+        // Reference-equality contract — see class XML. Each value is a freshly-allocated, immutable string[]
+        // published by AddAudioSid / RemoveAudioSid / RehydrateFromRoom. Never mutate.
         private readonly ConcurrentDictionary<string, string[]> streamsByIdentity = new ();
         private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
 
@@ -61,8 +61,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.TrackUnpublished += OnTrackUnpublished;
 
             room.Participants.UpdatesFromParticipant += OnParticipantUpdate;
-
-            room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            room.ActiveSpeakers.Updated += PullActiveSpeakers;
         }
 
         public void Dispose()
@@ -74,15 +73,11 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.TrackUnpublished -= OnTrackUnpublished;
 
             room.Participants.UpdatesFromParticipant -= OnParticipantUpdate;
-
-            room.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            room.ActiveSpeakers.Updated -= PullActiveSpeakers;
 
             streamsByIdentity.Clear();
             activeSpeakers.Clear();
         }
-
-        private void OnActiveSpeakersUpdated() =>
-            PullActiveSpeakers();
 
         private void PullActiveSpeakers()
         {
@@ -97,9 +92,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         public bool HasAudioStream(string walletId) =>
             streamsByIdentity.ContainsKey(walletId);
 
-        public ReadOnlySpan<string> GetAudioSids(string walletId) =>
-            streamsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : default;
-
+        // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault
         public string[]? GetAudioSidsArray(string walletId) =>
             streamsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
 
@@ -151,27 +144,26 @@ namespace DCL.VoiceChat.Nearby.Audio
         }
 
         private static bool IsNearbyAudio(TrackPublication publication) =>
-            publication.Kind == TrackKind.KindAudio && publication.Source == TrackSource.SourceMicrophone;
+            publication is { Kind: TrackKind.KindAudio, Source: TrackSource.SourceMicrophone };
 
         private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant) =>
             RemoveAudioSid(participant.Identity, publication.Sid);
 
         private void OnTrackUnpublished(TrackPublication publication, LKParticipant participant)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             // Room.cs:300-301 may invoke with a null publication when participant.UnPublish
             // raced another teardown path and returned null via the out-param.
             if (publication is null) return;
 
-            // No kind/source filter on remove: foreign sids never enter streamsByIdentity
-            // (subscribe-side filter), so RemoveAudioSid is a safe no-op for them.
+            // No kind/source filter on remove: foreign sids never enter streamsByIdentity (subscribe-side filter), so RemoveAudioSid is a safe no-op for them.
             RemoveAudioSid(participant.Identity, publication.Sid);
         }
 
         private void OnParticipantUpdate(LKParticipant participant, UpdateFromParticipant update)
         {
-            if (update != UpdateFromParticipant.Disconnected) return;
-
-            streamsByIdentity.TryRemove(participant.Identity, out _);
+            if (update == UpdateFromParticipant.Disconnected)
+                streamsByIdentity.TryRemove(participant.Identity, out _);
         }
 
         // Reference-equality contract — produces a NEW array on every call, never mutates an existing one.
@@ -189,9 +181,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         private void RemoveAudioSid(string identity, string sid)
         {
             // ConcurrentDictionary<TKey,TValue>.TryRemove(KeyValuePair) is .NET Core 2.0+ only;
-            // Unity's Mono runtime does not expose it. Fall back to ICollection<KVP>.Remove(item),
-            // which performs the same atomic key+value compare under the hood (see ConcurrentDictionary
-            // source: explicit ICollection.Remove forwards to TryRemoveInternal with matchValue=true).
+            // Fall back to ICollection<KVP>.Remove(item), which performs the same atomic key+value compare under the hood .
             var coll = (ICollection<KeyValuePair<string, string[]>>)streamsByIdentity;
 
             while (streamsByIdentity.TryGetValue(identity, out string[]? prev))

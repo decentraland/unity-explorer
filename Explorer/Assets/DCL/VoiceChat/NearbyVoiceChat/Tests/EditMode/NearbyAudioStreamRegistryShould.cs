@@ -162,7 +162,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             Assert.That(registry.HasAudioStream("0xUNKNOWN"), Is.False);
             Assert.That(registry.GetAudioSidsArray("0xUNKNOWN"), Is.Null);
-            Assert.That(registry.GetAudioSids("0xUNKNOWN").IsEmpty, Is.True);
         }
 
         [Test]

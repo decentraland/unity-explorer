@@ -501,8 +501,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public bool HasAudioStream(string walletId) => false;
 
-            public ReadOnlySpan<string> GetAudioSids(string walletId) => default;
-
             public string[]? GetAudioSidsArray(string walletId) => null;
 
             public Weak<AudioStream> GetActiveStream(StreamKey key)

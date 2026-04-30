@@ -40,10 +40,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Default: no streams, no active speakers — explicit so individual tests only override
             // the slot they care about. NSubstitute returns null/false for unstubbed reference/bool
             // returns, but stating the contract makes intent legible.
-            //
-            // We mock GetAudioSidsArray (returns string[]?) — Bridge's data path consumes this.
-            // GetAudioSids returns ReadOnlySpan<string> which NSubstitute may not be able to mock
-            // for ref-struct returns; the design's NSubstitute fallback uses GetAudioSidsArray.
             registry.GetAudioSidsArray(Arg.Any<string>()).Returns((string[]?)null);
             registry.IsActiveSpeaker(Arg.Any<string>()).Returns(false);
 

@@ -511,9 +511,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             public bool HasAudioStream(string walletId) =>
                 sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) && sids.Count > 0;
 
-            public ReadOnlySpan<string> GetAudioSids(string walletId) =>
-                GetAudioSidsArray(walletId);
-
             public string[]? GetAudioSidsArray(string walletId)
             {
                 if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) || sids.Count == 0)

@@ -19,13 +19,6 @@ namespace DCL.VoiceChat.Nearby.Audio
         bool HasAudioStream(string walletId);
 
         /// <summary>
-        /// Read-only span over the registry's copy-on-write sid array for the wallet.
-        /// <c>default</c> (empty span) when the wallet is not indexed; use <see cref="ReadOnlySpan{T}.IsEmpty"/>
-        /// to collapse null/empty into one signal. Iterating the span allocates nothing.
-        /// </summary>
-        ReadOnlySpan<string> GetAudioSids(string walletId);
-
-        /// <summary>
         /// Raw reference to the registry's copy-on-write sid array. <c>null</c> when the wallet is not indexed.
         /// Used by <see cref="LiveKit.Rooms.IRoom"/>-driven systems that need to compare snapshots via
         /// <see cref="object.ReferenceEquals(object,object)"/> — a different reference ↔ content changed.

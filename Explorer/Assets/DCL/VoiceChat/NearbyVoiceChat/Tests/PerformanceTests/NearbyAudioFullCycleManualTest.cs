@@ -344,9 +344,6 @@ namespace DCL.VoiceChat.Nearby
 
             public bool HasAudioStream(string walletId) => sidsByIdentity.ContainsKey(walletId);
 
-            public ReadOnlySpan<string> GetAudioSids(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : default;
-
             public string[]? GetAudioSidsArray(string walletId) =>
                 sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
 
