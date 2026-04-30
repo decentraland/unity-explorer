@@ -92,7 +92,7 @@ namespace SceneRunner.Admins
             while (token.IsCancellationRequested == false)
             {
                 await FireRequestAsync(token);
-                if (cts.IsCancellationRequested) return;
+                if (token.IsCancellationRequested) return;
                 await UniTask.Delay(DELAY, cancellationToken: token).SuppressCancellationThrow();
             }
         }
