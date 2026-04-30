@@ -291,8 +291,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
             return;
 
-            // Wrap to surface failures (e.g., RustAudio reporting no reachable mic during a Bluetooth toggle window)
-            // as a managed log instead of a UniTaskScheduler unobserved exception.
+            // Wrapped so failures surface as a managed log instead of an unobserved UniTask exception.
             async UniTaskVoid PublishMicAsync(bool autoStart)
             {
                 try { await microphonePublisher.PublishAsync(autoStart, CancellationToken.None); }

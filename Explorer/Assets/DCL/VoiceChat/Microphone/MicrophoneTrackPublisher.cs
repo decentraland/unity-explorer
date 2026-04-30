@@ -103,9 +103,7 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            // Verify a usable mic exists BEFORE tearing down the current track. RustAudio on Windows
-            // can leave devices unreachable for a brief window after Bluetooth toggling; tearing down
-            // first would leave the user without a track if the rebuild fails.
+            // Guard before teardown: a transient RustAudio fail (e.g. Bluetooth toggling on Windows) would otherwise leave the user without a track.
             Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
             if (!reachable.Success)
             {
