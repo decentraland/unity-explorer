@@ -44,6 +44,9 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             room.TrackSubscribed += OnTrackSubscribed;
             room.TrackUnsubscribed += OnTrackUnsubscribed;
+            room.TrackUnpublished += OnTrackUnpublished;
+
+            room.Participants.UpdatesFromParticipant += OnParticipantUpdate;
 
             room.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
         }
@@ -54,6 +57,9 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             room.TrackSubscribed -= OnTrackSubscribed;
             room.TrackUnsubscribed -= OnTrackUnsubscribed;
+            room.TrackUnpublished -= OnTrackUnpublished;
+
+            room.Participants.UpdatesFromParticipant -= OnParticipantUpdate;
 
             room.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
 
@@ -61,7 +67,10 @@ namespace DCL.VoiceChat.Nearby.Audio
             activeSpeakers.Clear();
         }
 
-        private void OnActiveSpeakersUpdated()
+        private void OnActiveSpeakersUpdated() =>
+            PullActiveSpeakers();
+
+        private void PullActiveSpeakers()
         {
             activeSpeakers.Clear();
             foreach (string id in room.ActiveSpeakers)
@@ -86,38 +95,73 @@ namespace DCL.VoiceChat.Nearby.Audio
 
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
         {
-            if (update == ConnectionUpdate.Disconnected)
+            switch (update)
             {
-                streamsByIdentity.Clear();
-                activeSpeakers.Clear();
-                return;
+                case ConnectionUpdate.Disconnected:
+                    streamsByIdentity.Clear();
+                    activeSpeakers.Clear();
+                    return;
+                case ConnectionUpdate.Connected:
+                case ConnectionUpdate.Reconnected:
+                    RehydrateFromRoom();
+                    PullActiveSpeakers();
+                    return;
+                // Reconnecting: no-op intentionally — per-track events still flow during reconnect,
+                // and the following Reconnected triggers a full re-sync that hard-resyncs any drift.
             }
+        }
 
-            if (update != ConnectionUpdate.Connected) return;
-
+        // Relies on serial FFI dispatch — concurrent OnTrackSubscribed/OnTrackUnsubscribed during
+        // clear+rebuild is impossible by LiveKit's per-room dispatch contract.
+        private void RehydrateFromRoom()
+        {
             streamsByIdentity.Clear();
 
             foreach (KeyValuePair<string, LKParticipant> participantEntry in room.Participants.RemoteParticipantIdentities())
             foreach (KeyValuePair<string, TrackPublication> trackEntry in participantEntry.Value.Tracks)
-                if (trackEntry.Value.Kind == TrackKind.KindAudio)
+                if (IsNearbyAudio(trackEntry.Value))
                     AddAudioSid(participantEntry.Key, trackEntry.Key);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
         {
-            if (publication.Kind == TrackKind.KindAudio)
+            if (IsNearbyAudio(publication))
                 AddAudioSid(participant.Identity, publication.Sid);
         }
 
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
+        private static bool IsNearbyAudio(TrackPublication publication) =>
+            publication.Kind == TrackKind.KindAudio && publication.Source == TrackSource.SourceMicrophone;
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant) =>
+            RemoveAudioSid(participant.Identity, publication.Sid);
+
+        private void OnTrackUnpublished(TrackPublication publication, LKParticipant participant)
         {
-            if (!streamsByIdentity.TryGetValue(participant.Identity, out ConcurrentDictionary<string, byte>? sids))
+            // Room.cs:300-301 may invoke with a null publication when participant.UnPublish
+            // raced another teardown path and returned null via the out-param.
+            if (publication is null) return;
+
+            // No kind/source filter on remove: foreign sids never enter streamsByIdentity
+            // (subscribe-side filter), so RemoveAudioSid is a safe no-op for them.
+            RemoveAudioSid(participant.Identity, publication.Sid);
+        }
+
+        private void OnParticipantUpdate(LKParticipant participant, UpdateFromParticipant update)
+        {
+            if (update != UpdateFromParticipant.Disconnected) return;
+
+            streamsByIdentity.TryRemove(participant.Identity, out _);
+        }
+
+        private void RemoveAudioSid(string identity, string sid)
+        {
+            if (!streamsByIdentity.TryGetValue(identity, out ConcurrentDictionary<string, byte>? sids))
                 return;
 
-            sids.TryRemove(publication.Sid, out _);
+            sids.TryRemove(sid, out _);
 
             if (sids.IsEmpty)
-                streamsByIdentity.TryRemove(participant.Identity, out _);
+                streamsByIdentity.TryRemove(identity, out _);
         }
 
         private void AddAudioSid(string identity, string sid)

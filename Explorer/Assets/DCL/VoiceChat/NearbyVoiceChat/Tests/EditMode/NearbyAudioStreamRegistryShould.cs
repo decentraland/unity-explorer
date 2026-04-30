@@ -27,6 +27,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private const string SID_VIDEO = "TR_video-1";
 
         private IRoom room = null!;
+        private IParticipantsHub participantsHub = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
         private NearbyAudioStreamRegistry registry = null!;
 
@@ -34,6 +35,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SetUp()
         {
             room = Substitute.For<IRoom>();
+            participantsHub = Substitute.For<IParticipantsHub>();
+            room.Participants.Returns(participantsHub);
             activeSpeakers = new FakeActiveSpeakers();
             room.ActiveSpeakers.Returns(activeSpeakers);
             registry = new NearbyAudioStreamRegistry(room);
@@ -57,6 +60,40 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void IgnoreScreenshareAudioOnSubscribed()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio, TrackSource.SourceScreenshareAudio);
+
+            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+        }
+
+        [Test]
+        public void IgnoreUnknownSourceAudioOnSubscribed()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio, TrackSource.SourceUnknown);
+
+            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+        }
+
+        [Test]
+        public void IgnoreScreenshareAudioOnRehydrate()
+        {
+            SetupRemoteParticipants(
+                (WALLET_A, new[]
+                {
+                    (SID_1, TrackKind.KindAudio, TrackSource.SourceMicrophone),
+                    (SID_2, TrackKind.KindAudio, TrackSource.SourceScreenshareAudio),
+                }));
+
+            RaiseConnectionUpdated(ConnectionUpdate.Connected);
+
+            var sids = registry.GetAudioSids(WALLET_A);
+            Assert.That(sids, Is.Not.Null);
+            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(sids.ContainsKey(SID_2), Is.False);
+        }
+
+        [Test]
         public void IgnoreSidWhenNonAudioTrackSubscribed()
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindVideo);
@@ -76,6 +113,42 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(sids, Is.Not.Null);
             Assert.That(sids!.ContainsKey(SID_1), Is.False);
             Assert.That(sids.ContainsKey(SID_2), Is.True);
+        }
+
+        [Test]
+        public void RemoveSidWhenAudioTrackUnpublished()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            RaiseTrackUnpublished(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+        }
+
+        [Test]
+        public void IgnoreNullPublicationOnUnpublished()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            LKParticipant participant = NewParticipant(WALLET_A);
+            Assert.DoesNotThrow(() =>
+                room.TrackUnpublished += Raise.Event<PublishDelegate>(null!, participant));
+
+            var sids = registry.GetAudioSids(WALLET_A);
+            Assert.That(sids, Is.Not.Null);
+            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+        }
+
+        [Test]
+        public void IgnoreNonAudioTrackUnpublished()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            RaiseTrackUnpublished(WALLET_A, SID_VIDEO, TrackKind.KindVideo);
+
+            var sids = registry.GetAudioSids(WALLET_A);
+            Assert.That(sids, Is.Not.Null);
+            Assert.That(sids!.ContainsKey(SID_1), Is.True);
         }
 
         [Test]
@@ -124,6 +197,86 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
             Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
+        }
+
+        [Test]
+        public void DropAllSidsWhenParticipantDisconnects()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_B, SID_VIDEO, TrackKind.KindAudio);
+
+            RaiseParticipantUpdated(WALLET_A, UpdateFromParticipant.Disconnected);
+
+            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
+            Assert.That(registry.GetAudioSids(WALLET_B)!.ContainsKey(SID_VIDEO), Is.True);
+        }
+
+        [Test]
+        public void IgnoreNonDisconnectedParticipantUpdate()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            RaiseParticipantUpdated(WALLET_A, UpdateFromParticipant.MetadataChanged);
+
+            var sids = registry.GetAudioSids(WALLET_A);
+            Assert.That(sids, Is.Not.Null);
+            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+        }
+
+        [Test]
+        public void RehydrateOnReconnected()
+        {
+            SetupRemoteParticipants((WALLET_A, new[] { (SID_1, TrackKind.KindAudio) }));
+            RaiseConnectionUpdated(ConnectionUpdate.Connected);
+
+            SetupRemoteParticipants((WALLET_B, new[] { (SID_2, TrackKind.KindAudio) }));
+            RaiseConnectionUpdated(ConnectionUpdate.Reconnected);
+
+            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
+            Assert.That(registry.GetAudioSids(WALLET_B)!.ContainsKey(SID_2), Is.True);
+        }
+
+        [Test]
+        public void PullActiveSpeakersOnReconnected()
+        {
+            activeSpeakers.SetActives(WALLET_A);
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.True);
+
+            activeSpeakers.SetSilently(WALLET_B);
+
+            RaiseConnectionUpdated(ConnectionUpdate.Reconnected);
+
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.False);
+            Assert.That(registry.IsActiveSpeaker(WALLET_B), Is.True);
+        }
+
+        [Test]
+        public void PullActiveSpeakersOnConnected()
+        {
+            activeSpeakers.SetActives(WALLET_A);
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.True);
+
+            activeSpeakers.SetSilently(WALLET_B);
+
+            RaiseConnectionUpdated(ConnectionUpdate.Connected);
+
+            Assert.That(registry.IsActiveSpeaker(WALLET_A), Is.False);
+            Assert.That(registry.IsActiveSpeaker(WALLET_B), Is.True);
+        }
+
+        [Test]
+        public void IgnoreReconnectingUpdate()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            RaiseConnectionUpdated(ConnectionUpdate.Reconnecting);
+
+            var sids = registry.GetAudioSids(WALLET_A);
+            Assert.That(sids, Is.Not.Null);
+            Assert.That(sids!.ContainsKey(SID_1), Is.True);
         }
 
         [Test]
@@ -219,10 +372,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.DoesNotThrow(() => Task.WaitAll(new[] { writer, reader }, millisecondsTimeout: 5000));
         }
 
-        private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind)
+        private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
         {
             LKParticipant participant = NewParticipant(identity);
-            TrackPublication publication = NewPublication(sid, kind);
+            TrackPublication publication = NewPublication(sid, kind, source);
             room.TrackSubscribed += Raise.Event<SubscribeDelegate>(null!, publication, participant);
         }
 
@@ -233,30 +386,55 @@ namespace DCL.VoiceChat.Nearby.Tests
             room.TrackUnsubscribed += Raise.Event<SubscribeDelegate>(null!, publication, participant);
         }
 
+        private void RaiseTrackUnpublished(string identity, string sid, TrackKind kind)
+        {
+            LKParticipant participant = NewParticipant(identity);
+            TrackPublication publication = NewPublication(sid, kind);
+            room.TrackUnpublished += Raise.Event<PublishDelegate>(publication, participant);
+        }
+
         private void RaiseConnectionUpdated(ConnectionUpdate update)
         {
             room.ConnectionUpdated += Raise.Event<ConnectionDelegate>(room, update, (LKDisconnectReason?)null);
+        }
+
+        private void RaiseParticipantUpdated(string identity, UpdateFromParticipant update)
+        {
+            LKParticipant participant = NewParticipant(identity);
+            participantsHub.UpdatesFromParticipant += Raise.Event<ParticipantDelegate>(participant, update);
         }
 
         private void SetupRemoteParticipants(params (string identity, (string sid, TrackKind kind)[] tracks)[] participants)
         {
             var dict = new Dictionary<string, LKParticipant>();
             foreach ((string identity, (string sid, TrackKind kind)[] tracks) in participants)
-                dict[identity] = NewParticipantWithTracks(identity, tracks);
+            {
+                var triples = new (string sid, TrackKind kind, TrackSource source)[tracks.Length];
+                for (int i = 0; i < tracks.Length; i++)
+                    triples[i] = (tracks[i].sid, tracks[i].kind, TrackSource.SourceMicrophone);
+                dict[identity] = NewParticipantWithTracks(identity, triples);
+            }
 
-            var hub = Substitute.For<IParticipantsHub>();
-            hub.RemoteParticipantIdentities().Returns(dict);
-            room.Participants.Returns(hub);
+            participantsHub.RemoteParticipantIdentities().Returns(dict);
         }
 
-        private static LKParticipant NewParticipantWithTracks(string identity, (string sid, TrackKind kind)[] tracks)
+        private void SetupRemoteParticipants(params (string identity, (string sid, TrackKind kind, TrackSource source)[] tracks)[] participants)
+        {
+            var dict = new Dictionary<string, LKParticipant>();
+            foreach ((string identity, (string sid, TrackKind kind, TrackSource source)[] tracks) in participants)
+                dict[identity] = NewParticipantWithTracks(identity, tracks);
+
+            participantsHub.RemoteParticipantIdentities().Returns(dict);
+        }
+
+        private static LKParticipant NewParticipantWithTracks(string identity, (string sid, TrackKind kind, TrackSource source)[] tracks)
         {
             LKParticipant participant = NewParticipant(identity);
 
             FieldInfo tracksField = typeof(LKParticipant).GetField("tracks", BindingFlags.Instance | BindingFlags.NonPublic)!;
             var tracksDict = (ConcurrentDictionary<string, TrackPublication>)tracksField.GetValue(participant)!;
-            foreach ((string sid, TrackKind kind) in tracks)
-                tracksDict[sid] = NewPublication(sid, kind);
+            foreach ((string sid, TrackKind kind, TrackSource source) in tracks)
+                tracksDict[sid] = NewPublication(sid, kind, source);
 
             return participant;
         }
@@ -270,9 +448,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             return participant;
         }
 
-        private static TrackPublication NewPublication(string sid, TrackKind kind)
+        private static TrackPublication NewPublication(string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
         {
-            var info = new TrackPublicationInfo { Sid = sid, Kind = kind };
+            var info = new TrackPublicationInfo { Sid = sid, Kind = kind, Source = source };
             var publication = new TrackPublication();
             typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
                                     .SetValue(publication, info);
@@ -293,6 +471,12 @@ namespace DCL.VoiceChat.Nearby.Tests
                 set.Clear();
                 foreach (string id in ids) set.Add(id);
                 Updated.Invoke();
+            }
+
+            public void SetSilently(params string[] ids)
+            {
+                set.Clear();
+                foreach (string id in ids) set.Add(id);
             }
         }
     }
