@@ -339,13 +339,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 animationComp.Play(avatarClipName);
             }
 
-            if (emoteReferences.propClip != null && emoteReferences.animationComp != null)
-            {
-                Animation propAnimationComp = emoteReferences.animationComp;
-                string propClipName = emoteReferences.propClip.name;
-                propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                propAnimationComp.Play(propClipName);
-            }
+            SetupPropAnimation(emoteReferences, loop);
         }
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
@@ -397,12 +391,24 @@ namespace DCL.AvatarRendering.Emotes.Play
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetupPropAnimation(EmoteReferences emoteReferences, bool isLooping)
         {
-            if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
+            if (emoteReferences.propClip == null) return;
+
+            if (emoteReferences.animatorComp != null)
             {
                 int propTriggerHash = IsAnimatorImportedLocally(emoteReferences.animatorComp) ? AnimationHashes.PROP_ANIMATION_TRIGGER : emoteReferences.propClipHash;
 
                 emoteReferences.animatorComp.SetTrigger(propTriggerHash);
                 emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isLooping);
+            }
+            else if (emoteReferences.animationComp != null)
+            {
+                // Legacy prop animation lives on the emote prefab's own Animation component, so
+                // it animates prop transforms in the emote hierarchy and never collides with the
+                // avatar's Animator/SampleAnimation pipeline used by the masked-legacy blender.
+                Animation propAnimationComp = emoteReferences.animationComp;
+                string propClipName = emoteReferences.propClip.name;
+                propAnimationComp[propClipName].wrapMode = isLooping ? WrapMode.Loop : WrapMode.Once;
+                propAnimationComp.Play(propClipName);
             }
 
             return;
