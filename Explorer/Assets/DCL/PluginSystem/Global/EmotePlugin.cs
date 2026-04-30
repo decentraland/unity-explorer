@@ -91,7 +91,6 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             string builderContentURL,
-            IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             IDecentralandUrlsSource decentralandUrlsSource,

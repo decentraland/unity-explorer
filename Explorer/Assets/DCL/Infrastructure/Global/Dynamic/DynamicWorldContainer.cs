@@ -795,7 +795,6 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     builderContentURL.Value,
-                    appArgs,
                     thumbnailProvider,
                     staticContainer.ScenesCache,
                     bootstrapContainer.DecentralandUrlsSource,
