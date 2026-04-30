@@ -11,7 +11,7 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND);
+            bool value = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND, true);
             view.ToggleView.Toggle.SetIsOnWithoutNotify(value);
             view.ToggleView.Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }

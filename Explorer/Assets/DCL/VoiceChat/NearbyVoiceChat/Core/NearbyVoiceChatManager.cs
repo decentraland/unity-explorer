@@ -134,7 +134,7 @@ namespace DCL.VoiceChat
 
         private void OnApplicationFocusChanged(bool hasFocus)
         {
-            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND))
+            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND, true))
                 return;
 
             if (!hasFocus && stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC && micPublisher.isRecording)
