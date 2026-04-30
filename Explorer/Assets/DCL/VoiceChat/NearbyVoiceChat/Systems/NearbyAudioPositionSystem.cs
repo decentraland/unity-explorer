@@ -8,7 +8,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
 using Unity.Mathematics;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
@@ -57,8 +56,17 @@ namespace DCL.VoiceChat.Nearby.Systems
             bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
-            src.enabled = !inactive;
-            src.AudioSource.enabled = !inactive;
+
+            // Diff-write: enabled toggling fires OnEnable/OnDisable on LivekitAudioSource (audio-config (un)subscribe)
+            // and crosses Unity interop on AudioSource. Skip both while the per-entity active/inactive bit is unchanged.
+            // Pessimistic init (LastInactive=false matches factory's enabled=true hand-off) forces the first-tick write
+            // when an avatar binds directly into the suspend band.
+            if (inactive != nearbyAudio.LastInactive)
+            {
+                src.enabled = !inactive;
+                src.AudioSource.enabled = !inactive;
+                nearbyAudio.LastInactive = inactive;
+            }
 
             if (inactive) return;
 
@@ -67,24 +75,19 @@ namespace DCL.VoiceChat.Nearby.Systems
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
 
-            // Diff-write: skip native transform.position interop while the avatar barely moved. Spatial-angle math below
-            // still feeds off the fresh sourcePos so audibility direction never desyncs from the actual head position.
             if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
             {
                 src.transform.position = sourcePos;
                 nearbyAudio.LastWrittenPos = sourcePos;
             }
 
+            // virtualized sources are not audible, so no need to calculate spatialization
             if (!src.AudioSource.isVirtual)
             {
                 (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
                 src.SetSpatialAngles(azimuth, elevation);
             }
 
-            // Mute version + diff-write: hot path is a single uint compare. Lookup and AudioSource.mute interop only
-            // run on ticks where the cache mutated; AudioSource.mute is set only if this entity's value actually changed.
-            // Pessimistic init (component LastSeenMuteVersion=0, cache.Version starts at 1) forces the binding-time
-            // unmute recompute on the first tick — preserves the world-origin-burst protection from before the diff layer.
             uint cacheVersion = muteService.CacheVersion;
             if (nearbyAudio.LastSeenMuteVersion != cacheVersion)
             {

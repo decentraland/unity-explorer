@@ -11,11 +11,9 @@ using UnityEngine;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    /// Applies <see cref="VoiceChatConfiguration"/> LiveKit spatial settings
-    /// to every <see cref="NearbyAudioSourceComponent"/> each frame.
+    /// Applies <see cref="VoiceChatConfiguration"/> LiveKit spatial settings to every <see cref="NearbyAudioSourceComponent"/> each frame.
     /// Debug bindings are two-way: widget changes update config, external config changes update widget.
-    /// Runs in <see cref="InitializationSystemGroup"/> so values are up-to-date
-    /// before <see cref="NearbyAudioPositionSystem"/> processes positions.
+    /// Runs in <see cref="InitializationSystemGroup"/> so values are up-to-date before <see cref="NearbyAudioPositionSystem"/> processes positions.
     /// </summary>
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class NearbyAudioDebugSystem : BaseUnityLoopSystem

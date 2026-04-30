@@ -75,7 +75,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             Entity avatar = comp.AvatarEntity;
 
             // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
-            bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<StreamingAudioComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
+            bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<NearbyAudioStreamerComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
             if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);
         }

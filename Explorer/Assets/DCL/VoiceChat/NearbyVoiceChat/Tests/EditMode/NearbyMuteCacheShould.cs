@@ -1,6 +1,5 @@
 using DCL.VoiceChat.Nearby.MutePersistence;
 using NUnit.Framework;
-using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Tests
 {
@@ -8,14 +7,11 @@ namespace DCL.VoiceChat.Nearby.Tests
     public class NearbyMuteCacheShould
     {
         private NearbyMuteCache cache;
-        private List<(string walletId, bool muted)> receivedEvents;
 
         [SetUp]
         public void SetUp()
         {
             cache = new NearbyMuteCache();
-            receivedEvents = new List<(string, bool)>();
-            cache.MuteStateChanged += (id, muted) => receivedEvents.Add((id, muted));
         }
 
         [Test]
@@ -43,47 +39,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void FireEventOnMute()
-        {
-            cache.SetMuted("0xabc", true);
-
-            Assert.That(receivedEvents.Count, Is.EqualTo(1));
-            Assert.That(receivedEvents[0].walletId, Is.EqualTo("0xabc"));
-            Assert.That(receivedEvents[0].muted, Is.True);
-        }
-
-        [Test]
-        public void FireEventOnUnmute()
-        {
-            cache.SetMuted("0xabc", true);
-            receivedEvents.Clear();
-
-            cache.SetMuted("0xabc", false);
-
-            Assert.That(receivedEvents.Count, Is.EqualTo(1));
-            Assert.That(receivedEvents[0].muted, Is.False);
-        }
-
-        [Test]
-        public void NotFireEventWhenAlreadyMuted()
-        {
-            cache.SetMuted("0xabc", true);
-            receivedEvents.Clear();
-
-            cache.SetMuted("0xabc", true);
-
-            Assert.That(receivedEvents, Is.Empty);
-        }
-
-        [Test]
-        public void NotFireEventWhenAlreadyUnmuted()
-        {
-            cache.SetMuted("0xabc", false);
-
-            Assert.That(receivedEvents, Is.Empty);
-        }
-
-        [Test]
         public void AddServerEntriesOnMerge()
         {
             cache.Merge(new[] { "0xnew1", "0xnew2" });
@@ -96,38 +51,11 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void PreserveLocalMutesOnMerge()
         {
             cache.SetMuted("0xlocal", true);
-            receivedEvents.Clear();
 
             cache.Merge(new[] { "0xserver" });
 
             Assert.That(cache.IsMuted("0xlocal"), Is.True);
             Assert.That(cache.IsMuted("0xserver"), Is.True);
-        }
-
-        [Test]
-        public void FireMutedEventsOnlyForNewEntriesOnMerge()
-        {
-            cache.SetMuted("0xlocal", true);
-            receivedEvents.Clear();
-
-            cache.Merge(new[] { "0xlocal", "0xserver" });
-
-            Assert.That(receivedEvents, Is.EquivalentTo(new[]
-            {
-                ("0xserver", true),
-            }));
-        }
-
-        [Test]
-        public void NotFireEventsWhenAllServerEntriesAlreadyMutedLocally()
-        {
-            cache.SetMuted("0xa", true);
-            cache.SetMuted("0xb", true);
-            receivedEvents.Clear();
-
-            cache.Merge(new[] { "0xa", "0xb" });
-
-            Assert.That(receivedEvents, Is.Empty);
         }
 
         [Test]
@@ -142,29 +70,16 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void NotFireEventForLocallyUnmutedAddressOnMerge()
-        {
-            cache.SetMuted("0xx", false);
-            receivedEvents.Clear();
-
-            cache.Merge(new[] { "0xx" });
-
-            Assert.That(receivedEvents, Is.Empty);
-        }
-
-        [Test]
         public void ReMuteAfterUnmuteThenReMuteBeforeMerge()
         {
             // User flips the decision: unmute, then mute again, before LoadAsync returns.
             cache.SetMuted("0xx", false);
             cache.SetMuted("0xx", true);
-            receivedEvents.Clear();
 
             cache.Merge(new[] { "0xx" });
 
             // Already muted locally after the re-mute — Merge is a no-op for this address.
             Assert.That(cache.IsMuted("0xx"), Is.True);
-            Assert.That(receivedEvents, Is.Empty);
         }
 
         [Test]

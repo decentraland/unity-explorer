@@ -41,7 +41,7 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///         or in-place mutation under any future "optimization" — it would silently break the bridge.
     ///     </para>
     /// </summary>
-    public sealed class NearbyAudioStreamRegistry : INearbyAudioStreamRegistry
+    public sealed class NearbyAudioStreamsRegistry : INearbyAudioStreamRegistry
     {
         private readonly IRoom room;
 
@@ -50,7 +50,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         private readonly ConcurrentDictionary<string, string[]> streamsByIdentity = new ();
         private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
 
-        public NearbyAudioStreamRegistry(IRoom room)
+        public NearbyAudioStreamsRegistry(IRoom room)
         {
             this.room = room;
 

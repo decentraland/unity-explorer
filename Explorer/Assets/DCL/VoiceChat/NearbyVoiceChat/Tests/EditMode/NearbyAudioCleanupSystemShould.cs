@@ -242,7 +242,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // sids for that walletId), the audio entity must be doomed without consulting the
             // registry or the blocking cache.
             (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Remove<StreamingAudioComponent>(avatarEntity);
+            world.Remove<NearbyAudioStreamerComponent>(avatarEntity);
 
             system.Update(0);
 
@@ -306,7 +306,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
-            Assert.That(world.Has<StreamingAudioComponent>(avatarEntity), Is.True,
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(avatarEntity), Is.True,
                 "Bridge's [None<DeleteEntityIntention>] filter prevents component removal on a doomed avatar");
         }
 
@@ -316,7 +316,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Optional sanity — proves the cheap shortcut actually short-circuits the registry call.
             // If the marker-absence clause fires, registry.IsStreamGone must NOT be invoked.
             (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Remove<StreamingAudioComponent>(avatarEntity);
+            world.Remove<NearbyAudioStreamerComponent>(avatarEntity);
 
             registry.ResetCallCounters();
 
@@ -432,7 +432,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // and AudibleRangeMarker applied InAudibleRangeTag before Binding spawned the entity.
             // Pair all three in the seed so existing trigger tests exercise the intended fallbacks
             // (IsStreamGone / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
-            world.Add(avatarEntity, new StreamingAudioComponent(new[] { sid }));
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { sid }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 

@@ -335,7 +335,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             string wallet = $"wallet-{distance}";
             Entity e = CreateAvatarEntityAtDistance(wallet, distance);
-            world.Add(e, new StreamingAudioComponent(new[] { "sid-test" }));
+            world.Add(e, new NearbyAudioStreamerComponent(new[] { "sid-test" }));
             return e;
         }
 

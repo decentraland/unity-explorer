@@ -30,7 +30,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
-        private NearbyAudioStreamRegistry registry = null!;
+        private NearbyAudioStreamsRegistry registry = null!;
 
         [SetUp]
         public void SetUp()
@@ -40,7 +40,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             room.Participants.Returns(participantsHub);
             activeSpeakers = new FakeActiveSpeakers();
             room.ActiveSpeakers.Returns(activeSpeakers);
-            registry = new NearbyAudioStreamRegistry(room);
+            registry = new NearbyAudioStreamsRegistry(room);
         }
 
         [TearDown]

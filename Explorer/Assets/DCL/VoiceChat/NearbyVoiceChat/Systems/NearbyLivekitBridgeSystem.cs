@@ -16,7 +16,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Runs every tick in <see cref="AvatarGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
     ///     Stateless — pass-through under the listening gate (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
     ///     <para>
-    ///         Maintains the avatar's <see cref="StreamingAudioComponent.SidsSnapshot"/> as a
+    ///         Maintains the avatar's <see cref="IsNearbyAudioStreamerComponentidsSnapshot"/> as a
     ///         reference to the registry's copy-on-write sid array — <c>ReferenceEquals</c> is the
     ///         freshness signal, no version counter is needed.
     ///     </para>
@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(StreamingAudioComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(NearbyAudioStreamerComponent))]
         [All(typeof(AvatarBase))]
         private void AddStreaming(Entity entity, in Profile profile)
         {
@@ -54,13 +54,13 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             string[]? arr = registry.GetAudioSidsArray(walletId);
             if (arr != null)
-                World.Add(entity, new StreamingAudioComponent(arr));
+                World.Add(entity, new NearbyAudioStreamerComponent(arr));
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void UpdateStreaming(Entity entity, in Profile profile, ref StreamingAudioComponent streaming)
+        private void UpdateStreaming(Entity entity, in Profile profile, ref NearbyAudioStreamerComponent nearby)
         {
             string userId = profile.UserId;
             if (string.IsNullOrEmpty(userId)) return;
@@ -70,13 +70,13 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (current != null)
             {
                 // Refresh path — registry published a new array (content changed) since we last observed. ref-mutation;
-                if (!ReferenceEquals(streaming.SidsSnapshot, current))
-                    streaming.SidsSnapshot = current;
+                if (!ReferenceEquals(nearby.StreamSidsSnapshot, current))
+                    nearby.StreamSidsSnapshot = current;
             }
             else
             {
                 // drop StreamingAudioComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
-                World.Remove<StreamingAudioComponent>(entity);
+                World.Remove<NearbyAudioStreamerComponent>(entity);
 
                 if (World.Has<IsActivelySpeakingTag>(entity))
                     World.Remove<IsActivelySpeakingTag>(entity);
@@ -88,7 +88,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(IsActivelySpeakingTag))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
+        [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent))]
         private void AddSpeaking(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;

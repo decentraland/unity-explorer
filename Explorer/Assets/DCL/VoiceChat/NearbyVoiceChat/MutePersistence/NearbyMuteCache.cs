@@ -14,9 +14,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
     ///     <b>Thread-safety.</b> All <see cref="HashSet{T}"/> access is serialized through <see cref="gate"/>.
     ///     Hot-path reads (<see cref="IsMuted"/>, <see cref="Version"/>) compete only against the one-shot
     ///     <see cref="NearbyMuteService.LoadAsync"/>-driven <see cref="Merge"/> at startup and the rare
-    ///     UI-driven <see cref="SetMuted"/>, so contention is effectively zero. <see cref="MuteStateChanged"/>
-    ///     is invoked outside the lock to keep subscriber callbacks (which may re-enter cache APIs or take
-    ///     other locks) deadlock-free.
+    ///     UI-driven <see cref="SetMuted"/>, so contention is effectively zero.
     /// </para>
     /// </summary>
     public class NearbyMuteCache : INearbyMuteCache
@@ -66,9 +64,6 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         {
             // Client is source of truth: server snapshot only adds missing entries.
             // Skip addresses the user explicitly unmuted this session, otherwise a stale snapshot would re-mute them.
-            // The added list is allocated once per Merge call (init-only path).
-            List<string>? added = null;
-
             lock (gate)
             {
                 foreach (string address in mutedAddresses)
@@ -78,10 +73,7 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
                     if (sessionUnmuted.Contains(normalized)) continue;
 
                     if (mutedWalletIds.Add(normalized))
-                    {
                         version++;
-                        (added ??= new List<string>()).Add(normalized);
-                    }
                 }
             }
         }

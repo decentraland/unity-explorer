@@ -28,7 +28,7 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// - Throttled to <see cref="NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME"/> per tick — large crowd ramp-ups
     ///   spread across multiple frames instead of spiking a single one.
     /// - Idempotent: re-ticking with no registry changes does not duplicate bindings.
-    /// - Hot path reads sids from the per-entity <see cref="StreamingAudioComponent"/>, not the registry.
+    /// - Hot path reads sids from the per-entity <see cref="NearbyAudioStreamerComponent"/>, not the registry.
     /// </summary>
     public class NearbyAudioBindingSystemShould : UnitySystemTestBase<NearbyAudioBindingSystem>
     {
@@ -125,7 +125,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             const string WALLET = "wallet-alice";
             Entity avatarEntity = world.Create(new Profile(WALLET, WALLET, new Avatar()));
-            world.Add(avatarEntity, new StreamingAudioComponent(new[] { "sid-1" }));
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { "sid-1" }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.SeedActiveStream(WALLET, "sid-1");
 
@@ -323,7 +323,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string SID = "sid-1";
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
-            world.Add(avatarEntity, new StreamingAudioComponent(new[] { SID }));
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { SID }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.SeedActiveStream(WALLET, SID);
 
@@ -340,7 +340,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string SID = "sid-1";
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
-            world.Add(avatarEntity, new StreamingAudioComponent(new[] { SID }));
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { SID }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.SeedActiveStream(WALLET, SID);
             userBlockingCache.UserIsBlocked(WALLET).Returns(true);
@@ -358,7 +358,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string SID = "sid-1";
 
             Entity avatarEntity = CreateAvatarEntity(WALLET);
-            world.Add(avatarEntity, new StreamingAudioComponent(new[] { SID }));
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { SID }));
             // intentionally no InAudibleRangeTag — out of range
             registry.SeedActiveStream(WALLET, SID);
 
@@ -370,7 +370,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void SpawnsAudioSourceDisabledInitially()
+        public void SpawnsAudioSourceMutedAndEnabledInitially()
         {
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
@@ -381,8 +381,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             NearbyAudioSourceComponent comp = GetSingleAudioComponent();
-            Assert.That(comp.LivekitAudioSource.enabled, Is.False);
-            Assert.That(comp.LivekitAudioSource.AudioSource.enabled, Is.False);
+            Assert.That(comp.LivekitAudioSource.AudioSource.mute, Is.True,
+                "source must start muted — burst protection on the one-frame window before PositionSystem's first tick");
+            Assert.That(comp.LivekitAudioSource.enabled, Is.True,
+                "factory hands sources out enabled; PositionSystem owns subsequent enabled toggles");
+            Assert.That(comp.LivekitAudioSource.AudioSource.enabled, Is.True);
         }
 
         // ── B2.1: zero-alloc data path on the per-avatar hot path ───
@@ -458,7 +461,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Entity CreateStreamingAvatar(string walletId, params string[] sids)
         {
             Entity entity = CreateAvatarEntity(walletId);
-            world.Add(entity, new StreamingAudioComponent(sids));
+            world.Add(entity, new NearbyAudioStreamerComponent(sids));
             world.Add<InAudibleRangeTag>(entity);
             return entity;
         }
@@ -488,7 +491,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             /// <summary>
             /// Simulates the race window where the entity still carries the sid in its
-            /// <see cref="StreamingAudioComponent"/> snapshot but the underlying track was
+            /// <see cref="NearbyAudioStreamerComponent"/> snapshot but the underlying track was
             /// unsubscribed before <see cref="GetActiveStream"/> was called.
             /// </summary>
             public void MarkStreamAsUnsubscribed(string walletId, string sid)

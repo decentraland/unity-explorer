@@ -348,7 +348,7 @@ namespace DCL.VoiceChat.Nearby
         /// B2-1 — Binding hot-path allocation profile at 100 avatars in steady state. Isolates
         /// <see cref="NearbyAudioBindingSystem.Update"/> from the rest of the chain so Unity's
         /// Performance Testing reporter attributes GC bytes/frame and ms/tick directly to the
-        /// per-avatar sid iteration over <see cref="StreamingAudioComponent.SidsSnapshot"/>.
+        /// per-avatar sid iteration over <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/>.
         /// <para>
         /// Pre-B2 baseline: ~128 B / frame per matching avatar from
         /// <c>ConcurrentDictionary&lt;string,byte&gt;.GetEnumerator</c> (≈ 2 KB / frame at this

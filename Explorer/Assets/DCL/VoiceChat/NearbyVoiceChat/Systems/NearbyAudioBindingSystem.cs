@@ -17,7 +17,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Owns the creation part of the Nearby audio-source lifecycle.
-    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> + <see cref="StreamingAudioComponent"/> + <see cref="InAudibleRangeTag"/>)
+    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> + <see cref="NearbyAudioStreamerComponent"/> + <see cref="InAudibleRangeTag"/>)
     ///     the system iterates the snapshotted sids on the entity itself and materializes an audio-source entity per <c>(walletId, sid)</c> pair that does not yet have one.
     ///     Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
     /// </summary>
@@ -64,8 +64,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent), typeof(InAudibleRangeTag))]
-        private void CollectPendingCreations(Entity avatarEntity, in Profile profile, in StreamingAudioComponent streaming)
+        [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent), typeof(InAudibleRangeTag))]
+        private void CollectPendingCreations(Entity avatarEntity, in Profile profile, in NearbyAudioStreamerComponent nearby)
         {
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
@@ -75,7 +75,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // Sids ride on the entity itself — no registry call on the per-avatar hot path.
             // Bridge guarantees SidsSnapshot is non-null for any entity that has the component.
-            foreach (string sid in streaming.SidsSnapshot)
+            foreach (string sid in nearby.StreamSidsSnapshot)
             {
                 var key = new StreamKey(walletId, sid);
                 if (bindings.ContainsKey(key)) continue;

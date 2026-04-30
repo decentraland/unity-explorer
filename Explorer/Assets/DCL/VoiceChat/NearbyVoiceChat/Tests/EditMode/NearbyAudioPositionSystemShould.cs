@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.MutePersistence;
@@ -232,17 +233,26 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void ReEnablesBothWhenAvatarIsActiveInRange()
+        public void ReEnablesBothWhenAvatarTransitionsFromSuspendedToActive()
         {
-            // Active band: InAudibleRangeTag present with IsSuspended=false. The spawn-disabled state
-            // from Binding must flip on the first PositionSystem tick.
+            // Diff-write contract: the enabled flip is gated by a transition of the per-entity
+            // active/inactive bit (LastInactive). Drive the source through suspend→active; the
+            // second tick must observe the diff and re-enable both flags.
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
-            lkSource.enabled = false;
-            lkSource.AudioSource.enabled = false;
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
+            // Tick 1: suspended → LastInactive flips false→true, source disabled.
+            system.Update(0);
+            Assume.That(lkSource.enabled, Is.False);
+            Assume.That(lkSource.AudioSource.enabled, Is.False);
+
+            // Avatar enters the active band.
+            world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = false;
+
+            // Tick 2: active → LastInactive flips true→false, source re-enabled.
             system.Update(0);
 
             Assert.That(lkSource.enabled, Is.True);

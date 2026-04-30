@@ -36,6 +36,8 @@ namespace DCL.VoiceChat.Nearby.Audio
         private int liveCount;
 
         internal int poolCountInactive => pool.CountInactive;
+        internal int liveInstanceCount => liveCount;
+        internal Transform sourcesRoot => pool.ParentContainer;
 
         public NearbyAudioSourceFactory(VoiceChatConfiguration configuration)
         {
@@ -97,8 +99,9 @@ namespace DCL.VoiceChat.Nearby.Audio
             return lkSource;
         }
 
-        // Wires the source to a stream, starts it muted, then suspends it.
-        // NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin.
+        // Wires the source to a stream and starts it muted.
+        // NearbyAudioPositionSystem unmutes after first position sync to avoid an audio burst at world origin —
+        // mute=true alone suppresses output on the one-frame window before the first SyncPositions tick.
         private static void ActivateForStream(LivekitAudioSource lkSource, AudioSource audioSource, StreamKey key, Weak<AudioStream> stream)
         {
             lkSource.Construct(stream);
@@ -109,9 +112,6 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             audioSource.mute = true;
             lkSource.Play();
-
-            audioSource.enabled = false;
-            lkSource.enabled = false;
         }
 
         private LivekitAudioSource CreatePooled(StreamKey key, Weak<AudioStream> stream)

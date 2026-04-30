@@ -17,7 +17,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
     /// Documents the contract of <see cref="NearbyLivekitBridgeSystem"/>: every avatar's
-    /// <see cref="StreamingAudioComponent.SidsSnapshot"/> reflects the registry's COW sid array
+    /// <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/> reflects the registry's COW sid array
     /// (reference-equal); <see cref="IsActivelySpeakingTag"/> reflects the registry's active-speaker
     /// snapshot. Pure pull-mirror; pass-through under listening gate.
     /// Invariant I1: <c>IsActivelySpeakingTag ⊆ StreamingAudioComponent</c>.
@@ -66,8 +66,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
-            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, sids), Is.True,
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
+            Assert.That(ReferenceEquals(world.Get<NearbyAudioStreamerComponent>(e).StreamSidsSnapshot, sids), Is.True,
                 "SidsSnapshot must be reference-equal to the registry's COW array");
         }
 
@@ -81,7 +81,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.False);
         }
 
         [Test]
@@ -93,14 +93,14 @@ namespace DCL.VoiceChat.Nearby.Tests
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             string[] preexisting = { "sid-pre" };
-            world.Add(e, new StreamingAudioComponent(preexisting));
+            world.Add(e, new NearbyAudioStreamerComponent(preexisting));
             StubStreaming(WALLET, "sid-other");
 
             system.Update(0);
 
             // Either Update kept it (preexisting reference) or refreshed it to the registry's array;
             // either way, AddStreaming must NOT have piled on a second component.
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
         }
 
         [Test]
@@ -121,7 +121,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.False);
         }
 
         // ── UpdateStreaming query ───────────────────────────────────
@@ -134,13 +134,13 @@ namespace DCL.VoiceChat.Nearby.Tests
             string[] sids = StubStreaming(WALLET, "sid-1");
 
             system.Update(0);
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
 
             // Two more ticks; registry returns the same array reference each time.
             system.Update(0);
             system.Update(0);
 
-            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, sids), Is.True,
+            Assert.That(ReferenceEquals(world.Get<NearbyAudioStreamerComponent>(e).StreamSidsSnapshot, sids), Is.True,
                 "stable registry → SidsSnapshot reference must remain unchanged across ticks");
         }
 
@@ -152,7 +152,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             string[] firstRef = StubStreaming(WALLET, "sid-1");
 
             system.Update(0);
-            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, firstRef), Is.True);
+            Assert.That(ReferenceEquals(world.Get<NearbyAudioStreamerComponent>(e).StreamSidsSnapshot, firstRef), Is.True);
 
             // Registry publishes a NEW array (content changed, reference changed) — simulate the
             // post-OnTrackSubscribed COW snapshot. Bridge must observe the new reference and refresh
@@ -162,7 +162,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, secondRef), Is.True,
+            Assert.That(ReferenceEquals(world.Get<NearbyAudioStreamerComponent>(e).StreamSidsSnapshot, secondRef), Is.True,
                 "new registry reference → SidsSnapshot must adopt the new reference");
         }
 
@@ -175,7 +175,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             registry.IsActiveSpeaker(WALLET).Returns(true);
 
             system.Update(0);
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True, "precondition: component attached");
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True, "precondition: component attached");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
 
             // Seed the dependent marker AudibleRangeSystem would have placed (suspended-flag rides inside it).
@@ -186,7 +186,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.False);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False, "cascade must drop speaking (invariant I1)");
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.False, "cascade must drop audible-range (suspended flag is enforced as subset by type)");
         }
@@ -220,7 +220,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True);
         }
 
@@ -236,7 +236,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.False);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False,
                 "speaking tag must require StreamingAudioComponent (invariant I1)");
         }
@@ -276,7 +276,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True,
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True,
                 "stream is unchanged — StreamingAudioComponent must persist");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False);
         }
@@ -293,7 +293,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True);
         }
 
@@ -308,7 +308,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True,
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True,
                 "component is pass-through; consumers (Binding/Cleanup/Nametag) own the listening gate");
         }
 

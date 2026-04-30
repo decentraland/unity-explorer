@@ -12,10 +12,7 @@ using ECS.LifeCycle.Components;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Owns the <see cref="VoiceChatNametagComponent"/> lifecycle for nearby voice chat through pull-based
-    ///     per-frame queries on the avatar set. Replaces <c>NearbyVoiceChatNametagsHandler</c>'s event-driven
-    ///     mutation. Three queries: listening-gate bulk teardown, <c>ref</c>-mutation of existing components,
-    ///     <c>World.Add</c> of missing components on avatars whose predicate flips to "should show".
+    ///     Owns the <see cref="VoiceChatNametagComponent"/> lifecycle for nearby voice chat through pull-based  per-frame queries on the avatar set.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]

@@ -75,7 +75,7 @@ namespace DCL.PluginSystem.Global
         private MicrophoneAudioToggleHandler? microphoneAudioToggleHandler;
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
-        private NearbyAudioStreamRegistry? nearbyAudioStreamRegistry;
+        private NearbyAudioStreamsRegistry? nearbyAudioStreamRegistry;
         private Dictionary<StreamKey, Entity>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
@@ -211,7 +211,7 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                nearbyAudioStreamRegistry = new NearbyAudioStreamRegistry(islandRoom);
+                nearbyAudioStreamRegistry = new NearbyAudioStreamsRegistry(islandRoom);
                 pluginScope.Add(nearbyAudioStreamRegistry);
 
                 nearbyAudioBindings = new Dictionary<StreamKey, Entity>(32);

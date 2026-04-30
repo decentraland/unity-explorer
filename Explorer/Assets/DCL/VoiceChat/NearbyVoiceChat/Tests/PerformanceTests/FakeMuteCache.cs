@@ -1,5 +1,4 @@
 using DCL.VoiceChat.Nearby.MutePersistence;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby
@@ -21,10 +20,6 @@ namespace DCL.VoiceChat.Nearby
     /// </summary>
     internal sealed class FakeMuteCache : INearbyMuteCache
     {
-#pragma warning disable CS0067 // Event never invoked — interface compliance only; perf tests do not consume.
-        public event Action<string, bool>? MuteStateChanged;
-#pragma warning restore CS0067
-
         private readonly HashSet<string> mutedSet = new ();
 
         // Mirrors production NearbyMuteCache: starts at 1 so a freshly-bound component
