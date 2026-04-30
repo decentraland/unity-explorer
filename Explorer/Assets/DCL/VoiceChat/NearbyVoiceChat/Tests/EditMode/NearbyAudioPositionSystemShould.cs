@@ -119,16 +119,20 @@ namespace DCL.VoiceChat.Nearby.Tests
         // ── Mute Per-Frame ──────────────────────────────────────────
 
         [Test]
-        public void MutedIdentityHasMutedAudioSource()
+        public void MutedIdentityKeepsMutedAudioSourceFromBinding()
         {
+            // Pessimistic init: binding starts AudioSource.mute=true and the component's LastAppliedMute=true.
+            // For an already-muted user, the first tick reads the cache once (Version mismatch from 0→1) but
+            // skips the AudioSource.mute interop because the cached value already matches LastAppliedMute.
             ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
             cam.Mode = CameraMode.FirstPerson;
 
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
-            lkSource.AudioSource.mute = false;
+            lkSource.AudioSource.mute = true;   // matches the binding contract
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
+            muteCache.Version.Returns(1u);
             muteCache.IsMuted(PARTICIPANT_A).Returns(true);
 
             system.Update(0);
@@ -147,17 +151,21 @@ namespace DCL.VoiceChat.Nearby.Tests
             lkSource.AudioSource.mute = true;
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
-            // muted → tick → muted
+            // Production flow: NearbyMuteCache bumps Version on every effective mutation.
+            // Simulate three distinct cache mutations across the three ticks below.
+            muteCache.Version.Returns(1u, 2u, 3u);
+
+            // muted → tick → muted (matches pessimistic init, no write but state stays correct)
             muteCache.IsMuted(PARTICIPANT_A).Returns(true);
             system.Update(0);
             Assert.That(lkSource.AudioSource.mute, Is.True, "Expected mute=true after first tick");
 
-            // flip to unmuted → tick → unmuted (no edge-trigger gating)
+            // flip to unmuted → tick → unmuted (write triggered by value diff against LastAppliedMute)
             muteCache.IsMuted(PARTICIPANT_A).Returns(false);
             system.Update(0);
             Assert.That(lkSource.AudioSource.mute, Is.False, "Expected mute=false after toggle to unmuted");
 
-            // flip back to muted → tick → muted (per-frame, not one-shot)
+            // flip back to muted → tick → muted (per-toggle, gated by Version bump)
             muteCache.IsMuted(PARTICIPANT_A).Returns(true);
             system.Update(0);
             Assert.That(lkSource.AudioSource.mute, Is.True, "Expected mute=true after toggle back");
@@ -175,6 +183,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             lkSource.AudioSource.mute = true;
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
+            muteCache.Version.Returns(1u);
             muteCache.IsMuted(PARTICIPANT_A).Returns(false);
 
             system.Update(0);
@@ -298,6 +307,121 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(lkSource.enabled, Is.False);
             Assert.That(lkSource.AudioSource.enabled, Is.False);
+        }
+
+        // ── Diff-write (B3): mute version + transform delta ─────────
+
+        [Test]
+        public void SkipMuteInteropWhenCacheVersionUnchanged()
+        {
+            // After the pessimistic-init tick has settled state, a subsequent tick with the same Version
+            // must skip both the IsMuted lookup and the AudioSource.mute write.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.mute = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.Version.Returns(1u);
+            muteCache.IsMuted(PARTICIPANT_A).Returns(false);
+
+            // Tick 1 absorbs pessimistic init: writes mute=false (IsMuted=false != LastApplied=true).
+            system.Update(0);
+            Assume.That(lkSource.AudioSource.mute, Is.False, "Sanity: first tick wrote mute=false");
+
+            // Sentinel: if tick 2 performs any write, it would overwrite this back to false.
+            lkSource.AudioSource.mute = true;
+            muteCache.ClearReceivedCalls();
+
+            // Tick 2 with same Version: no lookup, no write.
+            system.Update(0);
+
+            Assert.That(lkSource.AudioSource.mute, Is.True, "Sentinel survives — interop write skipped");
+            muteCache.DidNotReceive().IsMuted(Arg.Any<string>());
+        }
+
+        [Test]
+        public void SkipMuteInteropEvenWhenVersionBumpedIfValueUnchanged()
+        {
+            // Version moves (some other wallet was toggled), but THIS entity's mute state is unchanged.
+            // Lookup happens (Version mismatched), but the AudioSource.mute interop is gated by the value diff.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            lkSource.AudioSource.mute = true;
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.Version.Returns(1u, 2u);
+            muteCache.IsMuted(PARTICIPANT_A).Returns(true); // muted across both ticks
+
+            system.Update(0); // version=1, IsMuted=true matches LastApplied=true → no write
+
+            // Sentinel
+            lkSource.AudioSource.mute = false;
+
+            system.Update(0); // version=2, IsMuted=true still matches LastApplied=true → no write
+
+            Assert.That(lkSource.AudioSource.mute, Is.False, "Sentinel survives — value-diff gate skipped the write");
+        }
+
+        [Test]
+        public void SkipTransformWriteWhenPositionDeltaBelowEpsilon()
+        {
+            // 5 cm shift → sqrMagnitude = 0.0025 < POSITION_EPSILON_SQR (0.01). Transform write skipped.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Vector3 head = new Vector3(1, 2, 3);
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, head);
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.Version.Returns(1u);
+
+            system.Update(0); // pessimistic-init: writes head pos
+            Assume.That(lkSource.transform.position.x, Is.EqualTo(head.x).Within(0.001f));
+
+            // Move head anchor by 5 cm — below threshold.
+            AvatarBase avatarBase = world.Get<AvatarBase>(avatarEntity);
+            avatarBase.HeadAnchorPoint.position = head + new Vector3(0.05f, 0, 0);
+
+            system.Update(0);
+
+            // Last-written position retained because delta was below epsilon.
+            Assert.That(lkSource.transform.position.x, Is.EqualTo(head.x).Within(0.001f));
+            Assert.That(lkSource.transform.position.y, Is.EqualTo(head.y).Within(0.001f));
+            Assert.That(lkSource.transform.position.z, Is.EqualTo(head.z).Within(0.001f));
+        }
+
+        [Test]
+        public void WriteTransformWhenPositionDeltaExceedsEpsilon()
+        {
+            // 50 cm shift → sqrMagnitude = 0.25 > POSITION_EPSILON_SQR. Transform write applied.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+
+            Vector3 head = new Vector3(1, 2, 3);
+            Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, head);
+            LivekitAudioSource lkSource = CreateLivekitAudioSource();
+            CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
+
+            muteCache.Version.Returns(1u);
+
+            system.Update(0); // pessimistic-init: writes head pos
+
+            Vector3 newHead = head + new Vector3(0.5f, 0, 0);
+            AvatarBase avatarBase = world.Get<AvatarBase>(avatarEntity);
+            avatarBase.HeadAnchorPoint.position = newHead;
+
+            system.Update(0);
+
+            Assert.That(lkSource.transform.position.x, Is.EqualTo(newHead.x).Within(0.001f));
+            Assert.That(lkSource.transform.position.y, Is.EqualTo(newHead.y).Within(0.001f));
+            Assert.That(lkSource.transform.position.z, Is.EqualTo(newHead.z).Within(0.001f));
         }
 
         // ── Helpers ─────────────────────────────────────────────────

@@ -33,6 +33,12 @@ namespace DCL.VoiceChat.Nearby
             this.repository = repository;
         }
 
+        /// <summary>
+        /// Forwarded from <see cref="INearbyMuteCache.Version"/>. Read by
+        /// <c>NearbyAudioPositionSystem</c> to skip per-entity lookups while the cache is unchanged.
+        /// </summary>
+        public uint CacheVersion => cache.Version;
+
         public bool IsMuted(string walletId) =>
             cache.IsMuted(walletId);
 

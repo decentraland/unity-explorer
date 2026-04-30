@@ -18,10 +18,15 @@ namespace DCL.VoiceChat.Nearby.Systems
     /// <summary>
     ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
     ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
-    ///     Per-frame mute enforcement: <see cref="NearbyMuteService.IsMuted"/> is queried for every audio entity
-    ///     and written to <see cref="AudioSource.mute"/>. This is self-healing on toggle (no event plumbing) and
-    ///     subsumes the old "first-sync unmute" hack — the binding system starts with <c>mute = true</c> so the
-    ///     first successful tick recomputes it (avoids the world-origin burst between <c>Play()</c> and sync).
+    ///     Per-frame mute enforcement: gated by <see cref="NearbyMuteService.CacheVersion"/> — the per-entity
+    ///     <see cref="NearbyAudioSourceComponent.LastSeenMuteVersion"/> compares against the cache version, and the
+    ///     <see cref="AudioSource.mute"/> interop write only happens when both the cache changed and the per-entity
+    ///     value differs from <see cref="NearbyAudioSourceComponent.LastAppliedMute"/>. Self-healing on toggle is
+    ///     preserved: the system still visits every entity every frame, but the hot work is skipped while the cache
+    ///     is unchanged. The component's pessimistic init (LastSeenMuteVersion=0, cache.Version=1) guarantees the
+    ///     world-origin-burst-protection recompute on the first tick after binding.
+    ///     Per-frame transform write is similarly gated by a sqrMagnitude epsilon — angle math still uses the
+    ///     freshly-computed sourcePos every frame, so azimuth/elevation never desync.
     ///     Carries no lifecycle responsibility — structural changes for audio entities are owned by
     ///     <see cref="NearbyAudioCleanupSystem"/>.
     /// </summary>
@@ -29,6 +34,11 @@ namespace DCL.VoiceChat.Nearby.Systems
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
+        // sqr(0.1m) — skip Transform.position writes when the per-frame delta is below ~10 cm.
+        // Spatial gain at the 22 m audible-range cap is far below human-perceptible level at this delta;
+        // angle math still uses the freshly-computed sourcePos every frame, so azimuth/elevation never desync.
+        private const float POSITION_EPSILON_SQR = 0.01f;
+
         // Profiler markers — fine-grained per-step instrumentation for diagnosing where the
         // per-entity main-thread cost lives. Markers are no-ops in non-development builds
         // (Unity strips Profiler.* on release), so leaving them in place is free in shipping.
@@ -120,8 +130,14 @@ namespace DCL.VoiceChat.Nearby.Systems
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
             HEAD_POS_MARKER.End();
 
+            // Diff-write: skip native transform.position interop while the avatar barely moved. Spatial-angle math below
+            // still feeds off the fresh sourcePos so audibility direction never desyncs from the actual head position.
             TRANSFORM_WRITE_MARKER.Begin();
-            src.transform.position = sourcePos;
+            if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
+            {
+                src.transform.position = sourcePos;
+                nearbyAudio.LastWrittenPos = sourcePos;
+            }
             TRANSFORM_WRITE_MARKER.End();
 
             if (!src.AudioSource.isVirtual)
@@ -132,9 +148,22 @@ namespace DCL.VoiceChat.Nearby.Systems
                 SPATIAL_ANGLES_MARKER.End();
             }
 
-            // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute on first successful tick (when IsMuted is false).
+            // Mute version + diff-write: hot path is a single uint compare. Lookup and AudioSource.mute interop only
+            // run on ticks where the cache mutated; AudioSource.mute is set only if this entity's value actually changed.
+            // Pessimistic init (component LastSeenMuteVersion=0, cache.Version starts at 1) forces the binding-time
+            // unmute recompute on the first tick — preserves the world-origin-burst protection from before the diff layer.
             MUTE_SYNC_MARKER.Begin();
-            src.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
+            uint cacheVersion = muteService.CacheVersion;
+            if (nearbyAudio.LastSeenMuteVersion != cacheVersion)
+            {
+                bool muted = muteService.IsMuted(nearbyAudio.Key.identity);
+                if (muted != nearbyAudio.LastAppliedMute)
+                {
+                    src.AudioSource.mute = muted;
+                    nearbyAudio.LastAppliedMute = muted;
+                }
+                nearbyAudio.LastSeenMuteVersion = cacheVersion;
+            }
             MUTE_SYNC_MARKER.End();
         }
 

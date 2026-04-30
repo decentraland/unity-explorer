@@ -27,19 +27,24 @@ namespace DCL.VoiceChat.Nearby
 
         private readonly HashSet<string> mutedSet = new ();
 
+        // Mirrors production NearbyMuteCache: starts at 1 so a freshly-bound component
+        // (LastSeenMuteVersion=0) deterministically mismatches on its first tick.
+        public uint Version { get; private set; } = 1;
+
         public bool IsMuted(string walletAddress) =>
             mutedSet.Contains(walletAddress);
 
         public void SetMuted(string walletAddress, bool muted)
         {
-            if (muted) mutedSet.Add(walletAddress);
-            else mutedSet.Remove(walletAddress);
+            bool changed = muted ? mutedSet.Add(walletAddress) : mutedSet.Remove(walletAddress);
+            if (changed) Version++;
         }
 
         public void Merge(IEnumerable<string> mutedAddresses)
         {
             foreach (string addr in mutedAddresses)
-                mutedSet.Add(addr);
+                if (mutedSet.Add(addr))
+                    Version++;
         }
     }
 }
