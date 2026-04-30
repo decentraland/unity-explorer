@@ -62,6 +62,12 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             room.Participants.UpdatesFromParticipant += OnParticipantUpdate;
             room.ActiveSpeakers.Updated += PullActiveSpeakers;
+
+            if (room.Info.ConnectionState == LKConnectionState.ConnConnected)
+            {
+                RehydrateFromRoom();
+                PullActiveSpeakers();
+            }
         }
 
         public void Dispose()

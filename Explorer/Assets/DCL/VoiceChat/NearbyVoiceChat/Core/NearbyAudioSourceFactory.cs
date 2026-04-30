@@ -33,6 +33,9 @@ namespace DCL.VoiceChat.Nearby.Audio
         // route them back through DisposeLegacy instead of the pool.
         private readonly HashSet<LivekitAudioSource> legacyInstances = new (8);
 
+        // Tracks pool-managed instances currently handed out as LIVE. Membership is the single source  of truth for Dispose idempotency:
+        private readonly HashSet<LivekitAudioSource> liveInstances = new (32);
+
         private int liveCount;
 
         internal int poolCountInactive => pool.CountInactive;
@@ -71,6 +74,8 @@ namespace DCL.VoiceChat.Nearby.Audio
                 DisposeLegacy(source);
                 return;
             }
+
+            if (!liveInstances.Remove(source)) return;
 
             pool.Release(source);
             if (liveCount > 0) liveCount--;
@@ -126,6 +131,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             audioSource.volume = 1f; // ResetForPool zeroed it.
 
             ActivateForStream(lkSource, audioSource, key, stream);
+            liveInstances.Add(lkSource);
             return lkSource;
         }
 

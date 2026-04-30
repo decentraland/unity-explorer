@@ -162,7 +162,7 @@ namespace DCL.Nametags
                 return;
             }
 
-            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY ? true : voiceChatComponent.IsSpeaking;
+            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY || voiceChatComponent.IsSpeaking;
 
             nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
             nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed; // hushed is cleared to false when changing room

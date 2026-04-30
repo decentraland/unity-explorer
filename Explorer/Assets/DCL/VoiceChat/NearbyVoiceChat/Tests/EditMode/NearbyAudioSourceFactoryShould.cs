@@ -1,4 +1,3 @@
-using DCL.Optimization.Pools;
 using DCL.VoiceChat.Nearby.Audio;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
@@ -154,18 +153,23 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void DisposeDoesNotDoubleReleaseWhenCalledTwice()
         {
-            // Teardown races (CleanupSystem.OnDispose then BindingSystem.OnDispose) can route the same
-            // source through Dispose twice. The factory must short-circuit instead of throwing.
-            // PoolConstants.CHECK_COLLECTIONS is false in non-DEBUG_POOLS builds — this test only guards
-            // the default config; under collection-check pools throw deliberately and that is fine.
+            // CleanupSystem teardown can revisit an already-disposed source: TearDownMarkedAudioEntities
+            // re-fires across frames until DestroyEntitiesSystem catches up (it's [ThrottlingEnabled]),
+            // and OnDispose's DisposeAllAudioSources iterates components without filtering
+            // DeleteEntityIntention. With PoolConstants.CHECK_COLLECTIONS=false the underlying pool
+            // would silently push a duplicate onto its stack, so a later Create() would alias the same
+            // LivekitAudioSource across two entities. Dispose must be idempotent at the factory layer.
             LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
 
             Assert.DoesNotThrow(() => factory.Dispose(source));
+            Assert.That(factory.poolCountInactive, Is.EqualTo(1), "first Dispose returns the source to the pool");
+            Assert.That(factory.liveInstanceCount, Is.EqualTo(0), "first Dispose decrements the live counter");
 
-            if (PoolConstants.CHECK_COLLECTIONS) return;
+            Assert.DoesNotThrow(() => factory.Dispose(source), "second Dispose must short-circuit");
+            Assert.That(factory.poolCountInactive, Is.EqualTo(1),
+                "second Dispose must NOT push a duplicate onto the pool stack — that's the aliasing bug");
+            Assert.That(factory.liveInstanceCount, Is.EqualTo(0), "second Dispose must not double-decrement");
 
-            Assert.DoesNotThrow(() => factory.Dispose(source),
-                "second Dispose must short-circuit safely when collection checks are off");
             seenSources.Add(source);
         }
 
