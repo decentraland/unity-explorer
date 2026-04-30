@@ -802,7 +802,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
                     trimmedEmoteCatalog,
-                staticContainer.EmotePlayerProxy),
+                staticContainer.EmotesContainer.EmotePlayer),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,

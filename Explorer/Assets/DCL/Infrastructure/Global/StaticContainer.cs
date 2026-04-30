@@ -82,7 +82,6 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
-        public readonly ObjectProxy<EmotePlayer> EmotePlayerProxy = new ();
         public readonly ObjectProxy<IEmotesMessageBus> EmotesMessageBusProxy = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
@@ -95,6 +94,7 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
         public MediaPlayerContainer MediaContainer { get; private set; }
+        public EmotesContainer EmotesContainer { get; private set; }
         public ProfilesContainer ProfilesContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
@@ -221,6 +221,7 @@ namespace Global
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.EmotesContainer = new EmotesContainer(assetsProvisioner);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -293,7 +294,7 @@ namespace Global
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy, exposedPlayerTransform),
-                new SceneMaskedEmotePlugin(globalWorld, container.PlayerEntity, container.MainPlayerAvatarBaseProxy, container.EmotePlayerProxy, container.EmoteStorage, container.EmotesMessageBusProxy),
+                new SceneMaskedEmotePlugin(globalWorld, container.PlayerEntity, container.MainPlayerAvatarBaseProxy, container.EmotesContainer.EmotePlayer, container.EmoteStorage, container.EmotesMessageBusProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
@@ -351,13 +352,14 @@ namespace Global
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
         {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success)) results = await UniTask.WhenAll(
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success), (EmotesContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
                 settings.InitializePluginAsync(target.CharacterContainer, ct),
-                settings.InitializePluginAsync(target.MediaContainer, ct)
+                settings.InitializePluginAsync(target.MediaContainer, ct),
+                settings.InitializePluginAsync(target.EmotesContainer, ct)
             );
 
-            return results.Item1.success && results.Item2.success && results.Item3.success;
+            return results.Item1.success && results.Item2.success && results.Item3.success && results.Item4.success;
         }
     }
 }
