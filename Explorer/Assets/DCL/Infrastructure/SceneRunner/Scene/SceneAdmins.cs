@@ -88,11 +88,12 @@ namespace SceneRunner.Admins
 
         public async UniTaskVoid StartRequestPollingAsync()
         {
-            while (cts.IsCancellationRequested == false)
+            CancellationToken token = cts.Token;
+            while (token.IsCancellationRequested == false)
             {
-                await FireRequestAsync(cts.Token);
+                await FireRequestAsync(token);
                 if (cts.IsCancellationRequested) return;
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token).SuppressCancellationThrow();
+                await UniTask.Delay(DELAY, cancellationToken: token).SuppressCancellationThrow();
             }
         }
 
