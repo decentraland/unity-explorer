@@ -154,7 +154,8 @@ namespace DCL.PluginSystem.Global
             if (isConnected)
                 foreach (KeyValuePair<string, LKParticipant> entry in islandRoom.Participants.RemoteParticipantIdentities())
                 {
-                    audioSourceCount += (ulong)streamRegistry.GetAudioSids(entry.Key).Length;
+                    var sids = streamRegistry.GetAudioSids(entry.Key);
+                    if (sids != null) audioSourceCount += (ulong)sids.Count;
                 }
             activeAudioSourcesBinding.Value = audioSourceCount;
 

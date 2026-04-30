@@ -70,7 +70,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(InAudibleRangeTag))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag))]
         private void AddAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
             float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
@@ -81,7 +81,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent), typeof(InAudibleRangeTag))]
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag), typeof(InAudibleRangeTag))]
         private void RemoveAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
             float sqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;

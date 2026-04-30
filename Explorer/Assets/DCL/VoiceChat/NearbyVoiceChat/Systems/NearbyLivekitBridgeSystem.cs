@@ -13,14 +13,9 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Pull-mirror from <see cref="INearbyAudioStreamRegistry"/> to avatar-entity archetype
-    ///     state. Runs every tick in <see cref="AvatarGroup"/>, before
-    ///     <see cref="NearbyAudioBindingSystem"/>. Stateless — pass-through under the listening
-    ///     gate (state reflects LiveKit, not nearby-chat policy; consumers gate on policy).
-    ///     <para>
-    ///         Carries the per-wallet sid set onto the avatar via <see cref="StreamingAudioComponent"/>.
-    ///         The freshness check is a single <see cref="object.ReferenceEquals(object, object)"/>
-    ///         against the registry's copy-on-write array — content changes ↔ new reference.
-    ///     </para>
+    ///     markers. Runs every tick in <see cref="AvatarGroup"/>, before
+    ///     <see cref="NearbyAudioBindingSystem"/>. Stateless — pass-through under the listening gate
+    ///     (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
@@ -38,74 +33,54 @@ namespace DCL.VoiceChat.Nearby.Systems
         protected override void Update(float t)
         {
             // Order matters:
-            // 1. Attach StreamingAudioComponent to avatars whose stream just appeared.
-            // 2. Refresh / cascade-remove StreamingAudioComponent on avatars that already carry it.
+            // 1. Tag avatars whose stream just appeared.
+            // 2. Untag avatars whose stream just disappeared (cascades speaking removal).
             // 3. Tag avatars whose active-speaker signal just rose (only those still streaming).
             // 4. Untag avatars whose active-speaker signal just dropped.
-            AddStreamingQuery(World);
-            UpdateStreamingQuery(World);
-            AddSpeakingQuery(World);
-            RemoveSpeakingQuery(World);
+            AddStreamingTagQuery(World);
+            RemoveStreamingTagQuery(World);
+            AddSpeakingTagQuery(World);
+            RemoveSpeakingTagQuery(World);
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(StreamingAudioComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(IsStreamingAudioTag))]
         [All(typeof(AvatarBase))]
-        private void AddStreaming(Entity entity, in Profile profile)
+        private void AddStreamingTag(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
-            if (string.IsNullOrEmpty(walletId)) return;
-
-            // Read profile (in-ref) and registry BEFORE the structural change. After World.Add
-            // the `in profile` ref is invalidated, but the local `walletId` copy is fine.
-            string[]? arr = registry.GetAudioSidsArray(walletId);
-            if (arr == null) return;
-
-            World.Add(entity, new StreamingAudioComponent(arr));
+            if (!string.IsNullOrEmpty(walletId) && registry.GetAudioSids(walletId) != null)
+                World.Add<IsStreamingAudioTag>(entity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
-        private void UpdateStreaming(Entity entity, in Profile profile, ref StreamingAudioComponent streaming)
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag))]
+        private void RemoveStreamingTag(Entity entity, in Profile profile)
         {
-            // Value-copy the wallet id BEFORE any structural change so the `in profile` ref
-            // is fully consumed before World.Remove invalidates it.
             string walletId = profile.UserId;
-            string[]? current = string.IsNullOrEmpty(walletId)
-                ? null
-                : registry.GetAudioSidsArray(walletId);
+            if (string.IsNullOrEmpty(walletId) || registry.GetAudioSids(walletId) != null) return;
 
-            if (current == null)
-            {
-                // Stream disappeared — cascade-remove StreamingAudioComponent and the dependent
-                // archetype tags on the same tick. From this point on the `ref streaming` is
-                // invalid (structural change relocates the component); we must NOT touch it again.
-                World.Remove<StreamingAudioComponent>(entity);
+            World.Remove<IsStreamingAudioTag>(entity);
 
-                if (World.Has<IsActivelySpeakingTag>(entity))
-                    World.Remove<IsActivelySpeakingTag>(entity);
+            // Cascade: maintain invariants on the same tick — speaking ⊆ streaming and
+            // (suspended ⊆) inAudibleRange ⊆ streaming. Must stay inside the "stream actually
+            // disappeared" branch — otherwise every active speaker pays a structural-change pair
+            // per tick (Remove here, Add by Query C next call) for no reason.
+            if (World.Has<IsActivelySpeakingTag>(entity))
+                World.Remove<IsActivelySpeakingTag>(entity);
 
-                if (World.Has<IsSuspendedTag>(entity))
-                    World.Remove<IsSuspendedTag>(entity);
+            if (World.Has<IsSuspendedTag>(entity))
+                World.Remove<IsSuspendedTag>(entity);
 
-                if (World.Has<InAudibleRangeTag>(entity))
-                    World.Remove<InAudibleRangeTag>(entity);
-
-                return;
-            }
-
-            // Refresh path — ref-mutation only, NO structural change. Cheap when the registry's
-            // COW array reference has not changed since the last observation (the dominant case
-            // in steady state).
-            if (!ReferenceEquals(streaming.SidsSnapshot, current))
-                streaming.SidsSnapshot = current;
+            if (World.Has<InAudibleRangeTag>(entity))
+                World.Remove<InAudibleRangeTag>(entity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(IsActivelySpeakingTag))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
-        private void AddSpeaking(Entity entity, in Profile profile)
+        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag))]
+        private void AddSpeakingTag(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
             if (!string.IsNullOrEmpty(walletId) && registry.IsActiveSpeaker(walletId))
@@ -115,7 +90,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase), typeof(IsActivelySpeakingTag))]
-        private void RemoveSpeaking(Entity entity, in Profile profile)
+        private void RemoveSpeakingTag(Entity entity, in Profile profile)
         {
             string walletId = profile.UserId;
             if (!string.IsNullOrEmpty(walletId) && !registry.IsActiveSpeaker(walletId))

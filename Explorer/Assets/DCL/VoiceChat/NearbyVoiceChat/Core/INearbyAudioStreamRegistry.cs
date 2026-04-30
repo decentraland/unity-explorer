@@ -2,6 +2,7 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System;
+using System.Collections.Concurrent;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
@@ -12,26 +13,10 @@ namespace DCL.VoiceChat.Nearby.Audio
     public interface INearbyAudioStreamRegistry : IDisposable
     {
         /// <summary>
-        /// Point-lookup. <c>true</c> iff the wallet currently has at least one subscribed audio sid.
-        /// Allocation-free; safe on per-frame ECS hot paths.
+        /// Returns the concrete inner dictionary so callers can iterate with a struct enumerator (allocation-free).
+        /// <c>null</c> means the participant is not in the room or has no audio publications.
         /// </summary>
-        bool HasAudioStream(string walletId);
-
-        /// <summary>
-        /// Read-only span over the wallet's current sid set. Returns <c>default</c> (empty span)
-        /// when the wallet is absent. The underlying storage is copy-on-write — the span is valid
-        /// for the current observation window only; do not retain across registry mutations.
-        /// </summary>
-        ReadOnlySpan<string> GetAudioSids(string walletId);
-
-        /// <summary>
-        /// Raw reference to the wallet's current copy-on-write sid array, or <c>null</c> when absent.
-        /// Reference identity is the version signal: a different reference ↔ content changed.
-        /// Used <b>only</b> by <see cref="DCL.VoiceChat.Nearby.Systems.NearbyLivekitBridgeSystem"/>
-        /// for <see cref="object.ReferenceEquals(object, object)"/> comparison against the snapshot
-        /// cached in <see cref="DCL.VoiceChat.Nearby.StreamingAudioComponent"/>. Never mutate.
-        /// </summary>
-        string[]? GetAudioSidsArray(string walletId);
+        ConcurrentDictionary<string, byte>? GetAudioSids(string walletId);
 
         /// <summary>
         /// Resolves a stream lazily. Must be called from the main thread — <see cref="AudioStream"/>'s constructor
