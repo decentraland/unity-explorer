@@ -74,13 +74,13 @@ namespace DCL.Events
 
         public void AddEventToCalendar(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
         public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
@@ -101,13 +101,13 @@ namespace DCL.Events
 
         public void ShareEvent(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             EventShared?.Invoke(eventData);
         }
 
         public void CopyEventLink(IEventDTO eventData)
         {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData, decentralandUrlsSource));
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
             EventLinkCopied?.Invoke(eventData);
         }

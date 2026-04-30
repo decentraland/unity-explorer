@@ -490,6 +490,7 @@ jobs:
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
+            !build/**/*.pdb
           if-no-files-found: error
 
       - name: Compress the build folder to upload it to S3
@@ -499,7 +500,7 @@ jobs:
             zip -r upload_to_s3/${{ env.artifact_name }}.zip build.tar
           elif [ "${{ matrix.target }}" == "windows64" ]; then
             cd build
-            zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**"
+            zip -r ../upload_to_s3/${{ env.artifact_name }}.zip . -x "*_BackUpThisFolder_ButDontShipItWithYourGame**" -x "*_BurstDebugInformation_DoNotShip**" -x "*.pdb"
           fi
 
       - name: Install jq
