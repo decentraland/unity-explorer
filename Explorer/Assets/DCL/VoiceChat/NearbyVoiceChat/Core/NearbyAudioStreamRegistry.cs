@@ -97,10 +97,10 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             streamsByIdentity.Clear();
 
-            foreach (KeyValuePair<string, LKParticipant> entry in room.Participants.RemoteParticipantIdentities())
-            foreach (KeyValuePair<string, TrackPublication> trackEntry in entry.Value.Tracks)
+            foreach (KeyValuePair<string, LKParticipant> participantEntry in room.Participants.RemoteParticipantIdentities())
+            foreach (KeyValuePair<string, TrackPublication> trackEntry in participantEntry.Value.Tracks)
                 if (trackEntry.Value.Kind == TrackKind.KindAudio)
-                    AddAudioSid(entry.Key, trackEntry.Key);
+                    AddAudioSid(participantEntry.Key, trackEntry.Key);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)

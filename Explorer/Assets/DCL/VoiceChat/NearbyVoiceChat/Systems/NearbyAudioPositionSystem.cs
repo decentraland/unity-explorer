@@ -10,6 +10,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
@@ -28,6 +29,21 @@ namespace DCL.VoiceChat.Nearby.Systems
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
+        // Profiler markers — fine-grained per-step instrumentation for diagnosing where the
+        // per-entity main-thread cost lives. Markers are no-ops in non-development builds
+        // (Unity strips Profiler.* on release), so leaving them in place is free in shipping.
+        // Hierarchy mirrors the call structure: Update wraps everything; Query.* slices the
+        // per-entity work. To collapse in Profiler, group by "NearbyAudio.Position".
+        private static readonly ProfilerMarker UPDATE_MARKER = new ("NearbyAudio.Position.Update");
+        private static readonly ProfilerMarker GET_LISTENER_MARKER = new ("NearbyAudio.Position.GetListener");
+        private static readonly ProfilerMarker TRY_GET_AVATAR_MARKER = new ("NearbyAudio.Position.Query.TryGetAvatar");
+        private static readonly ProfilerMarker RANGE_TAGS_MARKER = new ("NearbyAudio.Position.Query.RangeTags");
+        private static readonly ProfilerMarker INACTIVE_SET_MARKER = new ("NearbyAudio.Position.Query.InactiveSetEnabled");
+        private static readonly ProfilerMarker HEAD_POS_MARKER = new ("NearbyAudio.Position.Query.HeadPositionRead");
+        private static readonly ProfilerMarker TRANSFORM_WRITE_MARKER = new ("NearbyAudio.Position.Query.TransformWrite");
+        private static readonly ProfilerMarker SPATIAL_ANGLES_MARKER = new ("NearbyAudio.Position.Query.SpatialAngles");
+        private static readonly ProfilerMarker MUTE_SYNC_MARKER = new ("NearbyAudio.Position.Query.MuteSync");
+
         private readonly NearbyMuteService muteService;
 
         private SingleInstanceEntity cameraEntity;
@@ -47,6 +63,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
+            using var _ = UPDATE_MARKER.Auto();
+
             // The AudioListener is on the camera, but spatial gain should be relative to the player's head.
             // In ThirdPerson these positions differ, so we track both to reproject remote sources before applying spatial audio.
             (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
@@ -55,6 +73,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
         {
+            using var _ = GET_LISTENER_MARKER.Auto();
+
             ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
             isFirstPerson = cam.Mode == CameraMode.FirstPerson;
 
@@ -70,36 +90,52 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
         {
             // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
-            if (!World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase)) return;
+            TRY_GET_AVATAR_MARKER.Begin();
+            bool hasAvatar = World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase);
+            TRY_GET_AVATAR_MARKER.End();
+            if (!hasAvatar) return;
 
             // Per-frame idempotent inactive-state application — self-healing, same pattern as `mute`.
             // "inactive" covers both suspend (16–22 m band) and the one-frame transient between an avatar
             // crossing 22 m outward (RangeMarker drops InAudibleRangeTag in AvatarGroup) and Cleanup
             // dooming this audio entity in the later CleanUpGroup. Without the range-absence clause,
             // PositionSystem would run the full spatial pipeline once on a doomed entity.
+            RANGE_TAGS_MARKER.Begin();
             Entity avatar = nearbyAudio.AvatarEntity;
             bool inactive = World.Has<IsSuspendedTag>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
+            RANGE_TAGS_MARKER.End();
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
+            INACTIVE_SET_MARKER.Begin();
             src.enabled = !inactive;
             src.AudioSource.enabled = !inactive;
+            INACTIVE_SET_MARKER.End();
 
             if (inactive) return;
 
+            HEAD_POS_MARKER.Begin();
             Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
+            HEAD_POS_MARKER.End();
+
+            TRANSFORM_WRITE_MARKER.Begin();
             src.transform.position = sourcePos;
+            TRANSFORM_WRITE_MARKER.End();
 
             if (!src.AudioSource.isVirtual)
             {
+                SPATIAL_ANGLES_MARKER.Begin();
                 (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
                 src.SetSpatialAngles(azimuth, elevation);
+                SPATIAL_ANGLES_MARKER.End();
             }
 
             // Per-frame mute enforcement — self-healing on toggle, also unmutes the binding-time start-mute on first successful tick (when IsMuted is false).
+            MUTE_SYNC_MARKER.Begin();
             src.AudioSource.mute = muteService.IsMuted(nearbyAudio.Key.identity);
+            MUTE_SYNC_MARKER.End();
         }
 
         private static (float azimuth, float elevation) CalculateSpatialAngles(Transform listenerTransform, Vector3 sourcePosition)

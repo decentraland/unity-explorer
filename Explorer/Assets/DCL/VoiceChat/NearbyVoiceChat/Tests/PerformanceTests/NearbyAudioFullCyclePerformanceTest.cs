@@ -74,7 +74,11 @@ namespace DCL.VoiceChat.Nearby
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
+            // FakeMuteCache (HashSet-backed) instead of Substitute.For<INearbyMuteCache>() — substitute
+            // proxies every IsMuted call through argument-matching + call-recording (~20 µs/call),
+            // which used to dominate the position-system slice of this benchmark and inflated full-cycle
+            // per-entity cost ~×7 over real production.
+            var muteService = new NearbyMuteService(new FakeMuteCache(), Substitute.For<INearbyMuteRepository>());
 
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
             positionSystem = new NearbyAudioPositionSystem(world, muteService);

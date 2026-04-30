@@ -44,7 +44,10 @@ namespace DCL.VoiceChat.Nearby
             playerGo.transform.position = new Vector3(0, 1.6f, 0);
             world.Create(new PlayerComponent(playerGo.transform));
 
-            var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
+            // FakeMuteCache (HashSet-backed) instead of Substitute.For<INearbyMuteCache>() — substitute
+            // proxies every IsMuted call through argument-matching + call-recording (~20 µs/call),
+            // which used to dominate this benchmark and inflated per-entity cost ~×7 over real production.
+            var muteService = new NearbyMuteService(new FakeMuteCache(), Substitute.For<INearbyMuteRepository>());
             system = new NearbyAudioPositionSystem(world, muteService);
             system.Initialize();
         }
@@ -64,6 +67,7 @@ namespace DCL.VoiceChat.Nearby
         [TestCase(10)]
         [TestCase(50)]
         [TestCase(100)]
+        [TestCase(1000)]
         public void UpdateWithNParticipants(int participantCount)
         {
             for (int i = 0; i < participantCount; i++)
