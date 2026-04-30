@@ -276,8 +276,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             registry.Add(PARTICIPANT_A, SID_2);
 
             // Sid-2 entity coexists; both audio entities share the same avatar (and its marker).
-            LivekitAudioSource source2 = CreateLivekitAudioSource();
             var key2 = new StreamKey(PARTICIPANT_A, SID_2);
+            LivekitAudioSource source2 = CreateLivekitAudioSource(key2);
             Entity audioEntity2 = world.Create(new NearbyAudioSourceComponent(key2, avatarEntity, source2));
             bindings.TryAdd(key2, audioEntity2);
 
@@ -436,8 +436,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 
-            LivekitAudioSource source = CreateLivekitAudioSource();
             var key = new StreamKey(walletId, sid);
+            LivekitAudioSource source = CreateLivekitAudioSource(key);
             Entity audioEntity = world.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
             bindings.TryAdd(key, audioEntity);
 
@@ -455,9 +455,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
         }
 
-        private LivekitAudioSource CreateLivekitAudioSource()
+        private LivekitAudioSource CreateLivekitAudioSource(StreamKey key)
         {
-            LivekitAudioSource source = LivekitAudioSource.New();
+            LivekitAudioSource source = sourceFactory.Create(key, Weak<AudioStream>.Null);
             gameObjects.Add(source.gameObject);
             return source;
         }
