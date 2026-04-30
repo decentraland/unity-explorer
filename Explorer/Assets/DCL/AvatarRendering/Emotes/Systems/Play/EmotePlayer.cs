@@ -82,15 +82,32 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteReferences.legacy)
             {
-                ReportHub.LogWarning(ReportCategory.EMOTE, $"Masked scene emote '{mainAsset.name}' was loaded as Legacy; masks require Mecanim and cannot be played.");
-                Stop(emoteReferences);
-                return false;
+                if (!PlayMaskedLegacyEmote(view, ref maskedEmote, emoteReferences, isLooping))
+                {
+                    Stop(emoteReferences);
+                    return false;
+                }
             }
-
-            PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
+            else
+                PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             maskedEmote.CurrentEmoteReference = emoteReferences;
+            return true;
+        }
+
+        private bool PlayMaskedLegacyEmote(in IAvatarView view, ref CharacterMaskedEmoteComponent maskedEmote, EmoteReferences emoteReferences, bool isLooping)
+        {
+            if (emoteReferences.avatarClip == null) return false;
+
+            view.StartMaskedLegacyEmote(emoteReferences.avatarClip, maskedEmote.Mask, isLooping);
+
+            // The view bails (logging) if the catalog is missing or has no entry; reflect that.
+            if (!view.IsMaskedLegacyEmotePlaying) return false;
+
+            maskedEmote.EmoteLoop = isLooping;
+
+            SetupPropAnimation(emoteReferences, isLooping);
             return true;
         }
 
@@ -104,6 +121,13 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         public void StopMasked(EmoteReferences emoteReference, in IAvatarView avatarView, AvatarEmoteMask mask)
         {
+            if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished)
+            {
+                avatarView.StopMaskedLegacyEmote();
+                Stop(emoteReference);
+                return;
+            }
+
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
             avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
@@ -127,11 +151,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             bool shouldCancel = masked.StopEmote;
 
-            if (!shouldCancel && masked.IsPlaying)
+            if (!shouldCancel)
             {
-                string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-                int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
-                shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+                if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished)
+                    shouldCancel = avatarView.HasMaskedLegacyEmoteFinished;
+                else if (masked.IsPlaying)
+                {
+                    string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                    int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
+                    shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+                }
             }
 
             if (!shouldCancel) return false;
@@ -145,6 +174,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         public static void UpdateMaskedEmoteTag(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
             if (masked.CurrentEmoteReference == null) return;
+
+            // Legacy-blender path doesn't use Mecanim layer tags; cancellation is driven
+            // by HasMaskedLegacyEmoteFinished on the avatar view, not by tag transitions.
+            if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);

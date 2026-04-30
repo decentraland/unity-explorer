@@ -51,12 +51,12 @@ namespace DCL.AvatarRendering.Emotes
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
-            // FullBody scene emotes load as Legacy animations so GLTFast doesn't hit `SetCurve` at runtime on non-legacy clips in builds.
-            // Masked scene emotes must be Mecanim — AnimatorOverrideController + layered masks are Mecanim-only.
-            bool useMecanim = Mask != AvatarEmoteMask.AemFullBody;
-
+            // Local scene emotes always load as Legacy: gltFast cannot generate Mecanim clips
+            // at runtime (SetCurve is editor-only) and the avatar now blends legacy masked
+            // emotes against locomotion via MaskedLegacyEmoteBlender, so masks no longer need
+            // the Mecanim layer path.
             var promise = GltfPromise.Create(world,
-                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: useMecanim),
+                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: false),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);

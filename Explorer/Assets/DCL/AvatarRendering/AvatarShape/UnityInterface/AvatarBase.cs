@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public AvatarAudioPlaybackController AudioPlaybackController { get; private set; }
 
         public Animation? LegacyAnimation { get; private set; }
+
+        private MaskedLegacyEmoteBlender? maskedLegacyBlender;
+        private static bool emoteMaskCatalogMissingLogged;
 
         [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
@@ -173,10 +177,53 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             if (LegacyAnimation != null) LegacyAnimation.Stop();
         }
 
-        public void SetPointAtLayerWeight(float weight)
+        private MaskedLegacyEmoteBlender AddOrGetMaskedLegacyBlender()
         {
-            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+            if (maskedLegacyBlender != null) return maskedLegacyBlender;
+
+            GameObject animatorGo = AvatarAnimator.gameObject;
+            maskedLegacyBlender = animatorGo.AddComponent<MaskedLegacyEmoteBlender>();
+            maskedLegacyBlender.Initialize(animatorGo);
+            return maskedLegacyBlender;
         }
+
+        public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;
+
+        public bool HasMaskedLegacyEmoteFinished => maskedLegacyBlender != null && maskedLegacyBlender.HasFinished;
+
+        public void StartMaskedLegacyEmote(AnimationClip clip, AvatarEmoteMask emoteMask, bool loop)
+        {
+            EmoteMaskCatalog? catalog = EmoteMaskCatalog.GetCachedInstance();
+
+            if (catalog == null)
+            {
+                if (!emoteMaskCatalogMissingLogged)
+                {
+                    ReportHub.LogWarning(ReportCategory.EMOTE,
+                        $"{EmoteMaskCatalog.RESOURCE_NAME}.asset not found in any Resources/ folder, masked legacy emotes cannot blend.");
+                    emoteMaskCatalogMissingLogged = true;
+                }
+                return;
+            }
+
+            if (!catalog.TryGet(emoteMask, out AvatarMask? avatarMask) || avatarMask == null)
+            {
+                ReportHub.LogWarning(ReportCategory.EMOTE,
+                    $"{EmoteMaskCatalog.RESOURCE_NAME} has no entry for {emoteMask}, masked legacy emote ignored.");
+                return;
+            }
+
+            // Keep the Animator enabled so locomotion stays driving the bones we restore each frame.
+            AvatarAnimator.enabled = true;
+
+            AddOrGetMaskedLegacyBlender().Play(clip, avatarMask, loop);
+        }
+
+        public void StopMaskedLegacyEmote() =>
+            maskedLegacyBlender?.Stop();
+
+        public void SetPointAtLayerWeight(float weight) =>
+            AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
 
         public void SetRotationLayerWeight(float weight)
         {
@@ -238,6 +285,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             ResetArmatureInclination();
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
+            maskedLegacyBlender?.Stop();
             AvatarAnimator.Rebind();
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
@@ -372,6 +420,14 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         bool IsLegacyAnimationPlaying { get; }
 
         void StopLegacyAnimation();
+
+        void StartMaskedLegacyEmote(AnimationClip clip, AvatarEmoteMask emoteMask, bool loop);
+
+        void StopMaskedLegacyEmote();
+
+        bool IsMaskedLegacyEmotePlaying { get; }
+
+        bool HasMaskedLegacyEmoteFinished { get; }
 
         float GetAnimatorFloat(int hash);
 
