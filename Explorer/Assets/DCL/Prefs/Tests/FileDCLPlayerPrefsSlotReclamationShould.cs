@@ -43,7 +43,6 @@ namespace DCL.Prefs.Tests
             {
                 Pid = int.MaxValue,
                 ProcessName = "ghost",
-                MainModulePath = "",
             });
             File.WriteAllText(DataPath(0), "{}");
 
@@ -73,7 +72,6 @@ namespace DCL.Prefs.Tests
             {
                 Pid = self.Id,
                 ProcessName = self.ProcessName,
-                MainModulePath = SafeMainModule(self),
             });
 
             using var prefs = new FileDCLPlayerPrefs(tempDir);
@@ -175,12 +173,6 @@ namespace DCL.Prefs.Tests
             var claim = JsonConvert.DeserializeObject<FileDCLPlayerPrefs.SlotClaim>(json);
             using Process self = Process.GetCurrentProcess();
             Assert.AreEqual(self.Id, claim.Pid);
-        }
-
-        private static string SafeMainModule(Process p)
-        {
-            try { return p.MainModule?.FileName ?? ""; }
-            catch { return ""; }
         }
     }
 }
