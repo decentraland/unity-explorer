@@ -105,8 +105,8 @@ namespace DCL.VoiceChat.Nearby
                     avatarBase,
                     new CharacterTransform(avatarGo.transform));
 
-                // Mirrors UpdateWithNParticipants: avatar carries InAudibleRangeTag, no IsSuspendedTag,
-                // so the production Has<>×2 pair takes the "active path" both branches taken.
+                // Mirrors UpdateWithNParticipants: avatar carries InAudibleRangeTag with
+                // IsSuspended=false, so the production TryGet hot-path takes the "active" branch.
                 world.Add<InAudibleRangeTag>(avatarEntity);
                 avatarEntities[i] = avatarEntity;
 
@@ -132,10 +132,11 @@ namespace DCL.VoiceChat.Nearby
         // pays archetype iteration overhead and source-generated query dispatch.
 
         /// <summary>
-        /// `World.Has&lt;IsSuspendedTag&gt;(e) || !World.Has&lt;InAudibleRangeTag&gt;(e)` — the per-entity
-        /// gate that the production query evaluates twice (once per tag) on every audio entity.
-        /// Demonstrates whether two Arch tag-presence checks per entity are cheap enough that
-        /// archetype filtering would be a no-op or whether they meaningfully dominate.
+        /// `!World.TryGet&lt;InAudibleRangeTag&gt;(e, out var tag) || tag.IsSuspended` — the per-entity
+        /// gate the production query evaluates on every audio entity after the 4→2 query merge
+        /// folded the suspend tag into a field of <see cref="InAudibleRangeTag"/>. Replaces the
+        /// old `Has<>×2` slice; demonstrates whether the single managed-component lookup is cheap
+        /// enough that the gate disappears in the noise of archetype iteration.
         /// </summary>
         [Test, Performance]
         [TestCase(10)]
@@ -153,7 +154,7 @@ namespace DCL.VoiceChat.Nearby
                     for (int i = 0; i < n; i++)
                     {
                         Entity e = avatarEntities[i];
-                        if (world.Has<IsSuspendedTag>(e) || !world.Has<InAudibleRangeTag>(e))
+                        if (!world.TryGet(e, out InAudibleRangeTag tag) || tag.IsSuspended)
                             sink++;
                     }
                 })

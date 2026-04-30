@@ -178,9 +178,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.Has<StreamingAudioComponent>(e), Is.True, "precondition: component attached");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
 
-            // Seed the dependent markers AudibleRangeMarker / Suspend would have placed.
-            world.Add<InAudibleRangeTag>(e);
-            world.Add<IsSuspendedTag>(e);
+            // Seed the dependent marker AudibleRangeSystem would have placed (suspended-flag rides inside it).
+            world.Add(e, new InAudibleRangeTag { IsSuspended = true });
 
             // Stream disappears.
             registry.GetAudioSidsArray(WALLET).Returns((string[]?)null);
@@ -189,8 +188,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False, "cascade must drop speaking (invariant I1)");
-            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False, "cascade must drop audible-range (invariant I2)");
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False, "cascade must drop suspended");
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False, "cascade must drop audible-range (suspended flag is enforced as subset by type)");
         }
 
         [Test]

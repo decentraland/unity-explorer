@@ -17,10 +17,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Pull-mirror from local-player ↔ avatar distance to range/suspend archetype markers.
-    ///     Runs every tick in <see cref="AvatarGroup"/>, after <see cref="NearbyLivekitBridgeSystem"/>
-    ///     (so streaming markers are current) and before <see cref="NearbyAudioBindingSystem"/>
-    ///     (so the binding filter sees a current <see cref="InAudibleRangeTag"/> set). Stateless —
-    ///     pass-through under the listening gate (markers reflect spatial reality; consumers gate on policy).
+    ///     Pass-through under the listening gate (markers reflect spatial reality; consumers gate on policy).
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(NearbyLivekitBridgeSystem))]
@@ -28,14 +25,14 @@ namespace DCL.VoiceChat.Nearby.Systems
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyAudibleRangeSystem : BaseUnityLoopSystem
     {
-        // Squared comparisons throughout — no sqrt per avatar per tick.
         private readonly float outerOutSqr;
         private readonly float outerInSqr;
         private readonly float suspendOutSqr;
         private readonly float suspendInSqr;
 
-        private SingleInstanceEntity playerEntity;
         private SingleInstanceEntity cameraEntity;
+        private Transform cameraTransform = null!;
+        private Transform playerFocusTransform = null!;
 
         internal NearbyAudibleRangeSystem(World world, VoiceChatConfiguration configuration) : base(world)
         {
@@ -44,15 +41,13 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             AssertHysteresisInvariant(rangeBand, suspendBand);
 
-            // Vector2 convention across both bands: x = inner radius, y = outer radius.
+            // Vector2 convention: x = inner radius, y = outer radius.
             outerInSqr = rangeBand.x * rangeBand.x;
             outerOutSqr = rangeBand.y * rangeBand.y;
             suspendInSqr = suspendBand.x * suspendBand.x;
             suspendOutSqr = suspendBand.y * suspendBand.y;
         }
 
-        // Bands must strictly nest so a single distance can't satisfy contradictory tag transitions
-        // on the same tick. Checked once at construction — values can't drift at runtime.
         [Conditional("UNITY_ASSERTIONS")]
         private static void AssertHysteresisInvariant(Vector2 rangeBand, Vector2 suspendBand)
         {
@@ -64,73 +59,60 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         public override void Initialize()
         {
-            playerEntity = World.CachePlayer();
             cameraEntity = World.CacheCamera();
+
+            cameraTransform = World.Get<CameraComponent>(cameraEntity).Camera.transform;
+            playerFocusTransform = World.Get<PlayerComponent>(World.CachePlayer()).CameraFocus;
+
+            World.Add(cameraEntity, new NearbyListenerComponent { ListenerTransform = cameraTransform });
         }
 
         protected override void Update(float t)
         {
-            Vector3 listenerPos = GetListenerPosition();
+            bool isFirstPerson = cameraEntity.GetCameraComponent(World).Mode == CameraMode.FirstPerson;
+            Vector3 playerHeadPosition = isFirstPerson ? cameraTransform.position : playerFocusTransform.position;
+
+            ref NearbyListenerComponent listener = ref World.Get<NearbyListenerComponent>(cameraEntity);
+            listener.IsFirstPerson = isFirstPerson;
+            listener.PlayerHeadPosition = playerHeadPosition;
 
             // Order matters:
-            AddAudibleRangeTagQuery(World, listenerPos); // 1. Tag avatars whose distance just dropped inside the outer-in threshold.
-            RemoveAudibleRangeTagQuery(World, listenerPos); // 2. Untag avatars whose distance just crossed the outer-out threshold (cascades suspend removal).
-            AddSuspendedTagQuery(World, listenerPos); // 3. Tag avatars in the suspend band.
-            RemoveSuspendedTagQuery(World, listenerPos); // 4. Untag avatars whose distance just dropped below suspend-in.
-        }
-
-        // Mirrors NearbyAudioPositionSystem's listener-position resolution so the cull boundary is evaluated against the same spatial reference the player actually hears.
-        private Vector3 GetListenerPosition()
-        {
-            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
-            if (cam.Mode == CameraMode.FirstPerson)
-                return cam.Camera.transform.position;
-
-            return World.TryGet(playerEntity, out PlayerComponent playerComp)
-                ? playerComp.CameraFocus.position
-                : cam.Camera.transform.position;
+            TryEnterAudibleRangeQuery(World, playerHeadPosition); // 1. Avatars without the tag: enter the outer-in band .
+            UpdateInAudibleRangeQuery(World, playerHeadPosition); // 2. Avatars with the tag: exit on outer-out, otherwise mutate IsSuspended via the suspend hysteresis
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(InAudibleRangeTag))]
         [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
-        private void AddAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
+        private void TryEnterAudibleRange([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
         {
-            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude <= outerInSqr)
-                World.Add<InAudibleRangeTag>(entity);
+            float distSqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
+
+            if (distSqr <= outerInSqr)
+                World.Add(entity, new InAudibleRangeTag { IsSuspended = distSqr >= suspendOutSqr });
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent), typeof(InAudibleRangeTag))]
-        private void RemoveAudibleRangeTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
+        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
+        private void UpdateInAudibleRange([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase, ref InAudibleRangeTag tag)
         {
-            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude > outerOutSqr)
+            float distSqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
+
+            // Exit: drop membership entirely.
+            if (distSqr > outerOutSqr)
             {
                 World.Remove<InAudibleRangeTag>(entity);
-
-                // Cascade: maintain invariant I1 (suspended ⊆ inAudibleRange) on every observable point.
-                if (World.Has<IsSuspendedTag>(entity))
-                    World.Remove<IsSuspendedTag>(entity);
+                return;
             }
-        }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention), typeof(IsSuspendedTag))]
-        [All(typeof(AvatarBase), typeof(InAudibleRangeTag))]
-        private void AddSuspendedTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
-        {
-            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude >= suspendOutSqr)
-                World.Add<IsSuspendedTag>(entity);
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(InAudibleRangeTag), typeof(IsSuspendedTag))]
-        private void RemoveSuspendedTag([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
-        {
-            if ((avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude < suspendInSqr)
-                World.Remove<IsSuspendedTag>(entity);
+            if (tag.IsSuspended)
+            {
+                if (distSqr < suspendInSqr)
+                    tag.IsSuspended = false;
+            }
+            else if (distSqr >= suspendOutSqr)
+                tag.IsSuspended = true;
         }
     }
 }

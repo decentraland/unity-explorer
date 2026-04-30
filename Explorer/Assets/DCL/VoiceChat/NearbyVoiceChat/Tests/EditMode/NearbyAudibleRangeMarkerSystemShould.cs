@@ -16,14 +16,15 @@ using Object = UnityEngine.Object;
 namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents the contract of <see cref="NearbyAudibleRangeMarkerSystem"/>: the two
-    /// avatar-level markers (<see cref="InAudibleRangeTag"/>, <see cref="IsSuspendedTag"/>) are
-    /// reconciled once per tick from the local-player ↔ avatar distance with hysteresis.
+    /// Documents the contract of <see cref="NearbyAudibleRangeSystem"/>: the avatar-level
+    /// <see cref="InAudibleRangeTag"/> (carrying the <c>IsSuspended</c> flag) is reconciled
+    /// once per tick from the local-player ↔ avatar distance with hysteresis.
     /// Invariants:
-    /// I1: <c>IsSuspendedTag ⊆ InAudibleRangeTag</c>.
+    /// I1: <c>IsSuspended</c> is enforced as a subset of <see cref="InAudibleRangeTag"/> by type
+    /// (the flag rides on the component and cannot survive its removal).
     /// I2: <c>InAudibleRangeTag ⊆ StreamingAudioComponent</c>.
     /// </summary>
-    public class NearbyAudibleRangeMarkerSystemShould : UnitySystemTestBase<NearbyAudibleRangeMarkerSystem>
+    public class NearbyAudibleRangeMarkerSystemShould : UnitySystemTestBase<NearbyAudibleRangeSystem>
     {
         private static readonly FieldInfo HEAD_ANCHOR_FIELD =
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -33,6 +34,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Entity cameraEntity;
         private Entity playerEntity;
         private Camera camera = null!;
+        private VoiceChatConfiguration configuration = null!;
 
         [SetUp]
         public void SetUp()
@@ -48,7 +50,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             playerFocusGo.transform.position = Vector3.zero;
             playerEntity = world.Create(new PlayerComponent(playerFocusGo.transform));
 
-            system = new NearbyAudibleRangeMarkerSystem(world);
+            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+
+            system = new NearbyAudibleRangeSystem(world, configuration);
             system.Initialize();
         }
 
@@ -58,7 +62,59 @@ namespace DCL.VoiceChat.Nearby.Tests
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
+
+            if (configuration != null) Object.DestroyImmediate(configuration);
+
             EcsTestsUtils.TearDownFeaturesRegistry();
+        }
+
+        // ── NearbyListenerComponent lifecycle ───────────────────────
+
+        [Test]
+        public void SeedsNearbyListenerComponentOnInitialize()
+        {
+            // After Initialize, the camera entity carries the singleton listener-data component.
+            // ListenerTransform is the camera transform (stable for the session); per-tick fields
+            // are filled on the first Update.
+            Assert.That(world.Has<NearbyListenerComponent>(cameraEntity), Is.True,
+                "RangeSystem.Initialize must seed NearbyListenerComponent on the camera entity");
+
+            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
+            Assert.That(listener.ListenerTransform, Is.SameAs(camera.transform));
+        }
+
+        [Test]
+        public void RefreshesIsFirstPersonAndHeadPositionEachTick_FirstPerson()
+        {
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.FirstPerson;
+            camera.transform.position = new Vector3(5f, 1.6f, -2f);
+
+            system.Update(0);
+
+            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
+            Assert.That(listener.IsFirstPerson, Is.True);
+            Assert.That(listener.PlayerHeadPosition, Is.EqualTo(camera.transform.position),
+                "FirstPerson: PlayerHeadPosition must track the camera transform");
+        }
+
+        [Test]
+        public void RefreshesIsFirstPersonAndHeadPositionEachTick_ThirdPerson()
+        {
+            // Third person: PlayerHeadPosition must follow the player's CameraFocus, not the camera.
+            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
+            cam.Mode = CameraMode.ThirdPerson;
+
+            camera.transform.position = new Vector3(100f, 0f, 0f);
+            PlayerComponent playerComp = world.Get<PlayerComponent>(playerEntity);
+            playerComp.CameraFocus.position = new Vector3(1f, 1.6f, 2f);
+
+            system.Update(0);
+
+            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
+            Assert.That(listener.IsFirstPerson, Is.False);
+            Assert.That(listener.PlayerHeadPosition, Is.EqualTo(playerComp.CameraFocus.position),
+                "ThirdPerson: PlayerHeadPosition must track PlayerComponent.CameraFocus");
         }
 
         // ── Outer boundary — Query A / Query B / hysteresis ─────────
@@ -118,36 +174,36 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void CascadeRemovesSuspendedWhenAudibleRangeRemovedSameTick()
         {
-            // Bring avatar into the suspend band: at 17 m it picks up both tags in one Update
-            // (Query A → Query C). Moving to 23 m must drop both via Query B's cascade in a single tick.
+            // Bring avatar into the suspend band: at 17 m TryEnter seeds InAudibleRangeTag with
+            // IsSuspended=true (distSqr ≥ suspendOutSqr) in one Update. Moving to 23 m must drop
+            // the tag via UpdateInAudibleRange's exit branch — the suspended flag rides out with it.
             Entity e = CreateStreamingAvatar(distance: 17f);
             system.Update(0);
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True, "precondition: audible tag applied");
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True, "precondition: suspended tag applied");
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True, "precondition: suspended flag set");
 
             MoveAvatar(e, distance: 23f);
 
             system.Update(0);
 
-            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False, "cascade must drop suspended when audible is removed (invariant I1)");
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False, "exit must drop the tag (suspended flag enforced as subset by type)");
         }
 
         [Test]
         public void AppliesSuspendedWhenInAudibleAndDistanceInOuterBand()
         {
-            // Seed the in-audible archetype, then move into the suspend band so Query C fires.
+            // Seed the in-audible archetype, then move into the suspend band so the field flips.
             Entity e = CreateStreamingAvatar(distance: 15f);
             system.Update(0);
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True, "precondition: audible tag applied");
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False, "precondition: not yet suspended");
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.False, "precondition: not yet suspended");
 
             MoveAvatar(e, distance: 19f);
 
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True);
         }
 
         [Test]
@@ -158,43 +214,43 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.False);
         }
 
         [Test]
         public void RemovesSuspendedWhenDistanceDropsBelowSuspendIn()
         {
-            // Avatar enters straight into the suspend band on inward approach (Query A adds
-            // InAudibleRangeTag at 18 m; Query C sees sqr ≥ 17² and adds IsSuspendedTag in the
-            // same tick). Then moving to 15 m triggers Query D (sqr < 16²) → suspend removed.
+            // Avatar enters straight into the suspend band on inward approach (TryEnter seeds
+            // InAudibleRangeTag with IsSuspended=true at 18 m because sqr ≥ 17²). Then moving to
+            // 15 m triggers UpdateInAudibleRange's clear-branch (sqr < 16²) → flag flips off.
             Entity e = CreateStreamingAvatar(distance: 18f);
             system.Update(0);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True, "precondition: suspended tag applied");
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True, "precondition: suspended flag set");
 
             MoveAvatar(e, distance: 15f);
 
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True, "audible tag must persist");
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.False);
         }
 
         [Test]
         public void KeepsSuspendedWithinHysteresisBandInner()
         {
             // Hysteresis: 16 in / 17 out. At 16.5 m (between thresholds) suspended must persist.
-            // Seed at 18 m (avatar enters audible-range and suspend band in the same tick), then
-            // move into the hysteresis band — Query D early-returns because sqr ≥ 16².
+            // Seed at 18 m (TryEnter seeds InAudibleRangeTag with IsSuspended=true), then move
+            // into the hysteresis band — the clear-branch is gated on sqr < 16² so the flag stays.
             Entity e = CreateStreamingAvatar(distance: 18f);
             system.Update(0);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True, "precondition: suspended tag applied");
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True, "precondition: suspended flag set");
 
             MoveAvatar(e, distance: 16.5f);
 
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True);
         }
 
         // ── Edge cases ──────────────────────────────────────────────
@@ -208,7 +264,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.False);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False);
         }
 
         [Test]
@@ -220,23 +275,23 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.False);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False);
         }
 
         [Test]
         public void DoesNotRevisitEntityAfterStructuralChangeInSameQuery()
         {
-            // Filter-trick guard: Query A's [None<InAudibleRangeTag>] excludes the entity from
-            // its own iterator after `World.Add` migrates it; otherwise `World.Add<T>` on an
-            // already-tagged entity would throw. Symmetric on suspend (Query C vs IsSuspendedTag).
-            // Single Update brings an avatar at 18 m through the chain in one pass:
-            // (no markers → InAudibleRangeTag → IsSuspendedTag) — covers both filter tricks.
+            // Filter-trick guard: TryEnter's [None<InAudibleRangeTag>] excludes the entity from
+            // its own iterator after `World.Add` migrates it; otherwise `World.Add` on an
+            // already-tagged entity would throw. The suspend flag now seeds inside the same
+            // structural change instead of via a second query, so the second filter-trick is
+            // gone — but the first one still matters and is exercised by an 18 m entry pass
+            // (no marker → InAudibleRangeTag with IsSuspended=true).
             Entity e = CreateStreamingAvatar(distance: 18f);
 
             Assert.DoesNotThrow(() => system.Update(0));
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.True);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.True);
         }
 
         [Test]
@@ -251,7 +306,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False);
+            Assert.That(world.Get<InAudibleRangeTag>(e).IsSuspended, Is.False);
         }
 
         [Test]

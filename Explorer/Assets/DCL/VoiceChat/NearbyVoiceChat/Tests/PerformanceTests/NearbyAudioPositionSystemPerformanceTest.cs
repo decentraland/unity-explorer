@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.Nearby
 
             var cameraGo = CreateTrackedGameObject("PerfCamera");
             var camera = cameraGo.AddComponent<Camera>();
-            world.Create(new CameraComponent(camera));
+            Entity cameraEntity = world.Create(new CameraComponent(camera));
 
             var playerGo = CreateTrackedGameObject("PerfPlayer");
             playerGo.transform.position = new Vector3(0, 1.6f, 0);
@@ -50,6 +50,16 @@ namespace DCL.VoiceChat.Nearby
             var muteService = new NearbyMuteService(new FakeMuteCache(), Substitute.For<INearbyMuteRepository>());
             system = new NearbyAudioPositionSystem(world, muteService);
             system.Initialize();
+
+            // PositionSystem reads NearbyListenerComponent (produced by NearbyAudibleRangeSystem in
+            // production). This benchmark exercises PositionSystem in isolation, so we seed the
+            // singleton manually with FirstPerson defaults.
+            world.Add(cameraEntity, new NearbyListenerComponent
+            {
+                ListenerTransform = camera.transform,
+                PlayerHeadPosition = playerGo.transform.position,
+                IsFirstPerson = true,
+            });
         }
 
         protected override void OnTearDown()
@@ -103,8 +113,9 @@ namespace DCL.VoiceChat.Nearby
                 new CharacterTransform(avatarGo.transform));
 
             // A1: PositionSystem skips the spatial pipeline unless the avatar carries
-            // InAudibleRangeTag (and lacks IsSuspendedTag). Tag here so the benchmark continues
-            // to measure the full spatial-pipeline path, not the inactive-state early-return.
+            // InAudibleRangeTag with IsSuspended=false. Default-tag here so the benchmark
+            // continues to measure the full spatial-pipeline path, not the inactive-state
+            // early-return.
             world.Add<InAudibleRangeTag>(avatarEntity);
 
             LivekitAudioSource source = LivekitAudioSource.New();

@@ -3,8 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character;
-using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -45,7 +43,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         // Hierarchy mirrors the call structure: Update wraps everything; Query.* slices the
         // per-entity work. To collapse in Profiler, group by "NearbyAudio.Position".
         private static readonly ProfilerMarker UPDATE_MARKER = new ("NearbyAudio.Position.Update");
-        private static readonly ProfilerMarker GET_LISTENER_MARKER = new ("NearbyAudio.Position.GetListener");
         private static readonly ProfilerMarker TRY_GET_AVATAR_MARKER = new ("NearbyAudio.Position.Query.TryGetAvatar");
         private static readonly ProfilerMarker RANGE_TAGS_MARKER = new ("NearbyAudio.Position.Query.RangeTags");
         private static readonly ProfilerMarker INACTIVE_SET_MARKER = new ("NearbyAudio.Position.Query.InactiveSetEnabled");
@@ -57,8 +54,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly NearbyMuteService muteService;
 
         private SingleInstanceEntity cameraEntity;
-        private SingleInstanceEntity playerEntity;
-        private bool isFirstPerson;
 
         internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService) : base(world)
         {
@@ -68,36 +63,23 @@ namespace DCL.VoiceChat.Nearby.Systems
         public override void Initialize()
         {
             cameraEntity = World.CacheCamera();
-            playerEntity = World.CachePlayer();
         }
 
         protected override void Update(float t)
         {
             using var _ = UPDATE_MARKER.Auto();
 
-            // The AudioListener is on the camera, but spatial gain should be relative to the player's head.
-            // In ThirdPerson these positions differ, so we track both to reproject remote sources before applying spatial audio.
-            (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
-            SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
-        }
-
-        private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
-        {
-            using var _ = GET_LISTENER_MARKER.Auto();
-
-            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
-            isFirstPerson = cam.Mode == CameraMode.FirstPerson;
-
-            Vector3 headPos = cam.Camera.transform.position;
-            if (!isFirstPerson && World.TryGet(playerEntity, out PlayerComponent playerComp))
-                headPos = playerComp.CameraFocus.position;
-
-            return (cam.Camera.transform, headPos);
+            // Listener data is produced once per tick by NearbyAudibleRangeSystem on the camera entity.
+            // The AudioListener is on the camera, but spatial gain should be relative to the player's
+            // head — in ThirdPerson the two diverge, so we reproject remote sources before applying
+            // spatial audio. Single chunk lookup; no PlayerComponent query needed here.
+            ref readonly NearbyListenerComponent listener = ref World.Get<NearbyListenerComponent>(cameraEntity);
+            SyncPositionsAndSpatialAnglesQuery(World, listener.ListenerTransform, listener.PlayerHeadPosition, listener.IsFirstPerson);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] bool isFirstPerson, ref NearbyAudioSourceComponent nearbyAudio)
         {
             // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
             TRY_GET_AVATAR_MARKER.Begin();
@@ -112,7 +94,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             // PositionSystem would run the full spatial pipeline once on a doomed entity.
             RANGE_TAGS_MARKER.Begin();
             Entity avatar = nearbyAudio.AvatarEntity;
-            bool inactive = World.Has<IsSuspendedTag>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
+            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
             RANGE_TAGS_MARKER.End();
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;

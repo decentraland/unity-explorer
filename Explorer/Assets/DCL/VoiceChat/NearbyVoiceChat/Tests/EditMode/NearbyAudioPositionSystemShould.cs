@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
-using DCL.Character.Components;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -36,7 +35,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private readonly List<GameObject> gameObjects = new (8);
 
         private Entity cameraEntity;
-        private Entity playerEntity;
+        private Camera camera = null!;
         private INearbyMuteCache muteCache = null!;
         private NearbyMuteService muteService = null!;
 
@@ -46,17 +45,33 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             var cameraGo = CreateTrackedGameObject("TestCamera");
-            var camera = cameraGo.AddComponent<Camera>();
+            camera = cameraGo.AddComponent<Camera>();
             cameraEntity = world.Create(new CameraComponent(camera));
-
-            var playerGo = CreateTrackedGameObject("TestPlayer");
-            playerEntity = world.Create(new PlayerComponent(playerGo.transform));
 
             muteCache = Substitute.For<INearbyMuteCache>();
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
 
             system = new NearbyAudioPositionSystem(world, muteService);
             system.Initialize();
+
+            // Production: NearbyAudibleRangeSystem.Initialize seeds the singleton listener data on
+            // the camera entity, then refreshes IsFirstPerson + PlayerHeadPosition every tick.
+            // Tests drive PositionSystem in isolation, so we attach the component manually with
+            // FirstPerson defaults; tests that need ThirdPerson reprojection mutate it via SeedListener.
+            world.Add(cameraEntity, new NearbyListenerComponent
+            {
+                ListenerTransform = camera.transform,
+                PlayerHeadPosition = camera.transform.position,
+                IsFirstPerson = true,
+            });
+        }
+
+        // Mirror what NearbyAudibleRangeSystem would have written this tick.
+        private void SeedListener(Vector3 playerHeadPos, bool isFirstPerson)
+        {
+            ref NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
+            listener.PlayerHeadPosition = playerHeadPos;
+            listener.IsFirstPerson = isFirstPerson;
         }
 
         protected override void OnTearDown()
@@ -74,9 +89,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void SyncAudioSourcePositionToAvatarHeadInFirstPerson()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
+            // Default seeded listener is FirstPerson at the camera origin.
             Vector3 avatarPos = new Vector3(10, 0, 5);
             Vector3 headPos = avatarPos + new Vector3(0, 1.6f, 0);
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, avatarPos, headPos);
@@ -93,12 +106,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void ReprojectAudioSourcePositionInThirdPerson()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.ThirdPerson;
-
-            var playerGo = CreateTrackedGameObject("PlayerFocus");
-            playerGo.transform.position = new Vector3(0, 1.6f, 0);
-            world.Set(playerEntity, new PlayerComponent(playerGo.transform));
+            var playerHeadPos = new Vector3(0, 1.6f, 0);
+            SeedListener(playerHeadPos, isFirstPerson: false);
 
             Vector3 avatarPos = new Vector3(8, 0, 4);
             Vector3 remoteHead = avatarPos + new Vector3(0, 1.6f, 0);
@@ -108,8 +117,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Vector3 listenerPos = cam.Camera.transform.position;
-            Vector3 expected = listenerPos + (remoteHead - playerGo.transform.position);
+            Vector3 listenerPos = camera.transform.position;
+            Vector3 expected = listenerPos + (remoteHead - playerHeadPos);
 
             Assert.That(audioSource.transform.position.x, Is.EqualTo(expected.x).Within(0.01f));
             Assert.That(audioSource.transform.position.y, Is.EqualTo(expected.y).Within(0.01f));
@@ -124,9 +133,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Pessimistic init: binding starts AudioSource.mute=true and the component's LastAppliedMute=true.
             // For an already-muted user, the first tick reads the cache once (Version mismatch from 0→1) but
             // skips the AudioSource.mute interop because the cached value already matches LastAppliedMute.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             lkSource.AudioSource.mute = true;   // matches the binding contract
@@ -143,9 +149,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void MuteToggleIsSelfHealing()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             lkSource.AudioSource.mute = true;
@@ -174,9 +177,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void UnmutedIdentityHasUnmutedAudioSource()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             // Start muted as the binding system would — first successful tick must release it.
@@ -196,11 +196,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void DisablesLivekitAndAudioSourceWhenAvatarIsSuspended()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
-            world.Add<IsSuspendedTag>(avatarEntity);
+            world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             lkSource.enabled = true;
@@ -220,9 +217,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             // outer-out crossing; Cleanup (CleanUpGroup) dooms the audio entity later in the same
             // frame. PositionSystem runs in between and must not invoke the spatial pipeline on
             // a doomed entity — the !Has<InAudibleRangeTag> clause in `inactive` covers it.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             world.Remove<InAudibleRangeTag>(avatarEntity);
 
@@ -240,11 +234,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void ReEnablesBothWhenAvatarIsActiveInRange()
         {
-            // Active band: InAudibleRangeTag present, no IsSuspendedTag. The spawn-disabled state
+            // Active band: InAudibleRangeTag present with IsSuspended=false. The spawn-disabled state
             // from Binding must flip on the first PositionSystem tick.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
@@ -261,13 +252,10 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void SkipsSpatialPipelineWhenInactive()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             // Suspended avatar — spatial pipeline must early-return: position not written,
             // mute not touched. Pin a sentinel position on the source and check it's untouched.
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
-            world.Add<IsSuspendedTag>(avatarEntity);
+            world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             Vector3 sentinelPos = new (123.4f, 56.7f, 89.1f);
@@ -290,11 +278,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void AppliesIdempotentWritesWhenStateUnchanged()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
-            world.Add<IsSuspendedTag>(avatarEntity);
+            world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
@@ -316,9 +301,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // After the pessimistic-init tick has settled state, a subsequent tick with the same Version
             // must skip both the IsMuted lookup and the AudioSource.mute write.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             lkSource.AudioSource.mute = true;
@@ -347,9 +329,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Version moves (some other wallet was toggled), but THIS entity's mute state is unchanged.
             // Lookup happens (Version mismatched), but the AudioSource.mute interop is gated by the value diff.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             lkSource.AudioSource.mute = true;
@@ -372,9 +351,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SkipTransformWriteWhenPositionDeltaBelowEpsilon()
         {
             // 5 cm shift → sqrMagnitude = 0.0025 < POSITION_EPSILON_SQR (0.01). Transform write skipped.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Vector3 head = new Vector3(1, 2, 3);
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, head);
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
@@ -401,9 +377,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void WriteTransformWhenPositionDeltaExceedsEpsilon()
         {
             // 50 cm shift → sqrMagnitude = 0.25 > POSITION_EPSILON_SQR. Transform write applied.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-
             Vector3 head = new Vector3(1, 2, 3);
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, head);
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
@@ -445,10 +418,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
             // A1: PositionSystem early-returns the spatial pipeline unless InAudibleRangeTag is
-            // present and IsSuspendedTag is absent. Default seed is "active in range" so the
+            // present with IsSuspended=false. Default seed is "active in range" so the
             // existing per-frame contract tests (position sync, mute, reprojection) keep working
             // without per-test scaffolding. Inactive-state tests opt into the suspend/out-of-range
-            // archetype explicitly.
+            // state explicitly (mutate IsSuspended or remove the tag).
             Entity entity = world.Create(
                 new Profile(walletId, walletId, new Avatar()),
                 avatarBase,

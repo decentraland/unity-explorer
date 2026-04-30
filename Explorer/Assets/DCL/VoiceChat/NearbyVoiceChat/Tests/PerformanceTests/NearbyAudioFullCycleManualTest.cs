@@ -107,13 +107,23 @@ namespace DCL.VoiceChat.Nearby
             world = World.Create();
 
             // Camera entity defaults Mode = FirstPerson, so the position system skips PlayerComponent.CameraFocus.
-            world.Create(new CameraComponent(camera));
+            Entity cameraEntity = world.Create(new CameraComponent(camera));
 
             // Local listener anchor — parented under the testbed so it's auto-cleaned on destroy.
             var playerGo = new GameObject("Listener_LocalPlayer");
             playerGo.transform.SetParent(transform);
             playerGo.transform.localPosition = Vector3.zero;
             world.Create(new PlayerComponent(playerGo.transform));
+
+            // PositionSystem reads NearbyListenerComponent (produced by NearbyAudibleRangeSystem in
+            // production). This testbed runs PositionSystem without RangeSystem, so we seed the
+            // singleton manually with FirstPerson defaults.
+            world.Add(cameraEntity, new NearbyListenerComponent
+            {
+                ListenerTransform = camera.transform,
+                PlayerHeadPosition = playerGo.transform.position,
+                IsFirstPerson = true,
+            });
 
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();

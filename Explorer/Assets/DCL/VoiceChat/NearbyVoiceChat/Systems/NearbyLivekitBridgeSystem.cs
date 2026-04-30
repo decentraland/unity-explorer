@@ -59,7 +59,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(StreamingAudioComponent))]
+        [All(typeof(AvatarBase))]
         private void UpdateStreaming(Entity entity, in Profile profile, ref StreamingAudioComponent streaming)
         {
             string userId = profile.UserId;
@@ -75,14 +75,11 @@ namespace DCL.VoiceChat.Nearby.Systems
             }
             else
             {
-                // drop StreamingAudioComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming, suspended ⊆ audible) hold.
+                // drop StreamingAudioComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
                 World.Remove<StreamingAudioComponent>(entity);
 
                 if (World.Has<IsActivelySpeakingTag>(entity))
                     World.Remove<IsActivelySpeakingTag>(entity);
-
-                if (World.Has<IsSuspendedTag>(entity))
-                    World.Remove<IsSuspendedTag>(entity);
 
                 if (World.Has<InAudibleRangeTag>(entity))
                     World.Remove<InAudibleRangeTag>(entity);
