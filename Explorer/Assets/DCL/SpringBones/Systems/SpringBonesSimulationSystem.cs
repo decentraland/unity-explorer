@@ -9,6 +9,8 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using Unity.Mathematics;
+using UnityEngine;
 namespace DCL.SpringBones
 {
     [LogCategory(ReportCategory.AVATAR)]
@@ -98,6 +100,9 @@ namespace DCL.SpringBones
             avatarDistances.Add((0f, registration.Slots));
         }
 
+        private static float SafeRatio(float current, float rest) =>
+            math.abs(rest) > 0.0001f ? current / rest : 1f;
+
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void SyncParentBones(ref SpringBoneRegistrationComponent registration)
@@ -108,10 +113,23 @@ namespace DCL.SpringBones
             {
                 slot.WearableParent.SetPositionAndRotation(slot.AvatarParent.position, slot.AvatarParent.rotation);
 
+                Vector3 parentLossy = slot.WearableParent.parent != null ? slot.WearableParent.parent.lossyScale : Vector3.one;
+                Vector3 avatarLossy = slot.AvatarParent.lossyScale;
+                slot.WearableParent.localScale = new Vector3(
+                    avatarLossy.x / parentLossy.x,
+                    avatarLossy.y / parentLossy.y,
+                    avatarLossy.z / parentLossy.z);
+
                 if (springBoneService.IsSlotActive(slot.SlotIndex))
                 {
+                    Vector3 restScale = slot.RestAvatarScale;
+                    float scaleFactor = (
+                        SafeRatio(avatarLossy.x, restScale.x) +
+                        SafeRatio(avatarLossy.y, restScale.y) +
+                        SafeRatio(avatarLossy.z, restScale.z)) / 3f;
+
                     springBoneService.SetParentData(slot.SlotIndex,
-                        slot.AvatarParent.rotation, slot.AvatarParent.localToWorldMatrix);
+                        slot.AvatarParent.rotation, slot.AvatarParent.localToWorldMatrix, scaleFactor);
                 }
             }
         }

@@ -6,5 +6,6 @@ namespace DCL.SpringBones
     {
         public quaternion Rotation;
         public float4x4 LocalToWorldMatrix;
+        public float ScaleFactor;
     }
 }

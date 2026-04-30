@@ -175,7 +175,7 @@ namespace DCL.SpringBones.Tests
             var (joints, configs, tails) = MakeChain(3);
             int slot = service.RegisterSpring(joints, configs, tails);
 
-            service.SetParentData(slot, quaternion.identity, float4x4.identity);
+            service.SetParentData(slot, quaternion.identity, float4x4.identity, 1f);
             service.SetSlotActive(slot, true);
             service.PrepareSimulation();
             service.Simulate(0.016f);
@@ -201,7 +201,7 @@ namespace DCL.SpringBones.Tests
 
             Assert.AreEqual(slotA, slotB);
             // Drive a sim step — trailing dummy transforms must not throw
-            service.SetParentData(slotB, quaternion.identity, float4x4.identity);
+            service.SetParentData(slotB, quaternion.identity, float4x4.identity, 1f);
             service.SetSlotActive(slotB, true);
             service.PrepareSimulation();
             Assert.DoesNotThrow(() => service.Simulate(0.016f));

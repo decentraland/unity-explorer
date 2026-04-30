@@ -168,12 +168,13 @@ namespace DCL.SpringBones
             }
         }
 
-        public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix)
+        public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix, float scaleFactor)
         {
             parentData[slotIndex] = new SpringBoneParentData
             {
                 Rotation = rotation,
                 LocalToWorldMatrix = localToWorldMatrix,
+                ScaleFactor = scaleFactor,
             };
         }
 

@@ -32,12 +32,15 @@ namespace DCL.SpringBones
             // Chain root's parent comes from the main-thread sync
             var parentRotation = ParentData[slotIndex].Rotation;
             var parentLocalToWorld = ParentData[slotIndex].LocalToWorldMatrix;
+            float scaleFactor = ParentData[slotIndex].ScaleFactor;
 
             for (int j = 0; j < jointCount; j++)
             {
                 int idx = baseIndex + j;
                 var config = JointConfigs[idx];
                 var head = Transforms[idx];
+
+                float scaledLength = config.Length * scaleFactor;
 
                 // Recompute head world transform from parent
                 head = UpdateParentMatrix(head, parentRotation, parentLocalToWorld);
@@ -61,8 +64,8 @@ namespace DCL.SpringBones
                 float len = math.length(headToTail);
 
                 nextTail = len > 0.0001f
-                    ? head.Position + (headToTail / len) * config.Length
-                    : head.Position + math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis) * config.Length;
+                    ? head.Position + (headToTail / len) * scaledLength
+                    : head.Position + math.mul(math.mul(parentRotation, config.LocalRotation), config.BoneAxis) * scaledLength;
 
                 NextTails[idx] = nextTail;
 

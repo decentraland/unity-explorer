@@ -158,6 +158,7 @@ namespace DCL.SpringBones
                 SlotIndex = slotIndex,
                 WearableParent = wearableParent,
                 AvatarParent = avatarParent,
+                RestAvatarScale = avatarParent.lossyScale,
             });
         }
 

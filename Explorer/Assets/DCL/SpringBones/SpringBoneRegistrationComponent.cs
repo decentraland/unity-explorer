@@ -8,6 +8,7 @@ namespace DCL.SpringBones
         public int SlotIndex;
         public Transform WearableParent;
         public Transform AvatarParent;
+        public Vector3 RestAvatarScale;
     }
 
     public struct SpringBoneRegistrationComponent
