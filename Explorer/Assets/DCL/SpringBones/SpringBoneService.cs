@@ -13,10 +13,13 @@ namespace DCL.SpringBones
     {
         public const int MAX_JOINTS_PER_SPRING = 8;
         const int INITIAL_SLOT_CAPACITY = 32;
+        const float FIXED_STEP = 1f / 60f;
+        const int MAX_SUBSTEPS = 4;
 
         readonly Transform dummyTransform;
         readonly Stack<int> freeSlots = new ();
 
+        float accumulatedDt;
         int slotCapacity;
         Transform[] managedTransforms; // parallel to TAA, for main-thread access
         TransformAccessArray taa;
@@ -182,6 +185,25 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
+            // Decouple physics from render fps. Step at fixed 60 Hz so authored stiffness/drag
+            // produce identical motion regardless of frame rate.
+            accumulatedDt += deltaTime;
+
+            int steps = 0;
+            while (accumulatedDt >= FIXED_STEP && steps < MAX_SUBSTEPS)
+            {
+                SimulateStep(FIXED_STEP);
+                accumulatedDt -= FIXED_STEP;
+                steps++;
+            }
+
+            // Drop residual after a stall to avoid spiral-of-death.
+            if (steps == MAX_SUBSTEPS)
+                accumulatedDt = 0f;
+        }
+
+        void SimulateStep(float deltaTime)
+        {
             JobHandle pullHandle = new PullSpringBoneTransformsJob
             {
                 Transforms = transforms,

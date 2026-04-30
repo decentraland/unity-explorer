@@ -54,8 +54,12 @@ namespace DCL.SpringBones
                 float3 currentTail = CurrentTails[idx];
                 float3 prevTail = PrevTails[idx];
 
+                // Drag is authored as per-step retention at ~60Hz. Scale exponent by 60*dt so
+                // per-second damping is framerate-invariant — at 144fps, raw (1-drag)^144 over-damps.
+                float dragRetention = math.pow(math.max(1e-6f, 1f - config.Drag), 60f * DeltaTime);
+
                 float3 nextTail = currentTail
-                                + (currentTail - prevTail) * (1f - config.Drag)
+                                + (currentTail - prevTail) * dragRetention
                                 + stiffnessForce
                                 + gravity;
 
