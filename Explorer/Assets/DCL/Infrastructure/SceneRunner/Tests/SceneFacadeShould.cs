@@ -36,6 +36,8 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using PortableExperiences.Controller;
+using RichTypes;
+using SceneRunner.Admins;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -386,7 +388,8 @@ namespace SceneRunner.Tests
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
                     new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>()) { }
+                Substitute.For<ISceneRuntime>(),
+                Option<ISceneAdmins>.None) { }
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>

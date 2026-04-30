@@ -15,10 +15,22 @@ using RichTypes;
 
 namespace SceneRunner.Admins
 {
+    public interface ISceneAdmins : IDisposable
+    {
+        UniTaskVoid StartRequestPollingAsync();
+
+        UniTask FireRequestAsync(CancellationToken ct);
+
+        // Null if not loaded yet
+        bool? IsAdmin(string wallet);
+
+        Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> CurrentAdmins();
+    }
+
     /// <summary>
     ///     Exists per scene
     /// </summary>
-    public class SceneAdmins : IDisposable
+    public class SceneAdmins : ISceneAdmins
     {
         public struct AdminInfo
         {
@@ -74,13 +86,6 @@ namespace SceneRunner.Admins
             this.sceneData = sceneData;
         }
 
-#if SCENE_ADMINS_TESTS
-        public static SceneAdmins NewTestInstance()
-        {
-            return new SceneAdmins(null!, null!, null!, null!);
-        }
-#endif
-
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
@@ -98,8 +103,6 @@ namespace SceneRunner.Admins
         // Exception-free
         public async UniTask FireRequestAsync(CancellationToken ct)
         {
-#if !SCENE_ADMINS_TESTS // it's not required to execute an actual request for tests
-
             using var _ = await operationLock.LockAsync();
 
             try
@@ -145,15 +148,11 @@ namespace SceneRunner.Admins
             {
                 initialLoadFinished = true;
             }
-#endif
         }
 
         // Null if not loaded yet
         public bool? IsAdmin(string wallet)
         {
-#if SCENE_ADMINS_TESTS
-            return true; // consider always an admin during tests
-#else
             if (initialLoadFinished)
             {
                 return wallets.ContainsKey(wallet);
@@ -162,7 +161,6 @@ namespace SceneRunner.Admins
             {
                 return null;
             }
-#endif
         }
 
         public Result<IReadOnlyDictionary<string, AdminInfo>> CurrentAdmins()
