@@ -11,16 +11,17 @@ using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Owns the creation part of the Nearby audio-source lifecycle.
-    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/>) the system iterates the registry's
-    ///     <c>(identity → sids)</c> snapshot and materializes an audio-source entity per <c>(walletId, sid)</c> pair that
-    ///     does not yet have one. Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
+    ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> +
+    ///     <see cref="StreamingAudioComponent"/> + <see cref="InAudibleRangeTag"/>) the system iterates
+    ///     the snapshotted sids on the entity itself and materializes an audio-source entity per
+    ///     <c>(walletId, sid)</c> pair that does not yet have one. Throttled to a fixed budget per frame
+    ///     so a crowd ramp-up does not spike a single tick.
     /// </summary>
     [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
@@ -64,8 +65,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [All(typeof(AvatarBase), typeof(IsStreamingAudioTag), typeof(InAudibleRangeTag))]
-        private void CollectPendingCreations(Entity avatarEntity, in Profile profile)
+        [All(typeof(AvatarBase), typeof(StreamingAudioComponent), typeof(InAudibleRangeTag))]
+        private void CollectPendingCreations(Entity avatarEntity, in Profile profile, in StreamingAudioComponent streaming)
         {
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
@@ -74,16 +75,12 @@ namespace DCL.VoiceChat.Nearby.Systems
             // Cleanup system handles already-bound entities; this filter prevents creation in the first place.
             if (userBlockingCache.UserIsBlocked(walletId)) return;
 
-            // Race-safety: NearbyLivekitBridgeSystem applies/removes IsStreamingAudioTag once per tick from
-            // a snapshot of registry.streamsByIdentity. Between Bridge's tick and Binding's tick (same frame,
-            // ordered by [UpdateBefore]) an FFI callback can drop the entry — leaving the marker on the avatar
-            // but the registry returning null. Skip rather than spawn a one-frame ghost source.
-            ConcurrentDictionary<string, byte>? sids = registry.GetAudioSids(walletId);
-            if (sids == null) return;
-
-            foreach (KeyValuePair<string, byte> entry in sids)
+            // Sids ride on the entity itself — no registry call on the per-avatar hot path.
+            // foreach over a string[] lowers to a struct-free for-loop in IL (zero allocations).
+            // Bridge guarantees SidsSnapshot is non-null for any entity that has the component.
+            foreach (string sid in streaming.SidsSnapshot)
             {
-                var key = new StreamKey(walletId, entry.Key);
+                var key = new StreamKey(walletId, sid);
                 if (bindings.ContainsKey(key)) continue;
 
                 pendingCreations.Add((avatarEntity, key));
@@ -101,7 +98,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                 Weak<AudioStream> stream = registry.GetActiveStream(key);
 
-                // Track was unsubscribed between collection (GetAudioSids) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
+                // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
                 if (!stream.Resource.Has) continue;
 
                 LivekitAudioSource source = sourceFactory.Create(key, stream);

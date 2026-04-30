@@ -4,6 +4,7 @@ using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
@@ -53,10 +54,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
         }
 
         [Test]
@@ -64,7 +63,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio, TrackSource.SourceScreenshareAudio);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
@@ -72,7 +71,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio, TrackSource.SourceUnknown);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
@@ -87,10 +86,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseConnectionUpdated(ConnectionUpdate.Connected);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
-            Assert.That(sids.ContainsKey(SID_2), Is.False);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_2), Is.False);
         }
 
         [Test]
@@ -98,7 +96,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindVideo);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
@@ -109,10 +107,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseTrackUnsubscribed(WALLET_A, SID_1);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.False);
-            Assert.That(sids.ContainsKey(SID_2), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.False);
+            Assert.That(ContainsSid(WALLET_A, SID_2), Is.True);
         }
 
         [Test]
@@ -122,7 +119,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseTrackUnpublished(WALLET_A, SID_1, TrackKind.KindAudio);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
@@ -134,9 +131,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.DoesNotThrow(() =>
                 room.TrackUnpublished += Raise.Event<PublishDelegate>(null!, participant));
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
         }
 
         [Test]
@@ -146,9 +142,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseTrackUnpublished(WALLET_A, SID_VIDEO, TrackKind.KindVideo);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
         }
 
         [Test]
@@ -158,13 +153,16 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseTrackUnsubscribed(WALLET_A, SID_1);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+            Assert.That(registry.GetAudioSidsArray(WALLET_A), Is.Null);
         }
 
         [Test]
         public void ReturnNullForUnknownWallet()
         {
-            Assert.That(registry.GetAudioSids("0xUNKNOWN"), Is.Null);
+            Assert.That(registry.HasAudioStream("0xUNKNOWN"), Is.False);
+            Assert.That(registry.GetAudioSidsArray("0xUNKNOWN"), Is.Null);
+            Assert.That(registry.GetAudioSids("0xUNKNOWN").IsEmpty, Is.True);
         }
 
         [Test]
@@ -176,14 +174,11 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseConnectionUpdated(ConnectionUpdate.Connected);
 
-            var sidsA = registry.GetAudioSids(WALLET_A);
-            var sidsB = registry.GetAudioSids(WALLET_B);
-
-            Assert.That(sidsA, Is.Not.Null);
-            Assert.That(sidsA!.ContainsKey(SID_1), Is.True);
-            Assert.That(sidsA.ContainsKey(SID_VIDEO), Is.False);
-            Assert.That(sidsB, Is.Not.Null);
-            Assert.That(sidsB!.ContainsKey(SID_2), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_VIDEO), Is.False);
+            Assert.That(registry.HasAudioStream(WALLET_B), Is.True);
+            Assert.That(ContainsSid(WALLET_B, SID_2), Is.True);
         }
 
         [Test]
@@ -195,8 +190,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             SetupRemoteParticipants((WALLET_B, new[] { (SID_2, TrackKind.KindAudio) }));
             RaiseConnectionUpdated(ConnectionUpdate.Connected);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
-            Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+            Assert.That(registry.HasAudioStream(WALLET_B), Is.True);
         }
 
         [Test]
@@ -208,9 +203,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseParticipantUpdated(WALLET_A, UpdateFromParticipant.Disconnected);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
-            Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
-            Assert.That(registry.GetAudioSids(WALLET_B)!.ContainsKey(SID_VIDEO), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+            Assert.That(registry.HasAudioStream(WALLET_B), Is.True);
+            Assert.That(ContainsSid(WALLET_B, SID_VIDEO), Is.True);
         }
 
         [Test]
@@ -220,9 +215,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseParticipantUpdated(WALLET_A, UpdateFromParticipant.MetadataChanged);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
         }
 
         [Test]
@@ -234,9 +228,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             SetupRemoteParticipants((WALLET_B, new[] { (SID_2, TrackKind.KindAudio) }));
             RaiseConnectionUpdated(ConnectionUpdate.Reconnected);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
-            Assert.That(registry.GetAudioSids(WALLET_B), Is.Not.Null);
-            Assert.That(registry.GetAudioSids(WALLET_B)!.ContainsKey(SID_2), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+            Assert.That(registry.HasAudioStream(WALLET_B), Is.True);
+            Assert.That(ContainsSid(WALLET_B, SID_2), Is.True);
         }
 
         [Test]
@@ -274,9 +268,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseConnectionUpdated(ConnectionUpdate.Reconnecting);
 
-            var sids = registry.GetAudioSids(WALLET_A);
-            Assert.That(sids, Is.Not.Null);
-            Assert.That(sids!.ContainsKey(SID_1), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
+            Assert.That(ContainsSid(WALLET_A, SID_1), Is.True);
         }
 
         [Test]
@@ -286,22 +279,22 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             RaiseConnectionUpdated(ConnectionUpdate.Disconnected);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
         public void UnsubscribeAndClearOnDispose()
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Not.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.True);
 
             registry.Dispose();
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
 
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
 
-            Assert.That(registry.GetAudioSids(WALLET_A), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
         }
 
         [Test]
@@ -340,7 +333,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // ActiveSpeakers update must NOT auto-add to the audio-sids index.
             activeSpeakers.SetActives(WALLET_B);
-            Assert.That(registry.GetAudioSids(WALLET_B), Is.Null);
+            Assert.That(registry.HasAudioStream(WALLET_B), Is.False);
         }
 
         [Test]
@@ -363,13 +356,87 @@ namespace DCL.VoiceChat.Nearby.Tests
             {
                 for (int i = 0; i < ITERATIONS && !cts.IsCancellationRequested; i++)
                 {
-                    var sids = registry.GetAudioSids(WALLET_A);
-                    if (sids != null)
-                        foreach (var _ in sids) { /* drain enumerator to surface concurrency issues */ }
+                    string[]? snapshot = registry.GetAudioSidsArray(WALLET_A);
+                    if (snapshot == null) continue;
+                    // Iterate the snapshot — the reference is immutable by COW contract,
+                    // so no torn state is observable even while writer is pushing new versions.
+                    for (int j = 0; j < snapshot.Length; j++) { _ = snapshot[j]; }
                 }
             });
 
             Assert.DoesNotThrow(() => Task.WaitAll(new[] { writer, reader }, millisecondsTimeout: 5000));
+        }
+
+        // ── B2.1: COW reference-equality contract ───────────────────
+
+        [Test]
+        public void SubscribingThenUnsubscribingSameSidProducesDistinctArrayReferences()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            string[] ref1 = registry.GetAudioSidsArray(WALLET_A)!;
+
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+            string[] ref2 = registry.GetAudioSidsArray(WALLET_A)!;
+
+            RaiseTrackUnsubscribed(WALLET_A, SID_1);
+            string[] ref3 = registry.GetAudioSidsArray(WALLET_A)!;
+
+            Assert.That(ReferenceEquals(ref1, ref2), Is.False, "subscribe must publish a NEW array reference");
+            Assert.That(ReferenceEquals(ref2, ref3), Is.False, "unsubscribe must publish a NEW array reference");
+            Assert.That(ReferenceEquals(ref1, ref3), Is.False, "no path may reuse a prior reference");
+        }
+
+        [Test]
+        public void SameSidSetObservedTwiceReturnsSameReference()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            string[]? a = registry.GetAudioSidsArray(WALLET_A);
+            string[]? b = registry.GetAudioSidsArray(WALLET_A);
+
+            Assert.That(a, Is.Not.Null);
+            Assert.That(ReferenceEquals(a, b), Is.True,
+                "two reads with no intervening event must return the same reference — Bridge's no-op invariant");
+        }
+
+        [Test]
+        public void IsStreamGoneReturnsTrueAfterLastSidUnsubscribed()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackUnsubscribed(WALLET_A, SID_1);
+
+            Assert.That(registry.IsStreamGone(new StreamKey(WALLET_A, SID_1)), Is.True);
+            Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+        }
+
+        [Test]
+        public void ConcurrentSubUnsubUnderContentionDoesNotLoseUpdates()
+        {
+            // Three concurrent FFI-thread paths racing on the same wallet. After all complete,
+            // sid-B must remain (sub never undone) and reference invariants must not be torn —
+            // every snapshot we observe is a COW array, never mutated post-publication.
+            const int RUNS = 200;
+
+            for (int run = 0; run < RUNS; run++)
+            {
+                Task t1 = Task.Run(() => RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio));
+                Task t2 = Task.Run(() => RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio));
+                Task.WaitAll(t1, t2);
+
+                Task t3 = Task.Run(() => RaiseTrackUnsubscribed(WALLET_A, SID_1));
+                t3.Wait();
+
+                Assert.That(ContainsSid(WALLET_A, SID_2), Is.True, "sid-B must survive concurrent contention");
+
+                // Cleanup for next iteration.
+                RaiseTrackUnsubscribed(WALLET_A, SID_2);
+            }
+        }
+
+        private bool ContainsSid(string walletId, string sid)
+        {
+            string[]? arr = registry.GetAudioSidsArray(walletId);
+            return arr != null && Array.IndexOf(arr, sid) >= 0;
         }
 
         private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)

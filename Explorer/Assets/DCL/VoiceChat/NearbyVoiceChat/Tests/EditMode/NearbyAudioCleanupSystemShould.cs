@@ -11,7 +11,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -232,17 +232,17 @@ namespace DCL.VoiceChat.Nearby.Tests
             }
         }
 
-        // ── A5.2: archetype short-circuit via IsStreamingAudioTag ───
+        // ── A5.2 / B2.1: archetype short-circuit via StreamingAudioComponent ───
 
         [Test]
         public void FlagsAudioEntityWhenAvatarLosesStreamingTag()
         {
             // Cheap shortcut — when the avatar is alive, not flagged for deletion, but has lost
-            // its IsStreamingAudioTag (Bridge dropped it because the registry no longer reports
+            // its StreamingAudioComponent (Bridge dropped it because the registry no longer reports
             // sids for that walletId), the audio entity must be doomed without consulting the
             // registry or the blocking cache.
             (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Remove<IsStreamingAudioTag>(avatarEntity);
+            world.Remove<StreamingAudioComponent>(avatarEntity);
 
             system.Update(0);
 
@@ -295,7 +295,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void FlagsAudioEntityWhenAvatarHasDeleteIntentionButMarkerRemains()
         {
-            // F1-deliberate invariant: NearbyLivekitBridgeSystem.RemoveStreamingTag filters with
+            // F1-deliberate invariant: NearbyLivekitBridgeSystem.UpdateStreaming filters with
             // [None<DeleteEntityIntention>], so a doomed avatar keeps its marker until physical
             // destruction. Cleanup must catch this via the World.Has<DeleteEntityIntention>(avatar)
             // clause, not the marker-absence clause.
@@ -306,8 +306,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
-            Assert.That(world.Has<IsStreamingAudioTag>(avatarEntity), Is.True,
-                "Bridge's [None<DeleteEntityIntention>] filter prevents marker removal on a doomed avatar");
+            Assert.That(world.Has<StreamingAudioComponent>(avatarEntity), Is.True,
+                "Bridge's [None<DeleteEntityIntention>] filter prevents component removal on a doomed avatar");
         }
 
         [Test]
@@ -316,7 +316,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Optional sanity — proves the cheap shortcut actually short-circuits the registry call.
             // If the marker-absence clause fires, registry.IsStreamGone must NOT be invoked.
             (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Remove<IsStreamingAudioTag>(avatarEntity);
+            world.Remove<StreamingAudioComponent>(avatarEntity);
 
             registry.ResetCallCounters();
 
@@ -428,11 +428,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             Entity avatarEntity = CreateAvatarEntity(walletId);
             // After A5.2 the cleanup shortcut treats streaming-marker absence as a doom signal;
             // A1 adds InAudibleRangeTag absence as a fourth shortcut clause. Realistic state for
-            // a live audio entity is both markers present — Bridge applied IsStreamingAudioTag
+            // a live audio entity is both markers present — Bridge applied StreamingAudioComponent
             // and AudibleRangeMarker applied InAudibleRangeTag before Binding spawned the entity.
             // Pair all three in the seed so existing trigger tests exercise the intended fallbacks
             // (IsStreamGone / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
-            world.Add<IsStreamingAudioTag>(avatarEntity);
+            world.Add(avatarEntity, new StreamingAudioComponent(new[] { sid }));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 
@@ -473,7 +473,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            private readonly Dictionary<string, ConcurrentDictionary<string, byte>> sidsByIdentity = new ();
+            // Per-wallet sid set as a HashSet — cleanup tests only need point-lookup semantics
+            // (IsStreamGone), not COW reference identity. Bridge tests are the place that
+            // exercises reference-equality contract.
+            private readonly Dictionary<string, HashSet<string>> sidsByIdentity = new ();
 
             // Call counters for asserting short-circuit behaviour. NSubstitute is overkill here —
             // INearbyAudioStreamRegistry has a hand-rolled fake to drive trigger combinations,
@@ -484,13 +487,13 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public void Add(string walletId, string sid)
             {
-                if (!sidsByIdentity.TryGetValue(walletId, out var sids))
+                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
                 {
-                    sids = new ConcurrentDictionary<string, byte>();
+                    sids = new HashSet<string>();
                     sidsByIdentity[walletId] = sids;
                 }
 
-                sids.TryAdd(sid, 0);
+                sids.Add(sid);
             }
 
             public void RemoveAll(string walletId) =>
@@ -498,15 +501,28 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public void RemoveSid(string walletId, string sid)
             {
-                if (sidsByIdentity.TryGetValue(walletId, out var sids))
-                    sids.TryRemove(sid, out _);
+                if (sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
+                    sids.Remove(sid);
             }
 
             public void ClearAll() =>
                 sidsByIdentity.Clear();
 
-            public ConcurrentDictionary<string, byte>? GetAudioSids(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out var sids) ? sids : null;
+            public bool HasAudioStream(string walletId) =>
+                sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) && sids.Count > 0;
+
+            public ReadOnlySpan<string> GetAudioSids(string walletId) =>
+                GetAudioSidsArray(walletId);
+
+            public string[]? GetAudioSidsArray(string walletId)
+            {
+                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) || sids.Count == 0)
+                    return null;
+
+                var arr = new string[sids.Count];
+                sids.CopyTo(arr);
+                return arr;
+            }
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 Weak<AudioStream>.Null;
@@ -514,8 +530,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             public bool IsStreamGone(StreamKey key)
             {
                 IsStreamGoneCallCount++;
-                ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
-                return sids == null || !sids.ContainsKey(key.sid);
+                return !sidsByIdentity.TryGetValue(key.identity, out HashSet<string>? sids) || !sids.Contains(key.sid);
             }
 
             public bool IsActiveSpeaker(string walletId) => false;

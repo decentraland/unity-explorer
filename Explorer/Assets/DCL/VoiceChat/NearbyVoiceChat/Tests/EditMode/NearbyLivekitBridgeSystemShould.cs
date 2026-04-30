@@ -7,7 +7,6 @@ using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -17,11 +16,11 @@ using Object = UnityEngine.Object;
 namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents the contract of <see cref="NearbyLivekitBridgeSystem"/>: zero-field marker components
-    /// (<see cref="IsStreamingAudioTag"/>, <see cref="IsActivelySpeakingTag"/>) on the avatar entity
-    /// are reconciled once per tick from the current <see cref="INearbyAudioStreamRegistry"/>
-    /// snapshot. Pure pull-mirror; pass-through under listening gate (consumers own the policy).
-    /// Invariant I1: <c>IsActivelySpeakingTag ⊆ IsStreamingAudioTag</c>.
+    /// Documents the contract of <see cref="NearbyLivekitBridgeSystem"/>: every avatar's
+    /// <see cref="StreamingAudioComponent.SidsSnapshot"/> reflects the registry's COW sid array
+    /// (reference-equal); <see cref="IsActivelySpeakingTag"/> reflects the registry's active-speaker
+    /// snapshot. Pure pull-mirror; pass-through under listening gate.
+    /// Invariant I1: <c>IsActivelySpeakingTag ⊆ StreamingAudioComponent</c>.
     /// </summary>
     public class NearbyLivekitBridgeSystemShould : UnitySystemTestBase<NearbyLivekitBridgeSystem>
     {
@@ -41,7 +40,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Default: no streams, no active speakers — explicit so individual tests only override
             // the slot they care about. NSubstitute returns null/false for unstubbed reference/bool
             // returns, but stating the contract makes intent legible.
-            registry.GetAudioSids(Arg.Any<string>()).Returns((ConcurrentDictionary<string, byte>?)null);
+            //
+            // We mock GetAudioSidsArray (returns string[]?) — Bridge's data path consumes this.
+            // GetAudioSids returns ReadOnlySpan<string> which NSubstitute may not be able to mock
+            // for ref-struct returns; the design's NSubstitute fallback uses GetAudioSidsArray.
+            registry.GetAudioSidsArray(Arg.Any<string>()).Returns((string[]?)null);
             registry.IsActiveSpeaker(Arg.Any<string>()).Returns(false);
 
             system = new NearbyLivekitBridgeSystem(world, registry);
@@ -56,272 +59,201 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
-        // ── Streaming tag — Query A (Add) ────────────────────────────
+        // ── AddStreaming query ──────────────────────────────────────
 
         [Test]
-        public void AppliesStreamingTagWhenRegistryReportsWalletId()
+        public void AddStreamingAttachesComponentWhenRegistryHasSids()
         {
-            // Arrange
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
+            string[] sids = StubStreaming(WALLET, "sid-1");
 
-            // Act
             system.Update(0);
 
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, sids), Is.True,
+                "SidsSnapshot must be reference-equal to the registry's COW array");
         }
 
         [Test]
-        public void RemovesStreamingTagWhenWalletIdDisappearsFromRegistry()
+        public void AddStreamingSkipsAvatarWithDeleteEntityIntention()
         {
-            // Arrange
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
-            system.Update(0); // tag is now applied
-
-            // walletId drops out of registry
-            registry.GetAudioSids(WALLET).Returns((ConcurrentDictionary<string, byte>?)null);
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
-        }
-
-        [Test]
-        public void KeepsStreamingTagWhenOneOfNSidsUnsubscribes()
-        {
-            // Arrange — multi-track participant
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            var sids = new ConcurrentDictionary<string, byte>();
-            sids.TryAdd("sid-1", 0);
-            sids.TryAdd("sid-2", 0);
-            registry.GetAudioSids(WALLET).Returns(sids);
-
-            system.Update(0);
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True, "precondition: tag applied on first tick");
-
-            // Act — one sid unsubscribes; outer dict still non-null
-            sids.TryRemove("sid-2", out _);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True,
-                "tag must persist while at least one sid remains for the walletId");
-        }
-
-        // ── Edge cases ──────────────────────────────────────────────
-
-        [Test]
-        public void DoesNotRevisitEntityAfterStructuralChangeInSameQuery()
-        {
-            // The filter-trick: Query A's [None<IsStreamingAudioTag>] excludes the entity from
-            // its own iterator after `World.Add` migrates it to a new archetype; Query B's
-            // [All<IsStreamingAudioTag>] does the symmetric thing on Remove. Verified by
-            // call count — Query A reads the registry exactly once, Query B reads it exactly
-            // once (and then short-circuits because the stream is still present). If either
-            // filter trick were broken the same query would re-enter and the count would balloon.
-            const string WALLET = "wallet-a";
-            CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
-            registry.ClearReceivedCalls(); // discard NSubstitute setup-side recordings
-
-            system.Update(0);
-
-            registry.Received(2).GetAudioSids(WALLET);
-        }
-
-        [Test]
-        public void SkipsAvatarWithDeleteEntityIntention()
-        {
-            // Arrange
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             world.Add<DeleteEntityIntention>(e);
             StubStreaming(WALLET, "sid-1");
 
-            // Act
             system.Update(0);
 
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
         }
 
         [Test]
-        public void SkipsAvatarWithNullOrEmptyWalletId()
+        public void AddStreamingSkipsAvatarAlreadyHavingComponent()
         {
-            // Arrange — avatar with empty UserId. We poison the empty-string slot with a non-null
-            // sids dict so that an impl which fails to short-circuit on empty walletId would
-            // mistakenly tag the entity. The empty-walletId guard is the observable behavior.
+            // Filter [None<StreamingAudioComponent>] must prevent the AddStreaming query from
+            // re-attaching a fresh component on an avatar that already carries one. UpdateStreaming
+            // is the single place that mutates an existing component.
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+            string[] preexisting = { "sid-pre" };
+            world.Add(e, new StreamingAudioComponent(preexisting));
+            StubStreaming(WALLET, "sid-other");
+
+            system.Update(0);
+
+            // Either Update kept it (preexisting reference) or refreshed it to the registry's array;
+            // either way, AddStreaming must NOT have piled on a second component.
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+        }
+
+        [Test]
+        public void AddStreamingSkipsAvatarWithEmptyWalletId()
+        {
+            // Avatar with empty UserId. Poison the empty-string slot with a non-null sids array
+            // so an impl which fails to short-circuit on empty walletId would mistakenly attach
+            // the component. The empty-walletId guard is the observable behavior.
             var avatarGo = CreateTrackedGameObject("Avatar_empty");
             AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
             var anchorGo = CreateTrackedGameObject("HeadAnchor_empty");
             anchorGo.transform.SetParent(avatarGo.transform);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, anchorGo.transform);
 
-            var poisonSids = new ConcurrentDictionary<string, byte>();
-            poisonSids.TryAdd("sid-poison", 0);
-            registry.GetAudioSids("").Returns(poisonSids);
+            registry.GetAudioSidsArray("").Returns(new[] { "sid-poison" });
 
             Entity e = world.Create(new Profile("", "", new Avatar()), avatarBase);
 
-            // Act
             system.Update(0);
 
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
         }
 
+        // ── UpdateStreaming query ───────────────────────────────────
+
         [Test]
-        public void AppliesTagsRegardlessOfListeningGateState()
+        public void UpdateStreamingNoOpWhenReferenceUnchanged()
         {
-            // The marker system has no reference to NearbyVoiceChatStateModel — it must
-            // never be coupled to listening-gate policy. This test pins that invariant
-            // architecturally: constructing the system with only (world, registry) is the contract.
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
+            string[] sids = StubStreaming(WALLET, "sid-1");
 
             system.Update(0);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
 
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True,
-                "marker is pass-through; consumers (Binding/Cleanup/Nametag) own the listening gate");
+            // Two more ticks; registry returns the same array reference each time.
+            system.Update(0);
+            system.Update(0);
+
+            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, sids), Is.True,
+                "stable registry → SidsSnapshot reference must remain unchanged across ticks");
         }
 
         [Test]
-        public void IdempotentWhenStateUnchangedAcrossTicks()
+        public void UpdateStreamingRefreshesReferenceWhenRegistryArrayChanged()
         {
-            // Arrange — both tags should be present steady-state.
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+            string[] firstRef = StubStreaming(WALLET, "sid-1");
+
+            system.Update(0);
+            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, firstRef), Is.True);
+
+            // Registry publishes a NEW array (content changed, reference changed) — simulate the
+            // post-OnTrackSubscribed COW snapshot. Bridge must observe the new reference and refresh
+            // the entity's snapshot.
+            string[] secondRef = { "sid-1", "sid-2" };
+            registry.GetAudioSidsArray(WALLET).Returns(secondRef);
+
+            system.Update(0);
+
+            Assert.That(ReferenceEquals(world.Get<StreamingAudioComponent>(e).SidsSnapshot, secondRef), Is.True,
+                "new registry reference → SidsSnapshot must adopt the new reference");
+        }
+
+        [Test]
+        public void UpdateStreamingCascadesFullRemovalWhenRegistryReturnsNull()
+        {
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             StubStreaming(WALLET, "sid-1");
             registry.IsActiveSpeaker(WALLET).Returns(true);
 
-            // Act — multiple ticks with no registry change
             system.Update(0);
-            system.Update(0);
-            system.Update(0);
-
-            // Assert — tag presence is the observable invariant; archetype-move counting is
-            // not part of Arch's public API.
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True);
-            Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True);
-        }
-
-        // ── Speaking tag — Query C / Query D / cascade ───────────────
-
-        [Test]
-        public void CascadeRemovesSpeakingTagWhenStreamingTagIsRemovedSameTick()
-        {
-            // Arrange — bring the entity into steady state with both tags.
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
-            registry.IsActiveSpeaker(WALLET).Returns(true);
-
-            system.Update(0);
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True, "precondition: streaming tag set");
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True, "precondition: component attached");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
 
-            // Stream disappears, but the avatar is still listed as an active speaker.
-            // Without cascade, invariant I1 (speaking ⊆ streaming) would break.
-            registry.GetAudioSids(WALLET).Returns((ConcurrentDictionary<string, byte>?)null);
-
-            // Act
-            system.Update(0);
-
-            // Assert — both tags gone in the same tick.
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
-            Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False,
-                "cascade must drop speaking when streaming is removed (invariant I1)");
-        }
-
-        [Test]
-        public void CascadeRemovesAudibleAndSuspendedWhenStreamingTagIsRemovedSameTick()
-        {
-            // A1 §6.9: extends F1's cascade — RemoveStreamingTag must also drop InAudibleRangeTag
-            // and IsSuspendedTag (if present) on stream disappearance, so invariant I2
-            // (InAudibleRangeTag ⊆ IsStreamingAudioTag) holds at every point.
-            const string WALLET = "wallet-a";
-            Entity e = CreateAvatarEntity(WALLET);
-            StubStreaming(WALLET, "sid-1");
-
-            system.Update(0);
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True, "precondition: streaming tag set");
-
-            // AudibleRangeMarker would have placed these tags in production; seed them directly here.
+            // Seed the dependent markers AudibleRangeMarker / Suspend would have placed.
             world.Add<InAudibleRangeTag>(e);
             world.Add<IsSuspendedTag>(e);
 
             // Stream disappears.
-            registry.GetAudioSids(WALLET).Returns((ConcurrentDictionary<string, byte>?)null);
+            registry.GetAudioSidsArray(WALLET).Returns((string[]?)null);
 
-            // Act
             system.Update(0);
 
-            // Assert — all dependent tags cascaded off.
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
-            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False,
-                "cascade must drop audible-range when streaming is removed (invariant I2)");
-            Assert.That(world.Has<IsSuspendedTag>(e), Is.False,
-                "cascade must drop suspended when streaming is removed (invariant I1+I2)");
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
+            Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False, "cascade must drop speaking (invariant I1)");
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False, "cascade must drop audible-range (invariant I2)");
+            Assert.That(world.Has<IsSuspendedTag>(e), Is.False, "cascade must drop suspended");
         }
 
         [Test]
-        public void AppliesSpeakingTagWhenRegistryReportsActiveSpeakerWithStreamingTag()
+        public void DoesNotRevisitEntityAfterStructuralChangeInSameQuery()
         {
-            // Arrange
+            // The filter-trick: AddStreaming's [None<StreamingAudioComponent>] excludes the entity
+            // from its own iterator after `World.Add` migrates it; UpdateStreaming's
+            // [All<StreamingAudioComponent>] symmetrically catches it. Verified by call count —
+            // AddStreaming reads the registry once, UpdateStreaming reads it once.
+            const string WALLET = "wallet-a";
+            CreateAvatarEntity(WALLET);
+            StubStreaming(WALLET, "sid-1");
+            registry.ClearReceivedCalls();
+
+            system.Update(0);
+
+            registry.Received(2).GetAudioSidsArray(WALLET);
+        }
+
+        // ── Speaking / cascade ──────────────────────────────────────
+
+        [Test]
+        public void AppliesSpeakingTagWhenRegistryReportsActiveSpeakerWithStreamingComponent()
+        {
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             StubStreaming(WALLET, "sid-1");
             registry.IsActiveSpeaker(WALLET).Returns(true);
 
-            // Act
             system.Update(0);
 
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True);
         }
 
         [Test]
-        public void DoesNotApplySpeakingTagToAvatarWithoutStreamingTag()
+        public void DoesNotApplySpeakingTagToAvatarWithoutStreamingComponent()
         {
-            // Arrange — avatar IS an active speaker but has NO audio stream.
-            // This pins invariant I1 architecturally: Query C's [All<IsStreamingAudioTag>] filter
-            // must prevent the speaking tag from ever materializing on a non-streaming avatar
-            // (covers the local-player case from invariant I2).
+            // Pins invariant I1: AddSpeaking's [All<StreamingAudioComponent>] filter must prevent
+            // the speaking tag from ever materializing on a non-streaming avatar.
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
-            // No StubStreaming — registry reports no audio for this walletId.
             registry.IsActiveSpeaker(WALLET).Returns(true);
+            // No StubStreaming — registry reports no audio for this walletId.
 
-            // Act
             system.Update(0);
 
-            // Assert
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.False);
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.False);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False,
-                "speaking tag must require streaming tag (invariant I1)");
+                "speaking tag must require StreamingAudioComponent (invariant I1)");
         }
 
         [Test]
         public void DoesNotChurnSpeakingTagWhenStreamingPersists()
         {
-            // Regression guard: an unconditional cascade in RemoveStreamingTag would unconditionally
-            // drop IsActivelySpeakingTag every tick, then Query C would re-add it on the same tick —
-            // costing a structural-change pair per active speaker per tick, with both tags present
-            // observably (so a tag-presence assertion alone does not catch it).
-            //
-            // Steady-state contract: with both tags settled, only Query D needs to re-check
-            // IsActiveSpeaker. Query C must not iterate (entity already has IsActivelySpeakingTag).
-            // If the cascade misfires, Query C re-iterates the entity → IsActiveSpeaker is called
-            // twice per tick instead of once.
+            // Regression guard: an unconditional speaking-cascade in UpdateStreaming would drop
+            // IsActivelySpeakingTag every tick, then AddSpeaking would re-add it on the same tick —
+            // costing a structural-change pair per active speaker per tick. Steady-state contract:
+            // both tags settled, only RemoveSpeaking re-checks IsActiveSpeaker. Measure call count.
             const string WALLET = "wallet-a";
             CreateAvatarEntity(WALLET);
             StubStreaming(WALLET, "sid-1");
@@ -338,7 +270,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void RemovesSpeakingTagWhenWalletIdDropsFromActiveSpeakersButStillStreaming()
         {
-            // Arrange — bring the entity into steady state with both tags.
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
             StubStreaming(WALLET, "sid-1");
@@ -347,26 +278,52 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
 
-            // Active-speaker signal drops, stream remains.
             registry.IsActiveSpeaker(WALLET).Returns(false);
 
-            // Act
             system.Update(0);
 
-            // Assert — only the speaking tag gone; streaming tag stays.
-            Assert.That(world.Has<IsStreamingAudioTag>(e), Is.True,
-                "stream is unchanged — streaming tag must persist");
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True,
+                "stream is unchanged — StreamingAudioComponent must persist");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.False);
+        }
+
+        [Test]
+        public void IdempotentWhenStateUnchangedAcrossTicks()
+        {
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+            StubStreaming(WALLET, "sid-1");
+            registry.IsActiveSpeaker(WALLET).Returns(true);
+
+            system.Update(0);
+            system.Update(0);
+            system.Update(0);
+
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True);
+            Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True);
+        }
+
+        [Test]
+        public void AppliesComponentRegardlessOfListeningGateState()
+        {
+            // The marker system has no reference to NearbyVoiceChatStateModel — never coupled to
+            // listening-gate policy. Pinned architecturally: ctor takes only (world, registry).
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+            StubStreaming(WALLET, "sid-1");
+
+            system.Update(0);
+
+            Assert.That(world.Has<StreamingAudioComponent>(e), Is.True,
+                "component is pass-through; consumers (Binding/Cleanup/Nametag) own the listening gate");
         }
 
         // ── Helpers ─────────────────────────────────────────────────
 
-        private void StubStreaming(string walletId, params string[] sids)
+        private string[] StubStreaming(string walletId, params string[] sids)
         {
-            var dict = new ConcurrentDictionary<string, byte>();
-            foreach (string sid in sids)
-                dict.TryAdd(sid, 0);
-            registry.GetAudioSids(walletId).Returns(dict);
+            registry.GetAudioSidsArray(walletId).Returns(sids);
+            return sids;
         }
 
         private Entity CreateAvatarEntity(string walletId)

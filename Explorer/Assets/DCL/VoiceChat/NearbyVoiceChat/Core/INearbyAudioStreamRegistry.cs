@@ -2,7 +2,6 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
@@ -13,10 +12,26 @@ namespace DCL.VoiceChat.Nearby.Audio
     public interface INearbyAudioStreamRegistry : IDisposable
     {
         /// <summary>
-        /// Returns the concrete inner dictionary so callers can iterate with a struct enumerator (allocation-free).
-        /// <c>null</c> means the participant is not in the room or has no audio publications.
+        /// Point-lookup: returns <c>true</c> if the wallet currently has at least one indexed audio sid.
+        /// Allocation-free, used by <see cref="LiveKit.Rooms.IRoom"/>-driven hot-path filters that only
+        /// need a presence signal.
         /// </summary>
-        ConcurrentDictionary<string, byte>? GetAudioSids(string walletId);
+        bool HasAudioStream(string walletId);
+
+        /// <summary>
+        /// Read-only span over the registry's copy-on-write sid array for the wallet.
+        /// <c>default</c> (empty span) when the wallet is not indexed; use <see cref="ReadOnlySpan{T}.IsEmpty"/>
+        /// to collapse null/empty into one signal. Iterating the span allocates nothing.
+        /// </summary>
+        ReadOnlySpan<string> GetAudioSids(string walletId);
+
+        /// <summary>
+        /// Raw reference to the registry's copy-on-write sid array. <c>null</c> when the wallet is not indexed.
+        /// Used by <see cref="LiveKit.Rooms.IRoom"/>-driven systems that need to compare snapshots via
+        /// <see cref="object.ReferenceEquals(object,object)"/> — a different reference ↔ content changed.
+        /// <b>Never mutate.</b> Treat the returned array as immutable from the caller's perspective.
+        /// </summary>
+        string[]? GetAudioSidsArray(string walletId);
 
         /// <summary>
         /// Resolves a stream lazily. Must be called from the main thread — <see cref="AudioStream"/>'s constructor

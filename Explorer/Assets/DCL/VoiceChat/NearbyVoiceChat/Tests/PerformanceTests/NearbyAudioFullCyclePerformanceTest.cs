@@ -13,7 +13,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.PerformanceTesting;
@@ -158,7 +158,7 @@ namespace DCL.VoiceChat.Nearby
 
         /// <summary>
         /// A5 canonical-win scenario: 100 avatars present, only a subset publishing audio.
-        /// Exercises the archetype filter on Binding (`[All<AvatarBase, IsStreamingAudioTag>]`)
+        /// Exercises the archetype filter on Binding (`[All<AvatarBase, StreamingAudioComponent>]`)
         /// and the cleanup short-circuit. The non-streaming avatars must be skipped at chunk-iteration
         /// level by Binding, and Cleanup runs against `streamingParticipants` audio entities only.
         /// <para>
@@ -337,6 +337,45 @@ namespace DCL.VoiceChat.Nearby
                 "pool working set must stay flat across boundary cycles — growth indicates new instantiations leaked into measurement");
         }
 
+        /// <summary>
+        /// B2-1 — Binding hot-path allocation profile at 100 avatars in steady state. Isolates
+        /// <see cref="NearbyAudioBindingSystem.Update"/> from the rest of the chain so Unity's
+        /// Performance Testing reporter attributes GC bytes/frame and ms/tick directly to the
+        /// per-avatar sid iteration over <see cref="StreamingAudioComponent.SidsSnapshot"/>.
+        /// <para>
+        /// Pre-B2 baseline: ~128 B / frame per matching avatar from
+        /// <c>ConcurrentDictionary&lt;string,byte&gt;.GetEnumerator</c> (≈ 2 KB / frame at this
+        /// density). Post-B2 expectation: GC delta drops to noise floor — `foreach` over a
+        /// `string[]` lowers to a struct-free `for` in IL. The reporter's GC sample group is the
+        /// single source of truth; trend is read from the perf-test results CSV, not asserted here.
+        /// </para>
+        /// </summary>
+        [Test]
+        [Performance]
+        public void BindingHotPathAt100AvatarsSteadyState()
+        {
+            const int PARTICIPANTS = 100;
+
+            PopulatePerfWorld(PARTICIPANTS);
+
+            int rampUpTicks = ComputeRampUpTicks(PARTICIPANTS);
+            for (int t = 0; t < rampUpTicks; t++)
+            {
+                markerSystem.Update(0);
+                audibleRangeMarkerSystem.Update(0);
+                system.Update(0);
+                positionSystem.Update(0);
+                cleanupSystem.Update(0);
+            }
+
+            Measure
+               .Method(() => system.Update(0))
+               .WarmupCount(10)
+               .MeasurementCount(100)
+               .GC()
+               .Run();
+        }
+
         private void TickFullChain()
         {
             markerSystem.Update(0);
@@ -476,19 +515,29 @@ namespace DCL.VoiceChat.Nearby
         // through the real factory — we want the integration cost, not a stubbed-out short-circuit.
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            private readonly Dictionary<string, ConcurrentDictionary<string, byte>> sidsByIdentity = new ();
+            // COW-style storage to mirror production semantics — every Add publishes a NEW
+            // string[] reference, so Bridge's UpdateStreaming ReferenceEquals check behaves
+            // identically against this fake.
+            private readonly Dictionary<string, string[]> sidsByIdentity = new ();
             private readonly Dictionary<StreamKey, Owned<AudioStream>> streamsByKey = new ();
             private readonly HashSet<string> activeSpeakers = new ();
 
             public void Add(string walletId, string sid)
             {
-                if (!sidsByIdentity.TryGetValue(walletId, out var sids))
+                if (sidsByIdentity.TryGetValue(walletId, out string[]? prev))
                 {
-                    sids = new ConcurrentDictionary<string, byte>();
-                    sidsByIdentity[walletId] = sids;
+                    if (Array.IndexOf(prev, sid) < 0)
+                    {
+                        var next = new string[prev.Length + 1];
+                        Array.Copy(prev, next, prev.Length);
+                        next[prev.Length] = sid;
+                        sidsByIdentity[walletId] = next;
+                    }
                 }
-
-                sids.TryAdd(sid, 0);
+                else
+                {
+                    sidsByIdentity[walletId] = new[] { sid };
+                }
 
                 var key = new StreamKey(walletId, sid);
                 if (!streamsByKey.ContainsKey(key))
@@ -497,8 +546,13 @@ namespace DCL.VoiceChat.Nearby
 
             public void MarkAsActiveSpeaker(string walletId) => activeSpeakers.Add(walletId);
 
-            public ConcurrentDictionary<string, byte>? GetAudioSids(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out var sids) ? sids : null;
+            public bool HasAudioStream(string walletId) => sidsByIdentity.ContainsKey(walletId);
+
+            public ReadOnlySpan<string> GetAudioSids(string walletId) =>
+                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : default;
+
+            public string[]? GetAudioSidsArray(string walletId) =>
+                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
@@ -507,8 +561,8 @@ namespace DCL.VoiceChat.Nearby
 
             public bool IsStreamGone(StreamKey key)
             {
-                ConcurrentDictionary<string, byte>? sids = GetAudioSids(key.identity);
-                return sids == null || !sids.ContainsKey(key.sid);
+                if (!sidsByIdentity.TryGetValue(key.identity, out string[]? arr)) return true;
+                return Array.IndexOf(arr, key.sid) < 0;
             }
 
             public bool IsActiveSpeaker(string walletId) => activeSpeakers.Contains(walletId);

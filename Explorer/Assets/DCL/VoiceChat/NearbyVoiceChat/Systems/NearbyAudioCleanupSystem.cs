@@ -88,18 +88,20 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // Cheap-first short-circuit. Order matters — IsAlive is a generation-counter compare,
             // Has<T> is an archetype-bitmap test (both sub-10 ns), IsStreamGone is a ConcurrentDictionary
-            // lookup, UserIsBlocked is heavier still. The dominant doom signal at scale is "avatar's
-            // last sid disappeared" — covered by the marker-absence clause without touching the registry.
+            // lookup + Array.IndexOf (N≈1), UserIsBlocked is heavier still. The dominant doom signal
+            // at scale is "avatar's last sid disappeared" — covered by the component-absence clause
+            // without touching the registry.
             //
-            // Marker absence ≠ avatar gone: NearbyLivekitBridgeSystem filters its remove-streaming query
-            // with [None<DeleteEntityIntention>], so a doomed avatar keeps the marker until physical
-            // destruction. Marker absence ≠ specific sid gone either: the marker is per-walletId, so
-            // for multi-sid participants the per-sid IsStreamGone fallback is the only granular signal.
-            // Both fallbacks must remain.
+            // Component absence ≠ avatar gone: NearbyLivekitBridgeSystem filters its UpdateStreaming
+            // query with [None<DeleteEntityIntention>], so a doomed avatar keeps StreamingAudioComponent
+            // until physical destruction. Component absence ≠ specific sid gone either: the component
+            // is per-walletId (one entry per avatar carries its full sid set), so for multi-sid
+            // participants the per-sid IsStreamGone fallback is the only granular signal. Both
+            // fallbacks must remain.
             bool avatarGoneOrOutOfRange =
                 !World.IsAlive(avatar)
                 || World.Has<DeleteEntityIntention>(avatar)
-                || !World.Has<IsStreamingAudioTag>(avatar)
+                || !World.Has<StreamingAudioComponent>(avatar)
                 || !World.Has<InAudibleRangeTag>(avatar);
 
             if (avatarGoneOrOutOfRange
