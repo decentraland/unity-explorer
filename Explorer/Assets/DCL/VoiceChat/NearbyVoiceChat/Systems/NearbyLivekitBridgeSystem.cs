@@ -16,7 +16,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Runs every tick in <see cref="AvatarGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
     ///     Stateless — pass-through under the listening gate (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
     ///     <para>
-    ///         Maintains the avatar's <see cref="IsNearbyAudioStreamerComponentidsSnapshot"/> as a
+    ///         Maintains the avatar's <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/> as a
     ///         reference to the registry's copy-on-write sid array — <c>ReferenceEquals</c> is the
     ///         freshness signal, no version counter is needed.
     ///     </para>
@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             // Order matters:
 
-            AddStreamingQuery(World); // 1. Attach StreamingAudioComponent to avatars whose stream just appeared.
+            AddStreamingQuery(World); // 1. Attach NearbyAudioStreamerComponent to avatars whose stream just appeared.
             UpdateStreamingQuery(World); // 2. Refresh / cascade-remove on avatars that already carry the component
             AddSpeakingQuery(World); // 3. Tag avatars whose active-speaker signal just rose (only those still streaming).
             RemoveSpeakingQuery(World); // 4. Untag avatars whose active-speaker signal just dropped.
@@ -75,7 +75,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             }
             else
             {
-                // drop StreamingAudioComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
+                // drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
                 World.Remove<NearbyAudioStreamerComponent>(entity);
 
                 if (World.Has<IsActivelySpeakingTag>(entity))
