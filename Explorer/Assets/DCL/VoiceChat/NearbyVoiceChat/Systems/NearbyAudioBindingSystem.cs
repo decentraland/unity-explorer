@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
@@ -21,7 +20,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     the system iterates the snapshotted sids on the entity itself and materializes an audio-source entity per <c>(walletId, sid)</c> pair that does not yet have one.
     ///     Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudibleRangeSystem))]
     [UpdateBefore(typeof(NearbyAudioPositionSystem))]
     public partial class NearbyAudioBindingSystem : BaseUnityLoopSystem

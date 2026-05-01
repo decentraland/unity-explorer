@@ -1,12 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Systems
@@ -15,7 +15,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
     ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {

@@ -21,8 +21,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///         freshness signal, no version counter is needed.
     ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateBefore(typeof(NearbyAudibleRangeSystem))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyLivekitBridgeSystem : BaseUnityLoopSystem

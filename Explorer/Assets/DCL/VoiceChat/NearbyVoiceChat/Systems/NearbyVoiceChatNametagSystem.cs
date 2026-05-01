@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -14,8 +13,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     /// <summary>
     ///     Owns the <see cref="VoiceChatNametagComponent"/> lifecycle for nearby voice chat through pull-based  per-frame queries on the avatar set.
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyVoiceChatNametagSystem : BaseUnityLoopSystem
     {

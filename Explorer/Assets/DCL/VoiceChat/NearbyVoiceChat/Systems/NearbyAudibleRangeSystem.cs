@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Components;
@@ -19,7 +18,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Pull-mirror from local-player ↔ avatar distance to range/suspend archetype markers.
     ///     Pass-through under the listening gate (markers reflect spatial reality; consumers gate on policy).
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyLivekitBridgeSystem))]
     [UpdateBefore(typeof(NearbyAudioBindingSystem))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
