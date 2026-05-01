@@ -137,6 +137,12 @@ namespace DCL.VoiceChat.Nearby.Audio
             }
         }
 
+        // Builds a fresh snapshot off to the side: for each participant, collects every nearby-audio sid
+        // into a single string[] (a participant can publish more than one mic track in practice).
+        // 'next' is private to this method until Interlocked.Exchange publishes it — no concurrent readers
+        // observe intermediate states, so we use plain TryGetValue + indexer instead of AddOrUpdate.
+        // ConcatNew preserves the immutability contract (see class XML): each identity ends up with a
+        // freshly allocated array, never shared with a previous snapshot.
         private void RehydrateFromRoom()
         {
             IReadOnlyDictionary<string, LKParticipant> participants = room.Participants.RemoteParticipantIdentities();
@@ -144,8 +150,15 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             foreach (KeyValuePair<string, LKParticipant> participantEntry in participants)
             foreach (KeyValuePair<string, TrackPublication> trackEntry in participantEntry.Value.Tracks)
-                if (IsNearbyAudio(trackEntry.Value))
-                    AddAudioSidTo(next, participantEntry.Key, trackEntry.Key);
+            {
+                if (!IsNearbyAudio(trackEntry.Value)) continue;
+
+                string identity = participantEntry.Key;
+                string sid = trackEntry.Key;
+                next[identity] = next.TryGetValue(identity, out string[]? prev)
+                    ? ConcatNew(prev, sid)
+                    : new[] { sid };
+            }
 
             Interlocked.Exchange(ref streamsByIdentity, next);
         }
