@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
         private AnimationClip lastEmote;
+        private AnimationClip? lastMaskedEmote;
         private AnimatorOverrideController overrideController;
 
         [field: SerializeField] public Animator AvatarAnimator { get; private set; }
@@ -165,6 +166,13 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             return LegacyAnimation;
         }
 
+        public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
+
+        public void StopLegacyAnimation()
+        {
+            if (LegacyAnimation != null) LegacyAnimation.Stop();
+        }
+
         public void SetPointAtLayerWeight(float weight)
         {
             AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
@@ -177,6 +185,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorFloat(int hash, float value)
         {
+            if (IsLegacyAnimationPlaying) return;
             if (AvatarAnimator.GetFloat(hash).Equals(value)) return;
 
             AvatarAnimator.enabled = true;
@@ -185,6 +194,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorInt(int hash, int value)
         {
+            if (IsLegacyAnimationPlaying) return;
             if (AvatarAnimator.GetInteger(hash).Equals(value)) return;
 
             AvatarAnimator.enabled = true;
@@ -193,6 +203,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorTrigger(int hash)
         {
+            if (IsLegacyAnimationPlaying) return;
+
             AvatarAnimator.enabled = true;
             AvatarAnimator.SetTrigger(hash);
         }
@@ -200,8 +212,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool IsAnimatorInTag(int hashTag) =>
             AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
 
-        public int GetAnimatorCurrentStateTag() =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
+        public int GetAnimatorCurrentStateTag(string layerName)
+        {
+            int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
+            return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
+        }
 
         public void ResetAnimatorTrigger(int hash)
         {
@@ -222,10 +237,17 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             ResetArmatureInclination();
             transform.localPosition = Vector3.zero;
+            LegacyAnimation?.Stop();
             AvatarAnimator.Rebind();
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
             FeetIKRig.enabled = false;
+        }
+
+        public void SetLayerWeight(string layerName, float weight)
+        {
+            int index = AvatarAnimator.GetLayerIndex(layerName);
+            AvatarAnimator.SetLayerWeight(index, weight);
         }
 
         public bool GetAnimatorBool(int hash) =>
@@ -233,6 +255,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetAnimatorBool(int hash, bool value)
         {
+            if (IsLegacyAnimationPlaying) return;
             if (AvatarAnimator.GetBool(hash) == value) return;
 
             AvatarAnimator.enabled = true;
@@ -250,8 +273,26 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             AvatarAnimator.runtimeAnimatorController = overrideController;
 
             lastEmote = animationClip;
+
+            if (IsLegacyAnimationPlaying) return;
             AvatarAnimator.enabled = true;
         }
+
+        public void ReplaceMaskedEmoteAnimation(AnimationClip animationClip)
+        {
+            if (lastMaskedEmote == animationClip) return;
+
+            overrideController["MaskedEmote"] = animationClip;
+            AvatarAnimator.runtimeAnimatorController = overrideController;
+
+            lastMaskedEmote = animationClip;
+
+            if (IsLegacyAnimationPlaying) return;
+            AvatarAnimator.enabled = true;
+        }
+
+        public void ClearMaskedEmoteAnimationCache() =>
+            lastMaskedEmote = null;
 
         public Vector3 GetAdaptiveNametagPosition()
         {
@@ -309,9 +350,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         Transform GetTransform();
 
         Animator AvatarAnimator { get; }
-        Animation? LegacyAnimation { get; }
-
-        Animation AddOrGetLegacyAnimation();
 
         void SetAnimatorFloat(int hash, float value);
 
@@ -325,14 +363,26 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void ReplaceEmoteAnimation(AnimationClip animationClip);
 
+        void ReplaceMaskedEmoteAnimation(AnimationClip animationClip);
+
+        void ClearMaskedEmoteAnimationCache();
+
+        Animation AddOrGetLegacyAnimation();
+
+        bool IsLegacyAnimationPlaying { get; }
+
+        void StopLegacyAnimation();
+
         float GetAnimatorFloat(int hash);
 
         bool IsAnimatorInTag(int hashTag);
 
-        int GetAnimatorCurrentStateTag();
+        int GetAnimatorCurrentStateTag(string layerName);
 
         void ResetAnimatorTrigger(int hash);
 
         void ResetArmatureInclination();
+
+        void SetLayerWeight(string layerName, float weight);
     }
 }

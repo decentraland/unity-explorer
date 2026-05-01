@@ -5,6 +5,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Play;
+using DCL.Multiplayer.Emotes;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -80,6 +83,7 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
+        public readonly ObjectProxy<IEmotesMessageBus> EmotesMessageBusProxy = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
 
@@ -91,11 +95,13 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
         public MediaPlayerContainer MediaContainer { get; private set; }
+        public EmotesContainer EmotesContainer { get; private set; }
         public ProfilesContainer ProfilesContainer { get; private set; }
         public QualityContainer QualityContainer { get; private set; }
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
         public WebRequestsContainer WebRequestsContainer { get; private set; }
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
+        public IEmoteStorage EmoteStorage { get; private set; }
 
         public ISystemMemoryCap MemoryCap { get; private set; }
 
@@ -208,12 +214,15 @@ namespace Global
 
             DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
+            container.EmoteStorage = new MemoryEmotesStorage();
+            container.CacheCleaner.Register(container.EmoteStorage);
 
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
             container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
             container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.EmotesContainer = new EmotesContainer(assetsProvisioner);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -233,6 +242,8 @@ namespace Global
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController, realmClock);
+            container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
+
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
@@ -284,6 +295,7 @@ namespace Global
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy, exposedPlayerTransform),
+                new SceneMaskedEmotePlugin(globalWorld, container.PlayerEntity, container.MainPlayerAvatarBaseProxy, container.EmotesContainer.EmotePlayer, container.EmoteStorage, container.EmotesMessageBusProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
@@ -341,13 +353,14 @@ namespace Global
 
         private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
         {
-            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success)) results = await UniTask.WhenAll(
+            ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success), (MediaPlayerContainer plugin, bool success), (EmotesContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
                 settings.InitializePluginAsync(target.CharacterContainer, ct),
-                settings.InitializePluginAsync(target.MediaContainer, ct)
+                settings.InitializePluginAsync(target.MediaContainer, ct),
+                settings.InitializePluginAsync(target.EmotesContainer, ct)
             );
 
-            return results.Item1.success && results.Item2.success && results.Item3.success;
+            return results.Item1.success && results.Item2.success && results.Item3.success && results.Item4.success;
         }
     }
 }
