@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
-using DCL.CharacterCamera;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -35,10 +34,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private readonly List<GameObject> gameObjects = new (8);
 
-        private Entity cameraEntity;
         private Camera camera = null!;
         private INearbyMuteCache muteCache = null!;
         private NearbyMuteService muteService = null!;
+        private NearbyListenerState listenerState = null!;
 
         [SetUp]
         public void SetUp()
@@ -47,32 +46,30 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             var cameraGo = CreateTrackedGameObject("TestCamera");
             camera = cameraGo.AddComponent<Camera>();
-            cameraEntity = world.Create(new CameraComponent(camera));
 
             muteCache = Substitute.For<INearbyMuteCache>();
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
 
-            system = new NearbyAudioPositionSystem(world, muteService);
-            system.Initialize();
-
-            // Production: NearbyAudibleRangeSystem.Initialize seeds the singleton listener data on
-            // the camera entity, then refreshes IsFirstPerson + PlayerHeadPosition every tick.
-            // Tests drive PositionSystem in isolation, so we attach the component manually with
-            // FirstPerson defaults; tests that need ThirdPerson reprojection mutate it via SeedListener.
-            world.Add(cameraEntity, new NearbyListenerComponent
+            // Production: NearbyAudibleRangeSystem.Initialize seeds NearbyListenerState.ListenerTransform,
+            // then refreshes IsFirstPerson + PlayerHeadPosition every tick. Tests drive PositionSystem in
+            // isolation, so we seed the state manually with FirstPerson defaults; tests that need
+            // ThirdPerson reprojection mutate it via SeedListener.
+            listenerState = new NearbyListenerState
             {
-                ListenerTransform = camera.transform,
                 PlayerHeadPosition = camera.transform.position,
                 IsFirstPerson = true,
-            });
+            };
+            listenerState.BindListener(camera.transform);
+
+            system = new NearbyAudioPositionSystem(world, muteService, listenerState);
+            system.Initialize();
         }
 
         // Mirror what NearbyAudibleRangeSystem would have written this tick.
         private void SeedListener(Vector3 playerHeadPos, bool isFirstPerson)
         {
-            ref NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
-            listener.PlayerHeadPosition = playerHeadPos;
-            listener.IsFirstPerson = isFirstPerson;
+            listenerState.PlayerHeadPosition = playerHeadPos;
+            listenerState.IsFirstPerson = isFirstPerson;
         }
 
         protected override void OnTearDown()

@@ -107,7 +107,7 @@ namespace DCL.VoiceChat.Nearby
             world = World.Create();
 
             // Camera entity defaults Mode = FirstPerson, so the position system skips PlayerComponent.CameraFocus.
-            Entity cameraEntity = world.Create(new CameraComponent(camera));
+            world.Create(new CameraComponent(camera));
 
             // Local listener anchor — parented under the testbed so it's auto-cleaned on destroy.
             var playerGo = new GameObject("Listener_LocalPlayer");
@@ -115,15 +115,15 @@ namespace DCL.VoiceChat.Nearby
             playerGo.transform.localPosition = Vector3.zero;
             world.Create(new PlayerComponent(playerGo.transform));
 
-            // PositionSystem reads NearbyListenerComponent (produced by NearbyAudibleRangeSystem in
+            // PositionSystem reads NearbyListenerState (produced by NearbyAudibleRangeSystem in
             // production). This testbed runs PositionSystem without RangeSystem, so we seed the
-            // singleton manually with FirstPerson defaults.
-            world.Add(cameraEntity, new NearbyListenerComponent
+            // state manually with FirstPerson defaults.
+            var listenerState = new NearbyListenerState
             {
-                ListenerTransform = camera.transform,
                 PlayerHeadPosition = playerGo.transform.position,
                 IsFirstPerson = true,
-            });
+            };
+            listenerState.BindListener(camera.transform);
 
             registry = new FakeStreamRegistry();
             bindings = new Dictionary<StreamKey, Entity>();
@@ -135,7 +135,7 @@ namespace DCL.VoiceChat.Nearby
             var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
 
             bindingSystem = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
-            positionSystem = new NearbyAudioPositionSystem(world, muteService);
+            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
             positionSystem.Initialize();
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
         }

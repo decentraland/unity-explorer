@@ -1,6 +1,5 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using DCL.Character.Components;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.MutePersistence;
@@ -38,28 +37,27 @@ namespace DCL.VoiceChat.Nearby
 
             var cameraGo = CreateTrackedGameObject("PerfCamera");
             var camera = cameraGo.AddComponent<Camera>();
-            Entity cameraEntity = world.Create(new CameraComponent(camera));
 
             var playerGo = CreateTrackedGameObject("PerfPlayer");
             playerGo.transform.position = new Vector3(0, 1.6f, 0);
-            world.Create(new PlayerComponent(playerGo.transform));
 
             // FakeMuteCache (HashSet-backed) instead of Substitute.For<INearbyMuteCache>() — substitute
             // proxies every IsMuted call through argument-matching + call-recording (~20 µs/call),
             // which used to dominate this benchmark and inflated per-entity cost ~×7 over real production.
             var muteService = new NearbyMuteService(new FakeMuteCache(), Substitute.For<INearbyMuteRepository>());
-            system = new NearbyAudioPositionSystem(world, muteService);
-            system.Initialize();
 
-            // PositionSystem reads NearbyListenerComponent (produced by NearbyAudibleRangeSystem in
+            // PositionSystem reads NearbyListenerState (produced by NearbyAudibleRangeSystem in
             // production). This benchmark exercises PositionSystem in isolation, so we seed the
-            // singleton manually with FirstPerson defaults.
-            world.Add(cameraEntity, new NearbyListenerComponent
+            // state manually with FirstPerson defaults.
+            var listenerState = new NearbyListenerState
             {
-                ListenerTransform = camera.transform,
                 PlayerHeadPosition = playerGo.transform.position,
                 IsFirstPerson = true,
-            });
+            };
+            listenerState.BindListener(camera.transform);
+
+            system = new NearbyAudioPositionSystem(world, muteService, listenerState);
+            system.Initialize();
         }
 
         protected override void OnTearDown()

@@ -35,6 +35,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Entity playerEntity;
         private Camera camera = null!;
         private VoiceChatConfiguration configuration = null!;
+        private NearbyListenerState listenerState = null!;
 
         [SetUp]
         public void SetUp()
@@ -51,8 +52,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             playerEntity = world.Create(new PlayerComponent(playerFocusGo.transform));
 
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            listenerState = new NearbyListenerState();
 
-            system = new NearbyAudibleRangeSystem(world, configuration);
+            system = new NearbyAudibleRangeSystem(world, configuration, listenerState);
             system.Initialize();
         }
 
@@ -68,19 +70,15 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
-        // ── NearbyListenerComponent lifecycle ───────────────────────
+        // ── NearbyListenerState lifecycle ───────────────────────────
 
         [Test]
-        public void SeedsNearbyListenerComponentOnInitialize()
+        public void SeedsNearbyListenerStateOnInitialize()
         {
-            // After Initialize, the camera entity carries the singleton listener-data component.
-            // ListenerTransform is the camera transform (stable for the session); per-tick fields
-            // are filled on the first Update.
-            Assert.That(world.Has<NearbyListenerComponent>(cameraEntity), Is.True,
-                "RangeSystem.Initialize must seed NearbyListenerComponent on the camera entity");
-
-            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
-            Assert.That(listener.ListenerTransform, Is.SameAs(camera.transform));
+            // After Initialize, the shared state carries the camera transform (stable for the session);
+            // per-tick fields are filled on the first Update.
+            Assert.That(listenerState.ListenerTransform, Is.SameAs(camera.transform),
+                "RangeSystem.Initialize must seed NearbyListenerState.ListenerTransform with the camera transform");
         }
 
         [Test]
@@ -92,9 +90,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
-            Assert.That(listener.IsFirstPerson, Is.True);
-            Assert.That(listener.PlayerHeadPosition, Is.EqualTo(camera.transform.position),
+            Assert.That(listenerState.IsFirstPerson, Is.True);
+            Assert.That(listenerState.PlayerHeadPosition, Is.EqualTo(camera.transform.position),
                 "FirstPerson: PlayerHeadPosition must track the camera transform");
         }
 
@@ -111,9 +108,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            ref readonly NearbyListenerComponent listener = ref world.Get<NearbyListenerComponent>(cameraEntity);
-            Assert.That(listener.IsFirstPerson, Is.False);
-            Assert.That(listener.PlayerHeadPosition, Is.EqualTo(playerComp.CameraFocus.position),
+            Assert.That(listenerState.IsFirstPerson, Is.False);
+            Assert.That(listenerState.PlayerHeadPosition, Is.EqualTo(playerComp.CameraFocus.position),
                 "ThirdPerson: PlayerHeadPosition must track PlayerComponent.CameraFocus");
         }
 

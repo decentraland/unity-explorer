@@ -80,12 +80,14 @@ namespace DCL.VoiceChat.Nearby
             // per-entity cost ~×7 over real production.
             var muteService = new NearbyMuteService(new FakeMuteCache(), Substitute.For<INearbyMuteRepository>());
 
+            // Shared state: RangeSystem produces, PositionSystem consumes (matches production wiring).
+            var listenerState = new NearbyListenerState();
+
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
-            positionSystem = new NearbyAudioPositionSystem(world, muteService);
-            positionSystem.Initialize();
+            positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
             cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
-            audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration);
+            audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration, listenerState);
             audibleRangeSystem.Initialize();
         }
 

@@ -29,13 +29,16 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly float outerInSqr;
         private readonly float suspendOutSqr;
         private readonly float suspendInSqr;
+        private readonly NearbyListenerState listenerState;
 
         private SingleInstanceEntity cameraEntity;
         private Transform cameraTransform = null!;
         private Transform playerFocusTransform = null!;
 
-        internal NearbyAudibleRangeSystem(World world, VoiceChatConfiguration configuration) : base(world)
+        internal NearbyAudibleRangeSystem(World world, VoiceChatConfiguration configuration, NearbyListenerState listenerState) : base(world)
         {
+            this.listenerState = listenerState;
+
             Vector2 rangeBand = configuration.nearbyAudibleRangeBand;
             Vector2 suspendBand = configuration.nearbyAudibleSuspendBand;
 
@@ -64,7 +67,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             cameraTransform = World.Get<CameraComponent>(cameraEntity).Camera.transform;
             playerFocusTransform = World.Get<PlayerComponent>(World.CachePlayer()).CameraFocus;
 
-            World.Add(cameraEntity, new NearbyListenerComponent { ListenerTransform = cameraTransform });
+            listenerState.BindListener(cameraTransform);
         }
 
         protected override void Update(float t)
@@ -72,9 +75,8 @@ namespace DCL.VoiceChat.Nearby.Systems
             bool isFirstPerson = cameraEntity.GetCameraComponent(World).Mode == CameraMode.FirstPerson;
             Vector3 playerHeadPosition = isFirstPerson ? cameraTransform.position : playerFocusTransform.position;
 
-            ref NearbyListenerComponent listener = ref World.Get<NearbyListenerComponent>(cameraEntity);
-            listener.IsFirstPerson = isFirstPerson;
-            listener.PlayerHeadPosition = playerHeadPosition;
+            listenerState.IsFirstPerson = isFirstPerson;
+            listenerState.PlayerHeadPosition = playerHeadPosition;
 
             // Order matters:
             TryEnterAudibleRangeQuery(World, playerHeadPosition); // 1. Avatars without the tag: enter the outer-in band .

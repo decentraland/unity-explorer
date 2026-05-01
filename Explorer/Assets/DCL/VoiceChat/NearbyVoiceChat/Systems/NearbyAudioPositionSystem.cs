@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
@@ -23,24 +22,17 @@ namespace DCL.VoiceChat.Nearby.Systems
         private const float POSITION_EPSILON_SQR = 0.01f;
 
         private readonly NearbyMuteService muteService;
+        private readonly NearbyListenerState listenerState;
 
-        private SingleInstanceEntity cameraEntity;
-
-        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService) : base(world)
+        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService, NearbyListenerState listenerState) : base(world)
         {
             this.muteService = muteService;
-        }
-
-        public override void Initialize()
-        {
-            cameraEntity = World.CacheCamera();
+            this.listenerState = listenerState;
         }
 
         protected override void Update(float t)
         {
-            // Listener data is produced once per tick by NearbyAudibleRangeSystem on the camera entity.
-            ref readonly NearbyListenerComponent listener = ref World.Get<NearbyListenerComponent>(cameraEntity);
-            SyncPositionsAndSpatialAnglesQuery(World, listener.ListenerTransform, listener.PlayerHeadPosition, listener.IsFirstPerson);
+            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition, listenerState.IsFirstPerson);
         }
 
         [Query]
