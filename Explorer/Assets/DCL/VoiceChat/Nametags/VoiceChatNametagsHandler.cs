@@ -1,7 +1,7 @@
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Utilities;
-using DCL.LiveKit.Public;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -55,21 +55,41 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            // After this loop activeSpeakers contains only those who stopped speaking.
-            newActiveSpeakers.Clear();
-            foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                newActiveSpeakers.Add(speakerId);
-
-                if (!activeSpeakers.Remove(speakerId))
-                    SetIsSpeaking(speakerId, true);
+                OnActiveSpeakersUpdatedAsync().Forget();
+                return;
             }
 
-            foreach (string oldSpeakerId in activeSpeakers)
-                SetIsSpeaking(oldSpeakerId, false);
+            OnActiveSpeakersUpdatedInternal();
+            return;
 
-            activeSpeakers.Clear();
-            activeSpeakers.UnionWith(newActiveSpeakers);
+            async UniTaskVoid OnActiveSpeakersUpdatedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnActiveSpeakersUpdatedInternal();
+            }
+
+            void OnActiveSpeakersUpdatedInternal()
+            {
+                if (disposed) return;
+
+                // After this loop activeSpeakers contains only those who stopped speaking.
+                newActiveSpeakers.Clear();
+                foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
+                {
+                    newActiveSpeakers.Add(speakerId);
+
+                    if (!activeSpeakers.Remove(speakerId))
+                        SetIsSpeaking(speakerId, true);
+                }
+
+                foreach (string oldSpeakerId in activeSpeakers)
+                    SetIsSpeaking(oldSpeakerId, false);
+
+                activeSpeakers.Clear();
+                activeSpeakers.UnionWith(newActiveSpeakers);
+            }
         }
 
         private void SetIsSpeaking(string participantId, bool isSpeaking)
@@ -82,41 +102,81 @@ namespace DCL.VoiceChat
 
         private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)
         {
-            switch (update)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                case UpdateFromParticipant.Disconnected:
-                    if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
-                    {
-                        world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
-                        activeSpeakers.Remove(participant.Identity);
-                    }
+                OnParticipantUpdatedAsync().Forget();
+                return;
+            }
 
-                    break;
+            OnParticipantUpdatedInternal();
+            return;
+
+            async UniTaskVoid OnParticipantUpdatedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnParticipantUpdatedInternal();
+            }
+
+            void OnParticipantUpdatedInternal()
+            {
+                if (disposed) return;
+
+                switch (update)
+                {
+                    case UpdateFromParticipant.Disconnected:
+                        if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
+                        {
+                            world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
+                            activeSpeakers.Remove(participant.Identity);
+                        }
+
+                        break;
+                }
             }
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
         {
-            switch (status)
+            if (!PlayerLoopHelper.IsMainThread)
             {
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType));
-                    OnActiveSpeakersUpdated();
-                    break;
+                OnCallStatusChangedAsync().Forget();
+                return;
+            }
 
-                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                case VoiceChatStatus.DISCONNECTED:
-                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
-                    activeSpeakers.Clear();
+            OnCallStatusChangedInternal();
+            return;
 
-                    foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
-                    {
-                        if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
-                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
-                    }
+            async UniTaskVoid OnCallStatusChangedAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                OnCallStatusChangedInternal();
+            }
 
-                    break;
+            void OnCallStatusChangedInternal()
+            {
+                if (disposed) return;
+
+                switch (status)
+                {
+                    case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                        world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType));
+                        OnActiveSpeakersUpdated();
+                        break;
+
+                    case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                    case VoiceChatStatus.DISCONNECTED:
+                    case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                        world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
+                        activeSpeakers.Clear();
+
+                        foreach ((string participantId, _) in voiceChatRoom.Participants.RemoteParticipantIdentities())
+                        {
+                            if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                                world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false, currentType) { IsRemoving = true });
+                        }
+
+                        break;
+                }
             }
         }
     }
