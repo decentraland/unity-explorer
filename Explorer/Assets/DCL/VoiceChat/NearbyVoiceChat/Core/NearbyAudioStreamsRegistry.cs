@@ -10,6 +10,7 @@ using RichTypes;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
@@ -31,23 +32,19 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///     Suppression / mute / block policies do <b>not</b> touch this registry — they are applied as pull-based
     ///     filters in the systems layer so resume / unblock instantly re-bind from the unchanged snapshot.
     ///     <para>
-    ///         <b>Reference-equality contract.</b> <see cref="streamsByIdentity"/> stores per-wallet sid sets as
-    ///         immutable <c>string[]</c> arrays under copy-on-write semantics. Every mutation
-    ///         (<see cref="AddAudioSid"/> / <see cref="RemoveAudioSid"/> / <see cref="RehydrateFromRoom"/>)
-    ///         publishes a <b>new</b> array reference — never reuses or mutates an existing one. This invariant
-    ///         is load-bearing for <see cref="DCL.VoiceChat.Nearby.Systems.NearbyLivekitBridgeSystem"/>'s
-    ///         <c>UpdateStreamingQuery</c>: <c>ReferenceEquals(observed, current)</c> is the freshness check
-    ///         that replaces a version counter. Do <b>not</b> introduce <c>Array.Resize</c>, pooled buffers,
-    ///         or in-place mutation under any future "optimization" — it would silently break the bridge.
+    ///         <b>Immutability contract.</b> Per-identity <c>string[]</c> arrays are copy-on-write
+    ///         (every mutation publishes a new reference); the dictionary itself is swapped atomically on rehydrate / disconnect.
+    ///         Do <b>not</b> reintroduce in-place mutation (array resize, pooled buffers, dict <c>Clear()</c>+rebuild) —
+    ///         the bridge's <c>ReferenceEquals</c> freshness check and the cleanup system's "stream gone" detection both rely on these invariants.
     ///     </para>
     /// </summary>
     public sealed class NearbyAudioStreamsRegistry : INearbyAudioStreamRegistry
     {
         private readonly IRoom room;
 
-        // Reference-equality contract — see class XML. Each value is a freshly-allocated, immutable string[]
-        // published by AddAudioSid / RemoveAudioSid / RehydrateFromRoom. Never mutate.
-        private readonly ConcurrentDictionary<string, string[]> streamsByIdentity = new ();
+        // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read.
+        // concurrencyLevel: 1 — FFI dispatch is serial, only one writer ever; saves the per-instance lock array (default = Environment.ProcessorCount).
+        private ConcurrentDictionary<string, string[]> streamsByIdentity = NewSnapshot();
         private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
 
         public NearbyAudioStreamsRegistry(IRoom room)
@@ -81,9 +78,12 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.Participants.UpdatesFromParticipant -= OnParticipantUpdate;
             room.ActiveSpeakers.Updated -= PullActiveSpeakers;
 
-            streamsByIdentity.Clear();
+            Interlocked.Exchange(ref streamsByIdentity, NewSnapshot());
             activeSpeakers.Clear();
         }
+
+        private static ConcurrentDictionary<string, string[]> NewSnapshot(int capacity = 0) =>
+            new (concurrencyLevel: 1, capacity: capacity);
 
         // Relies on serial FFI dispatch — concurrent ActiveSpeakers.Updated / OnConnectionUpdated invocations
         // during clear+rebuild are impossible by LiveKit's per-room dispatch contract.
@@ -102,18 +102,18 @@ namespace DCL.VoiceChat.Nearby.Audio
             activeSpeakers.ContainsKey(walletId);
 
         public bool HasAudioStream(string walletId) =>
-            streamsByIdentity.ContainsKey(walletId);
+            Volatile.Read(ref streamsByIdentity).ContainsKey(walletId);
 
         // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault
         public string[]? GetAudioSidsArray(string walletId) =>
-            streamsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
+            Volatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? arr) ? arr : null;
 
         public Weak<AudioStream> GetActiveStream(StreamKey key) =>
             room.AudioStreams.ActiveStream(key);
 
         public bool IsStreamGone(StreamKey key)
         {
-            if (!streamsByIdentity.TryGetValue(key.identity, out string[]? sids))
+            if (!Volatile.Read(ref streamsByIdentity).TryGetValue(key.identity, out string[]? sids))
                 return true;
 
             return Array.IndexOf(sids, key.sid) < 0;
@@ -124,7 +124,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             switch (update)
             {
                 case ConnectionUpdate.Disconnected:
-                    streamsByIdentity.Clear();
+                    Interlocked.Exchange(ref streamsByIdentity, NewSnapshot());
                     activeSpeakers.Clear();
                     return;
                 case ConnectionUpdate.Connected:
@@ -137,16 +137,17 @@ namespace DCL.VoiceChat.Nearby.Audio
             }
         }
 
-        // Relies on serial FFI dispatch — concurrent OnTrackSubscribed/OnTrackUnsubscribed during
-        // clear+rebuild is impossible by LiveKit's per-room dispatch contract.
         private void RehydrateFromRoom()
         {
-            streamsByIdentity.Clear();
+            IReadOnlyDictionary<string, LKParticipant> participants = room.Participants.RemoteParticipantIdentities();
+            ConcurrentDictionary<string, string[]> next = NewSnapshot(participants.Count);
 
-            foreach (KeyValuePair<string, LKParticipant> participantEntry in room.Participants.RemoteParticipantIdentities())
+            foreach (KeyValuePair<string, LKParticipant> participantEntry in participants)
             foreach (KeyValuePair<string, TrackPublication> trackEntry in participantEntry.Value.Tracks)
                 if (IsNearbyAudio(trackEntry.Value))
-                    AddAudioSid(participantEntry.Key, trackEntry.Key);
+                    AddAudioSidTo(next, participantEntry.Key, trackEntry.Key);
+
+            Interlocked.Exchange(ref streamsByIdentity, next);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
@@ -175,28 +176,31 @@ namespace DCL.VoiceChat.Nearby.Audio
         private void OnParticipantUpdate(LKParticipant participant, UpdateFromParticipant update)
         {
             if (update == UpdateFromParticipant.Disconnected)
-                streamsByIdentity.TryRemove(participant.Identity, out _);
+                Volatile.Read(ref streamsByIdentity).TryRemove(participant.Identity, out _);
         }
 
-        // Reference-equality contract — produces a NEW array on every call, never mutates an existing one.
-        private void AddAudioSid(string identity, string sid)
+        private void AddAudioSid(string identity, string sid) =>
+            AddAudioSidTo(Volatile.Read(ref streamsByIdentity), identity, sid);
+
+        private static void AddAudioSidTo(ConcurrentDictionary<string, string[]> dict, string identity, string sid)
         {
-            streamsByIdentity.AddOrUpdate(
+            dict.AddOrUpdate(
                 identity,
                 static (_, addedSid) => new[] { addedSid },
                 static (_, prev, addedSid) => Array.IndexOf(prev, addedSid) >= 0 ? prev : ConcatNew(prev, addedSid),
                 sid);
         }
 
-        // Reference-equality contract — CAS-retry loop publishes a NEW filtered array on every successful
-        // update; never mutates the previous one.
+        // CAS-retry loop publishes a NEW filtered array on every successful update; never mutates the previous one.
         private void RemoveAudioSid(string identity, string sid)
         {
-            // ConcurrentDictionary<TKey,TValue>.TryRemove(KeyValuePair) is .NET Core 2.0+ only;
-            // Fall back to ICollection<KVP>.Remove(item), which performs the same atomic key+value compare under the hood .
-            var coll = (ICollection<KeyValuePair<string, string[]>>)streamsByIdentity;
+            ConcurrentDictionary<string, string[]> snap = Volatile.Read(ref streamsByIdentity);
 
-            while (streamsByIdentity.TryGetValue(identity, out string[]? prev))
+            // ConcurrentDictionary<TKey,TValue>.TryRemove(KeyValuePair) is .NET Core 2.0+ only;
+            // Fall back to ICollection<KVP>.Remove(item), which performs the same atomic key+value compare under the hood.
+            var coll = (ICollection<KeyValuePair<string, string[]>>)snap;
+
+            while (snap.TryGetValue(identity, out string[]? prev))
             {
                 int idx = Array.IndexOf(prev, sid);
                 if (idx < 0) return;
@@ -213,13 +217,12 @@ namespace DCL.VoiceChat.Nearby.Audio
                 if (idx > 0) Array.Copy(prev, 0, next, 0, idx);
                 if (idx < prev.Length - 1) Array.Copy(prev, idx + 1, next, idx, prev.Length - idx - 1);
 
-                if (streamsByIdentity.TryUpdate(identity, next, prev))
+                if (snap.TryUpdate(identity, next, prev))
                     return;
                 // Lost CAS — retry from the new snapshot.
             }
         }
 
-        // Reference-equality contract — always allocates a fresh array.
         private static string[] ConcatNew(string[] prev, string sid)
         {
             var next = new string[prev.Length + 1];

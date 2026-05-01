@@ -336,6 +336,49 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void ReaderNeverObservesPartialSnapshotDuringConcurrentReconnect()
+        {
+            // Atomic-publish invariant: a main-thread reader polling GetAudioSidsArray for an identity
+            // that is present both before and after rehydrate must never observe null mid-rehydrate.
+            // With in-place Clear()+rebuild the reader would see a transient null window; with
+            // Interlocked.Exchange-based snapshot swap it sees only pre-state or post-state references.
+            SetupRemoteParticipants((WALLET_A, new[] { (SID_1, TrackKind.KindAudio) }));
+            RaiseConnectionUpdated(ConnectionUpdate.Connected);
+
+            const int RECONNECT_ITERATIONS = 500;
+            using var cts = new CancellationTokenSource();
+            string? observedNullAt = null;
+
+            Task reader = Task.Run(() =>
+            {
+                int loops = 0;
+                while (!cts.IsCancellationRequested)
+                {
+                    string[]? arr = registry.GetAudioSidsArray(WALLET_A);
+                    if (arr == null)
+                    {
+                        observedNullAt = "loop " + loops;
+                        return;
+                    }
+                    loops++;
+                }
+            });
+
+            Task writer = Task.Run(() =>
+            {
+                for (int i = 0; i < RECONNECT_ITERATIONS; i++)
+                    RaiseConnectionUpdated(ConnectionUpdate.Reconnected);
+            });
+
+            Assert.That(writer.Wait(millisecondsTimeout: 5000), Is.True, "writer must finish within timeout");
+            cts.Cancel();
+            Assert.That(reader.Wait(millisecondsTimeout: 5000), Is.True, "reader must terminate within timeout");
+
+            Assert.That(observedNullAt, Is.Null,
+                $"WALLET_A is present pre- and post-rehydrate; reader observed transient null at {observedNullAt}");
+        }
+
+        [Test]
         public void NotThrowWhenMutationsAreInterleavedWithReadsFromMultipleThreads()
         {
             const int ITERATIONS = 500;
