@@ -136,13 +136,6 @@ namespace CrdtEcsBridge.RestrictedActions
             return result;
         }
 
-        // Local scene development used to force masked emotes to full-body because gltFast
-        // can only produce legacy clips at runtime and Mecanim's masked-layer path needs real
-        // Mecanim clips. The avatar now blends legacy clips against locomotion via
-        // MaskedLegacyEmoteBlender (driven by EmoteMaskCatalog), so the fallback is no longer
-        // needed. Kept as a single point we can flip if a future avatar lacks the catalog.
-        public bool ShouldFallbackMaskedEmotesToFullBody(ISceneData sceneData) => false;
-
         public void StopEmote()
         {
             // If the avatar is not visible, there is nothing to stop (matches TriggerEmote guard).
