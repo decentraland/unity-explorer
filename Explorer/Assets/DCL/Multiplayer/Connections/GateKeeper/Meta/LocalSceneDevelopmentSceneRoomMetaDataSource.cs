@@ -7,6 +7,7 @@ using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -32,13 +33,23 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             URLAddress sceneDefinitionEndpoint = baseUrl.Append(URLSubdirectory.FromString("scene.json"));
             URLAddress idEndpoint = baseUrl.Append(URLSubdirectory.FromString("content/entities/active"));
 
-            SceneDefinition sceneDefinition =
-                await webRequestController.GetAsync(
-                                               new CommonArguments(sceneDefinitionEndpoint),
-                                               token,
-                                               ReportCategory.LIVEKIT
-                                           )
-                                          .CreateFromJson<SceneDefinition>(WRJsonParser.Unity);
+            SceneDefinition sceneDefinition;
+
+            try
+            {
+                sceneDefinition =
+                    await webRequestController.GetAsync(
+                                                   new CommonArguments(sceneDefinitionEndpoint),
+                                                   token,
+                                                   ReportCategory.LIVEKIT,
+                                                   suppressErrors: true
+                                               )
+                                              .CreateFromJson<SceneDefinition>(WRJsonParser.Unity);
+            }
+            catch (UnityWebRequestException e) when (e.Result == UnityWebRequest.Result.ConnectionError)
+            {
+                return Result<MetaData>.ErrorResult($"Local scene server unreachable at {baseUrl}: {e.Message}");
+            }
 
             var baseResult = sceneDefinition.scene.BaseParcel();
 

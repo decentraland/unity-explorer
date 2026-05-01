@@ -125,6 +125,14 @@ namespace DCL.Prefs
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
+            Application.quitting += OnQuitting;
+        }
+
+        private static void OnQuitting()
+        {
+            Application.quitting -= OnQuitting;
+            (dclPrefs as IDisposable)?.Dispose();
+            dclPrefs = null;
         }
 
 #if UNITY_EDITOR
