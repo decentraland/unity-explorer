@@ -4,24 +4,11 @@ using System.Threading;
 
 namespace DCL.VoiceChat.Nearby.MutePersistence
 {
-    /// <summary>
-    /// All wallet ids stored in this cache are lowercase. Normalization happens on write
-    /// (<see cref="SetMuted"/>, <see cref="Merge"/>); reads trust the input. The upstream
-    /// contract (catalyst profiles, social-service mutes endpoint) returns lowercase 0x-hex,
-    /// so the defensive <c>ToLowerInvariant</c> on write protects against EIP-55 checksummed
-    /// addresses without paying the upper-fold cost on every <see cref="IsMuted"/> call.
-    /// <para>
-    ///     <b>Thread-safety.</b> All <see cref="HashSet{T}"/> access is serialized through <see cref="gate"/>.
-    ///     Hot-path reads (<see cref="IsMuted"/>, <see cref="Version"/>) compete only against the one-shot
-    ///     <see cref="NearbyMuteService.LoadAsync"/>-driven <see cref="Merge"/> at startup and the rare
-    ///     UI-driven <see cref="SetMuted"/>, so contention is effectively zero.
-    /// </para>
-    /// </summary>
     public class NearbyMuteCache : INearbyMuteCache
     {
         private readonly object gate = new ();
-        private readonly HashSet<string> mutedWalletIds = new (StringComparer.Ordinal);
-        private readonly HashSet<string> sessionUnmuted = new (StringComparer.Ordinal); // Addresses the user explicitly unmuted in this session.
+        private readonly HashSet<string> mutedWalletIds = new (StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> sessionUnmuted = new (StringComparer.OrdinalIgnoreCase); // Addresses the user explicitly unmuted in this session.
 
         // Starts at 1 so a freshly-constructed component (LastSeenMuteVersion=0) deterministically mismatches on its first tick — guarantees the pessimistic initial recompute.
         // All writes happen under `gate`; the lock-free Version getter uses Volatile.Read to observe the latest committed value.
@@ -39,23 +26,21 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
 
         public void SetMuted(string walletAddress, bool muted)
         {
-            string normalized = walletAddress.ToLowerInvariant();
-
             lock (gate)
             {
                 if (muted)
                 {
-                    if (mutedWalletIds.Add(normalized))
+                    if (mutedWalletIds.Add(walletAddress))
                         version++;
 
-                    sessionUnmuted.Remove(normalized);
+                    sessionUnmuted.Remove(walletAddress);
                 }
                 else
                 {
-                    if (mutedWalletIds.Remove(normalized))
+                    if (mutedWalletIds.Remove(walletAddress))
                         version++;
 
-                    sessionUnmuted.Add(normalized); // Record intent even if not currently in the cache — Merge must honour it.
+                    sessionUnmuted.Add(walletAddress); // Record intent even if not currently in the cache — Merge must honour it.
                 }
             }
         }
@@ -68,11 +53,9 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
             {
                 foreach (string address in mutedAddresses)
                 {
-                    string normalized = address.ToLowerInvariant();
+                    if (sessionUnmuted.Contains(address)) continue;
 
-                    if (sessionUnmuted.Contains(normalized)) continue;
-
-                    if (mutedWalletIds.Add(normalized))
+                    if (mutedWalletIds.Add(address))
                         version++;
                 }
             }
