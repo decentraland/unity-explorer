@@ -1,5 +1,4 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using System;
@@ -402,9 +401,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
             else if (emoteReferences.animationComp != null)
             {
-                // Legacy prop animation lives on the emote prefab's own Animation component, so
-                // it animates prop transforms in the emote hierarchy and never collides with the
-                // avatar's Animator/SampleAnimation pipeline used by the masked-legacy blender.
+                // Legacy prop animation lives on the emote prefab's own Animation component
                 Animation propAnimationComp = emoteReferences.animationComp;
                 string propClipName = emoteReferences.propClip.name;
                 propAnimationComp[propClipName].wrapMode = isLooping ? WrapMode.Loop : WrapMode.Once;

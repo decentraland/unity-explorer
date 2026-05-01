@@ -3,7 +3,6 @@ using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -138,6 +137,18 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
         private Vector3 headArmatureBoneStartPosition;
 
+        public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
+        public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;
+        public bool HasMaskedLegacyEmoteFinished => maskedLegacyBlender != null && maskedLegacyBlender.HasFinished;
+
+
+
+
+
+
+
+
+
         private void Awake()
         {
             if (!AvatarAnimator)
@@ -170,8 +181,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             return LegacyAnimation;
         }
 
-        public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
-
         public void StopLegacyAnimation()
         {
             if (LegacyAnimation != null) LegacyAnimation.Stop();
@@ -186,10 +195,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             maskedLegacyBlender.Initialize(animatorGo);
             return maskedLegacyBlender;
         }
-
-        public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;
-
-        public bool HasMaskedLegacyEmoteFinished => maskedLegacyBlender != null && maskedLegacyBlender.HasFinished;
 
         public void StartMaskedLegacyEmote(AnimationClip clip, AvatarEmoteMask emoteMask, bool loop)
         {
@@ -225,10 +230,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetPointAtLayerWeight(float weight) =>
             AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
 
-        public void SetRotationLayerWeight(float weight)
-        {
+        public void SetRotationLayerWeight(float weight) =>
             AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
-        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
@@ -265,10 +268,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
         }
 
-        public void ResetAnimatorTrigger(int hash)
-        {
+        public void ResetAnimatorTrigger(int hash) =>
             AvatarAnimator.ResetTrigger(hash);
-        }
 
         public void ResetArmatureInclination()
         {

@@ -7,16 +7,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
     /// <summary>
     /// Manually blends a legacy <see cref="AnimationClip"/> with the Animator-driven locomotion
-    /// pose, so that masked emotes can be played in local scene development where gltFast can
-    /// only produce legacy clips at runtime (no Mecanim layer + AvatarMask available).
-    ///
-    /// Each LateUpdate the blender:
-    ///   1. Snapshots the local pose of every bone the AvatarMask marks INACTIVE
-    ///      (these are the bones the Animator should keep driving — e.g. legs).
-    ///   2. Calls <see cref="AnimationClip.SampleAnimation"/>, which overwrites the pose of
-    ///      every bone the clip animates.
-    ///   3. Restores the snapshotted local pose onto the inactive bones, so only the bones
-    ///      marked active by the mask end up driven by the emote.
+    /// pose, so that masked emotes can be played in local scene development.
     /// </summary>
     public class MaskedLegacyEmoteBlender : MonoBehaviour
     {
@@ -38,10 +29,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool IsPlaying => isPlaying;
         public bool HasFinished => hasFinished;
 
-        public void Initialize(GameObject sampleRoot)
-        {
+        public void Initialize(GameObject sampleRoot) =>
             this.sampleRoot = sampleRoot;
-        }
 
         public void Play(AnimationClip clip, AvatarMask mask, bool loop)
         {
@@ -70,6 +59,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         private void ResolveNonMaskedBones(AvatarMask mask)
         {
+            // Only calculate non-masked bones for new mask
             if (!nonMaskedBonesByMask.TryGetValue(mask, out Transform[] bones))
             {
                 var resolved = new List<Transform>();
@@ -105,6 +95,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         {
             if (!isPlaying || currentClip == null) return;
 
+            // Snapshot bones, this happens after the Animator has updated the base locomotion
             for (var i = 0; i < nonMaskedBones.Length; i++)
             {
                 Transform bone = nonMaskedBones[i];
@@ -112,8 +103,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
                 capturedRotations[i] = bone.localRotation;
             }
 
+            // Manually play the legacy emote animation to be masked
             currentClip.SampleAnimation(sampleRoot, time);
 
+            // Restore snapshot non-masked bones, this ends up blending the animator + animation
             for (var i = 0; i < nonMaskedBones.Length; i++)
             {
                 Transform bone = nonMaskedBones[i];
