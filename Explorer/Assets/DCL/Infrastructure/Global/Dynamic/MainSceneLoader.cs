@@ -1,3 +1,4 @@
+using AltTester.AltTesterUnitySDK.Commands;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
@@ -25,10 +26,10 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
-using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Quality.Runtime;
-using DCL.Settings.Utils;
-using DCL.UI;
+using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Time;
+using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -36,30 +37,25 @@ using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
+using DG.Tweening;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Newtonsoft.Json.Linq;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
-using Global.Dynamic.RealmUrl;
-using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using MVC;
+using Newtonsoft.Json.Linq;
+using Plugins.NativeWindowManager;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
-using DCL.UI.ErrorPopup;
-using DG.Tweening;
-using ECS;
-using System.IO;
-using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -316,6 +312,11 @@ namespace Global.Dynamic
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
                 await LoadStartingRealmAsync(ct);
+
+                if (TryDetectClockDesync(dynamicWorldContainer!.RealmClock))
+                    ReportHub.LogWarning(ReportCategory.STARTUP,
+                        "System clock is out of sync with the realm.");
+
                 await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
@@ -746,7 +747,7 @@ namespace Global.Dynamic
 
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {
-                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+                var runner = instance.GetComponent<AltRunner>();
 
                 var split = endpoint.Split(':');
 
@@ -803,6 +804,23 @@ namespace Global.Dynamic
             {
                 ReportHub.Log(data, "Finish checking");
             }
+        }
+
+        private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
+
+        /// <summary>
+        ///     Returns true when local UTC and realm UTC differ by more than <see cref="CLOCK_DESYNC_THRESHOLD_SECONDS"/>.
+        ///     <paramref name="delta"/> is positive when the local clock is behind the realm.
+        /// </summary>
+        private static bool TryDetectClockDesync(RealmClock realmClock)
+        {
+            DateTime? serverUtc = realmClock.UtcNow;
+
+            if (!serverUtc.HasValue)
+                return false;
+
+            var delta = serverUtc.Value - DateTime.UtcNow;
+            return Math.Abs(delta.TotalSeconds) > CLOCK_DESYNC_THRESHOLD_SECONDS;
         }
 
         private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>

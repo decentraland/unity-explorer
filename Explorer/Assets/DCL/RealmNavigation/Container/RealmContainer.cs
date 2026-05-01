@@ -17,6 +17,7 @@ using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
 using DCL.Prefs;
+using DCL.Time;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -42,7 +43,8 @@ namespace DCL.RealmNavigation
             IAppArgs appArgs,
             TeleportController teleportController,
             DecentralandEnvironment dclEnvironment,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            RealmClock realmClock)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
@@ -67,7 +69,8 @@ namespace DCL.RealmNavigation
                 urlsSource,
                 dclEnvironment,
                 staticContainer.WorldManifestProvider,
-                worldPermissionsService
+                worldPermissionsService,
+                realmClock
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
