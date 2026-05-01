@@ -85,6 +85,12 @@ namespace DCL.VoiceChat.Nearby.Audio
             activeSpeakers.Clear();
         }
 
+        // Relies on serial FFI dispatch — concurrent ActiveSpeakers.Updated / OnConnectionUpdated invocations
+        // during clear+rebuild are impossible by LiveKit's per-room dispatch contract.
+        // The transient "everything empty" window between Clear() and the final TryAdd is acceptable:
+        // readers (NearbyAudioBindingSystem and friends) are pull-based per-tick, so a missed-by-one-frame
+        // active-speaker flag is corrected on the next Updated event. Do not introduce snapshot-swap here
+        // unless a strict point-in-time read becomes a hard requirement.
         private void PullActiveSpeakers()
         {
             activeSpeakers.Clear();

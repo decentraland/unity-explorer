@@ -46,6 +46,12 @@ namespace DCL.VoiceChat
         public AudioMixerGroup ChatAudioMixerGroup;
 
         [Header("NEARBY")]
+        [Tooltip("Hard cap on live pool-managed Nearby audio sources. Beyond this, Create falls back to the legacy " +
+                 "instantiate-on-Create / destroy-on-Dispose path so the resident set drains naturally as users go out of range. " +
+                 "Set to 0 to bypass pooling entirely.")]
+        [Range(0, 2000)]
+        public int NearbyMaxLiveInstances = 300;
+
         public AnimationCurve NearbyCustomRolloffCurve = new (
             new Keyframe(0f, 1f, 0f, 0f),
             new Keyframe(3f, 1f, 0f, 0f),

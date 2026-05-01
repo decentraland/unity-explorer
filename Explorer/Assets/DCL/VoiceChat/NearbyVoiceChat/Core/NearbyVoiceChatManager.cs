@@ -201,6 +201,8 @@ namespace DCL.VoiceChat
                 if (!PlayerLoopHelper.IsMainThread)
                     await UniTask.SwitchToMainThread();
 
+                if (disposed) return;
+
                 ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT,
                     $"Island Room connection: {connectionUpdate}{(disconnectReason.HasValue ? $" (reason: {disconnectReason.Value})" : "")}");
 

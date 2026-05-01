@@ -22,10 +22,6 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private const string ROOT_NAME = "VoiceChatSources_Nearby";
 
-        // Hard cap on live pool-managed instances. Beyond this, Create falls through to the legacy
-        // instantiate-on-Create / destroy-on-Dispose path. Set to 0 to bypass pooling entirely.
-        internal const int MAX_LIVE_INSTANCES = 300;
-
         private readonly VoiceChatConfiguration configuration;
         private readonly GameObjectPool<LivekitAudioSource> pool;
 
@@ -57,8 +53,8 @@ namespace DCL.VoiceChat.Nearby.Audio
         {
             // Cap on simultaneously-live instances. Once exceeded, peel off into the legacy path:
             // those overflow sources get destroyed on Dispose instead of returning to the pool, so
-            // the resident set drains back to MAX_LIVE_INSTANCES naturally as users go out of range.
-            if (liveCount >= MAX_LIVE_INSTANCES)
+            // the resident set drains back to the configured cap naturally as users go out of range.
+            if (liveCount >= configuration.NearbyMaxLiveInstances)
                 return CreateLegacyTracked(key, stream);
 
             liveCount++;
@@ -85,6 +81,9 @@ namespace DCL.VoiceChat.Nearby.Audio
         {
             pool.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(pool.ParentContainer);
+            liveInstances.Clear();
+            legacyInstances.Clear();
+            liveCount = 0;
         }
 
         private LivekitAudioSource CreateFreshInstance()

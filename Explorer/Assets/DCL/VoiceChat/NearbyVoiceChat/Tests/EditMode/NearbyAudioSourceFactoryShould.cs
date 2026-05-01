@@ -212,12 +212,12 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void OverflowFallsBackToLegacyAndDestroysOnDispose()
         {
-            // Beyond MAX_LIVE_INSTANCES the factory peels off into the legacy path so the resident
+            // Beyond NearbyMaxLiveInstances the factory peels off into the legacy path so the resident
             // GO+AudioSource set can't grow without bound. Overflow instances are destroyed on
             // Dispose instead of returning to the pool — proven by liveInstanceCount staying at the
             // cap (overflow Create doesn't increment it) and the GameObject being Unity-fake-null
             // after Dispose (legacy DisposeLegacy ⇒ SafeDestroyGameObject, not pool.Release).
-            int cap = NearbyAudioSourceFactory.MAX_LIVE_INSTANCES;
+            int cap = configuration.NearbyMaxLiveInstances;
             var poolManaged = new List<LivekitAudioSource>(cap);
 
             for (var i = 0; i < cap; i++)
