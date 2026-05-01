@@ -90,7 +90,6 @@ namespace DCL.VoiceChat.Nearby.Systems
             foreach ((Entity avatarEntity, StreamKey key) in pendingCreations)
             {
                 if (budget <= 0) break;
-                if (bindings.ContainsKey(key)) continue;
 
                 Weak<AudioStream> stream = registry.GetActiveStream(key);
 
