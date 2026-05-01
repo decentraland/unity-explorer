@@ -9,7 +9,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
-using DCL.Time;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -53,8 +52,6 @@ namespace Global.Dynamic
                                                                         .WithAll<PartitionComponent, ISceneFacade>()
                                                                         .WithNone<PortableExperienceComponent, SmartWearableId>();
 
-        private const string DATE_HEADER = "Date";
-
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -74,7 +71,6 @@ namespace Global.Dynamic
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly DecentralandEnvironment environment;
         private readonly WorldManifestProvider worldManifestProvider;
-        private readonly RealmClock realmClock;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -112,8 +108,7 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
             WorldManifestProvider worldManifestProvider,
-            IWorldPermissionsService worldPermissionsService,
-            RealmClock realmClock)
+            IWorldPermissionsService worldPermissionsService)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -132,7 +127,6 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.environment = environment;
             this.worldManifestProvider = worldManifestProvider;
-            this.realmClock = realmClock;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -152,8 +146,7 @@ namespace Global.Dynamic
                 serverAbout.Clear();
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-                (ServerAbout result, WebResponseHeaders responseHeaders) = await genericGetRequest.OverwriteFromJsonWithHeadersAsync(serverAbout, WRJsonParser.Unity);
-                realmClock.TryRecordHttpDate(responseHeaders.GetResponseHeader(DATE_HEADER));
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
                 localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 

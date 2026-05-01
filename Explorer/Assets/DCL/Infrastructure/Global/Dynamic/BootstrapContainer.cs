@@ -12,6 +12,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Time;
 using DCL.Utility;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -55,6 +56,7 @@ namespace Global.Dynamic
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
+        public RealmClock RealmClock { get; } = new ();
 
         public override void Dispose()
         {
@@ -158,7 +160,7 @@ namespace Global.Dynamic
             container.Analytics = analyticsContainer;
 
             var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache,
-                new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController), world)
+                new HttpFeatureFlagsProvider(webRequestsContainer.WebRequestController, container.RealmClock), world)
             {
                 EnableAnalytics = analyticsContainer.Enabled,
             };

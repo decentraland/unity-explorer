@@ -128,9 +128,9 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 diskCache,
                 partialsDiskCache,
-                bootstrapContainer.Environment,
                 ct,
-                appArgs
+                appArgs,
+                bootstrapContainer.RealmClock
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(

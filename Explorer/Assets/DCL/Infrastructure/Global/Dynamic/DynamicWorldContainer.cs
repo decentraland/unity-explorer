@@ -76,7 +76,6 @@ using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SkyBox;
 using DCL.SocialService;
-using DCL.Time;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
@@ -151,8 +150,6 @@ namespace Global.Dynamic
 
         public IRealmNavigator RealmNavigator { get; }
 
-        public RealmClock RealmClock { get; }
-
         public GlobalWorldFactory GlobalWorldFactory { get; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
@@ -175,7 +172,6 @@ namespace Global.Dynamic
             IMVCManager mvcManager,
             IGlobalRealmController realmController,
             IRealmNavigator realmNavigator,
-            RealmClock realmClock,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IProfileRepository profileRepository,
@@ -194,7 +190,6 @@ namespace Global.Dynamic
             MvcManager = mvcManager;
             RealmController = realmController;
             RealmNavigator = realmNavigator;
-            RealmClock = realmClock;
             GlobalWorldFactory = globalWorldFactory;
             GlobalPlugins = globalPlugins;
             ProfileRepository = profileRepository;
@@ -379,8 +374,6 @@ namespace Global.Dynamic
 
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
-            var realmClock = new RealmClock();
-
             var realmContainer = RealmContainer.Create(
                 staticContainer,
                 identityCache,
@@ -393,8 +386,7 @@ namespace Global.Dynamic
                 appArgs,
                 teleportController,
                 bootstrapContainer.Environment,
-                worldPermissionsService,
-                realmClock);
+                worldPermissionsService);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -1342,7 +1334,6 @@ namespace Global.Dynamic
                 mvcManager,
                 realmContainer.RealmController,
                 realmNavigator,
-                realmClock,
                 globalWorldFactory,
                 globalPlugins,
                 profilesRepository,

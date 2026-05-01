@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Time;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -10,13 +11,17 @@ namespace DCL.FeatureFlags
 {
     public class HttpFeatureFlagsProvider
     {
+        private const string DATE_HEADER = "Date";
+
         private readonly IWebRequestController webRequestController;
+        private readonly RealmClock realmClock;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, string> headers = new ();
 
-        public HttpFeatureFlagsProvider(IWebRequestController webRequestController)
+        public HttpFeatureFlagsProvider(IWebRequestController webRequestController, RealmClock realmClock)
         {
             this.webRequestController = webRequestController;
+            this.realmClock = realmClock;
         }
 
         public async UniTask<FeatureFlagsConfiguration> GetAsync(FeatureFlagOptions options, CancellationToken ct)
@@ -37,7 +42,9 @@ namespace DCL.FeatureFlags
             var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ct, ReportCategory.FEATURE_FLAGS,
                 new WebRequestHeadersInfo(headers));
 
-            FeatureFlagsResultDto response = await result.CreateFromJson<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft);
+            (FeatureFlagsResultDto response, WebResponseHeaders responseHeaders) = await result.CreateFromJsonWithHeadersAsync<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft);
+
+            realmClock.TryRecordHttpDate(responseHeaders.GetResponseHeader(DATE_HEADER));
 
             response = StripAppNameFromKeys(options.AppName, response);
 

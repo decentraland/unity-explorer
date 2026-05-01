@@ -16,6 +16,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Settings;
+using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -115,9 +116,9 @@ namespace Global.Tests.PlayMode
                 enableAnalytics: false,
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                DecentralandEnvironment.Org,
                 ct,
                 appArgs,
+                new RealmClock(),
                 enableGPUInstancing: false
             );
 

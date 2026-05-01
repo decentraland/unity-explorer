@@ -66,6 +66,8 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
+        private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
+
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
@@ -285,7 +287,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -309,14 +311,11 @@ namespace Global.Dynamic
                     return;
                 }
 
+                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, ct);
+
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
                 await LoadStartingRealmAsync(ct);
-
-                if (TryDetectClockDesync(dynamicWorldContainer!.RealmClock))
-                    ReportHub.LogWarning(ReportCategory.STARTUP,
-                        "System clock is out of sync with the realm.");
-
                 await LoadUserFlowAsync(playerEntity, ct);
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
@@ -420,9 +419,7 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs)
-            {
                 SavedQualitySettingsApplier.EnforceLowPreset();
-            }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
@@ -806,21 +803,59 @@ namespace Global.Dynamic
             }
         }
 
-        private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
-
-        /// <summary>
-        ///     Returns true when local UTC and realm UTC differ by more than <see cref="CLOCK_DESYNC_THRESHOLD_SECONDS"/>.
-        ///     <paramref name="delta"/> is positive when the local clock is behind the realm.
-        /// </summary>
-        private static bool TryDetectClockDesync(RealmClock realmClock)
+        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, CancellationToken ct)
         {
-            DateTime? serverUtc = realmClock.UtcNow;
+            if (!IsDesync()) return;
 
-            if (!serverUtc.HasValue)
-                return false;
+            ErrorPopupWithRetryController.Result response = await ShowClockDesyncPopupAsync(ct);
 
-            var delta = serverUtc.Value - DateTime.UtcNow;
-            return Math.Abs(delta.TotalSeconds) > CLOCK_DESYNC_THRESHOLD_SECONDS;
+            switch (response)
+            {
+                case ErrorPopupWithRetryController.Result.EXIT:
+                    ExitUtils.Exit();
+                    break;
+                case ErrorPopupWithRetryController.Result.RESTART:
+                    await DetectClockDesyncAsync(realmClock, ct);
+                    break;
+            }
+
+            return;
+
+            bool IsDesync()
+            {
+                DateTime? serverUtc = realmClock.UtcNow;
+
+                if (!serverUtc.HasValue) return false;
+
+                var delta = serverUtc.Value - DateTime.UtcNow;
+                return Math.Abs(delta.TotalSeconds) > CLOCK_DESYNC_THRESHOLD_SECONDS;
+            }
+        }
+
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
+        {
+            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+
+            // The MVC manager is not considering the sorting order of the splash screen as it is spawned through the mvc system
+            // we need to force to render it on top of it
+            mvcManager.OnViewShowed += ShowPopupOnTopOfSplashScreen;
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Time sync needed",
+                description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
+                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+
+            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
+
+            mvcManager.OnViewShowed -= ShowPopupOnTopOfSplashScreen;
+
+            return input.SelectedOption;
+
+            void ShowPopupOnTopOfSplashScreen(IController c)
+            {
+                if (c is ErrorPopupWithRetryController errorPopupController)
+                    errorPopupController.SortingOder = splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1;
+            }
         }
 
         private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
