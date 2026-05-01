@@ -20,6 +20,7 @@ namespace DCL.SpringBones
         readonly Stack<int> freeSlots = new ();
 
         float accumulatedDt;
+        bool hasFirstStep;
         int slotCapacity;
         Transform[] managedTransforms; // parallel to TAA, for main-thread access
         TransformAccessArray taa;
@@ -30,8 +31,16 @@ namespace DCL.SpringBones
         NativeArray<SpringBoneJointConfig> jointConfigs;
         NativeArray<int> slotJointCounts;
         NativeArray<SpringBoneParentData> parentData;
+        // Previous-frame parent data per slot. Sim job slerps between this and current
+        // parentData each substep so parent rotation distributes smoothly across substeps —
+        // prevents flapping when avatar parent rotates a lot per frame at low fps.
+        NativeArray<SpringBoneParentData> previousParentData;
         NativeArray<bool> slotActive;
         NativeArray<bool> slotWasActive;
+        // Snapshot of post-step world rotation per joint, ping-ponged each substep so render
+        // can slerp(prev, curr, alpha) and hide substep boundaries.
+        NativeArray<quaternion> prevStepRotations;
+        NativeArray<quaternion> currStepRotations;
         bool disposed;
 
 #if UNITY_INCLUDE_TESTS
@@ -63,8 +72,11 @@ namespace DCL.SpringBones
             jointConfigs = new NativeArray<SpringBoneJointConfig>(totalJoints, Allocator.Persistent);
             slotJointCounts = new NativeArray<int>(slotCapacity, Allocator.Persistent);
             parentData = new NativeArray<SpringBoneParentData>(slotCapacity, Allocator.Persistent);
+            previousParentData = new NativeArray<SpringBoneParentData>(slotCapacity, Allocator.Persistent);
             slotActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
             slotWasActive = new NativeArray<bool>(slotCapacity, Allocator.Persistent);
+            prevStepRotations = new NativeArray<quaternion>(totalJoints, Allocator.Persistent);
+            currStepRotations = new NativeArray<quaternion>(totalJoints, Allocator.Persistent);
 
             taa = new TransformAccessArray(managedTransforms);
 
@@ -150,13 +162,20 @@ namespace DCL.SpringBones
                 if (isActive)
                 {
                     // Inactive→active: snap tail buffers to current transform position (rest pose)
+                    // and seed both world-rotation snapshots so first interpolated push is a no-op slerp.
+                    // Also seed prev parent data so first frame's substep parent-interp is a no-op.
+                    previousParentData[slot] = parentData[slot];
                     for (int j = 0; j < jointCount; j++)
                     {
                         int idx = baseIndex + j;
-                        float3 pos = (float3)managedTransforms[idx].position;
+                        Transform t = managedTransforms[idx];
+                        float3 pos = (float3)t.position;
                         prevTails[idx] = pos;
                         currentTails[idx] = pos;
                         nextTails[idx] = pos;
+                        quaternion worldRot = t.rotation;
+                        prevStepRotations[idx] = worldRot;
+                        currStepRotations[idx] = worldRot;
                     }
                 }
                 else
@@ -173,6 +192,7 @@ namespace DCL.SpringBones
 
         public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix, float scaleFactor)
         {
+            previousParentData[slotIndex] = parentData[slotIndex];
             parentData[slotIndex] = new SpringBoneParentData
             {
                 Rotation = rotation,
@@ -185,24 +205,48 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
-            // Decouple physics from render fps. Step at fixed 60 Hz so authored stiffness/drag
-            // produce identical motion regardless of frame rate.
+            // Fixed 60 Hz physics with sub-stepping. Render at any fps interpolates between
+            // the last two physics states (slerp) to hide substep boundaries — smooth at
+            // 30/45/60/120/244+ fps without aliasing.
             accumulatedDt += deltaTime;
 
-            int steps = 0;
-            while (accumulatedDt >= FIXED_STEP && steps < MAX_SUBSTEPS)
+            int totalSubsteps = math.min(MAX_SUBSTEPS, (int)(accumulatedDt / FIXED_STEP));
+
+            for (int i = 0; i < totalSubsteps; i++)
             {
-                SimulateStep(FIXED_STEP);
+                // prev ← old curr; new step writes into curr
+                (prevStepRotations, currStepRotations) = (currStepRotations, prevStepRotations);
                 accumulatedDt -= FIXED_STEP;
-                steps++;
+                // Alpha = fraction of current frame's wall-clock window at which this substep
+                // ends. Tracks parent motion continuously across frames regardless of how many
+                // substeps fall in any given render frame — avoids parent "rewinding" when a
+                // multi-substep frame follows single-substep frames.
+                float substepAlpha = deltaTime > 0f
+                    ? math.saturate((deltaTime - accumulatedDt) / deltaTime)
+                    : 1f;
+                SimulateStep(FIXED_STEP, substepAlpha);
+                hasFirstStep = true;
             }
 
             // Drop residual after a stall to avoid spiral-of-death.
-            if (steps == MAX_SUBSTEPS)
+            if (totalSubsteps == MAX_SUBSTEPS)
                 accumulatedDt = 0f;
+
+            if (!hasFirstStep) return;
+
+            float alpha = math.saturate(accumulatedDt / FIXED_STEP);
+
+            new PushSpringBoneTransformsJob
+            {
+                PrevRotations = prevStepRotations,
+                CurrRotations = currStepRotations,
+                SlotActive = slotActive,
+                MaxJointsPerSpring = MAX_JOINTS_PER_SPRING,
+                Alpha = alpha,
+            }.Schedule(taa).Complete();
         }
 
-        void SimulateStep(float deltaTime)
+        void SimulateStep(float deltaTime, float substepAlpha)
         {
             JobHandle pullHandle = new PullSpringBoneTransformsJob
             {
@@ -213,27 +257,21 @@ namespace DCL.SpringBones
 
             FlipBuffers();
 
-            JobHandle simHandle = new SpringBoneSimulationJob
+            new SpringBoneSimulationJob
             {
                 SlotJointCounts = slotJointCounts,
                 SlotActive = slotActive,
                 JointConfigs = jointConfigs,
                 ParentData = parentData,
+                PrevParentData = previousParentData,
+                SubstepAlpha = substepAlpha,
                 Transforms = transforms,
                 PrevTails = prevTails,
                 CurrentTails = currentTails,
                 NextTails = nextTails,
+                CurrStepRotations = currStepRotations,
                 DeltaTime = deltaTime,
-            }.Schedule(slotCapacity, 8, pullHandle);
-
-            JobHandle pushHandle = new PushSpringBoneTransformsJob
-            {
-                Transforms = transforms,
-                SlotActive = slotActive,
-                MaxJointsPerSpring = MAX_JOINTS_PER_SPRING,
-            }.Schedule(taa, simHandle);
-
-            pushHandle.Complete();
+            }.Schedule(slotCapacity, 8, pullHandle).Complete();
         }
 
         void FlipBuffers()
@@ -257,8 +295,11 @@ namespace DCL.SpringBones
             var newJointConfigs = new NativeArray<SpringBoneJointConfig>(newTotalJoints, Allocator.Persistent);
             var newSlotJointCounts = new NativeArray<int>(newCapacity, Allocator.Persistent);
             var newParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
+            var newPreviousParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
             var newSlotActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
             var newSlotWasActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
+            var newPrevStepRotations = new NativeArray<quaternion>(newTotalJoints, Allocator.Persistent);
+            var newCurrStepRotations = new NativeArray<quaternion>(newTotalJoints, Allocator.Persistent);
 
             NativeArray<SpringBoneTransformData>.Copy(transforms, newTransforms, oldTotalJoints);
             NativeArray<float3>.Copy(prevTails, newPrevTails, oldTotalJoints);
@@ -267,8 +308,11 @@ namespace DCL.SpringBones
             NativeArray<SpringBoneJointConfig>.Copy(jointConfigs, newJointConfigs, oldTotalJoints);
             NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, oldCapacity);
             NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, oldCapacity);
+            NativeArray<SpringBoneParentData>.Copy(previousParentData, newPreviousParentData, oldCapacity);
             NativeArray<bool>.Copy(slotActive, newSlotActive, oldCapacity);
             NativeArray<bool>.Copy(slotWasActive, newSlotWasActive, oldCapacity);
+            NativeArray<quaternion>.Copy(prevStepRotations, newPrevStepRotations, oldTotalJoints);
+            NativeArray<quaternion>.Copy(currStepRotations, newCurrStepRotations, oldTotalJoints);
 
             // Dispose old
             transforms.Dispose();
@@ -278,8 +322,11 @@ namespace DCL.SpringBones
             jointConfigs.Dispose();
             slotJointCounts.Dispose();
             parentData.Dispose();
+            previousParentData.Dispose();
             slotActive.Dispose();
             slotWasActive.Dispose();
+            prevStepRotations.Dispose();
+            currStepRotations.Dispose();
             taa.Dispose();
 
             // Assign new
@@ -290,8 +337,11 @@ namespace DCL.SpringBones
             jointConfigs = newJointConfigs;
             slotJointCounts = newSlotJointCounts;
             parentData = newParentData;
+            previousParentData = newPreviousParentData;
             slotActive = newSlotActive;
             slotWasActive = newSlotWasActive;
+            prevStepRotations = newPrevStepRotations;
+            currStepRotations = newCurrStepRotations;
             slotCapacity = newCapacity;
 
             var newManagedTransforms = new Transform[newTotalJoints];
@@ -319,8 +369,11 @@ namespace DCL.SpringBones
             if (jointConfigs.IsCreated) jointConfigs.Dispose();
             if (slotJointCounts.IsCreated) slotJointCounts.Dispose();
             if (parentData.IsCreated) parentData.Dispose();
+            if (previousParentData.IsCreated) previousParentData.Dispose();
             if (slotActive.IsCreated) slotActive.Dispose();
             if (slotWasActive.IsCreated) slotWasActive.Dispose();
+            if (prevStepRotations.IsCreated) prevStepRotations.Dispose();
+            if (currStepRotations.IsCreated) currStepRotations.Dispose();
             if (taa.isCreated) taa.Dispose();
 
             UnityObjectUtils.SafeDestroyGameObject(dummyTransform);

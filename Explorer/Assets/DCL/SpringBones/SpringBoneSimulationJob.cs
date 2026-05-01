@@ -13,14 +13,17 @@ namespace DCL.SpringBones
         [ReadOnly] public NativeArray<bool> SlotActive;
         [ReadOnly] public NativeArray<SpringBoneJointConfig> JointConfigs;
         [ReadOnly] public NativeArray<SpringBoneParentData> ParentData;
+        [ReadOnly] public NativeArray<SpringBoneParentData> PrevParentData;
         [ReadOnly] public NativeArray<float3> PrevTails;
         [ReadOnly] public NativeArray<float3> CurrentTails;
         [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<float3> NextTails;
+        [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<quaternion> CurrStepRotations;
 
         // Transforms are read AND written (chain propagation)
         [NativeDisableParallelForRestriction] public NativeArray<SpringBoneTransformData> Transforms;
 
         public float DeltaTime;
+        public float SubstepAlpha;
 
         public void Execute(int slotIndex)
         {
@@ -29,10 +32,18 @@ namespace DCL.SpringBones
 
             int baseIndex = slotIndex * SpringBoneService.MAX_JOINTS_PER_SPRING;
 
-            // Chain root's parent comes from the main-thread sync
-            var parentRotation = ParentData[slotIndex].Rotation;
-            var parentLocalToWorld = ParentData[slotIndex].LocalToWorldMatrix;
-            float scaleFactor = ParentData[slotIndex].ScaleFactor;
+            // Chain root's parent: interpolate from previous frame's parent state to current
+            // along the substep so a 30°/frame avatar rotation distributes across substeps
+            // instead of jumping all at once and exciting the springs.
+            var prevP = PrevParentData[slotIndex];
+            var currP = ParentData[slotIndex];
+            var parentRotation = math.slerp(prevP.Rotation, currP.Rotation, SubstepAlpha);
+            float4x4 parentLocalToWorld = new float4x4(
+                math.lerp(prevP.LocalToWorldMatrix.c0, currP.LocalToWorldMatrix.c0, SubstepAlpha),
+                math.lerp(prevP.LocalToWorldMatrix.c1, currP.LocalToWorldMatrix.c1, SubstepAlpha),
+                math.lerp(prevP.LocalToWorldMatrix.c2, currP.LocalToWorldMatrix.c2, SubstepAlpha),
+                math.lerp(prevP.LocalToWorldMatrix.c3, currP.LocalToWorldMatrix.c3, SubstepAlpha));
+            float scaleFactor = math.lerp(prevP.ScaleFactor, currP.ScaleFactor, SubstepAlpha);
 
             for (int j = 0; j < jointCount; j++)
             {
@@ -81,6 +92,7 @@ namespace DCL.SpringBones
                 quaternion newRotation = math.mul(FromToRotation(currentDir, targetDir), currentRot);
                 head = UpdateRotation(head, newRotation, parentRotation, parentLocalToWorld);
                 Transforms[idx] = head;
+                CurrStepRotations[idx] = newRotation;
 
                 // This joint becomes parent for the next
                 parentRotation = head.Rotation;
