@@ -209,7 +209,6 @@ namespace SceneRunner
                         sceneData
                         );
                 await sceneAdminsInstance.FireRequestAsync(ct);
-                sceneAdminsInstance.StartRequestPollingAsync().Forget();
 
                 sceneAdmins = Option<SceneAdmins>.Some(sceneAdminsInstance);
             }

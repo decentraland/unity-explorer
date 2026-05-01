@@ -48,7 +48,7 @@ namespace SceneRunner.Admins
         }
         // END Copied
         
-        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(1000);
+        private static readonly TimeSpan REFRESH_COOLDOWN = TimeSpan.FromSeconds(30);
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;
@@ -58,8 +58,9 @@ namespace SceneRunner.Admins
         private readonly CancellationTokenSource cts = new ();
         private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
         private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
-        
+
         private bool initialLoadFinished;
+        private DateTime lastRefreshTime = DateTime.MinValue;
 
         public SceneAdmins(
                 IWebRequestController webRequestController,
@@ -86,13 +87,22 @@ namespace SceneRunner.Admins
             cts.SafeCancelAndDispose();
         }
 
-        public async UniTaskVoid StartRequestPollingAsync()
+        /// <summary>
+        ///     Triggers a background refresh if the cooldown has elapsed.
+        ///     Called when a cache miss occurs for an unknown wallet.
+        /// </summary>
+        private void RequestRefreshIfNeeded()
         {
-            while (cts.IsCancellationRequested == false)
-            {
-                await FireRequestAsync(cts.Token);
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token).SuppressCancellationThrow();
-            }
+            if (cts.IsCancellationRequested)
+                return;
+
+            DateTime now = DateTime.UtcNow;
+
+            if (now - lastRefreshTime < REFRESH_COOLDOWN)
+                return;
+
+            lastRefreshTime = now;
+            FireRequestAsync(cts.Token).Forget();
         }
 
         // Exception-free
@@ -154,14 +164,15 @@ namespace SceneRunner.Admins
 #if SCENE_ADMINS_TESTS
             return true; // consider always an admin during tests
 #else
-            if (initialLoadFinished)
-            {
-                return wallets.ContainsKey(wallet);
-            }
-            else
-            {
+            if (!initialLoadFinished)
                 return null;
-            }
+
+            if (wallets.ContainsKey(wallet))
+                return true;
+
+            // Cache miss: trigger a background refresh so subsequent calls pick up changes
+            RequestRefreshIfNeeded();
+            return false;
 #endif
         }
 
