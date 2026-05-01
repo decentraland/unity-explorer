@@ -141,14 +141,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;
         public bool HasMaskedLegacyEmoteFinished => maskedLegacyBlender != null && maskedLegacyBlender.HasFinished;
 
-
-
-
-
-
-
-
-
         private void Awake()
         {
             if (!AvatarAnimator)

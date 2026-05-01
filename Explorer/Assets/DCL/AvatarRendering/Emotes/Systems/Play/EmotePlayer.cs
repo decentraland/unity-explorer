@@ -387,7 +387,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             SetupPropAnimation(emoteReferences, maskedEmote.EmoteLoop);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetupPropAnimation(EmoteReferences emoteReferences, bool isLooping)
         {
             if (emoteReferences.propClip == null) return;

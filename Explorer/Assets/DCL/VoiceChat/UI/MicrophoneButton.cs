@@ -6,8 +6,8 @@ namespace DCL.VoiceChat
 {
     public class MicrophoneButton : MonoBehaviour
     {
-        private const string MUTE_TEXT = "Mute";
-        private const string UNMUTE_TEXT = "Unmute";
+        private const string MUTE_TEXT = "Mute <color=#716B7C>[T]</color>";
+        private const string UNMUTE_TEXT = "Unmute <color=#716B7C>[T]</color>";
 
         [field: SerializeField]
         public Button MicButton { get; private set; }
