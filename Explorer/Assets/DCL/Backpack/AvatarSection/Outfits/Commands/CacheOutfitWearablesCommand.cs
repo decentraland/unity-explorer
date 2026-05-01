@@ -11,19 +11,19 @@ using DCL.Diagnostics;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
-    public class PrewarmWearablesCacheCommand
+    public class CacheOutfitWearablesCommand
     {
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStorage wearableStorage;
 
-        public PrewarmWearablesCacheCommand(IWearablesProvider wearablesProvider,
+        public CacheOutfitWearablesCommand(IWearablesProvider wearablesProvider,
             IWearableStorage wearableStorage)
         {
             this.wearablesProvider = wearablesProvider;
             this.wearableStorage = wearableStorage;
         }
 
-        public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, CancellationToken ct)
+        public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, BodyShape bodyShape, CancellationToken ct, List<IWearable> result)
         {
             if (wearableUrns == null || wearableUrns.Count == 0)
                 return;
@@ -49,7 +49,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             try
             {
                 // 2) Ensure base DTOs exist in the cache (required by save/profile code paths)
-                await wearablesProvider.GetByPointersAsync(baseUrns, BodyShape.MALE, ct);
+                await wearablesProvider.GetByPointersAsync(baseUrns, bodyShape, ct, result);
 
                 // 3) Persist ownership so save/profile can resolve full URNs with tokens
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)

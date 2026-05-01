@@ -41,12 +41,11 @@ namespace DCL.Backpack
         private readonly SaveOutfitCommand saveOutfitCommand;
         private readonly DeleteOutfitCommand deleteOutfitCommand;
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
-        private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         private readonly PreviewOutfitCommand previewOutfitCommand;
 
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
-        
+
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
             OutfitApplier outfitApplier,
@@ -57,7 +56,6 @@ namespace DCL.Backpack
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
             CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand,
-            PrewarmWearablesCacheCommand prewarmWearablesCacheCommand,
             PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
@@ -73,7 +71,6 @@ namespace DCL.Backpack
             this.saveOutfitCommand = saveOutfitCommand;
             this.deleteOutfitCommand = deleteOutfitCommand;
             this.bannerVisibilityCommand = bannerVisibilityCommand;
-            this.prewarmWearablesCacheCommand = prewarmWearablesCacheCommand;
             this.previewOutfitCommand = previewOutfitCommand;
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
@@ -129,9 +126,6 @@ namespace DCL.Backpack
                 var outfits = await LoadAndCacheOutfitsAsync(ct);
                 if (ct.IsCancellationRequested) return;
 
-                // Precache wearables in the background.
-                PrewarmWearablesCacheAsync(outfits.Values, ct).Forget();
-
                 // Update the UI with the primary data.
                 PopulateAllSlots(outfits);
             }
@@ -159,23 +153,10 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return new Dictionary<int, OutfitItem>();
 
             outfitsCollection.Update(outfits.Values);
-    
+
             return outfits;
         }
 
-        private async UniTaskVoid PrewarmWearablesCacheAsync(IEnumerable<OutfitItem> outfits, CancellationToken ct)
-        {
-            var uniqueUrnsToPrewarm = new HashSet<URN>();
-            foreach (var outfitItem in outfits)
-            {
-                if (outfitItem.outfit?.wearables == null) continue;
-                foreach (string urnString in outfitItem.outfit.wearables)
-                    uniqueUrnsToPrewarm.Add(new URN(urnString));
-            }
-
-            await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
-        }
-        
         private void OnSaveOutfitRequested(int slotIndex)
         {
             OnSaveOutfitRequestedAsync(slotIndex, cts.Token).Forget();
@@ -253,7 +234,7 @@ namespace DCL.Backpack
                 ReportHub.LogWarning(ReportCategory.OUTFITS, "Attempted to delete an outfit from an empty slot.");
                 return;
             }
-            
+
             presenter.SetSaving();
 
             try
