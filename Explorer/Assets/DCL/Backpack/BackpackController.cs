@@ -254,7 +254,8 @@ namespace DCL.Backpack
                 avatar.EyesColor,
                 avatar.HairColor,
                 avatar.SkinColor,
-                avatar.ForceRender
+                avatar.ForceRender,
+                useFullUrns: true
             );
             backpackCommandBus.SendCommand(command);
 

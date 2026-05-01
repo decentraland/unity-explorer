@@ -263,7 +263,7 @@ namespace DCL.Backpack.BackpackBus
                     if (wearableUrn != null)
                         urns.Add(wearableUrn);
 
-                await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolvedWearables);
+                await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolvedWearables, command.UseFullUrns);
 
                 ListPool<URN>.Release(urns);
 
