@@ -72,8 +72,8 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            AddTagForPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
-            AddTagForNonPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
+            AddTagForPlayerAvatarsQuery(World, cameraComponent);
+            AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
             UpdateOwnTagQuery(World);
             UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
@@ -83,8 +83,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
-            in AvatarShapeComponent avatarShape,
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
@@ -103,8 +102,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
-            in AvatarShapeComponent avatarShape,
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
