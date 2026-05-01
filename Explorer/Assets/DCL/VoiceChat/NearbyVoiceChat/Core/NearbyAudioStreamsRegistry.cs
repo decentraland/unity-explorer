@@ -191,36 +191,28 @@ namespace DCL.VoiceChat.Nearby.Audio
                 sid);
         }
 
-        // CAS-retry loop publishes a NEW filtered array on every successful update; never mutates the previous one.
+        // Publishes a NEW filtered array on every successful update; never mutates the previous one.
+        // Single-writer assumption (serial FFI dispatch) — see class XML; no CAS retry needed.
         private void RemoveAudioSid(string identity, string sid)
         {
             ConcurrentDictionary<string, string[]> snap = Volatile.Read(ref streamsByIdentity);
 
-            // ConcurrentDictionary<TKey,TValue>.TryRemove(KeyValuePair) is .NET Core 2.0+ only;
-            // Fall back to ICollection<KVP>.Remove(item), which performs the same atomic key+value compare under the hood.
-            var coll = (ICollection<KeyValuePair<string, string[]>>)snap;
+            if (!snap.TryGetValue(identity, out string[]? prev)) return;
 
-            while (snap.TryGetValue(identity, out string[]? prev))
+            int idx = Array.IndexOf(prev, sid);
+            if (idx < 0) return;
+
+            if (prev.Length == 1)
             {
-                int idx = Array.IndexOf(prev, sid);
-                if (idx < 0) return;
-
-                if (prev.Length == 1)
-                {
-                    if (coll.Remove(new KeyValuePair<string, string[]>(identity, prev)))
-                        return;
-                    // Lost CAS — another FFI event mutated the entry; retry from the new snapshot.
-                    continue;
-                }
-
-                var next = new string[prev.Length - 1];
-                if (idx > 0) Array.Copy(prev, 0, next, 0, idx);
-                if (idx < prev.Length - 1) Array.Copy(prev, idx + 1, next, idx, prev.Length - idx - 1);
-
-                if (snap.TryUpdate(identity, next, prev))
-                    return;
-                // Lost CAS — retry from the new snapshot.
+                snap.TryRemove(identity, out _);
+                return;
             }
+
+            var next = new string[prev.Length - 1];
+            if (idx > 0) Array.Copy(prev, 0, next, 0, idx);
+            if (idx < prev.Length - 1) Array.Copy(prev, idx + 1, next, idx, prev.Length - idx - 1);
+
+            snap[identity] = next;
         }
 
         private static string[] ConcatNew(string[] prev, string sid)
