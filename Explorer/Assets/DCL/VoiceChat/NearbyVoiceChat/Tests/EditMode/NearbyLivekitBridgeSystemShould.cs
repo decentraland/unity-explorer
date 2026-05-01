@@ -167,6 +167,51 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
+        public void BulkCascadeRemovalProcessesEveryEntityWithinSameTick()
+        {
+            // Regression for the iteration-safety hazard called out in code review:
+            // when registry drops streams for multiple avatars simultaneously, the cleanup
+            // path must process every entity in a single tick — no skips even though each
+            // World.Remove<NearbyAudioStreamerComponent> triggers an archetype move during
+            // query iteration. Pins the contract that motivated splitting Update into
+            // RefreshStreaming (ref-mutation only) + RemoveStreaming (structural changes,
+            // no outstanding ref).
+            const int COUNT = 8;
+            var entities = new Entity[COUNT];
+            var wallets = new string[COUNT];
+
+            for (int i = 0; i < COUNT; i++)
+            {
+                wallets[i] = $"wallet-{i}";
+                entities[i] = CreateAvatarEntity(wallets[i]);
+                StubStreaming(wallets[i], $"sid-{i}");
+                registry.IsActiveSpeaker(wallets[i]).Returns(true);
+            }
+
+            system.Update(0); // reach steady state: every avatar has streamer + speaking tag
+
+            for (int i = 0; i < COUNT; i++)
+            {
+                Assert.That(world.Has<NearbyAudioStreamerComponent>(entities[i]), Is.True, $"precondition: entity {i} streamer attached");
+                Assert.That(world.Has<IsActivelySpeakingTag>(entities[i]), Is.True, $"precondition: entity {i} speaking tag set");
+                world.Add(entities[i], new InAudibleRangeTag { IsSuspended = false });
+            }
+
+            // Streams disappear for every wallet on the same tick.
+            for (int i = 0; i < COUNT; i++)
+                registry.GetAudioSidsArray(wallets[i]).Returns((string[]?)null);
+
+            system.Update(0);
+
+            for (int i = 0; i < COUNT; i++)
+            {
+                Assert.That(world.Has<NearbyAudioStreamerComponent>(entities[i]), Is.False, $"entity {i}: streamer must be stripped");
+                Assert.That(world.Has<IsActivelySpeakingTag>(entities[i]), Is.False, $"entity {i}: speaking tag must cascade off");
+                Assert.That(world.Has<InAudibleRangeTag>(entities[i]), Is.False, $"entity {i}: audible-range tag must cascade off");
+            }
+        }
+
+        [Test]
         public void UpdateStreamingCascadesFullRemovalWhenRegistryReturnsNull()
         {
             const string WALLET = "wallet-a";
@@ -195,9 +240,10 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void DoesNotRevisitEntityAfterStructuralChangeInSameQuery()
         {
             // The filter-trick: AddStreaming's [None<StreamingAudioComponent>] excludes the entity
-            // from its own iterator after `World.Add` migrates it; UpdateStreaming's
-            // [All<StreamingAudioComponent>] symmetrically catches it. Verified by call count —
-            // AddStreaming reads the registry once, UpdateStreaming reads it once.
+            // from its own iterator after `World.Add` migrates it; RefreshStreaming and
+            // RemoveStreaming's [All<StreamingAudioComponent>] symmetrically catch it. Verified by
+            // call count — AddStreaming reads the registry once, RefreshStreaming once,
+            // RemoveStreaming once (the steady-state non-null path returns early).
             const string WALLET = "wallet-a";
             CreateAvatarEntity(WALLET);
             StubStreaming(WALLET, "sid-1");
@@ -205,7 +251,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            registry.Received(2).GetAudioSidsArray(WALLET);
+            registry.Received(3).GetAudioSidsArray(WALLET);
         }
 
         // ── Speaking / cascade ──────────────────────────────────────

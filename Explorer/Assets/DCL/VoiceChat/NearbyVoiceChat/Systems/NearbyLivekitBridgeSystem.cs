@@ -37,9 +37,9 @@ namespace DCL.VoiceChat.Nearby.Systems
         protected override void Update(float t)
         {
             // Order matters:
-
             AddStreamingQuery(World); // 1. Attach NearbyAudioStreamerComponent to avatars whose stream just appeared.
-            UpdateStreamingQuery(World); // 2. Refresh / cascade-remove on avatars that already carry the component
+            RefreshStreamingQuery(World); // 2a. Refresh SidsSnapshot reference on avatars that already carry the component (ref-mutation only, no structural changes).
+            RemoveStreamingQuery(World); // 2b. Cascade-remove on avatars whose stream disappeared (structural changes).
             AddSpeakingQuery(World); // 3. Tag avatars whose active-speaker signal just rose (only those still streaming).
             RemoveSpeakingQuery(World); // 4. Untag avatars whose active-speaker signal just dropped.
         }
@@ -60,30 +60,35 @@ namespace DCL.VoiceChat.Nearby.Systems
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void UpdateStreaming(Entity entity, in Profile profile, ref NearbyAudioStreamerComponent nearby)
+        private void RefreshStreaming(in Profile profile, ref NearbyAudioStreamerComponent nearby)
         {
             string userId = profile.UserId;
             if (string.IsNullOrEmpty(userId)) return;
 
             string[]? current = registry.GetAudioSidsArray(userId);
+            if (current == null) return; // cleanup is RemoveStreaming's responsibility
 
-            if (current != null)
-            {
-                // Refresh path — registry published a new array (content changed) since we last observed. ref-mutation;
-                if (!ReferenceEquals(nearby.StreamSidsSnapshot, current))
-                    nearby.StreamSidsSnapshot = current;
-            }
-            else
-            {
-                // drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
-                World.Remove<NearbyAudioStreamerComponent>(entity);
+            // Refresh path — registry published a new array (content changed) since we last observed.
+            if (!ReferenceEquals(nearby.StreamSidsSnapshot, current))
+                nearby.StreamSidsSnapshot = current;
+        }
 
-                if (World.Has<IsActivelySpeakingTag>(entity))
-                    World.Remove<IsActivelySpeakingTag>(entity);
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent))]
+        private void RemoveStreaming(Entity entity, in Profile profile)
+        {
+            string userId = profile.UserId;
+            if (string.IsNullOrEmpty(userId) || registry.GetAudioSidsArray(userId) != null) return;
 
-                if (World.Has<InAudibleRangeTag>(entity))
-                    World.Remove<InAudibleRangeTag>(entity);
-            }
+            // Drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
+            World.Remove<NearbyAudioStreamerComponent>(entity);
+
+            if (World.Has<IsActivelySpeakingTag>(entity))
+                World.Remove<IsActivelySpeakingTag>(entity);
+
+            if (World.Has<InAudibleRangeTag>(entity))
+                World.Remove<InAudibleRangeTag>(entity);
         }
 
         [Query]
