@@ -35,7 +35,7 @@ namespace DCL.Chat.ChatViewModels
             WalletId = profile.WalletId!;
             HasClaimedName = profile.HasClaimedName;
             Thumbnail = new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.ReadyToLoad(profile.UserNameColor));
-            Username = profile.DisplayName;
+            Username = profile.ValidatedName;
         }
 
         public static ChatTitlebarViewModel CreateLoading(TitlebarViewMode viewMode)
