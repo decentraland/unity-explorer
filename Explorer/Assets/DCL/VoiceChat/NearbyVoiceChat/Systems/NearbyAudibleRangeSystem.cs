@@ -50,7 +50,6 @@ namespace DCL.VoiceChat.Nearby.Systems
             suspendOutSqr = suspendBand.y * suspendBand.y;
         }
 
-        [Conditional("UNITY_ASSERTIONS")]
         private static void AssertHysteresisInvariant(Vector2 rangeBand, Vector2 suspendBand)
         {
             Debug.Assert(rangeBand.y > rangeBand.x, $"NearbyAudibleRange: RangeBand outer ({rangeBand.y}) must be > inner ({rangeBand.x}).");
