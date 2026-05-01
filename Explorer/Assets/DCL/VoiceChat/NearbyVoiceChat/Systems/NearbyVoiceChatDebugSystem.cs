@@ -33,6 +33,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private static readonly QueryDescription COMPONENT_QUERY = new QueryDescription().WithAll<NearbyAudioSourceComponent>();
 
         private readonly VoiceChatConfiguration configuration;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly IRoom islandRoom;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioStreamRegistry streamRegistry;
@@ -80,6 +81,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             IReadOnlyEntityParticipantTable entityParticipantTable) : base(world)
         {
             this.configuration = configuration;
+            this.debugBuilder = debugBuilder;
             this.islandRoom = islandRoom;
             this.stateModel = stateModel;
             this.streamRegistry = streamRegistry;
@@ -144,8 +146,11 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         private void PollMetrics(float t)
         {
-            if (!visibility.IsConnectedAndExpanded)
+            if (!debugBuilder.IsVisible || !visibility.IsConnectedAndExpanded)
+            {
+                pollAccumulator = 0f;
                 return;
+            }
 
             pollAccumulator += t;
             if (pollAccumulator < POLL_INTERVAL_SECONDS)
