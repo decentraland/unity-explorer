@@ -58,15 +58,17 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         private void DetectSceneMessageBusCommsObservableEvent()
         {
-            if (!engineApi.HasSubscription(SDKObservableEventIds.Comms))
-                return;
-
+            // Always drain the buffer to prevent unbounded growth when the scene
+            // subscribes to observables other than Comms. Only emit events when subscribed.
             lock (commsApi.SceneCommsMessages)
             {
                 if (commsApi.SceneCommsMessages.Count == 0) return;
 
-                foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
-                    engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
+                if (engineApi.HasSubscription(SDKObservableEventIds.Comms))
+                {
+                    foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
+                        engineApi.AddSDKObservableEvent(SDKObservableUtils.NewSDKObservableEventFromData(SDKObservableEventIds.Comms, currentPayload));
+                }
 
                 commsApi.ClearMessages();
             }
