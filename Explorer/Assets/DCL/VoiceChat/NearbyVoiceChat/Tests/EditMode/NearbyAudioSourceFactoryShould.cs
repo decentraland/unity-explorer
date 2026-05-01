@@ -12,9 +12,10 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// <summary>
     /// Documents <see cref="NearbyAudioSourceFactory"/> contract under the pool-backed implementation (A2):
     ///
-    /// - <c>Create</c> returns a fully enabled, playing <see cref="LivekitAudioSource"/> parented under <c>sourcesRoot</c>.
-    /// - <c>Dispose</c> drives the source into the inert POOLED state (GameObject inactive, both components disabled,
-    ///   stream cleared, mute=true / volume=0, parent under POOL_CONTAINER) and recycles it for the next <c>Create</c>.
+    /// - <c>Create</c> returns a fully active, playing <see cref="LivekitAudioSource"/> parented under <c>sourcesRoot</c>.
+    /// - <c>Dispose</c> drives the source into the inert POOLED state (GameObject inactive — pool's SetActive(false)
+    ///   fires OnDisable on both components, dropping the audio-config subscription —, stream cleared, mute=true /
+    ///   volume=0, parent under POOL_CONTAINER) and recycles it for the next <c>Create</c>.
     /// - <c>DisposeRoot</c> destroys all pooled instances + the sources-root subtree.
     /// </summary>
     public class NearbyAudioSourceFactoryShould
@@ -95,9 +96,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             factory.Dispose(source);
 
-            Assert.That(source.gameObject.activeSelf, Is.False, "GameObject must be inactive in pool");
-            Assert.That(source.enabled, Is.False, "LivekitAudioSource must be disabled in pool (drops audio config subscription)");
-            Assert.That(audioSource.enabled, Is.False, "AudioSource must be disabled in pool");
+            Assert.That(source.gameObject.activeSelf, Is.False,
+                "GameObject must be inactive in pool — pool's SetActive(false) is the OnDisable trigger that drops the audio config subscription");
             Assert.That(audioSource.isPlaying, Is.False);
             Assert.That(audioSource.mute, Is.True);
             Assert.That(audioSource.volume, Is.EqualTo(0f));
@@ -119,8 +119,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             AudioSource audioSource = source.AudioSource;
 
-            Assert.That(source.enabled, Is.True);
-            Assert.That(audioSource.enabled, Is.True);
+            Assert.That(source.gameObject.activeSelf, Is.True, "freshly acquired source must be active");
             Assert.That(audioSource.isPlaying, Is.True);
             Assert.That(audioSource.mute, Is.True, "PositionSystem unmutes after first sync — initial state is muted");
             Assert.That(source.transform.IsChildOf(factory.sourcesRoot), Is.True,
@@ -251,15 +250,16 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void AudioConfigSubscriptionDroppedInPool()
         {
             // §6 unsubscription invariant — the audio config subscription is owned by
-            // LivekitAudioSource.OnEnable/OnDisable, so the only observable indicator from outside is
-            // that LivekitAudioSource.enabled is false in POOLED state. That precondition is what
-            // guarantees Unity has invoked OnDisable, which has unsubscribed the event handler.
+            // LivekitAudioSource.OnEnable/OnDisable. ResetForPool no longer flips component.enabled
+            // (that allocated 256 B per toggle); instead, GameObjectPool.HandleRelease's SetActive(false)
+            // is what fires OnDisable and unsubscribes the handler. Observable indicator: the GameObject
+            // is inactive in POOLED state.
             LivekitAudioSource source = factory.Create(new StreamKey(WALLET_A, SID_1), Weak<AudioStream>.Null);
             factory.Dispose(source);
             seenSources.Add(source);
 
-            Assert.That(source.enabled, Is.False,
-                "LivekitAudioSource.enabled must be false in pool — OnDisable is the unsubscription point");
+            Assert.That(source.gameObject.activeSelf, Is.False,
+                "GameObject must be inactive in pool — SetActive(false) is the OnDisable / unsubscription trigger");
         }
     }
 }

@@ -414,13 +414,14 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         // A2 made source teardown reference-stable: the pool keeps the GO alive after Dispose. Both
         // paths still satisfy "no further audio-thread or main-thread tick" — fold them into one
-        // helper so the existing trigger tests do not have to know which path is active.
+        // helper so the existing trigger tests do not have to know which path is active. The pool's
+        // SetActive(false) is what fires OnDisable on the wrapper (drops the audio-config subscription)
+        // and on AudioSource (releases its voice slot); GameObject.activeSelf=false is the single observable.
         private static void AssertSourceTornDown(LivekitAudioSource source, string? message = null)
         {
             if (source == null) return; // legacy path — Object.Destroy ran
 
             Assert.That(source.gameObject.activeSelf, Is.False, message ?? "pooled source must be inactive");
-            Assert.That(source.enabled, Is.False, message ?? "pooled source's wrapper must be disabled");
         }
 
         private (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) SeedBinding(string walletId, string sid)

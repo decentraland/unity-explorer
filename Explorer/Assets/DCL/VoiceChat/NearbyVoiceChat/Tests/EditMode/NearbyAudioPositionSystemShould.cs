@@ -195,24 +195,22 @@ namespace DCL.VoiceChat.Nearby.Tests
         // ── A1: inactive-state handling (suspend / out-of-range) ────
 
         [Test]
-        public void DisablesLivekitAndAudioSourceWhenAvatarIsSuspended()
+        public void StopsAudioSourceWhenAvatarIsSuspended()
         {
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
-            lkSource.enabled = true;
-            lkSource.AudioSource.enabled = true;
+            lkSource.AudioSource.Play();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
             system.Update(0);
 
-            Assert.That(lkSource.enabled, Is.False);
-            Assert.That(lkSource.AudioSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.isPlaying, Is.False);
         }
 
         [Test]
-        public void DisablesLivekitAndAudioSourceWhenAvatarIsOutOfRange()
+        public void StopsAudioSourceWhenAvatarIsOutOfRange()
         {
             // One-frame transient: AudibleRangeMarker (AvatarGroup) drops InAudibleRangeTag on
             // outer-out crossing; Cleanup (CleanUpGroup) dooms the audio entity later in the same
@@ -222,41 +220,37 @@ namespace DCL.VoiceChat.Nearby.Tests
             world.Remove<InAudibleRangeTag>(avatarEntity);
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
-            lkSource.enabled = true;
-            lkSource.AudioSource.enabled = true;
+            lkSource.AudioSource.Play();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
             system.Update(0);
 
-            Assert.That(lkSource.enabled, Is.False);
-            Assert.That(lkSource.AudioSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.isPlaying, Is.False);
         }
 
         [Test]
-        public void ReEnablesBothWhenAvatarTransitionsFromSuspendedToActive()
+        public void ResumesPlaybackWhenAvatarTransitionsFromSuspendedToActive()
         {
-            // Diff-write contract: the enabled flip is gated by a transition of the per-entity
+            // Diff-write contract: the Stop/Play flip is gated by a transition of the per-entity
             // active/inactive bit (LastInactive). Drive the source through suspend→active; the
-            // second tick must observe the diff and re-enable both flags.
+            // second tick must observe the diff and call Play again.
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, Vector3.zero, new Vector3(0, 1.6f, 0));
             world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = true;
 
             LivekitAudioSource lkSource = CreateLivekitAudioSource();
             CreateAudioEntity(PARTICIPANT_A, "sid-1", avatarEntity, lkSource);
 
-            // Tick 1: suspended → LastInactive flips false→true, source disabled.
+            // Tick 1: suspended → LastInactive flips false→true, source stopped.
             system.Update(0);
-            Assume.That(lkSource.enabled, Is.False);
-            Assume.That(lkSource.AudioSource.enabled, Is.False);
+            Assume.That(lkSource.AudioSource.isPlaying, Is.False);
 
             // Avatar enters the active band.
             world.Get<InAudibleRangeTag>(avatarEntity).IsSuspended = false;
 
-            // Tick 2: active → LastInactive flips true→false, source re-enabled.
+            // Tick 2: active → LastInactive flips true→false, source resumed.
             system.Update(0);
 
-            Assert.That(lkSource.enabled, Is.True);
-            Assert.That(lkSource.AudioSource.enabled, Is.True);
+            Assert.That(lkSource.AudioSource.isPlaying, Is.True);
         }
 
         [Test]
@@ -300,8 +294,7 @@ namespace DCL.VoiceChat.Nearby.Tests
                 system.Update(0);
             });
 
-            Assert.That(lkSource.enabled, Is.False);
-            Assert.That(lkSource.AudioSource.enabled, Is.False);
+            Assert.That(lkSource.AudioSource.isPlaying, Is.False);
         }
 
         // ── Diff-write (B3): mute version + transform delta ─────────

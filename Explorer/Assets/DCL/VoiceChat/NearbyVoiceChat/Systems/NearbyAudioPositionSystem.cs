@@ -57,14 +57,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
 
-            // Diff-write: enabled toggling fires OnEnable/OnDisable on LivekitAudioSource (audio-config (un)subscribe)
-            // and crosses Unity interop on AudioSource. Skip both while the per-entity active/inactive bit is unchanged.
-            // Pessimistic init (LastInactive=false matches factory's enabled=true hand-off) forces the first-tick write
-            // when an avatar binds directly into the suspend band.
+            // Diff-write: Stop/Play is a state change on the AudioSource voice slot, not a topology change to the DSP graph
+            // Pessimistic init (LastInactive=false matches factory's enabled=true hand-off) forces the first-tick write when an avatar binds directly into the suspend band.
             if (inactive != nearbyAudio.LastInactive)
             {
-                src.enabled = !inactive;
-                src.AudioSource.enabled = !inactive;
+                if (inactive) src.AudioSource.Stop();
+                else src.AudioSource.Play();
                 nearbyAudio.LastInactive = inactive;
             }
 

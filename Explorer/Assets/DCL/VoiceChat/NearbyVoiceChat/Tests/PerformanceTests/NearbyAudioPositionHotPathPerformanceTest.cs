@@ -245,16 +245,17 @@ namespace DCL.VoiceChat.Nearby
         }
 
         /// <summary>
-        /// `src.enabled = !inactive; src.AudioSource.enabled = !inactive; src.AudioSource.mute = false;`
-        /// — three managed Unity Behaviour/AudioSource setters. Includes the property dereference
-        /// `src.AudioSource` (cached internally per LivekitAudioSource).
+        /// `src.AudioSource.Stop(); src.AudioSource.Play(); src.AudioSource.mute = false;`
+        /// — the per-frame state-toggle pattern PositionSystem applies on suspend/resume crossings.
+        /// Stop/Play is a state change on the audio voice slot (no DSP graph flush, no
+        /// MulticastDelegate alloc), unlike the previous `enabled` toggle which forced both.
         /// </summary>
         [Test, Performance]
         [TestCase(10)]
         [TestCase(50)]
         [TestCase(100)]
         [TestCase(1000)]
-        public void AudioSourceFlag_Writes(int n)
+        public void AudioSourceStateToggle_Writes(int n)
         {
             PopulateN(n);
 
@@ -264,8 +265,8 @@ namespace DCL.VoiceChat.Nearby
                     for (int i = 0; i < n; i++)
                     {
                         LivekitAudioSource src = audioSources[i];
-                        src.enabled = true;
-                        src.AudioSource.enabled = true;
+                        src.AudioSource.Stop();
+                        src.AudioSource.Play();
                         src.AudioSource.mute = false;
                     }
                 })

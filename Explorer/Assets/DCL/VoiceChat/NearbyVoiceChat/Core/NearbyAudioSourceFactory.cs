@@ -123,10 +123,6 @@ namespace DCL.VoiceChat.Nearby.Audio
             LivekitAudioSource lkSource = pool.Get();
             AudioSource audioSource = lkSource.AudioSource.EnsureNotNull();
 
-            // Re-enable BEFORE Construct/Play so OnEnable re-subscribes to AudioSettings.OnAudioConfigurationChanged and refreshes outputSampleRate;
-            // Play() then has a wired AudioSource to drive.
-            lkSource.enabled = true;
-            audioSource.enabled = true;
             audioSource.volume = 1f; // ResetForPool zeroed it.
 
             ActivateForStream(lkSource, audioSource, key, stream);
@@ -150,11 +146,6 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             source.Stop();
             source.Free();
-
-            // Order matters: AudioSource.enabled = false BEFORE LivekitAudioSource.enabled = false so
-            // the audio thread stops reading the source before its wrapper drops audio-config subscription.
-            if (audioSource != null) audioSource.enabled = false;
-            source.enabled = false;
         }
 
         private LivekitAudioSource CreateLegacyTracked(StreamKey key, Weak<AudioStream> stream)

@@ -370,7 +370,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void SpawnsAudioSourceMutedAndEnabledInitially()
+        public void SpawnsAudioSourcePlayingAndMutedInitially()
         {
             const string WALLET = "wallet-alice";
             const string SID = "sid-1";
@@ -383,9 +383,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             NearbyAudioSourceComponent comp = GetSingleAudioComponent();
             Assert.That(comp.LivekitAudioSource.AudioSource.mute, Is.True,
                 "source must start muted — burst protection on the one-frame window before PositionSystem's first tick");
-            Assert.That(comp.LivekitAudioSource.enabled, Is.True,
-                "factory hands sources out enabled; PositionSystem owns subsequent enabled toggles");
-            Assert.That(comp.LivekitAudioSource.AudioSource.enabled, Is.True);
+            Assert.That(comp.LivekitAudioSource.AudioSource.isPlaying, Is.True,
+                "factory hands sources out playing; PositionSystem owns subsequent Stop/Play transitions");
+            Assert.That(comp.LivekitAudioSource.gameObject.activeSelf, Is.True);
         }
 
         // ── B2.1: zero-alloc data path on the per-avatar hot path ───
