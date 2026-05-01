@@ -95,8 +95,15 @@ namespace Plugins.NativeWindowManager
 
             if (windowedModeRequested || isLocalScene)
                 EnableFullscreen(false, false);
-            else if (!FullScreenEnabled)
-                ApplyConstraints(true);
+            else
+            {
+                bool savedFullscreen = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, true);
+
+                if (FullScreenEnabled != savedFullscreen)
+                    EnableFullscreen(savedFullscreen, false);
+                else if (!FullScreenEnabled)
+                    ApplyConstraints(true);
+            }
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
