@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -13,7 +12,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Pull-mirror from <see cref="INearbyAudioStreamRegistry"/> to avatar-entity components.
-    ///     Runs every tick in <see cref="AvatarGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
+    ///     Runs every tick in <see cref="NearbyVoiceChatGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
     ///     Stateless — pass-through under the listening gate (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
     ///     <para>
     ///         Maintains the avatar's <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/> as a
@@ -21,8 +20,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///         freshness signal, no version counter is needed.
     ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(AvatarGroup))]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateBefore(typeof(NearbyAudibleRangeSystem))]
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyLivekitBridgeSystem : BaseUnityLoopSystem

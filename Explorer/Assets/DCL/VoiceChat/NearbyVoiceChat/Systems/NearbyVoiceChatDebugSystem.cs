@@ -1,40 +1,46 @@
 using Arch.Core;
-using Cysharp.Threading.Tasks;
+using Arch.System;
+using Arch.SystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.VoiceChat;
-using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
+using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
-using Utility;
-using Time = UnityEngine.Time;
 
-namespace DCL.PluginSystem.Global
+namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Live runtime metrics widget for Nearby Voice Chat. Polls every 250 ms while the widget is expanded.
-    ///     Surfaces ECS↔LiveKit consistency so stress-test sessions can attribute frozen nametags / unresponsive
-    ///     sound waves to either stale ECS components or LiveKit room state.
+    /// Applies <see cref="VoiceChatConfiguration"/> LiveKit spatial settings to every <see cref="NearbyAudioSourceComponent"/> when changed,
+    /// and surfaces ECS↔LiveKit consistency metrics through the Nearby Voice Chat debug widget.
+    /// Metric polling is throttled to <see cref="POLL_INTERVAL_SECONDS"/> and only runs while the widget is expanded,
+    /// so stress-test sessions can attribute frozen nametags / unresponsive sound waves to either stale ECS components or LiveKit room state.
+    /// Runs before <see cref="NearbyAudioPositionSystem"/> so config changes are visible the same frame the position system reads them.
     /// </summary>
-    public class NearbyVoiceChatDebugContainer : IDisposable
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
+    [UpdateBefore(typeof(NearbyAudioPositionSystem))]
+    public partial class NearbyVoiceChatDebugSystem : BaseUnityLoopSystem
     {
         private const string EM_DASH = "—";
-        private static readonly TimeSpan POLL_DELAY = TimeSpan.FromMilliseconds(250);
+        private const float POLL_INTERVAL_SECONDS = 0.25f;
         private static readonly QueryDescription COMPONENT_QUERY = new QueryDescription().WithAll<NearbyAudioSourceComponent>();
 
+        private readonly VoiceChatConfiguration configuration;
         private readonly IRoom islandRoom;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioStreamRegistry streamRegistry;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly Arch.Core.World world;
+
+        private readonly ElementBinding<bool> spatializeBinding;
+        private readonly ElementBinding<bool> smoothPanningBinding;
+        private readonly ElementBinding<float> ildBinding;
 
         private readonly DebugWidgetVisibilityBinding visibility = new (true);
         private readonly ElementBinding<string> stateBinding = new (string.Empty);
@@ -52,7 +58,11 @@ namespace DCL.PluginSystem.Global
 
         private readonly List<(string name, string value)> speakersBuffer = new ();
 
-        private CancellationTokenSource? pollCts;
+        private bool prevSpatialize;
+        private bool prevSmoothPanning;
+        private float prevIldStrength;
+
+        private float pollAccumulator;
 
         // Mismatch edge-detection: log when ECS↔LiveKit divergence appears and when it heals.
         // Avoids per-poll spam while still correlating to a precise frame for log-vs-screenshot triage.
@@ -60,22 +70,35 @@ namespace DCL.PluginSystem.Global
         private int mismatchStartFrame;
         private float mismatchStartTime;
 
-        public NearbyVoiceChatDebugContainer(
+        internal NearbyVoiceChatDebugSystem(
+            World world,
+            VoiceChatConfiguration configuration,
             IDebugContainerBuilder debugBuilder,
             IRoom islandRoom,
             NearbyVoiceChatStateModel stateModel,
             INearbyAudioStreamRegistry streamRegistry,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
-            Arch.Core.World world)
+            IReadOnlyEntityParticipantTable entityParticipantTable) : base(world)
         {
+            this.configuration = configuration;
             this.islandRoom = islandRoom;
             this.stateModel = stateModel;
             this.streamRegistry = streamRegistry;
             this.entityParticipantTable = entityParticipantTable;
-            this.world = world;
+
+            spatializeBinding = new ElementBinding<bool>(configuration.nearbySpatialize,
+                evt => { configuration.nearbySpatialize = evt.newValue; });
+
+            smoothPanningBinding = new ElementBinding<bool>(configuration.nearbySmoothPanning,
+                evt => { configuration.nearbySmoothPanning = evt.newValue; });
+
+            ildBinding = new ElementBinding<float>(configuration.nearbyIldStrength,
+                evt => { configuration.nearbyIldStrength = evt.newValue; });
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.NEARBY_VOICE_CHAT)
                        ?.SetVisibilityBinding(visibility)
+                        .AddControl(new DebugConstLabelDef("Spatialize"), new DebugToggleDef(spatializeBinding))
+                        .AddControl(new DebugConstLabelDef("Smooth Panning"), new DebugToggleDef(smoothPanningBinding))
+                        .AddFloatSliderField("ILD Strength", ildBinding, 0f, 1f)
                         .AddCustomMarker("State", stateBinding)
                         .AddCustomMarker("Suppression", suppressionBinding)
                         .AddCustomMarker("Local Speaking", localSpeakingBinding)
@@ -88,32 +111,48 @@ namespace DCL.PluginSystem.Global
                         .AddMarker("Entity↔Participant entries", entityParticipantsBinding, DebugLongMarkerDef.Unit.NoFormat)
                         .AddList("Speakers", speakersListBinding);
 
-            pollCts = new CancellationTokenSource();
-            PollLoopAsync(pollCts.Token).Forget();
+            prevSpatialize = configuration.nearbySpatialize;
+            prevSmoothPanning = configuration.nearbySmoothPanning;
+            prevIldStrength = configuration.nearbyIldStrength;
         }
 
-        public void Dispose()
+        protected override void Update(float t)
         {
-            pollCts.SafeCancelAndDispose();
-            pollCts = null;
+            ApplyConfigChanges();
+            PollMetrics(t);
         }
 
-        private async UniTaskVoid PollLoopAsync(CancellationToken ct)
+        private void ApplyConfigChanges()
         {
-            while (!ct.IsCancellationRequested)
-            {
-                bool cancelled = await UniTask.Delay(POLL_DELAY, cancellationToken: ct).SuppressCancellationThrow();
-                if (cancelled) return;
+            bool changed = prevSpatialize != configuration.nearbySpatialize
+                        || prevSmoothPanning != configuration.nearbySmoothPanning
+                        || !Mathf.Approximately(prevIldStrength, configuration.nearbyIldStrength);
 
-                if (!visibility.IsConnectedAndExpanded)
-                    continue;
+            if (!changed)
+                return;
 
-                UpdateMetrics();
-            }
+            prevSpatialize = configuration.nearbySpatialize;
+            prevSmoothPanning = configuration.nearbySmoothPanning;
+            prevIldStrength = configuration.nearbyIldStrength;
+
+            spatializeBinding.Value = configuration.nearbySpatialize;
+            smoothPanningBinding.Value = configuration.nearbySmoothPanning;
+            ildBinding.Value = configuration.nearbyIldStrength;
+
+            ApplySettingsQuery(World);
         }
 
-        private void UpdateMetrics()
+        private void PollMetrics(float t)
         {
+            if (!visibility.IsConnectedAndExpanded)
+                return;
+
+            pollAccumulator += t;
+            if (pollAccumulator < POLL_INTERVAL_SECONDS)
+                return;
+
+            pollAccumulator = 0f;
+
             NearbyVoiceChatState state = stateModel.State.Value;
             stateBinding.Value = $"<color={ColorFor(state)}>{state}</color>";
             suppressionBinding.Value = stateModel.ActiveSuppression.Value?.ToString() ?? EM_DASH;
@@ -156,7 +195,7 @@ namespace DCL.PluginSystem.Global
                     audioSourceCount += (ulong)(streamRegistry.GetAudioSidsArray(entry.Key)?.Length ?? 0);
             activeAudioSourcesBinding.Value = audioSourceCount;
 
-            ulong componentCount = (ulong)world.CountEntities(in COMPONENT_QUERY);
+            ulong componentCount = (ulong)World.CountEntities(in COMPONENT_QUERY);
             nearbyComponentsBinding.Value = componentCount;
 
             // Registry mirrors LiveKit's native audio publications; ECS components are bound by NearbyAudioBindingSystem.
@@ -189,6 +228,13 @@ namespace DCL.PluginSystem.Global
             }
 
             wasMismatched = isMismatched;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ApplySettings(ref NearbyAudioSourceComponent nearbyAudio)
+        {
+            nearbyAudio.LivekitAudioSource.ApplySpatialSettings(configuration);
         }
 
         private static string ColorFor(NearbyVoiceChatState state) =>

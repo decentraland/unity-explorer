@@ -156,7 +156,7 @@ namespace DCL.PluginSystem.Global
                 NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
                 NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
 
-                NearbyAudioDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer);
+                NearbyVoiceChatDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer, roomHub.IslandRoom(), nearbyStateModel!, nearbyAudioStreamRegistry!, entityParticipantTable);
             }
         }
 
@@ -247,9 +247,6 @@ namespace DCL.PluginSystem.Global
 
                 nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
-
-                // DEBUG
-                pluginScope.Add(new NearbyVoiceChatDebugContainer(debugContainer, islandRoom, nearbyStateModel, nearbyAudioStreamRegistry, entityParticipantTable, world));
 
                 // Intro FLUX
                 nearbyTipCts = new CancellationTokenSource();
