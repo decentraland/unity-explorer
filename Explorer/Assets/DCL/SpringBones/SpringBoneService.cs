@@ -205,6 +205,19 @@ namespace DCL.SpringBones
         {
             if (slotCapacity == 0) return;
 
+            // Hiccup: avatar teleports a full frame's worth of motion, but physics can only
+            // catch up MAX_SUBSTEPS * FIXED_STEP. Trying to integrate the parent jump over
+            // partial-frame interp causes massive overshoot (hair whipping). Skip this frame
+            // entirely and force a fresh snap on next PrepareSimulation so bones resume from
+            // a clean state.
+            if (deltaTime > MAX_SUBSTEPS * FIXED_STEP)
+            {
+                for (int slot = 0; slot < slotCapacity; slot++)
+                    if (slotActive[slot]) slotWasActive[slot] = false;
+                accumulatedDt = 0f;
+                return;
+            }
+
             // Fixed 60 Hz physics with sub-stepping. Render at any fps interpolates between
             // the last two physics states (slerp) to hide substep boundaries — smooth at
             // 30/45/60/120/244+ fps without aliasing.
