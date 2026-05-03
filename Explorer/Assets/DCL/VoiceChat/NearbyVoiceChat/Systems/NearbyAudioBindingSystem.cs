@@ -33,7 +33,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyAudioSourceFactory sourceFactory;
 
-        private readonly List<(Entity avatarEntity, StreamKey key)> pendingCreations = new (16);
 
         internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
@@ -51,20 +50,17 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            pendingCreations.Clear();
-
             // Listening gate: skip the entire avatar query when nearby chat is SUPPRESSED or DISABLED.
             // Cleanup system handles the symmetric teardown of any already-bound entities.
             if (stateModel.IsListeningDisabled) return;
 
-            CollectPendingCreationsQuery(World);
-            DrainPendingCreations();
+            CreateAndBindAudioSourcesToStreamersQuery(World);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent), typeof(InAudibleRangeTag))]
-        private void CollectPendingCreations(Entity avatarEntity, in Profile profile, in NearbyAudioStreamerComponent nearby)
+        private void CreateAndBindAudioSourcesToStreamers(Entity avatarEntity, in Profile profile, in NearbyAudioStreamerComponent nearby)
         {
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
@@ -73,34 +69,23 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (userBlockingCache.UserIsBlocked(walletId)) return;
 
             // Sids ride on the entity itself — no registry call on the per-avatar hot path.
-            // Bridge guarantees SidsSnapshot is non-null for any entity that has the component.
+            // Bridge system guarantees SidsSnapshot is non-null for any entity that has the component.
             foreach (string sid in nearby.StreamSidsSnapshot)
             {
                 var key = new StreamKey(walletId, sid);
-                if (bindings.ContainsKey(key)) continue;
 
-                pendingCreations.Add((avatarEntity, key));
-            }
-        }
+                if (!bindings.ContainsKey(key))
+                {
+                    Weak<AudioStream> stream = registry.GetActiveStream(key);
 
-        private void DrainPendingCreations()
-        {
-            int budget = MAX_CREATIONS_PER_FRAME;
+                    // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
+                    if (!stream.Resource.Has) continue;
 
-            foreach ((Entity avatarEntity, StreamKey key) in pendingCreations)
-            {
-                if (budget <= 0) break;
+                    LivekitAudioSource source = sourceFactory.Create(key, stream);
 
-                Weak<AudioStream> stream = registry.GetActiveStream(key);
-
-                // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
-                if (!stream.Resource.Has) continue;
-
-                LivekitAudioSource source = sourceFactory.Create(key, stream);
-
-                Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-                bindings.Add(key, audioEntity);
-                budget--;
+                    Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
+                    bindings.Add(key, audioEntity);
+                }
             }
         }
     }
