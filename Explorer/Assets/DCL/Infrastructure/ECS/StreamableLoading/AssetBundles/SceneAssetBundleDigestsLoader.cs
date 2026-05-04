@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -38,8 +39,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (result.Succeeded)
                 manifestVersion.InjectDepsDigests(result.Asset.GetDepsDigests());
-            else
-                result.TryLogException();
+            else if (result.Exception != null)
+                ReportHub.LogException(result.Exception, ReportCategory.ASSET_BUNDLES);
         }
     }
 }
