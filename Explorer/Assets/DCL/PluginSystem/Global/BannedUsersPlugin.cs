@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            BannedUsersFromCurrentScene.Initialize(new BannedUsersFromCurrentScene(roomHub, includeBannedUsersFromScene));
+            RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene(roomHub, includeBannedUsersFromScene));
 
             if (includeBannedUsersFromScene)
                 playerBannedScenesController = new PlayerBannedScenesController(roomHub, bannedSceneController, loadingStatus);

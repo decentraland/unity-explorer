@@ -14,17 +14,17 @@ namespace DCL.SceneBannedUsers
     /// Singleton class to check is a user is banned from the current scene.
     /// </summary>
     [Singleton]
-    public partial class BannedUsersFromCurrentScene
+    public partial class RoomMetadataCurrentScene
     {
         private readonly IRoomHub roomHub;
         private readonly bool includeBannedUsersFromScene;
 
         private CancellationTokenSource checkIfPlayerIsBannedCts;
         private string roomMetadata = string.Empty;
-        private BannedUsersRoomMetadata bannedUsersRoomMetadata;
+        private SceneRoomMetadata bannedUsersRoomMetadata;
         private HashSet<string> bannedAddressesSet;
 
-        public BannedUsersFromCurrentScene(
+        public RoomMetadataCurrentScene(
             IRoomHub roomHub,
             bool includeBannedUsersFromScene)
         {
@@ -50,7 +50,7 @@ namespace DCL.SceneBannedUsers
             if (string.IsNullOrEmpty(metadata)) return;
 
             roomMetadata = metadata;
-            bannedUsersRoomMetadata = JsonConvert.DeserializeObject<BannedUsersRoomMetadata>(roomMetadata);
+            bannedUsersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
 
             if (bannedUsersRoomMetadata.BannedAddresses is { Length: > 0 })
                 bannedAddressesSet = new HashSet<string>(bannedUsersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
