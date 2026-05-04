@@ -108,7 +108,7 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 
 ## Memory & GC Rules
 
-- Minimize GC pressure — reuse objects, use object pooling (`Utility/Pool`, `Utility/ThreadSafePool`)
+- Minimize GC pressure — reuse objects, use object pooling (`Utility/Pool`, `Utility/ThreadSafePool`). When you rent from a pool, the matching release belongs in the same lifecycle scope (`using` / `Dispose` / `finally`). For pooled lists held as fields, mirror every `Pool.Get()` against a `Pool.Release()` in `Dispose()` — silently dropping a rented list is a quiet leak that GCs the list reference but inflates the pool with new allocations on the next `Get()`.
 - Prefer `IReadOnlyCollection<T>` / `IReadOnlyList<T>` over `List<T>` / arrays; avoid `ToList()` / `ToArray()`
 - Use `Span<T>`, `Memory<T>`, `ArraySegment<T>`, `stackalloc` for slices
 - Avoid boxing/unboxing — do not pass structs as interfaces, do not use `object`

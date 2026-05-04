@@ -103,14 +103,15 @@ LoadTrimmedEmotesByParamSystem
   - SignedFetchGetAsync() (same signing mechanism)
   - Parses BuilderEmoteDTO.BuilderLambdaResponse
   - Calls LoadBuilderItem(): BuildElementDTO(builderContentURL)
-         ↓
-ResolveBuilderEmotePromisesSystem  [only injected when builderCollectionsPreview = true]
-  - For each emote in results with ContentDownloadUrl set:
-      .glb file  → creates GetGLTFIntention
-                   → World.Create(gltfPromise, emote, bodyShape)
-      .mp3/.ogg  → creates AudioClipPromise via AudioUtils
-                   URL = ContentDownloadUrl + content hash
-  - Marks as StreamableResult when all promises resolve
+  - AfterBuilderItemsLoaded() → BuilderEmoteAssetPromiseFactory.TryCreate(...)
+      For each emote in results with ContentDownloadUrl set:
+        .glb file  → creates GetGLTFIntention
+                     → World.Create(gltfPromise, emote, bodyShape)
+        .mp3/.ogg  → creates AudioClipPromise via AudioUtils
+                     URL = ContentDownloadUrl + content hash
+  - Promises are created on the intention's partition before the
+    StreamableLoadingResult is added, so they survive the
+    intention entity's destruction by the async caller.
 ```
 
 ### Key files
@@ -119,10 +120,10 @@ ResolveBuilderEmotePromisesSystem  [only injected when builderCollectionsPreview
 |------|------|
 | `ApplicationParamsEmoteProvider.cs` | Intercepts emote requests, applies Builder collection UUIDs, sets signing flag |
 | `GetTrimmedEmotesByParamIntention.cs` | ECS intention component; carries `NeedsBuilderAPISigning` flag and resolved URL |
-| `LoadTrimmedEmotesByParamSystem.cs` | Picks up intentions, calls signed fetch, parses `BuilderLambdaResponse` |
+| `LoadTrimmedEmotesByParamSystem.cs` | Picks up intentions, calls signed fetch, parses `BuilderLambdaResponse`, and creates GLTF/audio promises via `AfterBuilderItemsLoaded` hook |
 | `EmoteDTO.cs` | Defines `BuilderEmoteMetadataDto` and `BuildElementDTO()` |
-| `ResolveBuilderEmotePromisesSystem.cs` | Resolves GLTF and audio promises for Builder emotes |
-| `EmotePlugin.cs` | Contains the conditional injection guard for Builder-only systems |
+| `BuilderEmoteAssetPromiseFactory.cs` | Creates GLTF + audio promises for each builder emote |
+| `EmotePlugin.cs` | Wires dependencies and gates Builder-only behavior |
 
 ---
 
