@@ -6,6 +6,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
 using DCL.Platforms;
+using DCL.Utility;
 using UnityEngine;
 using Utility;
 
