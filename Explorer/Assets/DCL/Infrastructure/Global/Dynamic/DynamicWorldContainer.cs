@@ -365,7 +365,7 @@ namespace Global.Dynamic
                 new EcsEmoteProvider(globalWorld, identityCache), builderDTOsURL.Value);
 
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
+                new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value, identityCache);
 
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
@@ -786,7 +786,8 @@ namespace Global.Dynamic
                     wearableCatalog,
                     trimmedWearableCatalog,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
-                    builderContentURL.Value),
+                    builderContentURL.Value,
+                    appArgs),
                 new EmotePlugin(
                     staticContainer.WebRequestsContainer.WebRequestController,
                     emotesCache,

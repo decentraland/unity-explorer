@@ -16,6 +16,7 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
+using Global.AppArgs;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -38,6 +39,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearableStorage wearableStorage;
         private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly IAppArgs appArgs;
 
         private TimeSpan batchHeartbeat;
 
@@ -48,7 +50,8 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
-            string builderContentURL)
+            string builderContentURL,
+            IAppArgs appArgs)
         {
             this.wearableStorage = wearableStorage;
             this.trimmedWearableStorage = trimmedWearableStorage;
@@ -58,6 +61,7 @@ namespace DCL.AvatarRendering.Wearables
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
+            this.appArgs = appArgs;
 
             cacheCleaner.Register(this.wearableStorage);
             cacheCleaner.Register(this.trimmedWearableStorage);
@@ -72,12 +76,12 @@ namespace DCL.AvatarRendering.Wearables
                 realmData, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
                 trimmedWearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics);
-            BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
+            BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat, appArgs);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
-            if (builderCollectionsPreview)
+            if (builderCollectionsPreview || appArgs.TryGetValue(AppArgsFlags.CROSS_ENV_CONTENT_SERVER_URL, out _))
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

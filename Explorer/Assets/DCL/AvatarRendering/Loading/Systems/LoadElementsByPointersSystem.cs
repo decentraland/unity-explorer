@@ -63,8 +63,12 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 pointer += numberOfWearablesToRequest;
             }
 
+            PostProcessDTOs(finalTargetList.List, intention);
+
             return new StreamableLoadingResult<TAsset>(CreateAssetFromListOfDTOs(finalTargetList));
         }
+
+        protected virtual void PostProcessDTOs(List<TDTO> dtos, TIntention intention) { }
 
         protected abstract TAsset CreateAssetFromListOfDTOs(RepoolableList<TDTO> list);
 

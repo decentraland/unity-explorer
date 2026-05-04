@@ -17,6 +17,8 @@ namespace DCL.AvatarRendering.Loading.DTO
     {
         public string? ContentDownloadUrl { get; protected set; }
 
+        public void SetContentDownloadUrl(string url) => ContentDownloadUrl = url;
+
         public abstract MetadataBase Metadata { get; }
 
         [Serializable]

@@ -34,6 +34,9 @@ namespace Global.AppArgs
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
 
+        public const string CROSS_ENV_CATALOG_URL = "cross-env-catalog-url";
+        public const string CROSS_ENV_CONTENT_SERVER_URL = "cross-env-content-server-url";
+
         public const string PROFILE_NAME_EDITOR = "profile-name-editor";
 
         public const string CAMERA_REEL = "camera-reel";

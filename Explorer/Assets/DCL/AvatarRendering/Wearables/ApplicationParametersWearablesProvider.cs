@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Web3.Identities;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
@@ -19,12 +20,14 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearablesProvider source;
         private readonly List<ITrimmedWearable> resultWearablesBuffer = new ();
         private readonly string builderDTOsUrl;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
-        public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl)
+        public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl, IWeb3IdentityCache web3IdentityCache)
         {
             this.appArgs = appArgs;
             this.source = source;
             this.builderDTOsUrl = builderDTOsUrl;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask<(IReadOnlyList<ITrimmedWearable> results, int totalAmount)> GetTrimmedByParamsAsync(
@@ -34,6 +37,60 @@ namespace DCL.AvatarRendering.Wearables
             CommonLoadingArguments? loadingArguments = null,
             bool needsBuilderAPISigning = false)
         {
+            if (appArgs.TryGetValue(AppArgsFlags.CROSS_ENV_CATALOG_URL, out string? crossEnvCatalogUrl))
+            {
+                string userAddress = web3IdentityCache.Identity!.Address;
+                string zoneWearablesUrl = $"{crossEnvCatalogUrl!.TrimEnd('/')}/lambdas/users/{userAddress}/wearables?pageNum=1&pageSize=200&includeAmount=true";
+
+                results ??= new List<ITrimmedWearable>();
+                var localBuffer = ListPool<ITrimmedWearable>.Get();
+
+                await source.GetTrimmedByParamsAsync(
+                    parameters,
+                    ct,
+                    localBuffer,
+                    loadingArguments: new CommonLoadingArguments(zoneWearablesUrl, cancellationTokenSource: new CancellationTokenSource())
+                );
+
+                const int OWNED_PAGE_SIZE = 200;
+                IWearablesProvider.Params subParameters = parameters;
+                subParameters.PageSize = OWNED_PAGE_SIZE;
+                subParameters.PageNumber = 1;
+                int ownedTotal = int.MaxValue;
+                using var ownedPageBufferScope = ListPool<ITrimmedWearable>.Get(out var ownedPageBuffer);
+
+                while (localBuffer.Count < ownedTotal)
+                {
+                    ownedPageBuffer.Clear();
+                    (var ownedPageResults, int ownedPageTotal) = await source.GetTrimmedByParamsAsync(
+                        subParameters,
+                        ct,
+                        results: ownedPageBuffer
+                    );
+
+                    ownedTotal = ownedPageTotal;
+
+                    if (ownedPageResults.Count == 0)
+                        break;
+
+                    localBuffer.AddRange(ownedPageResults);
+                    subParameters.PageNumber++;
+                }
+
+                var unified = localBuffer
+                    .GroupBy(w => w.GetUrn())
+                    .Select(g => g.First())
+                    .ToList();
+
+                int pageIndex = parameters.PageNumber - 1;
+                results.AddRange(unified.Skip(pageIndex * parameters.PageSize).Take(parameters.PageSize));
+                int count = unified.Count;
+
+                ListPool<ITrimmedWearable>.Release(localBuffer);
+
+                return (results, count);
+            }
+
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
             {
                 URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
