@@ -32,6 +32,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         {
             this.pointers = pointers;
             CommonArguments = commonArguments;
+            OverrideContentServerUrl = null;
             released = false;
             ProfilingCounters.GetWearablesIntentionAmount.Value++;
         }
