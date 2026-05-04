@@ -33,6 +33,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [SerializeField] private Button? saveButton;
 
         [SerializeField] private Button? equipButton;
+        [SerializeField] private GameObject? equipButtonContent;
+        [SerializeField] private GameObject? equipSpinner;
         [SerializeField] private Button? unEquipButton;
         [SerializeField] private Button? deleteButton;
         [SerializeField] private Button? previewButton;
@@ -75,12 +77,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [field: SerializeField]
         public AudioClipConfig DeleteOutfitAudio { get; private set; }
 
+        public bool IsEquipLoading { get; private set; }
+
         private void Awake()
         {
             saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
-            
+
             equipButton?.onClick.AddListener(() =>
             {
+                if (IsEquipLoading) return;
+
                 OnEquipClicked?.Invoke();
 
                 if (EquipWearableAudio != null)
@@ -91,6 +97,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
             previewButton?.onClick.AddListener(() =>
             {
+                if (IsEquipLoading) return;
+
                 OnPreviewClicked?.Invoke();
                 if (ClickAudio != null)
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
@@ -102,6 +110,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowEmptyState(bool isHovering)
         {
+            ResetEquipButtonContent();
             emptyContainer.SetActive(!isHovering);
             hoverEmptyContainer.SetActive(isHovering);
             fullContainer.SetActive(false);
@@ -112,6 +121,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowLoadingState()
         {
+            ResetEquipButtonContent();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             fullContainer.SetActive(false);
@@ -122,6 +132,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowStateSaving()
         {
+            ResetEquipButtonContent();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             loadingContainer.SetActive(false);
@@ -195,6 +206,31 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void SetEquipped(bool equipped)
         {
             outfitEquippedOutline.gameObject.SetActive(equipped);
+        }
+
+        public void SetEquipLoading(bool loading)
+        {
+            IsEquipLoading = loading;
+            equipButtonContent?.SetActive(!loading);
+            equipSpinner?.SetActive(loading);
+        }
+
+        public void SetHoverEnabled(bool isEnabled)
+        {
+            if (hoverHandler == null) return;
+
+            // Snap back if we're disabling while hovered — disabled HoverHandler won't fire OnPointerExit.
+            if (!isEnabled && hoverHandler.enabled)
+                AnimateExit();
+
+            hoverHandler.enabled = isEnabled;
+        }
+
+        private void ResetEquipButtonContent()
+        {
+            IsEquipLoading = false;
+            equipButtonContent?.SetActive(true);
+            equipSpinner?.SetActive(false);
         }
 
         public void PlayDeleteOutfitSound()

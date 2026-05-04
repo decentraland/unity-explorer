@@ -129,6 +129,7 @@ namespace DCL.Backpack
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
+                backpackEventBus,
                 outfitApplier,
                 outfitsCollection,
                 webBrowser,

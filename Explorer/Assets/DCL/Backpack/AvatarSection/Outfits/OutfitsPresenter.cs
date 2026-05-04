@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -12,6 +13,7 @@ using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.Slots;
 using DCL.Browser;
@@ -27,6 +29,7 @@ namespace DCL.Backpack
     {
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
@@ -45,9 +48,11 @@ namespace DCL.Backpack
 
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
+        private OutfitSlotPresenter? loadingSlot;
 
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
+            IBackpackEventBus backpackEventBus,
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
@@ -63,6 +68,7 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.eventBus = eventBus;
+            this.backpackEventBus = backpackEventBus;
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
@@ -80,6 +86,8 @@ namespace DCL.Backpack
                 OnGetANameClicked, OnLinkClicked);
 
             CreateOutfitSlots();
+
+            backpackEventBus.EquipOutfitEvent += OnOutfitEquipCompleted;
         }
 
         private void CreateOutfitSlots()
@@ -111,6 +119,7 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
+            EndSlotBusy();
             characterPreviewController.StopEmotes();
             previewOutfitCommand.Restore();
             cts.SafeCancelAndDispose();
@@ -164,8 +173,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid OnSaveOutfitRequestedAsync(int slotIndex, CancellationToken ct)
         {
-            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            if (presenter == null) return;
+            if (!TryGetSlot(slotIndex, out var presenter)) return;
 
             presenter.SetSaving();
 
@@ -212,8 +220,8 @@ namespace DCL.Backpack
 
             if (ct.IsCancellationRequested || thumbnail == null) return;
 
-            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            presenter?.SetThumbnail(thumbnail);
+            if (TryGetSlot(slotIndex, out var presenter))
+                presenter.SetThumbnail(thumbnail);
         }
 
         private void OnDeleteOutfitRequested(int slotIndex)
@@ -223,8 +231,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid OnDeleteOutfitRequestedAsync(int slotIndex)
         {
-            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
-            if (presenter == null) return;
+            if (!TryGetSlot(slotIndex, out var presenter)) return;
 
             var originalOutfitData = presenter.GetOutfitData();
             if (originalOutfitData == null)
@@ -273,6 +280,8 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
+            BeginSlotBusy(outfitItem.slot);
+
             GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
 
             previewOutfitCommand.Commit();
@@ -284,6 +293,41 @@ namespace DCL.Backpack
             PlayRandomEmote();
         }
 
+        private void OnOutfitEquipCompleted(BackpackEquipOutfitCommand _, IWearable[] __) =>
+            EndSlotBusy();
+
+        private void BeginSlotBusy(int slotIndex)
+        {
+            EndSlotBusy();
+
+            if (!TryGetSlot(slotIndex, out var slot)) return;
+
+            loadingSlot = slot;
+            slot.SetEquipLoading(true);
+            for (int i = 0; i < slotPresenters.Count; i++)
+                if (slotPresenters[i] != slot) slotPresenters[i].SetHoverEnabled(false);
+        }
+
+        private void EndSlotBusy()
+        {
+            loadingSlot?.SetEquipLoading(false);
+            for (int i = 0; i < slotPresenters.Count; i++)
+                slotPresenters[i].SetHoverEnabled(true);
+            loadingSlot = null;
+        }
+
+        private bool TryGetSlot(int slotIndex, out OutfitSlotPresenter slot)
+        {
+            if ((uint)slotIndex < (uint)slotPresenters.Count)
+            {
+                slot = slotPresenters[slotIndex];
+                return true;
+            }
+
+            slot = null!;
+            return false;
+        }
+
         private void OnPreviewOutfitRequested(OutfitItem outfitItem)
         {
             OnPreviewOutfitRequestedAsync(outfitItem).Forget();
@@ -292,6 +336,8 @@ namespace DCL.Backpack
         private async UniTaskVoid OnPreviewOutfitRequestedAsync(OutfitItem outfitItem)
         {
             if (outfitItem?.outfit == null) return;
+
+            BeginSlotBusy(outfitItem.slot);
 
             try
             {
@@ -302,22 +348,24 @@ namespace DCL.Backpack
             {
                 ReportHub.LogException(ex, ReportCategory.OUTFITS);
             }
+            finally
+            {
+                EndSlotBusy();
+            }
         }
 
         private async UniTaskVoid GenerateThumbnailIfMissingAsync(int slotIndex, CancellationToken ct)
         {
-            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
+            if (!TryGetSlot(slotIndex, out var presenter) || presenter.HasThumbnail())
+                return;
 
-            if (presenter != null && !presenter.HasThumbnail())
+            try
             {
-                try
-                {
-                    await TakeScreenshotAndDisplayAsync(slotIndex, ct);
-                }
-                catch (OperationCanceledException)
-                {
-                    ReportHub.Log(ReportCategory.OUTFITS, $"On-demand thumbnail generation for slot {slotIndex} was cancelled.");
-                }
+                await TakeScreenshotAndDisplayAsync(slotIndex, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, $"On-demand thumbnail generation for slot {slotIndex} was cancelled.");
             }
         }
 
@@ -398,6 +446,7 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
+            backpackEventBus.EquipOutfitEvent -= OnOutfitEquipCompleted;
             outfitBannerPresenter.Dispose();
             foreach (var presenter in slotPresenters)
             {
