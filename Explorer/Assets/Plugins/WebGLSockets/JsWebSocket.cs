@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Cysharp.Threading.Tasks;
 using Utility.Networking;
 using RichTypes;
+using DCL.Diagnostics;
 
 namespace DCL.WebSockets.JS
 {
@@ -52,7 +53,10 @@ namespace DCL.WebSockets.JS
 
         public async UniTask SendAsync(ReadOnlyMemory<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
 
             unsafe
             {
@@ -163,7 +167,7 @@ namespace DCL.WebSockets.JS
                 return;
             }
             // Connect failed (State=Closed/Aborted). Caller will typically dispose; use LogWarning so stack trace isn't mistaken for a crash.
-            UnityEngine.Debug.LogWarning($"JsWebSocket.cs: Connect failed, handleId: {handleId}, message: {result.ErrorMessage}, uri: {uri}. Caller may dispose.");
+            ReportHub.LogWarning(ReportCategory.Unspecified, $"JsWebSocket.cs: Connect failed, handleId: {handleId}, message: {result.ErrorMessage}, uri: {uri}. Caller may dispose.");
             throw new WebSocketException();
         }
 

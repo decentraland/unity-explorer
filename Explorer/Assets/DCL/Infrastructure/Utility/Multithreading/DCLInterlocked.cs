@@ -55,7 +55,7 @@ namespace Utility.Multithreading
 
 #if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ulong Increment(ref ulong location)
+        public static ulong Increment(ref long location)
         {
             location = location + 1;
             return location;

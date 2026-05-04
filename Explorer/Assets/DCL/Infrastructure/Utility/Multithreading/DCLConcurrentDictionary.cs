@@ -44,7 +44,10 @@ namespace Utility.Multithreading
         public void Add(TKey key, TValue value)
         {
 #if UNITY_WEBGL
-            Inner.Add(key, value);
+            if (Inner.ContainsKey(key) == false)
+            {
+                Inner.Add(key, value);
+            }
 #else
             Inner.TryAdd(key, value);
 #endif
