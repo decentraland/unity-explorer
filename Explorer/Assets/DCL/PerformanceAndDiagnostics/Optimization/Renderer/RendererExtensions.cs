@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace DCL.PerformanceAndDiagnostics.Optimization.Renderer
@@ -9,16 +10,24 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Renderer
 
         public static void ForceBackfaceCulling(this UnityEngine.Renderer renderer)
         {
-            Material[] sharedMaterials = renderer.sharedMaterials;
+            List<Material> sharedMaterials = ListPool<Material>.Get();
 
-            foreach (Material material in sharedMaterials)
+            try
             {
-                if (material == null || !material.HasProperty(CULL_PROPERTY))
-                    continue;
+                renderer.GetSharedMaterials(sharedMaterials);
 
-                material.SetInt(CULL_PROPERTY, (int)CullMode.Back);
+                foreach (Material material in sharedMaterials)
+                {
+                    if (material == null || !material.HasProperty(CULL_PROPERTY))
+                        continue;
+
+                    material.SetInt(CULL_PROPERTY, (int)CullMode.Back);
+                }
+            }
+            finally
+            {
+                ListPool<Material>.Release(sharedMaterials);
             }
         }
-
     }
 }
