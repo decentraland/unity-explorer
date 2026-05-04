@@ -18,7 +18,6 @@ using System.Text;
 using System.Threading;
 using Utility;
 using RichTypes;
-using SceneRunner.Admins;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -57,8 +56,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                     sceneData,
                     sceneCommunicationPipe,
                     jsOperations,
-                    InstancePoolsProvider.Create(),
-                    Option<SceneAdmins>.Some(SceneAdmins.NewTestInstance())
+                    InstancePoolsProvider.Create()
                     );
         }
 

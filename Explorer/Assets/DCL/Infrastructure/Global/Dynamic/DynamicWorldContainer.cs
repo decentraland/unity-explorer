@@ -1090,7 +1090,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new BannedUsersPlugin(roomHub, staticContainer.RealmData, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
                 new SmartWearablesGlobalPlugin(wearableCatalog,
                     backpackEventBus,
                     staticContainer.PortableExperiencesController,

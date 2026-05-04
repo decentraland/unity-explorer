@@ -4,27 +4,24 @@ using SceneRuntime;
 using System;
 using System.IO;
 using System.Text;
-using SceneRunner.Admins;
 using RichTypes;
+using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         private readonly IInstancePoolsProvider byteArrayPool;
-        private readonly Option<SceneAdmins> sceneAdmins;
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
                 ISceneCommunicationPipe messagePipesHub,
                 IJsOperations jsOperations,
-                IInstancePoolsProvider byteArrayPool,
-                Option<SceneAdmins> sceneAdmins
+                IInstancePoolsProvider byteArrayPool
                 )
             : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {
             this.byteArrayPool = byteArrayPool;
-            this.sceneAdmins = sceneAdmins;
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
@@ -83,15 +80,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private bool IsTrustedSource(string walletId)
         {
-            if (sceneAdmins.Has)
-            {
-                // Message is considered safe if it's from a scene admin
-                bool? adminResult = sceneAdmins.Value.IsAdmin(walletId);
-                // Consider the user as non-admin until we know for sure
-                return adminResult == null ? false : adminResult.Value;
-            }
+            SceneAdminResult result = RoomMetadataCurrentScene.Instance.IsAdmin(walletId);
 
-            return true; // sceneAdmins are not applicable in cases like LSD
+            return result.Match(
+                    onSuccess: () => true, // Message is considered safe if it's from a scene admin
+                    onLocalSceneDevelopment: () => true, //sceneAdmins are not applicable in cases like LSD
+                    onNotAdmin: () => false,
+                    onNotLoadedYet: () => false // Consider the user as non-admin until we know for sure
+                    );
         }
     }
 }
