@@ -192,24 +192,11 @@ namespace Global.Dynamic
                     ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
             }
 
-            bool? fullscreenOverride = null;
-
-            if (applicationParametersParser.HasFlag(AppArgsFlags.FULLSCREEN))
-            {
-                if (applicationParametersParser.HasFlagWithValueTrue(AppArgsFlags.FULLSCREEN))
-                    fullscreenOverride = true;
-                else if (applicationParametersParser.HasFlagWithValueFalse(AppArgsFlags.FULLSCREEN))
-                    fullscreenOverride = false;
-                else
-                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.FULLSCREEN} value. Expected: true/false");
-            }
-
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE),
-                resolutionOverride,
-                fullscreenOverride);
+                resolutionOverride);
 
             World world = World.Create();
 

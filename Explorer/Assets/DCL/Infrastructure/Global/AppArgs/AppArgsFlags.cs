@@ -57,7 +57,6 @@ namespace Global.AppArgs
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
         public const string WINDOWED_MODE = "windowed-mode";
-        public const string FULLSCREEN = "fullscreen";
         public const string RESOLUTION = "resolution";
         public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
 

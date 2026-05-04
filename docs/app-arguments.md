@@ -300,18 +300,6 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
-### `fullscreen`
-**Type:** Boolean (`true` / `false`)
-**Description:** Overrides the saved PlayerPrefs fullscreen setting. `true` forces fullscreen, `false` forces windowed mode. Takes precedence over both `--windowed-mode` and any PlayerPrefs value.
-
-**Usage:**
-```bash
---fullscreen true
---fullscreen false
-```
-
----
-
 ### `resolution`
 **Type:** String (`WxH`)
 **Description:** Overrides the saved PlayerPrefs resolution. Only applies in fullscreen mode. Takes precedence over both PlayerPrefs and the default resolution. Format is width × height separated by `x`.
