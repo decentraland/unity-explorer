@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
-        public string? OverrideContentServerUrl { get; init; }
+        public string? OverrideContentServerUrl { get; set; }
 
         public readonly IReadOnlyList<URN> Pointers
         {
