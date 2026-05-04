@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.Nearby
         private readonly List<GameObject> gameObjects = new (256);
 
         private FakeStreamRegistry registry;
-        private Dictionary<StreamKey, Entity> bindings;
+        private HashSet<StreamKey> bindings;
         private NearbyVoiceChatStateModel stateModel;
         private VoiceChatConfiguration configuration;
         private NearbyAudioSourceFactory sourceFactory;
@@ -68,7 +68,7 @@ namespace DCL.VoiceChat.Nearby
             world.Create(new PlayerComponent(playerGo.transform));
 
             registry = new FakeStreamRegistry();
-            bindings = new Dictionary<StreamKey, Entity>();
+            bindings = new HashSet<StreamKey>();
             IUserBlockingCache userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();

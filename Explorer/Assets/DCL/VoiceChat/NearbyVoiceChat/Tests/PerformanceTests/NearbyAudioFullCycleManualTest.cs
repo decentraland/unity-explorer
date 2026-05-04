@@ -74,7 +74,7 @@ namespace DCL.VoiceChat.Nearby
         // ── World/system state ──────────────────────────────────────
         private World world;
         private FakeStreamRegistry registry;
-        private Dictionary<StreamKey, Entity> bindings;
+        private HashSet<StreamKey> bindings;
         private NearbyVoiceChatStateModel stateModel;
         private VoiceChatConfiguration configuration;
         private NearbyAudioSourceFactory sourceFactory;
@@ -126,7 +126,7 @@ namespace DCL.VoiceChat.Nearby
             listenerState.BindListener(camera.transform);
 
             registry = new FakeStreamRegistry();
-            bindings = new Dictionary<StreamKey, Entity>();
+            bindings = new HashSet<StreamKey>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);

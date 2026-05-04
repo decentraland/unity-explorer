@@ -28,13 +28,13 @@ namespace DCL.VoiceChat.Nearby.Systems
         internal const int MAX_CREATIONS_PER_FRAME = 10;
 
         private readonly INearbyAudioStreamRegistry registry;
-        private readonly Dictionary<StreamKey, Entity> bindings;
+        private readonly HashSet<StreamKey> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyAudioSourceFactory sourceFactory;
 
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
@@ -74,7 +74,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             {
                 var key = new StreamKey(walletId, sid);
 
-                if (!bindings.ContainsKey(key))
+                if (!bindings.Contains(key))
                 {
                     Weak<AudioStream> stream = registry.GetActiveStream(key);
 
@@ -83,8 +83,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                     LivekitAudioSource source = sourceFactory.Create(key, stream);
 
-                    Entity audioEntity = World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-                    bindings.Add(key, audioEntity);
+                    World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
+                    bindings.Add(key);
                 }
             }
         }

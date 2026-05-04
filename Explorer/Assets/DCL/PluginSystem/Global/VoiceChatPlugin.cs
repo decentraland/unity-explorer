@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyAudioStreamsRegistry? nearbyAudioStreamRegistry;
-        private Dictionary<StreamKey, Entity>? nearbyAudioBindings;
+        private HashSet<StreamKey>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyVoiceChatStateModel? nearbyStateModel;
@@ -216,7 +216,7 @@ namespace DCL.PluginSystem.Global
                 nearbyAudioStreamRegistry = new NearbyAudioStreamsRegistry(islandRoom);
                 pluginScope.Add(nearbyAudioStreamRegistry);
 
-                nearbyAudioBindings = new Dictionary<StreamKey, Entity>(32);
+                nearbyAudioBindings = new HashSet<StreamKey>(32);
                 nearbyAudioSourceFactory = new NearbyAudioSourceFactory(voiceChatConfiguration);
 
                 NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)

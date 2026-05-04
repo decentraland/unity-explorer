@@ -37,12 +37,12 @@ namespace DCL.VoiceChat.Nearby.Systems
             new QueryDescription().WithAll<NearbyAudioSourceComponent>().WithNone<DeleteEntityIntention>();
 
         private readonly INearbyAudioStreamRegistry registry;
-        private readonly Dictionary<StreamKey, Entity> bindings;
+        private readonly HashSet<StreamKey> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyAudioSourceFactory sourceFactory;
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, Dictionary<StreamKey, Entity> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;

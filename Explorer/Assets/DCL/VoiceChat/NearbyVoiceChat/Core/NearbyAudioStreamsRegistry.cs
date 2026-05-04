@@ -137,10 +137,6 @@ namespace DCL.VoiceChat.Nearby.Audio
             }
         }
 
-        // Builds a fresh snapshot off to the side: for each participant, collects every nearby-audio sid
-        // into a single string[] (a participant can publish more than one mic track in practice).
-        // 'next' is private to this method until Interlocked.Exchange publishes it — no concurrent readers
-        // observe intermediate states, so we use plain TryGetValue + indexer instead of AddOrUpdate.
         // ConcatNew preserves the immutability contract (see class XML): each identity ends up with a
         // freshly allocated array, never shared with a previous snapshot.
         private void RehydrateFromRoom()
@@ -204,8 +200,11 @@ namespace DCL.VoiceChat.Nearby.Audio
                 sid);
         }
 
-        // Publishes a NEW filtered array on every successful update; never mutates the previous one.
-        // Single-writer assumption (serial FFI dispatch) — see class XML; no CAS retry needed.
+        // Publishes a NEW filtered array on every successful update; never mutates 'prev'.
+        // Required by the immutability contract in the class XML: NearbyLivekitBridgeSystem
+        // uses ReferenceEquals(observed, current) for its per-frame freshness check, so any
+        // in-place mutation of a published array would silently hide the change from the bridge.
+        // Single-writer assumption (serial FFI dispatch) — no CAS retry needed.
         private void RemoveAudioSid(string identity, string sid)
         {
             ConcurrentDictionary<string, string[]> snap = Volatile.Read(ref streamsByIdentity);

@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry;
-        private Dictionary<StreamKey, Entity> bindings;
+        private HashSet<StreamKey> bindings;
         private IUserBlockingCache userBlockingCache;
         private NearbyVoiceChatStateModel stateModel;
 
@@ -53,7 +53,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
-            bindings = new Dictionary<StreamKey, Entity>();
+            bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
@@ -197,7 +197,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "blocked identity must not allocate an audio entity");
-            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False,
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False,
                 "skipped creation must not poison the bindings index");
         }
 
@@ -291,7 +291,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "Weak<AudioStream>.Null on resolve must not create an audio entity");
-            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False,
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False,
                 "skipped creation must not poison the bindings index");
         }
 
@@ -312,7 +312,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "absent StreamingAudioComponent must skip the avatar at archetype level");
-            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False);
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False);
         }
 
         [Test]
@@ -330,7 +330,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(CountAudioEntities(), Is.EqualTo(1));
-            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.True);
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.True);
         }
 
         [Test]
@@ -366,7 +366,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "absent InAudibleRangeTag must skip the avatar at archetype level");
-            Assert.That(bindings.ContainsKey(new StreamKey(WALLET, SID)), Is.False);
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False);
         }
 
         [Test]

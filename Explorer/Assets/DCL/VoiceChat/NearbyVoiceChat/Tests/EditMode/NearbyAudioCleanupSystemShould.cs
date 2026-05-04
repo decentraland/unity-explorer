@@ -44,7 +44,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry = null!;
-        private Dictionary<StreamKey, Entity> bindings = null!;
+        private HashSet<StreamKey> bindings = null!;
         private IUserBlockingCache userBlockingCache = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
         private VoiceChatConfiguration configuration = null!;
@@ -57,7 +57,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
-            bindings = new Dictionary<StreamKey, Entity>();
+            bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
@@ -262,7 +262,7 @@ namespace DCL.VoiceChat.Nearby.Tests
                 "healthy steady-state entity must not be flagged");
             Assert.That(world.IsAlive(audioEntity), Is.True);
             Assert.That(source == null, Is.False, "LivekitAudioSource must remain alive");
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
+            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
         }
 
         [Test]
@@ -279,7 +279,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var key2 = new StreamKey(PARTICIPANT_A, SID_2);
             LivekitAudioSource source2 = CreateLivekitAudioSource(key2);
             Entity audioEntity2 = world.Create(new NearbyAudioSourceComponent(key2, avatarEntity, source2));
-            bindings.TryAdd(key2, audioEntity2);
+            bindings.Add(key2);
 
             // Drop only sid-1 from the registry. Marker stays (sid-2 still present).
             registry.RemoveSid(PARTICIPANT_A, SID_1);
@@ -375,7 +375,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.IsAlive(audioEntity), Is.True);
             Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.False);
             Assert.That(source == null, Is.False);
-            Assert.That(bindings.ContainsKey(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
+            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(1));
         }
 
@@ -409,7 +409,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.IsAlive(audioEntity), Is.True, "entity destruction is delegated to DestroyEntitiesSystem and is out of scope here");
             Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True, "audio entity must be marked for deletion");
             AssertSourceTornDown(source, "LivekitAudioSource must be torn down (destroyed in legacy path, parked inactive in pool path)");
-            Assert.That(bindings.ContainsKey(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
+            Assert.That(bindings.Contains(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
         }
 
         // A2 made source teardown reference-stable: the pool keeps the GO alive after Dispose. Both
@@ -440,7 +440,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var key = new StreamKey(walletId, sid);
             LivekitAudioSource source = CreateLivekitAudioSource(key);
             Entity audioEntity = world.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-            bindings.TryAdd(key, audioEntity);
+            bindings.Add(key);
 
             return (audioEntity, avatarEntity, source);
         }
