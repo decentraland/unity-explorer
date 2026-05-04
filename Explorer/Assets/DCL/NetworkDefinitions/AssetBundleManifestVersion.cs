@@ -15,11 +15,15 @@ public class AssetBundleManifestVersion
         //From v41 ISS is supported for scenes
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
 
+        //From v49 the manifest exposes a per-file deps digest we can key the cache by
+        public const int ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST = 49;
+
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
+        private int? versionNumber;
 
 
         public bool assetBundleManifestRequestFailed;
@@ -27,6 +31,7 @@ public class AssetBundleManifestVersion
         public AssetBundleManifestVersionPerPlatform? assets;
 
         private HashSet<string>? convertedFiles;
+        private IReadOnlyDictionary<string, string>? depsDigests;
 
         public bool HasHashInPath()
         {
@@ -52,6 +57,32 @@ public class AssetBundleManifestVersion
             }
 
             return SupportsISS.Value;
+        }
+
+        public int GetVersionNumber()
+        {
+            if (versionNumber.HasValue) return versionNumber.Value;
+
+            string? version = GetAssetBundleManifestVersion();
+            versionNumber = string.IsNullOrEmpty(version) ? 0 : int.Parse(version.AsSpan().Slice(1));
+            return versionNumber.Value;
+        }
+
+        public bool HasDepsDigests() =>
+            GetVersionNumber() >= ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST;
+
+        public void InjectDepsDigests(IReadOnlyDictionary<string, string>? digests)
+        {
+            depsDigests = digests;
+        }
+
+        public bool TryGetDepsDigest(string hash, out string digest)
+        {
+            if (depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
+                return true;
+
+            digest = string.Empty;
+            return false;
         }
 
         public string? GetAssetBundleManifestVersion() =>

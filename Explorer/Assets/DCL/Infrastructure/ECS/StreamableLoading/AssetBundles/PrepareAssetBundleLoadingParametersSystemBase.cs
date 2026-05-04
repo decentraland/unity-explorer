@@ -67,7 +67,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
+                assetBundleIntention.AssetBundleManifestVersion.TryGetDepsDigest(assetBundleIntention.Hash, out string depsDigest);
+                assetBundleIntention.DepsDigest = depsDigest;
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash,
+                    assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate(),
+                    assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
+                    depsDigest);
             }
         }
 
@@ -79,8 +84,21 @@ namespace ECS.StreamableLoading.AssetBundles
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
 
-        public unsafe Hash128 ComputeHash(string hash, string buildDate)
+        public unsafe Hash128 ComputeHash(string hash, string buildDate, string? version = null, string? depsDigest = null)
         {
+            // For v49+ ABs the per-file deps digest replaces the buildDate sledgehammer that was previously used to
+            // invalidate the cache when dependencies might have changed. Key on (version + hash + digest) instead.
+            if (!string.IsNullOrEmpty(depsDigest))
+            {
+                string ver = version ?? string.Empty;
+                Span<char> v49Builder = stackalloc char[ver.Length + hash.Length + depsDigest.Length];
+                ver.AsSpan().CopyTo(v49Builder);
+                hash.AsSpan().CopyTo(v49Builder[ver.Length..]);
+                depsDigest.AsSpan().CopyTo(v49Builder[(ver.Length + hash.Length)..]);
+
+                fixed (char* ptr = v49Builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * v49Builder.Length)); }
+            }
+
             Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
             buildDate.AsSpan().CopyTo(hashBuilder);
             hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);

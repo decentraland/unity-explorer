@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CheckSceneAbDTO(sceneAbDto.Version, hash);
 
-            return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date);
+            return new SceneAssetBundleManifest(sceneAbDto.Version, sceneAbDto.Date, SceneAssetBundleManifest.ExtractDepsDigests(sceneAbDto.files));
         }
 
 
