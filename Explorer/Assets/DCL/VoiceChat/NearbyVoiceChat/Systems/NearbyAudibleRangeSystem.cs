@@ -6,6 +6,7 @@ using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Diagnostics;
@@ -84,8 +85,10 @@ namespace DCL.VoiceChat.Nearby.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(InAudibleRangeTag))]
         [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent))]
-        private void TryEnterAudibleRange([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase)
+        private void TryEnterAudibleRange([Data] Vector3 listenerPos, Entity entity, in AvatarBase avatarBase, in RemotePlayerMovementComponent remoteMovement)
         {
+            if (!remoteMovement.Initialized) return;
+
             float distSqr = (avatarBase.HeadAnchorPoint.position - listenerPos).sqrMagnitude;
 
             if (distSqr <= outerInSqr)

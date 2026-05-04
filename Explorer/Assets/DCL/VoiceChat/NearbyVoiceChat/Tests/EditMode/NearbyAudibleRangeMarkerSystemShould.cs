@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.Multiplayer.Movement;
 using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -10,6 +11,8 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
@@ -36,6 +39,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Camera camera = null!;
         private VoiceChatConfiguration configuration = null!;
         private NearbyListenerState listenerState = null!;
+        private ObjectPool<SimplePriorityQueue<NetworkMovementMessage>> movementQueuePool = null!;
 
         [SetUp]
         public void SetUp()
@@ -53,6 +57,11 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             listenerState = new NearbyListenerState();
+
+            movementQueuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+                actionOnRelease: queue => queue.Clear()
+            );
 
             system = new NearbyAudibleRangeSystem(world, configuration, listenerState);
             system.Initialize();
@@ -252,6 +261,27 @@ namespace DCL.VoiceChat.Nearby.Tests
         // ── Edge cases ──────────────────────────────────────────────
 
         [Test]
+        public void DoesNotApplyAudibleRangeUntilRemoteMovementInitialized()
+        {
+            // Until the first multiplayer packet lands, HeadAnchorPoint sits at origin and would
+            // falsely qualify the avatar as in-range. The gate on RemotePlayerMovementComponent.Initialized
+            // suppresses the tag so audio-source binding does not snap onto a (0,0,0) ghost.
+            Entity e = CreateStreamingAvatar(distance: 5f, initialized: false);
+
+            system.Update(0);
+
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.False);
+
+            // Simulate first packet applied: the gate lifts and the next tick tags the avatar.
+            ref RemotePlayerMovementComponent rpm = ref world.Get<RemotePlayerMovementComponent>(e);
+            rpm.Initialized = true;
+
+            system.Update(0);
+
+            Assert.That(world.Has<InAudibleRangeTag>(e), Is.True);
+        }
+
+        [Test]
         public void DoesNotTagNonStreamingAvatar()
         {
             // No StreamingAudioComponent — invariant I2 prevents any range marker from materializing.
@@ -327,15 +357,15 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         // ── Helpers ─────────────────────────────────────────────────
 
-        private Entity CreateStreamingAvatar(float distance)
+        private Entity CreateStreamingAvatar(float distance, bool initialized = true)
         {
             string wallet = $"wallet-{distance}";
-            Entity e = CreateAvatarEntityAtDistance(wallet, distance);
+            Entity e = CreateAvatarEntityAtDistance(wallet, distance, initialized);
             world.Add(e, new NearbyAudioStreamerComponent(new[] { "sid-test" }));
             return e;
         }
 
-        private Entity CreateAvatarEntityAtDistance(string walletId, float distance)
+        private Entity CreateAvatarEntityAtDistance(string walletId, float distance, bool initialized = true)
         {
             var avatarGo = CreateTrackedGameObject($"Avatar_{walletId}");
             AvatarBase avatarBase = avatarGo.AddComponent<AvatarBase>();
@@ -344,7 +374,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             headAnchorGo.transform.position = new Vector3(distance, 0f, 0f);
             HEAD_ANCHOR_FIELD.SetValue(avatarBase, headAnchorGo.transform);
 
-            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase);
+            var remoteMovement = new RemotePlayerMovementComponent(movementQueuePool) { Initialized = initialized };
+            return world.Create(new Profile(walletId, walletId, new Avatar()), avatarBase, remoteMovement);
         }
 
         private void MoveAvatar(Entity entity, float distance)
