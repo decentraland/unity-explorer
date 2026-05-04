@@ -36,7 +36,7 @@ namespace DCL.VoiceChat.UI
 
             view.Initialize(() => stateModel.IsLocalSpeaking ? 1f : 0f);
 
-            stateSubscription = stateModel.State.Subscribe(OnStateChanged);
+            stateSubscription = stateModel.State.Subscribe(SyncViewWithState);
             SyncViewWithState(stateModel.State.Value);
 
             view.HearOthersToggle.onValueChanged.AddListener(OnHearOthersToggled);
@@ -58,11 +58,6 @@ namespace DCL.VoiceChat.UI
             UnsubscribePushToTalk();
         }
 
-        private void OnStateChanged(NearbyVoiceChatState state)
-        {
-            SyncViewWithState(state);
-        }
-
         private void SyncViewWithState(NearbyVoiceChatState state)
         {
             switch (state)
@@ -75,7 +70,7 @@ namespace DCL.VoiceChat.UI
                     SubscribePushToTalk(); break;
             }
 
-            bool isSpeaking = state == NearbyVoiceChatState.SPEAKING;
+            bool isSpeaking = state == NearbyVoiceChatState.OPEN_MIC;
             bool isConnected = isSpeaking || state is NearbyVoiceChatState.IDLE;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
@@ -100,10 +95,10 @@ namespace DCL.VoiceChat.UI
         {
             if (stateModel.State.Value == NearbyVoiceChatState.IDLE)
             {
-                stateModel.StartSpeaking();
+                stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
                 view.HearText.text = SPEAKING_BUTTON_TEXT;
             }
-            else if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
+            else if (stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC)
                 stateModel.StopSpeaking();
         }
 
@@ -128,7 +123,7 @@ namespace DCL.VoiceChat.UI
         private void OnPushToTalkPressed(InputAction.CallbackContext ctx)
         {
             view.HearText.text = SPEAKING_PUSH_TO_TALK_TEXT;
-            stateModel.StartSpeaking();
+            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
         }
 
         private void OnPushToTalkReleased(InputAction.CallbackContext ctx)

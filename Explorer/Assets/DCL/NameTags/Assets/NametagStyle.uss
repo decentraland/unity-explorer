@@ -240,11 +240,11 @@
     transition-duration: 0.3s;
 }
 
-.nametag--voice-chat .nametag__badge-voice-chat-side {
+.nametag--voice-chat.nametag--speaking .nametag__badge-voice-chat-side {
     height: 6px;
 }
 
-.nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-side {
+.nametag--speaking .nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-side {
     height: 12px;
 }
 
@@ -259,12 +259,29 @@
     transition-duration: 0.3s;
 }
 
-.nametag--voice-chat .nametag__badge-voice-chat-middle {
+.nametag--voice-chat.nametag--speaking .nametag__badge-voice-chat-middle {
     height: 12px;
 }
 
-.nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-middle {
+.nametag--speaking .nametag__badge-voice-chat--alt > .nametag__badge-voice-chat-middle {
     height: 6px;
+}
+
+.nametag__badge-hushed {
+    display: none;
+    width: 14px;
+    height: 14px;
+    background-image: url('/Assets/DCL/VoiceChat/NearbyVoiceChat/UI/Textures/HushedIcn.png');
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-background-image-tint-color: #FF2D55;
+}
+
+.nametag--hushed .nametag__badge-hushed {
+    display: flex;
+}
+
+.nametag--hushed .nametag__badge-voice-chat {
+    display: none;
 }
 
 .nametag__message-container {
