@@ -180,10 +180,36 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
+            Vector2Int? resolutionOverride = null;
+
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) && !string.IsNullOrEmpty(resolutionArg))
+            {
+                string[] resParts = resolutionArg.Split('x');
+
+                if (resParts.Length == 2 && int.TryParse(resParts[0], out int resW) && int.TryParse(resParts[1], out int resH))
+                    resolutionOverride = new Vector2Int(resW, resH);
+                else
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            }
+
+            bool? fullscreenOverride = null;
+
+            if (applicationParametersParser.HasFlag(AppArgsFlags.FULLSCREEN))
+            {
+                if (applicationParametersParser.HasFlagWithValueTrue(AppArgsFlags.FULLSCREEN))
+                    fullscreenOverride = true;
+                else if (applicationParametersParser.HasFlagWithValueFalse(AppArgsFlags.FULLSCREEN))
+                    fullscreenOverride = false;
+                else
+                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.FULLSCREEN} value. Expected: true/false");
+            }
+
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE),
+                resolutionOverride,
+                fullscreenOverride);
 
             World world = World.Create();
 
