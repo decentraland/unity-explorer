@@ -5,7 +5,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Audio;
 using Utility;
 
 namespace DCL.VoiceChat.Nearby.Audio
@@ -84,6 +83,22 @@ namespace DCL.VoiceChat.Nearby.Audio
             liveInstances.Clear();
             legacyInstances.Clear();
             liveCount = 0;
+        }
+
+        /// <summary>
+        ///     Discards every instance pinned to the previous Unity audio output device since <see cref="AudioSource"/> binds to the device at creation and stays pinned.
+        ///     Inactive pool entries are destroyed; live instances are reclassified as legacy
+        ///     so their next <see cref="Dispose"/> destroys them instead of returning device-stale objects to the pool.
+        /// </summary>
+        public void InvalidateForDeviceChange()
+        {
+            foreach (LivekitAudioSource live in liveInstances)
+                legacyInstances.Add(live);
+
+            liveInstances.Clear();
+            liveCount = 0;
+
+            pool.Clear();
         }
 
         private LivekitAudioSource CreateFreshInstance()

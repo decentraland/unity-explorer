@@ -371,6 +371,8 @@ namespace DCL.VoiceChat.Nearby
             public bool IsActiveSpeaker(string walletId) =>
                 throw new NotImplementedException();
 
+            public int RebuildEpoch => 0;
+
             public void Dispose() { }
         }
     }

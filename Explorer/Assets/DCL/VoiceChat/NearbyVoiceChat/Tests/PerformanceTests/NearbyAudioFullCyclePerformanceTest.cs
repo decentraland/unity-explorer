@@ -573,6 +573,8 @@ namespace DCL.VoiceChat.Nearby
 
             public bool IsActiveSpeaker(string walletId) => activeSpeakers.Contains(walletId);
 
+            public int RebuildEpoch => 0;
+
             public void Dispose() { }
         }
     }
