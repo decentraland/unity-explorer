@@ -519,6 +519,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public bool IsActiveSpeaker(string walletId) => false;
 
+            public int RebuildEpoch => 0;
+
             public void Dispose() { }
         }
     }
