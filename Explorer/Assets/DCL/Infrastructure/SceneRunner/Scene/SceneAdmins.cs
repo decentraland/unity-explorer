@@ -59,7 +59,7 @@ namespace SceneRunner.Admins
             public string parcel;
         }
         // END Copied
-        
+
         private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(1000);
 
         private readonly IWebRequestController webRequestController;
@@ -70,7 +70,7 @@ namespace SceneRunner.Admins
         private readonly CancellationTokenSource cts = new ();
         private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
         private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
-        
+
         private bool initialLoadFinished;
 
         public SceneAdmins(
@@ -93,10 +93,12 @@ namespace SceneRunner.Admins
 
         public async UniTaskVoid StartRequestPollingAsync()
         {
-            while (cts.IsCancellationRequested == false)
+            CancellationToken token = cts.Token;
+            while (token.IsCancellationRequested == false)
             {
-                await FireRequestAsync(cts.Token);
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token).SuppressCancellationThrow();
+                await FireRequestAsync(token);
+                if (token.IsCancellationRequested) return;
+                await UniTask.Delay(DELAY, cancellationToken: token).SuppressCancellationThrow();
             }
         }
 

@@ -1,4 +1,3 @@
-using System;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -9,20 +8,21 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.SceneRunner.Scene;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Entity = Arch.Core.Entity;
-using DCL.Multiplayer.Profiles.Bunches;
-using DCL.SceneRunner.Scene;
-using DCL.Utility;
-using ECS.StreamableLoading.InitialSceneState;
 using UnityEngine.TestTools;
 using Utility;
+using Entity = Arch.Core.Entity;
+using Object = UnityEngine.Object;
 
 namespace CrdtEcsBridge.RestrictedActions.Tests
 {
@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Dispose();
 
             if (playerGameObject != null)
-                UnityEngine.Object.DestroyImmediate(playerGameObject);
+                Object.DestroyImmediate(playerGameObject);
         }
 
         [Test]
@@ -196,7 +196,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var emoteUrn = new URN("urn:emote:id");
             var isLooping = true;
 
-            globalWorldActions.TriggerEmote(emoteUrn, isLooping);
+            globalWorldActions.TriggerEmote(emoteUrn, isLooping, AvatarEmoteMask.AemFullBody);
 
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(playerEntity));
             var intent = world.Get<CharacterEmoteIntent>(playerEntity);
@@ -215,7 +215,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
             var emoteUrn = new URN("urn:emote:id");
 
-            globalWorldActions.TriggerEmote(emoteUrn, false);
+            globalWorldActions.TriggerEmote(emoteUrn, false, AvatarEmoteMask.AemFullBody);
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
             Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
@@ -236,7 +236,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
@@ -257,7 +257,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
 
             LogAssert.Expect(LogType.Error, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '_emote.glb'");
 
@@ -281,10 +281,33 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
+        }
+
+        // Truth table for ShouldFallbackMaskedEmotesToFullBody
+        [Test]
+        [TestCase(true, false, false, false, true)]   // local-dev w/o remote ABs → fallback
+        [TestCase(true, true, false, false, false)]   // local-dev w/ remote ABs → no fallback (loads from realm)
+        [TestCase(false, true, true, true, true)]     // builder collection preview on a wearable preview scene → fallback
+        [TestCase(false, true, true, false, false)]   // builder preview flag on, but scene isn't a wearable preview → no fallback
+        [TestCase(false, true, false, true, false)]   // wearable preview flag on, but builder preview off → no fallback
+        [TestCase(false, true, false, false, false)]  // production realm → no fallback
+        public void ShouldFallbackMaskedEmotesToFullBody_TruthTable(
+            bool localSceneDevelopment,
+            bool useRemoteAssetBundles,
+            bool isBuilderCollectionPreview,
+            bool isWearableBuilderCollectionPreview,
+            bool expected)
+        {
+            globalWorldActions = new GlobalWorldActions(world, playerEntity, mockMessageBus,
+                localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview);
+
+            var sceneData = new MockSceneData { IsWearableBuilderCollectionPreview = isWearableBuilderCollectionPreview };
+
+            Assert.AreEqual(expected, globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData));
         }
 
         [Test]
@@ -296,7 +319,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };
             var hash = "emote_hash_invisible";
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, AvatarEmoteMask.AemFullBody, CancellationToken.None);
 
             Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
@@ -305,16 +328,25 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         // Mocks
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
-            public List<(URN emoteId, bool isLooping)> SentEmotes = new ();
+            public List<(URN emoteId, bool isLooping, AvatarEmoteMask mask)> SentEmotes = new ();
 
-            public void Send(URN urn, bool loopCyclePassed) // Parameter name from interface
+            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() =>
+                throw new NotImplementedException();
+
+            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) // Parameter name from interface
             {
-                SentEmotes.Add((urn, loopCyclePassed));
+                SentEmotes.Add((urn, loopCyclePassed, mask));
             }
+
+            public void SendStop() =>
+                throw new NotImplementedException();
 
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+
+            public void SaveForRetry(RemoteEmoteStopIntention intention) =>
+                throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData
@@ -328,6 +360,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public SceneEntityDefinition SceneEntityDefinition { get; set; } = new ("sceneId", new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
+            public bool IsWearableBuilderCollectionPreview { get; set; }
 
             public bool HasRequiredPermission(string permission) => true;
 
