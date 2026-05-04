@@ -81,6 +81,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Prefs;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -698,6 +699,13 @@ namespace Global.Dynamic
                         bootstrapContainer.DecentralandUrlsSource))
                 : null;
 
+            NearbyVoiceChatStateModel? nearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyVoiceChatStateModel(
+                    DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                        ? NearbyVoiceChatState.DISABLED
+                        : NearbyVoiceChatState.IDLE)
+                : null;
+
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -1146,7 +1154,8 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
-                        nearbyMuteService)
+                        nearbyMuteService,
+                        nearbyStateModel)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -1288,7 +1297,10 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
-                        chatEventBus, translationSettings
+                        chatEventBus,
+                        translationSettings,
+                        nearbyStateModel,
+                        nearbyMuteService
                     )
                 );
 
