@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
             urlBuilder.Clear();
 
-            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
+            if (intention.CommonArguments.URL != URLAddress.EMPTY)
             {
                 var url = new Uri(intention.CommonArguments.URL);
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))

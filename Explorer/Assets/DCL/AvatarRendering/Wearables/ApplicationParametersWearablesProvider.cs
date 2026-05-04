@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables
             if (appArgs.TryGetValue(AppArgsFlags.CROSS_ENV_CATALOG_URL, out string? crossEnvCatalogUrl))
             {
                 string userAddress = web3IdentityCache.Identity!.Address;
-                string zoneWearablesUrl = $"{crossEnvCatalogUrl!.TrimEnd('/')}/lambdas/users/{userAddress}/wearables?pageNum=1&pageSize=200&includeAmount=true";
+                string zoneWearablesUrl = $"{crossEnvCatalogUrl!.TrimEnd('/')}/lambdas/users/{userAddress}/wearables?pageNum=1&pageSize=200&includeAmount=true&trimmed=true";
 
                 results ??= new List<ITrimmedWearable>();
                 var localBuffer = ListPool<ITrimmedWearable>.Get();
