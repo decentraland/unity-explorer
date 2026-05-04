@@ -25,7 +25,7 @@ public class AssetBundleManifestVersion
 
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
-        private int? versionNumber;
+        private bool? HasDepsDigestsValue;
 
 
         public bool assetBundleManifestRequestFailed;
@@ -61,17 +61,18 @@ public class AssetBundleManifestVersion
             return SupportsISS.Value;
         }
 
-        public int GetVersionNumber()
+        public bool HasDepsDigests()
         {
-            if (versionNumber.HasValue) return versionNumber.Value;
+            if (HasDepsDigestsValue == null)
+            {
+                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
+                    HasDepsDigestsValue = false;
+                else
+                    HasDepsDigestsValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST;
+            }
 
-            string? version = GetAssetBundleManifestVersion();
-            versionNumber = string.IsNullOrEmpty(version) ? 0 : int.Parse(version.AsSpan().Slice(1));
-            return versionNumber.Value;
+            return HasDepsDigestsValue.Value;
         }
-
-        public bool HasDepsDigests() =>
-            GetVersionNumber() >= ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST;
 
         /// <summary>
         ///     Parses the manifest's <c>files[]</c> entries and stores the per-file deps digest map.
