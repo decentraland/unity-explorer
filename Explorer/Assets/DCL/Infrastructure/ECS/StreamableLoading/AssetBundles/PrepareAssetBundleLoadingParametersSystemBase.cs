@@ -85,17 +85,16 @@ namespace ECS.StreamableLoading.AssetBundles
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
 
-        public unsafe Hash128 ComputeHash(string hash, string buildDate, string? version = null, string? depsDigest = null)
+        public unsafe Hash128 ComputeHash(string hash, string buildDate, string version, string? depsDigest = null)
         {
             // For v49+ ABs the per-file deps digest replaces the buildDate sledgehammer that was previously used to
             // invalidate the cache when dependencies might have changed. Key on (version + hash + digest) instead.
             if (!string.IsNullOrEmpty(depsDigest))
             {
-                string ver = version ?? string.Empty;
-                Span<char> v49Builder = stackalloc char[ver.Length + hash.Length + depsDigest.Length];
-                ver.AsSpan().CopyTo(v49Builder);
-                hash.AsSpan().CopyTo(v49Builder[ver.Length..]);
-                depsDigest.AsSpan().CopyTo(v49Builder[(ver.Length + hash.Length)..]);
+                Span<char> v49Builder = stackalloc char[version.Length + hash.Length + depsDigest.Length];
+                version.AsSpan().CopyTo(v49Builder);
+                hash.AsSpan().CopyTo(v49Builder[version.Length..]);
+                depsDigest.AsSpan().CopyTo(v49Builder[(version.Length + hash.Length)..]);
 
                 fixed (char* ptr = v49Builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * v49Builder.Length)); }
             }
