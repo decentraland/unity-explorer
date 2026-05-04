@@ -42,7 +42,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             prevState = next;
 
             // IDLE → SPEAKING: dispatch by activation. FOCUS_RESUMED is a continuation, not a fresh use.
-            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.SPEAKING)
+            if (prev == NearbyVoiceChatState.IDLE && next == NearbyVoiceChatState.OPEN_MIC)
             {
                 switch (stateModel.CurrentActivation)
                 {
@@ -57,7 +57,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             }
 
             // SPEAKING → IDLE: button-toggle off. Skip suppression-driven stops (call/scene/loading) — system, not user.
-            if (prev == NearbyVoiceChatState.SPEAKING && next == NearbyVoiceChatState.IDLE
+            if (prev == NearbyVoiceChatState.OPEN_MIC && next == NearbyVoiceChatState.IDLE
                 && stateModel.CurrentActivation == NearbyVoiceActivation.BUTTON
                 && stateModel.ActiveSuppression.Value == null)
             {
@@ -69,7 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             // - Disable() is unconditional, so toggle-off can fire from IDLE or SPEAKING.
             // - Enable() is gated to DISABLED, so toggle-on is only DISABLED → IDLE.
             // Transitions involving SUPPRESSED are system-driven (call/scene/loading) and are skipped.
-            if (next == NearbyVoiceChatState.DISABLED && prev is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
+            if (next == NearbyVoiceChatState.DISABLED && prev is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC)
                 TrackToggle(enabled: false);
             else if (prev == NearbyVoiceChatState.DISABLED && next == NearbyVoiceChatState.IDLE)
                 TrackToggle(enabled: true);

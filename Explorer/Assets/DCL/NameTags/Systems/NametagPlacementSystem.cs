@@ -72,8 +72,8 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            AddTagForPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
-            AddTagForNonPlayerAvatarsQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
+            AddTagForPlayerAvatarsQuery(World, cameraComponent);
+            AddTagForNonPlayerAvatarsQuery(World, cameraComponent);
             UpdateOwnTagQuery(World);
             UpdateElementTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
@@ -83,8 +83,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
-            in AvatarShapeComponent avatarShape,
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
@@ -95,6 +94,7 @@ namespace DCL.Nametags
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
                 return;
 
+            MarkVoiceChatBadgeDirty(e);
             NametagHolder nametagHolder = CreateNameTag(in avatarShape, profile);
             World.Add(e, nametagHolder);
         }
@@ -102,8 +102,7 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagHolder), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape), typeof(AvatarBase))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
-            in AvatarShapeComponent avatarShape,
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape,
             in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
@@ -115,8 +114,19 @@ namespace DCL.Nametags
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
 
+            MarkVoiceChatBadgeDirty(e);
             NametagHolder nametagHolder = CreateNameTag(in avatarShape);
             World.Add(e, nametagHolder);
+        }
+
+        // The pool resets transient visual state on Release, so a fresh holder always starts clean.
+        // Re-dirty any existing voice chat badge so UpdateNametagSpeakingState re-applies the current state to the new holder,
+        // otherwise IsDirty may already be false and the badge would stay off.
+        private void MarkVoiceChatBadgeDirty(Entity e)
+        {
+            ref VoiceChatNametagComponent voiceChat = ref World.TryGetRef<VoiceChatNametagComponent>(e, out bool exists);
+            if (exists)
+                voiceChat.IsDirty = true;
         }
 
         [Query]
@@ -143,13 +153,17 @@ namespace DCL.Nametags
             if (!voiceChatComponent.IsDirty)
                 return;
 
-            nametagHolder.Nametag.VoiceChat = voiceChatComponent.IsSpeaking;
-
             if (voiceChatComponent.IsRemoving)
             {
+                nametagHolder.Nametag.VoiceChat = nametagHolder.Nametag.Speaking = nametagHolder.Nametag.Hushed = false;
                 World.Remove<VoiceChatNametagComponent>(e);
                 return;
             }
+
+            nametagHolder.Nametag.VoiceChat = voiceChatComponent.Type == VoiceChatType.NEARBY || voiceChatComponent.IsSpeaking;
+
+            nametagHolder.Nametag.Speaking = voiceChatComponent.IsSpeaking;
+            nametagHolder.Nametag.Hushed = voiceChatComponent.IsHushed; // hushed is cleared to false when changing room
 
             voiceChatComponent.IsDirty = false;
         }
