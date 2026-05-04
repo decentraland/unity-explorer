@@ -9,6 +9,7 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Runtime.Wearables;
+using System;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -36,21 +37,21 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             this.outfitsLogger = outfitsLogger;
         }
 
-        public async UniTask ExecuteAsync(OutfitItem outfitToPreview, CancellationToken ct)
+        public async UniTask ExecuteAsync(OutfitItem outfitToPreview, CancellationToken ct, Action onEnd)
         {
             // If this is the first preview, store the current avatar state as the "original".
             if (originalOutfit == null)
             {
                 // Capture raw data for sync restore
                 CaptureOriginalDataState();
-                
+
                 // Capture DTO for visual restore
                 originalOutfit = await CreateOutfitFromEquippedAsync(ct);
             }
 
             // Apply the previewed outfit
             if (outfitToPreview.outfit != null)
-                outfitApplier.Apply(outfitToPreview.outfit);
+                outfitApplier.Apply(outfitToPreview.outfit, onEnd);
         }
 
         // Restores the original outfit if one was stored
@@ -108,7 +109,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
-            
+
             var (hair, eyes, skin) = equippedWearables.GetColors();
 
             equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable);
@@ -116,7 +117,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             var bodyShape = bodyShapeWearable?.GetUrn() ?? "";
 
             outfitsLogger.LogEquippedState("[PreviewOutfitCommand - outfit state]", profile?.UserId, equippedWearables);
-            
+
             return new Outfit
             {
                 bodyShape = bodyShape, wearables = equippedWearables

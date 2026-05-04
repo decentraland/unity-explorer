@@ -277,9 +277,10 @@ namespace DCL.Backpack.BackpackBus
             {
                 // Correctly swallowed: The user switched outfits, so we abort this one.
             }
-            catch (Exception e)
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
+            finally
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
+                command.OnEnd?.Invoke();
             }
         }
     }

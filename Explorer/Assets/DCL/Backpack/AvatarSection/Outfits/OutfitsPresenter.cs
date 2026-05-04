@@ -318,7 +318,7 @@ namespace DCL.Backpack
 
         private bool TryGetSlot(int slotIndex, out OutfitSlotPresenter slot)
         {
-            if ((uint)slotIndex < (uint)slotPresenters.Count)
+            if (slotIndex < slotPresenters.Count)
             {
                 slot = slotPresenters[slotIndex];
                 return true;
@@ -341,16 +341,12 @@ namespace DCL.Backpack
 
             try
             {
-                await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token);
+                await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token, EndSlotBusy);
                 GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
             }
             catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.OUTFITS);
-            }
-            finally
-            {
-                EndSlotBusy();
             }
         }
 
