@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes.Play;
 using DCL.FeatureFlags;
 using DCL.PluginSystem;
@@ -30,17 +31,19 @@ namespace DCL.AvatarRendering.Emotes
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             AudioSource audioSource = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
+            EmoteMaskCatalog emoteMaskCatalog = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteMaskCatalog, ct)).Value;
 
             bool legacyAnimationsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT)
                                            || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
-            EmotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled);
+            EmotePlayer = new EmotePlayer(audioSource, emoteMaskCatalog, legacyAnimationsEnabled);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<EmoteMaskCatalog> EmoteMaskCatalog { get; set; } = null!;
         }
     }
 }

@@ -521,6 +521,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <EmoteMaskCatalog>k__BackingField:
+          m_AssetGUID: f3a58c428a71b443e883f8fac00cfbbd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2563261270153757000
       type: {class: DonationsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
