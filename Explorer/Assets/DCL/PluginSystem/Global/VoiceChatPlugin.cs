@@ -54,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly EventSubscriptionScope pluginScope = new ();
         private readonly DCLConcurrentDictionary<string, LivekitAudioSource> nearbyAudioSources = new ();
         private readonly NearbyMuteService? nearbyMuteService;
+        private readonly NearbyVoiceChatStateModel? nearbyStateModel;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatButtonView nearbyVoiceChatButtonView;
         private readonly NearbyVoiceWidgetView nearbyVoiceWidgetView;
@@ -74,7 +75,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
-        private NearbyVoiceChatStateModel? nearbyStateModel;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
         private CancellationTokenSource? nearbyTipCts;
@@ -101,9 +101,11 @@ namespace DCL.PluginSystem.Global
             NearbyVoiceTipView nearbyVoiceTipView,
             VolumeBus volumeBus,
             IUserBlockingCache userBlockingCache,
-            NearbyMuteService? nearbyMuteService = null)
+            NearbyMuteService? nearbyMuteService = null,
+            NearbyVoiceChatStateModel? nearbyStateModel = null)
         {
             this.nearbyMuteService = nearbyMuteService;
+            this.nearbyStateModel = nearbyStateModel;
             this.userBlockingCache = userBlockingCache;
             this.roomHub = roomHub;
             this.voiceChatPanelView = voiceChatPanelView;
@@ -200,21 +202,18 @@ namespace DCL.PluginSystem.Global
             {
                 IRoom islandRoom = roomHub.IslandRoom();
 
-                NearbyVoiceChatState initialState = DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
-                    ? NearbyVoiceChatState.DISABLED
-                    : NearbyVoiceChatState.IDLE;
-
-                nearbyStateModel = new NearbyVoiceChatStateModel(initialState);
-                pluginScope.Add(nearbyStateModel);
+                // State model is created in DynamicWorldContainer so analytics can subscribe to it.
+                NearbyVoiceChatStateModel stateModel = nearbyStateModel!;
+                pluginScope.Add(stateModel);
 
                 // Persist the user's on/off preference of the nearby chat.
-                nearbyStateModel.State.Subscribe(newState =>
+                stateModel.State.Subscribe(newState =>
                 {
                     if (newState is NearbyVoiceChatState.DISABLED or NearbyVoiceChatState.IDLE)
                         DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.DISABLED);
                 });
 
-                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, nearbyStateModel);
+                var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, stateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
@@ -222,13 +221,13 @@ namespace DCL.PluginSystem.Global
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(
                     islandRoom, voiceChatConfiguration,
                     nearbyAudioSources, voiceChatOrchestrator.CurrentCallStatus,
-                    nearbyStateModel, nearbyMuteService, userBlockingCache, loadingStatus);
+                    stateModel, nearbyMuteService, userBlockingCache, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
-                nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, nearbyStateModel);
+                nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, stateModel);
                 pluginScope.Add(nearbyButtonController);
 
-                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, nearbyStateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
+                nearbyWidgetController = new NearbyVoiceWidgetController(nearbyVoiceWidgetView, stateModel, voiceChatConfiguration.ChatAudioMixerGroup, volumeBus);
                 pluginScope.Add(nearbyWidgetController);
 
                 nearbyTipCts = new CancellationTokenSource();

@@ -165,7 +165,8 @@ namespace ECS.Unity.AvatarShape.Systems
                         emoteId,
                         hash,
                         bodyShape,
-                        loop: false), PartitionComponent.TOP_PRIORITY);
+                        loop: false,
+                        mask: AvatarEmoteMask.AemFullBody), PartitionComponent.TOP_PRIORITY);
             }
             else
             {

@@ -16,10 +16,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             this.webSocket = webSocket;
         }
 
-        public static EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> NewErrorResult(DCLWebSocket webSocket) =>
+        public static EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> NewErrorResult(DCLWebSocket webSocket, Exception? inner = null) =>
             EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
                 IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
-                $"WebSocket closed with state: {webSocket.State} - Connection closed"
+                $"WebSocket closed with state: {webSocket.State} - Connection closed Connection closed: {(inner is null ? string.Empty : $" ({inner.GetType().Name}: {inner.Message})")}"
             );
     }
 }

@@ -50,7 +50,6 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
-using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
@@ -82,6 +81,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Prefs;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -100,7 +100,6 @@ using Global.Versioning;
 using DCL.LiveKit.Public;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -338,8 +337,7 @@ namespace Global.Dynamic
             var builderDTOsURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
             var builderContentURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
 
-            var emotesCache = new MemoryEmotesStorage();
-            staticContainer.CacheCleaner.Register(emotesCache);
+            IEmoteStorage emotesCache = staticContainer.EmoteStorage;
             staticContainer.CacheCleaner.Register(trimmedEmoteCatalog);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
@@ -635,6 +633,9 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
 
+            // Configure proxies for scene-side masked emote system
+            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
+
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -696,6 +697,13 @@ namespace Global.Dynamic
                     new RestNearbyMuteRepository(
                         staticContainer.WebRequestsContainer.WebRequestController,
                         bootstrapContainer.DecentralandUrlsSource))
+                : null;
+
+            NearbyVoiceChatStateModel? nearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyVoiceChatStateModel(
+                    DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                        ? NearbyVoiceChatState.DISABLED
+                        : NearbyVoiceChatState.IDLE)
                 : null;
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
@@ -795,13 +803,13 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     builderContentURL.Value,
-                    appArgs,
                     thumbnailProvider,
                     staticContainer.ScenesCache,
                     bootstrapContainer.DecentralandUrlsSource,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
-                    trimmedEmoteCatalog),
+                    trimmedEmoteCatalog,
+                staticContainer.EmotesContainer.EmotePlayer),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -1146,7 +1154,8 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
-                        nearbyMuteService)
+                        nearbyMuteService,
+                        nearbyStateModel)
                 );
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -1288,7 +1297,10 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
-                        chatEventBus, translationSettings
+                        chatEventBus,
+                        translationSettings,
+                        nearbyStateModel,
+                        nearbyMuteService
                     )
                 );
 

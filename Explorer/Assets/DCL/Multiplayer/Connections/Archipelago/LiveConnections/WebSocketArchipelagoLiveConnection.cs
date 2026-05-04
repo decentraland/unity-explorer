@@ -4,6 +4,7 @@ using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
+using System.IO;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
@@ -115,6 +116,28 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                            ),
                        };
             }
+            catch (WebSocketException e)
+            {
+                ClientWebSocket socket = current!.Value.WebSocket;
+
+                if (IndicatesConnectionClosed(e.WebSocketErrorCode, socket.State))
+                    return ConnectionClosedException.NewErrorResult(socket, e);
+
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    $"WebSocket protocol error: {e.WebSocketErrorCode} (state: {socket.State}) - {e.Message}"
+                );
+            }
+            catch (IOException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
+            catch (ObjectDisposedException e)
+            {
+                // Don't probe the websocket here — it's the disposed object. Property access on a disposed
+                // ClientWebSocket is not contractually safe across runtimes (Mono/IL2CPP/.NET differ).
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
+                    $"WebSocket disposed: {e}"
+                );
+            }
             catch (Exception e)
             {
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
@@ -162,6 +185,23 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         private bool IsWebSocketInvalid() =>
             current?.WebSocket is not { State: WebSocketState.Open };
+
+        /// <summary>
+        ///     A <see cref="WebSocketException" /> can mean either a connection-level failure or a
+        ///     protocol/format issue on an otherwise live socket. We classify by the reported error
+        ///     code, falling back to the socket state because Mono/IL2CPP commonly reports everything
+        ///     as <see cref="WebSocketError.Faulted" />.
+        /// </summary>
+        private static bool IndicatesConnectionClosed(WebSocketError error, WebSocketState state)
+        {
+            if (state != WebSocketState.Open)
+                return true;
+
+            return error is WebSocketError.Faulted
+                or WebSocketError.NativeError
+                or WebSocketError.ConnectionClosedPrematurely
+                or WebSocketError.InvalidState;
+        }
 
         private readonly struct Current : IDisposable
         {
