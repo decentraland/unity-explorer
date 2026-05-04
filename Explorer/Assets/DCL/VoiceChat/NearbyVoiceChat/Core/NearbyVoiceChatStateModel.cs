@@ -20,6 +20,13 @@ namespace DCL.VoiceChat.Nearby
         LOADING,
     }
 
+    public enum NearbyVoiceActivation
+    {
+        PUSH_TO_TALK,   // Hold [T]
+        BUTTON,         // Widget speak button click
+        FOCUS_RESUMED,  // Auto-resume after application regained focus
+    }
+
     public class NearbyVoiceChatStateModel : IDisposable
     {
         private readonly ReactiveProperty<NearbyVoiceChatState> state;
@@ -30,6 +37,12 @@ namespace DCL.VoiceChat.Nearby
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
         public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
+
+        /// <summary>
+        ///     How the current (or most recent) SPEAKING state was entered.
+        ///     Set by <see cref="StartSpeaking"/> right before the state transition.
+        /// </summary>
+        public NearbyVoiceActivation CurrentActivation { get; private set; }
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
@@ -70,10 +83,13 @@ namespace DCL.VoiceChat.Nearby
         }
 
         // Speaking
-        public void StartSpeaking()
+        public void StartSpeaking(NearbyVoiceActivation activation = NearbyVoiceActivation.BUTTON)
         {
             if (state.Value == NearbyVoiceChatState.IDLE)
+            {
+                CurrentActivation = activation;
                 SetState(NearbyVoiceChatState.OPEN_MIC);
+            }
         }
 
         public void StopSpeaking()

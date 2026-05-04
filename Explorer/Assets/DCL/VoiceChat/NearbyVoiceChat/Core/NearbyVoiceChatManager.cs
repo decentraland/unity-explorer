@@ -154,7 +154,7 @@ namespace DCL.VoiceChat
                     return;
                 }
 
-                stateModel.StartSpeaking();
+                stateModel.StartSpeaking(NearbyVoiceActivation.FOCUS_RESUMED);
                 ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Nearby mic resumed — application regained focus");
             }
         }
