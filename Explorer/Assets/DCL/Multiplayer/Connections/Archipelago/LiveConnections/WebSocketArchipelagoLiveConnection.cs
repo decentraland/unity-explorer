@@ -118,7 +118,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             }
             catch (WebSocketException e)
             {
-                ClientWebSocket socket = current!.Value.WebSocket;
+                DCLWebSocket socket = current!.Value.WebSocket;
 
                 if (IndicatesConnectionClosed(e.WebSocketErrorCode, socket.State))
                     return ConnectionClosedException.NewErrorResult(socket, e);
