@@ -16,7 +16,7 @@ public class AssetBundleManifestVersion
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 2000;
 
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
-        public const int ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST = 49;
+        private const int ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST = 49;
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
