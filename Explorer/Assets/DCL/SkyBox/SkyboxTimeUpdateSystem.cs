@@ -17,20 +17,15 @@ namespace DCL.SkyBox
         private readonly SkyboxStateMachine stateMachine;
         private readonly Entity skyboxEntity;
 
-        private ISkyboxState globalTimeState;
-
         private SkyboxTimeUpdateSystem(World world,
             SkyboxSettingsAsset skyboxSettings,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             SkyboxRenderController skyboxRenderController,
             IRealmData realmData,
-            Entity skyboxEntity,
-            bool pauseGlobalTime) : base(world)
+            Entity skyboxEntity) : base(world)
         {
             var transition = new InterpolateTimeOfDayState(skyboxSettings);
-
-            globalTimeState = new GlobalTimeState(skyboxSettings, transition, pauseGlobalTime);
 
             stateMachine = new SkyboxStateMachine(new ISkyboxState[]
             {
@@ -38,7 +33,7 @@ namespace DCL.SkyBox
                 new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
                 new RealmSkyboxState(realmData, skyboxSettings, sceneRestrictionController, transition),
                 new UIOverrideState(skyboxSettings, transition),
-                globalTimeState,
+                new GlobalTimeState(skyboxSettings, transition),
             });
 
             this.skyboxSettings = skyboxSettings;

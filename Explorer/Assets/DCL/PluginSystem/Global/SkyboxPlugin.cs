@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.SkyBox.Components;
 using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
@@ -25,7 +26,7 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IRealmData realmData;
-        private readonly bool pauseGlobalTime;
+        private readonly bool skyboxTimeEnabled;
 
         private SkyboxSettings settingsJson;
 
@@ -37,21 +38,27 @@ namespace DCL.SkyBox
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             IRealmData realmData,
-            bool pauseGlobalTime = false)
+            bool skyboxTimeEnabled = true)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
             this.realmData = realmData;
-            this.pauseGlobalTime = pauseGlobalTime;
+            this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity, pauseGlobalTime);
+            if (!skyboxTimeEnabled)
+            {
+                builder.World.AddOrGet(arguments.SkyboxEntity, new PauseSkyboxTimeUpdate());
+                return;
+            }
+
+            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
@@ -84,8 +91,8 @@ namespace DCL.SkyBox
                     lensFlareEnabled
                 );
 
-                if (pauseGlobalTime)
-                    skyboxRenderController.FreezeClouds();
+                if (!skyboxTimeEnabled)
+                    skyboxRenderController.DisableSkyboxTime();
             }
             catch (OperationCanceledException)
             {

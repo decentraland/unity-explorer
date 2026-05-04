@@ -30,6 +30,8 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
     private static readonly int CLOUDS_ROTATION_SPEED = Shader.PropertyToID("_CloudsRotationSpeed");
+    private static readonly int SECOND_SUN_ROTATION_SPEED = Shader.PropertyToID("_Second_Sun_Rotation_Speed");
+    private static readonly int TIME_PARAMETERS = Shader.PropertyToID("_TimeParameters");
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -299,9 +301,18 @@ public class SkyboxRenderController : MonoBehaviour
             RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
     }
 
-    public void FreezeClouds()
+    public void DisableSkyboxTime()
     {
         skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, 0f);
+        skyboxMaterial.SetFloat(SECOND_SUN_ROTATION_SPEED, 0f);
+
+        // Override shader-side time per-material to disable stars rotation and sky oscillation,
+        // which are driven by Unity's _TimeParameters global but have no material speed property.
+        skyboxMaterial.SetVector(TIME_PARAMETERS, Vector4.one);
+
+        // Cancel the pending directional light transition started during Initialize(),
+        // which would lerp from float.MinValue and corrupt the light's position.
+        transitionCancellationTokenSource?.Cancel();
     }
 
     private void OnDestroy()
