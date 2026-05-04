@@ -36,10 +36,5 @@ namespace DCL.UI.ErrorPopup
 
         [field: SerializeField]
         public GameObject ClockIcon { get; private set; }
-
-        public int SortingOrder
-        {
-            set => GetComponent<Canvas>().sortingOrder = value;
-        }
     }
 }

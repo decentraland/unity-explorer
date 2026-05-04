@@ -87,6 +87,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupPrefab = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
@@ -244,8 +245,9 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, ct);
 
                 bootstrap.InitializeFeaturesRegistry();
-
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, assetsProvisioner, ct);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
@@ -310,8 +312,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, ct);
 
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
 
@@ -804,11 +804,11 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, CancellationToken ct)
+        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
             if (!IsDesync()) return;
 
-            ErrorPopupWithRetryController.Result response = await ShowClockDesyncPopupAsync(ct);
+            ErrorPopupWithRetryController.Result response = await ShowClockDesyncPopupAsync(assetsProvisioner, ct);
 
             switch (response)
             {
@@ -816,7 +816,7 @@ namespace Global.Dynamic
                     ExitUtils.Exit();
                     break;
                 case ErrorPopupWithRetryController.Result.RESTART:
-                    await DetectClockDesyncAsync(realmClock, ct);
+                    await DetectClockDesyncAsync(realmClock, assetsProvisioner, ct);
                     break;
             }
 
@@ -833,29 +833,29 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<ErrorPopupWithRetryController.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
+        private async UniTask<ErrorPopupWithRetryController.Result> ShowClockDesyncPopupAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            IMVCManager mvcManager = dynamicWorldContainer!.MvcManager;
+            ErrorPopupWithRetryView prefab = (await assetsProvisioner.ProvideMainAssetAsync(clockDesyncPopupPrefab, ct)).Value;
 
-            // The MVC manager is not considering the sorting order of the splash screen as it is spawned through the mvc system
-            // we need to force to render it on top of it
-            mvcManager.OnViewShowed += ShowPopupOnTopOfSplashScreen;
+            ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
+                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(prefab, null, out ErrorPopupWithRetryView viewInstance);
+
+            using var controller = new ErrorPopupWithRetryController(viewFactory);
 
             var input = new ErrorPopupWithRetryController.Input(
                 title: "Time sync needed",
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
                 iconType: ErrorPopupWithRetryController.IconType.CLOCK);
 
-            try { await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct); }
-            finally { mvcManager.OnViewShowed -= ShowPopupOnTopOfSplashScreen; }
+            var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
+
+            // Cant use the MVC here, it doesn't exist at this point
+            await controller.LaunchViewLifeCycleAsync(ordering, input, ct);
+            await controller.HideViewAsync(ct);
+
+            Destroy(viewInstance.gameObject);
 
             return input.SelectedOption;
-
-            void ShowPopupOnTopOfSplashScreen(IController c)
-            {
-                if (c is ErrorPopupWithRetryController errorPopupController)
-                    errorPopupController.SortingOrder = splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1;
-            }
         }
 
         private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
@@ -873,6 +873,12 @@ namespace Global.Dynamic
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
             public SplashScreenRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ErrorPopupWithRetryRef : ComponentReference<ErrorPopupWithRetryView>
+        {
+            public ErrorPopupWithRetryRef(string guid) : base(guid) { }
         }
     }
 }
