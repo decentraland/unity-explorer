@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using System;
@@ -21,10 +22,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
+        private readonly EmoteMaskCatalog emoteMaskCatalog;
         private readonly bool legacyAnimationsEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, bool legacyAnimationsEnabled = false)
+        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, bool legacyAnimationsEnabled = false)
         {
+            this.emoteMaskCatalog = emoteMaskCatalog;
             this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
@@ -99,10 +102,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (emoteReferences.avatarClip == null) return false;
 
-            view.StartMaskedLegacyEmote(emoteReferences.avatarClip, maskedEmote.Mask, isLooping);
+            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out AvatarMask? avatarMask))
+            {
+                ReportHub.LogError(ReportCategory.EMOTE,
+                    $"{nameof(EmoteMaskCatalog)} has no entry for {maskedEmote.Mask}, masked legacy emote ignored.");
+                return false;
+            }
 
-            // The view bails (logging) if the catalog is missing or has no entry; reflect that.
-            if (!view.IsMaskedLegacyEmotePlaying) return false;
+            view.StartMaskedLegacyEmote(emoteReferences.avatarClip, avatarMask!, isLooping);
 
             maskedEmote.EmoteLoop = isLooping;
 

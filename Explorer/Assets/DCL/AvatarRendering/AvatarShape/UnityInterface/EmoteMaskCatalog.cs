@@ -13,8 +13,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     [CreateAssetMenu(menuName = "DCL/Avatar/Emote Mask Catalog", fileName = "EmoteMaskCatalog")]
     public class EmoteMaskCatalog : ScriptableObject
     {
-        public const string RESOURCE_NAME = "EmoteMaskCatalog";
-
         [Serializable]
         private struct Entry
         {
@@ -23,18 +21,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         }
 
         [SerializeField] private List<Entry> entries = new ();
-
-        private static EmoteMaskCatalog? cachedInstance;
-        private static bool resolved;
-
-        public static EmoteMaskCatalog? GetCachedInstance()
-        {
-            if (resolved) return cachedInstance;
-
-            cachedInstance = Resources.Load<EmoteMaskCatalog>(RESOURCE_NAME);
-            resolved = true;
-            return cachedInstance;
-        }
 
         public bool TryGet(AvatarEmoteMask key, out AvatarMask? mask)
         {

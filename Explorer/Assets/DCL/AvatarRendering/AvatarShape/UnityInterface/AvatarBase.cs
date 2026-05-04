@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using DCL.Audio.Avatar;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -31,7 +30,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public Animation? LegacyAnimation { get; private set; }
 
         private MaskedLegacyEmoteBlender? maskedLegacyBlender;
-        private static bool emoteMaskCatalogMissingLogged;
 
         [field: SerializeField] public RigBuilder RigBuilder { get; private set; }
 
@@ -188,31 +186,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             return maskedLegacyBlender;
         }
 
-        public void StartMaskedLegacyEmote(AnimationClip clip, AvatarEmoteMask emoteMask, bool loop)
+        public void StartMaskedLegacyEmote(AnimationClip clip, AvatarMask avatarMask, bool loop)
         {
-            EmoteMaskCatalog? catalog = EmoteMaskCatalog.GetCachedInstance();
-
-            if (catalog == null)
-            {
-                if (!emoteMaskCatalogMissingLogged)
-                {
-                    ReportHub.LogWarning(ReportCategory.EMOTE,
-                        $"{EmoteMaskCatalog.RESOURCE_NAME}.asset not found in any Resources/ folder, masked legacy emotes cannot blend.");
-                    emoteMaskCatalogMissingLogged = true;
-                }
-                return;
-            }
-
-            if (!catalog.TryGet(emoteMask, out AvatarMask? avatarMask) || avatarMask == null)
-            {
-                ReportHub.LogWarning(ReportCategory.EMOTE,
-                    $"{EmoteMaskCatalog.RESOURCE_NAME} has no entry for {emoteMask}, masked legacy emote ignored.");
-                return;
-            }
-
             // Keep the Animator enabled so locomotion stays driving the bones we restore each frame.
             AvatarAnimator.enabled = true;
-
             AddOrGetMaskedLegacyBlender().Play(clip, avatarMask, loop);
         }
 
@@ -414,7 +391,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         void StopLegacyAnimation();
 
-        void StartMaskedLegacyEmote(AnimationClip clip, AvatarEmoteMask emoteMask, bool loop);
+        void StartMaskedLegacyEmote(AnimationClip clip, AvatarMask avatarMask, bool loop);
 
         void StopMaskedLegacyEmote();
 
