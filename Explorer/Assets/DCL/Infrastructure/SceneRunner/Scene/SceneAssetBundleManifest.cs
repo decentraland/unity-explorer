@@ -5,8 +5,6 @@ namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
-        // 32 hex chars in `<hash>_<depsDigest>_<platform>` filenames produced by AB-converter v49+
-        private const int DEPS_DIGEST_LENGTH = 32;
         private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
         private readonly string version;
@@ -50,29 +48,15 @@ namespace SceneRunner.Scene
                 string file = files[i];
                 if (string.IsNullOrEmpty(file)) continue;
 
-                // Expect "<hash>_<depsDigest>_<platform>". Anything else (including legacy 2-part filenames) is skipped.
+                // Expect "<hash>_<depsDigest>_<platform>". Legacy 2-part filenames split into fewer parts and are skipped.
                 string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
                 if (parts.Length < 3) continue;
 
-                string digest = parts[1];
-                if (digest.Length != DEPS_DIGEST_LENGTH || !IsHex(digest)) continue;
-
                 map ??= new Dictionary<string, string>(new UrlHashComparer());
-                map[parts[0]] = digest;
+                map[parts[0]] = parts[1];
             }
 
             return map;
-        }
-
-        private static bool IsHex(string value)
-        {
-            for (var i = 0; i < value.Length; i++)
-            {
-                char c = value[i];
-                bool isHex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-                if (!isHex) return false;
-            }
-            return true;
         }
     }
 }

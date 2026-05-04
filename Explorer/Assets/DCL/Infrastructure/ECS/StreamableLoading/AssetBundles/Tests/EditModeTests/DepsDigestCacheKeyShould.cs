@@ -39,22 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void RejectInvalidDigestTokens()
-        {
-            string[] files =
-            {
-                // Middle token is not 32 hex chars
-                "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4_notahex_mac",
-                // Right length but contains non-hex character
-                "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4_zda1af30bdf4a19ce03e663a9a288afe_mac",
-            };
-
-            var map = SceneAssetBundleManifest.ExtractDepsDigests(files);
-
-            Assert.That(map, Is.Null);
-        }
-
-        [Test]
         public void TreatIntentionsWithDifferentDigestsAsDistinct()
         {
             var sameHash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
