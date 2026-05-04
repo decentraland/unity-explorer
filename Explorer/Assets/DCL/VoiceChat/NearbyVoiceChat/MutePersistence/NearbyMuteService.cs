@@ -17,6 +17,16 @@ namespace DCL.VoiceChat.Nearby
         private readonly INearbyMuteCache cache;
         private readonly INearbyMuteRepository repository;
 
+        /// <summary>
+        /// Parameters: walletId, isMuted.
+        /// Proxied from <see cref="INearbyMuteCache.MuteStateChanged"/> so consumers depend on the service facade rather than the cache directly.
+        /// </summary>
+        public event Action<string, bool>? MuteStateChanged
+        {
+            add => cache.MuteStateChanged += value;
+            remove => cache.MuteStateChanged -= value;
+        }
+
         public NearbyMuteService(INearbyMuteCache cache, INearbyMuteRepository repository)
         {
             this.cache = cache;

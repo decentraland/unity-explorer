@@ -16,6 +16,8 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
 
         public uint Version => Volatile.Read(ref version);
 
+        public event Action<string, bool>? MuteStateChanged;
+
         public bool IsMuted(string walletAddress)
         {
             lock (gate)
@@ -26,29 +28,37 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
 
         public void SetMuted(string walletAddress, bool muted)
         {
+            bool changed;
+
             lock (gate)
             {
                 if (muted)
                 {
-                    if (mutedWalletIds.Add(walletAddress))
-                        version++;
+                    changed = mutedWalletIds.Add(walletAddress);
+                    if (changed) version++;
 
                     sessionUnmuted.Remove(walletAddress);
                 }
                 else
                 {
-                    if (mutedWalletIds.Remove(walletAddress))
-                        version++;
+                    changed = mutedWalletIds.Remove(walletAddress);
+                    if (changed) version++;
 
                     sessionUnmuted.Add(walletAddress); // Record intent even if not currently in the cache — Merge must honour it.
                 }
             }
+
+            // Raised outside the lock so subscribers cannot deadlock against `gate`.
+            if (changed)
+                MuteStateChanged?.Invoke(walletAddress, muted);
         }
 
         public void Merge(IEnumerable<string> mutedAddresses)
         {
             // Client is source of truth: server snapshot only adds missing entries.
             // Skip addresses the user explicitly unmuted this session, otherwise a stale snapshot would re-mute them.
+            List<string>? newlyMuted = null;
+
             lock (gate)
             {
                 foreach (string address in mutedAddresses)
@@ -56,9 +66,16 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
                     if (sessionUnmuted.Contains(address)) continue;
 
                     if (mutedWalletIds.Add(address))
+                    {
                         version++;
+                        (newlyMuted ??= new List<string>()).Add(address);
+                    }
                 }
             }
+
+            if (newlyMuted != null)
+                foreach (string address in newlyMuted)
+                    MuteStateChanged?.Invoke(address, true);
         }
     }
 }

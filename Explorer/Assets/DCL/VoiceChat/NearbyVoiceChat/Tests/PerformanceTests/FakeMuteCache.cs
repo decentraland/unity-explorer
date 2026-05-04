@@ -1,4 +1,5 @@
 using DCL.VoiceChat.Nearby.MutePersistence;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby
@@ -26,20 +27,29 @@ namespace DCL.VoiceChat.Nearby
         // (LastSeenMuteVersion=0) deterministically mismatches on its first tick.
         public uint Version { get; private set; } = 1;
 
+        public event Action<string, bool>? MuteStateChanged;
+
         public bool IsMuted(string walletAddress) =>
             mutedSet.Contains(walletAddress);
 
         public void SetMuted(string walletAddress, bool muted)
         {
             bool changed = muted ? mutedSet.Add(walletAddress) : mutedSet.Remove(walletAddress);
-            if (changed) Version++;
+            if (changed)
+            {
+                Version++;
+                MuteStateChanged?.Invoke(walletAddress, muted);
+            }
         }
 
         public void Merge(IEnumerable<string> mutedAddresses)
         {
             foreach (string addr in mutedAddresses)
                 if (mutedSet.Add(addr))
+                {
                     Version++;
+                    MuteStateChanged?.Invoke(addr, true);
+                }
         }
     }
 }
