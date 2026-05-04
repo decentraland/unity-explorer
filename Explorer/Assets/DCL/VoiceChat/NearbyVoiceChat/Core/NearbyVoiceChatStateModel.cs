@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.Nearby
     public enum NearbyVoiceChatState
     {
         DISABLED,
-        IDLE, // default state where user is connected to nearby chat and can hear its participants
+        IDLE,       // default state where user is connected to nearby chat and can hear its participants
         SPEAKING,
         SUPPRESSED, // when you have another more priority voice chat - Private or Community
     }
@@ -18,6 +18,13 @@ namespace DCL.VoiceChat.Nearby
         CALL,
         SCENE,
         LOADING,
+    }
+
+    public enum NearbyVoiceActivation
+    {
+        PUSH_TO_TALK,   // Hold [T]
+        BUTTON,         // Widget speak button click
+        FOCUS_RESUMED,  // Auto-resume after application regained focus
     }
 
     public class NearbyVoiceChatStateModel : IDisposable
@@ -30,6 +37,12 @@ namespace DCL.VoiceChat.Nearby
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
         public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
+
+        /// <summary>
+        ///     How the current (or most recent) SPEAKING state was entered.
+        ///     Set by <see cref="StartSpeaking"/> right before the state transition.
+        /// </summary>
+        public NearbyVoiceActivation CurrentActivation { get; private set; }
 
         /// <summary>
         ///     True when the LiveKit server detects the local participant is actually producing sound (VAD).
@@ -68,10 +81,13 @@ namespace DCL.VoiceChat.Nearby
         }
 
         // Speaking
-        public void StartSpeaking()
+        public void StartSpeaking(NearbyVoiceActivation activation = NearbyVoiceActivation.BUTTON)
         {
             if (state.Value == NearbyVoiceChatState.IDLE)
+            {
+                CurrentActivation = activation;
                 SetState(NearbyVoiceChatState.SPEAKING);
+            }
         }
 
         public void StopSpeaking()

@@ -136,10 +136,6 @@ namespace CrdtEcsBridge.RestrictedActions
             return result;
         }
 
-        public bool ShouldFallbackMaskedEmotesToFullBody(ISceneData sceneData) =>
-            (localSceneDevelopment && !useRemoteAssetBundles) ||
-            (isBuilderCollectionPreview && sceneData.IsWearableBuilderCollectionPreview);
-
         public void StopEmote()
         {
             // If the avatar is not visible, there is nothing to stop (matches TriggerEmote guard).
