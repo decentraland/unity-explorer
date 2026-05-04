@@ -29,6 +29,7 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_RADIANCE = Shader.PropertyToID("_Sun_Radiance");
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
+    private static readonly int CLOUDS_ROTATION_SPEED = Shader.PropertyToID("_CloudsRotationSpeed");
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -296,6 +297,11 @@ public class SkyboxRenderController : MonoBehaviour
     {
         if (fog)
             RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
+    }
+
+    public void FreezeClouds()
+    {
+        skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, 0f);
     }
 
     private void OnDestroy()

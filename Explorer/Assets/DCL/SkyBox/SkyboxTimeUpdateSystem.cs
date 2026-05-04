@@ -25,11 +25,12 @@ namespace DCL.SkyBox
             ISceneRestrictionBusController sceneRestrictionController,
             SkyboxRenderController skyboxRenderController,
             IRealmData realmData,
-            Entity skyboxEntity) : base(world)
+            Entity skyboxEntity,
+            bool pauseGlobalTime) : base(world)
         {
             var transition = new InterpolateTimeOfDayState(skyboxSettings);
 
-            globalTimeState = new GlobalTimeState(skyboxSettings, transition);
+            globalTimeState = new GlobalTimeState(skyboxSettings, transition, pauseGlobalTime);
 
             stateMachine = new SkyboxStateMachine(new ISkyboxState[]
             {

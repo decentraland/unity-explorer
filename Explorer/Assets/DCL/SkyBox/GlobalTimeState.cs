@@ -4,14 +4,17 @@ namespace DCL.SkyBox
     {
         private readonly SkyboxSettingsAsset settings;
         private readonly InterpolateTimeOfDayState transition;
+        private readonly bool paused;
         private float refreshAccumulatedTime;
         private bool isTransitioning;
 
         public GlobalTimeState(SkyboxSettingsAsset settings,
-            InterpolateTimeOfDayState transition)
+            InterpolateTimeOfDayState transition,
+            bool paused = false)
         {
             this.settings = settings;
             this.transition = transition;
+            this.paused = paused;
         }
 
         public bool Applies() =>
@@ -30,6 +33,8 @@ namespace DCL.SkyBox
 
         public void Update(float dt)
         {
+            if (paused) return;
+
             if (isTransitioning)
             {
                 if (transition.Applies())
