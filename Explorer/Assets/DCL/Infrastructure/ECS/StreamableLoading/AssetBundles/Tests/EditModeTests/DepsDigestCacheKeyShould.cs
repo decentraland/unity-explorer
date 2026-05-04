@@ -1,6 +1,8 @@
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Threading;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -118,6 +120,28 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             using var keyB = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in alsoLegacy);
 
             Assert.That(HashNamings.HashNameFrom(keyA, ".ab"), Is.EqualTo(HashNamings.HashNameFrom(keyB, ".ab")));
+        }
+
+        [Test]
+        public void GltfIntentionCacheKeyComposesHashAndDigest()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            var withDigest = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_A);
+            var withoutDigest = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource());
+
+            Assert.That(withDigest.CacheKey, Is.EqualTo($"{hash}@{DIGEST_A}"));
+            Assert.That(withoutDigest.CacheKey, Is.EqualTo(hash), "Legacy entries must keep using the bare hash so existing cached assets keep hitting");
+        }
+
+        [Test]
+        public void GltfIntentionsWithDifferentDigestsAreDistinct()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            var a = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_A);
+            var b = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_B);
+
+            Assert.That(a.CacheKey, Is.Not.EqualTo(b.CacheKey));
+            Assert.That(a.Equals(b), Is.False);
         }
     }
 }

@@ -67,8 +67,18 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                assetBundleIntention.AssetBundleManifestVersion.TryGetDepsDigest(assetBundleIntention.Hash, out string depsDigest);
-                assetBundleIntention.DepsDigest = depsDigest;
+                // Upstream code paths (e.g. PrepareGltfAssetLoadingSystem) pre-populate DepsDigest from the bare hash
+                // before the platform suffix is appended. If they didn't, fall back to looking it up here, stripping
+                // the platform suffix because the digest map is keyed by bare hashes.
+                string? depsDigest = assetBundleIntention.DepsDigest;
+                if (string.IsNullOrEmpty(depsDigest))
+                {
+                    string lookupHash = StripPlatformSuffix(assetBundleIntention.Hash);
+                    if (assetBundleIntention.AssetBundleManifestVersion.TryGetDepsDigest(lookupHash, out string resolved))
+                        depsDigest = resolved;
+                    assetBundleIntention.DepsDigest = depsDigest;
+                }
+
                 assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash,
                     assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate(),
                     assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
@@ -104,6 +114,14 @@ namespace ECS.StreamableLoading.AssetBundles
             hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
 
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
+
+        private static string StripPlatformSuffix(string hash)
+        {
+            string suffix = PlatformUtils.GetCurrentPlatform();
+            return !string.IsNullOrEmpty(suffix) && hash.EndsWith(suffix, StringComparison.Ordinal)
+                ? hash[..^suffix.Length]
+                : hash;
         }
 
         private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)

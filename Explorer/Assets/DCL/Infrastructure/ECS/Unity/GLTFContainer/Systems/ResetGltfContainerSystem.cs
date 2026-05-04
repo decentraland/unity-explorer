@@ -66,7 +66,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
                 entityCollidersSceneCache.Remove(result.Asset);
-                cache.Dereference(component.Hash, result.Asset);
+                cache.Dereference(component.CacheKey, result.Asset);
             }
         }
 
