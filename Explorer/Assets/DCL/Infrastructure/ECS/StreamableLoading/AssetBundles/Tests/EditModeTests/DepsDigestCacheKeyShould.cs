@@ -2,10 +2,7 @@ using DCL.Ipfs;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
-using SceneRunner.Scene;
-using System.Collections.Generic;
 using System.Threading;
-using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -15,7 +12,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private const string DIGEST_B = "243f68977939e1f526b4c1a05a40b43a";
 
         [Test]
-        public void ExtractDepsDigestsFromThreePartFilenames()
+        public void InjectDepsDigestsFromThreePartFilenames()
         {
             string[] files =
             {
@@ -24,12 +21,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 $"bafkreice3qpeyeb4ni7fnlt6bijs57zrbuw7cwmbymzcndyllzho3hbgaa_{DIGEST_B}_mac",
             };
 
-            var map = SceneAssetBundleManifest.ExtractDepsDigests(files);
-
-            Assert.That(map, Is.Not.Null);
-            Assert.That(map!.Count, Is.EqualTo(2));
-
-            var manifest = new SceneAssetBundleManifest("v49", "2026-05-01", map);
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            manifest.InjectDepsDigests(files);
 
             Assert.That(manifest.TryGetDepsDigest("bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru", out _), Is.False, "Legacy 2-part filenames must not contribute a digest");
             Assert.That(manifest.TryGetDepsDigest("bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4", out string digestA), Is.True);
@@ -157,10 +150,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void ComposeCacheKey_AppendsDigestWhenPresent()
         {
             var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            manifest.InjectDepsDigests(new Dictionary<string, string>(new UrlHashComparer())
-            {
-                { "X", DIGEST_A },
-            });
+            manifest.InjectDepsDigests(new[] { $"X_{DIGEST_A}_mac" });
 
             Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo($"X@{DIGEST_A}"));
         }

@@ -12,14 +12,16 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        //From v41 ISS is supported for scenes
-        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
+        //v2000 marks that it has ISS enabled
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 2000;
 
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
         public const int ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST = 49;
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+
+        private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
@@ -71,9 +73,34 @@ public class AssetBundleManifestVersion
         public bool HasDepsDigests() =>
             GetVersionNumber() >= ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST;
 
-        public void InjectDepsDigests(IReadOnlyDictionary<string, string>? digests)
+        /// <summary>
+        ///     Parses the manifest's <c>files[]</c> entries and stores the per-file deps digest map.
+        ///     Expects v49+ filenames in the form <c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>;
+        ///     legacy 2-part filenames split into fewer parts and are skipped.
+        /// </summary>
+        public void InjectDepsDigests(string[]? files)
         {
-            depsDigests = digests;
+            if (files == null || files.Length == 0)
+            {
+                depsDigests = null;
+                return;
+            }
+
+            Dictionary<string, string>? map = null;
+
+            for (var i = 0; i < files.Length; i++)
+            {
+                string file = files[i];
+                if (string.IsNullOrEmpty(file)) continue;
+
+                string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
+                if (parts.Length < 3) continue;
+
+                map ??= new Dictionary<string, string>(new UrlHashComparer());
+                map[parts[0]] = parts[1];
+            }
+
+            depsDigests = map;
         }
 
         public bool TryGetDepsDigest(string hash, out string digest)
