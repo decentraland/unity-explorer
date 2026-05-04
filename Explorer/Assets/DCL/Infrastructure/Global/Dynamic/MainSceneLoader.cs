@@ -733,6 +733,7 @@ namespace Global.Dynamic
         private void InstantiateAltTester(IAppArgs appArgs)
         {
 #if ALTTESTER
+
             // Temporary parent needed because AltTester's Awake method relies on the name being
             // AltTesterPrefab (and not AltTesterPrefab(Clone))
             var tempParent = new GameObject("AltTesterParent");
@@ -845,16 +846,15 @@ namespace Global.Dynamic
                 description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
                 iconType: ErrorPopupWithRetryController.IconType.CLOCK);
 
-            await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct);
-
-            mvcManager.OnViewShowed -= ShowPopupOnTopOfSplashScreen;
+            try { await mvcManager.ShowAsync(ErrorPopupWithRetryController.IssueCommand(input), ct); }
+            finally { mvcManager.OnViewShowed -= ShowPopupOnTopOfSplashScreen; }
 
             return input.SelectedOption;
 
             void ShowPopupOnTopOfSplashScreen(IController c)
             {
                 if (c is ErrorPopupWithRetryController errorPopupController)
-                    errorPopupController.SortingOder = splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1;
+                    errorPopupController.SortingOrder = splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1;
             }
         }
 

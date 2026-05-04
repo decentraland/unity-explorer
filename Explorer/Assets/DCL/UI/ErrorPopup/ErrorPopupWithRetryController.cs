@@ -13,7 +13,7 @@ namespace DCL.UI.ErrorPopup
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        public int SortingOder
+        public int SortingOrder
         {
             set => pendingSortingOrder = value;
         }
