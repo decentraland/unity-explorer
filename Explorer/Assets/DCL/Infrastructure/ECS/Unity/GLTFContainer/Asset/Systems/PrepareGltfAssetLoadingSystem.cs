@@ -73,7 +73,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 var abIntention = GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name);
                 // Pre-populate so PrepareAssetBundleLoadingParametersSystem doesn't have to look it up by the
                 // platform-suffixed hash (the digest map is keyed by bare hashes).
-                abIntention.DepsDigest = intention.DepsDigest;
+                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest
+                    && manifest.TryGetDepsDigest(intention.Hash, out string digest))
+                    abIntention.DepsDigest = digest;
                 World.Add(entity, abIntention);
             }
         }

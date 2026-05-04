@@ -1,8 +1,11 @@
+using DCL.Ipfs;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -123,25 +126,59 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void GltfIntentionCacheKeyComposesHashAndDigest()
+        public void GltfIntentionDefaultsCacheKeyToHash()
         {
             const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var withDigest = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_A);
-            var withoutDigest = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource());
+            var intention = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource());
 
-            Assert.That(withDigest.CacheKey, Is.EqualTo($"{hash}@{DIGEST_A}"));
-            Assert.That(withoutDigest.CacheKey, Is.EqualTo(hash), "Legacy entries must keep using the bare hash so existing cached assets keep hitting");
+            Assert.That(intention.CacheKey, Is.EqualTo(hash), "Legacy callers that don't supply a cache key must default to the bare hash");
         }
 
         [Test]
-        public void GltfIntentionsWithDifferentDigestsAreDistinct()
+        public void GltfIntentionStoresPassedCacheKeyVerbatim()
         {
             const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var a = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_A);
-            var b = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), DIGEST_B);
+            string customKey = $"{hash}@{DIGEST_A}";
+            var intention = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), customKey);
+
+            Assert.That(intention.CacheKey, Is.EqualTo(customKey));
+        }
+
+        [Test]
+        public void GltfIntentionsWithDifferentCacheKeysAreDistinct()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            var a = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), $"{hash}@{DIGEST_A}");
+            var b = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), $"{hash}@{DIGEST_B}");
 
             Assert.That(a.CacheKey, Is.Not.EqualTo(b.CacheKey));
             Assert.That(a.Equals(b), Is.False);
+        }
+
+        [Test]
+        public void ComposeCacheKey_FallsBackToBareHashWhenManifestIsNull()
+        {
+            AssetBundleManifestVersion? manifest = null;
+            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
+        }
+
+        [Test]
+        public void ComposeCacheKey_FallsBackToBareHashWhenNoDigest()
+        {
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
+        }
+
+        [Test]
+        public void ComposeCacheKey_AppendsDigestWhenPresent()
+        {
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            manifest.InjectDepsDigests(new Dictionary<string, string>(new UrlHashComparer())
+            {
+                { "X", DIGEST_A },
+            });
+
+            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo($"X@{DIGEST_A}"));
         }
     }
 }

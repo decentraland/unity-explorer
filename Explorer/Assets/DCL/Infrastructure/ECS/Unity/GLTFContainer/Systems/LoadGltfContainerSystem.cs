@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -29,13 +29,15 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly Func<string, string> resolveCacheKey;
 
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
-            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, Func<string, string> resolveCacheKey) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.resolveCacheKey = resolveCacheKey;
         }
 
         protected override void Update(float t)
@@ -62,9 +64,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
             else
             {
-                string? depsDigest = ResolveDepsDigest(hash);
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), depsDigest), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), resolveCacheKey(hash)), partitionComponent);
                 component = new GltfContainerComponent(
                     sdkComponent.GetVisibleMeshesCollisionMask(),
                     sdkComponent.GetInvisibleMeshesCollisionMask(),
@@ -99,8 +100,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     );
                 else
                 {
-                    string? depsDigest = ResolveDepsDigest(hash);
-                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), depsDigest), partitionComponent);
+                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), resolveCacheKey(hash)), partitionComponent);
                     component.Promise = promise;
                     component.State = LoadingState.Loading;
                 }
@@ -136,15 +136,6 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
             }
-        }
-
-        private string? ResolveDepsDigest(string hash)
-        {
-            // The scene's AssetBundleManifestVersion (populated either via the registry response or
-            // AssetBundleManifestFallbackHelper) carries the per-file digest map for v49+ ABs. Bare hashes go in
-            // and out — the platform suffix lives in the AB URL only, not in the cache key.
-            var manifest = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
-            return manifest != null && manifest.TryGetDepsDigest(hash, out string digest) ? digest : null;
         }
     }
 }

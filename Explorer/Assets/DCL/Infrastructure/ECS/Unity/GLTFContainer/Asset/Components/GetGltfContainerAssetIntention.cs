@@ -14,45 +14,29 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public readonly string Hash;
 
         /// <summary>
-        ///     Per-file deps digest from the v49+ scene asset-bundle manifest. Null/empty for legacy entries.
-        ///     Disambiguates two scenes that share the same <see cref="Hash"/> but resolve different dependency closures.
+        ///     Opaque identity used to key the GLTF-container caches. Defaults to <see cref="Hash"/> for callers that
+        ///     don't need extra differentiation; callers that do (e.g. v49+ AB scenes that need to disambiguate by
+        ///     deps digest) build the key externally and pass it in.
         /// </summary>
-        public readonly string? DepsDigest;
+        public readonly string CacheKey;
 
-        public GetGltfContainerAssetIntention(string name, string hash, CancellationTokenSource cancellationTokenSource, string? depsDigest = null)
+        public GetGltfContainerAssetIntention(string name, string hash, CancellationTokenSource cancellationTokenSource, string? cacheKey = null)
         {
             Name = name;
             Hash = hash;
-            DepsDigest = depsDigest;
+            CacheKey = cacheKey ?? hash;
             CancellationTokenSource = cancellationTokenSource;
         }
 
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        /// <summary>
-        ///     The string used to key all GLTF-container caches (in-memory pool and AssetPreLoadCache).
-        ///     For v49+ entries it's <c>hash@digest</c>; for legacy entries it's the bare hash, so existing cache entries keep hitting.
-        /// </summary>
-        public string CacheKey => Compose(Hash, DepsDigest);
+        public bool Equals(GetGltfContainerAssetIntention other) =>
+            Name == other.Name && Hash == other.Hash && CacheKey == other.CacheKey;
 
-        public static string Compose(string hash, string? depsDigest) =>
-            string.IsNullOrEmpty(depsDigest) ? hash : $"{hash}@{depsDigest}";
+        public override bool Equals(object? obj) =>
+            obj is GetGltfContainerAssetIntention other && Equals(other);
 
-        public bool Equals(GetGltfContainerAssetIntention other)
-        {
-            return Name == other.Name
-                   && Hash == other.Hash
-                   && string.Equals(DepsDigest ?? string.Empty, other.DepsDigest ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is GetGltfContainerAssetIntention other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Name, Hash, DepsDigest ?? string.Empty);
-        }
+        public override int GetHashCode() =>
+            HashCode.Combine(Name, Hash, CacheKey);
     }
 }
