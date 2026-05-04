@@ -198,10 +198,6 @@ MonoBehaviour:
       Severity: 1
     - Category: COMMS_SCENE_HANDLER
       Severity: 0
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
     - Category: COMMS_SCENE_HANDLER
       Severity: 2
     - Category: ALWAYS
@@ -575,8 +571,6 @@ MonoBehaviour:
     - Category: OUTFITS
       Severity: 1
     - Category: GIFTING
-      Severity: 2
-    - Category: GIFTING
       Severity: 0
     - Category: GIFTING
       Severity: 4
@@ -662,18 +656,6 @@ MonoBehaviour:
       Severity: 4
     - Category: SDK_AUDIO_ANALYSIS
       Severity: 0
-    - Category: VOICE_CHAT
-      Severity: 3
-    - Category: VOICE_CHAT
-      Severity: 2
-    - Category: NEARBY_VOICE_CHAT
-      Severity: 3
-    - Category: NEARBY_VOICE_CHAT
-      Severity: 2
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 3
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1
