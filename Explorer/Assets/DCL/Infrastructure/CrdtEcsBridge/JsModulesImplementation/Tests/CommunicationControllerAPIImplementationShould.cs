@@ -17,6 +17,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
+using RichTypes;
 using SceneRunner.Admins;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
@@ -53,11 +54,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
             api = new CommunicationsControllerAPIImplementation(
-                    sceneData, 
+                    sceneData,
                     sceneCommunicationPipe,
-                    jsOperations, 
+                    jsOperations,
                     InstancePoolsProvider.Create(),
-                    SceneAdmins.NewTestInstance()
+                    Option<SceneAdmins>.Some(SceneAdmins.NewTestInstance())
                     );
         }
 
