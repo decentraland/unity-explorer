@@ -42,6 +42,9 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly NearbyAudioSourceFactory sourceFactory;
 
+        // Mismatch with registry.RebuildEpoch ⇒ output-device changed since last tick.
+        private int lastSeenRebuildEpoch;
+
         internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
@@ -49,12 +52,23 @@ namespace DCL.VoiceChat.Nearby.Systems
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
+
+            lastSeenRebuildEpoch = registry.RebuildEpoch;
         }
 
         protected override void Update(float t)
         {
-            // Listening-gate is one bulk archetype-move; per-entity detection is skipped entirely when closed.
-            if (stateModel.IsListeningDisabled)
+            int currentEpoch = registry.RebuildEpoch;
+
+            bool deviceChanged = currentEpoch != lastSeenRebuildEpoch;
+            if (deviceChanged)
+            {
+                lastSeenRebuildEpoch = currentEpoch;
+                sourceFactory.InvalidateForDeviceChange();
+            }
+
+            // Listening-gate AND device-change are bulk archetype-moves; per-entity detection is skipped in either case.
+            if (stateModel.IsListeningDisabled || deviceChanged)
                 World.Add<DeleteEntityIntention>(in LIVE_AUDIO_QUERY);
             else
                 FlagDoomedAudioEntitiesQuery(World);

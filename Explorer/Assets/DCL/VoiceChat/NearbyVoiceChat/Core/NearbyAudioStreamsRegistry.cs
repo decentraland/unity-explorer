@@ -11,6 +11,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
@@ -47,6 +48,11 @@ namespace DCL.VoiceChat.Nearby.Audio
         private ConcurrentDictionary<string, string[]> streamsByIdentity = NewSnapshot();
         private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
 
+        // Pull-based freshness signal for output-device changes;
+        private int rebuildEpoch;
+
+        public int RebuildEpoch => Volatile.Read(ref rebuildEpoch);
+
         public NearbyAudioStreamsRegistry(IRoom room)
         {
             this.room = room;
@@ -59,6 +65,8 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             room.Participants.UpdatesFromParticipant += OnParticipantUpdate;
             room.ActiveSpeakers.Updated += PullActiveSpeakers;
+
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
 
             if (room.Info.ConnectionState == LKConnectionState.ConnConnected)
             {
@@ -78,8 +86,16 @@ namespace DCL.VoiceChat.Nearby.Audio
             room.Participants.UpdatesFromParticipant -= OnParticipantUpdate;
             room.ActiveSpeakers.Updated -= PullActiveSpeakers;
 
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+
             Interlocked.Exchange(ref streamsByIdentity, NewSnapshot());
             activeSpeakers.Clear();
+        }
+
+        private void OnAudioConfigurationChanged(bool deviceWasChanged)
+        {
+            if (deviceWasChanged)
+                Interlocked.Increment(ref rebuildEpoch);
         }
 
         private static ConcurrentDictionary<string, string[]> NewSnapshot(int capacity = 0) =>

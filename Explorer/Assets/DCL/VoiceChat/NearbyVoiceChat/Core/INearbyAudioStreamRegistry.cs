@@ -40,5 +40,12 @@ namespace DCL.VoiceChat.Nearby.Audio
         /// allocation-free so per-frame ECS systems can call it without touching <see cref="LiveKit.Rooms.IRoom"/>.
         /// </summary>
         bool IsActiveSpeaker(string walletId);
+
+        /// <summary>
+        /// Monotonic pull-based freshness signal — bumped on Unity output-device change
+        /// (<see cref="UnityEngine.AudioSettings.OnAudioConfigurationChanged"/>, <c>deviceWasChanged: true</c>).
+        /// A value different from last tick means consumers must reconcile their device-bound state.
+        /// </summary>
+        int RebuildEpoch { get; }
     }
 }
