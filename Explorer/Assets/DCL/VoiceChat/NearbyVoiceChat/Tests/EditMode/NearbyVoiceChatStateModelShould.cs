@@ -53,8 +53,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void StartInSpeakingStateWhenInitializedAsSpeaking()
         {
-            using var speakingModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.SPEAKING);
-            Assert.That(speakingModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            using var speakingModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.OPEN_MIC);
+            Assert.That(speakingModel.State.Value, Is.EqualTo(NearbyVoiceChatState.OPEN_MIC));
         }
 
         // ── Enable / Disable ────────────────────────────────────────
@@ -81,18 +81,18 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.Enable();
 
             // Assert
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.OPEN_MIC));
             Assert.That(stateChanges, Is.Empty);
         }
 
         [Test]
         public void TransitionToDisabledFromAnyState(
-            [Values(NearbyVoiceChatState.IDLE, NearbyVoiceChatState.SPEAKING)]
+            [Values(NearbyVoiceChatState.IDLE, NearbyVoiceChatState.OPEN_MIC)]
             NearbyVoiceChatState activeState)
         {
             // Arrange
             model.Enable();
-            if (activeState == NearbyVoiceChatState.SPEAKING)
+            if (activeState == NearbyVoiceChatState.OPEN_MIC)
                 model.StartSpeaking();
 
             // Act — player leaves the island or feature is toggled off
@@ -114,7 +114,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             model.StartSpeaking();
 
             // Assert
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.OPEN_MIC));
         }
 
         [Test]
@@ -310,7 +310,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Player activates microphone → starts speaking to nearby players
             model.StartSpeaking();
-            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.SPEAKING));
+            Assert.That(model.State.Value, Is.EqualTo(NearbyVoiceChatState.OPEN_MIC));
 
             // Player receives a private call → nearby suppressed (SPEAKING force-stopped to IDLE first)
             model.Suppress(SuppressionReason.CALL);
@@ -341,7 +341,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(stateChanges, Is.EqualTo(new[]
             {
                 NearbyVoiceChatState.IDLE,       // Enable
-                NearbyVoiceChatState.SPEAKING,   // StartSpeaking
+                NearbyVoiceChatState.OPEN_MIC,   // StartSpeaking
                 NearbyVoiceChatState.IDLE,       // Suppress — force-stop SPEAKING
                 NearbyVoiceChatState.SUPPRESSED, // Suppress — enter suppression
                 NearbyVoiceChatState.IDLE,       // Resume — user preference was IDLE

@@ -297,27 +297,10 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void TryTriggerEmote_WithMask_FallsBackToFullBody_WhenLocalSceneDevelopment()
+        public void TryTriggerEmote_WithMask_RoutesThroughSceneWorld()
         {
             // Arrange
             const string EMOTE_URN = "urn:emote:foo";
-            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(true);
-
-            // Act
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Masked emotes are not previewable"));
-            restrictedActionsAPIImplementation.TryTriggerEmote(EMOTE_URN, AvatarEmoteMask.AemUpperBody);
-
-            // Assert: original mask was discarded; full-body trigger was used instead
-            globalWorldActions.Received(1).TriggerEmote(new URN(EMOTE_URN), false, AvatarEmoteMask.AemFullBody);
-            globalWorldActions.DidNotReceive().TriggerEmote(Arg.Any<URN>(), Arg.Any<bool>(), AvatarEmoteMask.AemUpperBody);
-        }
-
-        [Test]
-        public void TryTriggerEmote_WithMask_DoesNotFallBack_WhenNotLocalSceneDevelopment()
-        {
-            // Arrange
-            const string EMOTE_URN = "urn:emote:foo";
-            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(false);
 
             // Act
             restrictedActionsAPIImplementation.TryTriggerEmote(EMOTE_URN, AvatarEmoteMask.AemUpperBody);
@@ -328,31 +311,12 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void TryTriggerSceneEmoteAsync_WithMask_LoadsAsFullBody_WhenLocalSceneDevelopment()
+        public void TryTriggerSceneEmoteAsync_WithMask_PreservesMask()
         {
             // Arrange
             const string SRC = "scene/foo_emote.glb";
             const string HASH = "QmFakeHash";
             StubSceneContentHash(SRC, HASH);
-            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(true);
-
-            // Act
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("Masked emotes are not previewable"));
-            restrictedActionsAPIImplementation.TryTriggerSceneEmoteAsync(SRC, false, AvatarEmoteMask.AemUpperBody, CancellationToken.None).Forget();
-
-            // Assert: scene-emote loader received full-body, not the requested mask
-            globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemFullBody, Arg.Any<CancellationToken>());
-            globalWorldActions.DidNotReceive().TriggerSceneEmoteAsync(Arg.Any<ISceneData>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
-        }
-
-        [Test]
-        public void TryTriggerSceneEmoteAsync_WithMask_DoesNotFallBack_WhenNotLocalSceneDevelopment()
-        {
-            // Arrange
-            const string SRC = "scene/foo_emote.glb";
-            const string HASH = "QmFakeHash";
-            StubSceneContentHash(SRC, HASH);
-            globalWorldActions.ShouldFallbackMaskedEmotesToFullBody(sceneData).Returns(false);
 
             // Act
             restrictedActionsAPIImplementation.TryTriggerSceneEmoteAsync(SRC, false, AvatarEmoteMask.AemUpperBody, CancellationToken.None).Forget();

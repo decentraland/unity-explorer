@@ -73,7 +73,6 @@ namespace DCL.VoiceChat
                 if (streamKeysByIdentity.TryGetValue(key.identity, out ConcurrentDictionary<StreamKey, byte>? keys))
                 {
                     keys.TryRemove(key, out _);
-
                     if (keys.IsEmpty)
                         streamKeysByIdentity.TryRemove(key.identity, out _);
                 }
