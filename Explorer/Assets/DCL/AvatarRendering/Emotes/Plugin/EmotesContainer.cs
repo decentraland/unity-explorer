@@ -34,7 +34,9 @@ namespace DCL.AvatarRendering.Emotes
             bool legacyAnimationsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT)
                                            || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
-            EmotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled);
+            bool forceBackfaceCulling = FeaturesRegistry.Instance.IsEnabled(FeatureId.FORCE_BACKFACE_CULLING);
+
+            EmotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled, forceBackfaceCulling);
         }
 
         [Serializable]
