@@ -355,6 +355,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3a58c428a71b443e883f8fac00cfbbd
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/EmoteMaskCatalog.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f3fd7329d073f964aaec82eb9acc9ed3
     m_Address: DefaultBlack_512_BC7.DDS
     m_ReadOnly: 0
