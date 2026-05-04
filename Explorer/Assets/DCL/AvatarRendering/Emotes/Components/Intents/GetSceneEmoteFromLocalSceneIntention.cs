@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.ECSComponents;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.GLTF;
@@ -14,13 +15,12 @@ namespace DCL.AvatarRendering.Emotes
 {
     public struct GetSceneEmoteFromLocalSceneIntention : IEquatable<GetSceneEmoteFromLocalSceneIntention>, IEmoteAssetIntention
     {
-        private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
-
         public ISceneData SceneData { get; }
         public string EmotePath { get; }
         public string EmoteHash { get; }
         public bool Loop { get; }
         public BodyShape BodyShape { get; }
+        public AvatarEmoteMask Mask { get; }
         public LoadTimeout Timeout { get; private set; }
         public CancellationTokenSource CancellationTokenSource { get; }
 
@@ -30,6 +30,7 @@ namespace DCL.AvatarRendering.Emotes
             string emoteHash,
             BodyShape bodyShape,
             bool loop,
+            AvatarEmoteMask mask,
             int timeout = StreamableLoadingDefaults.TIMEOUT)
         {
             EmotePath = emotePath;
@@ -37,20 +38,25 @@ namespace DCL.AvatarRendering.Emotes
             EmoteHash = emoteHash;
             BodyShape = bodyShape;
             Loop = loop;
+            Mask = mask;
             CancellationTokenSource = new CancellationTokenSource();
             Timeout = new LoadTimeout(timeout, 0);
         }
 
         public bool Equals(GetSceneEmoteFromLocalSceneIntention other) =>
-            EmoteHash.Equals(other.EmoteHash) && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
+            EmoteHash.Equals(other.EmoteHash) && Loop == other.Loop && BodyShape.Equals(other.BodyShape) && Mask == other.Mask;
 
         public readonly URN NewSceneEmoteURN() =>
-            $"{SCENE_EMOTE_PREFIX}:{SceneData.SceneShortInfo.Name}-{EmoteHash}-{Loop.ToString().ToLower()}";
+            $"{GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX}:{SceneData.SceneShortInfo.Name}-{EmoteHash}-{Loop.ToString().ToLower()}";
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
+            // FullBody scene emotes load as Legacy animations so GLTFast doesn't hit `SetCurve` at runtime on non-legacy clips in builds.
+            // Masked scene emotes must be Mecanim — AnimatorOverrideController + layered masks are Mecanim-only.
+            bool useMecanim = Mask != AvatarEmoteMask.AemFullBody;
+
             var promise = GltfPromise.Create(world,
-                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: false),
+                GetGLTFIntention.Create(this.EmotePath, this.EmoteHash, mecanimAnimationClips: useMecanim),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);
