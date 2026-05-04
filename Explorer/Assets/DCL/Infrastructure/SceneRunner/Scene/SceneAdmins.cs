@@ -48,7 +48,8 @@ namespace SceneRunner.Admins
         }
         // END Copied
 
-        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(1000);
+        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(30000);
+
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;

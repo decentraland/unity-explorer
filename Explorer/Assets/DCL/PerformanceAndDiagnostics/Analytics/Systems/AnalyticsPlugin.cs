@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using DCL.Analytics.Systems;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Backpack.AvatarSection.Outfits.Analytics;
 using DCL.DebugUtilities;
@@ -12,6 +11,7 @@ using DCL.Profiling;
 using DCL.RealmNavigation;
 using DCL.Translation;
 using DCL.Utilities;
+using DCL.VoiceChat.Nearby;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -34,12 +34,15 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly IScenesCache scenesCache;
         private readonly ITranslationSettings translationSettings;
+        private readonly NearbyVoiceChatStateModel? nearbyVoiceStateModel;
+        private readonly NearbyMuteService? nearbyMuteService;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
         private AutoTranslateAnalytics? autoTranslateAnalytics;
         private OutfitsAnalytics outfitsAnalytics;
         private GiftAnalytics giftAnalytics;
         private HomeMarkerAnalytics homeMarkerAnalytics;
+        private NearbyVoiceChatAnalytics? nearbyVoiceChatAnalytics;
         private readonly PlayerParcelChangedAnalytics playerParcelChangedAnalytics;
 
         public AnalyticsPlugin(
@@ -54,7 +57,9 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             IScenesCache scenesCache,
             IEventBus eventBus,
-            ITranslationSettings translationSettings
+            ITranslationSettings translationSettings,
+            NearbyVoiceChatStateModel? nearbyVoiceStateModel = null,
+            NearbyMuteService? nearbyMuteService = null
         )
         {
             this.analytics = analytics;
@@ -69,6 +74,9 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.translationSettings = translationSettings;
             this.scenesCache = scenesCache;
+            this.nearbyVoiceStateModel = nearbyVoiceStateModel;
+            this.nearbyMuteService = nearbyMuteService;
+
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
             playerParcelChangedAnalytics = new PlayerParcelChangedAnalytics(analytics, scenesCache);
         }
@@ -77,6 +85,7 @@ namespace DCL.PluginSystem.Global
         {
             walkedDistanceAnalytics.Dispose();
             playerParcelChangedAnalytics.Dispose();
+            nearbyVoiceChatAnalytics?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -87,6 +96,9 @@ namespace DCL.PluginSystem.Global
             outfitsAnalytics = new OutfitsAnalytics(analytics, eventBus);
             giftAnalytics = new GiftAnalytics(analytics, eventBus);
             homeMarkerAnalytics = new HomeMarkerAnalytics(analytics, eventBus);
+
+            if (nearbyVoiceStateModel != null && nearbyMuteService != null)
+                nearbyVoiceChatAnalytics = new NearbyVoiceChatAnalytics(analytics, nearbyVoiceStateModel, nearbyMuteService);
 
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
