@@ -180,23 +180,11 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            Vector2Int? resolutionOverride = null;
-
-            if (applicationParametersParser.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) && !string.IsNullOrEmpty(resolutionArg))
-            {
-                string[] resParts = resolutionArg.Split('x');
-
-                if (resParts.Length == 2 && int.TryParse(resParts[0], out int resW) && int.TryParse(resParts[1], out int resH))
-                    resolutionOverride = new Vector2Int(resW, resH);
-                else
-                    ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
-            }
-
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
                 applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE),
-                resolutionOverride);
+                GetResolutionFromAppArgs(applicationParametersParser));
 
             World world = World.Create();
 
@@ -828,6 +816,20 @@ namespace Global.Dynamic
                 GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
             };
+
+        private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+                return null;
+
+            string[] parts = resolutionArg.Split('x');
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                return new Vector2Int(w, h);
+
+            ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            return null;
+        }
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
