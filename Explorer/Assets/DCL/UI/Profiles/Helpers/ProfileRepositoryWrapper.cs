@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace DCL.UI.Profiles.Helpers
         // Lets us keep showing a user's previous picture (via SpriteCache) while a newly published one is still being generated.
         private readonly Dictionary<string, string> latestThumbnailUrlByUser = new ();
 
+        public event Action<string>? UserThumbnailRefreshed;
+
         public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache)
         {
             this.thumbnailCache = thumbnailCache;
@@ -45,8 +48,14 @@ namespace DCL.UI.Profiles.Helpers
             return thumbnailCache.GetCachedSprite(url);
         }
 
-        public void StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl) =>
+        public void StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl)
+        {
+            bool hasExisting = latestThumbnailUrlByUser.TryGetValue(userId, out string? existingUrl);
             latestThumbnailUrlByUser[userId] = thumbnailUrl;
+
+            if (hasExisting && existingUrl != thumbnailUrl)
+                UserThumbnailRefreshed?.Invoke(userId);
+        }
 
         public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>
             profileRepository.GetCompactAsync(userId, ct);
