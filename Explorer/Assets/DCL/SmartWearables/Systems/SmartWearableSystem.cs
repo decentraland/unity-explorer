@@ -185,7 +185,7 @@ namespace DCL.SmartWearables
                 {
                     if (ct.IsCancellationRequested) return;
 
-                    bool isSmart = await smartWearableCache.IsSmartAsync(wearable, ct);
+                    bool isSmart = newOutfitSmartIds.Contains(SmartWearableCache.GetCacheId(wearable));
                     if (!isSmart) continue;
 
                     string id = SmartWearableCache.GetCacheId(wearable);

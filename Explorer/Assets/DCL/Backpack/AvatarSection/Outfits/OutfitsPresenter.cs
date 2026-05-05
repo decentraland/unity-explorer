@@ -318,13 +318,15 @@ namespace DCL.Backpack
 
         private bool TryGetSlot(int slotIndex, out OutfitSlotPresenter slot)
         {
-            if (slotIndex < slotPresenters.Count)
-            {
-                slot = slotPresenters[slotIndex];
-                return true;
-            }
-
             slot = null!;
+
+            foreach (var presenter in slotPresenters)
+                if (presenter.slotIndex == slotIndex)
+                {
+                    slot = presenter;
+                    return true;
+                }
+
             return false;
         }
 
@@ -346,6 +348,7 @@ namespace DCL.Backpack
             }
             catch (Exception ex)
             {
+                EndSlotBusy();
                 ReportHub.LogException(ex, ReportCategory.OUTFITS);
             }
         }

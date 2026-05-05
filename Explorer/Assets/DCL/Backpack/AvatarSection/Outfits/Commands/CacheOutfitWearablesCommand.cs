@@ -111,7 +111,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             // Ultra-defensive: split by ':' and detect a numeric-ish tail token
             string[]? parts = fullUrn.ToString().Split(':');
-            if (parts.Length >= 6 && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
+            if (parts.Length >= 7 && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
             {
                 // last is token, rebuild base without last
                 tokenId = parts[^1];
