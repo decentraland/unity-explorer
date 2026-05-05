@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleManifestVersion? manifestVersion = entityDefinition.assetBundleManifestVersion;
 
             // Pre-v49 manifests have no deps digest, and CreateFailed/CreateManualManifest entries report version < v49 as well — short-circuit those.
-            if (manifestVersion == null || !manifestVersion.HasDepsDigests())
+            if (manifestVersion == null || !manifestVersion.SupportsDepsDigests())
                 return;
 
             //Needed to use the Time.realtimeSinceStartup on the intention creation

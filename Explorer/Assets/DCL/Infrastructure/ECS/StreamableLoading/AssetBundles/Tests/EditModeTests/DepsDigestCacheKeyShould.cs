@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
 using System.Threading;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -153,6 +154,125 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             manifest.InjectDepsDigests(new[] { $"X_{DIGEST_A}_mac" });
 
             Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo($"X@{DIGEST_A}"));
+        }
+
+        [Test]
+        public void V49HashIsStableForSameInputs()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+
+            Assert.That(a, Is.EqualTo(b));
+        }
+
+        [Test]
+        public void V49HashAcceptsEmptyDigestForLeafBundles()
+        {
+            // v49+ leaf ABs that aren't listed in the manifest's deps map carry an empty digest. They must still
+            // produce a deterministic key — and crucially, one that doesn't depend on buildDate.
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
+
+            Assert.That(a, Is.EqualTo(b));
+        }
+
+        [Test]
+        public void V49HashDiffersWhenDigestDiffers()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_B);
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void V49HashDiffersBetweenEmptyAndNonEmptyDigest()
+        {
+            // A v49+ leaf AB (no digest) and a v49+ AB with a digest must not share a cache key, even though
+            // both go through the v49 path — the digest is a real discriminator and absence is meaningful.
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 leaf = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
+            Hash128 withDigest = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+
+            Assert.That(leaf, Is.Not.EqualTo(withDigest));
+        }
+
+        [Test]
+        public void V49HashDiffersWhenHashDiffers()
+        {
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("hashA", "v49", DIGEST_A);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("hashB", "v49", DIGEST_A);
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void V49HashDiffersWhenVersionDiffers()
+        {
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v50", DIGEST_A);
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void V49DelimiterPreventsBoundaryCollisions()
+        {
+            // Without delimiters, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce the
+            // same byte stream.
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("9foo", "v4", string.Empty);
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("foo", "v49", string.Empty);
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void LegacyHashIsStableForSameInputs()
+        {
+            const string hash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
+
+            Assert.That(a, Is.EqualTo(b));
+        }
+
+        [Test]
+        public void LegacyHashChangesWithBuildDate()
+        {
+            // Pre-v49 ABs have no per-file freshness signal, so buildDate is the only thing that flushes the cache
+            // when dependencies might have changed — verify it is actually contributing to the key.
+            const string hash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-02");
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void LegacyDelimiterPreventsBoundaryCollisions()
+        {
+            // Without a delimiter, (buildDate="2026-05-01", hash="Xhash") and (buildDate="2026-05-01X", hash="hash")
+            // would concatenate to the same byte stream.
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy("Xhash", "2026-05-01");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy("hash", "2026-05-01X");
+
+            Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void V49AndLegacyDoNotCollideForSameHash()
+        {
+            // A v49+ leaf AB with no digest must not accidentally produce the same Hash128 as the legacy path for
+            // the same bare hash, even if the legacy buildDate happens to equal the v49 version string.
+            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+            Hash128 legacy = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "v49");
+            Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
+
+            Assert.That(legacy, Is.Not.EqualTo(v49));
         }
     }
 }

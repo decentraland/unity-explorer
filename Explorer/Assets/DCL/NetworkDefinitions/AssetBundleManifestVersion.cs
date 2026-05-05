@@ -16,7 +16,7 @@ public class AssetBundleManifestVersion
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 2000;
 
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
-        private const int ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST = 49;
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST = 49;
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
@@ -25,7 +25,7 @@ public class AssetBundleManifestVersion
 
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
-        private bool? HasDepsDigestsValue;
+        private bool? SupportsDepsDigestsValue;
 
 
         public bool assetBundleManifestRequestFailed;
@@ -61,17 +61,22 @@ public class AssetBundleManifestVersion
             return SupportsISS.Value;
         }
 
-        public bool HasDepsDigests()
+        /// <summary>
+        ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
+        ///     in use for cache keying. This is purely a version check; an individual asset may still have an
+        ///     empty digest (leaf ABs that aren't listed in the manifest's deps map).
+        /// </summary>
+        public bool SupportsDepsDigests()
         {
-            if (HasDepsDigestsValue == null)
+            if (SupportsDepsDigestsValue == null)
             {
                 if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    HasDepsDigestsValue = false;
+                    SupportsDepsDigestsValue = false;
                 else
-                    HasDepsDigestsValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_HAS_DEPS_DIGEST;
+                    SupportsDepsDigestsValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             }
 
-            return HasDepsDigestsValue.Value;
+            return SupportsDepsDigestsValue.Value;
         }
 
         /// <summary>
