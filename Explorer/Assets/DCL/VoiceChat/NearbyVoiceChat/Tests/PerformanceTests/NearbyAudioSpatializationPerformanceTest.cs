@@ -91,7 +91,7 @@ namespace DCL.VoiceChat.Nearby
             for (int i = 0; i < count; i++)
             {
                 LivekitAudioSource source = LivekitAudioSource.New(isSpatial: true);
-                source.SetSpatialSettings(true, 0.75f, smoothPanning);
+                source.SetSpatialSettings(true, 0.75f);
                 source.SetSpatialAngles(
                     UnityEngine.Random.Range(-Mathf.PI, Mathf.PI),
                     UnityEngine.Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));

@@ -66,8 +66,8 @@ namespace DCL.VoiceChat.Nearby
         private LivekitAudioSource CreateSource()
         {
             LivekitAudioSource source = LivekitAudioSource.New(isSpatial: enableSpatialization);
-            source.SetSpatialSettings(enableSpatialization, ildStrength, smoothPanning);
-            source.transform.position = transform.position + Random.insideUnitSphere * spreadRadius;
+            source.SetSpatialSettings(enableSpatialization, ildStrength);
+            source.transform.position = transform.position + (Random.insideUnitSphere * spreadRadius);
             source.SetSpatialAngles(Random.Range(-Mathf.PI, Mathf.PI), Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
 
             InjectFakeAudioStream(source);
@@ -89,7 +89,7 @@ namespace DCL.VoiceChat.Nearby
 
             foreach (LivekitAudioSource source in activeSources)
             {
-                source.SetSpatialSettings(enableSpatialization, ildStrength, smoothPanning);
+                source.SetSpatialSettings(enableSpatialization, ildStrength);
 
                 if (source.AudioSource.volume != testToneVolume)
                     source.AudioSource.volume = testToneVolume;

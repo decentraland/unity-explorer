@@ -90,7 +90,7 @@
       "hash": "f57b137a6bd76527ea144b7e03cd7743f1b39599"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "https://github.com/decentraland/client-sdk-unity.git#fix/spatial-audio-panning-lower-volume",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -98,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "c1d582d62644c33e53e3c521c53663f37ad24fbe"
+      "hash": "20c70c3975da9fa47d86e191a4d88d7bba8d0ece"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
