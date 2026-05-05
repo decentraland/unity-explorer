@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
-    public class RemoteFacialExpressionSystem : BaseUnityLoopSystem
+    public partial class RemoteFacialExpressionSystem : BaseUnityLoopSystem
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IFacialExpressionMessageBus bus;

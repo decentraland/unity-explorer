@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69832a4fb177e7645af56a1f27d0dce2
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceAnimationSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6a252383173104e17acac54eb364afc4
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
     m_ReadOnly: 0

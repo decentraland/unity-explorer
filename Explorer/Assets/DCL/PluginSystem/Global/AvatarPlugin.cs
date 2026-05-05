@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
@@ -93,6 +94,9 @@ namespace DCL.PluginSystem.Global
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
 
+        private AvatarFaceAnimationSettings? faceAnimationSettings;
+        private AvatarFaceExpressionDefinition[] faceExpressions = Array.Empty<AvatarFaceExpressionDefinition>();
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -152,6 +156,15 @@ namespace DCL.PluginSystem.Global
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
 
+            if (settings.FaceAnimationSettings != null && !string.IsNullOrEmpty(settings.FaceAnimationSettings.AssetGUID))
+                faceAnimationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceAnimationSettings, ct)).Value;
+
+            if (settings.FaceExpressionConfig != null && !string.IsNullOrEmpty(settings.FaceExpressionConfig.AssetGUID))
+            {
+                AvatarFaceExpressionConfig config = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceExpressionConfig, ct)).Value;
+                faceExpressions = config.Expressions ?? Array.Empty<AvatarFaceExpressionDefinition>();
+            }
+
             debugContainerBuilder.TryAddWidget("Nametags")
                                 ?.AddToggleField("ShowNametags", _ => nametagsData.showNameTags = !nametagsData.showNameTags, nametagsData.showNameTags);
         }
@@ -192,6 +205,12 @@ namespace DCL.PluginSystem.Global
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
+
+            if (faceAnimationSettings != null)
+            {
+                AvatarFacialExpressionSystem.InjectToWorld(ref builder, faceAnimationSettings, eyebrowsTextureArray: null, eyeTextureArray: null, mouthPoseTextureArray: null);
+                UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
+            }
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
@@ -363,6 +382,10 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture> DefaultFemaleMouthTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
+
+            [Header("Facial Expressions")]
+            public AssetReferenceT<AvatarFaceAnimationSettings>? FaceAnimationSettings;
+            public AssetReferenceT<AvatarFaceExpressionConfig>? FaceExpressionConfig;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

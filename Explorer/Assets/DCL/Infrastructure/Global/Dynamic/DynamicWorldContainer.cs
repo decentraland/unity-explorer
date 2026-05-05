@@ -52,6 +52,7 @@ using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.FacialExpression;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
@@ -644,6 +645,7 @@ namespace Global.Dynamic
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
+            var multiplayerFacialExpressionMessageBus = new MultiplayerFacialExpressionMessageBus(messagePipesHub);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -1033,6 +1035,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
+                    multiplayerFacialExpressionMessageBus,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,

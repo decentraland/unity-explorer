@@ -4,6 +4,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.AvatarRendering.AvatarShape;
+using DCL.Multiplayer.FacialExpression;
+using DCL.Multiplayer.FacialExpression.Systems;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
@@ -12,6 +15,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Platforms;
 using ECS;
 using Global.AppArgs;
+using System;
 using System.Threading;
 using Utility;
 using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
@@ -23,6 +27,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly IFacialExpressionMessageBus facialExpressionMessageBus;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -36,12 +41,14 @@ namespace DCL.PluginSystem.Global
 
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus,
+            IFacialExpressionMessageBus facialExpressionMessageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
+            this.facialExpressionMessageBus = facialExpressionMessageBus;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
@@ -55,6 +62,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             messageBus.Dispose();
+            (facialExpressionMessageBus as IDisposable)?.Dispose();
         }
 
         public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
@@ -87,6 +95,9 @@ namespace DCL.PluginSystem.Global
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings, settings, entityParticipantTable, remoteMetadata);
+
+            PlayerFacialExpressionNetSendSystem.InjectToWorld(ref builder, facialExpressionMessageBus);
+            RemoteFacialExpressionSystem.InjectToWorld(ref builder, entityParticipantTable, facialExpressionMessageBus);
         }
     }
 }

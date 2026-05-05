@@ -968,9 +968,21 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         DefaultFemaleEyebrowsTexture:
           m_AssetGUID: eae766b15f997414794bfd4f17de5949
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        FaceAnimationSettings:
+          m_AssetGUID: 69832a4fb177e7645af56a1f27d0dce2
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        FaceExpressionConfig:
+          m_AssetGUID: f13fd0befee6d48479806b957b3ca94f
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 0
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
