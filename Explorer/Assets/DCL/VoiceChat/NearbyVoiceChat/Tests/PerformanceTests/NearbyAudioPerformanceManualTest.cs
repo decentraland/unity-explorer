@@ -24,7 +24,6 @@ namespace DCL.VoiceChat.Nearby
         [SerializeField] private bool enableSpatialization = true;
         [Range(0f, 1f)]
         [SerializeField] private float ildStrength = 0.75f;
-        [SerializeField] private bool smoothPanning;
 
         [Header("Audio")]
         [SerializeField] private bool playTestTone = true;
