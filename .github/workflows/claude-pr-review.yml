@@ -105,6 +105,23 @@ jobs:
 
             const output = claudeComment?.body ?? '';
             console.log('Claude comment preview:', output.slice(0, 300));
+            
+            // Previous Claude comments cleanup
+            const allClaudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            for (const c of allClaudeComments) {
+              if (claudeComment && c.id !== claudeComment.id) {
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: c.id
+                  });
+                  console.log(`Removed previous Claude review comment ${c.id}`);
+                } catch (e) {
+                  console.log(`Failed to remove comment ${c.id}: ${e.message}`);
+                }
+              }
+            }
 
             const failed = output.includes('REVIEW_RESULT: FAIL');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
@@ -301,6 +318,23 @@ jobs:
 
             const output = claudeComment?.body ?? '';
             console.log('Claude comment preview:', output.slice(0, 200));
+
+            // Previous Claude comments cleanup
+            const allClaudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            for (const c of allClaudeComments) {
+              if (claudeComment && c.id !== claudeComment.id) {
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: c.id
+                  });
+                  console.log(`Removed previous Claude review comment ${c.id}`);
+                } catch (e) {
+                  console.log(`Failed to remove comment ${c.id}: ${e.message}`);
+                }
+              }
+            }
 
             const failed = output.includes('REVIEW_RESULT: FAIL');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
