@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-using Utility;
 
 namespace DCL.Multiplayer.Profiles.Tables
 {

@@ -235,6 +235,7 @@ namespace DCL.PluginSystem.Global
                 },
                 actionOnRelease: nh =>
                 {
+                    nh.ResetTransientVisualState();
                     nh.gameObject.SetActive(false);
                 },
                 actionOnDestroy: UnityObjectUtils.SafeDestroy,

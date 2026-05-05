@@ -1,19 +1,17 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Friends.UserBlocking;
 using DCL.LiveKit.Public;
+using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.VoiceChat.Nearby;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Runtime.Scripts.Audio;
 using System;
-using Utility.Multithreading;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -22,9 +20,9 @@ namespace DCL.VoiceChat
 {
     /// <summary>
     ///     Orchestrates nearby voice chat: coordinates state transitions (Hearing/Speaking/Suppressed/Disabled),
-    ///     delegates microphone publishing to <see cref="MicrophoneTrackPublisher"/>,
-    ///     delegates remote track management to <see cref="RemoteTrackListener"/>.
-    ///     Owns nearby microphone lifecycle: start/stop, focus handling, device switching.
+    ///     delegates microphone publishing to <see cref="MicrophoneTrackPublisher"/>.
+    ///     Remote audio binding is owned by <see cref="DCL.VoiceChat.Nearby.Systems.NearbyAudioBindingSystem"/> driven from
+    ///     <see cref="DCL.VoiceChat.Nearby.Audio.INearbyAudioStreamRegistry"/>; this manager only owns mic + state.
     /// </summary>
     public class NearbyVoiceChatManager : IDisposable
     {
@@ -34,11 +32,8 @@ namespace DCL.VoiceChat
         private readonly IRoom islandRoom;
 
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly NearbyMuteService muteService;
-        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly MicrophoneTrackPublisher micPublisher;
-        private readonly RemoteTrackListener remoteListener;
 
         private readonly IDisposable callStatusSubscription;
         private readonly IDisposable loadingStageSubscription;
@@ -49,57 +44,22 @@ namespace DCL.VoiceChat
 
         private bool disposed;
 
-        public NearbyVoiceChatManager(
-            IRoom islandRoom,
-            VoiceChatConfiguration configuration,
-            DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources,
-            IReadonlyReactiveProperty<VoiceChatStatus> callStatus,
-            NearbyVoiceChatStateModel stateModel,
-            NearbyMuteService muteService,
-            IUserBlockingCache userBlockingCache,
-            ILoadingStatus loadingStatus)
+        public NearbyVoiceChatManager(NearbyVoiceChatStateModel stateModel, IRoom islandRoom, VoiceChatConfiguration configuration,
+            IReadonlyReactiveProperty<VoiceChatStatus> callStatus, ILoadingStatus loadingStatus)
         {
             this.islandRoom = islandRoom;
             this.configuration = configuration;
             this.stateModel = stateModel;
-            this.muteService = muteService;
-            this.userBlockingCache = userBlockingCache;
 
             micPublisher = new MicrophoneTrackPublisher(islandRoom, configuration, VoiceChatType.NEARBY);
 
-            var nearbyHub = new PlaybackSourcesHub(
-                parentNameSuffix: "Nearby",
-                configuration.ChatAudioMixerGroup,
-                spatial: true,
-                onSourceConfigured: (key, lkSource) =>
-                {
-                    lkSource.AudioSource.Apply3dAudioSettings(configuration.NearbyCustomRolloffCurve);
-                    lkSource.ApplySpatialSettings(configuration);
-                    activeAudioSources[key.identity] = lkSource;
-
-                    lkSource.AudioSource.mute = muteService.IsMuted(key.identity);
-                },
-                onSourceRemoved: key => activeAudioSources.TryRemove(key.identity, out _));
-
-            remoteListener = new RemoteTrackListener(islandRoom, configuration, nearbyHub, userBlockingCache);
-
             islandRoom.ConnectionUpdated += OnConnectionUpdated;
-            islandRoom.TrackSubscribed += OnTrackSubscribed;
-            islandRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
-
             Application.focusChanged += OnApplicationFocusChanged;
             VoiceChatSettings.MicrophoneChanged += OnMicrophoneDeviceChanged;
 
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
             nearbyStateSubscription = stateModel.State.Subscribe(OnNearbyStateChanged);
-
-            muteService.MuteStateChanged += OnMuteStateChanged;
-
-            userBlockingCache.UserBlocked += OnUserBlocked;
-            userBlockingCache.UserBlocksYou += OnUserBlocked;
-            userBlockingCache.UserUnblocked += OnUserUnblocked;
-            userBlockingCache.UserUnblocksYou += OnUserUnblocked;
 
             // Suppress while world is still loading so we do not attempt to connect before the player spawns.
             // User preference (DISABLED/IDLE from PlayerPrefs) is preserved as preBlockedState and restored on Resume(LOADING).
@@ -122,16 +82,7 @@ namespace DCL.VoiceChat
             loadingStageSubscription.Dispose();
             nearbyStateSubscription?.Dispose();
 
-            muteService.MuteStateChanged -= OnMuteStateChanged;
-
-            userBlockingCache.UserBlocked -= OnUserBlocked;
-            userBlockingCache.UserBlocksYou -= OnUserBlocked;
-            userBlockingCache.UserUnblocked -= OnUserUnblocked;
-            userBlockingCache.UserUnblocksYou -= OnUserUnblocked;
-
             islandRoom.ConnectionUpdated -= OnConnectionUpdated;
-            islandRoom.TrackSubscribed -= OnTrackSubscribed;
-            islandRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
             islandRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
 
             Application.focusChanged -= OnApplicationFocusChanged;
@@ -139,7 +90,6 @@ namespace DCL.VoiceChat
 
             Disconnect();
             micPublisher.Dispose();
-            remoteListener.Dispose();
 
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -147,17 +97,15 @@ namespace DCL.VoiceChat
         private void Connect()
         {
             if (islandRoom.Info.ConnectionState != LKConnectionState.ConnConnected) return;
-            if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)) return;
+            if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC)) return;
 
-            remoteListener.StartListeningAsync().Forget();
-            PublishMicWithRetryAsync(startMic: stateModel.State.Value == NearbyVoiceChatState.SPEAKING).Forget();
+            PublishMicWithRetryAsync(startMic: stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC).Forget();
         }
 
         private void Disconnect()
         {
             stateModel.IsLocalSpeaking = false;
             micPublisher.Unpublish();
-            remoteListener.StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, "Deactivated");
         }
 
@@ -184,18 +132,12 @@ namespace DCL.VoiceChat
                 stateModel.Suppress(SuppressionReason.LOADING);
         }
 
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
-        {
-            if (stateModel.State.Value is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING)
-                remoteListener.HandleTrackSubscribedAsync(publication, participant).Forget();
-        }
-
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, LKParticipant participant) =>
-            remoteListener.HandleTrackUnsubscribedAsync(publication, participant).Forget();
-
         private void OnApplicationFocusChanged(bool hasFocus)
         {
-            if (!hasFocus && stateModel.State.Value == NearbyVoiceChatState.SPEAKING && micPublisher.isRecording)
+            if (!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_MUTE_MIC_IN_BACKGROUND, true))
+                return;
+
+            if (!hasFocus && stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC && micPublisher.isRecording)
             {
                 micPublisher.StopMicrophone();
                 wasNearbyMicActiveBeforeFocusLoss = true;
@@ -238,7 +180,7 @@ namespace DCL.VoiceChat
             {
                 if (!micPublisher.isPublished) return;
 
-                bool wasSpeaking = stateModel.State.Value == NearbyVoiceChatState.SPEAKING;
+                bool wasSpeaking = stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC;
                 micPublisher.Unpublish();
                 PublishMicWithRetryAsync(startMic: wasSpeaking).Forget();
             }
@@ -246,7 +188,8 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate update, LKDisconnectReason? reason)
         {
-            // Cancel in-flight mic publish immediately so PublishAsync observes it via its CancellationToken
+            // Cancel in-flight mic publish synchronously — the event may arrive off the main thread, and any deferral
+            // until the main-thread hop below lets PublishMicWithRetryAsync start another attempt before observing cancellation.
             if (update == ConnectionUpdate.Disconnected)
                 activationCts.SafeCancelAndDispose();
 
@@ -257,6 +200,8 @@ namespace DCL.VoiceChat
             {
                 if (!PlayerLoopHelper.IsMainThread)
                     await UniTask.SwitchToMainThread();
+
+                if (disposed) return;
 
                 ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT,
                     $"Island Room connection: {connectionUpdate}{(disconnectReason.HasValue ? $" (reason: {disconnectReason.Value})" : "")}");
@@ -291,7 +236,7 @@ namespace DCL.VoiceChat
 
                     if (ct.IsCancellationRequested || disposed) return;
 
-                    if (startMic && stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
+                    if (startMic && stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC)
                         micPublisher.StartMicrophone();
 
                     ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, startMic ? "Mic track published and started" : "Mic track published (standby)");
@@ -315,29 +260,6 @@ namespace DCL.VoiceChat
                     catch (OperationCanceledException) { return; }
                 }
             }
-        }
-
-        private void OnMuteStateChanged(string walletId, bool isMuted) =>
-            remoteListener.SetMuteForIdentity(walletId, isMuted);
-
-        private void OnUserBlocked(string userId)
-        {
-            if (disposed) return;
-
-            remoteListener.RemoveStreamsByIdentity(userId);
-            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Removed nearby audio for blocked user {userId}");
-        }
-
-        private void OnUserUnblocked(string userId)
-        {
-            if (disposed) return;
-
-            // Only re-add while listening — suppressed/disabled states will rehydrate via StartListeningAsync on resume.
-            if (stateModel.State.Value is not (NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING))
-                return;
-
-            remoteListener.AddStreamsForIdentityAsync(userId).Forget();
-            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"Restoring nearby audio for unblocked user {userId}");
         }
 
         private void OnNearbyStateChanged(NearbyVoiceChatState newState)
@@ -370,7 +292,7 @@ namespace DCL.VoiceChat
                         Connect(); // ensures listener + track published; no-ops if already done
                         break;
 
-                    case NearbyVoiceChatState.SPEAKING:
+                    case NearbyVoiceChatState.OPEN_MIC:
                         if (micPublisher.isPublished)
                             micPublisher.StartMicrophone();
                         else

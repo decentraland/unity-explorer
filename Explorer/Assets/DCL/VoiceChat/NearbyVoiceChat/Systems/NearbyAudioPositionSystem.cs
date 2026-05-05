@@ -1,134 +1,94 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character;
-using DCL.Character.Components;
-using DCL.CharacterCamera;
-using DCL.Multiplayer.Profiles.Systems;
-using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming.Audio;
-using System.Collections.Generic;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    /// Handles positioning of Audio Sources for Nearby Voice Chat
-    ///    - Assigns <see cref="NearbyAudioSourceComponent"/> to remote entities who participate in the Nearby Chat
-    ///    - syncs AudioSource positions with <see cref="CharacterTransform"/> each frame, and applies spatial audio settings.
-    /// <see cref="VoiceChatConfiguration"/> is the single source of truth.
+    ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
+    ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
+    [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
+    [UpdateAfter(typeof(NearbyAudioBindingSystem))]
     public partial class NearbyAudioPositionSystem : BaseUnityLoopSystem
     {
-        private const float FALLBACK_HEAD_HEIGHT = 1.75f;
+        private const float POSITION_EPSILON_SQR = 0.01f;
 
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources;
+        private readonly NearbyMuteService muteService;
+        private readonly NearbyListenerState listenerState;
 
-        private readonly List<Entity> entitiesToCleanUp = new (4);
-        private readonly List<(Entity entity, string key, LivekitAudioSource source)> entitiesToAdd = new (4);
-
-        private SingleInstanceEntity cameraEntity;
-        private SingleInstanceEntity playerEntity;
-        private bool isFirstPerson;
-
-        internal NearbyAudioPositionSystem(World world,
-            IReadOnlyEntityParticipantTable entityParticipantTable,
-            DCLConcurrentDictionary<string, LivekitAudioSource> activeAudioSources) : base(world)
+        internal NearbyAudioPositionSystem(World world, NearbyMuteService muteService, NearbyListenerState listenerState) : base(world)
         {
-            this.entityParticipantTable = entityParticipantTable;
-            this.activeAudioSources = activeAudioSources;
-        }
-
-        public override void Initialize()
-        {
-            cameraEntity = World.CacheCamera();
-            playerEntity = World.CachePlayer();
+            this.muteService = muteService;
+            this.listenerState = listenerState;
         }
 
         protected override void Update(float t)
         {
-            entitiesToCleanUp.Clear();
-
-            AssignPendingSources();
-
-            // The AudioListener is on the camera, but spatial gain should be relative to the player's head.
-            // In ThirdPerson these positions differ, so we track both to reproject remote sources before applying spatial audio.
-            (Transform listenerTransform, Vector3 playerHeadPos) = GetListenerAndHeadPositions();
-            SyncPositionsAndSpatialAnglesQuery(World, listenerTransform, playerHeadPos);
-
-            foreach (Entity entity in entitiesToCleanUp)
-                World.Remove<NearbyAudioSourceComponent>(entity);
-        }
-
-        private void AssignPendingSources()
-        {
-            entitiesToAdd.Clear();
-
-            // Pass 1: update existing components via ref; collect entities that need a new component
-            foreach (KeyValuePair<string, LivekitAudioSource> kvp in activeAudioSources)
-            {
-                if (!entityParticipantTable.TryGet(kvp.Key, out IReadOnlyEntityParticipantTable.Entry entry)) continue;
-                if (World.Has<DeleteEntityIntention>(entry.Entity)) continue;
-
-                if (World.Has<NearbyAudioSourceComponent>(entry.Entity))
-                {
-                    ref NearbyAudioSourceComponent component = ref World.Get<NearbyAudioSourceComponent>(entry.Entity);
-                    component.LivekitAudioSource = kvp.Value;
-                    component.Transform = kvp.Value.transform;
-                }
-                else
-                {
-                    entitiesToAdd.Add((entry.Entity, kvp.Key, kvp.Value));
-                }
-            }
-
-            // Pass 2: structural changes (World.Add) after all refs are released
-            foreach ((Entity entity, string key, LivekitAudioSource source) in entitiesToAdd)
-                World.Add(entity, new NearbyAudioSourceComponent(key, source));
-        }
-
-        private (Transform listenerTransform, Vector3 playerHeadPos) GetListenerAndHeadPositions()
-        {
-            ref readonly CameraComponent cam = ref cameraEntity.GetCameraComponent(World);
-            isFirstPerson = cam.Mode == CameraMode.FirstPerson;
-
-            Vector3 headPos = cam.Camera.transform.position;
-            if (!isFirstPerson && World.TryGet(playerEntity, out PlayerComponent playerComp))
-                headPos = playerComp.CameraFocus.position;
-
-            return (cam.Camera.transform, headPos);
+            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition, listenerState.IsFirstPerson);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos,
-            Entity entity, in CharacterTransform characterTransform, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] bool isFirstPerson, ref NearbyAudioSourceComponent nearbyAudio)
         {
-            if (!activeAudioSources.ContainsKey(nearbyAudio.ParticipantIdentity))
+            // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
+            bool hasAvatar = World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase);
+            if (!hasAvatar) return;
+
+            // Per-frame idempotent inactive-state application — self-healing
+            Entity avatar = nearbyAudio.AvatarEntity;
+            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
+
+            LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
+
+            // Diff-write: Stop/Play is a state change on the AudioSource voice slot, not a topology change to the DSP graph
+            // Pessimistic init (LastInactive=false matches factory's enabled=true hand-off) forces the first-tick write when an avatar binds directly into the suspend band.
+            if (inactive != nearbyAudio.LastInactive)
             {
-                entitiesToCleanUp.Add(entity);
-                return;
+                if (inactive) src.AudioSource.Stop();
+                else src.AudioSource.Play();
+                nearbyAudio.LastInactive = inactive;
             }
 
-            Vector3 remoteAvatarHeadPos = World.TryGet(entity, out AvatarBase? avatarBase)
-                ? avatarBase.HeadAnchorPoint.position
-                : characterTransform.Position + new Vector3(0f, FALLBACK_HEAD_HEIGHT, 0f);
+            if (inactive) return;
+
+            Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
-            nearbyAudio.Transform.position = sourcePos;
 
-            (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
-            nearbyAudio.LivekitAudioSource.SetSpatialAngles(azimuth, elevation);
+            if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
+            {
+                src.transform.position = sourcePos;
+                nearbyAudio.LastWrittenPos = sourcePos;
+            }
+
+            // virtualized sources are not audible, so no need to calculate spatialization
+            if (!src.AudioSource.isVirtual)
+            {
+                (float azimuth, float elevation) = CalculateSpatialAngles(listenerTransform, sourcePos);
+                src.SetSpatialAngles(azimuth, elevation);
+            }
+
+            uint cacheVersion = muteService.CacheVersion;
+            if (nearbyAudio.LastSeenMuteVersion != cacheVersion)
+            {
+                bool muted = muteService.IsMuted(nearbyAudio.Key.identity);
+                if (muted != nearbyAudio.LastAppliedMute)
+                {
+                    src.AudioSource.mute = muted;
+                    nearbyAudio.LastAppliedMute = muted;
+                }
+                nearbyAudio.LastSeenMuteVersion = cacheVersion;
+            }
         }
 
         private static (float azimuth, float elevation) CalculateSpatialAngles(Transform listenerTransform, Vector3 sourcePosition)

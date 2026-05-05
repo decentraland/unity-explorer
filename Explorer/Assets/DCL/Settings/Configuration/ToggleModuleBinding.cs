@@ -46,6 +46,7 @@ namespace DCL.Settings.Configuration
             PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE = 12,
             SUN_LENS_FLARE_FEATURE = 13,
             DOUBLE_TAP_TO_MOVE = 14,
+            MUTE_MIC_IN_BACKGROUND_FEATURE = 15,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -89,6 +90,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.FULLSCREEN_FEATURE => new FullscreenSettingsController(viewInstance),
                 ToggleFeatures.PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE => new PlayCurrentSceneStreamSettingsController(viewInstance, videoPrioritizationSettings, qualitySettingsController),
                 ToggleFeatures.DOUBLE_TAP_TO_MOVE => new DoubleTapToMoveSettingsController(viewInstance),
+                ToggleFeatures.MUTE_MIC_IN_BACKGROUND_FEATURE => new MuteMicInBackgroundController(viewInstance),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
