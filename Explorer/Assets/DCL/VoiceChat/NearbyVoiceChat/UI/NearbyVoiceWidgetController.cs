@@ -70,7 +70,7 @@ namespace DCL.VoiceChat.UI
                     SubscribePushToTalk(); break;
             }
 
-            bool isSpeaking = state == NearbyVoiceChatState.SPEAKING;
+            bool isSpeaking = state == NearbyVoiceChatState.OPEN_MIC;
             bool isConnected = isSpeaking || state is NearbyVoiceChatState.IDLE;
 
             view.HearOthersToggle.SetIsOnWithoutNotify(isConnected);
@@ -98,7 +98,7 @@ namespace DCL.VoiceChat.UI
                 stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
                 view.HearText.text = SPEAKING_BUTTON_TEXT;
             }
-            else if (stateModel.State.Value == NearbyVoiceChatState.SPEAKING)
+            else if (stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC)
                 stateModel.StopSpeaking();
         }
 

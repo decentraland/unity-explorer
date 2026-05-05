@@ -50,6 +50,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
+        // temportal sentry budget fix. TODO remove once the core issue solved
+        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
+
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
@@ -227,8 +230,23 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
+                const string ONCE_PATTERN = "(will retry)";
+
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+                bool isCaught = marshaled.Contains(ONCE_PATTERN);
+
+                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
+                {
+                    // Don't log if already was
+                    return;
+                }
+
                 ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+
+                if (isCaught)
+                {
+                    ONCE_PATTERN_ALREADY_CAUGHT = true;
+                }
             }
             catch
             {
