@@ -93,6 +93,12 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
+            // SceneFactory unconditionally fires SceneAdmins.FireRequestAsync unless realmData reports
+            // LSD; the cube.js fixture is loaded locally so LSD == true is semantically correct and
+            // skips the unrelated signed-fetch path that would otherwise log an empty-URI exception.
+            var realmData = Substitute.For<IRealmData>();
+            realmData.IsLocalSceneDevelopment.Returns(true);
+
             sceneFactory = new SceneFactory(
                 ecsWorldFactory,
                 sceneRuntimeFactory,
@@ -108,7 +114,7 @@ namespace SceneRunner.Tests
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.TEST,
                 NullRoomHub.INSTANCE,
-                Substitute.For<IRealmData>(),
+                realmData,
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
