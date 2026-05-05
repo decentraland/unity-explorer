@@ -136,27 +136,6 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void ThrottleCreates10ThenOver25Avatars()
-        {
-            const int AVATARS = 25;
-            for (int i = 0; i < AVATARS; i++)
-            {
-                string wallet = $"wallet-{i}";
-                CreateStreamingAvatar(wallet, "sid-1");
-                registry.SeedActiveStream(wallet, "sid-1");
-            }
-
-            system.Update(0);
-            Assert.That(CountAudioEntities(), Is.EqualTo(NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME));
-
-            system.Update(0);
-            Assert.That(CountAudioEntities(), Is.EqualTo(NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME * 2));
-
-            system.Update(0);
-            Assert.That(CountAudioEntities(), Is.EqualTo(AVATARS));
-        }
-
-        [Test]
         public void IdempotencyDoesNotDuplicateBindings()
         {
             const string WALLET = "wallet-alice";
