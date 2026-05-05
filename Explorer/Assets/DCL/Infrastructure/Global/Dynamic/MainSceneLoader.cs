@@ -58,7 +58,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Networking;
 using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
@@ -250,7 +249,9 @@ namespace Global.Dynamic
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
-                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, assetsProvisioner, ct);
+                // Checking for clock desync after feature flags (or any other process that performs an http request)
+                // potentially saves one extra HEAD request
+                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController, assetsProvisioner, ct);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
@@ -807,10 +808,9 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, IWebRequestController webRequestController, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            if (!realmClock.HasSample)
-                await TryProbeServerTimeAsync(realmClock, ct);
+            await TryProbeServerTimeAsync(realmClock, webRequestController, ct);
 
             if (!IsDesync()) return;
 
@@ -822,7 +822,7 @@ namespace Global.Dynamic
                     ExitUtils.Exit();
                     break;
                 case ErrorPopupWithRetryController.Result.RESTART:
-                    await DetectClockDesyncAsync(realmClock, assetsProvisioner, ct);
+                    await DetectClockDesyncAsync(realmClock, webRequestController, assetsProvisioner, ct);
                     break;
             }
 
@@ -832,6 +832,7 @@ namespace Global.Dynamic
             {
                 DateTime? serverUtc = realmClock.UtcNow;
 
+                // Don't block the user if the server time cannot be resolved
                 if (!serverUtc.HasValue) return false;
 
                 var delta = serverUtc.Value - DateTime.UtcNow;
@@ -839,15 +840,18 @@ namespace Global.Dynamic
             }
         }
 
-        private static async UniTask TryProbeServerTimeAsync(RealmClock realmClock, CancellationToken ct)
+        private static async UniTask TryProbeServerTimeAsync(RealmClock realmClock, IWebRequestController controller, CancellationToken ct)
         {
+            if (realmClock.HasSample) return;
+
             try
             {
-                using var request = UnityWebRequest.Head(CLOCK_PROBE_URL);
-                await request.SendWebRequest().WithCancellation(ct);
-
-                if (request.result == UnityWebRequest.Result.Success)
-                    realmClock.TryRecordHttpDate(request.GetResponseHeader("Date"));
+                // This will internally set the realm clock on success
+                await controller.IsHeadReachableAsync(
+                    ReportCategory.STARTUP,
+                    URLAddress.FromString(CLOCK_PROBE_URL),
+                    ct,
+                    suppressErrors: true);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
