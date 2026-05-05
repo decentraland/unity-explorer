@@ -819,7 +819,7 @@ namespace Global.Dynamic
             switch (response)
             {
                 case ErrorPopupWithRetryController.Result.EXIT:
-                    ExitUtils.Exit();
+                    // ErrorPopupWithRetryController already handles exit internally, no need to do anything else here
                     break;
                 case ErrorPopupWithRetryController.Result.RESTART:
                     await DetectClockDesyncAsync(realmClock, webRequestController, assetsProvisioner, ct);

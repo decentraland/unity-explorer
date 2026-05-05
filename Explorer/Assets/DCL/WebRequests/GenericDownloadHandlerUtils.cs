@@ -13,24 +13,6 @@ using UnityEngine.Networking;
 namespace DCL.WebRequests
 {
     /// <summary>
-    ///     Snapshot of the response headers of a completed web request.
-    ///     Safe to keep beyond the request lifetime — values are copied off the underlying
-    ///     <see cref="UnityWebRequest"/> before it is disposed.
-    /// </summary>
-    public readonly struct WebResponseHeaders
-    {
-        private readonly Dictionary<string, string>? headers;
-
-        public WebResponseHeaders(Dictionary<string, string>? headers)
-        {
-            this.headers = headers;
-        }
-
-        public string? GetResponseHeader(string name) =>
-            headers != null && headers.TryGetValue(name, out string value) ? value : null;
-    }
-
-    /// <summary>
     ///     Contains operation that are common for all generic requests
     /// </summary>
     public static class GenericDownloadHandlerUtils
@@ -141,16 +123,6 @@ namespace DCL.WebRequests
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
                 SendAsync<CreateFromJsonOp<T, TRequest>, T>(new CreateFromJsonOp<T, TRequest>(jsonParser, threadFlags, createCustomExceptionOnFailure));
 
-            /// <summary>
-            ///     Same as <see cref="CreateFromJson{T}"/> but additionally returns a snapshot of the response headers.
-            /// </summary>
-            public UniTask<(T result, WebResponseHeaders headers)> CreateFromJsonWithHeadersAsync<T>(WRJsonParser jsonParser,
-                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
-                SendAsync<WithHeadersOp<CreateFromJsonOp<T, TRequest>, T, TRequest>, (T, WebResponseHeaders)>(
-                    new WithHeadersOp<CreateFromJsonOp<T, TRequest>, T, TRequest>(
-                        new CreateFromJsonOp<T, TRequest>(jsonParser, threadFlags, createCustomExceptionOnFailure)));
-
             public UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
@@ -182,18 +154,6 @@ namespace DCL.WebRequests
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
                 SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
-
-            /// <summary>
-            ///     Same as <see cref="OverwriteFromJsonAsync{T}"/> but additionally returns a snapshot of the response headers.
-            /// </summary>
-            public UniTask<(T result, WebResponseHeaders headers)> OverwriteFromJsonWithHeadersAsync<T>(
-                T targetObject,
-                WRJsonParser jsonParser,
-                WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
-                SendAsync<WithHeadersOp<OverwriteFromJsonAsyncOp<T, TRequest>, T, TRequest>, (T, WebResponseHeaders)>(
-                    new WithHeadersOp<OverwriteFromJsonAsyncOp<T, TRequest>, T, TRequest>(
-                        new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure)));
 
             public UniTask<T> OverwriteFromNewtonsoftJsonAsync<T>(
                 T targetObject,
@@ -408,30 +368,6 @@ namespace DCL.WebRequests
             {
                 webRequest.UnityWebRequest.disposeDownloadHandlerOnDispose = false;
                 return UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler)!;
-            }
-        }
-
-        /// <summary>
-        ///     Wraps an inner op so the caller receives both the inner result and a snapshot of the response headers.
-        ///     The headers are copied off the request before the inner op runs, so the snapshot is safe to keep
-        ///     beyond the wrapping op's lifetime.
-        /// </summary>
-        public struct WithHeadersOp<TInner, T, TRequest> : IWebRequestOp<TRequest, (T, WebResponseHeaders)>
-            where TInner: struct, IWebRequestOp<TRequest, T>
-            where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
-        {
-            private readonly TInner inner;
-
-            public WithHeadersOp(TInner inner)
-            {
-                this.inner = inner;
-            }
-
-            public async UniTask<(T, WebResponseHeaders)> ExecuteAsync(TRequest webRequest, CancellationToken ct)
-            {
-                var headers = new WebResponseHeaders(webRequest.UnityWebRequest.GetResponseHeaders());
-                T? result = await inner.ExecuteAsync(webRequest, ct);
-                return (result!, headers);
             }
         }
     }
