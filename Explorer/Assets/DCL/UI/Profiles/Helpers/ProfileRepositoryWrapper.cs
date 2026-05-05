@@ -22,6 +22,9 @@ namespace DCL.UI.Profiles.Helpers
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
 
+        // Lets us keep showing a user's previous picture (via SpriteCache) while a newly published one is still being generated.
+        private readonly Dictionary<string, string> latestThumbnailUrlByUser = new ();
+
         public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache)
         {
             this.thumbnailCache = thumbnailCache;
@@ -33,6 +36,17 @@ namespace DCL.UI.Profiles.Helpers
 
         public Sprite? GetProfileThumbnail(string thumbnailUrl) =>
             thumbnailCache.GetCachedSprite(thumbnailUrl);
+
+        public Sprite? GetLatestThumbnailForUser(string userId)
+        {
+            if (!latestThumbnailUrlByUser.TryGetValue(userId, out string? url))
+                return null;
+
+            return thumbnailCache.GetCachedSprite(url);
+        }
+
+        public void StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl) =>
+            latestThumbnailUrlByUser[userId] = thumbnailUrl;
 
         public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>
             profileRepository.GetCompactAsync(userId, ct);

@@ -31,6 +31,7 @@ namespace DCL.UI.ProfileElements
 
             if (cachedSprite != null)
             {
+                profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl);
                 property.SetLoaded(cachedSprite, true);
                 return;
             }
@@ -42,12 +43,21 @@ namespace DCL.UI.ProfileElements
             if (ct.IsCancellationRequested)
                 return;
 
+            // Seed with this user's last known sprite (null if none) so we keep their previous picture during download
+            // and don't leak a sprite from a previous user when the property is reused (e.g. identity change).
+            Sprite? previousUserSprite = profileRepository.GetLatestThumbnailForUser(userId);
+
+            property.UpdateValue(new ProfileThumbnailViewModel(ProfileThumbnailViewModel.State.LOADING, previousUserSprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
+
             try
             {
                 Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(faceSnapshotUrl, ct);
 
                 if (downloadedSprite != null)
+                {
+                    profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl);
                     property.SetLoaded(downloadedSprite, false);
+                }
                 else
                     UpdateFromError();
             }
@@ -60,6 +70,10 @@ namespace DCL.UI.ProfileElements
 
             void UpdateFromError()
             {
+                // If we already swapped in a previous picture, keep showing it instead of falling back to the placeholder.
+                if (property.Value.Sprite != null && property.Value.ThumbnailState == ProfileThumbnailViewModel.State.LOADING)
+                    return;
+
                 property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
             }
         }
