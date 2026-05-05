@@ -338,6 +338,7 @@ namespace DCL.Backpack
                 await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token, EndSlotBusy);
                 GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
             }
+            catch (OperationCanceledException) { EndSlotBusy(); }
             catch (Exception ex)
             {
                 EndSlotBusy();
