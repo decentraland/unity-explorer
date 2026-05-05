@@ -39,6 +39,15 @@ namespace Utility.Multithreading
             Inner = new (comparer);
         }
 
+        public DCLConcurrentDictionary(int concurrencyLevel, int capacity)
+        {
+#if UNITY_WEBGL
+            Inner = new (capacity: capacity);
+#else
+            Inner = new (concurrencyLevel: concurrencyLevel, capacity: capacity);
+#endif
+        }
+
         public bool IsEmpty => Inner.IsEmpty;
 
         public void Add(TKey key, TValue value)
@@ -74,6 +83,23 @@ namespace Utility.Multithreading
             return value;
 #else
             return Inner.GetOrAdd(key, valueFactory);
+#endif
+        }
+
+        public TValue AddOrUpdate<TArg>(
+            TKey key,
+            Func<TKey, TArg, TValue> addValueFactory,
+            Func<TKey, TValue, TArg, TValue> updateValueFactory,
+            TArg factoryArgument)
+        {
+#if UNITY_WEBGL
+            TValue value = Inner.TryGetValue(key, out TValue existing)
+                ? updateValueFactory(key, existing, factoryArgument)
+                : addValueFactory(key, factoryArgument);
+            Inner[key] = value;
+            return value;
+#else
+            return Inner.AddOrUpdate(key, addValueFactory, updateValueFactory, factoryArgument);
 #endif
         }
 
