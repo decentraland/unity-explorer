@@ -9,7 +9,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using System.Diagnostics;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -30,10 +29,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly float suspendOutSqr;
         private readonly float suspendInSqr;
         private readonly NearbyListenerState listenerState;
-
-        private SingleInstanceEntity cameraEntity;
-        private Transform cameraTransform = null!;
-        private Transform playerFocusTransform = null!;
 
         internal NearbyAudibleRangeSystem(World world, VoiceChatConfiguration configuration, NearbyListenerState listenerState) : base(world)
         {
@@ -61,22 +56,17 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         public override void Initialize()
         {
-            cameraEntity = World.CacheCamera();
+            SingleInstanceEntity cameraEntity = World.CacheCamera();
 
-            cameraTransform = World.Get<CameraComponent>(cameraEntity).Camera.transform;
-            playerFocusTransform = World.Get<PlayerComponent>(World.CachePlayer()).CameraFocus;
+            Transform cameraTransform = World.Get<CameraComponent>(cameraEntity).Camera.transform;
+            Transform? playerFocusTransform = World.Get<PlayerComponent>(World.CachePlayer()).CameraFocus;
 
-            listenerState.BindListener(cameraTransform);
+            listenerState.BindListener(playerFocusTransform, cameraTransform);
         }
 
         protected override void Update(float t)
         {
-            bool isFirstPerson = cameraEntity.GetCameraComponent(World).Mode == CameraMode.FirstPerson;
-            Vector3 playerHeadPosition = isFirstPerson ? cameraTransform.position : playerFocusTransform.position;
-
-            listenerState.IsFirstPerson = isFirstPerson;
-            listenerState.PlayerHeadPosition = playerHeadPosition;
-
+            Vector3 playerHeadPosition = listenerState.PlayerHeadPosition;
             // Order matters:
             TryEnterAudibleRangeQuery(World, playerHeadPosition); // 1. Avatars without the tag: enter the outer-in band .
             UpdateInAudibleRangeQuery(World, playerHeadPosition); // 2. Avatars with the tag: exit on outer-out, otherwise mutate IsSuspended via the suspend hysteresis

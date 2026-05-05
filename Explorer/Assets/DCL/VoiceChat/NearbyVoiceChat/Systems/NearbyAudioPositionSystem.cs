@@ -32,12 +32,12 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         protected override void Update(float t)
         {
-            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition, listenerState.IsFirstPerson);
+            SyncPositionsAndSpatialAnglesQuery(World, listenerState.ListenerTransform, listenerState.PlayerHeadPosition);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, [Data] bool isFirstPerson, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
         {
             // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
             bool hasAvatar = World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase);
@@ -61,9 +61,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (inactive) return;
 
             Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
-
-            // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
-            Vector3 sourcePos = isFirstPerson ? remoteAvatarHeadPos : listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
+            Vector3 sourcePos = listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
 
             if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
             {

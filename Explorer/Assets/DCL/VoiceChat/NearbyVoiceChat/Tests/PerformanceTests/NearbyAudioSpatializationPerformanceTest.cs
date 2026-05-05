@@ -69,7 +69,7 @@ namespace DCL.VoiceChat.Nearby
             int totalSamples = bufferSize * CHANNELS;
             float[] audioBuffer = new float[totalSamples];
 
-            SetupSources(sourceCount, smoothPanning);
+            SetupSources(sourceCount);
 
             Measure
                .Method(() =>
@@ -84,7 +84,7 @@ namespace DCL.VoiceChat.Nearby
                .Run();
         }
 
-        private void SetupSources(int count, bool smoothPanning = false)
+        private void SetupSources(int count)
         {
             UnityEngine.Random.InitState(42);
 

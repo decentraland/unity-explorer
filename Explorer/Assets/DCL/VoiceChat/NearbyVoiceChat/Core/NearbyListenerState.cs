@@ -8,11 +8,14 @@ namespace DCL.VoiceChat.Nearby
     public class NearbyListenerState
     {
         public Transform ListenerTransform { get; private set; } = null!;
+        private Transform playerHeadTransform = null!;
 
-        public Vector3 PlayerHeadPosition;
-        public bool IsFirstPerson;
+        public Vector3 PlayerHeadPosition => playerHeadTransform.position;
 
-        public void BindListener(Transform listenerTransform) =>
-            ListenerTransform = listenerTransform;
+        public void BindListener(Transform playerHead, Transform listener)
+        {
+            ListenerTransform = listener;
+            this.playerHeadTransform = playerHead;
+        }
     }
 }
