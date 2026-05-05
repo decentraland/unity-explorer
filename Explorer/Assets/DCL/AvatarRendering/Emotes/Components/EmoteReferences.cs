@@ -13,10 +13,10 @@ namespace DCL.AvatarRendering.Emotes
 
         public AudioSource? audioSource;
 
-        public void Initialize(AnimationClip? animationClip, AnimationClip? propCLip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
+        public void Initialize(AnimationClip? animationClip, AnimationClip? propClip, Animator? animatorComp, Animation? animationComp, int propClipHash, bool legacy)
         {
             this.avatarClip = animationClip;
-            this.propClip = propCLip;
+            this.propClip = propClip;
             this.animatorComp = animatorComp;
             this.animationComp = animationComp;
             this.propClipHash = propClipHash;

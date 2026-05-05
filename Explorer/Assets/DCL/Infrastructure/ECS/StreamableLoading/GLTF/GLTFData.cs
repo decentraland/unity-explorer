@@ -4,6 +4,7 @@ using GLTFast;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -30,9 +31,8 @@ namespace ECS.StreamableLoading.GLTF
             // Dispose the GltfImport which will handle texture disposal
             Asset?.Dispose();
 
-            // Destroy the container GameObject
-            if (Root != null)
-                Object.Destroy(Root);
+            // SafeDestroy routes to DestroyImmediate in edit mode (tests) and Destroy at runtime.
+            UnityObjectUtils.SafeDestroy(Root);
         }
     }
 }

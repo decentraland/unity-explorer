@@ -50,6 +50,7 @@ namespace SceneRunner.Admins
 
         private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(30000);
 
+
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;
         private readonly IRealmData realmData;
@@ -88,10 +89,12 @@ namespace SceneRunner.Admins
 
         public async UniTaskVoid StartRequestPollingAsync()
         {
-            while (cts.IsCancellationRequested == false)
+            CancellationToken token = cts.Token;
+            while (token.IsCancellationRequested == false)
             {
-                await FireRequestAsync(cts.Token);
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token).SuppressCancellationThrow();
+                await FireRequestAsync(token);
+                if (token.IsCancellationRequested) return;
+                await UniTask.Delay(DELAY, cancellationToken: token).SuppressCancellationThrow();
             }
         }
 
