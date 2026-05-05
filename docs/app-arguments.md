@@ -302,7 +302,7 @@ More detailed instructions on how to test can be found in the description of rel
 
 ### `resolution`
 **Type:** String (`WxH`)
-**Description:** Overrides the saved PlayerPrefs resolution. Only applies in fullscreen mode. Takes precedence over both PlayerPrefs and the default resolution. Format is width × height separated by `x`.
+**Description:** Overrides the resolution on startup, taking precedence over both PlayerPrefs and the default resolution. Applies in both fullscreen and windowed modes. Format is width × height separated by `x`.
 
 **Usage:**
 ```bash

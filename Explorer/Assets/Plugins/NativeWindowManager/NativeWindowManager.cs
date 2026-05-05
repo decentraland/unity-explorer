@@ -113,9 +113,7 @@ namespace Plugins.NativeWindowManager
                 inFullscreen = targetFullscreen;
             }
 
-            // Explicitly apply the saved or overridden resolution.
-            // In fullscreen this also covers the common case where the state already matched the saved
-            // preference and EnableFullscreen was skipped, so the resolution still needs restoring.
+            // Apply saved/overridden resolution — needed even when fullscreen state was unchanged (EnableFullscreen skipped).
             Vector2Int targetResolution = resolutionOverride ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
             Screen.SetResolution(targetResolution.x, targetResolution.y, inFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
 
