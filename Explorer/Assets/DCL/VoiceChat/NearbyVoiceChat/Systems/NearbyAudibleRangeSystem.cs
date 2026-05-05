@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             Transform cameraTransform = World.Get<CameraComponent>(cameraEntity).Camera.transform;
             Transform? playerFocusTransform = World.Get<PlayerComponent>(World.CachePlayer()).CameraFocus;
 
-            listenerState.BindListener(playerFocusTransform, cameraTransform);
+            listenerState.BindListener(cameraTransform, playerFocusTransform);
         }
 
         protected override void Update(float t)

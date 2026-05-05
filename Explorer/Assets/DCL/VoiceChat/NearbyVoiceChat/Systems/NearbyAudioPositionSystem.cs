@@ -60,6 +60,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             if (inactive) return;
 
+            // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
             Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
             Vector3 sourcePos = listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
 

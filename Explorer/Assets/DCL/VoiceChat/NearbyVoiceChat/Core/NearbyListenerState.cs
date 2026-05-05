@@ -12,7 +12,7 @@ namespace DCL.VoiceChat.Nearby
 
         public Vector3 PlayerHeadPosition => playerHeadTransform.position;
 
-        public void BindListener(Transform playerHead, Transform listener)
+        public void BindListener(Transform listener, Transform playerHead)
         {
             ListenerTransform = listener;
             this.playerHeadTransform = playerHead;
