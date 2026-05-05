@@ -206,6 +206,7 @@ namespace DCL.SmartWearables
                 }
             }
             catch (OperationCanceledException) { /* expected on rapid outfit replace */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
         }
 
         private async UniTask StopSmartWearableSceneAsync(IWearable wearable)
