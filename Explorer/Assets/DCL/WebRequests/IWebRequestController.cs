@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Time;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -30,7 +31,8 @@ namespace DCL.WebRequests
                 DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
             new WebRequestBudget(TOTAL_BUDGET,
-                new ElementBinding<ulong>((ulong)TOTAL_BUDGET))
+                new ElementBinding<ulong>((ulong)TOTAL_BUDGET)),
+            new RealmClock()
         );
 #endif
     }

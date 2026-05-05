@@ -33,7 +33,6 @@ using DCL.Profiling;
 using DCL.Quality;
 using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -172,7 +171,6 @@ namespace Global
             IDiskCache<PartialLoadingState> partialsDiskCache,
             CancellationToken ct,
             IAppArgs appArgs,
-            RealmClock realmClock,
             bool enableGPUInstancing = true)
         {
             ProfilingCounters.CleanAllCounters();
@@ -241,7 +239,7 @@ namespace Global
             container.SmartWearableCache = new SmartWearableCache(webRequestsContainer.WebRequestController);
             container.ImageControllerProvider = new ImageControllerProvider(globalWorld);
 
-            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController, realmClock);
+            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
             container.GltfContainerAssetsCache = new GltfContainerAssetsCache(componentsContainer.ComponentPoolsRegistry);
 
 

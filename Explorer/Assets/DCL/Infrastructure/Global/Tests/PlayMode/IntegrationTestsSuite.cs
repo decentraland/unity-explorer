@@ -102,7 +102,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 debugBuilder,
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -118,7 +118,6 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 ct,
                 appArgs,
-                new RealmClock(),
                 enableGPUInstancing: false
             );
 

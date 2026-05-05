@@ -129,8 +129,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 ct,
-                appArgs,
-                bootstrapContainer.RealmClock
+                appArgs
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(

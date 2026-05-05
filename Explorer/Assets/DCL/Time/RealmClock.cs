@@ -15,6 +15,9 @@ namespace DCL.Time
         private long sampleTimestamp;
         private bool hasSample;
 
+        /// <summary>True once a server-time sample has been recorded.</summary>
+        public bool HasSample => hasSample;
+
         /// <summary>
         ///     Server-aligned current UTC time. Null until the first sample is recorded.
         ///     Advances with <see cref="Stopwatch"/>-based application time, not <see cref="DateTime.UtcNow"/>.

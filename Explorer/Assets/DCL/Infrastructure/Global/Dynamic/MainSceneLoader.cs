@@ -58,6 +58,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
@@ -67,6 +68,7 @@ namespace Global.Dynamic
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
         private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
+        private const string CLOCK_PROBE_URL = "https://decentraland.org/";
 
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
@@ -87,7 +89,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
-        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupPrefab = null!;
+        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
@@ -96,6 +98,7 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
         private FileStream? singleInstanceLock;
+        private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
         private void Awake()
         {
@@ -806,6 +809,9 @@ namespace Global.Dynamic
 
         private async UniTask DetectClockDesyncAsync(RealmClock realmClock, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
+            if (!realmClock.HasSample)
+                await TryProbeServerTimeAsync(realmClock, ct);
+
             if (!IsDesync()) return;
 
             ErrorPopupWithRetryController.Result response = await ShowClockDesyncPopupAsync(assetsProvisioner, ct);
@@ -833,12 +839,27 @@ namespace Global.Dynamic
             }
         }
 
+        private static async UniTask TryProbeServerTimeAsync(RealmClock realmClock, CancellationToken ct)
+        {
+            try
+            {
+                using var request = UnityWebRequest.Head(CLOCK_PROBE_URL);
+                await request.SendWebRequest().WithCancellation(ct);
+
+                if (request.result == UnityWebRequest.Result.Success)
+                    realmClock.TryRecordHttpDate(request.GetResponseHeader("Date"));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
+        }
+
         private async UniTask<ErrorPopupWithRetryController.Result> ShowClockDesyncPopupAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            ErrorPopupWithRetryView prefab = (await assetsProvisioner.ProvideMainAssetAsync(clockDesyncPopupPrefab, ct)).Value;
+            if (clockDesyncPopupPrefab == null)
+                clockDesyncPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
 
             ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
-                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(prefab, null, out ErrorPopupWithRetryView viewInstance);
+                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(clockDesyncPopupPrefab, null, out ErrorPopupWithRetryView viewInstance);
 
             using var controller = new ErrorPopupWithRetryController(viewFactory);
 
