@@ -56,7 +56,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
 
             listenerState = new NearbyListenerState();
-            listenerState.BindListener(playerHead, camera.transform);
+            listenerState.BindListener(camera.transform, playerHead);
 
             system = new NearbyAudioPositionSystem(world, muteService, listenerState);
             system.Initialize();

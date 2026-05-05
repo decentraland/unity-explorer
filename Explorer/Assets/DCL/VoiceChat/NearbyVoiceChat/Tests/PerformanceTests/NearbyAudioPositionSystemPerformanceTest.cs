@@ -50,7 +50,7 @@ namespace DCL.VoiceChat.Nearby
             // production). This benchmark exercises PositionSystem in isolation, so we seed the
             // state manually with the player head transform.
             var listenerState = new NearbyListenerState();
-            listenerState.BindListener(playerGo.transform, camera.transform);
+            listenerState.BindListener(camera.transform, playerGo.transform);
 
             system = new NearbyAudioPositionSystem(world, muteService, listenerState);
             system.Initialize();

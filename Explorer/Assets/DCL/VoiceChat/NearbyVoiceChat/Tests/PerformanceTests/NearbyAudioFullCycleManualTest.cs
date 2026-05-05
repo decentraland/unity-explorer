@@ -119,7 +119,7 @@ namespace DCL.VoiceChat.Nearby
             // production). This testbed runs PositionSystem without RangeSystem, so we seed the
             // state manually with the player head position.
             var listenerState = new NearbyListenerState();
-            listenerState.BindListener(playerGo.transform, camera.transform);
+            listenerState.BindListener(camera.transform, playerGo.transform);
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
