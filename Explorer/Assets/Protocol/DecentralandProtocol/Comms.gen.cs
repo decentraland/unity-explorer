@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLmBwoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCK1CAoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -47,62 +47,66 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "aXRpb25IABI8CghyZWFjdGlvbhgOIAEoCzIoLmRlY2VudHJhbGFuZC5rZXJu",
             "ZWwuY29tbXMucmZjNC5SZWFjdGlvbkgAEkUKDWNoYXRfcmVhY3Rpb24YDyAB",
             "KAsyLC5kZWNlbnRyYWxhbmQua2VybmVsLmNvbW1zLnJmYzQuQ2hhdFJlYWN0",
-            "aW9uSAASGAoQcHJvdG9jb2xfdmVyc2lvbhgLIAEoDUIJCgdtZXNzYWdlIqUB",
-            "CghQb3NpdGlvbhINCgVpbmRleBgBIAEoDRISCgpwb3NpdGlvbl94GAMgASgC",
-            "EhIKCnBvc2l0aW9uX3kYBCABKAISEgoKcG9zaXRpb25fehgFIAEoAhISCgpy",
-            "b3RhdGlvbl94GAYgASgCEhIKCnJvdGF0aW9uX3kYByABKAISEgoKcm90YXRp",
-            "b25fehgIIAEoAhISCgpyb3RhdGlvbl93GAkgASgCIusFCghNb3ZlbWVudBIR",
-            "Cgl0aW1lc3RhbXAYASABKAISEgoKcG9zaXRpb25feBgCIAEoAhISCgpwb3Np",
-            "dGlvbl95GAMgASgCEhIKCnBvc2l0aW9uX3oYBCABKAISEgoKdmVsb2NpdHlf",
-            "eBgFIAEoAhISCgp2ZWxvY2l0eV95GAYgASgCEhIKCnZlbG9jaXR5X3oYByAB",
-            "KAISHAoUbW92ZW1lbnRfYmxlbmRfdmFsdWUYCCABKAISGQoRc2xpZGVfYmxl",
-            "bmRfdmFsdWUYCSABKAISEwoLaXNfZ3JvdW5kZWQYCiABKAgSEgoKaXNfanVt",
-            "cGluZxgLIAEoCBISCgpqdW1wX2NvdW50GBggASgFEhQKDGlzX2xvbmdfanVt",
-            "cBgMIAEoCBIUCgxpc19sb25nX2ZhbGwYDSABKAgSEgoKaXNfZmFsbGluZxgO",
-            "IAEoCBISCgppc19zdHVubmVkGA8gASgIEkgKC2dsaWRlX3N0YXRlGBcgASgO",
-            "MjMuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0Lk1vdmVtZW50Lkds",
-            "aWRlU3RhdGUSEgoKcm90YXRpb25feRgQIAEoAhISCgppc19pbnN0YW50GBEg",
-            "ASgIEhIKCmlzX2Vtb3RpbmcYEiABKAgSGwoTaGVhZF9pa195YXdfZW5hYmxl",
-            "ZBgTIAEoCBIdChVoZWFkX2lrX3BpdGNoX2VuYWJsZWQYFCABKAgSEAoIaGVh",
-            "ZF95YXcYFSABKAISEgoKaGVhZF9waXRjaBgWIAEoAhISCgpwb2ludF9hdF94",
-            "GBkgASgCEhIKCnBvaW50X2F0X3kYGiABKAISEgoKcG9pbnRfYXRfehgbIAEo",
-            "AhIWCg5pc19wb2ludGluZ19hdBgcIAEoCCJOCgpHbGlkZVN0YXRlEg8KC1BS",
-            "T1BfQ0xPU0VEEAASEAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAK",
-            "DENMT1NJTkdfUFJPUBADInEKEk1vdmVtZW50Q29tcHJlc3NlZBIVCg10ZW1w",
-            "b3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMSFgoOaGVh",
-            "ZF9zeW5jX2RhdGEYAyABKAUSFQoNcG9pbnRfYXRfZGF0YRgEIAEoBSK7AwoL",
-            "UGxheWVyRW1vdGUSFgoOaW5jcmVtZW50YWxfaWQYASABKA0SCwoDdXJuGAIg",
-            "ASgJEhEKCXRpbWVzdGFtcBgDIAEoAhIYCgtpc19zdG9wcGluZxgEIAEoCEgA",
-            "iAEBEhkKDGlzX3JlcGVhdGluZxgFIAEoCEgBiAEBEhsKDmludGVyYWN0aW9u",
-            "X2lkGAYgASgFSAKIAQESIQoUc29jaWFsX2Vtb3RlX291dGNvbWUYByABKAVI",
-            "A4gBARIYCgtpc19yZWFjdGluZxgIIAEoCEgEiAEBEiMKFnNvY2lhbF9lbW90",
-            "ZV9pbml0aWF0b3IYCSABKAlIBYgBARIaCg10YXJnZXRfYXZhdGFyGAogASgJ",
-            "SAaIAQESEQoEbWFzaxgLIAEoDUgHiAEBQg4KDF9pc19zdG9wcGluZ0IPCg1f",
-            "aXNfcmVwZWF0aW5nQhEKD19pbnRlcmFjdGlvbl9pZEIXChVfc29jaWFsX2Vt",
-            "b3RlX291dGNvbWVCDgoMX2lzX3JlYWN0aW5nQhkKF19zb2NpYWxfZW1vdGVf",
-            "aW5pdGlhdG9yQhAKDl90YXJnZXRfYXZhdGFyQgcKBV9tYXNrIjUKClNjZW5l",
-            "RW1vdGUSFwoPc2NlbmVfZW50aXR5X2lkGAEgASgJEg4KBnNvdXJjZRgCIAEo",
-            "CSIxChZBbm5vdW5jZVByb2ZpbGVWZXJzaW9uEhcKD3Byb2ZpbGVfdmVyc2lv",
-            "bhgBIAEoDSI6Cg5Qcm9maWxlUmVxdWVzdBIPCgdhZGRyZXNzGAQgASgJEhcK",
-            "D3Byb2ZpbGVfdmVyc2lvbhgDIAEoDSI/Cg9Qcm9maWxlUmVzcG9uc2USGgoS",
-            "c2VyaWFsaXplZF9wcm9maWxlGAEgASgJEhAKCGJhc2VfdXJsGAIgASgJIloK",
-            "BENoYXQSDwoHbWVzc2FnZRgBIAEoCRIRCgl0aW1lc3RhbXAYAiABKAESGwoO",
-            "Zm9yd2FyZGVkX2Zyb20YAyABKAlIAIgBAUIRCg9fZm9yd2FyZGVkX2Zyb20i",
-            "JwoFU2NlbmUSEAoIc2NlbmVfaWQYASABKAkSDAoEZGF0YRgCIAEoDCKLAQoF",
-            "Vm9pY2USFwoPZW5jb2RlZF9zYW1wbGVzGAEgASgMEg0KBWluZGV4GAIgASgN",
-            "Ej8KBWNvZGVjGAMgASgOMjAuZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
-            "ZmM0LlZvaWNlLlZvaWNlQ29kZWMiGQoKVm9pY2VDb2RlYxILCgdWQ19PUFVT",
-            "EAAihQEKDkxvb2tBdFBvc2l0aW9uEhEKCXRpbWVzdGFtcBgBIAEoAhISCgpw",
-            "b3NpdGlvbl94GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoKcG9zaXRp",
-            "b25fehgEIAEoAhIkChx0YXJnZXRfYXZhdGFyX3dhbGxldF9hZGRyZXNzGAUg",
-            "ASgJIkEKCFJlYWN0aW9uEhMKC2Vtb2ppX2luZGV4GAEgASgFEhEKCXRpbWVz",
-            "dGFtcBgCIAEoAhINCgVjb3VudBgDIAEoBSJICgxDaGF0UmVhY3Rpb24SEwoL",
-            "ZW1vamlfaW5kZXgYASABKAUSEgoKbWVzc2FnZV9pZBgCIAEoCRIPCgdhZGRy",
-            "ZXNzGAMgASgJYgZwcm90bzM="));
+            "aW9uSAASTQoRZmFjaWFsX2V4cHJlc3Npb24YECABKAsyMC5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmNvbW1zLnJmYzQuRmFjaWFsRXhwcmVzc2lvbkgAEhgKEHBy",
+            "b3RvY29sX3ZlcnNpb24YCyABKA1CCQoHbWVzc2FnZSKlAQoIUG9zaXRpb24S",
+            "DQoFaW5kZXgYASABKA0SEgoKcG9zaXRpb25feBgDIAEoAhISCgpwb3NpdGlv",
+            "bl95GAQgASgCEhIKCnBvc2l0aW9uX3oYBSABKAISEgoKcm90YXRpb25feBgG",
+            "IAEoAhISCgpyb3RhdGlvbl95GAcgASgCEhIKCnJvdGF0aW9uX3oYCCABKAIS",
+            "EgoKcm90YXRpb25fdxgJIAEoAiLrBQoITW92ZW1lbnQSEQoJdGltZXN0YW1w",
+            "GAEgASgCEhIKCnBvc2l0aW9uX3gYAiABKAISEgoKcG9zaXRpb25feRgDIAEo",
+            "AhISCgpwb3NpdGlvbl96GAQgASgCEhIKCnZlbG9jaXR5X3gYBSABKAISEgoK",
+            "dmVsb2NpdHlfeRgGIAEoAhISCgp2ZWxvY2l0eV96GAcgASgCEhwKFG1vdmVt",
+            "ZW50X2JsZW5kX3ZhbHVlGAggASgCEhkKEXNsaWRlX2JsZW5kX3ZhbHVlGAkg",
+            "ASgCEhMKC2lzX2dyb3VuZGVkGAogASgIEhIKCmlzX2p1bXBpbmcYCyABKAgS",
+            "EgoKanVtcF9jb3VudBgYIAEoBRIUCgxpc19sb25nX2p1bXAYDCABKAgSFAoM",
+            "aXNfbG9uZ19mYWxsGA0gASgIEhIKCmlzX2ZhbGxpbmcYDiABKAgSEgoKaXNf",
+            "c3R1bm5lZBgPIAEoCBJICgtnbGlkZV9zdGF0ZRgXIAEoDjIzLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuY29tbXMucmZjNC5Nb3ZlbWVudC5HbGlkZVN0YXRlEhIK",
+            "CnJvdGF0aW9uX3kYECABKAISEgoKaXNfaW5zdGFudBgRIAEoCBISCgppc19l",
+            "bW90aW5nGBIgASgIEhsKE2hlYWRfaWtfeWF3X2VuYWJsZWQYEyABKAgSHQoV",
+            "aGVhZF9pa19waXRjaF9lbmFibGVkGBQgASgIEhAKCGhlYWRfeWF3GBUgASgC",
+            "EhIKCmhlYWRfcGl0Y2gYFiABKAISEgoKcG9pbnRfYXRfeBgZIAEoAhISCgpw",
+            "b2ludF9hdF95GBogASgCEhIKCnBvaW50X2F0X3oYGyABKAISFgoOaXNfcG9p",
+            "bnRpbmdfYXQYHCABKAgiTgoKR2xpZGVTdGF0ZRIPCgtQUk9QX0NMT1NFRBAA",
+            "EhAKDE9QRU5JTkdfUFJPUBABEgsKB0dMSURJTkcQAhIQCgxDTE9TSU5HX1BS",
+            "T1AQAyJxChJNb3ZlbWVudENvbXByZXNzZWQSFQoNdGVtcG9yYWxfZGF0YRgB",
+            "IAEoBRIVCg1tb3ZlbWVudF9kYXRhGAIgASgDEhYKDmhlYWRfc3luY19kYXRh",
+            "GAMgASgFEhUKDXBvaW50X2F0X2RhdGEYBCABKAUiuwMKC1BsYXllckVtb3Rl",
+            "EhYKDmluY3JlbWVudGFsX2lkGAEgASgNEgsKA3VybhgCIAEoCRIRCgl0aW1l",
+            "c3RhbXAYAyABKAISGAoLaXNfc3RvcHBpbmcYBCABKAhIAIgBARIZCgxpc19y",
+            "ZXBlYXRpbmcYBSABKAhIAYgBARIbCg5pbnRlcmFjdGlvbl9pZBgGIAEoBUgC",
+            "iAEBEiEKFHNvY2lhbF9lbW90ZV9vdXRjb21lGAcgASgFSAOIAQESGAoLaXNf",
+            "cmVhY3RpbmcYCCABKAhIBIgBARIjChZzb2NpYWxfZW1vdGVfaW5pdGlhdG9y",
+            "GAkgASgJSAWIAQESGgoNdGFyZ2V0X2F2YXRhchgKIAEoCUgGiAEBEhEKBG1h",
+            "c2sYCyABKA1IB4gBAUIOCgxfaXNfc3RvcHBpbmdCDwoNX2lzX3JlcGVhdGlu",
+            "Z0IRCg9faW50ZXJhY3Rpb25faWRCFwoVX3NvY2lhbF9lbW90ZV9vdXRjb21l",
+            "Qg4KDF9pc19yZWFjdGluZ0IZChdfc29jaWFsX2Vtb3RlX2luaXRpYXRvckIQ",
+            "Cg5fdGFyZ2V0X2F2YXRhckIHCgVfbWFzayI1CgpTY2VuZUVtb3RlEhcKD3Nj",
+            "ZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAkiMQoWQW5ub3Vu",
+            "Y2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASABKA0iOgoO",
+            "UHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9maWxlX3Zl",
+            "cnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlhbGl6ZWRf",
+            "cHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSJaCgRDaGF0Eg8KB21l",
+            "c3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBEhsKDmZvcndhcmRlZF9m",
+            "cm9tGAMgASgJSACIAQFCEQoPX2ZvcndhcmRlZF9mcm9tIicKBVNjZW5lEhAK",
+            "CHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2Vu",
+            "Y29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgD",
+            "IAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5W",
+            "b2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAIoUBCg5Mb29r",
+            "QXRQb3NpdGlvbhIRCgl0aW1lc3RhbXAYASABKAISEgoKcG9zaXRpb25feBgC",
+            "IAEoAhISCgpwb3NpdGlvbl95GAMgASgCEhIKCnBvc2l0aW9uX3oYBCABKAIS",
+            "JAocdGFyZ2V0X2F2YXRhcl93YWxsZXRfYWRkcmVzcxgFIAEoCSJBCghSZWFj",
+            "dGlvbhITCgtlbW9qaV9pbmRleBgBIAEoBRIRCgl0aW1lc3RhbXAYAiABKAIS",
+            "DQoFY291bnQYAyABKAUiSAoMQ2hhdFJlYWN0aW9uEhMKC2Vtb2ppX2luZGV4",
+            "GAEgASgFEhIKCm1lc3NhZ2VfaWQYAiABKAkSDwoHYWRkcmVzcxgDIAEoCSJT",
+            "ChBGYWNpYWxFeHByZXNzaW9uEhYKDmV5ZWJyb3dzX2luZGV4GAEgASgNEhIK",
+            "CmV5ZXNfaW5kZXgYAiABKA0SEwoLbW91dGhfaW5kZXgYAyABKA1iBnByb3Rv",
+            "Mw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "Reaction", "ChatReaction", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "MovementCompressed", "LookAtPosition", "Reaction", "ChatReaction", "FacialExpression", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "JumpCount", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "GlideState", "RotationY", "IsInstant", "IsEmoting", "HeadIkYawEnabled", "HeadIkPitchEnabled", "HeadYaw", "HeadPitch", "PointAtX", "PointAtY", "PointAtZ", "IsPointingAt" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement.Types.GlideState) }, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData", "HeadSyncData", "PointAtData" }, null, null, null, null),
@@ -116,7 +120,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice), global::Decentraland.Kernel.Comms.Rfc4.Voice.Parser, new[]{ "EncodedSamples", "Index", "Codec" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice.Types.VoiceCodec) }, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition), global::Decentraland.Kernel.Comms.Rfc4.LookAtPosition.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "TargetAvatarWalletAddress" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Reaction), global::Decentraland.Kernel.Comms.Rfc4.Reaction.Parser, new[]{ "EmojiIndex", "Timestamp", "Count" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ChatReaction), global::Decentraland.Kernel.Comms.Rfc4.ChatReaction.Parser, new[]{ "EmojiIndex", "MessageId", "Address" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ChatReaction), global::Decentraland.Kernel.Comms.Rfc4.ChatReaction.Parser, new[]{ "EmojiIndex", "MessageId", "Address" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.FacialExpression), global::Decentraland.Kernel.Comms.Rfc4.FacialExpression.Parser, new[]{ "EyebrowsIndex", "EyesIndex", "MouthIndex" }, null, null, null, null)
           }));
     }
     #endregion
@@ -200,6 +205,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           break;
         case MessageOneofCase.ChatReaction:
           ChatReaction = other.ChatReaction.Clone();
+          break;
+        case MessageOneofCase.FacialExpression:
+          FacialExpression = other.FacialExpression.Clone();
           break;
       }
 
@@ -380,6 +388,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "facial_expression" field.</summary>
+    public const int FacialExpressionFieldNumber = 16;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Comms.Rfc4.FacialExpression FacialExpression {
+      get { return messageCase_ == MessageOneofCase.FacialExpression ? (global::Decentraland.Kernel.Comms.Rfc4.FacialExpression) message_ : null; }
+      set {
+        message_ = value;
+        messageCase_ = value == null ? MessageOneofCase.None : MessageOneofCase.FacialExpression;
+      }
+    }
+
     /// <summary>Field number for the "protocol_version" field.</summary>
     public const int ProtocolVersionFieldNumber = 11;
     private uint protocolVersion_;
@@ -410,6 +430,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       LookAtPosition = 13,
       Reaction = 14,
       ChatReaction = 15,
+      FacialExpression = 16,
     }
     private MessageOneofCase messageCase_ = MessageOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -454,6 +475,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(LookAtPosition, other.LookAtPosition)) return false;
       if (!object.Equals(Reaction, other.Reaction)) return false;
       if (!object.Equals(ChatReaction, other.ChatReaction)) return false;
+      if (!object.Equals(FacialExpression, other.FacialExpression)) return false;
       if (ProtocolVersion != other.ProtocolVersion) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
@@ -477,6 +499,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.LookAtPosition) hash ^= LookAtPosition.GetHashCode();
       if (messageCase_ == MessageOneofCase.Reaction) hash ^= Reaction.GetHashCode();
       if (messageCase_ == MessageOneofCase.ChatReaction) hash ^= ChatReaction.GetHashCode();
+      if (messageCase_ == MessageOneofCase.FacialExpression) hash ^= FacialExpression.GetHashCode();
       if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
@@ -557,6 +580,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(122);
         output.WriteMessage(ChatReaction);
       }
+      if (messageCase_ == MessageOneofCase.FacialExpression) {
+        output.WriteRawTag(130, 1);
+        output.WriteMessage(FacialExpression);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -627,6 +654,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(122);
         output.WriteMessage(ChatReaction);
       }
+      if (messageCase_ == MessageOneofCase.FacialExpression) {
+        output.WriteRawTag(130, 1);
+        output.WriteMessage(FacialExpression);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -678,6 +709,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (messageCase_ == MessageOneofCase.ChatReaction) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(ChatReaction);
+      }
+      if (messageCase_ == MessageOneofCase.FacialExpression) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(FacialExpression);
       }
       if (ProtocolVersion != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
@@ -781,6 +815,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             ChatReaction = new global::Decentraland.Kernel.Comms.Rfc4.ChatReaction();
           }
           ChatReaction.MergeFrom(other.ChatReaction);
+          break;
+        case MessageOneofCase.FacialExpression:
+          if (FacialExpression == null) {
+            FacialExpression = new global::Decentraland.Kernel.Comms.Rfc4.FacialExpression();
+          }
+          FacialExpression.MergeFrom(other.FacialExpression);
           break;
       }
 
@@ -929,6 +969,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             ChatReaction = subBuilder;
             break;
           }
+          case 130: {
+            global::Decentraland.Kernel.Comms.Rfc4.FacialExpression subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.FacialExpression();
+            if (messageCase_ == MessageOneofCase.FacialExpression) {
+              subBuilder.MergeFrom(FacialExpression);
+            }
+            input.ReadMessage(subBuilder);
+            FacialExpression = subBuilder;
+            break;
+          }
         }
       }
     #endif
@@ -1072,6 +1121,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             }
             input.ReadMessage(subBuilder);
             ChatReaction = subBuilder;
+            break;
+          }
+          case 130: {
+            global::Decentraland.Kernel.Comms.Rfc4.FacialExpression subBuilder = new global::Decentraland.Kernel.Comms.Rfc4.FacialExpression();
+            if (messageCase_ == MessageOneofCase.FacialExpression) {
+              subBuilder.MergeFrom(FacialExpression);
+            }
+            input.ReadMessage(subBuilder);
+            FacialExpression = subBuilder;
             break;
           }
         }
@@ -6271,6 +6329,276 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 26: {
             Address = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// Facial expression state per ADR-317.
+  /// Each field is a 0-based tile index into the corresponding 4x4 facial-feature atlas.
+  /// Values outside 0-15 MUST be ignored by receivers in this version.
+  /// Edge-triggered: senders emit only when an index changes; not periodic.
+  /// Local-only blink and lip-sync are NOT part of this message.
+  /// </summary>
+  public sealed partial class FacialExpression : pb::IMessage<FacialExpression>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<FacialExpression> _parser = new pb::MessageParser<FacialExpression>(() => new FacialExpression());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<FacialExpression> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Comms.Rfc4.CommsReflection.Descriptor.MessageTypes[15]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public FacialExpression() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public FacialExpression(FacialExpression other) : this() {
+      eyebrowsIndex_ = other.eyebrowsIndex_;
+      eyesIndex_ = other.eyesIndex_;
+      mouthIndex_ = other.mouthIndex_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public FacialExpression Clone() {
+      return new FacialExpression(this);
+    }
+
+    /// <summary>Field number for the "eyebrows_index" field.</summary>
+    public const int EyebrowsIndexFieldNumber = 1;
+    private uint eyebrowsIndex_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint EyebrowsIndex {
+      get { return eyebrowsIndex_; }
+      set {
+        eyebrowsIndex_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "eyes_index" field.</summary>
+    public const int EyesIndexFieldNumber = 2;
+    private uint eyesIndex_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint EyesIndex {
+      get { return eyesIndex_; }
+      set {
+        eyesIndex_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "mouth_index" field.</summary>
+    public const int MouthIndexFieldNumber = 3;
+    private uint mouthIndex_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint MouthIndex {
+      get { return mouthIndex_; }
+      set {
+        mouthIndex_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as FacialExpression);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(FacialExpression other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EyebrowsIndex != other.EyebrowsIndex) return false;
+      if (EyesIndex != other.EyesIndex) return false;
+      if (MouthIndex != other.MouthIndex) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EyebrowsIndex != 0) hash ^= EyebrowsIndex.GetHashCode();
+      if (EyesIndex != 0) hash ^= EyesIndex.GetHashCode();
+      if (MouthIndex != 0) hash ^= MouthIndex.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (EyebrowsIndex != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(EyebrowsIndex);
+      }
+      if (EyesIndex != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(EyesIndex);
+      }
+      if (MouthIndex != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(MouthIndex);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (EyebrowsIndex != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(EyebrowsIndex);
+      }
+      if (EyesIndex != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(EyesIndex);
+      }
+      if (MouthIndex != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(MouthIndex);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (EyebrowsIndex != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(EyebrowsIndex);
+      }
+      if (EyesIndex != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(EyesIndex);
+      }
+      if (MouthIndex != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(MouthIndex);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(FacialExpression other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EyebrowsIndex != 0) {
+        EyebrowsIndex = other.EyebrowsIndex;
+      }
+      if (other.EyesIndex != 0) {
+        EyesIndex = other.EyesIndex;
+      }
+      if (other.MouthIndex != 0) {
+        MouthIndex = other.MouthIndex;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            EyebrowsIndex = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            EyesIndex = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            MouthIndex = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            EyebrowsIndex = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            EyesIndex = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            MouthIndex = input.ReadUInt32();
             break;
           }
         }
