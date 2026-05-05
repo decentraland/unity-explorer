@@ -182,8 +182,7 @@ namespace Global.Dynamic
 
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
-                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE));
 
             World world = World.Create();
 
