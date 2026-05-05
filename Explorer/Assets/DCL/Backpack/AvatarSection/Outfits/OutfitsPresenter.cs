@@ -29,7 +29,6 @@ namespace DCL.Backpack
     {
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
-        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
@@ -52,7 +51,6 @@ namespace DCL.Backpack
 
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
-            IBackpackEventBus backpackEventBus,
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
@@ -68,7 +66,6 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.eventBus = eventBus;
-            this.backpackEventBus = backpackEventBus;
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
@@ -86,8 +83,6 @@ namespace DCL.Backpack
                 OnGetANameClicked, OnLinkClicked);
 
             CreateOutfitSlots();
-
-            backpackEventBus.EquipOutfitEvent += OnOutfitEquipCompleted;
         }
 
         private void CreateOutfitSlots()
@@ -286,15 +281,12 @@ namespace DCL.Backpack
 
             previewOutfitCommand.Commit();
 
-            outfitApplier.Apply(outfitItem.outfit);
+            outfitApplier.Apply(outfitItem.outfit, EndSlotBusy);
 
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
 
             PlayRandomEmote();
         }
-
-        private void OnOutfitEquipCompleted(BackpackEquipOutfitCommand _, IWearable[] __) =>
-            EndSlotBusy();
 
         private void BeginSlotBusy(int slotIndex)
         {
@@ -445,7 +437,6 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
-            backpackEventBus.EquipOutfitEvent -= OnOutfitEquipCompleted;
             outfitBannerPresenter.Dispose();
             foreach (var presenter in slotPresenters)
             {

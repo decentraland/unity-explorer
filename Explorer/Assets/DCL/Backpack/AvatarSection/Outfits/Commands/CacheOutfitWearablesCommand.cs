@@ -49,13 +49,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             foreach (var w in baseUrns)
                 TryAdd(w, result, missingUrns);
 
-            if (missingUrns.Count > 0)
-                await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
-
-            ListPool<URN>.Release(missingUrns);
-
             try
             {
+                if (missingUrns.Count > 0)
+                    await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
+
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)
                     // We don't strictly need transferredAt/price here; use safe defaults.
                     if (wearableStorage.GetOwnedNftCount(baseUrn) == 0)
@@ -76,9 +74,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 /* expected */
             }
-            catch (Exception e) { ReportHub.LogException(e, "[OUTFIT_PREWARM] Failed during cache pre-warming."); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
             finally
             {
+                ListPool<URN>.Release(missingUrns);
                 HashSetPool<URN>.Release(baseUrns);
                 ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Release(tokenMappings);
             }
