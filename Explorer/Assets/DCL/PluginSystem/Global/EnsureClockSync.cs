@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
             this.requestUserAction = requestUserAction;
         }
 
-        public async UniTask Execute(CancellationToken ct)
+        public async UniTask ExecuteAsync(CancellationToken ct)
         {
             Result response = Result.RESTART;
 

@@ -251,7 +251,7 @@ namespace Global.Dynamic
                 var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
                     ShowClockDesyncPopupAsync);
 
-                await ensureClockSyncAction.Execute(ct);
+                await ensureClockSyncAction.ExecuteAsync(ct);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);

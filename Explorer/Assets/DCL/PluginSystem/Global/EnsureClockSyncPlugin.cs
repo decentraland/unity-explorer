@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
         private void CheckForClockSync(Vector2Int obj)
         {
             lifeCycleCts = lifeCycleCts.SafeRestart();
-            ensureClockSync.Execute(lifeCycleCts.Token).Forget();
+            ensureClockSync.ExecuteAsync(lifeCycleCts.Token).Forget();
         }
 
         private async UniTask<EnsureClockSync.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
