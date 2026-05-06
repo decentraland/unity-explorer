@@ -1,3 +1,6 @@
+// TODO test with Unity WebGL build later, because uses an external library with TASKS
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
