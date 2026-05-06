@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.SpringBones
 {
-    internal static class SpringBoneTransformSync
+    public static class SpringBoneTransformSync
     {
         /// <summary>
         /// Aligns the wearable's parent pivot to the corresponding avatar bone, dividing
