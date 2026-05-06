@@ -63,13 +63,25 @@ namespace Utility.Multithreading
 #endif
         }
 
+        // Returns Task on desktop, UniTask on WebGL by design.
+        // Why Task on desktop: AsUniTask(useCurrentSynchronizationContext: true) calls
+        // TaskScheduler.FromCurrentSynchronizationContext(), which throws on contexts that
+        // are not TaskScheduler-compatible (e.g. the V8 script-invoke thread). Plain `await`
+        // on a Task uses SynchronizationContext.Post, which works on any context, so
+        // returning Task lets the caller capture/restore their sync context via the standard
+        // await machinery without that conversion.
+        // Why UniTask on WebGL: WebGL is single-threaded, so we hand-roll a UniTask-based
+        // queue (no real SemaphoreSlim) and return UniTask directly.
+        // Callers that need UniTask-only extensions (e.g. SuppressToResultAsync) on the
+        // desktop path must wrap with .AsUniTask() explicitly.
+#if !UNITY_WEBGL
+        public System.Threading.Tasks.Task WaitAsync() // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#else
         public UniTask WaitAsync()
+#endif
         {
 #if !UNITY_WEBGL
-            // Skip capturing SynchronizationContext: avoids InvalidOperationException when
-            // current context is not TaskScheduler-compatible (e.g. V8 script-invoke thread)
-            // Improves performance
-            return semaphore.WaitAsync().AsUniTask(useCurrentSynchronizationContext: false);
+            return semaphore.WaitAsync();
 #else
             if (count > 0)
             {
@@ -84,10 +96,14 @@ namespace Utility.Multithreading
         }
 
 
+#if !UNITY_WEBGL
+        public System.Threading.Tasks.Task WaitAsync(CancellationToken ct) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG 
+#else
         public UniTask WaitAsync(CancellationToken ct)
+#endif
         {
 #if !UNITY_WEBGL
-            return semaphore.WaitAsync(ct).AsUniTask(useCurrentSynchronizationContext: false);
+            return semaphore.WaitAsync(ct);
 #else
             if (ct.IsCancellationRequested)
                 return UniTask.FromCanceled(ct);
