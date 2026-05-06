@@ -42,8 +42,6 @@
     "com.unity.test-framework.performance": "3.2.0",
     "com.unity.timeline": "1.8.11",
     "com.unity.ugui": "2.0.0",
-    "com.vrmc.gltf": "https://github.com/vrm-c/UniVRM.git?path=/Packages/UniGLTF#v0.131.0",
-    "com.vrmc.vrm": "https://github.com/vrm-c/UniVRM.git?path=/Packages/VRM10#v0.131.0",
     "com.unity.visualeffectgraph": "17.4.0",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
