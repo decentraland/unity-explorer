@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace SceneRunner.Scene
         ISceneData SceneData { get; }
         Option<SceneAdmins> SceneAdmins { get; }
         bool IsEmpty { get; }
+        SceneRuntimeMetrics RuntimeMetrics { get; }
 
         void Initialize();
 

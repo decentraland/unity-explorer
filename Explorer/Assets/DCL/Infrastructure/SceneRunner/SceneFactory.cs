@@ -244,7 +244,8 @@ namespace SceneRunner
                     realmData,
                     portableExperiencesController,
                     remoteMetadata,
-                    messagePipesHub
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
             else
@@ -273,7 +274,8 @@ namespace SceneRunner
                     realmData,
                     portableExperiencesController,
                     remoteMetadata,
-                    messagePipesHub
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
 

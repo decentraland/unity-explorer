@@ -407,3 +407,38 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     border-left-width: 4px;
     border-left-style: solid;
 }
+
+.line-chart {
+    flex-direction: column;
+    width: 100%;
+    padding: 4px 6px;
+    background-color: rgba(20, 20, 20, 0.7);
+    border-radius: 4px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.line-chart__header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.line-chart__title {
+    color: rgb(220, 220, 220);
+    font-size: 11px;
+    -unity-text-align: middle-left;
+}
+
+.line-chart__value {
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-right;
+}
+
+.line-chart__plot {
+    height: 48px;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
