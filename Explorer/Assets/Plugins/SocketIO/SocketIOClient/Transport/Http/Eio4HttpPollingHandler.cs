@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using SocketIOClient.Extensions;
 
 namespace SocketIOClient.Transport.Http
@@ -13,7 +13,7 @@ namespace SocketIOClient.Transport.Http
 
         private const char Separator = '\u001E';
 
-        public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
+        public override async UniTask PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
             var builder = new StringBuilder();
 
@@ -25,7 +25,7 @@ namespace SocketIOClient.Transport.Http
             await PostAsync(uri, text, cancellationToken);
         }
 
-        protected override async Task ProduceText(string text)
+        protected override async UniTask ProduceText(string text)
         {
             string[] items = text.Split(new[] { Separator }, StringSplitOptions.RemoveEmptyEntries);
 

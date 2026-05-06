@@ -1,3 +1,7 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Newtonsoft.Json;
 using Plugins.DclNativeProcesses;
 using System;
@@ -427,3 +431,5 @@ namespace DCL.Prefs
         }
     }
 }
+
+#endif

@@ -40,7 +40,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatConfiguration configuration;
         private readonly string tag;
 
-        private readonly SemaphoreSlim semaphoreSlim = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphoreSlim = new (1, 1);
 
         private MicrophoneTrack? microphoneTrack;
 
