@@ -66,7 +66,10 @@ namespace Utility.Multithreading
         public UniTask WaitAsync()
         {
 #if !UNITY_WEBGL
-            return semaphore.WaitAsync().AsUniTask();
+            // Skip capturing SynchronizationContext: avoids InvalidOperationException when
+            // current context is not TaskScheduler-compatible (e.g. V8 script-invoke thread)
+            // Improves performance
+            return semaphore.WaitAsync().AsUniTask(useCurrentSynchronizationContext: false);
 #else
             if (count > 0)
             {
@@ -84,7 +87,7 @@ namespace Utility.Multithreading
         public UniTask WaitAsync(CancellationToken ct)
         {
 #if !UNITY_WEBGL
-            return semaphore.WaitAsync(ct).AsUniTask();
+            return semaphore.WaitAsync(ct).AsUniTask(useCurrentSynchronizationContext: false);
 #else
             if (ct.IsCancellationRequested)
                 return UniTask.FromCanceled(ct);
