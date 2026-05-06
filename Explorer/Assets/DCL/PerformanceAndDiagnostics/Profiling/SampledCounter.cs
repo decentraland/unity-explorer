@@ -64,6 +64,40 @@ namespace DCL.Profiling
         }
 
         /// <summary>
+        ///     Computes aggregate stats with a hiccup threshold derived from the current sample
+        ///     average: a sample is a hiccup when it exceeds <paramref name="meanMultiplier" /> times
+        ///     the mean. Requires a second pass through the ring once the mean is known.
+        /// </summary>
+        public Stats ComputeDynamicStats(float meanMultiplier)
+        {
+            lock (lockObject)
+            {
+                int count = sampleCount;
+                if (count == 0) return default;
+
+                long min = long.MaxValue;
+                long max = long.MinValue;
+                long sum = 0;
+
+                for (var i = 0; i < count; i++)
+                {
+                    long value = samples[i];
+                    if (value < min) min = value;
+                    if (value > max) max = value;
+                    sum += value;
+                }
+
+                float threshold = (float)sum / count * meanMultiplier;
+                var hiccups = 0;
+
+                for (var i = 0; i < count; i++)
+                    if (samples[i] > threshold) hiccups++;
+
+                return new Stats(count, min, max, sum, hiccups);
+            }
+        }
+
+        /// <summary>
         ///     Copies recent samples in chronological (oldest-first) order into <paramref name="dst" />.
         ///     Returns the number of samples written. Caller's buffer must be at least
         ///     <see cref="BUFFER_CAPACITY" />.

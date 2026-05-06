@@ -17,11 +17,12 @@ namespace DCL.Profiling.ECS
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class DebugViewCurrentSceneSystem : BaseUnityLoopSystem
     {
-        private const int CHART_CAPACITY = 120;
+        private const int FPS_CHART_CAPACITY = 120;
+        private const int TICK_CHART_CAPACITY = SampledCounter.BUFFER_CAPACITY;
         private const int FRAME_STATS_COOLDOWN = 30;
         private const int RECENT_TICK_WINDOW = 32;
         private const long HICCUP_THRESHOLD_NS = 50_000_000L; // 50 ms ~ 20 FPS
-        private const long MESSAGE_HICCUP_THRESHOLD = 100;
+        private const float MESSAGE_HICCUP_MEAN_MULTIPLIER = 2f; // a tick that produces > 2x avg messages is a spike
 
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
@@ -55,23 +56,15 @@ namespace DCL.Profiling.ECS
         private readonly ElementBinding<LineChartBuffer> messagesFromChart;
         private readonly ElementBinding<LineChartBuffer> messagesToChart;
 
-        private readonly long[] tickScratch = new long[SampledCounter.BUFFER_CAPACITY];
-        private readonly float[] fpsRing = new float[CHART_CAPACITY];
-        private readonly float[] bytesFromRing = new float[CHART_CAPACITY];
-        private readonly float[] bytesToRing = new float[CHART_CAPACITY];
-        private readonly float[] messagesFromRing = new float[CHART_CAPACITY];
-        private readonly float[] messagesToRing = new float[CHART_CAPACITY];
+        private readonly long[] longScratch = new long[SampledCounter.BUFFER_CAPACITY];
+        private readonly float[] fpsRing = new float[FPS_CHART_CAPACITY];
+        private readonly float[] bytesFromRing = new float[TICK_CHART_CAPACITY];
+        private readonly float[] bytesToRing = new float[TICK_CHART_CAPACITY];
+        private readonly float[] messagesFromRing = new float[TICK_CHART_CAPACITY];
+        private readonly float[] messagesToRing = new float[TICK_CHART_CAPACITY];
 
         private int fpsRingIndex;
         private int fpsRingCount;
-        private int bytesFromRingIndex;
-        private int bytesFromRingCount;
-        private int bytesToRingIndex;
-        private int bytesToRingCount;
-        private int messagesFromRingIndex;
-        private int messagesFromRingCount;
-        private int messagesToRingIndex;
-        private int messagesToRingCount;
 
         private readonly Action<ISceneFacade?>? onCurrentSceneChanged;
 
@@ -133,20 +126,20 @@ namespace DCL.Profiling.ECS
                          .AddControl(new DebugLineChartDef(fpsChart, "Tick FPS", new Color(0.18f, 0.80f, 0.44f), DebugLongMarkerDef.Unit.NoFormat), null)
                          .AddCustomMarker("Bytes from scene:", bytesFromTotal)
                          .AddCustomMarker("Bytes/s from scene:", bytesFromPerSec)
-                         .AddControl(new DebugLineChartDef(bytesFromChart, "Bytes/s from scene", new Color(0.20f, 0.60f, 0.86f), DebugLongMarkerDef.Unit.Bytes), null)
+                         .AddControl(new DebugLineChartDef(bytesFromChart, "Bytes/tick from scene", new Color(0.20f, 0.60f, 0.86f), DebugLongMarkerDef.Unit.Bytes), null)
                          .AddCustomMarker("Msgs from scene:", messagesFromTotal)
                          .AddCustomMarker("Msgs/s from scene:", messagesFromPerSec)
                          .AddCustomMarker("Msgs/call min/max from scene:", messagesFromMinMax)
                          .AddCustomMarker("Msg hiccups from scene:", messagesFromHiccups)
-                         .AddControl(new DebugLineChartDef(messagesFromChart, "Msgs/s from scene", new Color(0.40f, 0.80f, 0.95f), DebugLongMarkerDef.Unit.NoFormat), null)
+                         .AddControl(new DebugLineChartDef(messagesFromChart, "Msgs/tick from scene", new Color(0.40f, 0.80f, 0.95f), DebugLongMarkerDef.Unit.NoFormat), null)
                          .AddCustomMarker("Bytes to scene:", bytesToTotal)
                          .AddCustomMarker("Bytes/s to scene:", bytesToPerSec)
-                         .AddControl(new DebugLineChartDef(bytesToChart, "Bytes/s to scene", new Color(0.91f, 0.30f, 0.55f), DebugLongMarkerDef.Unit.Bytes), null)
+                         .AddControl(new DebugLineChartDef(bytesToChart, "Bytes/tick to scene", new Color(0.91f, 0.30f, 0.55f), DebugLongMarkerDef.Unit.Bytes), null)
                          .AddCustomMarker("Msgs to scene:", messagesToTotal)
                          .AddCustomMarker("Msgs/s to scene:", messagesToPerSec)
                          .AddCustomMarker("Msgs/call min/max to scene:", messagesToMinMax)
                          .AddCustomMarker("Msg hiccups to scene:", messagesToHiccups)
-                         .AddControl(new DebugLineChartDef(messagesToChart, "Msgs/s to scene", new Color(0.98f, 0.55f, 0.75f), DebugLongMarkerDef.Unit.NoFormat), null);
+                         .AddControl(new DebugLineChartDef(messagesToChart, "Msgs/tick to scene", new Color(0.98f, 0.55f, 0.75f), DebugLongMarkerDef.Unit.NoFormat), null);
         }
 
         protected override void Update(float t)
@@ -177,25 +170,16 @@ namespace DCL.Profiling.ECS
             lastMessagesToScene = messagesTo;
             lastSampleTime = now;
 
-            int sampleCount = metrics.TickTimesNs.CopySnapshot(tickScratch);
-            ComputeTickFps(sampleCount, out float currentFpsValue, out float minFpsValue, out float maxFpsValue, out int hiccupCount);
-
-            float bytesFromPerSecValue = deltaBytesFrom / dt;
-            float bytesToPerSecValue = deltaBytesTo / dt;
-            float messagesFromPerSecValue = deltaMessagesFrom / dt;
-            float messagesToPerSecValue = deltaMessagesTo / dt;
+            int tickSampleCount = metrics.TickTimesNs.CopySnapshot(longScratch);
+            ComputeTickFps(tickSampleCount, out float currentFpsValue, out float minFpsValue, out float maxFpsValue, out int hiccupCount);
 
             PushSample(fpsRing, ref fpsRingIndex, ref fpsRingCount, currentFpsValue);
-            PushSample(bytesFromRing, ref bytesFromRingIndex, ref bytesFromRingCount, bytesFromPerSecValue);
-            PushSample(bytesToRing, ref bytesToRingIndex, ref bytesToRingCount, bytesToPerSecValue);
-            PushSample(messagesFromRing, ref messagesFromRingIndex, ref messagesFromRingCount, messagesFromPerSecValue);
-            PushSample(messagesToRing, ref messagesToRingIndex, ref messagesToRingCount, messagesToPerSecValue);
-
             fpsChart.SetAndUpdate(new LineChartBuffer(fpsRing, fpsRingIndex, fpsRingCount, currentFpsValue));
-            bytesFromChart.SetAndUpdate(new LineChartBuffer(bytesFromRing, bytesFromRingIndex, bytesFromRingCount, bytesFromPerSecValue));
-            bytesToChart.SetAndUpdate(new LineChartBuffer(bytesToRing, bytesToRingIndex, bytesToRingCount, bytesToPerSecValue));
-            messagesFromChart.SetAndUpdate(new LineChartBuffer(messagesFromRing, messagesFromRingIndex, messagesFromRingCount, messagesFromPerSecValue));
-            messagesToChart.SetAndUpdate(new LineChartBuffer(messagesToRing, messagesToRingIndex, messagesToRingCount, messagesToPerSecValue));
+
+            PopulatePerTickChart(metrics.BytesFromScene, bytesFromChart, bytesFromRing);
+            PopulatePerTickChart(metrics.BytesToScene, bytesToChart, bytesToRing);
+            PopulatePerTickChart(metrics.MessagesFromScene, messagesFromChart, messagesFromRing);
+            PopulatePerTickChart(metrics.MessagesToScene, messagesToChart, messagesToRing);
 
             if (++framesSinceMetricsUpdate >= FRAME_STATS_COOLDOWN)
             {
@@ -250,10 +234,6 @@ namespace DCL.Profiling.ECS
         private void ResetLocalState()
         {
             fpsRingIndex = fpsRingCount = 0;
-            bytesFromRingIndex = bytesFromRingCount = 0;
-            bytesToRingIndex = bytesToRingCount = 0;
-            messagesFromRingIndex = messagesFromRingCount = 0;
-            messagesToRingIndex = messagesToRingCount = 0;
             lastBytesFromScene = lastBytesToScene = lastMessagesFromScene = lastMessagesToScene = 0;
             framesSinceMetricsUpdate = 0;
 
@@ -263,6 +243,17 @@ namespace DCL.Profiling.ECS
             bytesToChart.Value = new LineChartBuffer(bytesToRing, 0, 0, 0);
             messagesFromChart.Value = new LineChartBuffer(messagesFromRing, 0, 0, 0);
             messagesToChart.Value = new LineChartBuffer(messagesToRing, 0, 0, 0);
+        }
+
+        private void PopulatePerTickChart(SampledCounter counter, ElementBinding<LineChartBuffer> chart, float[] ring)
+        {
+            int count = counter.CopySnapshot(longScratch);
+
+            for (var i = 0; i < count; i++)
+                ring[i] = longScratch[i];
+
+            float displayValue = count > 0 ? ring[count - 1] : 0f;
+            chart.SetAndUpdate(new LineChartBuffer(ring, 0, count, displayValue));
         }
 
         private void ComputeTickFps(int sampleCount, out float currentFps, out float minFpsValue, out float maxFpsValue, out int hiccupCount)
@@ -282,7 +273,7 @@ namespace DCL.Profiling.ECS
 
             for (var i = 0; i < sampleCount; i++)
             {
-                long ns = tickScratch[i];
+                long ns = longScratch[i];
                 if (ns <= 0) continue;
                 if (ns < minNs) minNs = ns;
                 if (ns > maxNs) maxNs = ns;
@@ -337,13 +328,13 @@ namespace DCL.Profiling.ECS
             messagesFromPerSec.Value = (deltaMessagesFrom / dt).ToString("F1", CultureInfo.InvariantCulture);
             messagesToPerSec.Value = (deltaMessagesTo / dt).ToString("F1", CultureInfo.InvariantCulture);
 
-            SampledCounter.Stats messagesFromStats = metrics.MessagesFromScene.ComputeStats(MESSAGE_HICCUP_THRESHOLD);
+            SampledCounter.Stats messagesFromStats = metrics.MessagesFromScene.ComputeDynamicStats(MESSAGE_HICCUP_MEAN_MULTIPLIER);
             messagesFromMinMax.Value = messagesFromStats.Count > 0
                 ? $"{messagesFromStats.Min} / {messagesFromStats.Max}"
                 : "—";
             messagesFromHiccups.Value = FormatMessageHiccups(messagesFromStats.Hiccups);
 
-            SampledCounter.Stats messagesToStats = metrics.MessagesToScene.ComputeStats(MESSAGE_HICCUP_THRESHOLD);
+            SampledCounter.Stats messagesToStats = metrics.MessagesToScene.ComputeDynamicStats(MESSAGE_HICCUP_MEAN_MULTIPLIER);
             messagesToMinMax.Value = messagesToStats.Count > 0
                 ? $"{messagesToStats.Min} / {messagesToStats.Max}"
                 : "—";
