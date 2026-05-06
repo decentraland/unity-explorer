@@ -154,7 +154,7 @@ namespace DCL.Emoji
             emojiSearchController.Dispose();
 
             foreach (EmojiSectionView sectionView in emojiSectionViews)
-                UnityObjectUtils.SafeDestroy(sectionView.gameObject);
+                UnityObjectUtils.SafeDestroyGameObject(sectionView);
 
             emojiSectionViews.Clear();
             foundEmojis.Clear();
