@@ -8,15 +8,14 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.VoiceChat.Nearby.Audio
 {
     /// <summary>
-    ///     Thread-safe mirror of the island room's remote audio sids, indexed by participant identity.
+    ///     Thread-safe mirror of the island room's remote audio sids, indexed by participant identity. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
     ///     Acts as the single source of truth that <see cref="DCL.VoiceChat.Nearby.Systems.NearbyAudioBindingSystem"/>
     ///     polls each tick — no events leak into the ECS pipeline.
     ///     <para>
@@ -43,15 +42,15 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private readonly IRoom room;
 
-        // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read.
+        // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         // concurrencyLevel: 1 — FFI dispatch is serial, only one writer ever; saves the per-instance lock array (default = Environment.ProcessorCount).
-        private ConcurrentDictionary<string, string[]> streamsByIdentity = NewSnapshot();
-        private readonly ConcurrentDictionary<string, byte> activeSpeakers = new ();
+        private DCLConcurrentDictionary<string, string[]> streamsByIdentity = NewSnapshot();
+        private readonly DCLConcurrentDictionary<string, byte> activeSpeakers = new ();
 
         // Pull-based freshness signal for output-device changes;
         private int rebuildEpoch;
 
-        public int RebuildEpoch => Volatile.Read(ref rebuildEpoch);
+        public int RebuildEpoch => DCLVolatile.Read(ref rebuildEpoch);
 
         public NearbyAudioStreamsRegistry(IRoom room)
         {
@@ -88,17 +87,17 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
 
-            Interlocked.Exchange(ref streamsByIdentity, NewSnapshot());
+            DCLInterlocked.Exchange(ref streamsByIdentity, NewSnapshot());
             activeSpeakers.Clear();
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
             if (deviceWasChanged)
-                Interlocked.Increment(ref rebuildEpoch);
+                DCLInterlocked.Increment(ref rebuildEpoch);
         }
 
-        private static ConcurrentDictionary<string, string[]> NewSnapshot(int capacity = 0) =>
+        private static DCLConcurrentDictionary<string, string[]> NewSnapshot(int capacity = 0) =>
             new (concurrencyLevel: 1, capacity: capacity);
 
         // Relies on serial FFI dispatch — concurrent ActiveSpeakers.Updated / OnConnectionUpdated invocations
@@ -118,18 +117,18 @@ namespace DCL.VoiceChat.Nearby.Audio
             activeSpeakers.ContainsKey(walletId);
 
         public bool HasAudioStream(string walletId) =>
-            Volatile.Read(ref streamsByIdentity).ContainsKey(walletId);
+            DCLVolatile.Read(ref streamsByIdentity).ContainsKey(walletId);
 
         // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault
         public string[]? GetAudioSidsArray(string walletId) =>
-            Volatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? arr) ? arr : null;
+            DCLVolatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? arr) ? arr : null;
 
         public Weak<AudioStream> GetActiveStream(StreamKey key) =>
             room.AudioStreams.ActiveStream(key);
 
         public bool IsStreamGone(StreamKey key)
         {
-            if (!Volatile.Read(ref streamsByIdentity).TryGetValue(key.identity, out string[]? sids))
+            if (!DCLVolatile.Read(ref streamsByIdentity).TryGetValue(key.identity, out string[]? sids))
                 return true;
 
             return Array.IndexOf(sids, key.sid) < 0;
@@ -140,7 +139,7 @@ namespace DCL.VoiceChat.Nearby.Audio
             switch (update)
             {
                 case ConnectionUpdate.Disconnected:
-                    Interlocked.Exchange(ref streamsByIdentity, NewSnapshot());
+                    DCLInterlocked.Exchange(ref streamsByIdentity, NewSnapshot());
                     activeSpeakers.Clear();
                     return;
                 case ConnectionUpdate.Connected:
@@ -158,7 +157,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         private void RehydrateFromRoom()
         {
             IReadOnlyDictionary<string, LKParticipant> participants = room.Participants.RemoteParticipantIdentities();
-            ConcurrentDictionary<string, string[]> next = NewSnapshot(participants.Count);
+            DCLConcurrentDictionary<string, string[]> next = NewSnapshot(participants.Count);
 
             foreach (KeyValuePair<string, LKParticipant> participantEntry in participants)
             foreach (KeyValuePair<string, TrackPublication> trackEntry in participantEntry.Value.Tracks)
@@ -172,7 +171,7 @@ namespace DCL.VoiceChat.Nearby.Audio
                     : new[] { sid };
             }
 
-            Interlocked.Exchange(ref streamsByIdentity, next);
+            DCLInterlocked.Exchange(ref streamsByIdentity, next);
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, LKParticipant participant)
@@ -201,13 +200,13 @@ namespace DCL.VoiceChat.Nearby.Audio
         private void OnParticipantUpdate(LKParticipant participant, UpdateFromParticipant update)
         {
             if (update == UpdateFromParticipant.Disconnected)
-                Volatile.Read(ref streamsByIdentity).TryRemove(participant.Identity, out _);
+                DCLVolatile.Read(ref streamsByIdentity).TryRemove(participant.Identity, out _);
         }
 
         private void AddAudioSid(string identity, string sid) =>
-            AddAudioSidTo(Volatile.Read(ref streamsByIdentity), identity, sid);
+            AddAudioSidTo(DCLVolatile.Read(ref streamsByIdentity), identity, sid);
 
-        private static void AddAudioSidTo(ConcurrentDictionary<string, string[]> dict, string identity, string sid)
+        private static void AddAudioSidTo(DCLConcurrentDictionary<string, string[]> dict, string identity, string sid)
         {
             dict.AddOrUpdate(
                 identity,
@@ -223,7 +222,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         // Single-writer assumption (serial FFI dispatch) — no CAS retry needed.
         private void RemoveAudioSid(string identity, string sid)
         {
-            ConcurrentDictionary<string, string[]> snap = Volatile.Read(ref streamsByIdentity);
+            DCLConcurrentDictionary<string, string[]> snap = DCLVolatile.Read(ref streamsByIdentity);
 
             if (!snap.TryGetValue(identity, out string[]? prev)) return;
 
