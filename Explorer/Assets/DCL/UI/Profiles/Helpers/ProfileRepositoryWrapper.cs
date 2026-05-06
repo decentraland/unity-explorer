@@ -61,20 +61,22 @@ namespace DCL.UI.Profiles.Helpers
             return thumbnailCache.GetCachedSprite(url);
         }
 
-        public void StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl)
+        public bool StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl)
         {
             // Reject stale writes: a concurrent fetch may finish with an older snapshot's URL after the profile cache
             // has already moved on. Trusting the cache here prevents the picture from rolling backwards.
             if (profileCache.TryGetCompact(userId, out Profile.CompactInfo cachedProfile)
                 && !string.IsNullOrEmpty(cachedProfile.FaceSnapshotUrl.Value)
                 && cachedProfile.FaceSnapshotUrl.Value != thumbnailUrl)
-                return;
+                return false;
 
             bool hasExisting = latestThumbnailUrlByUser.TryGetValue(userId, out string? existingUrl);
             latestThumbnailUrlByUser[userId] = thumbnailUrl;
 
             if (hasExisting && existingUrl != thumbnailUrl)
                 UserThumbnailRefreshed?.Invoke(userId);
+
+            return true;
         }
 
         public UniTask<Profile.CompactInfo?> GetProfileAsync(string userId, CancellationToken ct) =>

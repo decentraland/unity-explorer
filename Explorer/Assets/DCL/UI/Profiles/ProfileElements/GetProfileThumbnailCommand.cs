@@ -29,9 +29,8 @@ namespace DCL.UI.ProfileElements
 
             Sprite? cachedSprite = profileRepository.GetProfileThumbnail(faceSnapshotUrl);
 
-            if (cachedSprite != null)
+            if (cachedSprite != null && profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl))
             {
-                profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl);
                 property.SetLoaded(cachedSprite, true);
                 return;
             }
@@ -56,8 +55,8 @@ namespace DCL.UI.ProfileElements
 
                 if (downloadedSprite != null)
                 {
-                    profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl);
-                    property.SetLoaded(downloadedSprite, false);
+                    if (profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl))
+                        property.SetLoaded(downloadedSprite, false);
                 }
                 else
                     UpdateFromError();
