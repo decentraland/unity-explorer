@@ -12,7 +12,7 @@ namespace DCL.SpringBones
 {
     public class SpringBoneService : IDisposable
     {
-        public const int MAX_JOINTS_PER_SPRING = 8;
+        public const int MAX_JOINTS_PER_SPRING = 12;
         private const int INITIAL_SLOT_CAPACITY = 32;
         private const float FIXED_STEP = 1f / 60f;
         private const int MAX_SUBSTEPS = 4;
