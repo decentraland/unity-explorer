@@ -62,12 +62,16 @@ jobs:
 
     env:
       # The branch under test (head of the PR for pull_request runs).
-      # Reused both as the unity-explorer build target AND as the
-      # explorer-automation tests-ref. metaforge falls back to main if the
-      # branch doesn't exist on explorer-automation's origin.
+      # Used as the explorer-automation tests-ref. metaforge falls back to main
+      # if the branch doesn't exist on explorer-automation's origin.
       TEST_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
       TESTS_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      # TEMPORARY (workflow smoke-test): hardcoded direct URL of a known-green
+      # Unity Cloud Build for this branch, so we don't block on the in-progress
+      # build for the latest SHA. Once the rest of the pipeline is validated,
+      # switch back to `mf explorer test "${TEST_REF}"` for proper per-SHA testing.
+      BUILD_URL: "https://explorer-artifacts.decentraland.org/@dcl/unity-explorer/branch/test/visual-tests/pr-21880-4a69d3a/Decentraland_macos.zip"
 
     steps:
       - name: Compute identifiers
@@ -164,14 +168,24 @@ jobs:
         # `mf explorer install` is idempotent — `mf explorer test <ref>` later
         # finds the build already cached.
         #
-        # `yes |` covers metaforge's interactive "use last successful build?"
-        # prompt that fires when the current SHA's Unity Cloud Build is still
-        # pending. Falling back to the last green build is what we want anyway.
-        run: yes | mf explorer install "${TEST_REF}"
+        # --non-interactive turns the "use the last successful build?" prompt
+        # into a hard error, so we fail fast (and honestly) when the current
+        # SHA's Unity Cloud Build hasn't completed yet, rather than silently
+        # testing a stale Explorer.
+        #
+        # During smoke-test we install from a direct URL (BUILD_URL) to skip
+        # the SHA-pending dance entirely. Switch the arg back to "${TEST_REF}"
+        # to validate per-SHA resolution once the workflow is otherwise green.
+        run: mf explorer install "${BUILD_URL}" --non-interactive
 
       - name: Provision metaforge test account
         run: |
           set -euo pipefail
+          # `mf account login` writes the auth-token bridge into Explorer's
+          # userdata_0.json. The parent directory only exists after Explorer
+          # has launched at least once on this machine — pre-create it so
+          # login can write without a "Could not find a part of the path" error.
+          mkdir -p "$HOME/Library/Application Support/Decentraland/Explorer"
           ACCOUNT="ci-visual-${GITHUB_RUN_ID}"
           mf account create "$ACCOUNT" --env zone
           mf account login "$ACCOUNT"
@@ -185,9 +199,10 @@ jobs:
         run: |
           set -euo pipefail
           mf explorer server start
-          # `yes |` covers the same fallback-build prompt as in the install step,
-          # in case mf explorer test re-resolves the build target.
-          yes | mf explorer test "${TEST_REF}" \
+          # Smoke-test: same direct URL as the install step above. Once
+          # validated, swap back to `"${TEST_REF}"` for per-SHA resolution.
+          mf explorer test "${BUILD_URL}" \
+            --non-interactive \
             --tests-ref "${TESTS_REF}" \
             --filter "Category=Visual" \
             --report-type SingleFile \
