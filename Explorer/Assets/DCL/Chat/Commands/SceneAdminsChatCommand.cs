@@ -35,14 +35,14 @@ namespace DCL.Chat.Commands
                 return "Current scene is not available. Please make sure you are on a scene";
             }
 
-            Option<SceneAdmins> adminsOption = currentScene.SceneAdmins;
+            Option<ISceneAdmins> adminsOption = currentScene.SceneAdmins;
 
             if (adminsOption.Has == false)
             {
                 return "Scene admins are not available in the current environment";
             }
 
-            SceneAdmins admins = adminsOption.Value;
+            ISceneAdmins admins = adminsOption.Value;
 
             Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> result = admins.CurrentAdmins();
 

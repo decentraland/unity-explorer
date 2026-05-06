@@ -88,40 +88,25 @@ namespace Plugins.NativeWindowManager
         /// </summary>
         /// <param name="disableConstraints">If constraints should be disabled in window mode.</param>
         /// <param name="windowedModeRequested">If window mode was specifically requested via app args.</param>
-        /// <param name="isLocalScene">If we're running a local scene.</param>
         /// <param name="resolutionOverride">Optional resolution injected via app args, overrides PlayerPrefs and defaults.</param>
-        public static void Initialize(bool disableConstraints, bool windowedModeRequested, bool isLocalScene, Vector2Int? resolutionOverride = null)
+        public static void Initialize(bool disableConstraints, bool windowedModeRequested, Vector2Int? resolutionOverride = null)
         {
             disableWindowConstraints = disableConstraints;
 
-            bool inFullscreen;
+            bool desiredFullscreen = !windowedModeRequested
+                                     && DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, true);
 
-            if (windowedModeRequested || isLocalScene)
-            {
-                EnableFullscreen(false, false);
-                inFullscreen = false;
-            }
-            else
-            {
-                bool targetFullscreen = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, true);
+            if (desiredFullscreen != FullScreenEnabled)
+                EnableFullscreen(desiredFullscreen, store: false);
+            else if (!desiredFullscreen)
+                ApplyConstraints(true);
 
-                if (FullScreenEnabled != targetFullscreen)
-                    EnableFullscreen(targetFullscreen, false);
-                else if (!FullScreenEnabled)
-                    ApplyConstraints(true);
-
-                inFullscreen = targetFullscreen;
-            }
-
-            // Apply saved/overridden resolution — needed even when fullscreen state was unchanged (EnableFullscreen skipped).
+            // Apply saved/overridden resolution
             Vector2Int targetResolution = resolutionOverride ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
-            Screen.SetResolution(targetResolution.x, targetResolution.y, inFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+            Screen.SetResolution(targetResolution.x, targetResolution.y, desiredFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
-
-            if (isLocalScene)
-                FullScreenResolution = ResolutionUtils.GetDefaultResolution();
         }
 
         /// <summary>

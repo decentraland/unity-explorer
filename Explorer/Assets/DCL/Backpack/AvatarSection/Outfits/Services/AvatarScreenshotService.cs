@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
+using Utility.Multithreading; 
 
 namespace DCL.Backpack.AvatarSection.Outfits.Services
 {
@@ -106,7 +107,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
                 {
                     string filePath = GetFilePathForSlot(userId, slotIndex);
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-                    await UniTask.SwitchToThreadPool();
+                    await DCLTask.SwitchToThreadPool();
                     await using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                     {
                         stream.Write(pngNative);
@@ -152,7 +153,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
 
             try
             {
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
                 byte[] fileData = await File.ReadAllBytesAsync(filePath, ct);
 
                 await UniTask.SwitchToMainThread();
@@ -180,7 +181,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
             string filePath = GetFilePathForSlot(userId, slotIndex);
 
             // 2. Switch to a background thread for file I/O to prevent blocking the main thread.
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             try
             {
