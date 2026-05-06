@@ -11,14 +11,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         private readonly IInstancePoolsProvider byteArrayPool;
-        private readonly Option<ISceneAdmins> sceneAdmins;
+        private readonly Option<SceneAdmins> sceneAdmins;
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
                 ISceneCommunicationPipe messagePipesHub,
                 IJsOperations jsOperations,
                 IInstancePoolsProvider byteArrayPool,
-                Option<ISceneAdmins> sceneAdmins
+                Option<SceneAdmins> sceneAdmins
                 )
             : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {

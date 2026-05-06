@@ -396,7 +396,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ISystemsUpdateGate>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>(),
-                Option<ISceneAdmins>.None) { }
+                Option<SceneAdmins>.None) { }
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>

@@ -32,7 +32,7 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        public Option<ISceneAdmins> SceneAdmins => deps.SceneAdmins;
+        public Option<SceneAdmins> SceneAdmins => deps.SceneAdmins;
 
         private int intervalMS;
 

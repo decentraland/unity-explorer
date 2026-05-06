@@ -14,22 +14,10 @@ using RichTypes;
 
 namespace SceneRunner.Admins
 {
-    public interface ISceneAdmins : IDisposable
-    {
-        UniTaskVoid StartRequestPollingAsync();
-
-        UniTask FireRequestAsync(CancellationToken ct);
-
-        // Null if not loaded yet
-        bool? IsAdmin(string wallet);
-
-        Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> CurrentAdmins();
-    }
-
     /// <summary>
     ///     Exists per scene
     /// </summary>
-    public class SceneAdmins : ISceneAdmins
+    public class SceneAdmins : IDisposable
     {
         public struct AdminInfo
         {
@@ -84,6 +72,14 @@ namespace SceneRunner.Admins
             this.urls = urls;
             this.realmData = realmData;
             this.sceneData = sceneData;
+        }
+
+        internal SceneAdmins(IReadOnlyCollection<string> preloadedAdmins)
+        {
+            foreach (string wallet in preloadedAdmins)
+                wallets[wallet] = new AdminInfo { admin = wallet };
+
+            initialLoadFinished = true;
         }
 
         public void Dispose()

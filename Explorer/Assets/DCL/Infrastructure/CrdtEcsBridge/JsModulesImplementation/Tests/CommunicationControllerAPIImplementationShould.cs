@@ -53,15 +53,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
-            ISceneAdmins sceneAdmins = Substitute.For<ISceneAdmins>();
-            sceneAdmins.IsAdmin(Arg.Any<string>()).Returns(true);
+            var sceneAdmins = new SceneAdmins(new[] { "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" });
 
             api = new CommunicationsControllerAPIImplementation(
                     sceneData,
                     sceneCommunicationPipe,
                     jsOperations,
                     InstancePoolsProvider.Create(),
-                    Option<ISceneAdmins>.Some(sceneAdmins)
+                    Option<SceneAdmins>.Some(sceneAdmins)
                     );
         }
 

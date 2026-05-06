@@ -198,7 +198,7 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
-            public readonly Option<ISceneAdmins> SceneAdmins;
+            public readonly Option<SceneAdmins> SceneAdmins;
 
             /// <summary>
             ///     For Unit Tests only
@@ -213,7 +213,7 @@ namespace SceneRunner
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
                 ISceneRuntime runtime,
-                Option<ISceneAdmins> sceneAdmins
+                Option<SceneAdmins> sceneAdmins
                 )
             {
                 EngineAPI = engineAPI;
@@ -242,7 +242,7 @@ namespace SceneRunner
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
+                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : this(
                     engineApi,
@@ -288,7 +288,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
+                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
@@ -314,7 +314,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
+                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : base(
                         new SDKObservableEventsEngineAPIImplementation(
