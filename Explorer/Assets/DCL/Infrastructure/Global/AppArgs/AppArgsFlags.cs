@@ -60,6 +60,7 @@ namespace Global.AppArgs
         public const string WINDOWED_MODE = "windowed-mode";
         public const string RESOLUTION = "resolution";
         public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
+        public const string DISABLE_HUD = "disable-hud";
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
