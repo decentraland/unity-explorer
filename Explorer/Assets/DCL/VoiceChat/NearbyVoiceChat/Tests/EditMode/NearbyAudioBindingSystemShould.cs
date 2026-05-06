@@ -403,7 +403,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             mock.IsActiveSpeaker(Arg.Any<string>()).Returns(false);
 
             // Replace registry with the mock for the lifetime of this test.
-            var localBindings = new Dictionary<StreamKey, Entity>();
+            var localBindings = new HashSet<StreamKey>();
             using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             VoiceChatConfiguration localConfig = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             try
