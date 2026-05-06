@@ -322,7 +322,7 @@ jobs:
             // Previous Claude comments cleanup
             const allClaudeComments = [...comments.data].filter(c => c.user?.login === 'claude[bot]');
             for (const c of allClaudeComments) {
-              if (claudeComment && c.id !== claudeComment.id) {
+              if (claudeComment && c.id !== claudeComment.id && c.body?.includes('REVIEW_RESULT:')) {
                 try {
                   await github.rest.issues.deleteComment({
                     owner: context.repo.owner,
