@@ -11,11 +11,12 @@ name: Visual Regression
 #                           from a collaborator comment.
 #
 # Required secrets / vars (configure once on the repo):
-#   - secrets.ALTTESTER_LICENSE             AltTester Pro license key
-#   - secrets.EXPLORER_TEAM_S3_BUCKET       S3 bucket for the Allure report
-#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Public-facing prefix for the bucket
-#   - secrets.AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY  S3 upload credentials
-#   - vars.AWS_REGION                       e.g. us-east-1
+#   - secrets.ALTTESTER_LICENCE                       AltTester Pro license key (note: British spelling, set by devops)
+#   - secrets.REPOS_READ_ONLY_TOKEN                   PAT with read on decentraland/MetaForge + decentraland/explorer-automation
+#   - secrets.EXPLORER_TEAM_S3_BUCKET                 S3 bucket for the Allure report
+#   - secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION        AWS region the bucket lives in
+#   - secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID / EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY  S3 upload credentials
+#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL         Public-facing prefix for the bucket
 
 on:
   # TEMPORARY for smoke-testing: runs on every push to the PR. Once the workflow
@@ -65,7 +66,11 @@ jobs:
       # Used as the explorer-automation tests-ref. metaforge falls back to main
       # if the branch doesn't exist on explorer-automation's origin.
       TEST_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      TESTS_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      # TEMPORARY (smoke-test): the explorer-automation visual setup lives on
+      # feat/snapshots-comparison (PR #2) until merged to main. Once that PR
+      # lands, switch this back to ${{ github.event.pull_request.head.ref }}
+      # so per-branch test pairing works for real PRs.
+      TESTS_REF: feat/snapshots-comparison
       PR_NUMBER: ${{ github.event.pull_request.number }}
       # TEMPORARY (workflow smoke-test): hardcoded direct URL of a known-green
       # Unity Cloud Build for this branch, so we don't block on the in-progress
@@ -122,6 +127,15 @@ jobs:
           xattr -dr com.apple.quarantine /Applications/AltTesterDesktop.app || true
           ls /Applications/AltTesterDesktop.app/Contents/MacOS/AltTesterDesktop
 
+          # Allure CLI: metaforge generates the HTML report with it after each
+          # run. Pre-install globally so `mf explorer test --non-interactive`
+          # doesn't hit the "install allure?" prompt.
+          # NB: metaforge expects the `allure` npm package (which has the
+          # `awesome` subcommand for nice reports), NOT `allure-commandline`
+          # (Java-based, only has the legacy `generate` subcommand).
+          npm install -g allure
+          allure --version
+
           gh --version
 
       - name: Verify MetaForge access
@@ -155,8 +169,15 @@ jobs:
 
       - name: Configure AltTester license
         env:
+          # NB: secret name uses British spelling (LICENCE) — set by devops.
           ALTTESTER_LICENSE: ${{ secrets.ALTTESTER_LICENSE }}
-        run: mf alttester set-license "$ALTTESTER_LICENSE"
+        run: |
+          set -euo pipefail
+          if [ -z "${ALTTESTER_LICENSE:-}" ]; then
+            echo "::error::Missing ALTTESTER_LICENSE secret. Add it under repo Settings → Secrets → Actions."
+            exit 1
+          fi
+          mf alttester set-license "$ALTTESTER_LICENSE"
 
       - name: Pre-install Explorer build
         env:
@@ -196,9 +217,16 @@ jobs:
           # Surface metaforge logs at info level so failures are diagnosable
           # without needing to download artifacts.
           MF_LOG_LEVEL: info
+          # metaforge clones explorer-automation via `gh repo clone`, which
+          # needs GH_TOKEN to authenticate against the private repo.
+          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
         run: |
           set -euo pipefail
-          mf explorer server start
+          # Pass --tests-ref to both commands so the managed clone of
+          # explorer-automation lands on the right branch up front.
+          # `server start` is what triggers the clone + _host build; if it
+          # defaults to main, the scenes/ workspace may be missing.
+          mf explorer server start --tests-ref "${TESTS_REF}"
           # Smoke-test: same direct URL as the install step above. Once
           # validated, swap back to `"${TEST_REF}"` for per-SHA resolution.
           mf explorer test "${BUILD_URL}" \
@@ -231,9 +259,9 @@ jobs:
         if: always() && steps.report.outputs.report_path != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION }}
 
       - name: Upload Allure report to S3
         if: always() && steps.report.outputs.report_path != ''
@@ -289,8 +317,10 @@ jobs:
       - name: Cleanup metaforge state
         if: always()
         run: |
-          mf explorer server stop || true
-          mf alttester deactivate || true   # release the license activation slot
+          mf explorer server stop --non-interactive || true
+          mf alttester deactivate --non-interactive || true   # release the license activation slot
           if [ -n "${MF_ACCOUNT:-}" ]; then
-            mf account remove "${MF_ACCOUNT}" || true
+            # --yes accepts the destructive prompt; --non-interactive guards
+            # against any *other* prompt (which would now be unexpected).
+            mf account remove "${MF_ACCOUNT}" --yes --non-interactive || true
           fi
