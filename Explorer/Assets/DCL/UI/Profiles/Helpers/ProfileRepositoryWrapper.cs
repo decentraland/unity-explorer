@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace DCL.UI.Profiles.Helpers
     /// <remarks>
     /// Note: This was extracted from ViewDependencies, as that was not the right place for this functionality to be.
     /// </remarks>
-    public class ProfileRepositoryWrapper
+    public class ProfileRepositoryWrapper : IDisposable
     {
         // We need to set a delay due to the time that takes to regenerate the thumbnail at the backend
         // It is incremental, as the time to process it varies depending on the traffic
@@ -22,17 +23,27 @@ namespace DCL.UI.Profiles.Helpers
 
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
 
         // Lets us keep showing a user's previous picture (via SpriteCache) while a newly published one is still being generated.
         private readonly Dictionary<string, string> latestThumbnailUrlByUser = new ();
 
         public event Action<string>? UserThumbnailRefreshed;
 
-        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache)
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache, IWeb3IdentityCache identityCache)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
+
+            identityCache.OnIdentityCleared += OnIdentityCleared;
         }
+
+        public void Dispose() =>
+            identityCache.OnIdentityCleared -= OnIdentityCleared;
+
+        private void OnIdentityCleared() =>
+            latestThumbnailUrlByUser.Clear();
 
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
             await thumbnailCache.GetSpriteAsync(thumbnailUrl, RETRY_POLICY, ct);

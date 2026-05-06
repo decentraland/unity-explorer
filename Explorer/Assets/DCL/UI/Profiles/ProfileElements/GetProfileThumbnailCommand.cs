@@ -46,6 +46,7 @@ namespace DCL.UI.ProfileElements
             // Seed with this user's last known sprite (null if none) so we keep their previous picture during download
             // and don't leak a sprite from a previous user when the property is reused (e.g. identity change).
             Sprite? previousUserSprite = profileRepository.GetLatestThumbnailForUser(userId);
+            bool seededPreviousSprite = previousUserSprite != null;
 
             property.UpdateValue(new ProfileThumbnailViewModel(ProfileThumbnailViewModel.State.LOADING, previousUserSprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
 
@@ -68,10 +69,13 @@ namespace DCL.UI.ProfileElements
                 UpdateFromError();
             }
 
+            return;
+
             void UpdateFromError()
             {
-                // If we already swapped in a previous picture, keep showing it instead of falling back to the placeholder.
-                if (property.Value.Sprite != null && property.Value.ThumbnailState == ProfileThumbnailViewModel.State.LOADING)
+                // Tracked locally so concurrent updates to the property (parallel fetches, external SetLoaded) cannot
+                // confuse the decision to keep showing the previous picture vs. falling back to the placeholder.
+                if (seededPreviousSprite)
                     return;
 
                 property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
