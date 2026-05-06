@@ -12,7 +12,6 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
-using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
