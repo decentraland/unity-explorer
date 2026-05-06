@@ -1,0 +1,281 @@
+name: Visual Regression
+
+# Runs the explorer-automation visual suite against the unity-explorer build of
+# the PR's branch. macOS-only for now: AltTester needs a real GPU and visual
+# baselines are pinned to one OS to avoid cross-platform pixel-diff churn.
+#
+# Trigger model (Workflow #1 of the visual-regression CI plan):
+#   - workflow_dispatch:    manual run, lets us iterate on the workflow itself.
+#   - workflow_call:        the comment-trigger workflow (#2) calls this with
+#                           the PR's ref + number once it parses /visual-tests
+#                           from a collaborator comment.
+#
+# Required secrets / vars (configure once on the repo):
+#   - secrets.ALTTESTER_LICENSE             AltTester Pro license key
+#   - secrets.EXPLORER_TEAM_S3_BUCKET       S3 bucket for the Allure report
+#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Public-facing prefix for the bucket
+#   - secrets.AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY  S3 upload credentials
+#   - vars.AWS_REGION                       e.g. us-east-1
+
+on:
+  # TEMPORARY for smoke-testing: runs on every push to the PR. Once the workflow
+  # has executed at least once on the default branch, GitHub registers it and
+  # the dispatch + comment-trigger flow takes over. At that point, replace this
+  # with the workflow_dispatch + workflow_call block below.
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+  # Final triggers (re-enable after the file lands on `dev`):
+  # workflow_dispatch:
+  #   inputs:
+  #     pr_number:
+  #       description: "PR number to test (used for S3 path + comment target)."
+  #       required: true
+  #       type: string
+  #     tests_ref:
+  #       description: "Override for the explorer-automation branch. Empty = try the matching unity-explorer branch, else fall back to main."
+  #       required: false
+  #       type: string
+  # workflow_call:
+  #   inputs:
+  #     pr_number:
+  #       required: true
+  #       type: string
+  #     tests_ref:
+  #       required: false
+  #       type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  # One in-flight run per PR; new triggers cancel older ones.
+  group: visual-regression-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-tests:
+    name: Visual regression (macOS)
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    env:
+      # The branch under test (head of the PR for pull_request runs).
+      # Reused both as the unity-explorer build target AND as the
+      # explorer-automation tests-ref. metaforge falls back to main if the
+      # branch doesn't exist on explorer-automation's origin.
+      TEST_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      TESTS_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Compute identifiers
+        id: ids
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          SAFE_BRANCH="${TEST_REF//\//-}"
+          S3_PATH="@dcl/${{ github.event.repository.name }}/visual-regression/${PR_NUMBER}/${SHORT_SHA}"
+          {
+            echo "short_sha=${SHORT_SHA}"
+            echo "safe_branch=${SAFE_BRANCH}"
+            echo "s3_path=${S3_PATH}"
+            echo "report_url=${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${S3_PATH}/index.html"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install runtime prerequisites
+        run: |
+          set -euo pipefail
+          # gh + git ship with the macos-14 runner image. We just need .NET 10
+          # (via the official Microsoft installer script — no Homebrew tap needed)
+          # and AltTester Desktop (cask if available, else manual dmg install).
+          curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+          chmod +x /tmp/dotnet-install.sh
+          /tmp/dotnet-install.sh --channel 10.0 --install-dir "$HOME/.dotnet"
+          echo "$HOME/.dotnet" >> "$GITHUB_PATH"
+          export PATH="$HOME/.dotnet:$PATH"
+          dotnet --version
+
+          # AltTester Desktop has no Homebrew cask. The vendor's macOS package
+          # is a zip wrapping a .dmg + a sample TicTacToe build; we only need
+          # the .dmg. Pipeline: zip → extract dmg → mount → copy .app → eject.
+          ALTTESTER_URL="https://alttester.com/app/uploads/AltTester/desktop/AltTesterDesktopPackageMac__2_3_1.zip"
+          curl -fsSL "$ALTTESTER_URL" -o /tmp/alttester.zip
+          unzip -q /tmp/alttester.zip -d /tmp/alttester
+          ALTTESTER_DMG=$(find /tmp/alttester -maxdepth 4 -name "AltTesterDesktop*.dmg" -type f | head -1)
+          [ -n "$ALTTESTER_DMG" ] || { echo "::error::AltTesterDesktop dmg not found in zip"; exit 1; }
+          # Mount the dmg and locate the .app via filesystem search rather than
+          # parsing hdiutil output (which can include tab-separated columns where
+          # the mount path itself contains whitespace). hdiutil writes the mount
+          # under /Volumes; find it by name.
+          hdiutil attach "$ALTTESTER_DMG" -nobrowse -quiet
+          ALTTESTER_APP=$(find /Volumes -maxdepth 3 -name "AltTesterDesktop.app" -type d 2>/dev/null | head -1)
+          [ -n "$ALTTESTER_APP" ] || { echo "::error::AltTesterDesktop.app not found under /Volumes after mount"; ls /Volumes; exit 1; }
+          echo "Found at: $ALTTESTER_APP"
+          cp -R "$ALTTESTER_APP" /Applications/
+          MOUNT_POINT=$(dirname "$ALTTESTER_APP")
+          hdiutil detach "$MOUNT_POINT" -quiet || true
+          xattr -dr com.apple.quarantine /Applications/AltTesterDesktop.app || true
+          ls /Applications/AltTesterDesktop.app/Contents/MacOS/AltTesterDesktop
+
+          gh --version
+
+      - name: Verify MetaForge access
+        env:
+          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::Missing REPOS_READ_ONLY_TOKEN secret (PAT with read access to decentraland/MetaForge)"
+            exit 1
+          fi
+          # Skip `gh auth login` — its validation requires `read:org` scope
+          # which the read-only PAT doesn't carry. Instead we hand `gh` the
+          # token via $GH_TOKEN, which it picks up at every API call without
+          # the up-front login validation. Probe with a real API call so the
+          # workflow fails fast if the token doesn't actually have read on
+          # decentraland/MetaForge.
+          gh api repos/decentraland/MetaForge/releases/latest --jq '.tag_name'
+
+      - name: Install metaforge
+        env:
+          # The installer shells out to `gh release download` against the
+          # private MetaForge repo; child gh processes inherit $GH_TOKEN.
+          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+        run: |
+          # Installer prompts "Proceed? [Y/n]" — feed it `yes` so it runs
+          # non-interactively in CI. `yes` floods stdin with "y\n" forever
+          # (harmless; installer reads one line and ignores the rest).
+          yes | /bin/bash -c "$(curl -fsSL https://explorer-artifacts.decentraland.zone/tools/install.sh)"
+          echo "$HOME/Library/Application Support/Decentraland/MetaForge/bin" >> "$GITHUB_PATH"
+
+      - name: Configure AltTester license
+        env:
+          ALTTESTER_LICENSE: ${{ secrets.ALTTESTER_LICENSE }}
+        run: mf alttester set-license "$ALTTESTER_LICENSE"
+
+      - name: Pre-install Explorer build
+        env:
+          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+        # `mf account login` writes the auth-token bridge into Explorer's
+        # userdata_0.json. That file's parent directory only exists after
+        # Explorer has been installed at least once; install it up front so
+        # login doesn't fail with "Could not find a part of the path".
+        # `mf explorer install` is idempotent — `mf explorer test <ref>` later
+        # finds the build already cached.
+        #
+        # `yes |` covers metaforge's interactive "use last successful build?"
+        # prompt that fires when the current SHA's Unity Cloud Build is still
+        # pending. Falling back to the last green build is what we want anyway.
+        run: yes | mf explorer install "${TEST_REF}"
+
+      - name: Provision metaforge test account
+        run: |
+          set -euo pipefail
+          ACCOUNT="ci-visual-${GITHUB_RUN_ID}"
+          mf account create "$ACCOUNT" --env zone
+          mf account login "$ACCOUNT"
+          echo "MF_ACCOUNT=${ACCOUNT}" >> "$GITHUB_ENV"
+
+      - name: Run visual regression suite
+        env:
+          # Surface metaforge logs at info level so failures are diagnosable
+          # without needing to download artifacts.
+          MF_LOG_LEVEL: info
+        run: |
+          set -euo pipefail
+          mf explorer server start
+          # `yes |` covers the same fallback-build prompt as in the install step,
+          # in case mf explorer test re-resolves the build target.
+          yes | mf explorer test "${TEST_REF}" \
+            --tests-ref "${TESTS_REF}" \
+            --filter "Category=Visual" \
+            --report-type SingleFile \
+            --skip-allure-open \
+            || TEST_EXIT=$?
+          mf explorer server stop || true
+          exit "${TEST_EXIT:-0}"
+
+      - name: Locate Allure report
+        id: report
+        if: always()
+        run: |
+          # mf explorer test --report-type SingleFile writes a single-file HTML
+          # report next to the cloned tests dir. Find it regardless of where
+          # metaforge cloned to so we don't hard-code the path.
+          REPORT=$(find "$HOME/Library/Application Support/Decentraland/MetaForge" \
+                        -name "index.html" -path "*allure-report*" 2>/dev/null | head -1)
+          if [ -z "$REPORT" ]; then
+            echo "::warning::Allure report not found; skipping upload."
+            echo "report_path=" >> "$GITHUB_OUTPUT"
+          else
+            echo "report_path=${REPORT}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        if: always() && steps.report.outputs.report_path != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Upload Allure report to S3
+        if: always() && steps.report.outputs.report_path != ''
+        env:
+          BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+          S3_PATH: ${{ steps.ids.outputs.s3_path }}
+          REPORT: ${{ steps.report.outputs.report_path }}
+        run: |
+          set -euo pipefail
+          REPORT_DIR=$(dirname "$REPORT")
+          aws s3 sync "$REPORT_DIR" "s3://$BUCKET/$S3_PATH/" \
+            --acl public-read \
+            --cache-control "public, max-age=300"
+
+      - name: Upload Allure artifact (fallback if S3 fails)
+        if: always() && steps.report.outputs.report_path != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ steps.ids.outputs.short_sha }}
+          path: ${{ steps.report.outputs.report_path }}
+          retention-days: 14
+
+      - name: Find existing PR comment
+        if: always() && env.PR_NUMBER != ''
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ env.PR_NUMBER }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '## Visual regression tests'
+
+      - name: Comment results on PR
+        if: always() && env.PR_NUMBER != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ env.PR_NUMBER }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            ## Visual regression tests
+
+            ${{ job.status == 'success' && '✅ **All visual tests passed.**' || '❌ **Visual tests failed.**' }}
+
+            | | |
+            |---|---|
+            | Commit | `${{ steps.ids.outputs.short_sha }}` |
+            | Branch | `${{ env.TEST_REF }}` |
+            | Allure report | ${{ steps.report.outputs.report_path != '' && format('[Open]({0})', steps.ids.outputs.report_url) || '_not generated_' }} |
+            | Workflow run | [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+
+            <sub>Triggered via `/visual-tests` · this comment is updated on every run.</sub>
+
+      - name: Cleanup metaforge state
+        if: always()
+        run: |
+          mf explorer server stop || true
+          mf alttester deactivate || true   # release the license activation slot
+          if [ -n "${MF_ACCOUNT:-}" ]; then
+            mf account remove "${MF_ACCOUNT}" || true
+          fi
