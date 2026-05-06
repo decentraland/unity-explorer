@@ -1110,7 +1110,8 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
-                new JumpIndicatorPlugin(assetsProvisioner)
+                new JumpIndicatorPlugin(assetsProvisioner),
+                new EnsureClockSyncPlugin(realmNavigator, mvcManager, bootstrapContainer.RealmClock, staticContainer.WebRequestsContainer.WebRequestController),
             };
 
             if (donationsService.DonationFeatureEnabled)

@@ -66,9 +66,6 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
-        private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
-        private const string CLOCK_PROBE_URL = "https://decentraland.org/";
-
         [Header("STARTUP CONFIG")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
@@ -249,9 +246,13 @@ namespace Global.Dynamic
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
+                // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)
                 // potentially saves one extra HEAD request
-                await DetectClockDesyncAsync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController, assetsProvisioner, ct);
+                var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
+                    ShowClockDesyncPopupAsync);
+
+                await ensureClockSyncAction.Execute(ct);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
@@ -808,59 +809,10 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask DetectClockDesyncAsync(RealmClock realmClock, IWebRequestController webRequestController, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
-        {
-            await TryProbeServerTimeAsync(realmClock, webRequestController, ct);
-
-            if (!IsDesync()) return;
-
-            ErrorPopupWithRetryController.Result response = await ShowClockDesyncPopupAsync(assetsProvisioner, ct);
-
-            switch (response)
-            {
-                case ErrorPopupWithRetryController.Result.EXIT:
-                    // ErrorPopupWithRetryController already handles exit internally, no need to do anything else here
-                    break;
-                case ErrorPopupWithRetryController.Result.RESTART:
-                    await DetectClockDesyncAsync(realmClock, webRequestController, assetsProvisioner, ct);
-                    break;
-            }
-
-            return;
-
-            bool IsDesync()
-            {
-                DateTime? serverUtc = realmClock.UtcNow;
-
-                // Don't block the user if the server time cannot be resolved
-                if (!serverUtc.HasValue) return false;
-
-                var delta = serverUtc.Value - DateTime.UtcNow;
-                return Math.Abs(delta.TotalSeconds) > CLOCK_DESYNC_THRESHOLD_SECONDS;
-            }
-        }
-
-        private static async UniTask TryProbeServerTimeAsync(RealmClock realmClock, IWebRequestController controller, CancellationToken ct)
-        {
-            if (realmClock.HasSample) return;
-
-            try
-            {
-                // This will internally set the realm clock on success
-                await controller.IsHeadReachableAsync(
-                    ReportCategory.STARTUP,
-                    URLAddress.FromString(CLOCK_PROBE_URL),
-                    ct,
-                    suppressErrors: true);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
-        }
-
-        private async UniTask<ErrorPopupWithRetryController.Result> ShowClockDesyncPopupAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        private async UniTask<EnsureClockSync.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
         {
             if (clockDesyncPopupPrefab == null)
-                clockDesyncPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
+                clockDesyncPopupPrefab = (await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
 
             ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
                 ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(clockDesyncPopupPrefab, null, out ErrorPopupWithRetryView viewInstance);
@@ -880,7 +832,16 @@ namespace Global.Dynamic
 
             Destroy(viewInstance.gameObject);
 
-            return input.SelectedOption;
+            switch (input.SelectedOption)
+            {
+                case ErrorPopupWithRetryController.Result.EXIT:
+                    // The error popup will automatically request application exit
+                    return EnsureClockSync.Result.CONTINUE;
+                case ErrorPopupWithRetryController.Result.RESTART:
+                    return EnsureClockSync.Result.RESTART;
+            }
+
+            return EnsureClockSync.Result.CONTINUE;
         }
 
         private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
