@@ -50,6 +50,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
+        // temportal sentry budget fix. TODO remove once the core issue solved
+        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
+
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
@@ -227,23 +230,23 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
+                const string ONCE_PATTERN = "(will retry)";
+
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+                bool isCaught = marshaled.Contains(ONCE_PATTERN);
 
-                bool isInternal = marshaled.Contains("(will retry)");
-
-                // Required to avoid polluting Sentry with retry messages
-                string reportCategory = isInternal
-                    ? ReportCategory.ANALYTICS_INTERNAL
-                    : ReportCategory.ANALYTICS;
-
-#if UNITY_EDITOR
-                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
-#else
-                if (isInternal == false) // Avoid logging ANALYTICS_INTERNAL in builds
+                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
                 {
-                    ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+                    // Don't log if already was
+                    return;
                 }
-#endif
+
+                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+
+                if (isCaught)
+                {
+                    ONCE_PATTERN_ALREADY_CAUGHT = true;
+                }
             }
             catch
             {

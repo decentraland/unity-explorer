@@ -13,16 +13,17 @@ MonoBehaviour:
   m_Name: Integration Tests Global Container
   m_EditorClassIdentifier: 
   settings:
-  - rid: 6784895265395441664
-  - rid: 6784895265412481024
-  - rid: 6784895265412481025
-  - rid: 1268264197252972544
-  - rid: 1841402216112979968
-  - rid: 2174542042650378246
-  - rid: 5734404089553354752
-  - rid: 9078877983710380130
-  - rid: 732305993255354463
   - rid: 1709771761983946848
+  - rid: 6784895265412481024
+  - rid: 1841402216112979968
+  - rid: 6784895265412481025
+  - rid: 2410810641358782729
+  - rid: 1268264197252972544
+  - rid: 9078877983710380130
+  - rid: 5734404089553354752
+  - rid: 2174542042650378246
+  - rid: 6784895265395441664
+  - rid: 732305993255354463
   references:
     version: 2
     RefIds:
@@ -127,6 +128,21 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 2410810641358782729
+      type: {class: EmotesContainer/Settings, ns: DCL.AvatarRendering.Emotes, asm: DCL.Plugins}
+      data:
+        <EmoteAudioSource>k__BackingField:
+          m_AssetGUID: 62f68ba25f6c905428b36a081b072566
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <EmoteMaskCatalog>k__BackingField:
+          m_AssetGUID: f3a58c428a71b443e883f8fac00cfbbd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5734404089553354752
       type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -142,6 +158,7 @@ MonoBehaviour:
         <PartitionSettings>k__BackingField: {fileID: 11400000, guid: 8d266ff458e71f2439f9c30bd7e68d4a, type: 2}
         <RealmPartitionSettings>k__BackingField: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         <SkyboxSettings>k__BackingField: {fileID: 0}
+        <BuildData>k__BackingField: {fileID: 0}
         frameTimeCap: 33
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
@@ -165,7 +182,29 @@ MonoBehaviour:
     - rid: 6784895265412481025
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <controllerSettings>k__BackingField: {fileID: 11400000, guid: df2e68b45160aee4eaaf2475e21525e4, type: 2}
+        <ControllerSettings>k__BackingField: {fileID: 0}
+        <Gliding>k__BackingField:
+          <PropPrefab>k__BackingField:
+            m_AssetGUID: 
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_SubObjectGUID: 
+            m_EditorAssetChanged: 0
+          <EnablePropPooling>k__BackingField: 0
+          <TrailVelocityThreshold>k__BackingField: 1
+        <PointAtMarkerPrefab>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PointAtMarkerVisibilitySettings>k__BackingField: {fileID: 0}
+        <DestinationMarkerPrefab>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 9078877983710380130
       type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
       data:

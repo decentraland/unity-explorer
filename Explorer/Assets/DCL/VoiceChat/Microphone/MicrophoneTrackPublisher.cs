@@ -86,7 +86,37 @@ namespace DCL.VoiceChat
         public async UniTask PublishAsync(bool micAutoStart, CancellationToken ct)
         {
             using var _ = await semaphoreSlim.LockAsync();
+            await PublishLockedAsync(micAutoStart, ct);
+        }
 
+        public void Unpublish() =>
+            UnpublishLocked();
+
+        // Republishes the track to rebuild the FFI handle: the native source is pinned to the original device config at track creation.
+        public async UniTask SwitchMicrophoneAsync(bool keepRecording, CancellationToken ct)
+        {
+            using var _ = await semaphoreSlim.LockAsync();
+
+            if (!microphoneTrack.HasValue)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Mic switch ignored: no track currently published");
+                return;
+            }
+
+            // Guard before teardown: a transient RustAudio fail (e.g. Bluetooth toggling on Windows) would otherwise leave the user without a track.
+            Result<MicrophoneSelection> reachable = VoiceChatSettings.ReachableSelection();
+            if (!reachable.Success)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{tag} Mic switch aborted, current track preserved: {reachable.ErrorMessage}");
+                return;
+            }
+
+            UnpublishLocked();
+            await PublishLockedAsync(keepRecording, ct);
+        }
+
+        private async UniTask PublishLockedAsync(bool micAutoStart, CancellationToken ct)
+        {
             if (microphoneTrack.HasValue)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{tag} Local track already published");
@@ -125,7 +155,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void Unpublish()
+        private void UnpublishLocked()
         {
             if (!microphoneTrack.HasValue) return;
 
