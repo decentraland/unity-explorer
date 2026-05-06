@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -89,6 +90,13 @@ namespace DCL.SpringBones
         {
             int jointCount = jointTransforms.Count;
 
+            if (jointCount > MAX_JOINTS_PER_SPRING)
+            {
+                ReportHub.LogWarning(ReportCategory.AVATAR,
+                    $"SpringBone chain has {jointCount} joints, clamping to {MAX_JOINTS_PER_SPRING}. Chain will be truncated.");
+                jointCount = MAX_JOINTS_PER_SPRING;
+            }
+
             if (freeSlots.Count == 0)
                 Grow();
 
@@ -122,7 +130,11 @@ namespace DCL.SpringBones
         {
             if (disposed) return;
 
-            slotJointCounts[slotIndex] = 0;
+            // -1 sentinel marks slot as released. Without it a double-unregister would push the
+            // same index onto freeSlots twice and hand the same slot to two callers.
+            if (slotJointCounts[slotIndex] < 0) return;
+
+            slotJointCounts[slotIndex] = -1;
             slotActive[slotIndex] = false;
             slotWasActive[slotIndex] = false;
             int baseIndex = slotIndex * MAX_JOINTS_PER_SPRING;
@@ -192,11 +204,21 @@ namespace DCL.SpringBones
 
         public void SetParentData(int slotIndex, quaternion rotation, float4x4 localToWorldMatrix, float scaleFactor)
         {
+            // Decompose to T/R/S so the simulation job can slerp rotations and lerp position/scale
+            // independently each substep. Linear-blending matrix columns instead would skew the
+            // upper 3×3 because per-column lerp of two rotations is not a rotation.
+            float3 position = localToWorldMatrix.c3.xyz;
+            float3 scale = new float3(
+                math.length(localToWorldMatrix.c0.xyz),
+                math.length(localToWorldMatrix.c1.xyz),
+                math.length(localToWorldMatrix.c2.xyz));
+
             previousParentData[slotIndex] = parentData[slotIndex];
             parentData[slotIndex] = new SpringBoneParentData
             {
                 Rotation = rotation,
-                LocalToWorldMatrix = localToWorldMatrix,
+                Position = position,
+                Scale = scale,
                 ScaleFactor = scaleFactor,
             };
         }
@@ -215,6 +237,10 @@ namespace DCL.SpringBones
                 for (int slot = 0; slot < slotCapacity; slot++)
                     if (slotActive[slot]) slotWasActive[slot] = false;
                 accumulatedDt = 0f;
+                // Treat next frame as a fresh start: skip the trailing slerp-push until a new
+                // substep produces a curr rotation, so we don't blend pre-hiccup prev with
+                // freshly-snapped curr.
+                hasFirstStep = false;
                 return;
             }
 

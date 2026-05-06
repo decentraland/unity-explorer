@@ -5,12 +5,12 @@ using UnityEngine.Jobs;
 
 namespace DCL.SpringBones
 {
-    [BurstCompile]
+    [BurstCompile(FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Standard)]
     public struct PushSpringBoneTransformsJob : IJobParallelForTransform
     {
-        [ReadOnly] [NativeDisableParallelForRestriction] public NativeArray<quaternion> PrevRotations;
-        [ReadOnly] [NativeDisableParallelForRestriction] public NativeArray<quaternion> CurrRotations;
-        [ReadOnly] [NativeDisableParallelForRestriction] public NativeArray<bool> SlotActive;
+        [ReadOnly] public NativeArray<quaternion> PrevRotations;
+        [ReadOnly] public NativeArray<quaternion> CurrRotations;
+        [ReadOnly] public NativeArray<bool> SlotActive;
         public int MaxJointsPerSpring;
         public float Alpha;
 

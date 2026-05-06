@@ -4,11 +4,11 @@ using UnityEngine.Jobs;
 
 namespace DCL.SpringBones
 {
-    [BurstCompile]
+    [BurstCompile(FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Standard)]
     public struct PullSpringBoneTransformsJob : IJobParallelForTransform
     {
-        [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<SpringBoneTransformData> Transforms;
-        [ReadOnly] [NativeDisableParallelForRestriction] public NativeArray<bool> SlotActive;
+        [WriteOnly] public NativeArray<SpringBoneTransformData> Transforms;
+        [ReadOnly] public NativeArray<bool> SlotActive;
         public int MaxJointsPerSpring;
 
         public void Execute(int index, TransformAccess transform)

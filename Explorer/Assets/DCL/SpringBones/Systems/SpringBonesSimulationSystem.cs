@@ -111,6 +111,15 @@ namespace DCL.SpringBones
 
             foreach (SpringBoneSlot slot in registration.Slots)
             {
+                // Guards against the cache-evict-during-sim race: the wearable can be destroyed
+                // between registration and the next sim tick before the AvatarVersion bump
+                // triggers UnregisterSlots.
+                if (slot.WearableParent == null || slot.AvatarParent == null)
+                {
+                    springBoneService.SetSlotActive(slot.SlotIndex, false);
+                    continue;
+                }
+
                 slot.WearableParent.SetPositionAndRotation(slot.AvatarParent.position, slot.AvatarParent.rotation);
 
                 Vector3 parentLossy = slot.WearableParent.parent != null ? slot.WearableParent.parent.lossyScale : Vector3.one;

@@ -73,6 +73,10 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             SpringBonesDto? springBones = wearableDto.metadata?.data?.springBones;
             if (springBones?.models == null) return null;
 
+            if (springBones.version != SpringBonesDto.SUPPORTED_VERSION)
+                ReportHub.LogWarning(ReportCategory.AVATAR,
+                    $"Spring bones DTO version {springBones.version} does not match supported version {SpringBonesDto.SUPPORTED_VERSION}; parsing may misinterpret fields. Wearable: {wearable.GetUrn()}");
+
             if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash) || mainFileHash == null)
                 return null;
 

@@ -6,7 +6,7 @@ using Unity.Mathematics;
 
 namespace DCL.SpringBones
 {
-    [BurstCompile]
+    [BurstCompile(FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Standard)]
     public struct SpringBoneSimulationJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> SlotJointCounts;
@@ -16,10 +16,12 @@ namespace DCL.SpringBones
         [ReadOnly] public NativeArray<SpringBoneParentData> PrevParentData;
         [ReadOnly] public NativeArray<float3> PrevTails;
         [ReadOnly] public NativeArray<float3> CurrentTails;
+        // Per-slot disjoint write ranges; safety system can't infer the slot stride so the
+        // parallel-restriction bypass is required despite being conceptually disjoint.
         [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<float3> NextTails;
         [WriteOnly] [NativeDisableParallelForRestriction] public NativeArray<quaternion> CurrStepRotations;
 
-        // Transforms are read AND written (chain propagation)
+        // Read AND written within a slot (chain propagation: child reads previously-written parent).
         [NativeDisableParallelForRestriction] public NativeArray<SpringBoneTransformData> Transforms;
 
         public float DeltaTime;
@@ -28,7 +30,7 @@ namespace DCL.SpringBones
         public void Execute(int slotIndex)
         {
             int jointCount = SlotJointCounts[slotIndex];
-            if (jointCount == 0 || !SlotActive[slotIndex]) return;
+            if (jointCount <= 0 || !SlotActive[slotIndex]) return;
 
             int baseIndex = slotIndex * SpringBoneService.MAX_JOINTS_PER_SPRING;
 
@@ -38,11 +40,9 @@ namespace DCL.SpringBones
             var prevP = PrevParentData[slotIndex];
             var currP = ParentData[slotIndex];
             var parentRotation = math.slerp(prevP.Rotation, currP.Rotation, SubstepAlpha);
-            float4x4 parentLocalToWorld = new float4x4(
-                math.lerp(prevP.LocalToWorldMatrix.c0, currP.LocalToWorldMatrix.c0, SubstepAlpha),
-                math.lerp(prevP.LocalToWorldMatrix.c1, currP.LocalToWorldMatrix.c1, SubstepAlpha),
-                math.lerp(prevP.LocalToWorldMatrix.c2, currP.LocalToWorldMatrix.c2, SubstepAlpha),
-                math.lerp(prevP.LocalToWorldMatrix.c3, currP.LocalToWorldMatrix.c3, SubstepAlpha));
+            float3 parentPosition = math.lerp(prevP.Position, currP.Position, SubstepAlpha);
+            float3 parentScale = math.lerp(prevP.Scale, currP.Scale, SubstepAlpha);
+            float4x4 parentLocalToWorld = float4x4.TRS(parentPosition, parentRotation, parentScale);
             float scaleFactor = math.lerp(prevP.ScaleFactor, currP.ScaleFactor, SubstepAlpha);
 
             for (int j = 0; j < jointCount; j++)
@@ -141,9 +141,8 @@ namespace DCL.SpringBones
             float3 t = math.normalize(to);
             float dot = math.dot(f, t);
 
-            if (dot >= 1f) return quaternion.identity;
-
-            if (dot <= -1f)
+            // Antiparallel: any axis perpendicular to f works; pick the canonical least-aligned one.
+            if (dot <= -0.999999f)
             {
                 float3 axis = math.cross(f, new float3(1, 0, 0));
 
@@ -153,9 +152,10 @@ namespace DCL.SpringBones
                 return quaternion.AxisAngle(math.normalize(axis), math.PI);
             }
 
-            float angle = math.acos(dot);
-            float3 rotAxis = math.normalize(math.cross(f, t));
-            return quaternion.AxisAngle(rotAxis, angle);
+            // Shortest-arc quaternion: q = (cross(f, t), 1 + dot) normalized. Avoids acos(dot)
+            // which is numerically unstable as dot → 1 (small-angle case dominates per substep).
+            float3 c = math.cross(f, t);
+            return math.normalize(new quaternion(c.x, c.y, c.z, 1f + dot));
         }
     }
 }

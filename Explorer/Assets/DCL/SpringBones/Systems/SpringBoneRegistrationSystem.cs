@@ -22,7 +22,7 @@ namespace DCL.SpringBones
     {
         private readonly SpringBoneService springBoneService;
 
-        public SpringBoneRegistrationSystem(World world, SpringBoneService springBoneService) : base(world)
+        internal SpringBoneRegistrationSystem(World world, SpringBoneService springBoneService) : base(world)
         {
             this.springBoneService = springBoneService;
         }
@@ -48,10 +48,15 @@ namespace DCL.SpringBones
 
             RegisterSprings(avatarShapeComponent.InstantiatedWearables, avatarBase, ref transformMatrixComponent, slots);
 
+            // Capture the version locally before the structural change. World.Add moves the entity
+            // to a new archetype, invalidating the avatarShapeComponent/transformMatrixComponent
+            // refs from this query — they must not be read after this line.
+            int avatarVersion = avatarShapeComponent.InstantiationVersion;
+
             World.Add(entity, new SpringBoneRegistrationComponent
             {
                 Slots = slots,
-                AvatarVersion = avatarShapeComponent.InstantiationVersion,
+                AvatarVersion = avatarVersion,
             });
         }
 
@@ -88,7 +93,9 @@ namespace DCL.SpringBones
         private void RegisterSprings(IList<CachedAttachment> wearables, AvatarBase avatarBase,
             ref AvatarTransformMatrixComponent transformMatrixComponent, List<SpringBoneSlot> slots)
         {
-            Transform[] skeleton = avatarBase.AvatarSkinnedMeshRenderer.bones;
+            // Use the already-populated avatar bone array instead of SkinnedMeshRenderer.bones,
+            // whose getter copies the internal array on every call.
+            Transform[] skeleton = transformMatrixComponent.bones.Inner;
 
             using var springBoneTransformsScope = ListPool<Transform>.Get(out var springBoneTransforms);
 
