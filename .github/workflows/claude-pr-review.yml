@@ -107,7 +107,7 @@ jobs:
             console.log('Claude comment preview:', output.slice(0, 300));
             
             // Previous Claude comments cleanup
-            const allClaudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const allClaudeComments = [...comments.data].filter(c => c.user?.login === 'claude[bot]');
             for (const c of allClaudeComments) {
               if (claudeComment && c.id !== claudeComment.id) {
                 try {
