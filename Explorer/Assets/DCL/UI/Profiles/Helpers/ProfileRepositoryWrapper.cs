@@ -23,6 +23,7 @@ namespace DCL.UI.Profiles.Helpers
 
         private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
+        private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache identityCache;
 
         // Lets us keep showing a user's previous picture (via SpriteCache) while a newly published one is still being generated.
@@ -30,10 +31,11 @@ namespace DCL.UI.Profiles.Helpers
 
         public event Action<string>? UserThumbnailRefreshed;
 
-        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache, IWeb3IdentityCache identityCache)
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, IProfileCache profileCache, ISpriteCache thumbnailCache, IWeb3IdentityCache identityCache)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
+            this.profileCache = profileCache;
             this.identityCache = identityCache;
 
             identityCache.OnIdentityCleared += OnIdentityCleared;
@@ -61,6 +63,13 @@ namespace DCL.UI.Profiles.Helpers
 
         public void StoreLatestThumbnailUrlForUser(string userId, string thumbnailUrl)
         {
+            // Reject stale writes: a concurrent fetch may finish with an older snapshot's URL after the profile cache
+            // has already moved on. Trusting the cache here prevents the picture from rolling backwards.
+            if (profileCache.TryGetCompact(userId, out Profile.CompactInfo cachedProfile)
+                && !string.IsNullOrEmpty(cachedProfile.FaceSnapshotUrl.Value)
+                && cachedProfile.FaceSnapshotUrl.Value != thumbnailUrl)
+                return;
+
             bool hasExisting = latestThumbnailUrlByUser.TryGetValue(userId, out string? existingUrl);
             latestThumbnailUrlByUser[userId] = thumbnailUrl;
 

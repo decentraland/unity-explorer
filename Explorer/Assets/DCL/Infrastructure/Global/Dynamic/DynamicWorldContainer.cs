@@ -142,6 +142,7 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public IMVCManager MvcManager { get; }
 
@@ -184,7 +185,8 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler)
+            BannedNotificationHandler bannedNotificationHandler,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -203,6 +205,7 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public override void Dispose()
@@ -213,6 +216,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            profileRepositoryWrapper.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -664,7 +668,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache, identityCache);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             var communitiesEventBus = new CommunitiesEventBus();
@@ -1359,7 +1363,8 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler
+                bannedNotificationHandler,
+                profileRepositoryWrapper
             );
 
             // Init itself
