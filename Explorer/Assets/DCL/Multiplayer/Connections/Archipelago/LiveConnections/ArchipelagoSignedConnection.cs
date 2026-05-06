@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         private readonly IArchipelagoLiveConnection origin;
 
-        private readonly SemaphoreSlim semaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphore = new (1, 1);
 
         private readonly IMemoryPool memoryPool;
         private readonly IMultiPool multiPool;
