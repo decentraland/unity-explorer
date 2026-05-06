@@ -75,7 +75,7 @@ namespace Utility.Multithreading
         // Callers that need UniTask-only extensions (e.g. SuppressToResultAsync) on the
         // desktop path must wrap with .AsUniTask() explicitly.
 #if !UNITY_WEBGL
-        public System.Threading.Tasks.Task WaitAsync() // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        public System.Threading.Tasks.Task WaitAsync() // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #else
         public UniTask WaitAsync()
 #endif
@@ -97,7 +97,7 @@ namespace Utility.Multithreading
 
 
 #if !UNITY_WEBGL
-        public System.Threading.Tasks.Task WaitAsync(CancellationToken ct) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG 
+        public System.Threading.Tasks.Task WaitAsync(CancellationToken ct) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #else
         public UniTask WaitAsync(CancellationToken ct)
 #endif
