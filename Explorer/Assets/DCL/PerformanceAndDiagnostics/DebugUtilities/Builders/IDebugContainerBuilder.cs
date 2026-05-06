@@ -41,6 +41,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName WEB_REQUESTS = "Web Requests".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_DEBUG_METRICS = "Web Requests Debug Metrics".AsWidgetName();
             public static readonly WidgetName VOICE_CHAT = "Voice Chat".AsWidgetName();
+            public static readonly WidgetName NEARBY_VOICE_CHAT = "Voice Chat - Nearby".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_DELAY = "Web Requests Delay".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_STRESS_TEST = "Web Requests Stress Test".AsWidgetName();
             public static readonly WidgetName LANDSCAPE_GPUI = "Landscape - GPUI".AsWidgetName();
