@@ -197,7 +197,7 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
-            Option<SceneAdmins> sceneAdmins = Option<SceneAdmins>.None;
+            Option<ISceneAdmins> sceneAdmins = Option<ISceneAdmins>.None;
 
             if (realmData.IsLocalSceneDevelopment == false)
             {
@@ -210,7 +210,7 @@ namespace SceneRunner
                 await sceneAdminsInstance.FireRequestAsync(ct);
                 sceneAdminsInstance.StartRequestPollingAsync().Forget();
 
-                sceneAdmins = Option<SceneAdmins>.Some(sceneAdminsInstance);
+                sceneAdmins = Option<ISceneAdmins>.Some(sceneAdminsInstance);
             }
 
             if (ENABLE_SDK_OBSERVABLES)
