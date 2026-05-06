@@ -27,7 +27,9 @@ namespace DCL.WebRequests.ChromeDevtool
         private readonly Dictionary<UnityWebRequest, ChromeDevToolWebRequestScope> uwrToScope;
         private readonly List<ChromeDevToolWebRequestScope?> webRequestScopes;
 
+#if !UNITY_WEBGL 
         private readonly IBridge bridge;
+#endif
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public ChromeDevToolHandler(int maxConcurrency, IBridge bridge)
@@ -38,7 +40,9 @@ namespace DCL.WebRequests.ChromeDevtool
             // The context has to be stored forever as it's possible to inspect the whole web requests history and invoke the corresponding callbacks
             webRequestScopes = new List<ChromeDevToolWebRequestScope>(INITIAL_CAPACITY);
 
+#if !UNITY_WEBGL 
             this.bridge = bridge;
+#endif
         }
 
 #if UNITY_INCLUDE_TESTS || UNITY_EDITOR
@@ -48,6 +52,9 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public static ChromeDevToolHandler New(bool startOnCreation, IAppArgs appArgs)
         {
+#if UNITY_WEBGL // ChromeDevtoolProtocolClient is not supported on WebGL. WebSocket server cannot be instantiated from a webpage, use mock
+            return new ChromeDevToolHandler(0, null!); 
+#else
             const int PORT = 1473;
 
             ChromeDevToolHandler newInstance = null!;
@@ -86,6 +93,7 @@ namespace DCL.WebRequests.ChromeDevtool
 
                 return result;
             }
+#endif
         }
 
         public BridgeStatus Status => bridge.Status;
