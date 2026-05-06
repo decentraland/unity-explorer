@@ -130,14 +130,8 @@ namespace DCL.SpringBones
 
                         currentWearableParent = springBone.ManagedTransform.parent;
                         currentAvatarParent = skeleton[springBone.AvatarSkeletonParentBoneIndex];
-                        currentWearableParent.SetPositionAndRotation(currentAvatarParent.position, currentAvatarParent.rotation);
 
-                        Vector3 parentOfWearableLossyScale = currentWearableParent.parent != null ? currentWearableParent.parent.lossyScale : Vector3.one;
-                        Vector3 avatarLossyScale = currentAvatarParent.lossyScale;
-                        currentWearableParent.localScale = new Vector3(
-                            avatarLossyScale.x / parentOfWearableLossyScale.x,
-                            avatarLossyScale.y / parentOfWearableLossyScale.y,
-                            avatarLossyScale.z / parentOfWearableLossyScale.z);
+                        SpringBoneTransformSync.SyncWearableParentToAvatar(currentWearableParent, currentAvatarParent);
                     }
 
                     chainJoints.Add(springBone.ManagedTransform);

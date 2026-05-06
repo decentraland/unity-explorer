@@ -20,8 +20,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, simulationSettings);
             SpringBoneRegistrationSystem.InjectToWorld(ref builder, springBoneService);
+            SpringBonesSimulationSystem.InjectToWorld(ref builder, springBoneService, simulationSettings);
         }
     }
 }

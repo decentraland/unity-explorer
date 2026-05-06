@@ -101,7 +101,7 @@ namespace DCL.SpringBones
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static SpringBoneTransformData UpdateParentMatrix(SpringBoneTransformData head, quaternion parentRotation, float4x4 parentLocalToWorld)
+        private static SpringBoneTransformData UpdateParentMatrix(SpringBoneTransformData head, quaternion parentRotation, float4x4 parentLocalToWorld)
         {
             quaternion newRotation = math.mul(parentRotation, head.LocalRotation);
             float4x4 newLocalToWorld = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, head.LocalRotation, head.LocalScale));
@@ -115,7 +115,7 @@ namespace DCL.SpringBones
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static SpringBoneTransformData UpdateRotation(SpringBoneTransformData head, quaternion newWorldRotation, quaternion parentRotation, float4x4 parentLocalToWorld)
+        private static SpringBoneTransformData UpdateRotation(SpringBoneTransformData head, quaternion newWorldRotation, quaternion parentRotation, float4x4 parentLocalToWorld)
         {
             quaternion newLocalRotation = math.normalize(math.mul(math.inverse(parentRotation), newWorldRotation));
             float4x4 newLocalToWorld = math.mul(parentLocalToWorld, float4x4.TRS(head.LocalPosition, newLocalRotation, head.LocalScale));
@@ -129,7 +129,7 @@ namespace DCL.SpringBones
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static quaternion FromToRotation(in float3 from, in float3 to)
+        private static quaternion FromToRotation(in float3 from, in float3 to)
         {
             float fromLenSq = math.lengthsq(from);
             float toLenSq = math.lengthsq(to);

@@ -13,36 +13,36 @@ namespace DCL.SpringBones
     public class SpringBoneService : IDisposable
     {
         public const int MAX_JOINTS_PER_SPRING = 8;
-        const int INITIAL_SLOT_CAPACITY = 32;
-        const float FIXED_STEP = 1f / 60f;
-        const int MAX_SUBSTEPS = 4;
+        private const int INITIAL_SLOT_CAPACITY = 32;
+        private const float FIXED_STEP = 1f / 60f;
+        private const int MAX_SUBSTEPS = 4;
 
-        readonly Transform dummyTransform;
-        readonly Stack<int> freeSlots = new ();
+        private readonly Transform dummyTransform;
+        private readonly Stack<int> freeSlots = new ();
 
-        float accumulatedDt;
-        bool hasFirstStep;
-        int slotCapacity;
-        Transform[] managedTransforms; // parallel to TAA, for main-thread access
-        TransformAccessArray taa;
-        NativeArray<SpringBoneTransformData> transforms;
-        NativeArray<float3> prevTails;
-        NativeArray<float3> currentTails;
-        NativeArray<float3> nextTails;
-        NativeArray<SpringBoneJointConfig> jointConfigs;
-        NativeArray<int> slotJointCounts;
-        NativeArray<SpringBoneParentData> parentData;
+        private float accumulatedDt;
+        private bool hasFirstStep;
+        private int slotCapacity;
+        private Transform[] managedTransforms; // parallel to TAA, for main-thread access
+        private TransformAccessArray taa;
+        private NativeArray<SpringBoneTransformData> transforms;
+        private NativeArray<float3> prevTails;
+        private NativeArray<float3> currentTails;
+        private NativeArray<float3> nextTails;
+        private NativeArray<SpringBoneJointConfig> jointConfigs;
+        private NativeArray<int> slotJointCounts;
+        private NativeArray<SpringBoneParentData> parentData;
         // Previous-frame parent data per slot. Sim job slerps between this and current
         // parentData each substep so parent rotation distributes smoothly across substeps —
         // prevents flapping when avatar parent rotates a lot per frame at low fps.
-        NativeArray<SpringBoneParentData> previousParentData;
-        NativeArray<bool> slotActive;
-        NativeArray<bool> slotWasActive;
+        private NativeArray<SpringBoneParentData> previousParentData;
+        private NativeArray<bool> slotActive;
+        private NativeArray<bool> slotWasActive;
         // Snapshot of post-step world rotation per joint, ping-ponged each substep so render
         // can slerp(prev, curr, alpha) and hide substep boundaries.
-        NativeArray<quaternion> prevStepRotations;
-        NativeArray<quaternion> currStepRotations;
-        bool disposed;
+        private NativeArray<quaternion> prevStepRotations;
+        private NativeArray<quaternion> currStepRotations;
+        private bool disposed;
 
 #if UNITY_INCLUDE_TESTS
         public int SlotCapacity => slotCapacity;
@@ -59,7 +59,7 @@ namespace DCL.SpringBones
             AllocateArrays(0);
         }
 
-        void AllocateArrays(int previousCapacity)
+        private void AllocateArrays(int previousCapacity)
         {
             int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
 
@@ -154,7 +154,8 @@ namespace DCL.SpringBones
                 slotActive[i] = false;
         }
 
-        public void SetSlotActive(int slotIndex, bool active) { slotActive[slotIndex] = active; }
+        public void SetSlotActive(int slotIndex, bool active) =>
+            slotActive[slotIndex] = active;
 
         public bool IsSlotActive(int slotIndex) => slotActive[slotIndex];
 
@@ -285,7 +286,7 @@ namespace DCL.SpringBones
             }.Schedule(taa).Complete();
         }
 
-        void SimulateStep(float deltaTime, float substepAlpha)
+        private void SimulateStep(float deltaTime, float substepAlpha)
         {
             JobHandle pullHandle = new PullSpringBoneTransformsJob
             {
@@ -313,74 +314,32 @@ namespace DCL.SpringBones
             }.Schedule(slotCapacity, 8, pullHandle).Complete();
         }
 
-        void FlipBuffers()
+        private void FlipBuffers()
         {
             // Rotate: prev ← current ← next ← prev
             (prevTails, currentTails, nextTails) = (currentTails, nextTails, prevTails);
         }
 
-        void Grow()
+        private void Grow()
         {
             int oldCapacity = slotCapacity;
             int newCapacity = oldCapacity * 2;
             int oldTotalJoints = oldCapacity * MAX_JOINTS_PER_SPRING;
             int newTotalJoints = newCapacity * MAX_JOINTS_PER_SPRING;
 
-            // Allocate new arrays and copy old data
-            var newTransforms = new NativeArray<SpringBoneTransformData>(newTotalJoints, Allocator.Persistent);
-            var newPrevTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newCurrentTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newNextTails = new NativeArray<float3>(newTotalJoints, Allocator.Persistent);
-            var newJointConfigs = new NativeArray<SpringBoneJointConfig>(newTotalJoints, Allocator.Persistent);
-            var newSlotJointCounts = new NativeArray<int>(newCapacity, Allocator.Persistent);
-            var newParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
-            var newPreviousParentData = new NativeArray<SpringBoneParentData>(newCapacity, Allocator.Persistent);
-            var newSlotActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
-            var newSlotWasActive = new NativeArray<bool>(newCapacity, Allocator.Persistent);
-            var newPrevStepRotations = new NativeArray<quaternion>(newTotalJoints, Allocator.Persistent);
-            var newCurrStepRotations = new NativeArray<quaternion>(newTotalJoints, Allocator.Persistent);
+            Resize(ref transforms, newTotalJoints, oldTotalJoints);
+            Resize(ref prevTails, newTotalJoints, oldTotalJoints);
+            Resize(ref currentTails, newTotalJoints, oldTotalJoints);
+            Resize(ref nextTails, newTotalJoints, oldTotalJoints);
+            Resize(ref jointConfigs, newTotalJoints, oldTotalJoints);
+            Resize(ref prevStepRotations, newTotalJoints, oldTotalJoints);
+            Resize(ref currStepRotations, newTotalJoints, oldTotalJoints);
+            Resize(ref slotJointCounts, newCapacity, oldCapacity);
+            Resize(ref parentData, newCapacity, oldCapacity);
+            Resize(ref previousParentData, newCapacity, oldCapacity);
+            Resize(ref slotActive, newCapacity, oldCapacity);
+            Resize(ref slotWasActive, newCapacity, oldCapacity);
 
-            NativeArray<SpringBoneTransformData>.Copy(transforms, newTransforms, oldTotalJoints);
-            NativeArray<float3>.Copy(prevTails, newPrevTails, oldTotalJoints);
-            NativeArray<float3>.Copy(currentTails, newCurrentTails, oldTotalJoints);
-            NativeArray<float3>.Copy(nextTails, newNextTails, oldTotalJoints);
-            NativeArray<SpringBoneJointConfig>.Copy(jointConfigs, newJointConfigs, oldTotalJoints);
-            NativeArray<int>.Copy(slotJointCounts, newSlotJointCounts, oldCapacity);
-            NativeArray<SpringBoneParentData>.Copy(parentData, newParentData, oldCapacity);
-            NativeArray<SpringBoneParentData>.Copy(previousParentData, newPreviousParentData, oldCapacity);
-            NativeArray<bool>.Copy(slotActive, newSlotActive, oldCapacity);
-            NativeArray<bool>.Copy(slotWasActive, newSlotWasActive, oldCapacity);
-            NativeArray<quaternion>.Copy(prevStepRotations, newPrevStepRotations, oldTotalJoints);
-            NativeArray<quaternion>.Copy(currStepRotations, newCurrStepRotations, oldTotalJoints);
-
-            // Dispose old
-            transforms.Dispose();
-            prevTails.Dispose();
-            currentTails.Dispose();
-            nextTails.Dispose();
-            jointConfigs.Dispose();
-            slotJointCounts.Dispose();
-            parentData.Dispose();
-            previousParentData.Dispose();
-            slotActive.Dispose();
-            slotWasActive.Dispose();
-            prevStepRotations.Dispose();
-            currStepRotations.Dispose();
-            taa.Dispose();
-
-            // Assign new
-            transforms = newTransforms;
-            prevTails = newPrevTails;
-            currentTails = newCurrentTails;
-            nextTails = newNextTails;
-            jointConfigs = newJointConfigs;
-            slotJointCounts = newSlotJointCounts;
-            parentData = newParentData;
-            previousParentData = newPreviousParentData;
-            slotActive = newSlotActive;
-            slotWasActive = newSlotWasActive;
-            prevStepRotations = newPrevStepRotations;
-            currStepRotations = newCurrStepRotations;
             slotCapacity = newCapacity;
 
             var newManagedTransforms = new Transform[newTotalJoints];
@@ -389,10 +348,19 @@ namespace DCL.SpringBones
                 newManagedTransforms[i] = dummyTransform;
             managedTransforms = newManagedTransforms;
 
+            taa.Dispose();
             taa = new TransformAccessArray(newManagedTransforms);
 
             for (int i = newCapacity - 1; i >= oldCapacity; i--)
                 freeSlots.Push(i);
+        }
+
+        private static void Resize<T>(ref NativeArray<T> arr, int newSize, int copyCount) where T : struct
+        {
+            var resized = new NativeArray<T>(newSize, Allocator.Persistent);
+            NativeArray<T>.Copy(arr, resized, copyCount);
+            arr.Dispose();
+            arr = resized;
         }
 
         public void Dispose()
@@ -401,21 +369,26 @@ namespace DCL.SpringBones
 
             disposed = true;
 
-            if (transforms.IsCreated) transforms.Dispose();
-            if (prevTails.IsCreated) prevTails.Dispose();
-            if (currentTails.IsCreated) currentTails.Dispose();
-            if (nextTails.IsCreated) nextTails.Dispose();
-            if (jointConfigs.IsCreated) jointConfigs.Dispose();
-            if (slotJointCounts.IsCreated) slotJointCounts.Dispose();
-            if (parentData.IsCreated) parentData.Dispose();
-            if (previousParentData.IsCreated) previousParentData.Dispose();
-            if (slotActive.IsCreated) slotActive.Dispose();
-            if (slotWasActive.IsCreated) slotWasActive.Dispose();
-            if (prevStepRotations.IsCreated) prevStepRotations.Dispose();
-            if (currStepRotations.IsCreated) currStepRotations.Dispose();
+            DisposeIfCreated(ref transforms);
+            DisposeIfCreated(ref prevTails);
+            DisposeIfCreated(ref currentTails);
+            DisposeIfCreated(ref nextTails);
+            DisposeIfCreated(ref jointConfigs);
+            DisposeIfCreated(ref slotJointCounts);
+            DisposeIfCreated(ref parentData);
+            DisposeIfCreated(ref previousParentData);
+            DisposeIfCreated(ref slotActive);
+            DisposeIfCreated(ref slotWasActive);
+            DisposeIfCreated(ref prevStepRotations);
+            DisposeIfCreated(ref currStepRotations);
             if (taa.isCreated) taa.Dispose();
 
             UnityObjectUtils.SafeDestroyGameObject(dummyTransform);
+        }
+
+        private static void DisposeIfCreated<T>(ref NativeArray<T> arr) where T : struct
+        {
+            if (arr.IsCreated) arr.Dispose();
         }
     }
 }

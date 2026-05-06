@@ -11,6 +11,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using Unity.Mathematics;
 using UnityEngine;
+
 namespace DCL.SpringBones
 {
     [LogCategory(ReportCategory.AVATAR)]
@@ -120,14 +121,7 @@ namespace DCL.SpringBones
                     continue;
                 }
 
-                slot.WearableParent.SetPositionAndRotation(slot.AvatarParent.position, slot.AvatarParent.rotation);
-
-                Vector3 parentLossy = slot.WearableParent.parent != null ? slot.WearableParent.parent.lossyScale : Vector3.one;
-                Vector3 avatarLossy = slot.AvatarParent.lossyScale;
-                slot.WearableParent.localScale = new Vector3(
-                    avatarLossy.x / parentLossy.x,
-                    avatarLossy.y / parentLossy.y,
-                    avatarLossy.z / parentLossy.z);
+                Vector3 avatarLossy = SpringBoneTransformSync.SyncWearableParentToAvatar(slot.WearableParent, slot.AvatarParent);
 
                 if (springBoneService.IsSlotActive(slot.SlotIndex))
                 {
