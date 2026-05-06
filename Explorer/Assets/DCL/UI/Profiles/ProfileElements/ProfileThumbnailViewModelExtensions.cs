@@ -6,9 +6,8 @@ namespace DCL.UI.ProfileElements
 {
     public static class ProfileThumbnailViewModelExtensions
     {
-        // Preserve the current sprite to avoid a placeholder flash while the new picture is downloaded.
         public static void SetLoading(this IReactiveProperty<ProfileThumbnailViewModel> property, Color color) =>
-            property.UpdateValue(new ProfileThumbnailViewModel(State.LOADING, property.Value.Sprite, color, property.Value.FitAndCenterImage));
+            property.UpdateValue(new ProfileThumbnailViewModel(State.LOADING, null, color));
 
         public static void SetLoaded(this IReactiveProperty<ProfileThumbnailViewModel> property, Sprite sprite, bool fromCache) =>
             property.UpdateValue(FromLoaded(sprite, fromCache, property.Value.ProfileColor, property.Value.FitAndCenterImage));
