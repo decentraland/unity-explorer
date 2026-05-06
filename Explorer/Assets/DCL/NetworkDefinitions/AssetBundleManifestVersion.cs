@@ -37,27 +37,13 @@ public class AssetBundleManifestVersion
 
         public bool HasHashInPath()
         {
-            if (HasHashInPathValue == null)
-            {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    HasHashInPathValue = false;
-                else
-                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
-            }
-
+            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
         }
 
         public bool SupportsInitialSceneState()
         {
-            if (SupportsISS == null)
-            {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    SupportsISS = false;
-                else
-                    SupportsISS = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
-            }
-
+            SupportsISS ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
             return SupportsISS.Value;
         }
 
@@ -68,15 +54,17 @@ public class AssetBundleManifestVersion
         /// </summary>
         public bool SupportsDepsDigests()
         {
-            if (SupportsDepsDigestsValue == null)
-            {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    SupportsDepsDigestsValue = false;
-                else
-                    SupportsDepsDigestsValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
-            }
-
+            SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
+        }
+
+        //Try parse is required to avoid throwing exceptions when the version is not in the expected format, which can happen for LODs in example
+        private static bool TryParseVersionNumber(string? version, out int parsed)
+        {
+            parsed = 0;
+            if (string.IsNullOrEmpty(version) || version!.Length < 2 || version[0] != 'v')
+                return false;
+            return int.TryParse(version.AsSpan(1), out parsed);
         }
 
         /// <summary>
@@ -193,7 +181,6 @@ public class AssetBundleManifestVersion
 
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             assetBundleManifestVersion.assets = assets;
-            assetBundleManifestVersion.HasHashInPathValue = false;
 
             return assetBundleManifestVersion;
         }

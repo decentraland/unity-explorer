@@ -264,6 +264,29 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
+        public void VersionPredicates_DoNotThrowOnNonVNVersions()
+        {
+            //Check that when handling a LOD it doesn't throw
+            var lodManifest = AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate");
+
+            Assert.That(lodManifest.HasHashInPath(), Is.False);
+            Assert.That(lodManifest.SupportsInitialSceneState(), Is.False);
+            Assert.That(lodManifest.SupportsDepsDigests(), Is.False);
+
+            var manualManifest = AssetBundleManifestVersion.CreateManualManifest();
+
+            Assert.That(manualManifest.HasHashInPath(), Is.False);
+            Assert.That(manualManifest.SupportsInitialSceneState(), Is.False);
+            Assert.That(manualManifest.SupportsDepsDigests(), Is.False);
+
+            var wrongString = AssetBundleManifestVersion.CreateFromFallback("v", "dummyDate");
+            Assert.That(wrongString.SupportsDepsDigests(), Is.False);
+
+            var nonNumeric = AssetBundleManifestVersion.CreateFromFallback("vfoo", "dummyDate");
+            Assert.That(nonNumeric.SupportsDepsDigests(), Is.False);
+        }
+
+        [Test]
         public void V49AndLegacyDoNotCollideForSameHash()
         {
             // A v49+ leaf AB with no digest must not accidentally produce the same Hash128 as the legacy path for
