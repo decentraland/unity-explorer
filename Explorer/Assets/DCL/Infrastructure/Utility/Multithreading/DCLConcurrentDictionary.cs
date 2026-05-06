@@ -48,7 +48,11 @@ namespace Utility.Multithreading
 #endif
         }
 
+#if !UNITY_WEBGL
         public bool IsEmpty => Inner.IsEmpty;
+#else
+        public bool IsEmpty => Inner.Count == 0;
+#endif
 
         public void Add(TKey key, TValue value)
         {

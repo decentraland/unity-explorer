@@ -73,17 +73,23 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
-            if (disposed)
+            try
             {
-                // If the scene was disposed before just dispose the sync buffer
-                syncCommandBuffer.Dispose();
-                return;
+                if (disposed)
+                    // If the scene was disposed before just dispose the sync buffer
+                    syncCommandBuffer.Dispose();
+                else
+                    syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             }
-
-            syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
+            finally
+            {
 #if !UNITY_WEBGL
-            semaphore.Release();
+                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
+                // including the disposed early-return and any exception thrown by Apply,
+                // otherwise the slot leaks and subsequent Rents time out forever.
+                semaphore.Release();
 #endif
+            }
         }
     }
 }
