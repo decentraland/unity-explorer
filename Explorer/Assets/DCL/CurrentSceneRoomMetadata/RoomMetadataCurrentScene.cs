@@ -33,11 +33,7 @@ namespace DCL.SceneBannedUsers
         private readonly IRealmData realmData;
         private readonly bool includeBannedUsersFromScene;
 
-        private CancellationTokenSource checkIfPlayerIsBannedCts;
-        private string roomMetadata = string.Empty;
-        private SceneRoomMetadata usersRoomMetadata;
         private Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null);
-
         private Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null);
 
         public RoomMetadataCurrentScene(
@@ -67,8 +63,8 @@ namespace DCL.SceneBannedUsers
         {
             if (string.IsNullOrEmpty(metadata)) return;
 
-            roomMetadata = metadata;
-            usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
+            string roomMetadata = metadata;
+            SceneRoomMetadata usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
 
             using var bannedLock = bannedAddressesSet.Lock();
             if (usersRoomMetadata.BannedAddresses is { Length: > 0 })
@@ -88,6 +84,9 @@ namespace DCL.SceneBannedUsers
 #if UNITY_INCLUDE_TESTS
             return SceneAdminResult.Success(); // consider always an admin during tests
 #else
+            if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
+                return SceneAdminResult.NotLoadedYet();
+
             if (realmData.IsLocalSceneDevelopment)
                 return SceneAdminResult.LocalSceneDevelopment();
 
@@ -112,6 +111,9 @@ namespace DCL.SceneBannedUsers
 
         public Result<IEnumerable<string>> CurrentAdmins()
         {
+            if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
+                return Result<IEnumerable<string>>.ErrorResult("Scene Admins are not available, Livekit room is disconnected");
+
             if (realmData.IsLocalSceneDevelopment)
                 return Result<IEnumerable<string>>.ErrorResult("Scene Admins are not available in Local Scene Development");
 
