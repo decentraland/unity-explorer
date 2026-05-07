@@ -392,8 +392,10 @@ namespace SceneRunner.Tests
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
-                    new ECSWorldInstanceSharedDependencies()),
+                    new ECSWorldInstanceSharedDependencies()
+                ),
                 Substitute.For<ISceneRuntime>()
+            ) {}
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>
