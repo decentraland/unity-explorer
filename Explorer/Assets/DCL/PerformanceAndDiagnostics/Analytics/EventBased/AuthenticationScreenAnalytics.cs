@@ -110,10 +110,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void OnProfileFinalized() =>
+            // isInstant: true because this fires moments before the auth screen tears down
+            // and the FSM transitions to InitAuthState. Without flushing immediately the event
+            // can sit in the buffer past the screen disposal and never make it to Segment.
             analytics.Track(Authentication.PROFILE_FINALIZED, new JObject
             {
                 { "method", controller.CurrentLoginMethod.ToString() },
-            });
+            }, isInstant: true);
 
         private void OnOTPVerified(string email, bool success)
         {
