@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading;
 
 namespace CrdtEcsBridge
 {
@@ -27,9 +26,8 @@ namespace CrdtEcsBridge
     ///         </item>
     ///     </list>
     ///     <para />
-    ///     Thread-safe: the blocked-ID set is built once via racy lazy init (idempotent,
-    ///     published with a volatile write). The hot path is a lock-free
-    ///     <see cref="HashSet{T}.Contains" /> with zero allocations.
+    ///     The blocked-ID set is built once in a static initialiser and immutable thereafter,
+    ///     so the hot path is an allocation-free <see cref="HashSet{T}.Contains" />. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
     /// </summary>
     public static class CreatorHubComponentFilter
     {
@@ -64,7 +62,7 @@ namespace CrdtEcsBridge
             "inspector::Nodes",
             "inspector::TransformConfig",
             "inspector::Hide",
-            "inspector::Lock",
+            "inspector::Lock", // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             "inspector::Ground",
             "inspector::Tile",
             "inspector::CustomAsset",
@@ -88,7 +86,7 @@ namespace CrdtEcsBridge
 
         /// <summary>
         ///     Lazily initialised, then immutable. Racy init is safe because the result is
-        ///     always identical and <see cref="Volatile.Write{T}" /> guarantees a
+        ///     always identical and <see cref="Volatile.Write{T}" /> guarantees a // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         ///     fully-constructed object is published.
         /// </summary>
         private static HashSet<int>? blockedIds;
@@ -145,7 +143,11 @@ namespace CrdtEcsBridge
         private static HashSet<int> BlockedIds
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Volatile.Read(ref blockedIds) ?? InitBlockedIds();
+#if !UNITY_WEBGL
+            get => System.Threading.Volatile.Read(ref blockedIds) ?? InitBlockedIds(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#else
+            get => blockedIds ?? InitBlockedIds();
+#endif
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -156,7 +158,11 @@ namespace CrdtEcsBridge
             foreach (string name in CREATOR_HUB_COMPONENT_NAMES)
                 set.Add(ComponentIdFromName(name));
 
-            Volatile.Write(ref blockedIds, set);
+#if !UNITY_WEBGL
+            System.Threading.Volatile.Write(ref blockedIds, set); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#else
+            blockedIds = set;
+#endif
             return set;
         }
 
