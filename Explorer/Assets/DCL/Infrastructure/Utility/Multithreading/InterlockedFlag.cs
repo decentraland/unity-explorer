@@ -9,10 +9,10 @@ namespace Utility.Multithreading
         public bool IsSet => isSet != 0;
 
         public bool Set() =>
-            Interlocked.Exchange(ref isSet, 1) == 0;
+            DCLInterlocked.Exchange(ref isSet, 1) == 0;
 
         public bool Reset() =>
-            Interlocked.Exchange(ref isSet, 0) != 0;
+            DCLInterlocked.Exchange(ref isSet, 0) != 0;
 
         public static implicit operator bool(InterlockedFlag flag) =>
             flag.IsSet;

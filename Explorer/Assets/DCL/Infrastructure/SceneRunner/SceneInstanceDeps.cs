@@ -198,7 +198,7 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
-            public readonly Option<SceneAdmins> SceneAdmins;
+            public readonly Option<ISceneAdmins> SceneAdmins;
 
             /// <summary>
             ///     For Unit Tests only
@@ -213,7 +213,7 @@ namespace SceneRunner
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
                 ISceneRuntime runtime,
-                Option<SceneAdmins> sceneAdmins
+                Option<ISceneAdmins> sceneAdmins
                 )
             {
                 EngineAPI = engineAPI;
@@ -242,11 +242,11 @@ namespace SceneRunner
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : this(
                     engineApi,
-                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard),
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData, syncDeps.permissionsProvider, systemClipboard, syncDeps.ECSWorldFacade.EcsWorld, syncDeps.ECSWorldFacade.PersistentEntities.Player),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, realmData, webRequestController, skyboxSettings, roomHub, installSource),
                     new SceneApiImplementation(syncDeps.sceneData),
                     new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations, syncDeps.permissionsProvider),
@@ -288,7 +288,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
@@ -314,7 +314,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(
                         new SDKObservableEventsEngineAPIImplementation(

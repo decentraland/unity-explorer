@@ -4,8 +4,8 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -13,7 +13,7 @@ using Utility;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Thread-safe hub for managing LiveKit audio playback sources.
+    /// Threadsafe hub for managing LiveKit audio playback sources.
     /// </summary>
     public readonly struct PlaybackSourcesHub
     {
@@ -25,9 +25,9 @@ namespace DCL.VoiceChat
 
         private readonly Transform parent;
 
-        private readonly ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
-        // Read as ConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<StreamKey, byte>> streamKeysByIdentity;
+        private readonly DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> streams;
+        // Read as DCLConcurrentDictionary<string, ConcurrentHashSet<StreamKey>> — byte is an unused placeholder (no ConcurrentHashSet in BCL).
+        private readonly DCLConcurrentDictionary<string, DCLConcurrentDictionary<StreamKey, byte>> streamKeysByIdentity;
         public IReadOnlyDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> Streams => streams;
 
         public PlaybackSourcesHub(
@@ -37,8 +37,8 @@ namespace DCL.VoiceChat
             Action<StreamKey, LivekitAudioSource>? onSourceConfigured = null,
             Action<StreamKey>? onSourceRemoved = null)
         {
-            this.streams = new ConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
-            this.streamKeysByIdentity = new ConcurrentDictionary<string, ConcurrentDictionary<StreamKey, byte>>();
+            this.streams = new DCLConcurrentDictionary<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)>();
+            this.streamKeysByIdentity = new DCLConcurrentDictionary<string, DCLConcurrentDictionary<StreamKey, byte>>();
             this.audioMixerGroup = audioMixerGroup;
             this.spatial = spatial;
             this.onSourceConfigured = onSourceConfigured;
@@ -60,7 +60,7 @@ namespace DCL.VoiceChat
             }
 
             streamKeysByIdentity
-               .GetOrAdd(key.identity, static _ => new ConcurrentDictionary<StreamKey, byte>())
+               .GetOrAdd(key.identity, static _ => new DCLConcurrentDictionary<StreamKey, byte>())
                .TryAdd(key, 0); // 0 is a dummy value — inner dict is used as a set, only keys matter.
 
             onSourceConfigured?.Invoke(key, source);
@@ -70,10 +70,9 @@ namespace DCL.VoiceChat
         {
             if (streams.TryRemove(key, out (Weak<AudioStream> stream, LivekitAudioSource source) pair))
             {
-                if (streamKeysByIdentity.TryGetValue(key.identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+                if (streamKeysByIdentity.TryGetValue(key.identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 {
                     keys.TryRemove(key, out _);
-
                     if (keys.IsEmpty)
                         streamKeysByIdentity.TryRemove(key.identity, out _);
                 }
@@ -97,7 +96,7 @@ namespace DCL.VoiceChat
 
         internal void SetMuteForIdentity(string identity, bool mute)
         {
-            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+            if (!streamKeysByIdentity.TryGetValue(identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 return;
 
             foreach (KeyValuePair<StreamKey, byte> kvp in keys)
@@ -107,7 +106,7 @@ namespace DCL.VoiceChat
 
         internal void RemoveStreamsByIdentity(string identity)
         {
-            if (!streamKeysByIdentity.TryGetValue(identity, out ConcurrentDictionary<StreamKey, byte>? keys))
+            if (!streamKeysByIdentity.TryGetValue(identity, out DCLConcurrentDictionary<StreamKey, byte>? keys))
                 return;
 
             foreach (KeyValuePair<StreamKey, byte> kvp in keys)
