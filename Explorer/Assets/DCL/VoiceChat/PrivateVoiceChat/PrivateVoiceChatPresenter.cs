@@ -137,6 +137,7 @@ namespace DCL.VoiceChat
             statusSubscription?.Dispose();
             this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            this.voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             micController.Dispose();
         }
     }
