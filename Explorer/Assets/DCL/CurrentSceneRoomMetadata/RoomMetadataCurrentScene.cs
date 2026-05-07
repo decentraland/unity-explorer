@@ -36,7 +36,7 @@ namespace DCL.SceneBannedUsers
         private CancellationTokenSource checkIfPlayerIsBannedCts;
         private string roomMetadata = string.Empty;
         private SceneRoomMetadata usersRoomMetadata;
-        private HashSet<string>? bannedAddressesSet;
+        private Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null);
 
         private Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null);
 
@@ -70,10 +70,11 @@ namespace DCL.SceneBannedUsers
             roomMetadata = metadata;
             usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
 
+            using var bannedLock = bannedAddressesSet.Lock();
             if (usersRoomMetadata.BannedAddresses is { Length: > 0 })
-                bannedAddressesSet = new HashSet<string>(usersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
+                bannedLock.Value = new HashSet<string>(usersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
             else
-                bannedAddressesSet = null;
+                bannedLock.Value = null;
 
             using var adminsLock = sceneAdminsAddressesSet.Lock();
             if (usersRoomMetadata.SceneAdmins is { Length: > 0 })
@@ -138,7 +139,8 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return false;
 
-            return bannedAddressesSet?.Contains(userId) ?? false;
+            using var bannedLock = bannedAddressesSet.Lock();
+            return bannedLock.Value?.Contains(userId) ?? false;
         }
     }
 }
