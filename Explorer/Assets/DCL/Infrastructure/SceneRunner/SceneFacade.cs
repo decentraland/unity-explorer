@@ -17,6 +17,9 @@ namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
+        private const int HANG_WATCHDOG_POLL_INTERVAL_MS = 1000;
+        private const int HANG_INTERRUPT_THRESHOLD_MS = 30000;
+
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
@@ -37,6 +40,11 @@ namespace SceneRunner
         private int intervalMS;
 
         private readonly InterlockedFlag sceneCodeIsRunning = new ();
+
+        // Hot-path watchdog state: set to Stopwatch.GetTimestamp() at the start of each UpdateScene
+        // tick, reset to 0 when the tick completes.
+        // Read from a separate watchdog continuation to detect hangs
+        private long tickStartTimestamp;
 
         public SceneFacade(
             ISceneData sceneData,
@@ -102,6 +110,7 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
+
             try
             {
                 // Start the scene
@@ -119,6 +128,10 @@ namespace SceneRunner
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
+            // Single watchdog for the whole loop lifetime
+            var loopCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            RunHangWatchdogAsync(loopCts.Token).Forget();
+
             try
             {
                 while (true)
@@ -133,13 +146,19 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+                    Interlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
+
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
                     catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
-                    finally { sceneCodeIsRunning.Reset(); }
+                    finally
+                    {
+                        Interlocked.Exchange(ref tickStartTimestamp, 0);
+                        sceneCodeIsRunning.Reset();
+                    }
 
                     SceneStateProvider.TickNumber++;
 
@@ -161,9 +180,44 @@ namespace SceneRunner
                 }
             }
             catch (OperationCanceledException) { }
+            finally
+            {
+                loopCts.Cancel();
+                loopCts.Dispose();
+            }
         }
 
-        private async 
+        private async UniTaskVoid RunHangWatchdogAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                try { await DCLTask.Delay(HANG_WATCHDOG_POLL_INTERVAL_MS, ct); }
+                catch (OperationCanceledException) { return; }
+
+                long startTs = Interlocked.Read(ref tickStartTimestamp);
+                if (startTs == 0) continue; // No tick in progress
+
+                long elapsedMs = (Stopwatch.GetTimestamp() - startTs) * 1000 / Stopwatch.Frequency;
+                if (elapsedMs < HANG_INTERRUPT_THRESHOLD_MS) continue; // Tick still under threshold
+
+                string id = SceneData.SceneEntityDefinition.id ?? "<unknown>";
+
+                ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' UpdateScene hung for {elapsedMs}ms — interrupting engine and marking scene as JavaScriptError");
+
+                // Mark scene as failed first so the loop's IsNotRunningState() check breaks on the
+                // next iteration after the interrupt unwinds the await.
+                SceneStateProvider.State.Set(SceneState.JavaScriptError);
+
+                // Force V8 to throw ScriptInterruptedException from the running JS at the next safe point.
+                // The exception propagates out of UpdateScene -> caught by the loop's catch (ScriptEngineException) block.
+                try { runtimeInstance.Interrupt(); }
+                catch (Exception e) { ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' Interrupt() threw {e.GetType().Name}: {e.Message}"); }
+
+                return; // Stop watchdog after issuing interrupt
+            }
+        }
+
+        private async
 #if UNITY_WEBGL
             Cysharp.Threading.Tasks.UniTask<bool>
 #else

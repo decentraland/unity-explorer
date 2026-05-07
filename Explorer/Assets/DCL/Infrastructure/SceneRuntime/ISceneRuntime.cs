@@ -46,6 +46,13 @@ namespace SceneRuntime
 
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
+        /// <summary>
+        ///     Forcibly interrupts a running JS execution by causing a <see cref="Microsoft.ClearScript.ScriptInterruptedException"/>
+        ///     to be thrown from inside the engine. Safe to call from another thread.
+        ///     After interrupt the engine state may be inconsistent — treat as terminal and dispose the scene.
+        /// </summary>
+        void Interrupt();
+
         void SetIsDisposing();
 
         void OnSceneIsCurrentChanged(bool isCurrent);
