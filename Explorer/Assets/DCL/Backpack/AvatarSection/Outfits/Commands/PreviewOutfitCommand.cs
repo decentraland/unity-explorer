@@ -9,7 +9,6 @@ using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using Runtime.Wearables;
-using System;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
@@ -37,7 +36,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             this.outfitsLogger = outfitsLogger;
         }
 
-        public async UniTask ExecuteAsync(OutfitItem outfitToPreview, CancellationToken ct, Action onEnd)
+        public async UniTask ExecuteAsync(OutfitItem outfitToPreview, CancellationToken ct)
         {
             // If this is the first preview, store the current avatar state as the "original".
             if (originalOutfit == null)
@@ -51,7 +50,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             // Apply the previewed outfit
             if (outfitToPreview.outfit != null)
-                outfitApplier.Apply(outfitToPreview.outfit, onEnd);
+                outfitApplier.Apply(outfitToPreview.outfit);
         }
 
         // Restores the original outfit if one was stored

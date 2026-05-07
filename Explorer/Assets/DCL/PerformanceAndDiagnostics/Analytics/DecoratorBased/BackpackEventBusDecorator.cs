@@ -27,6 +27,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?> FilterEvent;
         public event Action<BackpackEquipOutfitCommand, IWearable[]>? EquipOutfitEvent;
+        public event Action? EquipOutfitCompletedEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
         public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string> ChangeColorEvent;
@@ -57,6 +58,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.DeactivateEvent += OnDeactivate;
             core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
             core.EquipOutfitEvent += OnEquipOutfit;
+            core.EquipOutfitCompletedEvent += OnEquipOutfitCompleted;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
@@ -79,10 +81,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.DeactivateEvent -= OnDeactivate;
             core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
             core.EquipOutfitEvent -= OnEquipOutfit;
+            core.EquipOutfitCompletedEvent -= OnEquipOutfitCompleted;
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
             EquipOutfitEvent?.Invoke(command, wearables);
+
+        private void OnEquipOutfitCompleted() =>
+            EquipOutfitCompletedEvent?.Invoke();
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
         {
@@ -146,8 +152,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SendBackpackDeactivateEvent() =>
             core.SendBackpackDeactivateEvent();
 
-        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
             core.SendEquipOutfit(command, wearables);
+
+        public void SendEquipOutfitCompleted() =>
+            core.SendEquipOutfitCompleted();
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
             core.SendChangedBackpackSectionEvent(backpackSections);

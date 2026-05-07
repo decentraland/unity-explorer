@@ -29,6 +29,7 @@ namespace DCL.Backpack
     {
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
@@ -51,6 +52,7 @@ namespace DCL.Backpack
 
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
+            IBackpackEventBus backpackEventBus,
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
@@ -66,6 +68,7 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.eventBus = eventBus;
+            this.backpackEventBus = backpackEventBus;
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
@@ -81,6 +84,8 @@ namespace DCL.Backpack
 
             outfitBannerPresenter = new OutfitBannerPresenter(view.OutfitsBanner,
                 OnGetANameClicked, OnLinkClicked);
+
+            backpackEventBus.EquipOutfitCompletedEvent += EndSlotBusy;
 
             CreateOutfitSlots();
         }
@@ -281,7 +286,7 @@ namespace DCL.Backpack
 
             previewOutfitCommand.Commit();
 
-            outfitApplier.Apply(outfitItem.outfit, EndSlotBusy);
+            outfitApplier.Apply(outfitItem.outfit);
 
             eventBus.Publish(new OutfitsEvents.EquipOutfitEvent());
 
@@ -335,7 +340,7 @@ namespace DCL.Backpack
 
             try
             {
-                await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token, EndSlotBusy);
+                await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token);
                 GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
             }
             catch (OperationCanceledException) { EndSlotBusy(); }
@@ -438,6 +443,7 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
+            backpackEventBus.EquipOutfitCompletedEvent -= EndSlotBusy;
             outfitBannerPresenter.Dispose();
             foreach (var presenter in slotPresenters)
             {

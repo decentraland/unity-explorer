@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +12,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         public readonly Color SkinColor;
         public readonly IReadOnlyCollection<string> ForceRender;
         public readonly bool UseFullUrns;
-        public readonly Action? OnEnd;
 
         public BackpackEquipOutfitCommand(string bodyShape,
             IReadOnlyCollection<string> wearables,
@@ -21,8 +19,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             Color hairColor,
             Color skinColor,
             IReadOnlyCollection<string> forceRender,
-            bool useFullUrns = false,
-            Action? onEnd = null)
+            bool useFullUrns = false)
         {
             BodyShape = bodyShape;
             Wearables = wearables;
@@ -31,7 +28,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             SkinColor = skinColor;
             ForceRender = forceRender;
             UseFullUrns = useFullUrns;
-            OnEnd = onEnd;
         }
     }
 }

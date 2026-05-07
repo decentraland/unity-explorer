@@ -281,7 +281,7 @@ namespace DCL.Backpack.BackpackBus
                 ListPool<URN>.Release(urns);
                 ListPool<IWearable>.Release(resolvedWearables);
 
-                command.OnEnd?.Invoke();
+                backpackEventBus.SendEquipOutfitCompleted();
             }
         }
     }

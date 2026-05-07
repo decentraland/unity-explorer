@@ -1,7 +1,6 @@
-﻿using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.BackpackBus;
-using System;
 
 namespace DCL.Backpack.AvatarSection.Outfits
 {
@@ -14,7 +13,7 @@ namespace DCL.Backpack.AvatarSection.Outfits
             this.bus = bus;
         }
 
-        public void Apply(Outfit outfit, Action? onEnd = null)
+        public void Apply(Outfit outfit)
         {
             var command = new BackpackEquipOutfitCommand(
                 outfit.bodyShape,
@@ -22,8 +21,7 @@ namespace DCL.Backpack.AvatarSection.Outfits
                 outfit.eyes.color,
                 outfit.hair.color,
                 outfit.skin.color,
-                outfit.forceRender,
-                onEnd: onEnd
+                outfit.forceRender
             );
 
             bus.SendCommand(command);
