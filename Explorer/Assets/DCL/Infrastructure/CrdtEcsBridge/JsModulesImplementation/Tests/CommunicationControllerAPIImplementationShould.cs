@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using Utility;
 using RichTypes;
+using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -93,6 +94,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         public void OnMessageReceived()
         {
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+
+            RoomMetadataCurrentScene.InitializeTest();
 
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 

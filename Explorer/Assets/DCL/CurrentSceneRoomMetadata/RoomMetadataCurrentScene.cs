@@ -48,6 +48,19 @@ namespace DCL.SceneBannedUsers
             roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
         }
 
+
+#if UNITY_INCLUDE_TESTS
+        public RoomMetadataCurrentScene()
+        {
+        }
+
+        public static void InitializeTest()
+        {
+            RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene());
+        }
+#endif
+
+
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             if (connectionUpdate is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
