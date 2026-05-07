@@ -15,11 +15,6 @@ namespace DCL.Diagnostics
         public const string ANALYTICS = nameof(ANALYTICS);
 
         /// <summary>
-        ///     Everything connected analytics that is not supposed to be reported to Sentry (retries for example)
-        /// </summary>
-        public const string ANALYTICS_INTERNAL = nameof(ANALYTICS_INTERNAL);
-
-        /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
         public const string ASSETS_PROVISION = nameof(ASSETS_PROVISION);
@@ -55,6 +50,11 @@ namespace DCL.Diagnostics
         public const string SCENE_LOADING = nameof(SCENE_LOADING);
 
         /// <summary>
+        ///     Messages related to the scene admins and their operations
+        /// </summary>
+        public const string SCENE_ADMINS = nameof(SCENE_ADMINS);
+
+        /// <summary>
         ///     Messages related to the scene UI
         /// </summary>
         public const string SCENE_UI = nameof(SCENE_UI);
@@ -73,6 +73,11 @@ namespace DCL.Diagnostics
         ///     Archipelago and gatekeeper requests
         /// </summary>
         public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
+
+        /// <summary>
+        ///     COMMS Api
+        /// </summary>
+        public const string COMMS_API = nameof(COMMS_API);
 
         /// <summary>
         ///     Chat livekit requests

@@ -143,7 +143,25 @@ Always dereference in cleanup paths to allow the unloading pipeline to reclaim m
 
 - `TexturesCache` -> `Texture2D`
 - `WearableAssetsCache` -> `CachedWearable` -> `WearableAsset` -> `AssetBundleData`
-- `GltfContainerAssetsCache` -> `GltfContainerAsset` -> `AssetBundleData`
+- `GltfContainerAssetsCache` -> `GltfContainerAsset` -> `AssetBundleData`     (AB path)
+- `GltfContainerAssetsCache` -> `GltfContainerAsset` -> `GLTFData` -> `GltfImport`,
+  `GltfLoadCache` -> `GLTFData` -> `GltfImport`                                (raw-GLTF path; ref-counted via `RefCountStreamableCacheBase`)
+
+### RefCountStreamableCacheBase
+
+Caches built on `RefCountStreamableCacheBase<TAssetData, TAsset, TIntention>` (e.g. `GltfLoadCache`) share one `TAssetData` across all consumers requesting the same intention:
+
+- `cache.AddReference` is called per consumer in `LoadSystemBase.ApplyLoadedResult` — refCount = N consumers.
+- `Dereference` happens in the consumer's disposal path (e.g. `GltfContainerAsset.Dispose` -> `AssetData.Dereference`).
+- Terminal disposal (`asset.Dispose()` -> `DestroyObject`) only fires when `cache.Unload` finds an entry with `refCount == 0`.
+
+**Do not call `Dispose()` from the consumer's disposal path.** By the time the consumer runs, `PutAsync` has already stored the asset in the cache. Calling `Dispose()` here disposes the underlying asset (texture, GltfImport, etc.); the next `cache.Unload` then iterates the entry, sees `CanBeDisposed()`, and disposes again — double-dispose corrupts profiling counters and the underlying asset state. `Dereference` only; let the cache's `Unload` finish disposal.
+
+For dedup to fire, see the **Intention Equality Contract** in `docs/asset-promises.md` — `Equals` and `GetHashCode` must be consistent or piggy-backing requests silently miss.
+
+### LSD eager drain
+
+`ECSReloadScene.DisposeAndRestartAsync` (LSD branch) calls `cacheCleaner.UnloadCache(budgeted: false)` on every `/reload` because the dev server's content hash is path-based: edits to a `.glb` keep the same hash, so a cached entry would return the stale asset. The drain forces fresh loads. Production scene transitions/teleports do not run this drain.
 
 ---
 

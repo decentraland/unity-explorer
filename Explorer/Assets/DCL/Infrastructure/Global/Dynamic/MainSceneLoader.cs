@@ -40,11 +40,12 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -181,13 +182,14 @@ namespace Global.Dynamic
 
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
-                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE));
 
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
+            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -385,9 +387,9 @@ namespace Global.Dynamic
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
 
                 // Note that FileShare.None should lock the file to other processes, and it does,
-                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0, 0);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             }
             catch (IOException) { return true; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
@@ -801,6 +803,17 @@ namespace Global.Dynamic
                 ReportHub.Log(data, "Finish checking");
             }
         }
+
+        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
+            mode switch
+            {
+                GatekeeperMode.Org => null,
+                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
+                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                GatekeeperMode.Localhost => "http://localhost:3000",
+                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+            };
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>

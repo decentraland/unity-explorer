@@ -17,6 +17,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
+using RichTypes;
+using SceneRunner.Admins;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -51,8 +53,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
-            api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
-                jsOperations, InstancePoolsProvider.Create());
+            ISceneAdmins sceneAdmins = Substitute.For<ISceneAdmins>();
+            sceneAdmins.IsAdmin(Arg.Any<string>()).Returns(true);
+
+            api = new CommunicationsControllerAPIImplementation(
+                    sceneData,
+                    sceneCommunicationPipe,
+                    jsOperations,
+                    InstancePoolsProvider.Create(),
+                    Option<ISceneAdmins>.Some(sceneAdmins)
+                    );
         }
 
         [Test]
@@ -175,7 +185,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             // Expected: CRDT message should be filtered
             var filteredBuffer = new byte[crdtMessage.Length];
-            CRDTFilter.FilterSceneMessageBatch(crdtMessage, filteredBuffer, out int filteredWrite);
+            CRDTFilter.FilterSceneMessageBatch(crdtMessage, filteredBuffer, isTrustedSource: true, out int filteredWrite);
             var expectedCrdtEncoded = new byte[filteredWrite + 1];
             expectedCrdtEncoded[0] = (byte)ISceneCommunicationPipe.MsgType.Uint8Array;
             Buffer.BlockCopy(filteredBuffer, 0, expectedCrdtEncoded, 1, filteredWrite);
@@ -267,7 +277,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             // Expected: RES_CRDT_STATE should be filtered
             var filteredStateBuffer = new byte[resMessage.Length];
-            CRDTFilter.FilterCRDTState(resMessage, filteredStateBuffer, out int filteredStateWrite);
+            CRDTFilter.FilterCRDTState(resMessage, filteredStateBuffer, isTrustedSource: true, out int filteredStateWrite);
             var expectedResEncoded = new byte[filteredStateWrite + 1];
             expectedResEncoded[0] = (byte)ISceneCommunicationPipe.MsgType.Uint8Array;
             Buffer.BlockCopy(filteredStateBuffer, 0, expectedResEncoded, 1, filteredStateWrite);

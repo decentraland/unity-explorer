@@ -11,6 +11,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
@@ -32,6 +33,7 @@ namespace DCL.ResourcesUnloading.Tests
         private ISizedStreamableCache<TextureData, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
+        private IStreamableCache<GLTFData, GetGLTFIntention> gltfLoadCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
         private IProfileCache profileCache;
@@ -56,6 +58,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache = Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();
+            gltfLoadCache = Substitute.For<IStreamableCache<GLTFData, GetGLTFIntention>>();
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODCache>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
@@ -70,6 +73,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
+            cacheCleaner.Register(gltfLoadCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(attachmentsAssetsCache);
             cacheCleaner.Register(materialPool);
@@ -98,6 +102,7 @@ namespace DCL.ResourcesUnloading.Tests
             trimmedWearableStorage.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
             trimmedEmoteStorage.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
             gltfContainerAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            gltfLoadCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
             profileCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
