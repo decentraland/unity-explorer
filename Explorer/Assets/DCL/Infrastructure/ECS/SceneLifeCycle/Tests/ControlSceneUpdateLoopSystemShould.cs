@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0f);
 
-            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+            scene.Received(1).StartAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 
@@ -83,7 +83,7 @@ namespace ECS.SceneLifeCycle.Tests
             // let the system switch to the thread pool
             await Task.Delay(100);
 
-            await scene.Received(1).StartUpdateLoopAsync(15, Arg.Any<CancellationToken>());
+            await scene.Received(1).StartAsync(15, Arg.Any<CancellationToken>());
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 

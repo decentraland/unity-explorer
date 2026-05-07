@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!promise.TryConsume(World, out var result) || !result.Succeeded) return;
 
             ISceneFacade scene = result.Asset!;
-            StartScene(definitionComponent, partition, scene);
+            StartSceneAsync(definitionComponent, partition, scene).Forget();
 
             World.Add(entity, scene);
         }
@@ -80,7 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             World.Add(entity, new SmartWearableSceneStarted());
 
-            StartScene(definitionComponent, partition, scene);
+            StartSceneAsync(definitionComponent, partition, scene).Forget();
         }
 
         [Query]
@@ -92,41 +92,46 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }
 
-        private void StartScene(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
+        private async UniTaskVoid StartSceneAsync(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
         {
             int fps = realmPartitionSettings.GetSceneUpdateFrequency(partition);
-            RunOnThreadPoolAsync().Forget();
 
-            // So we know the scene has started
-            if (definitionComponent.IsPortableExperience)
-                scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
-            else
-                scenesCache.Add(scene, definitionComponent.Parcels);
-
-            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
-
-            return;
-
-            async UniTaskVoid RunOnThreadPoolAsync()
+            try
             {
-                try
-                {
-                    await DCLTask.SwitchToThreadPool();
-
-                    if (destroyCancellationToken.IsCancellationRequested) return;
+                // 1. JS init must run on a non-main thread
+                await DCLTask.SwitchToThreadPool();
+                if (destroyCancellationToken.IsCancellationRequested) return;
 
 #if !UNITY_WEBGL
-                    // Provide basic thread-pool synchronization context
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                // Provide basic thread-pool synchronization context
+                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
-                    // FPS is set by another system
-                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, GetReportData());
-                }
+                await scene.StartAsync(fps, destroyCancellationToken);
+
+                // If JS init failed (handler set state to an error) or destroy was triggered, stop here.
+                if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
+                    return;
+
+                scene.UpdateLoopAsync(destroyCancellationToken).Forget();
+
+                // 2. Register the scene in the cache from the main thread (cache writes are main-thread only)
+                await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
+
+                if (definitionComponent.IsPortableExperience)
+                    scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
+                else
+                    scenesCache.Add(scene, definitionComponent.Parcels);
+
+                ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
+
+                // // 3. Run the update loop on the thread pool
+                // await DCLTask.SwitchToThreadPool();
+                // if (destroyCancellationToken.IsCancellationRequested) return;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, GetReportData());
             }
         }
     }

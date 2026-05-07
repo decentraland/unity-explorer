@@ -12,13 +12,15 @@ using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 using RichTypes;
+using Utility;
 
 namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
         private const int HANG_WATCHDOG_POLL_INTERVAL_MS = 1000;
-        private const int HANG_INTERRUPT_THRESHOLD_MS = 30000;
+        private const int UPDATE_HANG_INTERRUPT_THRESHOLD_MS = 10000;
+        private const int START_HANG_INTERRUPT_THRESHOLD_MS = 30000;
 
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
@@ -94,12 +96,19 @@ namespace SceneRunner
         public bool IsSceneReady() =>
             SceneData.SceneLoadingConcluded;
 
-        public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
+        /// <summary>
+        ///     Initializes the scene and runs JS startup code. Returns when the scene's onStart has completed.
+        ///     Must be called from a non-main thread (V8 execution requirement).
+        ///     If JS init throws, the scene is left in its current state and the exception is reported via
+        ///     <see cref="sceneExceptionsHandler"/>; callers should observe <see cref="SceneStateProvider"/>
+        ///     before proceeding to <see cref="UpdateLoopAsync"/>.
+        /// </summary>
+        public async UniTask StartAsync(int targetFPS, CancellationToken ct)
         {
-            MultithreadingUtility.AssertMainThread(nameof(StartUpdateLoopAsync));
+            MultithreadingUtility.AssertMainThread(nameof(StartAsync));
 
             if (SceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
+                throw new ThreadStateException($"{nameof(StartAsync)} is already started!");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
@@ -110,27 +119,46 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
+            Interlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
+
+            // One-shot watchdog: if JS init doesn't complete within START_HANG_INTERRUPT_THRESHOLD_MS,
+            // interrupt the engine and mark the scene as failed.
+            var watchdogCts = new CancellationTokenSource();
+            RunHangWatchdogAsync(START_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
 
             try
             {
-                // Start the scene
+                // Start the scene (runs JS onStart)
                 await runtimeInstance.StartScene();
             }
-            catch (ScriptEngineException e)
+            catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
+            finally
             {
-                sceneExceptionsHandler.OnJavaScriptException(e);
-                return;
+                Interlocked.Exchange(ref tickStartTimestamp, 0);
+                watchdogCts.SafeCancelAndDispose();
+                sceneCodeIsRunning.Reset();
             }
-            finally { sceneCodeIsRunning.Reset(); }
 
             MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
+        }
+
+        /// <summary>
+        ///     Runs the per-tick update loop. Must be called after <see cref="StartAsync"/> completes
+        ///     and the scene state is still Running.
+        /// </summary>
+        public async UniTask UpdateLoopAsync(CancellationToken ct)
+        {
+            MultithreadingUtility.AssertMainThread(nameof(UpdateLoopAsync));
+
+            if (SceneStateProvider.IsNotRunningState())
+                return;
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
             // Single watchdog for the whole loop lifetime
-            var loopCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            RunHangWatchdogAsync(loopCts.Token).Forget();
+            var watchdogCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            RunHangWatchdogAsync(UPDATE_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
 
             try
             {
@@ -180,14 +208,10 @@ namespace SceneRunner
                 }
             }
             catch (OperationCanceledException) { }
-            finally
-            {
-                loopCts.Cancel();
-                loopCts.Dispose();
-            }
+            finally { watchdogCts.SafeCancelAndDispose(); }
         }
 
-        private async UniTaskVoid RunHangWatchdogAsync(CancellationToken ct)
+        private async UniTaskVoid RunHangWatchdogAsync(int thresholdMs, CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
             {
@@ -198,18 +222,18 @@ namespace SceneRunner
                 if (startTs == 0) continue; // No tick in progress
 
                 long elapsedMs = (Stopwatch.GetTimestamp() - startTs) * 1000 / Stopwatch.Frequency;
-                if (elapsedMs < HANG_INTERRUPT_THRESHOLD_MS) continue; // Tick still under threshold
+                if (elapsedMs < thresholdMs) continue; // Tick still under threshold
 
                 string id = SceneData.SceneEntityDefinition.id ?? "<unknown>";
 
-                ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' UpdateScene hung for {elapsedMs}ms — interrupting engine and marking scene as JavaScriptError");
+                ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' hung for {elapsedMs}ms (threshold={thresholdMs}ms) — interrupting engine and marking scene as JavaScriptError");
 
                 // Mark scene as failed first so the loop's IsNotRunningState() check breaks on the
                 // next iteration after the interrupt unwinds the await.
                 SceneStateProvider.State.Set(SceneState.JavaScriptError);
 
                 // Force V8 to throw ScriptInterruptedException from the running JS at the next safe point.
-                // The exception propagates out of UpdateScene -> caught by the loop's catch (ScriptEngineException) block.
+                // The exception propagates out of the in-flight call -> caught by the caller's catch (ScriptEngineException) block.
                 try { runtimeInstance.Interrupt(); }
                 catch (Exception e) { ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' Interrupt() threw {e.GetType().Name}: {e.Message}"); }
 
