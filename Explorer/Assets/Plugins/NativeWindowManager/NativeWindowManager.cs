@@ -88,21 +88,20 @@ namespace Plugins.NativeWindowManager
         /// </summary>
         /// <param name="disableConstraints">If constraints should be disabled in window mode.</param>
         /// <param name="windowedModeRequested">If window mode was specifically requested via app args.</param>
-        /// <param name="isLocalScene">If we're running a local scene.</param>
-        public static void Initialize(bool disableConstraints, bool windowedModeRequested, bool isLocalScene)
+        public static void Initialize(bool disableConstraints, bool windowedModeRequested)
         {
             disableWindowConstraints = disableConstraints;
 
-            if (windowedModeRequested || isLocalScene)
-                EnableFullscreen(false, false);
-            else if (!FullScreenEnabled)
+            bool desiredFullscreen = !windowedModeRequested
+                                     && DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, true);
+
+            if (desiredFullscreen != FullScreenEnabled)
+                EnableFullscreen(desiredFullscreen, store: false);
+            else if (!desiredFullscreen)
                 ApplyConstraints(true);
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
-
-            if (isLocalScene)
-                FullScreenResolution = ResolutionUtils.GetDefaultResolution();
         }
 
         /// <summary>

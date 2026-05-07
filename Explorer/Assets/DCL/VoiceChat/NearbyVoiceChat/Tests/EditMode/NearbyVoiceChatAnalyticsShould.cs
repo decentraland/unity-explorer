@@ -352,7 +352,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Assert
             AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_USER_MUTE,
-                p => (string?)p["identity"] == WALLET && (bool?)p["is_muted"] == true);
+                p => (string?)p["wallet_id"] == WALLET && (bool?)p["is_muted"] == true);
         }
 
         [Test]
@@ -363,7 +363,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Assert
             AssertTrackedOnce(AnalyticsEvents.VoiceChat.NEARBY_VOICE_USER_MUTE,
-                p => (string?)p["identity"] == WALLET && (bool?)p["is_muted"] == false);
+                p => (string?)p["wallet_id"] == WALLET && (bool?)p["is_muted"] == false);
         }
 
         [Test]

@@ -20,12 +20,12 @@ namespace Utility.Multithreading
         private static FrameCounter? frameCounter;
 
         /// <summary>
-        ///     Thread-safe frame count
+        ///     Threadsafe frame count
         /// </summary>
         public static long FrameCount =>
 
             // In Tests frameCounter is null
-            frameCounter != null ? Interlocked.Read(ref frameCounter.frameCount) : 0;
+            frameCounter != null ? DCLInterlocked.Read(ref frameCounter.frameCount) : 0;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void SaveFrameCount()
@@ -36,15 +36,19 @@ namespace Utility.Multithreading
         /// <summary>
         ///     Freezes the background thread while the Editor App is paused
         /// </summary>
+        [Conditional("UNITY_EDITOR")]
         public static void WaitWhileOnPause()
         {
+#if !UNITY_WEBGL
             // If it is called from the tests then we can't spin
             if (PlayerLoopHelper.IsMainThread)
                 return;
 
-            while (Volatile.Read(ref isPaused) && Volatile.Read(ref isInPlayMode))
-                Thread.Sleep(10);
+            while (Volatile.Read(ref isPaused) && Volatile.Read(ref isInPlayMode)) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                Thread.Sleep(10); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
         }
+
 
         /// <summary>
         ///     Must ensure that the execution does not jump between different threads
@@ -53,8 +57,11 @@ namespace Utility.Multithreading
         [Conditional("DEBUG")]
         public static void AssertMainThread(string funcName, bool isMainThread = false)
         {
+// there is no 'none' main thread in WebGL
+#if !UNITY_WEBGL
             if (PlayerLoopHelper.IsMainThread != isMainThread)
                 throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
+#endif
         }
 
         public static void InvokeOnMainThread(this Action action, PlayerLoopTiming timing = PlayerLoopTiming.Update)
