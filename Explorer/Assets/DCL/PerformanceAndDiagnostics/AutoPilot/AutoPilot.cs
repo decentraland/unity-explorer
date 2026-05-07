@@ -8,7 +8,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Profiler = UnityEngine.Profiling.Profiler;
 
@@ -108,14 +107,14 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
             }
         }
 
-        private Task WriteSampleAsync() =>
+        private UniTask WriteSampleAsync() =>
             csv != null
                 ? csv.WriteLineAsync(string.Format(
                     CultureInfo.InvariantCulture, "{0},{1},{2}",
                     Time.frameCount,
                     profiler.LastFrameTimeValueNs * 0.000001f,
-                    profiler.LastGpuFrameTimeValueNs * 0.000001f))
-                : Task.CompletedTask;
+                    profiler.LastGpuFrameTimeValueNs * 0.000001f)).AsUniTask()
+                : UniTask.CompletedTask;
 
         private static async UniTask WriteSummaryAsync(string csvFile,
             string summaryFile)

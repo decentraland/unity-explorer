@@ -34,6 +34,7 @@ using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.VoiceChat.UI;
 using Utility;
+using Utility.Multithreading;
 using AudioSettings = UnityEngine.AudioSettings;
 using RustAudio;
 

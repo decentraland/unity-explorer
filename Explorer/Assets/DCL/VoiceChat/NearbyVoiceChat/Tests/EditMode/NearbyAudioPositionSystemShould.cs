@@ -11,6 +11,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Reflection;
+using Utility.Multithreading;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
