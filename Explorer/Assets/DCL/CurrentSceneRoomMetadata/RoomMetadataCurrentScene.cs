@@ -33,8 +33,8 @@ namespace DCL.SceneBannedUsers
         private readonly IRealmData realmData;
         private readonly bool includeBannedUsersFromScene;
 
-        private Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null);
-        private Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null);
+        private Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         public RoomMetadataCurrentScene(
             IRoomHub roomHub,
@@ -66,13 +66,13 @@ namespace DCL.SceneBannedUsers
             string roomMetadata = metadata;
             SceneRoomMetadata usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
 
-            using var bannedLock = bannedAddressesSet.Lock();
+            using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (usersRoomMetadata.BannedAddresses is { Length: > 0 })
                 bannedLock.Value = new HashSet<string>(usersRoomMetadata.BannedAddresses, StringComparer.OrdinalIgnoreCase);
             else
                 bannedLock.Value = null;
 
-            using var adminsLock = sceneAdminsAddressesSet.Lock();
+            using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (usersRoomMetadata.SceneAdmins is { Length: > 0 })
                 adminsLock.Value = new HashSet<string>(usersRoomMetadata.SceneAdmins, StringComparer.OrdinalIgnoreCase);
             else
@@ -90,7 +90,7 @@ namespace DCL.SceneBannedUsers
             if (realmData.IsLocalSceneDevelopment)
                 return SceneAdminResult.LocalSceneDevelopment();
 
-            using var adminsLock = sceneAdminsAddressesSet.Lock();
+            using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (adminsLock.Value == null)
             {
                 return SceneAdminResult.NotLoadedYet();
@@ -117,7 +117,7 @@ namespace DCL.SceneBannedUsers
             if (realmData.IsLocalSceneDevelopment)
                 return Result<IEnumerable<string>>.ErrorResult("Scene Admins are not available in Local Scene Development");
 
-            using var adminsLock = sceneAdminsAddressesSet.Lock();
+            using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (adminsLock.Value != null)
             {
                 return Result<IEnumerable<string>>.SuccessResult(adminsLock.Value);
@@ -141,7 +141,7 @@ namespace DCL.SceneBannedUsers
             if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return false;
 
-            using var bannedLock = bannedAddressesSet.Lock();
+            using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             return bannedLock.Value?.Contains(userId) ?? false;
         }
     }
