@@ -172,6 +172,7 @@ namespace DCL.Tests
         public void VerifyShouldNotUseConcurrentCollection()
         {
             const string pattern = @"System\.Collections\.Concurrent";
+            // must be used only for the infrastructural types, don't abuse the skipping
             string[] ignorePaths = new []
             {
                 "Assets/DCL/Infrastructure/Utility/Multithreading/DCLConcurrentDictionary.cs",
