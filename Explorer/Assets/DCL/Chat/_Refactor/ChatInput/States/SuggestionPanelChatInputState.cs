@@ -148,6 +148,9 @@ namespace DCL.Chat.ChatInput
             //We add or update the remaining participants
             foreach (Profile.CompactInfo profile in participantProfiles)
             {
+                if (string.IsNullOrEmpty(profile.DisplayName))
+                    continue;
+
                 if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                 {
                     if (!profileSuggestionData.ProfileData.Equals(profile))
