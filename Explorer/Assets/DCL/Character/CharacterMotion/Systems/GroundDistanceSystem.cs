@@ -32,7 +32,7 @@ namespace DCL.CharacterMotion.Systems
             checkRay.origin = groundCheckOrigin;
 
             //QueryTriggerInteraction.Ignore prevents trigger areas to be detected in the sphere cast, detecting only concrete colliders and avoid randomly closing the glider
-            bool didHit = DCLPhysics.SphereCast(checkRay, GROUND_CHECK_RADIUS, out RaycastHit hit, Mathf.Infinity, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+            bool didHit = DCLPhysics.SphereCast(checkRay, GROUND_CHECK_RADIUS, out RaycastHit hit, MAX_GROUND_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
 
             rigidTransform.GroundDistance = didHit ? hit.distance : MAX_GROUND_DISTANCE;
         }
