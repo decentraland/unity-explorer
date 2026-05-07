@@ -7,10 +7,11 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
-using DCL.LiveKit.Public;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading; 
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
@@ -49,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             if (sent)
                 throw new Exception("Request already sent");
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             if (cancellationToken.IsCancellationRequested)
                 return;

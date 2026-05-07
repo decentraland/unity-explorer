@@ -1,3 +1,4 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
 using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;

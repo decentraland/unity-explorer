@@ -35,7 +35,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         private void BuildSystem(PrepareGltfAssetLoadingSystem.Options options = default)
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache, options);
+            system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, options);
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             // LSD must hit the GltfContainerAssetsCache like any other path — per-consumer cloning in
             // CreateGltfAssetFromRawGltfSystem makes cache reuse safe across multiple entities.
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoveAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
@@ -169,7 +169,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void FallBackToRawGltfLoadOnCacheMissInLocalSceneDevelopment()
         {
-            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoveAssetBundles = false });
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options { LocalSceneDevelopment = true, UseRemoteAssetBundles = false });
 
             // Cache miss: default Substitute returns false
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());

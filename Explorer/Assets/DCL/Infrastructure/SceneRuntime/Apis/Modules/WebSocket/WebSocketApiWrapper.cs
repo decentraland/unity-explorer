@@ -1,3 +1,16 @@
+/* 
+   TODO WebGL branch uses mocking like:
+
+   41   │             catch (Exception e)
+   42   │             {
+   43   │                 return Task.CompletedTask;
+   44   │                 //return Task.FromException(e).ToPromise();
+   45   │             }
+
+   We need to test it on WebGL build later to be sure we can use promises safely,
+   meanwhile: TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+*/
+
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
