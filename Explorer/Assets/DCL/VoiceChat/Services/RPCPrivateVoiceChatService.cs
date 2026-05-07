@@ -8,7 +8,6 @@ using System.Threading;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
 using Sentry;
-using System.Net.WebSockets;
 using Utility;
 
 namespace DCL.VoiceChat.Services

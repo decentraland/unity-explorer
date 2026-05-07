@@ -7,8 +7,9 @@ using DCL.SkyBox.Components;
 using Decentraland.Sdk.Development;
 using Google.Protobuf;
 using System;
-using System.Net.WebSockets;
 using System.Threading;
+using Utility.Multithreading;
+using Utility.Networking;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
@@ -20,7 +21,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         private readonly Entity playerEntity;
         private readonly Entity skyboxEntity;
         private readonly World globalWorld;
-        private ClientWebSocket? webSocket;
+        private DCLWebSocket? webSocket;
 
         public LocalSceneDevelopmentController(ECSReloadScene reloadScene,
             Entity playerEntity,
@@ -51,11 +52,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         private async UniTask ConnectToServerAsync(string localSceneWebsocketServer,
             WsSceneMessage wsSceneMessage, byte[] receiveBuffer, CancellationToken ct)
         {
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Trying to connect to: {localSceneWebsocketServer}");
 
-            webSocket = new ClientWebSocket();
+            webSocket = new DCLWebSocket();
             await webSocket.ConnectAsync(new Uri(localSceneWebsocketServer), ct);
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection state: {webSocket.State}");
@@ -63,7 +64,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             while (webSocket.State == WebSocketState.Open)
             {
                 // every iteration starts on the thread pool
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
                 WebSocketReceiveResult? receiveResult = await webSocket.ReceiveAsync(receiveBuffer, ct);
 

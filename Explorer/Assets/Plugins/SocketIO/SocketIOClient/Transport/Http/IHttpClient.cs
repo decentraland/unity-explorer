@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace SocketIOClient.Transport.Http
 {
@@ -12,10 +12,10 @@ namespace SocketIOClient.Transport.Http
 
         void SetProxy(IWebProxy proxy);
 
-        Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken);
+        UniTask<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken);
 
-        Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
+        UniTask<HttpResponseMessage> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
 
-        Task<string> GetStringAsync(Uri requestUri);
+        UniTask<string> GetStringAsync(Uri requestUri);
     }
 }

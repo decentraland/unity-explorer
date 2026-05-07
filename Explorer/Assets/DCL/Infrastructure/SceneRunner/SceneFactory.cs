@@ -32,7 +32,6 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Networking;
@@ -198,7 +197,7 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
-            Option<SceneAdmins> sceneAdmins = Option<SceneAdmins>.None;
+            Option<ISceneAdmins> sceneAdmins = Option<ISceneAdmins>.None;
 
             if (realmData.IsLocalSceneDevelopment == false)
             {
@@ -211,7 +210,7 @@ namespace SceneRunner
                 await sceneAdminsInstance.FireRequestAsync(ct);
                 sceneAdminsInstance.StartRequestPollingAsync().Forget();
 
-                sceneAdmins = Option<SceneAdmins>.Some(sceneAdminsInstance);
+                sceneAdmins = Option<ISceneAdmins>.Some(sceneAdminsInstance);
             }
 
             if (ENABLE_SDK_OBSERVABLES)
@@ -303,7 +302,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)

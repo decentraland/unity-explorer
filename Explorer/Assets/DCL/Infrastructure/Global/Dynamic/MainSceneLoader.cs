@@ -40,7 +40,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
@@ -182,8 +182,7 @@ namespace Global.Dynamic
 
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
-                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE));
 
             World world = World.Create();
 
@@ -388,9 +387,9 @@ namespace Global.Dynamic
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
 
                 // Note that FileShare.None should lock the file to other processes, and it does,
-                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0, 0);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             }
             catch (IOException) { return true; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }

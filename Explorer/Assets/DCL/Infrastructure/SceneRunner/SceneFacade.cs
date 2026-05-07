@@ -10,7 +10,6 @@ using SceneRuntime;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
 using RichTypes;
@@ -34,7 +33,7 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        public Option<SceneAdmins> SceneAdmins => deps.SceneAdmins;
+        public Option<ISceneAdmins> SceneAdmins => deps.SceneAdmins;
 
         public SceneRuntimeMetrics RuntimeMetrics => deps.SyncDeps.RuntimeMetrics;
 
@@ -158,10 +157,10 @@ namespace SceneRunner
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
-                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                    await Task.Delay(sleepMS, ct);
-                    MultithreadingUtility.AssertMainThread(nameof(Task.Delay));
+                    await DCLTask.Delay(sleepMS, ct);
+                    MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay));
                     long elapsedTicks = stopWatch.Elapsed.Ticks;
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                     RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
@@ -170,7 +169,13 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
+        private async 
+#if UNITY_WEBGL
+            Cysharp.Threading.Tasks.UniTask<bool>
+#else
+            System.Threading.Tasks.ValueTask<bool> // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#endif
+            IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
             {
@@ -190,7 +195,7 @@ namespace SceneRunner
                     return false;
 
                 // Just idle, don't do anything, need to wait for an actual value
-                await Task.Delay(10, ct);
+                await DCLTask.Delay(10, ct);
             }
 
             return true;

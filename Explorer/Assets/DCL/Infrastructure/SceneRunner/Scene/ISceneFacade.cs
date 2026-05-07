@@ -17,7 +17,7 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
-        Option<SceneAdmins> SceneAdmins { get; }
+        Option<ISceneAdmins> SceneAdmins { get; }
         bool IsEmpty { get; }
         SceneRuntimeMetrics RuntimeMetrics { get; }
 
