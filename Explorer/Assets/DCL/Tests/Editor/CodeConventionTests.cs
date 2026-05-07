@@ -222,10 +222,18 @@ namespace DCL.Tests
             using var p = Process.Start(finder);
             p.WaitForExit();
             string output = p!.StandardOutput.ReadToEnd();
-            
-            // Skip rg-based checks when ripgrep isn't installed on the host (common locally; CI has it).
+
+            // In CI (batch mode) ripgrep is required: fail loudly if missing.
+            // Locally we ignore so devs without rg installed can still run the test suite.
             if (p.ExitCode == 1 || string.IsNullOrWhiteSpace(output))
-                Assert.Ignore($"ripgrep (rg) not found on PATH. Install it to run this convention check (e.g. `brew install ripgrep`). which-output: '{output}', err: '{p.StandardError.ReadToEnd()}'.");
+            {
+                string message = $"ripgrep (rg) not found on PATH. Install it to run this convention check (e.g. `brew install ripgrep`). which-output: '{output}', err: '{p.StandardError.ReadToEnd()}'.";
+
+                if (UnityEngine.Application.isBatchMode)
+                    Assert.Fail(message);
+                else
+                    Assert.Ignore(message);
+            }
 
             return output.Trim();
         }
