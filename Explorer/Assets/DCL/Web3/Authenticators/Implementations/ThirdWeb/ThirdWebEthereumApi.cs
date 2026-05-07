@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading;
 using Thirdweb;
+using Utility.Multithreading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -27,7 +28,7 @@ namespace DCL.Web3.Authenticators
 
         public TransactionConfirmationDelegate? TransactionConfirmationCallback { private get; set; }
 
-        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new (1, 1);
         private readonly ThirdWebMetaTxService metaTxService;
 
         public ThirdWebEthereumApi(
@@ -59,7 +60,9 @@ namespace DCL.Web3.Authenticators
         public async UniTask<EthApiResponse> SendAsync(IThirdwebWallet? wallet, EthApiRequest request, Web3RequestSource source, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             try
             {
@@ -90,10 +93,14 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+#if !UNITY_WEBGL
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
                     await UniTask.SwitchToMainThread(CancellationToken.None);
+#else
+                await UniTask.SwitchToMainThread(CancellationToken.None);
+#endif
 
                 mutex.Release();
             }

@@ -9,6 +9,7 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
+using Utility.Multithreading;
 using System.Collections.Generic;
 using System.Reflection;
 using Avatar = DCL.Profiles.Avatar;
