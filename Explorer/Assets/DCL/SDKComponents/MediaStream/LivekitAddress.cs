@@ -17,6 +17,13 @@ namespace DCL.SDKComponents.MediaStream
             this.raw = rawAddress;
         }
 
+        public UserStream(string identity, string sid)
+        {
+            this.Identity = identity;
+            this.Sid = sid;
+            this.raw = $"livekit-video://{identity}/{sid}";
+        }
+
         public override string ToString() =>
             raw;
     }

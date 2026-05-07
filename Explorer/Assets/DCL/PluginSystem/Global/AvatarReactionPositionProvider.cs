@@ -2,6 +2,7 @@ using Arch.Core;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Multiplayer.Profiles.Tables;
 using UnityEngine;
 using DCL.Chat.ChatReactions.Simulation.World;
@@ -19,6 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly ChatReactionsWorldLaneConfig worldLaneConfig;
         private readonly List<Vector3> nearbyPositionsCache = new (32);
 
         public int LastNearbyCount => nearbyPositionsCache.Count;
@@ -26,11 +28,13 @@ namespace DCL.PluginSystem.Global
         public AvatarReactionPositionProvider(
             Arch.Core.World world,
             Entity playerEntity,
-            IReadOnlyEntityParticipantTable entityParticipantTable)
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            ChatReactionsWorldLaneConfig worldLaneConfig)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.entityParticipantTable = entityParticipantTable;
+            this.worldLaneConfig = worldLaneConfig;
         }
 
         public Vector3? GetLocalPlayerHeadPosition()
@@ -41,7 +45,7 @@ namespace DCL.PluginSystem.Global
             if (!world.TryGet(playerEntity, out AvatarBase avatarBase) || avatarBase == null)
                 return null;
 
-            return avatarBase.GetAdaptiveNametagPosition();
+            return avatarBase.GetAdaptiveNametagPosition() + worldLaneConfig.AnchorOffset;
         }
 
         public Vector3? GetHeadPosition(string walletId)
@@ -54,13 +58,15 @@ namespace DCL.PluginSystem.Global
             if (!result.Success)
                 return null;
 
-            return result.Result.GetAdaptiveNametagPosition();
+            return result.Result.GetAdaptiveNametagPosition() + worldLaneConfig.AnchorOffset;
         }
 
         public List<Vector3> GetAllNearbyHeadPositions()
         {
             Profiler.BeginSample("ChatReactions.GetNearbyHeads");
             nearbyPositionsCache.Clear();
+
+            Vector3 offset = worldLaneConfig.AnchorOffset;
 
             foreach (string walletId in entityParticipantTable.Wallets())
             {
@@ -73,7 +79,7 @@ namespace DCL.PluginSystem.Global
                 if (!world.TryGet(entry.Entity, out AvatarBase avatarBase) || avatarBase == null)
                     continue;
 
-                nearbyPositionsCache.Add(avatarBase.GetAdaptiveNametagPosition());
+                nearbyPositionsCache.Add(avatarBase.GetAdaptiveNametagPosition() + offset);
             }
 
             Profiler.EndSample();

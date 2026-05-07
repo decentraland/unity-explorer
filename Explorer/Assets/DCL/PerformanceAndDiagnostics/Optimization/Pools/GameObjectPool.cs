@@ -12,17 +12,22 @@ namespace DCL.Optimization.Pools
         private static readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
 
         private readonly IExtendedObjectPool<T> gameObjectPool;
-        private readonly Transform parentContainer;
 
         private readonly Action<T>? onRelease;
         private readonly Action<T>? onGet;
 
         public int CountInactive => gameObjectPool.CountInactive;
 
-        public GameObjectPool(Transform rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
+        // Auto-created child GameObject ("POOL_CONTAINER_<T>") that parks released instances and any owner-side hierarchy parent (live instances).
+        // Exposed so callers can rename it for editor diagnostics or destroy it during their own teardown without re-implementing the wrapper.
+        public Transform ParentContainer { get; }
+
+        public GameObjectPool(Transform? rootContainer, Func<T>? creationHandler = null, Action<T>? onRelease = null, int maxSize = 2048, Action<T>? onGet = null)
         {
-            parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
-            parentContainer.SetParent(rootContainer);
+            ParentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
+            // Transform.SetParent(null) is legal — places the container at scene root; callers that
+            // don't need a wrapper hierarchy can pass null and parent / rename Container themselves.
+            ParentContainer.SetParent(rootContainer);
 
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
@@ -88,7 +93,7 @@ namespace DCL.Optimization.Pools
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
 
-            component.gameObject.transform.SetParent(parentContainer, false);
+            component.gameObject.transform.SetParent(ParentContainer, false);
         }
     }
 }

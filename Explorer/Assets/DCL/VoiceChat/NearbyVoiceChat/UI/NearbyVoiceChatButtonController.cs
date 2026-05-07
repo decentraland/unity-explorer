@@ -50,7 +50,6 @@ namespace DCL.VoiceChat.UI
             stateSubscription.Dispose();
             suppressionSubscription.Dispose();
             view.CloseAreaButton.onClick.RemoveListener(view.HideDisabledTooltip);
-            view.HideDisabledTooltip();
         }
     }
 }

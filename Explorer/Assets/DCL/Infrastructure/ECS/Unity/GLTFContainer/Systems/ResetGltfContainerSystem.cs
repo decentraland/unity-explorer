@@ -65,8 +65,8 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                cache.Dereference(component.Hash, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
+                cache.Dereference(component.Hash, result.Asset);
             }
         }
 
@@ -86,6 +86,9 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (sdkComponent.IsDirty && !string.Equals(sdkComponent.Src, component.Name, StringComparison.OrdinalIgnoreCase))
             {
                 TryReleaseAsset(ref component);
+
+                // Cancel the loading entity if still in-flight so it doesn't orphan a GltfContainerAsset once it resolves
+                component.Promise.ForgetLoading(World);
 
                 // It will be a signal to create a new promise
                 component.State = LoadingState.Unknown;

@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace SceneRunner.Scene
 {
@@ -14,28 +15,29 @@ namespace SceneRunner.Scene
     public class HybridSceneHashedContent : ISceneContent
     {
         private readonly URLDomain contentBaseUrl;
-        private Dictionary<string, string> fileToHash;
+        private readonly Dictionary<string, string> fileToHash;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
-        public string remoteSceneID;
+        public string? remoteSceneID;
 
         private readonly IWebRequestController webRequestController;
 
         private readonly URLDomain abDomain;
 
-
-        private readonly List<string> filesToGetFromLocalHost = new()
+        private readonly HashSet<string> filesToGetFromLocalHost = new (StringComparer.OrdinalIgnoreCase)
         {
             "scene.json", "main.crdt"
         };
+
+        private HashSet<string>? remoteFilesBuffer;
 
         public HybridSceneHashedContent(IWebRequestController webRequestController,
             SceneEntityDefinition contentDefinitions, URLDomain contentBaseUrl,
             URLDomain abDomain)
         {
             filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
-            fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Length, StringComparer.OrdinalIgnoreCase);
+            fileToHash = new Dictionary<string, string>(contentDefinitions.content.Length, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
 
@@ -55,7 +57,7 @@ namespace SceneRunner.Scene
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
                 //Textures are not fetched by asset bundles
-                if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
+                if (filesToGetFromLocalHost.Contains(contentPath) || ShouldBeLocal(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
                     resolvedContentURLs[contentPath] = (true, result);
@@ -74,43 +76,63 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetHash(string name, out string hash)
-        {
-            return fileToHash.TryGetValue(name, out hash);
-        }
+        public bool TryGetHash(string name, out string hash) =>
+            fileToHash.TryGetValue(name, out hash);
 
-        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory)
+        public bool IsRawAsset(string contentPath) =>
+            filesToGetFromLocalHost.Contains(contentPath) || ShouldBeLocal(contentPath);
+
+        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, ReportData reportCategory, CancellationToken ct)
         {
+            if (remoteSceneID == null)
+                throw new ArgumentNullException(nameof(remoteSceneID));
+
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
             try
             {
-                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), new CancellationToken(), reportCategory)
-                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
+                                                                      .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+
+                remoteFilesBuffer ??= new HashSet<string>(sceneEntityDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
+                remoteFilesBuffer.Clear();
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
-                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file) && !IsTexture(contentDefinition.file))
+                    remoteFilesBuffer.Add(contentDefinition.file);
+
+                    if (fileToHash.ContainsKey(contentDefinition.file)
+                        && !filesToGetFromLocalHost.Contains(contentDefinition.file)
+                        && !ShouldBeLocal(contentDefinition.file))
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
-            }
 
+                // Files that exist locally but not in the remote definition have no AB on the CDN — load from localhost
+                foreach (string localFile in fileToHash.Keys)
+                    if (!remoteFilesBuffer.Contains(localFile))
+                        filesToGetFromLocalHost.Add(localFile);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception) { ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles"); }
         }
 
-        private bool IsTexture(string contentDefinitionFile)
+        private static bool ShouldBeLocal(string file)
         {
-            return contentDefinitionFile.EndsWith("jpg", StringComparison.OrdinalIgnoreCase) ||
-                   contentDefinitionFile.EndsWith("jpeg", StringComparison.OrdinalIgnoreCase) ||
-                   contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
+            // Textures are converted, but there is an unresolved race condition when the texture is used as a dependency, see: https://github.com/decentraland/unity-explorer/pull/3422
+            return file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                   // Sounds are not converted, are directly fetched from the content server
+                   file.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                   file.EndsWith(".wav", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory, string? worldContentServerBaseUrl = null)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, ReportData reportCategory,
+            CancellationToken ct, string? worldContentServerBaseUrl = null)
         {
             IGetHash getHash;
+
             switch (remoteContentServer)
             {
                 case HybridSceneContentServer.Genesis:
@@ -127,7 +149,8 @@ namespace SceneRunner.Scene
                     return false;
             }
 
-            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory);
+            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory, ct);
+
             if (success)
             {
                 remoteSceneID = sceneHash;

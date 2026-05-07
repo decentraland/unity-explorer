@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using Plugins.RustSegment.SegmentServerWrap.ContextSources;
 using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -34,25 +33,28 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private static readonly TimeSpan PUMP_DELAY = TimeSpan.FromMilliseconds(500);
 
         // nullable service
-        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!);
+        private static readonly Mutex<RustSegmentAnalyticsService> CURRENT = new (null!); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
 
         private readonly string anonId;
         private volatile string? cachedUserId;
 
-        private readonly ConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
+        private readonly DCLConcurrentDictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        // Lock for public operations, cannot be used by callbacks or private methods
+        // Lock for public operations, cannot be used by callbacks or private methods // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         private readonly object publicLock = new (); 
 
         private long trackId;
         private long flushId;
 
+        // temportal sentry budget fix. TODO remove once the core issue solved
+        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
+
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
-            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+            using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -100,7 +102,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (publicLock)
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
                 cancellationTokenSource.Cancel();
                 cancellationTokenSource.Dispose();
@@ -227,23 +229,23 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
+                const string ONCE_PATTERN = "(will retry)";
+
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
+                bool isCaught = marshaled.Contains(ONCE_PATTERN);
 
-                bool isInternal = marshaled.Contains("(will retry)");
-
-                // Required to avoid polluting Sentry with retry messages
-                string reportCategory = isInternal
-                    ? ReportCategory.ANALYTICS_INTERNAL
-                    : ReportCategory.ANALYTICS;
-
-#if UNITY_EDITOR
-                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
-#else
-                if (isInternal == false) // Avoid logging ANALYTICS_INTERNAL in builds
+                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
                 {
-                    ReportHub.LogException(new Exception($"Segment error: {marshaled}"), reportCategory);
+                    // Don't log if already was
+                    return;
                 }
-#endif
+
+                ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
+
+                if (isCaught)
+                {
+                    ONCE_PATTERN_ALREADY_CAUGHT = true;
+                }
             }
             catch
             {
@@ -256,7 +258,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             try
             {
-                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock();
+                using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+
                 if (instanceGuard.Value == null) return;
 
                 Operation type = instanceGuard.Value.afterClean[operationId].Item1;

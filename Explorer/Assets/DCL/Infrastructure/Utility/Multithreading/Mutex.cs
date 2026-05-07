@@ -1,8 +1,11 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
 namespace Utility.Multithreading
 {
     public class Mutex<T>
     {
+#if !UNITY_WEBGL
         private readonly object lockObject = new();
+#endif
         private T value;
 
         public Mutex(T value)
@@ -12,11 +15,13 @@ namespace Utility.Multithreading
 
         public Guard Lock()
         {
+#if !UNITY_WEBGL
             System.Threading.Monitor.Enter(lockObject);
+#endif
             return new Guard(this);
         }
 
-        public readonly ref struct Guard 
+        public readonly ref struct Guard
         {
             private readonly Mutex<T> mutex;
 
@@ -29,7 +34,9 @@ namespace Utility.Multithreading
 
             public void Dispose()
             {
+#if !UNITY_WEBGL
                 System.Threading.Monitor.Exit(mutex.lockObject);
+#endif
             }
         }
     }
