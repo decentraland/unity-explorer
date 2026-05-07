@@ -90,10 +90,22 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             if (masked.CurrentEmoteReference == null) return;
+
+            AvatarBase view = mainPlayerAvatarBaseProxy.Object!;
+
+            // Legacy-blender path: tear down once the blender signals natural completion.
+            if (view.HasMaskedLegacyEmoteFinished)
+            {
+                TryStopMaskedEmote(ref masked);
+                return;
+            }
+
+            if (view.IsMaskedLegacyEmotePlaying) return;
+
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
+            int currentTag = view.GetAnimatorCurrentStateTag(layer);
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
             if (isOnAnotherTag)

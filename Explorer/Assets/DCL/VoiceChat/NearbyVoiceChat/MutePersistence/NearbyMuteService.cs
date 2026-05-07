@@ -8,7 +8,6 @@ namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
     /// Facade over <see cref="INearbyMuteCache"/> and <see cref="INearbyMuteRepository"/>.
-    /// Shared between <see cref="NearbyVoiceChatManager"/> (subscribes to <see cref="MuteStateChanged"/>)
     /// and the user profile context menu (calls <see cref="SetMutedAsync"/>).
     /// </summary>
     public class NearbyMuteService
@@ -20,6 +19,7 @@ namespace DCL.VoiceChat.Nearby
 
         /// <summary>
         /// Parameters: walletId, isMuted.
+        /// Proxied from <see cref="INearbyMuteCache.MuteStateChanged"/> so consumers depend on the service facade rather than the cache directly.
         /// </summary>
         public event Action<string, bool>? MuteStateChanged
         {
@@ -32,6 +32,11 @@ namespace DCL.VoiceChat.Nearby
             this.cache = cache;
             this.repository = repository;
         }
+
+        /// <summary>
+        /// Used to skip per-entity lookups while the cache is unchanged.
+        /// </summary>
+        public uint CacheVersion => cache.Version;
 
         public bool IsMuted(string walletId) =>
             cache.IsMuted(walletId);

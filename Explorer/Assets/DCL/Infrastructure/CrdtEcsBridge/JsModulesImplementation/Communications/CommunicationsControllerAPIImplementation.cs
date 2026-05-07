@@ -2,7 +2,6 @@
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
-using System.IO;
 using System.Text;
 using RichTypes;
 using DCL.SceneBannedUsers;
@@ -72,7 +71,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
 
             if (totalLength > IJsOperations.LIVEKIT_MAX_SIZE)
-                throw new InternalBufferOverflowException("Received a message larger than LIVEKIT_MAX_SIZE");
+                throw new Exception("Received a message larger than LIVEKIT_MAX_SIZE");
 
             array.SetLength(totalLength);
             base.Enqueue(array);
