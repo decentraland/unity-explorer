@@ -2,17 +2,18 @@
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
+using RichTypes;
+using SceneRunner.Admins;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRunner.Admins;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
-using Utility.Multithreading;
-using RichTypes;
 using Utility;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -258,7 +259,7 @@ namespace SceneRunner
 #if UNITY_WEBGL
             Cysharp.Threading.Tasks.UniTask<bool>
 #else
-            System.Threading.Tasks.ValueTask<bool> // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+            ValueTask<bool> // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #endif
             IdleWhileRunningAsync(CancellationToken ct)
         {
@@ -288,13 +289,9 @@ namespace SceneRunner
 
         public void SetIsCurrent(bool isCurrent)
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"[SetIsCurrentDiag] '{Info.Name}' isCurrent={isCurrent}, isMainThread={Cysharp.Threading.Tasks.PlayerLoopHelper.IsMainThread}, sceneCodeIsRunning={sceneCodeIsRunning.IsSet}");
-
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
             deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
-
-            ReportHub.Log(ReportCategory.ALWAYS, $"[SetIsCurrentDiag] '{Info.Name}' isCurrent={isCurrent} done");
         }
 
         /// <remarks>
