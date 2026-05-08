@@ -18,7 +18,6 @@ using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-
     /// <summary>
     ///     Starts the scene or changes fps of its execution
     /// </summary>
@@ -98,23 +97,22 @@ namespace ECS.SceneLifeCycle.Systems
 
             try
             {
-                // 1. JS init must run on a non-main thread
                 await DCLTask.SwitchToThreadPool();
                 if (destroyCancellationToken.IsCancellationRequested) return;
 
 #if !UNITY_WEBGL
+
                 // Provide basic thread-pool synchronization context
                 SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
                 await scene.StartAsync(fps, destroyCancellationToken);
 
+                await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
+
                 // If JS init failed (handler set state to an error) or destroy was triggered, stop here.
                 if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
                     return;
-
-                // 2. Register the scene in the cache from the main thread (cache writes are main-thread only)
-                await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
 
                 if (definitionComponent.IsPortableExperience)
                     scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
@@ -123,17 +121,15 @@ namespace ECS.SceneLifeCycle.Systems
 
                 ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
 
-                // 3. Run the update loop on the thread pool
                 await DCLTask.SwitchToThreadPool();
-                if (destroyCancellationToken.IsCancellationRequested) return;
+
+                if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
+                    return;
 
                 await scene.UpdateLoopAsync(destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, GetReportData());
-            }
+            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
     }
 }
