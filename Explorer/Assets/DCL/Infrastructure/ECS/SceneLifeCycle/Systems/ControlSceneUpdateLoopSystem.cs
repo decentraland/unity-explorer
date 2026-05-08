@@ -123,7 +123,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
 
-                // // 3. Run the update loop on the thread pool
+                // 3. Run the update loop on the thread pool
                 await DCLTask.SwitchToThreadPool();
                 if (destroyCancellationToken.IsCancellationRequested) return;
 

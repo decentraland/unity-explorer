@@ -129,7 +129,7 @@ namespace SceneRunner
 
             // One-shot watchdog: if JS init doesn't complete within START_HANG_INTERRUPT_THRESHOLD_MS,
             // interrupt the engine and mark the scene as failed.
-            var watchdogCts = new CancellationTokenSource();
+            var watchdogCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             // This is a safeguard to prevent the JS thread to become stuck keeping the scene state as running when it failed
             // See: https://github.com/decentraland/unity-explorer/issues/8654
             // https://github.com/decentraland/unity-explorer/issues/8493
@@ -227,32 +227,37 @@ namespace SceneRunner
 
         private async UniTaskVoid RunHangWatchdogAsync(int thresholdMs, CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                try { await DCLTask.Delay(HANG_WATCHDOG_POLL_INTERVAL_MS, ct); }
-                catch (OperationCanceledException) { return; }
+                while (!ct.IsCancellationRequested)
+                {
+                    await DCLTask.Delay(HANG_WATCHDOG_POLL_INTERVAL_MS, ct);
 
-                long startTs = Interlocked.Read(ref tickStartTimestamp);
-                if (startTs == 0) continue; // No tick in progress
+                    long startTs = Interlocked.Read(ref tickStartTimestamp);
+                    if (startTs == 0) continue; // No tick in progress
 
-                long elapsedMs = (Stopwatch.GetTimestamp() - startTs) * 1000 / Stopwatch.Frequency;
-                if (elapsedMs < thresholdMs) continue; // Tick still under threshold
+                    long elapsedMs = (Stopwatch.GetTimestamp() - startTs) * 1000 / Stopwatch.Frequency;
+                    if (elapsedMs < thresholdMs) continue; // Tick still under threshold
 
-                string id = SceneData.SceneEntityDefinition.id ?? "<unknown>";
+                    string? id = SceneData.SceneEntityDefinition.id;
 
-                ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' hung for {elapsedMs}ms (threshold={thresholdMs}ms) — interrupting engine and marking scene as JavaScriptError");
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Scene '{id}' hung for {elapsedMs}ms (threshold={thresholdMs}ms) — interrupting engine and marking scene as JavaScriptError");
 
-                // Mark scene as failed first so the loop's IsNotRunningState() check breaks on the
-                // next iteration after the interrupt unwinds the await.
-                SceneStateProvider.State.Set(SceneState.JavaScriptError);
+                    // Mark scene as failed first so the loop's IsNotRunningState() check breaks on the
+                    // next iteration after the interrupt unwinds the await.
+                    // Don't override dispose/error states
+                    if (!SceneStateProvider.IsNotRunningState())
+                        SceneStateProvider.State.Set(SceneState.JavaScriptError);
 
-                // Force V8 to throw ScriptInterruptedException from the running JS at the next safe point.
-                // The exception propagates out of the in-flight call -> caught by the caller's catch (ScriptEngineException) block.
-                try { runtimeInstance.Interrupt(); }
-                catch (Exception e) { ReportHub.LogError(ReportCategory.ALWAYS, $"[SceneLoopDiag] '{id}' Interrupt() threw {e.GetType().Name}: {e.Message}"); }
+                    // Force V8 to throw ScriptInterruptedException from the running JS at the next safe point.
+                    // The exception propagates out of the in-flight call -> caught by the caller's catch (ScriptEngineException) block.
+                    runtimeInstance.Interrupt();
 
-                return; // Stop watchdog after issuing interrupt
+                    return; // Stop watchdog after issuing interrupt
+                }
             }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.SCENE_LOADING); }
         }
 
         private async
