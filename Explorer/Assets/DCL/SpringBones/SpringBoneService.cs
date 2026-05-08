@@ -56,10 +56,10 @@ namespace DCL.SpringBones
             dummyTransform = go.transform;
 
             slotCapacity = INITIAL_SLOT_CAPACITY;
-            AllocateArrays(0);
+            AllocateArrays();
         }
 
-        private void AllocateArrays(int previousCapacity)
+        private void AllocateArrays()
         {
             int totalJoints = slotCapacity * MAX_JOINTS_PER_SPRING;
 
@@ -82,7 +82,7 @@ namespace DCL.SpringBones
             taa = new TransformAccessArray(managedTransforms);
 
             // Seed free-list with all fresh slots (descending so lowest pops first)
-            for (int i = slotCapacity - 1; i >= previousCapacity; i--)
+            for (int i = slotCapacity - 1; i >= 0; i--)
                 freeSlots.Push(i);
         }
 
@@ -369,26 +369,21 @@ namespace DCL.SpringBones
 
             disposed = true;
 
-            DisposeIfCreated(ref transforms);
-            DisposeIfCreated(ref prevTails);
-            DisposeIfCreated(ref currentTails);
-            DisposeIfCreated(ref nextTails);
-            DisposeIfCreated(ref jointConfigs);
-            DisposeIfCreated(ref slotJointCounts);
-            DisposeIfCreated(ref parentData);
-            DisposeIfCreated(ref previousParentData);
-            DisposeIfCreated(ref slotActive);
-            DisposeIfCreated(ref slotWasActive);
-            DisposeIfCreated(ref prevStepRotations);
-            DisposeIfCreated(ref currStepRotations);
+            transforms.Dispose();
+            prevTails.Dispose();
+            currentTails.Dispose();
+            nextTails.Dispose();
+            jointConfigs.Dispose();
+            slotJointCounts.Dispose();
+            parentData.Dispose();
+            previousParentData.Dispose();
+            slotActive.Dispose();
+            slotWasActive.Dispose();
+            prevStepRotations.Dispose();
+            currStepRotations.Dispose();
             if (taa.isCreated) taa.Dispose();
 
             UnityObjectUtils.SafeDestroyGameObject(dummyTransform);
-        }
-
-        private static void DisposeIfCreated<T>(ref NativeArray<T> arr) where T : struct
-        {
-            if (arr.IsCreated) arr.Dispose();
         }
     }
 }

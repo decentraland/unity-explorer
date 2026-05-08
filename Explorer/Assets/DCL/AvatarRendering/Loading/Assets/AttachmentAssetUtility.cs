@@ -59,8 +59,9 @@ namespace DCL.AvatarRendering.Loading.Assets
             // We need to destroy it form the source wearable
             foreach (var meshRenderer in meshRenderers.Value) Object.DestroyImmediate(meshRenderer.gameObject);
 
-            // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
-            RemoveBonesGameObjects(instantiatedWearable.transform, springBoneParams);
+            // Remove unused bone GameObjects from the wearable hierarchies, preserving any
+            // Transform referenced by a SkinnedMeshRenderer.bones array (skinning would break otherwise).
+            RemoveBonesGameObjects(instantiatedWearable.transform);
 
             var springBones = BuildSpringBoneData(instantiatedWearable, springBoneParams);
             return new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
@@ -80,16 +81,26 @@ namespace DCL.AvatarRendering.Loading.Assets
             }
         }
 
-        private static void RemoveBonesGameObjects(Transform wearableRoot, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
+        private static void RemoveBonesGameObjects(Transform wearableRoot)
         {
             if (wearableRoot.GetComponentInChildren<Renderer>(true) == null)
                 return;
+
+            using var skinnedRenderersScope = wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true);
+            using var referencedBonesScope = HashSetPool<Transform>.Get(out var referencedBones);
+
+            foreach (SkinnedMeshRenderer smr in skinnedRenderersScope.Value)
+            {
+                Transform[] bones = smr.bones;
+                for (int b = 0; b < bones.Length; b++)
+                    if (bones[b] != null) referencedBones.Add(bones[b]);
+            }
 
             for (int i = wearableRoot.childCount - 1; i >= 0; i--)
             {
                 Transform child = wearableRoot.GetChild(i);
 
-                if (!HasRendererInHierarchy(child) && !HasSpringBoneInHierarchy(child, springBoneParams))
+                if (!HasRendererInHierarchy(child) && !HasReferencedBoneInHierarchy(child, referencedBones))
                     Object.Destroy(child.gameObject);
             }
         }
@@ -97,16 +108,13 @@ namespace DCL.AvatarRendering.Loading.Assets
         private static bool HasRendererInHierarchy(Transform transform) =>
             transform.GetComponentInChildren<Renderer>(true) != null;
 
-        private static bool HasSpringBoneInHierarchy(Transform transform, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
+        private static bool HasReferencedBoneInHierarchy(Transform transform, HashSet<Transform> referencedBones)
         {
-            if (springBoneParams == null || springBoneParams.Count == 0)
-                return false;
-
-            if (springBoneParams.ContainsKey(transform.name))
+            if (referencedBones.Contains(transform))
                 return true;
 
             for (int i = 0; i < transform.childCount; i++)
-                if (HasSpringBoneInHierarchy(transform.GetChild(i), springBoneParams))
+                if (HasReferencedBoneInHierarchy(transform.GetChild(i), referencedBones))
                     return true;
 
             return false;
@@ -114,11 +122,12 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         private static SpringBoneData[] BuildSpringBoneData(GameObject wearable, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
-            if (springBoneParams == null || springBoneParams.Count == 0)
-                return Array.Empty<SpringBoneData>();
-
             var skeleton = wearable.GetComponentInChildren<SkinnedMeshRenderer>();
+            if (skeleton == null) return Array.Empty<SpringBoneData>();
             Transform[] bones = skeleton.bones;
+            if (bones.Length <= AVATAR_SKELETON_BONE_COUNT) return Array.Empty<SpringBoneData>();
+
+            bool hasParams = springBoneParams != null && springBoneParams.Count > 0;
 
             using var resultScope = ListPool<SpringBoneData>.Get(out var result);
             using var boneIndexLookupScope = DictionaryPool<Transform, int>.Get(out var boneIndexLookup);
@@ -131,7 +140,7 @@ namespace DCL.AvatarRendering.Loading.Assets
                 Transform bone = bones[i];
 
                 // Bone explicitly configured in the payload (root or follower)
-                if (springBoneParams.TryGetValue(bone.name, out SpringBoneParamsDto cfg))
+                if (hasParams && springBoneParams!.TryGetValue(bone.name, out SpringBoneParamsDto cfg))
                 {
                     result.Add(new SpringBoneData(bone, cfg.isRoot,
                         boneIndexLookup[bone.parent],
@@ -140,30 +149,60 @@ namespace DCL.AvatarRendering.Loading.Assets
                     continue;
                 }
 
-                // Untagged extra bone (beyond the base avatar skeleton): inherit from
-                // the nearest spring root ancestor reachable through bone parents.
                 if (i < AVATAR_SKELETON_BONE_COUNT) continue;
 
+                // Untagged extra bone beyond the base skeleton. It still needs a slot in the
+                // global bone matrix array, otherwise the wearable's SMR has indices past the
+                // base skeleton that resolve to garbage matrices and the mesh deforms wrong.
                 SpringBoneParamsDto? inherited = null;
 
-                for (Transform a = bone.parent; a != null && boneIndexLookup.ContainsKey(a); a = a.parent)
+                if (hasParams)
                 {
-                    if (springBoneParams.TryGetValue(a.name, out SpringBoneParamsDto ancestorCfg) && ancestorCfg.isRoot)
+                    for (Transform a = bone.parent; a != null && boneIndexLookup.ContainsKey(a); a = a.parent)
                     {
-                        inherited = ancestorCfg;
-                        break;
+                        if (springBoneParams!.TryGetValue(a.name, out SpringBoneParamsDto ancestorCfg) && ancestorCfg.isRoot)
+                        {
+                            inherited = ancestorCfg;
+                            break;
+                        }
                     }
                 }
 
-                if (inherited == null) continue;
+                if (!boneIndexLookup.TryGetValue(bone.parent, out int parentIdx)) continue;
 
-                result.Add(new SpringBoneData(bone, isRoot: false,
-                    boneIndexLookup[bone.parent],
-                    inherited.stiffness, inherited.drag, inherited.gravityDir, inherited.gravityPower,
-                    bone.localRotation));
+                if (inherited != null)
+                {
+                    // Follower of an explicit spring root upstream
+                    result.Add(new SpringBoneData(bone, isRoot: false,
+                        parentIdx,
+                        inherited.stiffness, inherited.drag, inherited.gravityDir, inherited.gravityPower,
+                        bone.localRotation));
+                }
+                else
+                {
+                    // No spring context: neutral params (no stiffness, full damping, no gravity)
+                    // so sim runs as a no-op and the bone holds its rest pose driven by its
+                    // skeleton ancestor. isRoot true when parented directly to base skeleton.
+                    bool isRoot = parentIdx < AVATAR_SKELETON_BONE_COUNT;
+                    result.Add(new SpringBoneData(bone, isRoot,
+                        parentIdx,
+                        DEFAULT_EXTRA_BONE_PARAMS.stiffness, DEFAULT_EXTRA_BONE_PARAMS.drag,
+                        DEFAULT_EXTRA_BONE_PARAMS.gravityDir, DEFAULT_EXTRA_BONE_PARAMS.gravityPower,
+                        bone.localRotation));
+                }
             }
 
             return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
         }
+
+        private static readonly SpringBoneParamsDto DEFAULT_EXTRA_BONE_PARAMS = new ()
+        {
+            stiffness = 0.5f,
+            drag = 0.4f,
+            gravityDir = Vector3.zero,
+            gravityPower = 0f,
+            hitRadius = 0f,
+            isRoot = false,
+        };
     }
 }

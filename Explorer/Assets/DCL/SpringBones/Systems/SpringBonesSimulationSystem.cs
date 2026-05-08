@@ -121,10 +121,9 @@ namespace DCL.SpringBones
                     continue;
                 }
 
-                Vector3 avatarLossy = SpringBoneTransformSync.SyncWearableParentToAvatar(slot.WearableParent, slot.AvatarParent);
-
                 if (springBoneService.IsSlotActive(slot.SlotIndex))
                 {
+                    Vector3 avatarLossy = SpringBoneTransformSync.SyncWearableParentToAvatar(slot.WearableParent, slot.AvatarParent);
                     Vector3 restScale = slot.RestAvatarScale;
                     float scaleFactor = (
                         SafeRatio(avatarLossy.x, restScale.x) +
