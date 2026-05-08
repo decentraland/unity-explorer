@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             WearableDTO? wearableDto = wearable.Model.Asset;
             if (wearableDto == null) return null;
 
-            SpringBonesDto? springBones = wearableDto.metadata?.data?.springBones;
+            SpringBonesDto? springBones = wearableDto.metadata.data.springBones;
             if (springBones?.models == null) return null;
 
             if (springBones.version != SpringBonesDto.SUPPORTED_VERSION)
@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash) || mainFileHash == null)
                 return null;
 
-            return springBones.models.TryGetValue(mainFileHash, out var map) ? map : null;
+            return springBones.models.GetValueOrDefault(mainFileHash);
         }
 
         public static void Dereference(this in AvatarShapeComponent avatarShapeComponent)
