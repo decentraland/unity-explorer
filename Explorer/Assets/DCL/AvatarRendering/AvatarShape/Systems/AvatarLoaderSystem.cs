@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         [Query]
         [None(typeof(AvatarShapeComponent), typeof(Profile))]
-        private void CreateAvatarShapeFromSDKComponent(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
+        private void CreateAvatarShapeFromSDKComponent(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
@@ -55,17 +55,16 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarShape.CaptureWearablesSnapshot(pbAvatarShape.Wearables);
 
-            World.Add(entity, avatarShape);
-            World.Add(entity, new AvatarHighlightComponent());
+            World.Add(entity, avatarShape, new AvatarHighlightComponent());
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent), typeof(PBAvatarShape), typeof(PlayerComponent))]
-        private void CreateAvatarShapeFromProfile(in Entity entity, in Profile profile, ref PartitionComponent partition)
+        private void CreateAvatarShapeFromProfile(Entity entity, in Profile profile, ref PartitionComponent partition)
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
-            World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
-            World.Add(entity, new AvatarHighlightComponent());
+            var avatarShape = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
+            World.Add(entity, avatarShape, new AvatarHighlightComponent());
         }
 
         [Query]
