@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.TestTools;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
@@ -43,44 +42,27 @@ namespace DCL.VoiceChat.Nearby.Tests
         private IUserBlockingCache userBlockingCache;
         private NearbyVoiceChatStateModel stateModel;
 
-        private VoiceChatConfiguration configuration;
-        private NearbyAudioSourceFactory sourceFactory;
+        private FakeNearbyAudioSourceFactory sourceFactory;
 
         private readonly List<GameObject> gameObjects = new (32);
 
         [SetUp]
         public void SetUp()
         {
-            // FakeStreamRegistry seeds a null AudioStream; once Play() fires, OnAudioFilterRead NREs on
-            // the audio thread on a schedule the teardown can't beat. Proper fix lives in package code.
-            LogAssert.ignoreFailingMessages = true;
-
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
-            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
-            sourceFactory = new NearbyAudioSourceFactory(configuration);
+            sourceFactory = new FakeNearbyAudioSourceFactory();
 
             system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
         }
 
         protected override void OnTearDown()
         {
-            // Reap LivekitAudioSource instances spawned inside the system itself (parented to its private
-            // sourcesRoot, not tracked in our gameObjects list). Leaving them alive across tests is fatal:
-            // Unity keeps invoking OnAudioFilterRead on the audio thread, and by then the underlying world,
-            // stream, and registry have been torn down — producing NREs on a foreign thread.
-            foreach (LivekitAudioSource src in Object.FindObjectsByType<LivekitAudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                if (src == null) continue;
-
-                src.Stop();
-                src.Free();
-                Object.DestroyImmediate(src.gameObject);
-            }
+            sourceFactory.DisposeRoot();
 
             foreach (GameObject go in gameObjects)
                 if (go != null) Object.DestroyImmediate(go);
@@ -89,8 +71,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             bindings.Clear();
             stateModel.Dispose();
-
-            if (configuration != null) Object.DestroyImmediate(configuration);
 
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
@@ -389,10 +369,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Replace registry with the mock for the lifetime of this test.
             var localBindings = new HashSet<StreamKey>();
             using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
-            VoiceChatConfiguration localConfig = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {
-                var localFactory = new NearbyAudioSourceFactory(localConfig);
                 var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory);
 
                 const string WALLET = "wallet-alice";
@@ -412,7 +391,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             }
             finally
             {
-                if (localConfig != null) Object.DestroyImmediate(localConfig);
+                localFactory.DisposeRoot();
             }
         }
 
@@ -506,6 +485,55 @@ namespace DCL.VoiceChat.Nearby.Tests
             public int RebuildEpoch => 0;
 
             public void Dispose() { }
+        }
+
+        // ── Fake audio source factory ───────────────────────────────
+
+        // Production NearbyAudioSourceFactory unconditionally invokes Construct(stream) + Play() on every
+        // Create. Construct copies the supplied Weak<AudioStream> into the source, and Play() turns Unity's
+        // audio thread loose on OnAudioFilterRead. With FakeStreamRegistry's contract-breached null payload,
+        // OnAudioFilterRead would dereference a null AudioStream and NRE asynchronously — a race the test
+        // tear-down cannot win. Tests assert bookkeeping (entity count, component fields, AudioSource flags),
+        // not DSP behaviour, so this fake builds a real LivekitAudioSource MonoBehaviour, calls Play() (so
+        // isPlaying assertions still hold), sets mute=true, and DELIBERATELY skips Construct(...). The
+        // source's stream field stays at its default Weak<AudioStream>.Null (Disposed=true), and
+        // OnAudioFilterRead short-circuits via Resource.Has=false on every audio-thread tick.
+        private sealed class FakeNearbyAudioSourceFactory : INearbyAudioSourceFactory
+        {
+            private readonly List<LivekitAudioSource> instances = new (16);
+
+            public LivekitAudioSource Create(StreamKey key, Weak<AudioStream> stream)
+            {
+                LivekitAudioSource lkSource = LivekitAudioSource.New(explicitName: true, isSpatial: true);
+                lkSource.AudioSource.mute = true;
+                lkSource.Play();
+                instances.Add(lkSource);
+                return lkSource;
+            }
+
+            public void Dispose(LivekitAudioSource? source)
+            {
+                if (source == null) return;
+                if (!instances.Remove(source)) return;
+
+                source.Stop();
+                Object.DestroyImmediate(source.gameObject);
+            }
+
+            public void DisposeRoot()
+            {
+                foreach (LivekitAudioSource src in instances)
+                {
+                    if (src == null) continue;
+
+                    src.Stop();
+                    Object.DestroyImmediate(src.gameObject);
+                }
+
+                instances.Clear();
+            }
+
+            public void InvalidateForDeviceChange() { }
         }
     }
 }
