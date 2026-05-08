@@ -139,57 +139,45 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 Transform bone = bones[i];
 
-                // Bone explicitly configured in the payload (root or follower)
-                if (hasParams && springBoneParams!.TryGetValue(bone.name, out SpringBoneParamsDto cfg))
-                {
-                    result.Add(new SpringBoneData(bone, cfg.isRoot,
-                        boneIndexLookup[bone.parent],
-                        cfg.stiffness, cfg.drag, cfg.gravityDir, cfg.gravityPower,
-                        bone.localRotation));
+                if (i < AVATAR_SKELETON_BONE_COUNT && (!hasParams || !springBoneParams!.ContainsKey(bone.name)))
                     continue;
-                }
 
-                if (i < AVATAR_SKELETON_BONE_COUNT) continue;
+                if (!boneIndexLookup.TryGetValue(bone.parent, out int parentIdx)) continue;
 
-                // Untagged extra bone beyond the base skeleton. It still needs a slot in the
-                // global bone matrix array, otherwise the wearable's SMR has indices past the
-                // base skeleton that resolve to garbage matrices and the mesh deforms wrong.
-                SpringBoneParamsDto? inherited = null;
+                // isRoot is derived purely from hierarchy: a chain root is a bone whose parent is
+                // in the base avatar skeleton. RegisterSprings indexes skeleton[parentIdx] against
+                // the 62-bone base array, so honoring an authored isRoot for a deeper bone reads
+                // out of range and wrecks the parent extra via SyncWearableParentToAvatar.
+                bool isRoot = parentIdx < AVATAR_SKELETON_BONE_COUNT;
 
-                if (hasParams)
+                SpringBoneParamsDto cfgToUse;
+
+                if (hasParams && springBoneParams!.TryGetValue(bone.name, out SpringBoneParamsDto explicitCfg))
+                    cfgToUse = explicitCfg;
+                else
                 {
-                    for (Transform a = bone.parent; a != null && boneIndexLookup.ContainsKey(a); a = a.parent)
+                    // Untagged extra: inherit params from nearest configured ancestor, otherwise
+                    // fall back to neutral defaults so the bone still gets a slot in the global
+                    // matrix array and is driven by its skeleton ancestor.
+                    cfgToUse = DEFAULT_EXTRA_BONE_PARAMS;
+
+                    if (hasParams)
                     {
-                        if (springBoneParams!.TryGetValue(a.name, out SpringBoneParamsDto ancestorCfg) && ancestorCfg.isRoot)
+                        for (Transform a = bone.parent; a != null && boneIndexLookup.ContainsKey(a); a = a.parent)
                         {
-                            inherited = ancestorCfg;
-                            break;
+                            if (springBoneParams!.TryGetValue(a.name, out SpringBoneParamsDto ancestorCfg))
+                            {
+                                cfgToUse = ancestorCfg;
+                                break;
+                            }
                         }
                     }
                 }
 
-                if (!boneIndexLookup.TryGetValue(bone.parent, out int parentIdx)) continue;
-
-                if (inherited != null)
-                {
-                    // Follower of an explicit spring root upstream
-                    result.Add(new SpringBoneData(bone, isRoot: false,
-                        parentIdx,
-                        inherited.stiffness, inherited.drag, inherited.gravityDir, inherited.gravityPower,
-                        bone.localRotation));
-                }
-                else
-                {
-                    // No spring context: neutral params (no stiffness, full damping, no gravity)
-                    // so sim runs as a no-op and the bone holds its rest pose driven by its
-                    // skeleton ancestor. isRoot true when parented directly to base skeleton.
-                    bool isRoot = parentIdx < AVATAR_SKELETON_BONE_COUNT;
-                    result.Add(new SpringBoneData(bone, isRoot,
-                        parentIdx,
-                        DEFAULT_EXTRA_BONE_PARAMS.stiffness, DEFAULT_EXTRA_BONE_PARAMS.drag,
-                        DEFAULT_EXTRA_BONE_PARAMS.gravityDir, DEFAULT_EXTRA_BONE_PARAMS.gravityPower,
-                        bone.localRotation));
-                }
+                result.Add(new SpringBoneData(bone, isRoot,
+                    parentIdx,
+                    cfgToUse.stiffness, cfgToUse.drag, cfgToUse.gravityDir, cfgToUse.gravityPower,
+                    bone.localRotation));
             }
 
             return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
