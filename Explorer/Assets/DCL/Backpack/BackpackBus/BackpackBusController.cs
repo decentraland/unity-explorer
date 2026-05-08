@@ -269,7 +269,7 @@ namespace DCL.Backpack.BackpackBus
                 if (ct.IsCancellationRequested)
                     return;
 
-                backpackEventBus.SendEquipOutfit(command, resolvedWearables);
+                backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
             }
             catch (OperationCanceledException)
             {

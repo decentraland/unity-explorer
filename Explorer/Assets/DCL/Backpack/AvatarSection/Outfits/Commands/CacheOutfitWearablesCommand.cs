@@ -82,7 +82,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             if (wearableStorage.TryGetElement(urn, out IWearable w))
                 result.Add(w);
             else
-                missingUrns.Add(new URN(urn));
+                missingUrns.Add(urn);
         }
 
         // Accepts V2 on-chain URNs of form:
