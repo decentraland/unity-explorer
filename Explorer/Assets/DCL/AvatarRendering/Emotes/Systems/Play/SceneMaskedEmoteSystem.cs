@@ -16,7 +16,6 @@ using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
@@ -91,10 +90,22 @@ namespace DCL.AvatarRendering.Emotes.Play
             }
 
             if (masked.CurrentEmoteReference == null) return;
+
+            AvatarBase view = mainPlayerAvatarBaseProxy.Object!;
+
+            // Legacy-blender path: tear down once the blender signals natural completion.
+            if (view.HasMaskedLegacyEmoteFinished)
+            {
+                TryStopMaskedEmote(ref masked);
+                return;
+            }
+
+            if (view.IsMaskedLegacyEmotePlaying) return;
+
             if (!masked.IsPlaying) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-            int currentTag = mainPlayerAvatarBaseProxy.Object!.GetAnimatorCurrentStateTag(layer);
+            int currentTag = view.GetAnimatorCurrentStateTag(layer);
             bool isOnAnotherTag = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
 
             if (isOnAnotherTag)
@@ -272,7 +283,6 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// When permanent=true, clears EmoteUrn (no replay possible).
         /// When permanent=false, preserves EmoteUrn/Mask for replay on re-entry.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TryStopMaskedEmote(ref CharacterMaskedEmoteComponent masked, bool permanent = false)
         {
             if (masked.CurrentEmoteReference == null)

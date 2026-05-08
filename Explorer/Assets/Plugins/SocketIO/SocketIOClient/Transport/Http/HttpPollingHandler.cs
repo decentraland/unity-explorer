@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using SocketIOClient.Extensions;
 
 namespace SocketIOClient.Transport.Http
@@ -17,7 +17,7 @@ namespace SocketIOClient.Transport.Http
         }
 
         protected IHttpClient HttpClient { get; }
-        public Func<string, Task> OnTextReceived { get; set; }
+        public Func<string, UniTask> OnTextReceived { get; set; }
         public Action<byte[]> OnBytesReceived { get; set; }
 
         public void AddHeader(string key, string val)
@@ -33,35 +33,35 @@ namespace SocketIOClient.Transport.Http
         protected static string AppendRandom(string uri) =>
             uri + "&t=" + DateTimeOffset.Now.ToUnixTimeSeconds();
 
-        public async Task GetAsync(string uri, CancellationToken cancellationToken)
+        public async UniTask GetAsync(string uri, CancellationToken cancellationToken)
         {
             var req = new HttpRequestMessage(HttpMethod.Get, AppendRandom(uri));
-            HttpResponseMessage resMsg = await HttpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage resMsg = await HttpClient.SendAsync(req, cancellationToken);
 
             if (!resMsg.IsSuccessStatusCode) { throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}"); }
 
-            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
+            await ProduceMessageAsync(resMsg);
         }
 
-        public async Task SendAsync(HttpRequestMessage req, CancellationToken cancellationToken)
+        public async UniTask SendAsync(HttpRequestMessage req, CancellationToken cancellationToken)
         {
-            HttpResponseMessage resMsg = await HttpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage resMsg = await HttpClient.SendAsync(req, cancellationToken);
 
             if (!resMsg.IsSuccessStatusCode) { throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}"); }
 
-            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
+            await ProduceMessageAsync(resMsg);
         }
 
-        public virtual async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
+        public virtual async UniTask PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             var httpContent = new StringContent(content);
-            HttpResponseMessage resMsg = await HttpClient.PostAsync(AppendRandom(uri), httpContent, cancellationToken).ConfigureAwait(false);
-            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
+            HttpResponseMessage resMsg = await HttpClient.PostAsync(AppendRandom(uri), httpContent, cancellationToken);
+            await ProduceMessageAsync(resMsg);
         }
 
-        public abstract Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken);
+        public abstract UniTask PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken);
 
-        private async Task ProduceMessageAsync(HttpResponseMessage resMsg)
+        private async UniTask ProduceMessageAsync(HttpResponseMessage resMsg)
         {
             if (resMsg.Content.Headers.ContentType.MediaType == "application/octet-stream")
             {
@@ -75,14 +75,14 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        protected abstract Task ProduceText(string text);
+        protected abstract UniTask ProduceText(string text);
 
         protected void OnBytes(byte[] bytes)
         {
             OnBytesReceived.TryInvoke(bytes);
         }
 
-        private async Task ProduceBytes(byte[] bytes)
+        private async UniTask ProduceBytes(byte[] bytes)
         {
             var i = 0;
 

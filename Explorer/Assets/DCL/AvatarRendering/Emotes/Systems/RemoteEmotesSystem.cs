@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
@@ -7,7 +7,6 @@ using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
 using UnityEngine.Pool;
-using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.RemotePlayersMovementSystem;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -93,41 +92,53 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
-                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
-
-                    // Wait until interpolation reaches the stop's timestamp before applying
-                    if (interpolationExists && !StopIsInPresentOrPast(replicaMovement, stopIntention, intComp))
+                    // If the entity has an emote intent not already consumed we remove it straight away
+                    if (World.Has<CharacterEmoteIntent>(entry.Entity))
                     {
-                        savedStopIntentions!.Add(stopIntention);
+                        World.Remove<CharacterEmoteIntent>(entry.Entity);
                         continue;
                     }
 
-                    // If the entity has an emote intent not already consumed we remove it straight away
-                    if (World.Has<CharacterEmoteIntent>(entry.Entity))
-                        World.Remove<CharacterEmoteIntent>(entry.Entity);
+                    // Check if any emote (full-body or masked) is playing on the remote entity and stop it
+                    bool isPlayingAny = false;
 
                     if (World.TryGet(entry.Entity, out CharacterEmoteComponent emoteComponent) && (emoteComponent.IsPlayingEmote || emoteComponent.CurrentEmoteReference != null))
                     {
                         emoteComponent.StopEmote = true;
                         World.Set(entry.Entity, emoteComponent);
+                        isPlayingAny = true;
                     }
 
                     if (World.TryGet(entry.Entity, out CharacterMaskedEmoteComponent masked) && (masked.IsPlaying || masked.CurrentEmoteReference != null))
                     {
                         masked.StopEmote = true;
                         World.Set(entry.Entity, masked);
+                        isPlayingAny = true;
                     }
+
+                    if (isPlayingAny)
+                        continue;
+
+                    // Entity exists but the play intention hasn't been applied yet (still queued
+                    // waiting for interpolation to catch up). Save the stop for retry so it can
+                    // cancel the emote once the play is eventually consumed.
+                    // However, if interpolation has already passed the stop's timestamp, the
+                    // corresponding play was either never received or already consumed — discard.
+                    ref readonly InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref readonly RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+
+                    if (!interpolationExists || IsInPresentOrPast(intComp.Present, replicaMovement.PastMessage.timestamp, stopIntention.Timestamp, t))
+                        continue;
+
+                    savedStopIntentions!.Add(stopIntention);
                 }
             }
 
             foreach (RemoteEmoteStopIntention savedStopIntention in savedStopIntentions!)
                 emotesMessageBus.SaveForRetry(savedStopIntention);
-
-            return;
-
-            bool StopIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteStopIntention stopIntention, InterpolationComponent intComp) =>
-                intComp.Present + t >= stopIntention.Timestamp || replicaMovement.PastMessage.timestamp >= stopIntention.Timestamp;
         }
+
+        private static bool IsInPresentOrPast(double interpolationPresent, double pastMessageTimestamp, double intentionTimestamp, float deltaTime) =>
+            interpolationPresent + deltaTime >= intentionTimestamp || pastMessageTimestamp >= intentionTimestamp;
     }
 }

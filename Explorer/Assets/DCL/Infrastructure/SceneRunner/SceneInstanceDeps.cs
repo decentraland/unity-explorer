@@ -46,6 +46,7 @@ using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 using SceneRunner.Admins;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -197,7 +198,7 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
-            public readonly SceneAdmins SceneAdmins;
+            public readonly Option<ISceneAdmins> SceneAdmins;
 
             /// <summary>
             ///     For Unit Tests only
@@ -212,7 +213,7 @@ namespace SceneRunner
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
                 ISceneRuntime runtime,
-                SceneAdmins sceneAdmins
+                Option<ISceneAdmins> sceneAdmins
                 )
             {
                 EngineAPI = engineAPI;
@@ -241,7 +242,7 @@ namespace SceneRunner
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                SceneAdmins sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : this(
                     engineApi,
@@ -268,7 +269,11 @@ namespace SceneRunner
 
                 Runtime.Dispose();
                 SyncDeps.Dispose();
-                SceneAdmins.Dispose();
+
+                if (SceneAdmins.Has)
+                {
+                    SceneAdmins.Value.Dispose();
+                }
             }
         }
 
@@ -283,7 +288,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                SceneAdmins sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
@@ -309,7 +314,7 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                SceneAdmins sceneAdmins,
+                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(
                         new SDKObservableEventsEngineAPIImplementation(
@@ -325,18 +330,18 @@ namespace SceneRunner
                             syncDeps.ecsMultiThreadSync,
                             syncOwner
                             ),
-                    syncDeps, 
-                    sceneRuntime, 
-                    sceneRuntime, 
-                    mvcManager, 
-                    globalWorldActions, 
-                    realmData, 
-                    profileRepository, 
-                    messagePipesHub, 
-                    webRequestController, 
-                    skyboxSettings, 
-                    systemClipboard, 
-                    roomHub, 
+                    syncDeps,
+                    sceneRuntime,
+                    sceneRuntime,
+                    mvcManager,
+                    globalWorldActions,
+                    realmData,
+                    profileRepository,
+                    messagePipesHub,
+                    webRequestController,
+                    skyboxSettings,
+                    systemClipboard,
+                    roomHub,
                     sceneAdmins,
                     installSource
                   ) { }

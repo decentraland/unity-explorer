@@ -58,6 +58,7 @@ namespace DCL.VoiceChat
 
         public void Show()
         {
+            VoiceChatCanvasGroup.DOKill();
             VoiceChatContainer.SetActive(true);
             VoiceChatCanvasGroup.alpha = 0;
             VoiceChatCanvasGroup
@@ -72,6 +73,7 @@ namespace DCL.VoiceChat
 
         public void Hide()
         {
+            VoiceChatCanvasGroup.DOKill();
             VoiceChatCanvasGroup.alpha = 1;
             VoiceChatCanvasGroup
                 .DOFade(0, SHOW_HIDE_ANIMATION_DURATION)

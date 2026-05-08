@@ -418,11 +418,21 @@ MonoBehaviour:
       Severity: 4
     - Category: DONATIONS
       Severity: 1
+    - Category: TRANSLATE
+      Severity: 4
+    - Category: TRANSLATE
+      Severity: 1
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 4
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 1
+    - Category: SCENE_PERMISSIONS
+      Severity: 4
+    - Category: SCENE_PERMISSIONS
+      Severity: 1
     - Category: SCENE_ADMINS
       Severity: 4
     - Category: SCENE_ADMINS
-      Severity: 1
-    - Category: RUNTIME_DEEPLINKS
       Severity: 1
     - Category: RUNTIME_DEEPLINKS
       Severity: 4
@@ -432,6 +442,28 @@ MonoBehaviour:
       Severity: 0
     - Category: MULTIPLAYER
       Severity: 2
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 1
+    - Category: PLACES
+      Severity: 4
+    - Category: PLACES
+      Severity: 1
+    - Category: PARTICLE_SYSTEM
+      Severity: 1
+    - Category: PARTICLE_SYSTEM
+      Severity: 4
+    - Category: NEARBY_VOICE_CHAT
+      Severity: 4
+    - Category: NEARBY_VOICE_CHAT
+      Severity: 1
+    - Category: GLTF_CONTAINER
+      Severity: 4
+    - Category: GLTF_CONTAINER
+      Severity: 1
+    - Category: ANALYTICS_INTERNAL
+      Severity: 4
+    - Category: ANALYTICS_INTERNAL
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

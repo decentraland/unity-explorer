@@ -120,7 +120,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (loadFromLocalScene)
             {
                 if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
-                    result = await ResolveSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+                    result = await ResolveSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, mask, ct);
                 else
                     ReportHub.LogError(ReportCategory.EMOTE, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '{SCENE_EMOTE_NAMING}'");
             }
@@ -141,11 +141,9 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
 
             // Stop full-body emote (global world only, masked emotes are handled by scene-side systems)
-            if (world.TryGet(playerEntity, out CharacterEmoteComponent emoteComponent))
-            {
+            ref CharacterEmoteComponent emoteComponent = ref world.TryGetRef<CharacterEmoteComponent>(playerEntity, out bool emoteExists);
+            if (emoteExists)
                 emoteComponent.StopEmote = true;
-                world.Set(playerEntity, emoteComponent);
-            }
         }
 
         private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
@@ -171,14 +169,14 @@ namespace CrdtEcsBridge.RestrictedActions
             return null;
         }
 
-        private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
+        private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, AvatarEmoteMask mask, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 return null;
 
             var promise = LocalSceneEmotePromise.Create(world,
                 new GetSceneEmoteFromLocalSceneIntention(sceneData, emotePath, emoteHash,
-                    avatarShape.BodyShape, loop),
+                    avatarShape.BodyShape, loop, mask),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);

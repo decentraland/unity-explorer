@@ -8,7 +8,7 @@ using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using SceneRunner.Admins;
-using DCL.Utility.Types;
+using RichTypes;
 
 namespace DCL.Chat.Commands
 {
@@ -35,7 +35,14 @@ namespace DCL.Chat.Commands
                 return "Current scene is not available. Please make sure you are on a scene";
             }
 
-            SceneAdmins admins = currentScene.SceneAdmins;
+            Option<ISceneAdmins> adminsOption = currentScene.SceneAdmins;
+
+            if (adminsOption.Has == false)
+            {
+                return "Scene admins are not available in the current environment";
+            }
+
+            ISceneAdmins admins = adminsOption.Value;
 
             Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> result = admins.CurrentAdmins();
 

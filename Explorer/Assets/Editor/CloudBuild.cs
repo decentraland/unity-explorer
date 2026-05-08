@@ -70,6 +70,7 @@ namespace Editor
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
 
+            DesktopStandaloneSettings.CopyPDBFiles = true;
         }
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud

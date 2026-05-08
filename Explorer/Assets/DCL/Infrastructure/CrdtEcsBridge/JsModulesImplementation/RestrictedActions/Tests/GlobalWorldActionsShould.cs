@@ -301,6 +301,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public SceneEntityDefinition SceneEntityDefinition { get; set; } = new ("sceneId", new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
+            public bool IsWearableBuilderCollectionPreview { get; set; }
 
             public bool HasRequiredPermission(string permission) => true;
 

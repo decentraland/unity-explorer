@@ -84,11 +84,12 @@ MonoBehaviour:
       - rid: 5242998342527483920
       - rid: 5242998342527483919
       - rid: 3511243270148325474
-    - <GroupTitle>k__BackingField: Voice Streams & Calls
+    - <GroupTitle>k__BackingField: Voice Chat & Streams
       <FeatureFlagName>k__BackingField: 0
       <FeatureId>k__BackingField: 1
       <Modules>k__BackingField:
       - rid: 3511243270148325473
+      - rid: 3511243270148325475
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Mouse
@@ -114,6 +115,7 @@ MonoBehaviour:
       - rid: 1708279571579404288
       - rid: 1708279571579404289
       - rid: 2659808844961546333
+      - rid: 4223195832360370271
   references:
     version: 2
     RefIds:
@@ -169,7 +171,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: In-World Chat Bubbles
+          <ModuleName>k__BackingField: In-World Chat Bubbles & Reactions
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           isMultiselect: 0
@@ -265,7 +267,7 @@ MonoBehaviour:
             performance.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 4
+        <Feature>k__BackingField: 5
     - rid: 2404945502817747083
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -284,7 +286,7 @@ MonoBehaviour:
             performance on weaker devices.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 6
     - rid: 2404945502817747084
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -302,7 +304,7 @@ MonoBehaviour:
             performance gain.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 6
+        <Feature>k__BackingField: 7
     - rid: 2404945502817747108
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -391,9 +393,9 @@ MonoBehaviour:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName:
-          m_SubObjectType:
-          m_SubObjectGUID:
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Sun Shadows
@@ -402,24 +404,7 @@ MonoBehaviour:
             improve performance.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 7
-    - rid: 2404945524685013200
-      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <FeatureId>k__BackingField: 0
-        <View>k__BackingField:
-          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName:
-          m_SubObjectType:
-          m_SubObjectGUID:
-          m_EditorAssetChanged: 0
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Sun Lens Flare
-          <Description>k__BackingField: Enables a lens flare effect on the sun light.
-            Disable this to remove the effect and gain a minor performance improvement.
-          <IsEnabled>k__BackingField: 1
-          defaultIsOn: 1
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 8
     - rid: 2404945524685013118
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -478,7 +463,7 @@ MonoBehaviour:
             for nearby objects, improving close-up shadow detail and performance.
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 30
+          minValue: 40
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 60
@@ -500,7 +485,24 @@ MonoBehaviour:
             can significantly improve performance in light-heavy scenes.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 9
+        <Feature>k__BackingField: 10
+    - rid: 2404945524685013200
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Sun Lens Flare
+          <Description>k__BackingField: Enables a lens flare effect on the sun light.
+            Disable this to remove the effect and gain a minor performance improvement.
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 13
     - rid: 2659808844961546333
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -585,7 +587,7 @@ MonoBehaviour:
             automatically.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 14
     - rid: 3511243270148325473
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -610,13 +612,13 @@ MonoBehaviour:
         <FeatureId>k__BackingField: 1
         <View>k__BackingField:
           m_AssetGUID: 27c8bedb89b5739458399a3bd3d255ac
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 1
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Voice Streams & Calls
-          <Description>k__BackingField: 
+          <ModuleName>k__BackingField: Voice Chat & Streams
+          <Description>k__BackingField:
           <IsEnabled>k__BackingField: 1
           sliderType: 1
           minValue: 0
@@ -624,6 +626,38 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 100
         <Feature>k__BackingField: 9
+    - rid: 3511243270148325475
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 1
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Mute Mic in Background
+          <Description>k__BackingField:
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 15
+    - rid: 4223195832360370271
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Chat Reactions
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 0
+        <Feature>k__BackingField: 4
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -775,7 +809,7 @@ MonoBehaviour:
             or windowed.
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 10
+        <Feature>k__BackingField: 11
     - rid: 7533463652475600993
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -792,4 +826,4 @@ MonoBehaviour:
             play or even the closeby scenes will
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
-        <Feature>k__BackingField: 11
+        <Feature>k__BackingField: 12

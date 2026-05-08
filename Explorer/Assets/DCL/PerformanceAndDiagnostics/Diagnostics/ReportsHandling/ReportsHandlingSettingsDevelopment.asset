@@ -198,12 +198,6 @@ MonoBehaviour:
       Severity: 1
     - Category: COMMS_SCENE_HANDLER
       Severity: 0
-    - Category: LIVEKIT
-      Severity: 2
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
     - Category: COMMS_SCENE_HANDLER
       Severity: 2
     - Category: ALWAYS
@@ -275,8 +269,6 @@ MonoBehaviour:
     - Category: JAVASCRIPT
       Severity: 4
     - Category: LANDSCAPE
-      Severity: 4
-    - Category: LIGHT_SOURCE
       Severity: 4
     - Category: LIVEKIT
       Severity: 4
@@ -421,8 +413,6 @@ MonoBehaviour:
     - Category: JAVASCRIPT
       Severity: 1
     - Category: LANDSCAPE
-      Severity: 1
-    - Category: LIGHT_SOURCE
       Severity: 1
     - Category: LIVEKIT
       Severity: 1
@@ -580,8 +570,6 @@ MonoBehaviour:
       Severity: 4
     - Category: OUTFITS
       Severity: 1
-    - Category: GIFTING
-      Severity: 2
     - Category: GIFTING
       Severity: 0
     - Category: GIFTING
@@ -638,11 +626,35 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS_INTERNAL
       Severity: 1
-    - Category: SCENE_ADMINS
+    - Category: NEARBY_VOICE_CHAT
+      Severity: 0
+    - Category: NEARBY_VOICE_CHAT
       Severity: 4
-    - Category: SCENE_ADMINS
+    - Category: NEARBY_VOICE_CHAT
       Severity: 1
-    - Category: SCENE_ADMINS
+    - Category: PARTICLE_SYSTEM
+      Severity: 0
+    - Category: PARTICLE_SYSTEM
+      Severity: 4
+    - Category: PARTICLE_SYSTEM
+      Severity: 1
+    - Category: DONATIONS
+      Severity: 0
+    - Category: DONATIONS
+      Severity: 4
+    - Category: DONATIONS
+      Severity: 1
+    - Category: LIVEKIT
+      Severity: 2
+    - Category: LIGHT_SOURCE
+      Severity: 0
+    - Category: LIGHT_SOURCE
+      Severity: 4
+    - Category: LIGHT_SOURCE
+      Severity: 1
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 4
+    - Category: SDK_AUDIO_ANALYSIS
       Severity: 0
     - Category: MULTIPLAYER
       Severity: 2

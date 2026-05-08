@@ -6,19 +6,30 @@ using Utility;
 using Utility.Multithreading;
 using System;
 using System.Threading;
-using System.Collections.Concurrent;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Utility.Types;
+using RichTypes;
 
 namespace SceneRunner.Admins
 {
+    public interface ISceneAdmins : IDisposable
+    {
+        UniTaskVoid StartRequestPollingAsync();
+
+        UniTask FireRequestAsync(CancellationToken ct);
+
+        // Null if not loaded yet
+        bool? IsAdmin(string wallet);
+
+        Result<IReadOnlyDictionary<string, SceneAdmins.AdminInfo>> CurrentAdmins();
+    }
+
     /// <summary>
     ///     Exists per scene
     /// </summary>
-    public class SceneAdmins : IDisposable
+    public class SceneAdmins : ISceneAdmins
     {
         public struct AdminInfo
         {
@@ -47,8 +58,9 @@ namespace SceneRunner.Admins
             public string parcel;
         }
         // END Copied
-        
-        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(1000);
+
+        private static readonly TimeSpan DELAY = TimeSpan.FromMilliseconds(30000);
+
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urls;
@@ -56,9 +68,9 @@ namespace SceneRunner.Admins
         private readonly ISceneData sceneData;
 
         private readonly CancellationTokenSource cts = new ();
-        private readonly SemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
-        private readonly ConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
-        
+        private readonly DCLSemaphoreSlim operationLock = new (initialCount: 1, maxCount: 1);
+        private readonly DCLConcurrentDictionary<string, AdminInfo> wallets = new (StringComparer.OrdinalIgnoreCase);
+
         private bool initialLoadFinished;
 
         public SceneAdmins(
@@ -74,13 +86,6 @@ namespace SceneRunner.Admins
             this.sceneData = sceneData;
         }
 
-#if SCENE_ADMINS_TESTS
-        public static SceneAdmins NewTestInstance()
-        {
-            return new SceneAdmins(null!, null!, null!, null!);
-        }
-#endif
-
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
@@ -88,18 +93,18 @@ namespace SceneRunner.Admins
 
         public async UniTaskVoid StartRequestPollingAsync()
         {
-            while (cts.IsCancellationRequested == false)
+            CancellationToken token = cts.Token;
+            while (token.IsCancellationRequested == false)
             {
-                await FireRequestAsync(cts.Token);
-                await UniTask.Delay(DELAY, cancellationToken: cts.Token);
+                await FireRequestAsync(token);
+                if (token.IsCancellationRequested) return;
+                await UniTask.Delay(DELAY, cancellationToken: token).SuppressCancellationThrow();
             }
         }
 
         // Exception-free
         public async UniTask FireRequestAsync(CancellationToken ct)
         {
-#if !SCENE_ADMINS_TESTS // it's not required to execute an actual request for tests
-
             using var _ = await operationLock.LockAsync();
 
             try
@@ -107,8 +112,8 @@ namespace SceneRunner.Admins
                 RealmMetadata realmMetadata = new RealmMetadata()
                 {
                     hostname = realmData.Hostname,
-                             protocol = realmData.Protocol,
-                             serverName = realmData.RealmName,
+                    protocol = realmData.Protocol,
+                    serverName = realmData.RealmName,
                 };
 
                 Vector2Int baseParcel = sceneData.SceneShortInfo.BaseParcel;
@@ -145,15 +150,11 @@ namespace SceneRunner.Admins
             {
                 initialLoadFinished = true;
             }
-#endif
         }
 
         // Null if not loaded yet
         public bool? IsAdmin(string wallet)
         {
-#if SCENE_ADMINS_TESTS
-            return true; // consider always an admin during tests
-#else
             if (initialLoadFinished)
             {
                 return wallets.ContainsKey(wallet);
@@ -162,7 +163,6 @@ namespace SceneRunner.Admins
             {
                 return null;
             }
-#endif
         }
 
         public Result<IReadOnlyDictionary<string, AdminInfo>> CurrentAdmins()

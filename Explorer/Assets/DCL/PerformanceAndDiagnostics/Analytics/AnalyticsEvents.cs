@@ -83,6 +83,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string LIVEKIT_HEALTH_CHECK_FAILED = "livekit_health_check_failed"; // 🔴 - needs testing
         }
 
+        public static class VoiceChat
+        {
+            public const string NEARBY_VOICE_SPEAK_BUTTON = "nearby_voice_speak_button";
+            public const string NEARBY_VOICE_SPEAK_PTT = "nearby_voice_speak_ptt";
+            public const string NEARBY_VOICE_TOGGLE = "nearby_voice_toggle";
+            public const string NEARBY_VOICE_USER_MUTE = "nearby_voice_user_mute";
+        }
+
         public static class Authentication
         {
             public const string CLICK_COMMUNITY_GUIDANCE = "click_community_guidance";
@@ -187,6 +195,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public const string CHAT_BUBBLES_VISIBILITY_CHANGED = "chat-bubbles-visibility-changed";
             public const string QUALITY_SETTINGS_REPORT = "quality_settings_report";
+        }
+
+        public static class Reactions
+        {
+            public const string REACT_CHAT_MESSAGE = "react_chat_message";
+            public const string REACT_SITUATION = "react_situation";
+            public const string REACTION_VISUALIZATION = "reaction_visualization";
         }
 
         public static class FeatureFlags

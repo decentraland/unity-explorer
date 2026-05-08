@@ -16,11 +16,13 @@ namespace DCL.AvatarRendering.Emotes
         private int currentAnimationTag;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
-            ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
+            ? CurrentEmoteReference.avatarClip.length * (CurrentEmoteReference.animatorComp != null ? CurrentEmoteReference.animatorComp.speed : 1f)
             : 0f;
 
         public readonly bool IsPlayingEmote =>
-            currentAnimationTag == AnimationHashes.EMOTE || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
+            (CurrentEmoteReference != null && CurrentEmoteReference.legacy)
+            || currentAnimationTag == AnimationHashes.EMOTE
+            || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
         public readonly int CurrentAnimationTag => currentAnimationTag;
 

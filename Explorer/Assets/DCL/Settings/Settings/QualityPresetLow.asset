@@ -22,9 +22,10 @@ MonoBehaviour:
   sceneDistance: 10
   landscapeDistance: 500
   sunShadows: 0
+  sunLensFlare: 0
   sceneLightsEnabled: 0
   sceneLightShadowsEnabled: 1
   maxSceneLights: 0
   shadowsQualityLevel: 0
-  shadowDistance: 30
+  shadowDistance: 40
   playCurrentSceneStreamsOnly: 1

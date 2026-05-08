@@ -32,13 +32,13 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
 using SceneRunner.Admins;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -197,15 +197,21 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
-            SceneAdmins sceneAdmins = new SceneAdmins(
-                    webRequestController,
-                    decentralandUrlsSource,
-                    realmData!,
-                    sceneData
-                    );
+            Option<ISceneAdmins> sceneAdmins = Option<ISceneAdmins>.None;
 
-            await sceneAdmins.FireRequestAsync(ct);
-            sceneAdmins.StartRequestPollingAsync().Forget();
+            if (realmData.IsLocalSceneDevelopment == false)
+            {
+                SceneAdmins sceneAdminsInstance = new SceneAdmins(
+                        webRequestController,
+                        decentralandUrlsSource,
+                        realmData!,
+                        sceneData
+                        );
+                await sceneAdminsInstance.FireRequestAsync(ct);
+                sceneAdminsInstance.StartRequestPollingAsync().Forget();
+
+                sceneAdmins = Option<ISceneAdmins>.Some(sceneAdminsInstance);
+            }
 
             if (ENABLE_SDK_OBSERVABLES)
             {
@@ -236,7 +242,8 @@ namespace SceneRunner
                     sceneData,
                     realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub
                 );
             }
             else
@@ -264,7 +271,8 @@ namespace SceneRunner
                     sceneData,
                     realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub
                 );
             }
 
@@ -292,7 +300,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)
