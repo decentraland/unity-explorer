@@ -1,5 +1,7 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.ECSComponents;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
@@ -30,14 +32,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool ShowOnlyWearables;
 
         /// <summary>
-        /// Hash of structural fields (BodyShape, Wearables, ShowOnlyWearables).
-        /// Used to detect whether a PBAvatarShape update requires full re-instantiation
-        /// or just a cosmetic refresh (colors, name, expressions).
+        /// Snapshot of the last applied wearable URN list. Reused across updates to detect
+        /// structural changes without per-frame allocation.
         /// </summary>
-        public int StructuralHash;
+        public readonly List<string> LastWearables;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
-            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false, int structuralHash = 0)
+            Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
         {
             ID = id;
             Name = name;
@@ -46,6 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             WearablePromise = wearablePromise;
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
+            LastWearables = new List<string>();
             SkinColor = skinColor;
             HairColor = hairColor;
             EyesColor = eyesColor;
@@ -54,7 +56,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
             InstantiationVersion = -1;
-            StructuralHash = structuralHash;
         }
 
         public void CreateOutlineCompatibilityList()
@@ -81,7 +82,35 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Name = name;
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
+            LastWearables = new List<string>();
             IsVisible = true;
+        }
+
+        /// <summary>
+        /// Returns true when <paramref name="other"/> changes any structural field
+        /// (BodyShape, ShowOnlyWearables, Wearables) — i.e. the avatar must be re-instantiated.
+        /// </summary>
+        public readonly bool HasStructuralChange(PBAvatarShape other)
+        {
+            BodyShape newBodyShape = other;
+            if (!BodyShape.Equals(newBodyShape)) return true;
+
+            bool newShowOnlyWearables = other is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
+            if (ShowOnlyWearables != newShowOnlyWearables) return true;
+
+            if (LastWearables.Count != other.Wearables.Count) return true;
+            for (int i = 0; i < LastWearables.Count; i++)
+                if (!string.Equals(LastWearables[i], other.Wearables[i], StringComparison.Ordinal))
+                    return true;
+
+            return false;
+        }
+
+        public void CaptureWearablesSnapshot(IReadOnlyList<string> wearables)
+        {
+            LastWearables.Clear();
+            for (int i = 0; i < wearables.Count; i++)
+                LastWearables.Add(wearables[i]);
         }
     }
 }

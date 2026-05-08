@@ -47,12 +47,15 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             WearablePromise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
 
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
+            var avatarShape = new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise,
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
-                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true },
-                AvatarStructuralHashUtils.ComputeStructuralHash(pbAvatarShape, pbAvatarShape.Wearables, pbAvatarShape.ShowOnlyWearables)));
+                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true });
+
+            avatarShape.CaptureWearablesSnapshot(pbAvatarShape.Wearables);
+
+            World.Add(entity, avatarShape);
             World.Add(entity, new AvatarHighlightComponent());
         }
 
@@ -95,10 +98,7 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
 
-            // Only create a new WearablePromise when structural fields changed (BodyShape, Wearables, ShowOnlyWearables)
-            int newHash = AvatarStructuralHashUtils.ComputeStructuralHash(pbAvatarShape, pbAvatarShape.Wearables, pbAvatarShape.ShowOnlyWearables);
-
-            if (newHash != avatarShapeComponent.StructuralHash)
+            if (avatarShapeComponent.HasStructuralChange(pbAvatarShape))
             {
                 if (!avatarShapeComponent.WearablePromise.IsConsumed)
                     avatarShapeComponent.WearablePromise.ForgetLoading(World);
@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarShapeComponent.WearablePromise = CreateWearablePromise(pbAvatarShape, partition);
                 avatarShapeComponent.BodyShape = pbAvatarShape;
                 avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
-                avatarShapeComponent.StructuralHash = newHash;
+                avatarShapeComponent.CaptureWearablesSnapshot(pbAvatarShape.Wearables);
             }
         }
 
@@ -150,7 +150,6 @@ namespace DCL.AvatarRendering.AvatarShape
             avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
             avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
-            avatarShapeComponent.StructuralHash = AvatarStructuralHashUtils.ComputeStructuralHash(profile.Avatar.BodyShape, profile.Avatar.Wearables);
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
