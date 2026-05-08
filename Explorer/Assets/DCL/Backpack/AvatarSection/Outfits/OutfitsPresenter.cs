@@ -302,7 +302,7 @@ namespace DCL.Backpack
             loadingSlot = slot;
             slot.SetEquipLoading(true);
             for (int i = 0; i < slotPresenters.Count; i++)
-                if (slotPresenters[i] != slot) slotPresenters[i].SetHoverEnabled(false);
+                slotPresenters[i].SetHoverEnabled(slotPresenters[i] == slot);
         }
 
         private void EndSlotBusy()

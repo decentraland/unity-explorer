@@ -253,8 +253,8 @@ namespace DCL.Backpack.BackpackBus
 
         private async UniTaskVoid EquipOutfitAsync(BackpackEquipOutfitCommand command, CancellationToken ct)
         {
-            List<IWearable> resolvedWearables = ListPool<IWearable>.Get();
-            List<URN> urns = ListPool<URN>.Get();
+            using var a = ListPool<IWearable>.Get(out var resolvedWearables);
+            using var b = ListPool<URN>.Get(out var urns);
 
             try
             {
@@ -269,7 +269,7 @@ namespace DCL.Backpack.BackpackBus
                 if (ct.IsCancellationRequested)
                     return;
 
-                backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
+                backpackEventBus.SendEquipOutfit(command, resolvedWearables);
             }
             catch (OperationCanceledException)
             {
@@ -278,9 +278,6 @@ namespace DCL.Backpack.BackpackBus
             catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
             finally
             {
-                ListPool<URN>.Release(urns);
-                ListPool<IWearable>.Release(resolvedWearables);
-
                 backpackEventBus.SendEquipOutfitCompleted();
             }
         }

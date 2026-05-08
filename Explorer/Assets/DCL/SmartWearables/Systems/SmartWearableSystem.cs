@@ -132,13 +132,13 @@ namespace DCL.SmartWearables
         private void OnUnEquipWearable(IWearable wearable) =>
             StopSmartWearableSceneAsync(wearable).Forget();
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             outfitEquipCts = outfitEquipCts.SafeRestart();
             HandleOutfitEquipAsync(wearables, outfitEquipCts.Token).Forget();
         }
 
-        private async UniTaskVoid HandleOutfitEquipAsync(IWearable[] wearables, CancellationToken ct)
+        private async UniTaskVoid HandleOutfitEquipAsync(IReadOnlyCollection<IWearable> wearables, CancellationToken ct)
         {
             try
             {
@@ -155,29 +155,25 @@ namespace DCL.SmartWearables
                 if (ct.IsCancellationRequested) return;
 
                 // Cancel pending loads for smart wearables that left the outfit
-                using (ListPool<string>.Get(out var pendingIds))
-                {
-                    foreach (var kvp in pendingScenes)
-                        if (!newOutfitSmartIds.Contains(kvp.Key))
-                            pendingIds.Add(kvp.Key);
+                using var a = ListPool<string>.Get(out var pendingIds);
+                foreach (var kvp in pendingScenes)
+                    if (!newOutfitSmartIds.Contains(kvp.Key))
+                        pendingIds.Add(kvp.Key);
 
-                    foreach (string id in pendingIds)
-                        if (pendingScenes.Remove(id, out var pending))
-                            pending.ForgetLoading(World);
-                }
+                foreach (string id in pendingIds)
+                    if (pendingScenes.Remove(id, out var pending))
+                        pending.ForgetLoading(World);
 
                 // Unload running smart wearables that left the outfit; clear kill marker like OnUnEquipWearable does
-                using (ListPool<string>.Get(out var runningIds))
-                {
-                    foreach (string id in smartWearableCache.RunningSmartWearables)
-                        if (!newOutfitSmartIds.Contains(id))
-                            runningIds.Add(id);
+                using var b = ListPool<string>.Get(out var runningIds);
+                foreach (string id in smartWearableCache.RunningSmartWearables)
+                    if (!newOutfitSmartIds.Contains(id))
+                        runningIds.Add(id);
 
-                    foreach (string id in runningIds)
-                    {
-                        smartWearableCache.KilledPortableExperiences.Remove(id);
-                        portableExperiencesController.UnloadPortableExperienceById(id);
-                    }
+                foreach (string id in runningIds)
+                {
+                    smartWearableCache.KilledPortableExperiences.Remove(id);
+                    portableExperiencesController.UnloadPortableExperienceById(id);
                 }
 
                 // Start scenes for smart wearables now in the outfit (auth flow mirrors single-equip path)

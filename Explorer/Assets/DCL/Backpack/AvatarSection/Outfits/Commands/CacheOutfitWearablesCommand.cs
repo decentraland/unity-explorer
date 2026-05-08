@@ -29,9 +29,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             if (wearableUrns == null || wearableUrns.Count == 0)
                 return;
 
-            // 1) Split into base URNs and token mappings (base -> (full, token))
-            var baseUrns = HashSetPool<URN>.Get();
-            var tokenMappings = ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Get();
+            using var a = HashSetPool<URN>.Get(out var baseUrns);
+            using var b = ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Get(out var tokenMappings);
+            using var c = ListPool<URN>.Get(out var missingUrns);
 
             foreach (var fullUrn in wearableUrns)
                 if (!useFullUrns && TrySplitBaseAndToken(fullUrn, out var baseUrn, out string tokenId))
@@ -42,8 +42,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 else
                     // Off-chain or no token: just ensure DTO exists
                     baseUrns.Add(fullUrn);
-
-            var missingUrns = ListPool<URN>.Get();
 
             TryAdd(bodyShape, result, missingUrns);
             foreach (var w in baseUrns)
@@ -75,29 +73,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 /* expected */
             }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
-            finally
-            {
-                ListPool<URN>.Release(missingUrns);
-                HashSetPool<URN>.Release(baseUrns);
-                ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Release(tokenMappings);
-            }
         }
 
-        private void TryAdd(string urn, List<IWearable> result, List<URN> missingUrns)
+        private void TryAdd(URN urn, List<IWearable> result, List<URN> missingUrns)
         {
             if (string.IsNullOrEmpty(urn)) return;
 
             if (wearableStorage.TryGetElement(urn, out IWearable w))
                 result.Add(w);
             else
-                try
-                {
-                    missingUrns.Add(new URN(urn));
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogError(ReportCategory.BACKPACK, $"Invalid URN in outfit: {urn}. Error: {e.Message}");
-                }
+                missingUrns.Add(new URN(urn));
         }
 
         // Accepts V2 on-chain URNs of form:

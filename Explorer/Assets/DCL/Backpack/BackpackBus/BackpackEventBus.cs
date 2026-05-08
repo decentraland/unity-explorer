@@ -28,7 +28,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<Color, string>? ChangeColorEvent;
         public event Action? PublishProfileEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?>? FilterEvent;
-        public event Action<BackpackEquipOutfitCommand, IWearable[]>? EquipOutfitEvent;
+        public event Action<BackpackEquipOutfitCommand, IReadOnlyCollection<IWearable>>? EquipOutfitEvent;
         public event Action? EquipOutfitCompletedEvent;
 
         public void SendWearableSelect(IWearable equipWearable) =>
@@ -77,8 +77,8 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendBackpackDeactivateEvent() =>
             DeactivateEvent?.Invoke();
-        
-        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
+
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables) =>
             EquipOutfitEvent?.Invoke(command, wearables);
 
         public void SendEquipOutfitCompleted() =>
