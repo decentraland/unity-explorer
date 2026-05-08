@@ -49,13 +49,9 @@ namespace DCL.VoiceChat.Nearby
 
             // PositionSystem reads NearbyListenerState (produced by NearbyAudibleRangeSystem in
             // production). This benchmark exercises PositionSystem in isolation, so we seed the
-            // state manually with FirstPerson defaults.
-            var listenerState = new NearbyListenerState
-            {
-                PlayerHeadPosition = playerGo.transform.position,
-                IsFirstPerson = true,
-            };
-            listenerState.BindListener(camera.transform);
+            // state manually with the player head transform.
+            var listenerState = new NearbyListenerState();
+            listenerState.BindListener(camera.transform, playerGo.transform);
 
             system = new NearbyAudioPositionSystem(world, muteService, listenerState);
             system.Initialize();
