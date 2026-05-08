@@ -33,7 +33,6 @@ namespace DCL.AvatarRendering.Loading.Assets
 
             ProcessWearableChildren(parent, wearable);
 
-            wearable.Instance.gameObject.layer = parent.gameObject.layer;
             wearable.Instance.transform.ResetLocalTRS();
             wearable.Instance.gameObject.SetActive(true);
 
@@ -58,7 +57,7 @@ namespace DCL.AvatarRendering.Loading.Assets
 
             // A wearable cannot have a MeshRenderer, only SkinnedMeshRenderer.
             // We need to destroy it form the source wearable
-            foreach (var T in meshRenderers.Value) Object.DestroyImmediate(T.gameObject);
+            foreach (var meshRenderer in meshRenderers.Value) Object.DestroyImmediate(meshRenderer.gameObject);
 
             // Remove unused bone GameObjects from the wearable hierarchies, preserving spring bone transforms
             RemoveBonesGameObjects(instantiatedWearable.transform, springBoneParams);
@@ -83,9 +82,7 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         private static void RemoveBonesGameObjects(Transform wearableRoot, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
-            using PoolExtensions.Scope<List<Renderer>> pooledList = wearableRoot.gameObject.GetComponentsInChildrenIntoPooledList<Renderer>(true);
-
-            if (pooledList.Value.Count == 0)
+            if (wearableRoot.GetComponentInChildren<Renderer>(true) == null)
                 return;
 
             for (int i = wearableRoot.childCount - 1; i >= 0; i--)
@@ -115,66 +112,55 @@ namespace DCL.AvatarRendering.Loading.Assets
             return false;
         }
 
-        private static void CollectSpringBoneChain(
-            Transform root,
-            SpringBoneParamsDto rootConfig,
-            Dictionary<Transform, int> boneIndexLookup,
-            IReadOnlyDictionary<string, SpringBoneParamsDto> springBoneParams,
-            List<SpringBoneData> result)
-        {
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-                if (!boneIndexLookup.TryGetValue(child, out int boneIndex)) continue;
-                if (boneIndex < AVATAR_SKELETON_BONE_COUNT) continue;
-
-                // If the child has its own entry in the payload, it's an independent root — skip
-                if (springBoneParams.ContainsKey(child.name)) continue;
-
-                result.Add(new SpringBoneData(
-                    child,
-                    isRoot: false,
-                    boneIndexLookup[child.parent],
-                    rootConfig.stiffness,
-                    rootConfig.drag,
-                    rootConfig.gravityDir,
-                    rootConfig.gravityPower,
-                    child.localRotation));
-
-                CollectSpringBoneChain(child, rootConfig, boneIndexLookup, springBoneParams, result);
-            }
-        }
-
         private static SpringBoneData[] BuildSpringBoneData(GameObject wearable, IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
         {
             if (springBoneParams == null || springBoneParams.Count == 0)
                 return Array.Empty<SpringBoneData>();
 
-            using var resultScope = ListPool<SpringBoneData>.Get(out var result);
-
             var skeleton = wearable.GetComponentInChildren<SkinnedMeshRenderer>();
+            Transform[] bones = skeleton.bones;
 
-            // Map each bone in the rig to its index in the bones array
+            using var resultScope = ListPool<SpringBoneData>.Get(out var result);
             using var boneIndexLookupScope = DictionaryPool<Transform, int>.Get(out var boneIndexLookup);
-            for (int boneIndex = 0; boneIndex < skeleton.bones.Length; boneIndex++)
-                boneIndexLookup.Add(skeleton.bones[boneIndex], boneIndex);
 
-            foreach (var bone in skeleton.bones)
+            for (int i = 0; i < bones.Length; i++)
+                boneIndexLookup.Add(bones[i], i);
+
+            for (int i = 0; i < bones.Length; i++)
             {
-                if (!springBoneParams.TryGetValue(bone.name, out SpringBoneParamsDto paramsDto)) continue;
+                Transform bone = bones[i];
 
-                result.Add(new SpringBoneData(bone,
-                    paramsDto.isRoot,
+                // Bone explicitly configured in the payload (root or follower)
+                if (springBoneParams.TryGetValue(bone.name, out SpringBoneParamsDto cfg))
+                {
+                    result.Add(new SpringBoneData(bone, cfg.isRoot,
+                        boneIndexLookup[bone.parent],
+                        cfg.stiffness, cfg.drag, cfg.gravityDir, cfg.gravityPower,
+                        bone.localRotation));
+                    continue;
+                }
+
+                // Untagged extra bone (beyond the base avatar skeleton): inherit from
+                // the nearest spring root ancestor reachable through bone parents.
+                if (i < AVATAR_SKELETON_BONE_COUNT) continue;
+
+                SpringBoneParamsDto? inherited = null;
+
+                for (Transform a = bone.parent; a != null && boneIndexLookup.ContainsKey(a); a = a.parent)
+                {
+                    if (springBoneParams.TryGetValue(a.name, out SpringBoneParamsDto ancestorCfg) && ancestorCfg.isRoot)
+                    {
+                        inherited = ancestorCfg;
+                        break;
+                    }
+                }
+
+                if (inherited == null) continue;
+
+                result.Add(new SpringBoneData(bone, isRoot: false,
                     boneIndexLookup[bone.parent],
-                    paramsDto.stiffness,
-                    paramsDto.drag,
-                    paramsDto.gravityDir,
-                    paramsDto.gravityPower,
+                    inherited.stiffness, inherited.drag, inherited.gravityDir, inherited.gravityPower,
                     bone.localRotation));
-
-                // Collect untagged children that inherit this root's spring bone parameters
-                if (paramsDto.isRoot)
-                    CollectSpringBoneChain(bone, paramsDto, boneIndexLookup, springBoneParams, result);
             }
 
             return result.Count > 0 ? result.ToArray() : Array.Empty<SpringBoneData>();
