@@ -75,10 +75,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     }, isInstant: true);
                     if (controller.IsCurrentlyNewAccount)
                     {
+                        // isInstant: true — this is the start of the in-Explorer onboarding step
+                        // and pairs with PROFILE_FINALIZED. We need both endpoints of the
+                        // onboarding measurement to be guaranteed-flushed; otherwise an early
+                        // abandon (close client during avatar customization) can drop the start
+                        // event and leave us with a profile_finalized that has no opener.
                         analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, new JObject
                         {
                             { "method", controller.CurrentLoginMethod.ToString() },
-                        });
+                        }, isInstant: true);
                     }
                     break;
 
@@ -98,10 +103,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     }, isInstant: true);
                     if (controller.IsCurrentlyNewAccount)
                     {
+                        // isInstant: true — same reasoning as the LoggedIn branch.
                         analytics.Track(Authentication.NEW_ACCOUNT_ONBOARDING_STARTED, new JObject
                         {
                             { "method", controller.CurrentLoginMethod.ToString() },
-                        });
+                        }, isInstant: true);
                     }
                     break;
 
