@@ -1,6 +1,8 @@
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.ECSComponents;
+using ECS.Unity.ColorComponent;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -87,8 +89,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
 
         /// <summary>
-        /// Returns true when <paramref name="other"/> changes any structural field
-        /// (BodyShape, ShowOnlyWearables, Wearables) — i.e. the avatar must be re-instantiated.
+        /// Returns true when <paramref name="other"/> changes any field that requires re-instantiation:
+        /// BodyShape, ShowOnlyWearables, Wearables, or any of the avatar colors. Colors are included
+        /// because they only reach the GPU through SetAvatarColors at instantiation — no live refresh
+        /// path exists. Expression triggers and the talking flag are intentionally NOT checked: those
+        /// tick frequently and must not trigger a rebuild.
         /// </summary>
         public readonly bool HasStructuralChange(PBAvatarShape other)
         {
@@ -97,6 +102,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             bool newShowOnlyWearables = other is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
             if (ShowOnlyWearables != newShowOnlyWearables) return true;
+
+            if (HairColor != other.GetHairColor().ToUnityColor()) return true;
+            if (SkinColor != other.GetSkinColor().ToUnityColor()) return true;
+            if (EyesColor != other.GetEyeColor().ToUnityColor()) return true;
 
             if (LastWearables.Count != other.Wearables.Count) return true;
             for (int i = 0; i < LastWearables.Count; i++)

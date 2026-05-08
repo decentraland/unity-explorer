@@ -90,12 +90,9 @@ namespace DCL.AvatarRendering.AvatarShape
                 return;
 
             // Always update cosmetic fields
+            // Identity fields are always cheap to track and never affect rendering.
             avatarShapeComponent.ID = pbAvatarShape.Id;
             avatarShapeComponent.Name = pbAvatarShape.Name;
-            avatarShapeComponent.HairColor = pbAvatarShape.GetHairColor().ToUnityColor();
-            avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
-            avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
-            avatarShapeComponent.IsDirty = true;
 
             if (avatarShapeComponent.HasStructuralChange(pbAvatarShape))
             {
@@ -104,7 +101,11 @@ namespace DCL.AvatarRendering.AvatarShape
                 avatarShapeComponent.WearablePromise = CreateWearablePromise(pbAvatarShape, partition);
                 avatarShapeComponent.BodyShape = pbAvatarShape;
                 avatarShapeComponent.ShowOnlyWearables = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
+                avatarShapeComponent.HairColor = pbAvatarShape.GetHairColor().ToUnityColor();
+                avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
+                avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
                 avatarShapeComponent.CaptureWearablesSnapshot(pbAvatarShape.Wearables);
+                avatarShapeComponent.IsDirty = true;
             }
         }
 
