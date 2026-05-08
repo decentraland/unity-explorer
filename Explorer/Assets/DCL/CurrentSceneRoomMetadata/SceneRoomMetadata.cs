@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿#nullable enable
+
+using Newtonsoft.Json;
 using System;
-using System.Text.Json.Serialization;
+using RichTypes;
 
 namespace DCL.SceneBannedUsers
 {
@@ -9,5 +11,18 @@ namespace DCL.SceneBannedUsers
     {
         [JsonProperty("bannedAddresses")] public string[] BannedAddresses;
         [JsonProperty("sceneAdmins")] public string[] SceneAdmins;
+
+        public static Result<SceneRoomMetadata> FromJson(string rawJson)
+        {
+            try
+            {
+                SceneRoomMetadata usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(rawJson);
+                return Result<SceneRoomMetadata>.SuccessResult(usersRoomMetadata);
+            }
+            catch (Exception e)
+            {
+                return Result<SceneRoomMetadata>.ErrorResult($"Cannot parse SceneRoomMetadata from: '{rawJson}'; error: {e.Message ?? "unknown error"}");
+            }
+        }
     }
 }

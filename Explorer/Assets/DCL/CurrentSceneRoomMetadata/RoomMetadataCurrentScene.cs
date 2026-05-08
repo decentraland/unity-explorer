@@ -1,13 +1,13 @@
-﻿using CodeLess.Attributes;
+﻿#nullable enable
+
+using CodeLess.Attributes;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.LiveKit.Public;
 using ECS;
-using LiveKit.Proto;
 using LiveKit.Rooms;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Utility.Multithreading;
 using RichTypes;
 using REnum;
@@ -33,8 +33,8 @@ namespace DCL.SceneBannedUsers
         private readonly IRealmData realmData;
         private readonly bool includeBannedUsersFromScene;
 
-        private Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-        private Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private readonly Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private readonly Mutex<HashSet<string>?> sceneAdminsAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         public RoomMetadataCurrentScene(
             IRoomHub roomHub,
@@ -46,11 +46,13 @@ namespace DCL.SceneBannedUsers
             this.includeBannedUsersFromScene = includeBannedUsersFromScene;
             roomHub.SceneRoom().Room().RoomMetadataChanged += OnRoomMetadataChanged;
             roomHub.SceneRoom().Room().ConnectionUpdated += OnConnectionUpdated;
+
+            OnRoomMetadataChanged(roomHub.SceneRoom().Room().Info.Metadata);
         }
 
 
 #if UNITY_INCLUDE_TESTS
-        public RoomMetadataCurrentScene()
+        private RoomMetadataCurrentScene()
         {
         }
 
@@ -76,8 +78,15 @@ namespace DCL.SceneBannedUsers
         {
             if (string.IsNullOrEmpty(metadata)) return;
 
-            string roomMetadata = metadata;
-            SceneRoomMetadata usersRoomMetadata = JsonConvert.DeserializeObject<SceneRoomMetadata>(roomMetadata);
+            Result<SceneRoomMetadata> result = SceneRoomMetadata.FromJson(metadata);
+
+            if (result.Success == false)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Failed to parse scene room metadata: {result.ErrorMessage}");
+                return;
+            }
+
+            SceneRoomMetadata usersRoomMetadata = result.Value;
 
             using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (usersRoomMetadata.BannedAddresses is { Length: > 0 })

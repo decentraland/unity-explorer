@@ -18,10 +18,6 @@ namespace DCL.Chat.Commands
 
         public string Description => $"<b>/{Command}</b>\n  Shows the list of admins of the scene";
 
-        public SceneAdminsChatCommand()
-        {
-        }
-
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             Result<IEnumerable<string>> result = RoomMetadataCurrentScene.Instance.CurrentAdmins();
