@@ -10,7 +10,6 @@ using DCL.CharacterMotion.Settings;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Systems;

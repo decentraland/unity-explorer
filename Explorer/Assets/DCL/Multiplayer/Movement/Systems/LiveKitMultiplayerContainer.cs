@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement
             IMessagePipesHub messagePipesHub,
             MovementInbox movementInbox,
             ISelfProfile selfProfile,
-            ObjectProxy<IUserBlockingCache> userBlockingCache,
+            IUserBlockingCache userBlockingCache,
             MultiplayerDebugSettings multiplayerDebugSettings)
         {
             bool backwardCompatibilityMode = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);

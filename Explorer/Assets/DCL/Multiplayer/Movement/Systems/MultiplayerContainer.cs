@@ -214,7 +214,7 @@ namespace DCL.Multiplayer.Movement
             IRoomHub roomHub,
             IMessagePipesHub messagePipesHub,
             MultiplayerDebugSettings multiplayerDebugSettings,
-            ObjectProxy<IUserBlockingCache> userBlockingCache,
+            IUserBlockingCache userBlockingCache,
             ISelfProfile selfProfile,
             CancellationToken ct) =>
             new (

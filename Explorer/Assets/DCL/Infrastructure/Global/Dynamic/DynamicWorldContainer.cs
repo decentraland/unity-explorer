@@ -422,7 +422,15 @@ namespace Global.Dynamic
 
             var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), memoryPool, islandThroughputBunch, sceneThroughputBunch, chatThroughputBunch);
 
+            IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
+
+            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING)
+                ? new UserBlockingCache(friendsEventBus)
+                : new NullUserBlockingCache();
+
+            // LEGACY HACK — do not add new consumers. Kept only for Settings group + ExplorePanelPlugin; pass `userBlockingCache` directly instead. See ObjectProxy<T>.
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+            userBlockingCacheProxy.SetObject(userBlockingCache);
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -461,7 +469,7 @@ namespace Global.Dynamic
                     roomHub,
                     messagePipesHub,
                     dynamicSettings.MultiplayerDebugSettings,
-                    userBlockingCacheProxy,
+                    userBlockingCache,
                     selfProfile,
                     ct);
             }
@@ -589,12 +597,6 @@ namespace Global.Dynamic
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
-
-            IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
-            IUserBlockingCache userBlockingCache = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING)
-                ? new UserBlockingCache(friendsEventBus)
-                : new NullUserBlockingCache();
-            userBlockingCacheProxy.SetObject(userBlockingCache);
 
             var currentChannelService = new CurrentChannelService();
 
