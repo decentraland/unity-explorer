@@ -10,7 +10,6 @@ using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
@@ -541,7 +540,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             LKParticipant participant = NewParticipant(identity);
 
             FieldInfo tracksField = typeof(LKParticipant).GetField("tracks", BindingFlags.Instance | BindingFlags.NonPublic)!;
-            var tracksDict = (ConcurrentDictionary<string, TrackPublication>)tracksField.GetValue(participant)!;
+            var tracksDict = (IDictionary<string, TrackPublication>)tracksField.GetValue(participant)!;
             foreach ((string sid, TrackKind kind, TrackSource source) in tracks)
                 tracksDict[sid] = NewPublication(sid, kind, source);
 

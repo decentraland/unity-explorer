@@ -175,6 +175,22 @@ jobs:
           docker push $ghcr
           echo "Seeded GHCR: $ghcr"
 
+      - name: Install ripgrep for edit mode tests
+        if: matrix.testMode == 'editmode'
+        id: rg-img
+        run: |
+          base="${{ steps.img.outputs.ghcr }}"
+          derived="${base}-rg"
+          cat > /tmp/Dockerfile.rg <<EOF
+          FROM $base
+          RUN apt-get update \
+              && apt-get install -y --no-install-recommends ripgrep \
+              && rm -rf /var/lib/apt/lists/*
+          EOF
+          docker build -t "$derived" -f /tmp/Dockerfile.rg /tmp
+          echo "image=$derived" >> $GITHUB_OUTPUT
+          echo "Built derived image with ripgrep: $derived"
+
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -186,7 +202,7 @@ jobs:
           projectPath: Explorer
           testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
-          customImage: ${{ steps.img.outputs.ghcr }}
+          customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
