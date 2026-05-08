@@ -18,13 +18,18 @@ name: Visual Regression
 #   internally).
 #
 # Required secrets / vars (configure once on the repo):
-#   - secrets.ALTTESTER_LICENCE                       AltTester Pro license key (British spelling, set by devops)
-#   - secrets.REPOS_READ_ONLY_TOKEN                   PAT with read on decentraland/MetaForge + decentraland/explorer-automation
-#   - secrets.EXPLORER_TEAM_S3_BUCKET                 S3 bucket for the Allure report
-#   - secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION        AWS region the bucket lives in
-#   - secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID         S3 upload credentials
-#   - secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY     S3 upload credentials
-#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL         Public-facing prefix of the bucket
+#
+# Used directly by this dispatcher:
+#   - vars.DEV_EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Constructs the Explorer build download URL
+#
+# Inherited by the reusable workflow via `secrets: inherit` — must exist
+# on this repo even though the dispatcher itself doesn't reference them:
+#   - secrets.ALTTESTER_LICENSE
+#   - secrets.REPOS_READ_ONLY_TOKEN
+#   - secrets.DEV_EXPLORER_TEAM_S3_BUCKET
+#   - secrets.DEV_EXPLORER_TEAM_AWS_DEFAULT_REGION
+#   - secrets.DEV_EXPLORER_TEAM_AWS_ACCESS_KEY_ID
+#   - secrets.DEV_EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
 
 on:
   issue_comment:
@@ -86,7 +91,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          PUBLIC_URL_PREFIX: ${{ vars.DEV_EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
