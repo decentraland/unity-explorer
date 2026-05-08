@@ -40,12 +40,12 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly HashSet<StreamKey> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
-        private readonly NearbyAudioSourceFactory sourceFactory;
+        private readonly INearbyAudioSourceFactory sourceFactory;
 
         // Mismatch with registry.RebuildEpoch ⇒ output-device changed since last tick.
         private int lastSeenRebuildEpoch;
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, NearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
