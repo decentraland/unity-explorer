@@ -62,6 +62,12 @@ namespace DCL.Quality.Runtime
             this.appArgs = appArgs;
             this.analytics = analytics;
 
+            if (SavedQualitySettingsApplier.TryGetPresetOverride(appArgs, out QualityPresetLevel overridePreset))
+            {
+                ApplyPresetInternal(overridePreset, persist: false);
+                return;
+            }
+
             QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
             if (savedPreset == QualityPresetLevel.Custom)
@@ -73,7 +79,10 @@ namespace DCL.Quality.Runtime
             else { SetPreset(savedPreset); }
         }
 
-        public void SetPreset(QualityPresetLevel level)
+        public void SetPreset(QualityPresetLevel level) =>
+            ApplyPresetInternal(level, persist: true);
+
+        private void ApplyPresetInternal(QualityPresetLevel level, bool persist)
         {
             if (level == QualityPresetLevel.Custom) { throw new ArgumentException("Cannot set custom preset from QualitySettingsController"); }
 
@@ -85,9 +94,11 @@ namespace DCL.Quality.Runtime
             CurrentPreset = level;
             presetData = preset;
 
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(level));
-
-            DeleteCustomSettings();
+            if (persist)
+            {
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(level));
+                DeleteCustomSettings();
+            }
 
             FpsLimit = preset.FpsLimit;
             VSync = preset.VSyncEnabled;
@@ -107,11 +118,14 @@ namespace DCL.Quality.Runtime
             ShadowDistance = preset.ShadowDistance;
             PlayCurrentSceneStreamsOnly = preset.PlayCurrentSceneStreamsOnly;
 
-            ApplyAllSettings();
+            ApplyAllSettings(persist);
             OnPresetChanged?.Invoke(level);
         }
 
-        public void ApplyAllSettings()
+        public void ApplyAllSettings() =>
+            ApplyAllSettings(persist: true);
+
+        private void ApplyAllSettings(bool persist)
         {
             URPSettingsApplier.ApplyVSync(VSync, FpsLimit);
             upscalingController.UpdateUpscaling(ResolutionScale);
@@ -125,7 +139,7 @@ namespace DCL.Quality.Runtime
             landscapeData.DetailDistance = LandscapeDistance;
 
             URPSettingsApplier.ApplySunShadows(SunShadows);
-            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, SunLensFlare);
+            if (persist) DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, SunLensFlare);
             URPSettingsApplier.ApplySunLensFlare(SunLensFlare);
             URPSettingsApplier.ApplySceneLight(SceneLights);
             URPSettingsApplier.ApplyMaxObjectsPerLight(MaxSceneLights);

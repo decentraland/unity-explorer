@@ -56,6 +56,7 @@ namespace Global.AppArgs
         public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string GRAPHICS = "graphics";
         public const string WINDOWED_MODE = "windowed-mode";
         public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
         public const string DISABLE_HUD = "disable-hud";

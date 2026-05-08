@@ -241,6 +241,19 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `graphics`
+**Type:** String (`Low`, `Medium`, or `High`, case-insensitive)
+**Description:** Forces a graphics quality preset on startup, overriding whatever preset is saved in PlayerPrefs. The override is ephemeral — PlayerPrefs are not modified, so launching again without the flag restores the user's saved preset (including any `Custom` overrides). `Custom` is not accepted as a value.
+
+**Usage:**
+```bash
+--graphics high
+--graphics medium
+--graphics low
+```
+
+---
+
 ## Development Tools Flags
 
 ### `identity-expiration-duration`
