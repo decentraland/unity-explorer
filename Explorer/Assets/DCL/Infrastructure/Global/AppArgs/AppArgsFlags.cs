@@ -23,6 +23,7 @@ namespace Global.AppArgs
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+        public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
 
         /// <summary>
         /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
