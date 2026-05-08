@@ -122,8 +122,7 @@ jobs:
             exit 1
           fi
 
-          SAFE_BRANCH="${HEAD_REF//\//-}"
-          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${SAFE_BRANCH}/pr-${RUN_NUMBER}-${SHORT_SHA}"
+          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${HEAD_REF}/pr-${RUN_NUMBER}-${SHORT_SHA}"
           BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
 
           {
