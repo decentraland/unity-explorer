@@ -39,8 +39,8 @@ namespace DCL.SpringBones
 
         [Query]
         [None(typeof(SpringBoneRegistrationComponent), typeof(DeleteEntityIntention))]
-        private void RegisterNew(in Entity entity,
-            ref AvatarShapeComponent avatarShapeComponent,
+        private void RegisterNew(Entity entity,
+            in AvatarShapeComponent avatarShapeComponent,
             AvatarBase avatarBase,
             ref AvatarTransformMatrixComponent transformMatrixComponent)
         {
@@ -50,7 +50,7 @@ namespace DCL.SpringBones
 
             // Capture the version locally before the structural change. World.Add moves the entity
             // to a new archetype, invalidating the avatarShapeComponent/transformMatrixComponent
-            // refs from this query — they must not be read after this line.
+            // refs from this query: they must not be read after this line.
             int avatarVersion = avatarShapeComponent.InstantiationVersion;
 
             World.Add(entity, new SpringBoneRegistrationComponent
@@ -63,7 +63,7 @@ namespace DCL.SpringBones
         [Query]
         [All(typeof(AvatarShapeComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void ReRegisterOnChange(ref AvatarShapeComponent avatarShapeComponent,
+        private void ReRegisterOnChange(in AvatarShapeComponent avatarShapeComponent,
             AvatarBase avatarBase,
             ref SpringBoneRegistrationComponent registration,
             ref AvatarTransformMatrixComponent transformMatrixComponent)
@@ -105,8 +105,8 @@ namespace DCL.SpringBones
                 using var chainConfigsScope = ListPool<SpringBoneJointConfig>.Get(out var chainConfigs);
                 using var chainTailsScope = ListPool<float3>.Get(out var chainTails);
 
-                Transform currentWearableParent = null;
-                Transform currentAvatarParent = null;
+                Transform? currentWearableParent = null;
+                Transform? currentAvatarParent = null;
 
                 foreach (SpringBoneData springBone in wearable.SpringBones)
                 {
