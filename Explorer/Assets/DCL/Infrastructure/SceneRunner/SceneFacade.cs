@@ -22,6 +22,11 @@ namespace SceneRunner
         private const int UPDATE_HANG_INTERRUPT_THRESHOLD_MS = 10000;
         private const int START_HANG_INTERRUPT_THRESHOLD_MS = 30000;
 
+        // Cap dt passed to JS so a slow tick (e.g. host-parking on first iteration) can't feed an
+        // absurd value into scene code that does dt-based stepping/integration, which would otherwise
+        // spin synchronously inside V8 for hundreds of iterations and trip the hang watchdog.
+        private const float MAX_DELTA_TIME = 0.1f;
+
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
@@ -124,6 +129,9 @@ namespace SceneRunner
             // One-shot watchdog: if JS init doesn't complete within START_HANG_INTERRUPT_THRESHOLD_MS,
             // interrupt the engine and mark the scene as failed.
             var watchdogCts = new CancellationTokenSource();
+            // This is a safeguard to prevent the JS thread to become stuck keeping the scene state as running when it failed
+            // See: https://github.com/decentraland/unity-explorer/issues/8654
+            // https://github.com/decentraland/unity-explorer/issues/8493
             RunHangWatchdogAsync(START_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
 
             try
@@ -156,8 +164,10 @@ namespace SceneRunner
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
-            // Single watchdog for the whole loop lifetime
             var watchdogCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            // This is a safeguard to prevent the JS thread to become stuck keeping the scene state as running when it failed
+            // See: https://github.com/decentraland/unity-explorer/issues/8654
+            // https://github.com/decentraland/unity-explorer/issues/8493
             RunHangWatchdogAsync(UPDATE_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
 
             try
@@ -204,7 +214,10 @@ namespace SceneRunner
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await DCLTask.Delay(sleepMS, ct);
                     MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay));
-                    deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
+                    // Some scenes fail when delta time is large, locking the JS thread
+                    // See: https://github.com/decentraland/unity-explorer/issues/8654
+                    // https://github.com/decentraland/unity-explorer/issues/8493
+                    deltaTime = Math.Min(stopWatch.ElapsedMilliseconds / 1000f, MAX_DELTA_TIME);
                 }
             }
             catch (OperationCanceledException) { }
@@ -275,9 +288,13 @@ namespace SceneRunner
 
         public void SetIsCurrent(bool isCurrent)
         {
+            ReportHub.Log(ReportCategory.ALWAYS, $"[SetIsCurrentDiag] '{Info.Name}' isCurrent={isCurrent}, isMainThread={Cysharp.Threading.Tasks.PlayerLoopHelper.IsMainThread}, sceneCodeIsRunning={sceneCodeIsRunning.IsSet}");
+
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
             deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+
+            ReportHub.Log(ReportCategory.ALWAYS, $"[SetIsCurrentDiag] '{Info.Name}' isCurrent={isCurrent} done");
         }
 
         /// <remarks>
