@@ -91,6 +91,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             // Write into flat backing arrays
             int offset = validIndex * bonesArrayLength;
             BoneArray bones = transformMatrixComponent.bones;
+
+            // bonesArrayLength is the per-avatar slot capacity (MAX_BONE_COUNT = 256).
+            // bones.Count is BASE_BONE_COUNT (62) plus appended spring bones, so it is
+            // typically smaller than bonesArrayLength — the trailing slots get padded with
+            // dummyTransform. Mathf.Min guards against a hypothetical out-of-range BoneArray.
             int actualCount = Mathf.Min(bones.Count, bonesArrayLength);
 
             for (int b = 0; b < actualCount; b++)
