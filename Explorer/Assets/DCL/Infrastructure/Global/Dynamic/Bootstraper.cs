@@ -2,12 +2,10 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.CharacterCamera;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.InWorldCamera;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
@@ -352,31 +350,32 @@ namespace Global.Dynamic
                     playerEntity: playerEntity
                 ), ct);
 
-            OpenDefaultUI(dynamicWorldContainer.MvcManager, globalWorld.EcsWorld, ct);
+            OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
 
             splashScreen.Hide();
         }
 
-        private void OpenDefaultUI(IMVCManager mvcManager, World ecsWorld, CancellationToken ct)
+        private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
 
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_HUD))
-                DisableHudOnStartupAsync(ecsWorld, ct).Forget();
+                DisableHudOnStartupAsync(mvcManager, ct).Forget();
         }
 
-        private static async UniTaskVoid DisableHudOnStartupAsync(World ecsWorld, CancellationToken ct)
+        internal static async UniTask DisableHudOnStartupAsync(IMVCManager mvcManager, CancellationToken ct)
         {
             try
             {
-                // Wait a frame: MVC views are lazy; SetViewCanvasActive no-ops until viewFactory has run.
+                // Wait a frame so lazily-mounted MVC views exist before toggling.
                 await UniTask.NextFrame(ct).SuppressCancellationThrow();
 
                 if (ct.IsCancellationRequested)
                     return;
 
-                ecsWorld.Add(ecsWorld.CacheCamera(), new ToggleUIRequest { Enable = false, Except = null });
+                // Bypass ToggleUIRequest (used by U key) so scene SDK UIDocuments stay visible.
+                mvcManager.SetAllViewsCanvasActive(false);
             }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
         }
