@@ -17,7 +17,7 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///     as the feature's hierarchy root (renamed to "VoiceChatSources_Nearby") so live and pooled
     ///     instances are siblings under one parent — no factory-side wrapper transform.
     /// </summary>
-    public class NearbyAudioSourceFactory
+    public class NearbyAudioSourceFactory : INearbyAudioSourceFactory
     {
         private const string ROOT_NAME = "VoiceChatSources_Nearby";
 
