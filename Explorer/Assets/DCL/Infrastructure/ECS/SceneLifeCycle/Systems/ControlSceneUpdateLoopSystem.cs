@@ -113,8 +113,6 @@ namespace ECS.SceneLifeCycle.Systems
                 if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
                     return;
 
-                scene.UpdateLoopAsync(destroyCancellationToken).Forget();
-
                 // 2. Register the scene in the cache from the main thread (cache writes are main-thread only)
                 await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
 
@@ -126,8 +124,10 @@ namespace ECS.SceneLifeCycle.Systems
                 ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
 
                 // // 3. Run the update loop on the thread pool
-                // await DCLTask.SwitchToThreadPool();
-                // if (destroyCancellationToken.IsCancellationRequested) return;
+                await DCLTask.SwitchToThreadPool();
+                if (destroyCancellationToken.IsCancellationRequested) return;
+
+                await scene.UpdateLoopAsync(destroyCancellationToken);
             }
             catch (Exception e)
             {
