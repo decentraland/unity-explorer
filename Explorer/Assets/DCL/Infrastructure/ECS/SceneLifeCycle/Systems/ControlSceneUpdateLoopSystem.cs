@@ -129,6 +129,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 await scene.UpdateLoopAsync(destroyCancellationToken);
             }
+            catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, GetReportData());
