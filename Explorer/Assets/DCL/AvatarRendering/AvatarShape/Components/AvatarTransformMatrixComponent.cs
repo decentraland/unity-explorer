@@ -74,21 +74,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
     }
 
-    /// <summary>
-    ///     Bone transform array with separate count and capacity. The internal array never shrinks —
-    ///     <see cref="Append"/> reuses existing capacity when possible, avoiding heap allocation.
-    /// </summary>
     public struct BoneArray
     {
         public Transform[] Inner;
-        public int Count;
+
+        public int Count => Inner.Length;
 
         public Transform this[int i] => Inner[i];
 
-        private BoneArray(Transform[] inner, int count)
+        private BoneArray(Transform[] inner)
         {
             Inner = inner;
-            Count = count;
         }
 
         public static Result<BoneArray> From(Transform[] bones)
@@ -96,7 +92,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             if (bones.Length < ComputeShaderConstants.BASE_BONE_COUNT || bones.Length > ComputeShaderConstants.MAX_BONE_COUNT)
                 return Result<BoneArray>.ErrorResult($"Cannot map bone array, count {bones.Length} outside valid range [{ComputeShaderConstants.BASE_BONE_COUNT}, {ComputeShaderConstants.MAX_BONE_COUNT}]");
 
-            return Result<BoneArray>.SuccessResult(new BoneArray(bones, bones.Length));
+            return Result<BoneArray>.SuccessResult(new BoneArray(bones));
         }
 
         public static BoneArray FromOrDefault(Transform[] bones, ReportData reportData)
@@ -116,14 +112,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             var inner = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
             for (int i = 0; i < ComputeShaderConstants.BASE_BONE_COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
-            return new BoneArray(inner, ComputeShaderConstants.BASE_BONE_COUNT);
+            return new BoneArray(inner);
         }
 
         public void Append(List<Transform> bones)
         {
             if (bones.Count == 0) return;
 
-            int newCount = Count + bones.Count;
+            int oldCount = Inner.Length;
+            int newCount = oldCount + bones.Count;
 
             if (newCount > ComputeShaderConstants.MAX_BONE_COUNT)
             {
@@ -131,15 +128,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 newCount = ComputeShaderConstants.MAX_BONE_COUNT;
             }
 
-            if (Inner.Length < newCount)
-                Array.Resize(ref Inner, newCount);
+            Array.Resize(ref Inner, newCount);
 
-            int extraCount = newCount - Count;
-
+            int extraCount = newCount - oldCount;
             for (int i = 0; i < extraCount; i++)
-                Inner[Count + i] = bones[i];
-
-            Count = newCount;
+                Inner[oldCount + i] = bones[i];
         }
     }
 }
