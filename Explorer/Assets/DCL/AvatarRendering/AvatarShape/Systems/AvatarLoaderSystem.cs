@@ -99,8 +99,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (avatarShapeComponent.HasStructuralChange(pbAvatarShape))
             {
-                if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                    avatarShapeComponent.WearablePromise.ForgetLoading(World);
+                avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
                 avatarShapeComponent.WearablePromise = CreateWearablePromise(pbAvatarShape, partition);
                 avatarShapeComponent.BodyShape = pbAvatarShape;
@@ -137,8 +136,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         private void ApplyProfileToAvatarShape(Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
-            if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                avatarShapeComponent.WearablePromise.ForgetLoading(World);
+            avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
             WearablePromise newPromise = CreateWearablePromise(profile, partition);
             avatarShapeComponent.ID = profile.UserId;
