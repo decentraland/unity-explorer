@@ -22,7 +22,7 @@ namespace DCL.VoiceChat.Nearby.Tests
     ///
     /// - Reads avatar position via <see cref="NearbyAudioSourceComponent.AvatarEntity"/>.
     /// - Drives <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
-    /// - Reprojects spatial position to the player head in third-person.
+    /// - Reprojects source position relative to the player head.
     ///
     /// Structural changes for audio entities are owned exclusively by <see cref="NearbyAudioCleanupSystem"/>.
     /// </summary>
@@ -36,6 +36,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private readonly List<GameObject> gameObjects = new (8);
 
         private Camera camera = null!;
+        private Transform playerHead = null!;
         private INearbyMuteCache muteCache = null!;
         private NearbyMuteService muteService = null!;
         private NearbyListenerState listenerState = null!;
@@ -48,29 +49,24 @@ namespace DCL.VoiceChat.Nearby.Tests
             var cameraGo = CreateTrackedGameObject("TestCamera");
             camera = cameraGo.AddComponent<Camera>();
 
+            // Default head anchor collocated with the camera; tests that need a non-collocated head mutate via SeedListener.
+            playerHead = CreateTrackedGameObject("TestPlayerHead").transform;
+            playerHead.position = camera.transform.position;
+
             muteCache = Substitute.For<INearbyMuteCache>();
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
 
-            // Production: NearbyAudibleRangeSystem.Initialize seeds NearbyListenerState.ListenerTransform,
-            // then refreshes IsFirstPerson + PlayerHeadPosition every tick. Tests drive PositionSystem in
-            // isolation, so we seed the state manually with FirstPerson defaults; tests that need
-            // ThirdPerson reprojection mutate it via SeedListener.
-            listenerState = new NearbyListenerState
-            {
-                PlayerHeadPosition = camera.transform.position,
-                IsFirstPerson = true,
-            };
-            listenerState.BindListener(camera.transform);
+            listenerState = new NearbyListenerState();
+            listenerState.BindListener(camera.transform, playerHead);
 
             system = new NearbyAudioPositionSystem(world, muteService, listenerState);
             system.Initialize();
         }
 
-        // Mirror what NearbyAudibleRangeSystem would have written this tick.
-        private void SeedListener(Vector3 playerHeadPos, bool isFirstPerson)
+        // Mirror what NearbyAudibleRangeSystem would drive into the head transform this tick.
+        private void SeedListener(Vector3 playerHeadPos)
         {
-            listenerState.PlayerHeadPosition = playerHeadPos;
-            listenerState.IsFirstPerson = isFirstPerson;
+            playerHead.position = playerHeadPos;
         }
 
         protected override void OnTearDown()
@@ -86,9 +82,11 @@ namespace DCL.VoiceChat.Nearby.Tests
         // ── Position Sync ───────────────────────────────────────────
 
         [Test]
-        public void SyncAudioSourcePositionToAvatarHeadInFirstPerson()
+        public void SyncsAudioSourceToRemoteHeadWhenListenerCollocatedWithPlayerHead()
         {
-            // Default seeded listener is FirstPerson at the camera origin.
+            // Degenerate reprojection case: listener and player head share a position, so
+            // sourcePos = listener + (remoteHead - playerHead) collapses to remoteHead.
+            // This is approximately the FirstPerson case in production.
             Vector3 avatarPos = new Vector3(10, 0, 5);
             Vector3 headPos = avatarPos + new Vector3(0, 1.6f, 0);
             Entity avatarEntity = CreateAvatarEntity(PARTICIPANT_A, avatarPos, headPos);
@@ -103,10 +101,13 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void ReprojectAudioSourcePositionInThirdPerson()
+        public void ReprojectsAudioSourcePositionRelativeToPlayerHead()
         {
+            // General case (covers ThirdPerson and the FP↔TP transition):
+            // listener is offset from the player's head, so the source is reprojected to
+            // listener + (remoteHead - playerHead) — pan/gain stay head-relative.
             var playerHeadPos = new Vector3(0, 1.6f, 0);
-            SeedListener(playerHeadPos, isFirstPerson: false);
+            SeedListener(playerHeadPos);
 
             Vector3 avatarPos = new Vector3(8, 0, 4);
             Vector3 remoteHead = avatarPos + new Vector3(0, 1.6f, 0);
