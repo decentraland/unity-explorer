@@ -73,6 +73,16 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `skip-minimum-specs-screen`
+**Description:** Skips the minimum system specifications screen on startup, even when the host hardware does not meet the minimum requirements. Also bypasses the automatic low-quality preset that is normally enforced on sub-spec hardware, so the user-selected preset (or `--graphics`) controls quality. Intended for visual tests and CI machines that may register as low-spec but should still render at the configured quality. The hardware check still runs and is recorded in analytics/Sentry. Ignored when `--forceMinimumSpecsScreen` is also passed.
+
+**Usage:**
+```bash
+--skip-minimum-specs-screen
+```
+
+---
+
 ## Scene & Environment Flags
 
 ### `scene-console`
@@ -372,10 +382,11 @@ Visual regression tests need a deterministic scene: a fixed window, no time-of-d
 | `--resolution 1920x1080` | Forces a fixed render resolution. Capturing at the same resolution that the reference frames were taken at avoids upscaler/MSAA differences. Only honored in fullscreen mode. |
 | `--windowed-mode` | Forces windowed mode so the OS doesn't apply display-server-specific fullscreen scaling. Pair with `--resolution` to lock the captured framebuffer size. |
 | `--disable-hud` | Hides the HUD (chat, minimap, notifications, etc.) so transient UI doesn't pollute the captured frame. SDK UI from scenes remains visible. |
+| `--skip-minimum-specs-screen` | Skips the "performance adjusted to your device" screen on sub-spec hardware and prevents the automatic low-quality preset from overriding `--graphics`. |
 
 **Example launch:**
 ```bash
---debug --landscape-terrain-enabled false --skybox-time-enabled false --resolution 1920x1080 --windowed-mode --disable-hud
+--debug --landscape-terrain-enabled false --skybox-time-enabled false --resolution 1920x1080 --windowed-mode --disable-hud --skip-minimum-specs-screen
 ```
 
 ---
