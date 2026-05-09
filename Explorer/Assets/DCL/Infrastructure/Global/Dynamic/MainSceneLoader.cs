@@ -415,9 +415,10 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
-            if (!hasMinimumSpecs)
+            if (!hasMinimumSpecs && !skipScreen)
             {
                 SavedQualitySettingsApplier.EnforceLowPreset();
             }
@@ -446,7 +447,7 @@ namespace Global.Dynamic
 
             analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
-            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+            bool shouldShowScreen = forceShow || (!skipScreen && !userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
                 return minimumSpecsGuard.Results;
