@@ -34,7 +34,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private readonly List<GameObject> gameObjects = new (16);
 
-        private Entity cameraEntity;
         private Entity playerEntity;
         private Camera camera = null!;
         private VoiceChatConfiguration configuration = null!;
@@ -49,7 +48,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var cameraGo = CreateTrackedGameObject("TestCamera");
             cameraGo.transform.position = Vector3.zero;
             camera = cameraGo.AddComponent<Camera>();
-            cameraEntity = world.Create(new CameraComponent(camera));
+            world.Create(new CameraComponent(camera));
 
             var playerFocusGo = CreateTrackedGameObject("PlayerFocus");
             playerFocusGo.transform.position = Vector3.zero;
@@ -91,35 +90,19 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void RefreshesIsFirstPersonAndHeadPositionEachTick_FirstPerson()
+        public void RefreshesPlayerHeadPositionEachTickFromCameraFocus()
         {
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.FirstPerson;
-            camera.transform.position = new Vector3(5f, 1.6f, -2f);
-
-            system.Update(0);
-
-            Assert.That(listenerState.IsFirstPerson, Is.True);
-            Assert.That(listenerState.PlayerHeadPosition, Is.EqualTo(camera.transform.position),
-                "FirstPerson: PlayerHeadPosition must track the camera transform");
-        }
-
-        [Test]
-        public void RefreshesIsFirstPersonAndHeadPositionEachTick_ThirdPerson()
-        {
-            // Third person: PlayerHeadPosition must follow the player's CameraFocus, not the camera.
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.ThirdPerson;
-
+            // PlayerHeadPosition is mode-independent: always tracks PlayerComponent.CameraFocus,
+            // regardless of camera mode. This keeps the audio reprojection continuous through
+            // FP↔TP Cinemachine blends — the camera moves, the head anchor does not flip.
             camera.transform.position = new Vector3(100f, 0f, 0f);
             PlayerComponent playerComp = world.Get<PlayerComponent>(playerEntity);
             playerComp.CameraFocus.position = new Vector3(1f, 1.6f, 2f);
 
             system.Update(0);
 
-            Assert.That(listenerState.IsFirstPerson, Is.False);
             Assert.That(listenerState.PlayerHeadPosition, Is.EqualTo(playerComp.CameraFocus.position),
-                "ThirdPerson: PlayerHeadPosition must track PlayerComponent.CameraFocus");
+                "PlayerHeadPosition must track PlayerComponent.CameraFocus, not the camera transform");
         }
 
         // ── Outer boundary — Query A / Query B / hysteresis ─────────
@@ -336,14 +319,12 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void ListenerPositionInThirdPersonUsesCameraFocusNotCamera()
+        public void RangeDistanceUsesCameraFocusNotCamera()
         {
-            // Camera and CameraFocus are co-located at SetUp; in third-person the helper must
-            // read CameraFocus, not the camera transform. Move the camera far away to break
-            // any "use camera in third-person" implementation; the avatar is positioned 17 m
-            // from the focus (in-range) but 100 m from the camera (way out-of-range).
-            ref CameraComponent cam = ref world.Get<CameraComponent>(cameraEntity);
-            cam.Mode = CameraMode.ThirdPerson;
+            // Camera and CameraFocus are co-located at SetUp; the range check must read
+            // CameraFocus, not the camera transform — regardless of camera mode. Move the
+            // camera far away to break any "use camera transform" implementation; the avatar
+            // is positioned 17 m from the focus (in-range) but 100 m from the camera (way out).
             camera.transform.position = new Vector3(100f, 0f, 0f);
 
             // CameraFocus stays at origin — the player-component anchor.
@@ -352,7 +333,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True,
-                "third-person helper must evaluate distance against PlayerComponent.CameraFocus");
+                "range distance must be evaluated against PlayerComponent.CameraFocus");
         }
 
         // ── Helpers ─────────────────────────────────────────────────
