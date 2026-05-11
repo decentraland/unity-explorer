@@ -18,8 +18,8 @@ using System;
 using System.Collections;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.TestTools;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace SceneRuntime.Tests
 {
