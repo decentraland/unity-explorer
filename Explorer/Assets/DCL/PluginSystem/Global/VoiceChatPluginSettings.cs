@@ -16,5 +16,7 @@ namespace DCL.PluginSystem.Global
         [Header("Audio References")]
         [field: SerializeField] public AudioClipConfig MuteMicrophoneAudio { get; private set; } = null!;
         [field: SerializeField] public AudioClipConfig UnmuteMicrophoneAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig NearbyStartSpeakingAudio { get; private set; } = null!;
+        [field: SerializeField] public AudioClipConfig NearbyStopSpeakingAudio { get; private set; } = null!;
     }
 }

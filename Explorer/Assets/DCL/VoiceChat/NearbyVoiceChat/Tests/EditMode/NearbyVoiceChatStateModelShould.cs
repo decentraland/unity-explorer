@@ -364,5 +364,146 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Assert
             Assert.That(stateChanges, Is.Empty);
         }
+
+        // ── IsOpenMic synthetic reactive ────────────────────────────
+
+        [Test]
+        public void StartIsOpenMicFalseWhenInitialStateIsNotOpenMic()
+        {
+            // Assert — model was constructed with DISABLED in SetUp
+            Assert.That(model.IsOpenMic.Value, Is.False);
+        }
+
+        [Test]
+        public void StartIsOpenMicTrueWhenInitialStateIsOpenMic()
+        {
+            // Arrange + Act
+            using var speakingModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.OPEN_MIC);
+
+            // Assert
+            Assert.That(speakingModel.IsOpenMic.Value, Is.True);
+        }
+
+        [Test]
+        public void FlipIsOpenMicTrueOnStartSpeaking()
+        {
+            // Arrange
+            model.Enable();
+
+            // Act
+            model.StartSpeaking();
+
+            // Assert
+            Assert.That(model.IsOpenMic.Value, Is.True);
+        }
+
+        [Test]
+        public void FlipIsOpenMicFalseOnStopSpeaking()
+        {
+            // Arrange
+            model.Enable();
+            model.StartSpeaking();
+
+            // Act
+            model.StopSpeaking();
+
+            // Assert
+            Assert.That(model.IsOpenMic.Value, Is.False);
+        }
+
+        [Test]
+        public void FlipIsOpenMicFalseWhenSuppressedFromOpenMic()
+        {
+            // Arrange — speaking, then suppression cascade (OPEN_MIC → IDLE → SUPPRESSED)
+            model.Enable();
+            model.StartSpeaking();
+
+            // Act
+            model.Suppress(SuppressionReason.CALL);
+
+            // Assert — both intermediate transitions land IsOpenMic at false
+            Assert.That(model.IsOpenMic.Value, Is.False);
+        }
+
+        [Test]
+        public void NotChangeIsOpenMicOnSuppressFromIdle()
+        {
+            // Arrange — not speaking
+            model.Enable();
+            var openMicChanges = new List<bool>();
+            model.IsOpenMic.Subscribe(v => openMicChanges.Add(v));
+
+            // Act
+            model.Suppress(SuppressionReason.CALL);
+
+            // Assert — never went true, never emitted
+            Assert.That(model.IsOpenMic.Value, Is.False);
+            Assert.That(openMicChanges, Is.Empty);
+        }
+
+        [Test]
+        public void NotChangeIsOpenMicOnResumeToIdle()
+        {
+            // Arrange — was speaking, suppression force-stopped it. After Resume we return to IDLE, IsOpenMic stays false.
+            model.Enable();
+            model.StartSpeaking();
+            model.Suppress(SuppressionReason.CALL);
+            var openMicChanges = new List<bool>();
+            model.IsOpenMic.Subscribe(v => openMicChanges.Add(v));
+
+            // Act
+            model.Resume(SuppressionReason.CALL);
+
+            // Assert
+            Assert.That(model.IsOpenMic.Value, Is.False);
+            Assert.That(openMicChanges, Is.Empty);
+        }
+
+        [Test]
+        public void EmitSingleStopTransitionOnSuppressFromOpenMic()
+        {
+            // Arrange
+            model.Enable();
+            model.StartSpeaking();
+            var openMicChanges = new List<bool>();
+            model.IsOpenMic.Subscribe(v => openMicChanges.Add(v));
+
+            // Act — OPEN_MIC → IDLE → SUPPRESSED
+            model.Suppress(SuppressionReason.CALL);
+
+            // Assert — only the OPEN_MIC → IDLE transition flips IsOpenMic;
+            // the IDLE → SUPPRESSED hop is already false and is filtered by ReactiveProperty equality.
+            Assert.That(openMicChanges, Is.EqualTo(new[] { false }));
+        }
+
+        [Test]
+        public void EmitSingleStartTransitionOnStartSpeaking()
+        {
+            // Arrange
+            model.Enable();
+            var openMicChanges = new List<bool>();
+            model.IsOpenMic.Subscribe(v => openMicChanges.Add(v));
+
+            // Act
+            model.StartSpeaking();
+
+            // Assert
+            Assert.That(openMicChanges, Is.EqualTo(new[] { true }));
+        }
+
+        [Test]
+        public void NotEmitIsOpenMicWhenDisabledFromIdle()
+        {
+            // Arrange — never speaking
+            model.Enable();
+            var openMicChanges = new List<bool>();
+            model.IsOpenMic.Subscribe(v => openMicChanges.Add(v));
+
+            // Act
+            model.Disable();
+
+            // Assert — IDLE → DISABLED, IsOpenMic stays false throughout
+            Assert.That(openMicChanges, Is.Empty);
+        }
     }
 }

@@ -80,6 +80,8 @@ namespace DCL.PluginSystem.Global
         private HashSet<StreamKey>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
+        private NearbyMicrophoneHandler? nearbyMicrophoneHandler;
+        private MicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
         private CancellationTokenSource? nearbyTipCts;
@@ -202,7 +204,7 @@ namespace DCL.PluginSystem.Global
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
             AudioClipConfig muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             AudioClipConfig unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
-            microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
+            microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler.IsMicrophoneEnabled, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
 
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
@@ -237,8 +239,14 @@ namespace DCL.PluginSystem.Global
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
 
-                nearbyVoiceChatManager = new NearbyVoiceChatManager(stateModel, islandRoom, voiceChatConfiguration, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
+                nearbyVoiceChatManager = new NearbyVoiceChatManager(stateModel, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
+
+                nearbyMicrophoneHandler = new NearbyMicrophoneHandler(stateModel, islandRoom, voiceChatConfiguration);
+                pluginScope.Add(nearbyMicrophoneHandler);
+
+                nearbyMicrophoneAudioToggleHandler = new MicrophoneAudioToggleHandler(stateModel.IsOpenMic, pluginSettings.NearbyStopSpeakingAudio, pluginSettings.NearbyStartSpeakingAudio);
+                pluginScope.Add(nearbyMicrophoneAudioToggleHandler);
 
                 // UI
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, stateModel);

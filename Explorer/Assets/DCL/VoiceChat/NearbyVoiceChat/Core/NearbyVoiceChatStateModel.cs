@@ -31,12 +31,21 @@ namespace DCL.VoiceChat.Nearby
     {
         private readonly ReactiveProperty<NearbyVoiceChatState> state;
         private readonly ReactiveProperty<SuppressionReason?> activeSuppression = new (null);
+        private readonly ReactiveProperty<bool> isOpenMic;
         private readonly HashSet<SuppressionReason> suppressionReasons = new ();
 
         private NearbyVoiceChatState preBlockedState;
 
         public IReadonlyReactiveProperty<NearbyVoiceChatState> State => state;
         public IReadonlyReactiveProperty<SuppressionReason?> ActiveSuppression => activeSuppression;
+
+        /// <summary>
+        ///     Synthetic mirror of <c>State.Value == OPEN_MIC</c>.
+        ///     Derived inside <see cref="SetState"/> so it stays in lockstep with the canonical state
+        ///     without extra subscriptions or threading concerns.
+        ///     Consumed by <see cref="MicrophoneAudioToggleHandler"/> to play start/stop speaking SFX.
+        /// </summary>
+        public IReadonlyReactiveProperty<bool> IsOpenMic => isOpenMic;
 
         /// <summary>
         ///     How the current (or most recent) SPEAKING state was entered.
@@ -62,6 +71,7 @@ namespace DCL.VoiceChat.Nearby
         public NearbyVoiceChatStateModel(NearbyVoiceChatState initialState)
         {
             state = new ReactiveProperty<NearbyVoiceChatState>(initialState);
+            isOpenMic = new ReactiveProperty<bool>(initialState == NearbyVoiceChatState.OPEN_MIC);
             preBlockedState = initialState;
         }
 
@@ -69,6 +79,7 @@ namespace DCL.VoiceChat.Nearby
         {
             state.ClearSubscriptionsList();
             activeSuppression.ClearSubscriptionsList();
+            isOpenMic.ClearSubscriptionsList();
         }
 
         public void Enable()
@@ -146,6 +157,7 @@ namespace DCL.VoiceChat.Nearby
         {
             ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"State change {state.Value} -> {newState}");
             state.Value = newState;
+            isOpenMic.Value = newState == NearbyVoiceChatState.OPEN_MIC;
         }
     }
 }
