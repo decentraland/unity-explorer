@@ -407,7 +407,7 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.sidebarConfigButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
-        private void OnHelpButtonClicked() => OpenPanelAsync(null, HelpMenuController.IssueCommand()).Forget();
+        private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
 
         private void OnContactSupportClicked() => HelpOpened?.Invoke();
 

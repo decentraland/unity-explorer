@@ -91,7 +91,7 @@ MonoBehaviour:
   <SidebarConfigPanelView>k__BackingField: {fileID: 9165167233262662817}
   <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
   <emotesWheelButton>k__BackingField: {fileID: 7515730619705325338}
-  <helpButton>k__BackingField: {fileID: 2978611201982790949}
+  <helpButton>k__BackingField: {fileID: 5555575879091665929}
   <HelpMenu>k__BackingField: {fileID: 8797854463136211626}
   <unreadMessagesButton>k__BackingField: {fileID: 3472291053238887700}
   <chatUnreadMessagesNumber>k__BackingField: {fileID: 3554301536170617574}
@@ -681,17 +681,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2978611201982790949 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2759484254438996382, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &3655238427613538003 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4442674242960712296, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
@@ -733,6 +722,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5555575879091665929 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4757157486523119794, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49ca1955f944decaab3280e1c39b5a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &6705180925666095888 stripped

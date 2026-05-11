@@ -64,7 +64,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator emotesWheelButton { get; private set; } = null!;
 
         [field: Header("Help")]
-        [field: SerializeField] internal Button helpButton { get; private set; } = null!;
+        [field: SerializeField] internal HoverableAndSelectableButtonWithAnimator helpButton { get; private set; } = null!;
         [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
 
         [field: Header("Chat")]
