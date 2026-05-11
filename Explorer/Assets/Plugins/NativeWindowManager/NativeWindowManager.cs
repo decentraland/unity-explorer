@@ -88,7 +88,8 @@ namespace Plugins.NativeWindowManager
         /// </summary>
         /// <param name="disableConstraints">If constraints should be disabled in window mode.</param>
         /// <param name="windowedModeRequested">If window mode was specifically requested via app args.</param>
-        public static void Initialize(bool disableConstraints, bool windowedModeRequested)
+        /// <param name="resolutionOverride">Optional resolution injected via app args, overrides PlayerPrefs and defaults.</param>
+        public static void Initialize(bool disableConstraints, bool windowedModeRequested, Vector2Int? resolutionOverride = null)
         {
             disableWindowConstraints = disableConstraints;
 
@@ -99,6 +100,10 @@ namespace Plugins.NativeWindowManager
                 EnableFullscreen(desiredFullscreen, store: false);
             else if (!desiredFullscreen)
                 ApplyConstraints(true);
+
+            // Apply saved/overridden resolution
+            Vector2Int targetResolution = resolutionOverride ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+            Screen.SetResolution(targetResolution.x, targetResolution.y, desiredFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
