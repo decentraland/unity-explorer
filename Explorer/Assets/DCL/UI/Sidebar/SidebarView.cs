@@ -33,7 +33,6 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] public Button InWorldCameraButton { get; private set; } = null!;
         [field: SerializeField] internal Button communitiesButton { get; private set; } = null!;
         [field: SerializeField] internal Button? placesButton { get; private set; } = null!;
-        [field: SerializeField] internal Button mapButton { get; private set; } = null!;
         [field: SerializeField] internal Button backpackButton { get; private set; } = null!;
         [field: SerializeField] internal Button cameraReelButton { get; private set; } = null!;
         [field: SerializeField] internal Button settingsButton { get; private set; } = null!;

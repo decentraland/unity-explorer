@@ -73,7 +73,6 @@ MonoBehaviour:
   <InWorldCameraButton>k__BackingField: {fileID: 1734187727223042766}
   <communitiesButton>k__BackingField: {fileID: 9067792495595083366}
   <placesButton>k__BackingField: {fileID: 5369727375203069159}
-  <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
@@ -774,17 +773,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7155361432440409617, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8108662634941636583 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 9194748314017176412, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
-  m_PrefabInstance: {fileID: 1089184277027898555}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &8183886167291671765 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9119382768320999534, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}

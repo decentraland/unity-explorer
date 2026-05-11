@@ -128,7 +128,6 @@ namespace DCL.UI.Sidebar
             {
                 viewInstance.settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
                 viewInstance.communitiesButton.onClick.RemoveListener(OnCommunitiesButtonClicked);
-                viewInstance.mapButton.onClick.RemoveListener(OnMapButtonClicked);
                 viewInstance.autoHideToggle.onValueChanged.RemoveListener(OnAutoHideToggleChanged);
                 viewInstance.helpButton.onClick.RemoveListener(OnHelpButtonClicked);
                 viewInstance.controlsButton.onClick.RemoveListener(OnControlsButtonClicked);
@@ -204,7 +203,6 @@ namespace DCL.UI.Sidebar
 
             viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
             viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
-            viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
@@ -379,7 +377,6 @@ namespace DCL.UI.Sidebar
 
         private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
         private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
-        private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
         private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
         private void OnPlacesButtonClicked()
         {
