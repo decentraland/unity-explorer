@@ -93,15 +93,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static unsafe Hash128 ComputeHashLegacy(string hash, string buildDate)
         {
-            ReadOnlySpan<char> hashSpan = hash.AsSpan();
-            ReadOnlySpan<char> buildDateSpan = buildDate.AsSpan();
+            // Byte-identical to the pre-v49 cache key so existing Unity-AB-cache entries keep hitting after upgrade.
+            // The lack of a delimiter is a known theoretical collision risk (e.g. buildDate ending in 'X' vs. hash
+            // starting with 'X') — accepted here, will be addressed when v49 adoption lets us retire this path.
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
 
-            Span<char> builder = stackalloc char[buildDateSpan.Length + 1 + hashSpan.Length];
-            buildDateSpan.CopyTo(builder);
-            builder[buildDateSpan.Length] = '|';
-            hashSpan.CopyTo(builder[(buildDateSpan.Length + 1)..]);
-
-            fixed (char* ptr = builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * builder.Length)); }
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
         public static unsafe Hash128 ComputeHashV49(string hash, string version, string depsDigest)

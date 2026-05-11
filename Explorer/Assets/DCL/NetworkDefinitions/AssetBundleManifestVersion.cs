@@ -23,6 +23,12 @@ public class AssetBundleManifestVersion
 
         private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
+        // Global kill-switch for the v49 deps-digest cache-keying scheme. Default off so the build is byte-identical
+        // to legacy behavior until the feature flag is rolled out. Flipped from bootstrap based on FeaturesRegistry.
+        // When false: SupportsDepsDigests reports false for every manifest, TryGetDepsDigest never returns a digest,
+        // and every downstream call site (cache dispatch, GLTF key compose, digest fetch) falls back to legacy.
+        public static bool DepsDigestKeyingEnabled;
+
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
         private bool? SupportsDepsDigestsValue;
@@ -54,6 +60,7 @@ public class AssetBundleManifestVersion
         /// </summary>
         public bool SupportsDepsDigests()
         {
+            if (!DepsDigestKeyingEnabled) return false;
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
         }
@@ -74,7 +81,7 @@ public class AssetBundleManifestVersion
         /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (files == null || files.Length == 0)
+            if (!DepsDigestKeyingEnabled || files == null || files.Length == 0)
             {
                 depsDigests = null;
                 return;
@@ -99,7 +106,7 @@ public class AssetBundleManifestVersion
 
         public bool TryGetDepsDigest(string hash, out string digest)
         {
-            if (depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
+            if (DepsDigestKeyingEnabled && depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
                 return true;
 
             digest = string.Empty;

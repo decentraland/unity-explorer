@@ -12,6 +12,23 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private const string DIGEST_A = "dda1af30bdf4a19ce03e663a9a288afe";
         private const string DIGEST_B = "243f68977939e1f526b4c1a05a40b43a";
 
+        private bool depsDigestKeyingEnabledBackup;
+
+        [OneTimeSetUp]
+        public void EnableDepsDigestKeyingForFixture()
+        {
+            // The production gate is off until the feature flag flips it from bootstrap. Tests exercise the v49
+            // code paths directly, so opt in for the lifetime of the fixture and restore in teardown.
+            depsDigestKeyingEnabledBackup = AssetBundleManifestVersion.DepsDigestKeyingEnabled;
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = true;
+        }
+
+        [OneTimeTearDown]
+        public void RestoreDepsDigestKeying()
+        {
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = depsDigestKeyingEnabledBackup;
+        }
+
         [Test]
         public void InjectDepsDigestsFromThreePartFilenames()
         {
@@ -253,17 +270,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void LegacyDelimiterPreventsBoundaryCollisions()
-        {
-            // Without a delimiter, (buildDate="2026-05-01", hash="Xhash") and (buildDate="2026-05-01X", hash="hash")
-            // would concatenate to the same byte stream.
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy("Xhash", "2026-05-01");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy("hash", "2026-05-01X");
-
-            Assert.That(a, Is.Not.EqualTo(b));
-        }
-
-        [Test]
         public void VersionPredicates_DoNotThrowOnNonVNVersions()
         {
             //Check that when handling a LOD it doesn't throw
@@ -296,6 +302,37 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
 
             Assert.That(legacy, Is.Not.EqualTo(v49));
+        }
+
+        [Test]
+        public void Gate_DisablesV49DigestSupportEvenForV49Manifests()
+        {
+            // With the kill-switch off, every manifest must report SupportsDepsDigests() == false so the dispatch
+            // in PrepareCommonArguments takes the legacy path for v49 traffic too.
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = false;
+            try
+            {
+                var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+                Assert.That(manifest.SupportsDepsDigests(), Is.False);
+            }
+            finally { AssetBundleManifestVersion.DepsDigestKeyingEnabled = true; }
+        }
+
+        [Test]
+        public void Gate_SuppressesDigestLookupsAndInjection()
+        {
+            // With the kill-switch off, TryGetDepsDigest must not return digests even if InjectDepsDigests is
+            // called — guarantees ComposeCacheKey returns the bare hash and GLTF/AB cache keys stay legacy-shaped.
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = false;
+            try
+            {
+                var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+                manifest.InjectDepsDigests(new[] { $"X_{DIGEST_A}_mac" });
+
+                Assert.That(manifest.TryGetDepsDigest("X", out _), Is.False);
+                Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
+            }
+            finally { AssetBundleManifestVersion.DepsDigestKeyingEnabled = true; }
         }
     }
 }
