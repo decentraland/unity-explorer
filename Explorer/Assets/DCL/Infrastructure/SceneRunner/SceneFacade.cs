@@ -143,7 +143,7 @@ namespace SceneRunner
             catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
             finally
             {
-                Interlocked.Exchange(ref tickStartTimestamp, 0);
+                DCLInterlocked.Exchange(ref tickStartTimestamp, 0);
                 watchdogCts.SafeCancelAndDispose();
                 sceneCodeIsRunning.Reset();
             }
@@ -187,7 +187,7 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
-                    Interlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
+                    DCLInterlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
 
                     try
                     {
@@ -197,7 +197,7 @@ namespace SceneRunner
                     catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
                     finally
                     {
-                        Interlocked.Exchange(ref tickStartTimestamp, 0);
+                        DCLInterlocked.Exchange(ref tickStartTimestamp, 0);
                         sceneCodeIsRunning.Reset();
                     }
 
@@ -235,7 +235,7 @@ namespace SceneRunner
                 {
                     await DCLTask.Delay(HANG_WATCHDOG_POLL_INTERVAL_MS, ct);
 
-                    long startTs = Interlocked.Read(ref tickStartTimestamp);
+                    long startTs = DCLInterlocked.Read(ref tickStartTimestamp);
                     if (startTs == 0) continue; // No tick in progress
 
                     long elapsedMs = (Stopwatch.GetTimestamp() - startTs) * 1000 / Stopwatch.Frequency;
