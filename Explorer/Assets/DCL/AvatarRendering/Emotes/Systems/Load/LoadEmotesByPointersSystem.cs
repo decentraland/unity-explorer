@@ -271,8 +271,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (audioType == AudioType.UNKNOWN)
                     continue;
 
-                // In LSD the realm content URL points at the local preview server, which doesn't host catalog
-                // emote audio — fall back to the production catalyst for the active environment.
                 string contentBaseUrl = localSceneDevelopment
                     ? urlsSource.Url(DecentralandUrl.PeerContent)
                     : urlsSource.Url(DecentralandUrl.Content);
