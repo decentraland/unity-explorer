@@ -81,6 +81,7 @@ namespace DCL.PluginSystem.Global
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatManager? nearbyVoiceChatManager;
         private NearbyMicrophoneHandler? nearbyMicrophoneHandler;
+        private NearbySpeakingAudibilityGate? nearbySpeakingAudibilityGate;
         private MicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
@@ -245,7 +246,10 @@ namespace DCL.PluginSystem.Global
                 nearbyMicrophoneHandler = new NearbyMicrophoneHandler(stateModel, islandRoom, voiceChatConfiguration);
                 pluginScope.Add(nearbyMicrophoneHandler);
 
-                nearbyMicrophoneAudioToggleHandler = new MicrophoneAudioToggleHandler(stateModel.IsOpenMic, pluginSettings.NearbyStopSpeakingAudio, pluginSettings.NearbyStartSpeakingAudio);
+                nearbySpeakingAudibilityGate = new NearbySpeakingAudibilityGate(stateModel, voiceChatConfiguration);
+                pluginScope.Add(nearbySpeakingAudibilityGate);
+
+                nearbyMicrophoneAudioToggleHandler = new MicrophoneAudioToggleHandler(nearbySpeakingAudibilityGate.EffectiveOpenMic, pluginSettings.NearbyStopSpeakingAudio, pluginSettings.NearbyStartSpeakingAudio);
                 pluginScope.Add(nearbyMicrophoneAudioToggleHandler);
 
                 // UI

@@ -65,6 +65,11 @@ namespace DCL.VoiceChat
         [Range(0f, 1f)] public float nearbyIldStrength = 0.75f;
         public bool nearbySmoothPanning;
 
+        [Header("NEARBY - SFX")]
+        [Tooltip("When false (default), start/stop speaking SFX is muted whenever the OPEN_MIC transition was triggered by push-to-talk. " +
+                 "Exposed in the Nearby Voice Chat debug widget so UX can A/B test push-to-talk sessions in-game.")]
+        public bool nearbyPlaySfxOnPushToTalk;
+
         [Header("NEARBY - Audible Range (meters)")]
         [Tooltip("Audible-range hysteresis band, in meters.\n" +
                  "X = inner radius — crossing inward below this distance ADDS the audible-range tag.\n" +

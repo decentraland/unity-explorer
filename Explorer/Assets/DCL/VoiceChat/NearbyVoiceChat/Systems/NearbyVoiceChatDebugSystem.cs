@@ -42,6 +42,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly ElementBinding<bool> spatializeBinding;
         private readonly ElementBinding<bool> smoothPanningBinding;
         private readonly ElementBinding<float> ildBinding;
+        private readonly ElementBinding<bool> playSfxOnPushToTalkBinding;
 
         private readonly DebugWidgetVisibilityBinding visibility = new (true);
         private readonly ElementBinding<string> stateBinding = new (string.Empty);
@@ -96,11 +97,15 @@ namespace DCL.VoiceChat.Nearby.Systems
             ildBinding = new ElementBinding<float>(configuration.nearbyIldStrength,
                 evt => { configuration.nearbyIldStrength = evt.newValue; });
 
+            playSfxOnPushToTalkBinding = new ElementBinding<bool>(configuration.nearbyPlaySfxOnPushToTalk,
+                evt => { configuration.nearbyPlaySfxOnPushToTalk = evt.newValue; });
+
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.NEARBY_VOICE_CHAT)
                        ?.SetVisibilityBinding(visibility)
                         .AddControl(new DebugConstLabelDef("Spatialize"), new DebugToggleDef(spatializeBinding))
                         .AddControl(new DebugConstLabelDef("Smooth Panning"), new DebugToggleDef(smoothPanningBinding))
                         .AddFloatSliderField("ILD Strength", ildBinding, 0f, 1f)
+                        .AddControl(new DebugConstLabelDef("Play SFX during Push-to-Talk"), new DebugToggleDef(playSfxOnPushToTalkBinding))
                         .AddCustomMarker("State", stateBinding)
                         .AddCustomMarker("Suppression", suppressionBinding)
                         .AddCustomMarker("Local Speaking", localSpeakingBinding)
