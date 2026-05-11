@@ -1,9 +1,15 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.IO;
+
+#endif
+
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
@@ -15,11 +21,12 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
         [SerializeField] private bool useCleanUp = true;
 
 
+#if !UNITY_WEBGL
         private void Start()
         {
             StartAsync().Forget();
         }
-        
+
         private void Update()
         {
             CleanUp();
@@ -67,5 +74,8 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             var _ = NewDiskCache(out var cache);
             cache.CleanUpIfNeeded();
         }
+
+#endif
+
     }
 }
