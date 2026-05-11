@@ -57,7 +57,8 @@ namespace ECS.Unity.AssetLoad.Systems
                 && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (result.Succeeded)
-                    assetPreLoadCache.TryAdd(assetPreLoadLoadingStateComponent.AssetHash, result.Asset);
+                    // Must match the key used by GltfContainerAssetsCache.TryGet (and looked up via assetLoadCache.TryGet there)
+                    assetPreLoadCache.TryAdd(component.CacheKey, result.Asset);
 
                 MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
             }
