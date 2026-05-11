@@ -1,3 +1,7 @@
+// GLTFast forces usage of Task that is not compatible with WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Arch.Core;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
@@ -51,3 +55,5 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             new GltFastGlobalDownloadProvider(world, realmData.Ipfs.ContentBaseUrl.Value, partitionComponent, reportData, webRequestController, acquiredBudget);
     }
 }
+
+#endif
