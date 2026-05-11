@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!promise.TryConsume(World, out var result) || !result.Succeeded) return;
 
             ISceneFacade scene = result.Asset!;
-            StartSceneAsync(definitionComponent, partition, scene).Forget();
+            StartAndUpdateSceneAsync(definitionComponent, partition, scene).Forget();
 
             World.Add(entity, scene);
         }
@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             World.Add(entity, new SmartWearableSceneStarted());
 
-            StartSceneAsync(definitionComponent, partition, scene).Forget();
+            StartAndUpdateSceneAsync(definitionComponent, partition, scene).Forget();
         }
 
         [Query]
@@ -91,7 +91,7 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }
 
-        private async UniTaskVoid StartSceneAsync(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
+        private async UniTaskVoid StartAndUpdateSceneAsync(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
         {
             int fps = realmPartitionSettings.GetSceneUpdateFrequency(partition);
 
@@ -106,12 +106,12 @@ namespace ECS.SceneLifeCycle.Systems
                 SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
-                await scene.StartAsync(fps, destroyCancellationToken);
+                SceneState startState = await scene.StartAsync(fps, destroyCancellationToken);
 
                 await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
 
                 // If JS init failed (handler set state to an error) or destroy was triggered, stop here.
-                if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
+                if (startState != SceneState.Running || destroyCancellationToken.IsCancellationRequested)
                     return;
 
                 if (definitionComponent.IsPortableExperience)

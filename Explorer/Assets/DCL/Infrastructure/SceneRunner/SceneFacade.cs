@@ -109,7 +109,7 @@ namespace SceneRunner
         ///     <see cref="sceneExceptionsHandler"/>; callers should observe <see cref="SceneStateProvider"/>
         ///     before proceeding to <see cref="UpdateLoopAsync"/>.
         /// </summary>
-        public async UniTask StartAsync(int targetFPS, CancellationToken ct)
+        public async UniTask<SceneState> StartAsync(int targetFPS, CancellationToken ct)
         {
             MultithreadingUtility.AssertMainThread(nameof(StartAsync));
 
@@ -125,7 +125,7 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
-            Interlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
+            DCLInterlocked.Exchange(ref tickStartTimestamp, Stopwatch.GetTimestamp());
 
             // One-shot watchdog: if JS init doesn't complete within START_HANG_INTERRUPT_THRESHOLD_MS,
             // interrupt the engine and mark the scene as failed.
@@ -149,6 +149,8 @@ namespace SceneRunner
             }
 
             MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
+
+            return SceneStateProvider.State.Value();
         }
 
         /// <summary>

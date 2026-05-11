@@ -84,6 +84,22 @@ namespace Utility.Multithreading
 
 #if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Exchange(ref long location, long value)
+        {
+            long previous = location;
+            location = value;
+            return previous;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Exchange(ref long location, long value)
+        {
+            return Interlocked.Exchange(ref location, value);
+        }
+#endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Exchange<T>(ref T location, T value) where T : class?
         {
             T previous = location;
