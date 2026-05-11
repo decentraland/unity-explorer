@@ -256,6 +256,7 @@ namespace DCL.Multiplayer.Movement
             last.headIKYawEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadYaw);
             last.headIKPitchEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadPitch);
             last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
+            last.isPointingAt = EnumUtils.HasFlag(flags, PlayerAnimationFlags.PointingAt);
             lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
             lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
             lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
@@ -282,6 +283,10 @@ namespace DCL.Multiplayer.Movement
 
             if (delta.HasGlideState)
                 last.animState.GlideState = ToNetworkMovementGlideState(delta.GlideState);
+
+            if (delta.HasPointAtX) last.pointAtWorldHitPoint.x = delta.PointAtXQuantized;
+            if (delta.HasPointAtY) last.pointAtWorldHitPoint.y = delta.PointAtYQuantized;
+            if (delta.HasPointAtZ) last.pointAtWorldHitPoint.z = delta.PointAtZQuantized;
 
             // Delta movements are always interpolated
             last.isInstant = false;
@@ -320,6 +325,9 @@ namespace DCL.Multiplayer.Movement
 
             if (message.headIKPitchEnabled)
                 state.HeadPitch = message.headYawAndPitch[1];
+
+            if (message.isPointingAt)
+                state.PointAt = message.pointAtWorldHitPoint.ToProtoVector();
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
@@ -339,6 +347,8 @@ namespace DCL.Multiplayer.Movement
 
             float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
+
+            bool isPointingAt = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.PointingAt);
 
             var message = new NetworkMovementMessage
             {
@@ -367,6 +377,11 @@ namespace DCL.Multiplayer.Movement
                 headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
                 headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),
                 headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
+
+                isPointingAt = isPointingAt,
+                pointAtWorldHitPoint = isPointingAt && playerState.PointAt != null
+                    ? playerState.PointAt.ToUnityVector()
+                    : Vector3.zero,
             };
 
             return message;
@@ -396,6 +411,9 @@ namespace DCL.Multiplayer.Movement
 
             if (message.headIKPitchEnabled)
                 flags |= (uint)PlayerAnimationFlags.HeadPitch;
+
+            if (message.isPointingAt)
+                flags |= (uint)PlayerAnimationFlags.PointingAt;
 
             return flags;
         }

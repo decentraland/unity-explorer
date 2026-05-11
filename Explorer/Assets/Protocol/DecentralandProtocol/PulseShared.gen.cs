@@ -26,24 +26,26 @@ namespace Decentraland.Pulse {
           string.Concat(
             "CiVkZWNlbnRyYWxhbmQvcHVsc2UvcHVsc2Vfc2hhcmVkLnByb3RvEhJkZWNl",
             "bnRyYWxhbmQucHVsc2UaIWRlY2VudHJhbGFuZC9jb21tb24vdmVjdG9ycy5w",
-            "cm90byLuAgoLUGxheWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEi4K",
+            "cm90byKwAwoLUGxheWVyU3RhdGUSFAoMcGFyY2VsX2luZGV4GAEgASgFEi4K",
             "CHBvc2l0aW9uGAIgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3Iz",
             "Ei4KCHZlbG9jaXR5GAMgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0",
             "b3IzEhIKCnJvdGF0aW9uX3kYBCABKAISFgoObW92ZW1lbnRfYmxlbmQYBSAB",
             "KAISEwoLc2xpZGVfYmxlbmQYBiABKAISFQoIaGVhZF95YXcYByABKAJIAIgB",
             "ARIXCgpoZWFkX3BpdGNoGAggASgCSAGIAQESEwoLc3RhdGVfZmxhZ3MYCSAB",
             "KA0SMwoLZ2xpZGVfc3RhdGUYCiABKA4yHi5kZWNlbnRyYWxhbmQucHVsc2Uu",
-            "R2xpZGVTdGF0ZRISCgpqdW1wX2NvdW50GAsgASgFQgsKCV9oZWFkX3lhd0IN",
-            "CgtfaGVhZF9waXRjaCqEAQoUUGxheWVyQW5pbWF0aW9uRmxhZ3MSCAoETk9O",
-            "RRAAEgwKCEdST1VOREVEEAESDQoJTE9OR19KVU1QEAISDQoJTE9OR19GQUxM",
-            "EAQSCwoHRkFMTElORxAIEgsKB1NUVU5ORUQQEBIMCghIRUFEX1lBVxAgEg4K",
-            "CkhFQURfUElUQ0gQQCpOCgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAAS",
-            "EAoMT1BFTklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJP",
-            "UBADYgZwcm90bzM="));
+            "R2xpZGVTdGF0ZRISCgpqdW1wX2NvdW50GAsgASgFEjMKCHBvaW50X2F0GAwg",
+            "ASgLMhwuZGVjZW50cmFsYW5kLmNvbW1vbi5WZWN0b3IzSAKIAQFCCwoJX2hl",
+            "YWRfeWF3Qg0KC19oZWFkX3BpdGNoQgsKCV9wb2ludF9hdCqWAQoUUGxheWVy",
+            "QW5pbWF0aW9uRmxhZ3MSCAoETk9ORRAAEgwKCEdST1VOREVEEAESDQoJTE9O",
+            "R19KVU1QEAISDQoJTE9OR19GQUxMEAQSCwoHRkFMTElORxAIEgsKB1NUVU5O",
+            "RUQQEBIMCghIRUFEX1lBVxAgEg4KCkhFQURfUElUQ0gQQBIQCgtQT0lOVElO",
+            "R19BVBCAASpOCgpHbGlkZVN0YXRlEg8KC1BST1BfQ0xPU0VEEAASEAoMT1BF",
+            "TklOR19QUk9QEAESCwoHR0xJRElORxACEhAKDENMT1NJTkdfUFJPUBADYgZw",
+            "cm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.PlayerAnimationFlags), typeof(global::Decentraland.Pulse.GlideState), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount" }, new[]{ "HeadYaw", "HeadPitch" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerState), global::Decentraland.Pulse.PlayerState.Parser, new[]{ "ParcelIndex", "Position", "Velocity", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount", "PointAt" }, new[]{ "HeadYaw", "HeadPitch", "PointAt" }, null, null, null)
           }));
     }
     #endregion
@@ -59,6 +61,7 @@ namespace Decentraland.Pulse {
     [pbr::OriginalName("STUNNED")] Stunned = 16,
     [pbr::OriginalName("HEAD_YAW")] HeadYaw = 32,
     [pbr::OriginalName("HEAD_PITCH")] HeadPitch = 64,
+    [pbr::OriginalName("POINTING_AT")] PointingAt = 128,
   }
 
   public enum GlideState {
@@ -119,6 +122,7 @@ namespace Decentraland.Pulse {
       stateFlags_ = other.stateFlags_;
       glideState_ = other.glideState_;
       jumpCount_ = other.jumpCount_;
+      pointAt_ = other.pointAt_ != null ? other.pointAt_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -290,6 +294,22 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "point_at" field.</summary>
+    public const int PointAtFieldNumber = 12;
+    private global::Decentraland.Common.Vector3 pointAt_;
+    /// <summary>
+    /// Absolute world hit position the player is pointing at.
+    /// Only meaningful when POINTING_AT is set in `state_flags`.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector3 PointAt {
+      get { return pointAt_; }
+      set {
+        pointAt_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -316,6 +336,7 @@ namespace Decentraland.Pulse {
       if (StateFlags != other.StateFlags) return false;
       if (GlideState != other.GlideState) return false;
       if (JumpCount != other.JumpCount) return false;
+      if (!object.Equals(PointAt, other.PointAt)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -334,6 +355,7 @@ namespace Decentraland.Pulse {
       if (StateFlags != 0) hash ^= StateFlags.GetHashCode();
       if (GlideState != global::Decentraland.Pulse.GlideState.PropClosed) hash ^= GlideState.GetHashCode();
       if (JumpCount != 0) hash ^= JumpCount.GetHashCode();
+      if (pointAt_ != null) hash ^= PointAt.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -396,6 +418,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(88);
         output.WriteInt32(JumpCount);
       }
+      if (pointAt_ != null) {
+        output.WriteRawTag(98);
+        output.WriteMessage(PointAt);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -450,6 +476,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(88);
         output.WriteInt32(JumpCount);
       }
+      if (pointAt_ != null) {
+        output.WriteRawTag(98);
+        output.WriteMessage(PointAt);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -492,6 +522,9 @@ namespace Decentraland.Pulse {
       }
       if (JumpCount != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(JumpCount);
+      }
+      if (pointAt_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PointAt);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -543,6 +576,12 @@ namespace Decentraland.Pulse {
       }
       if (other.JumpCount != 0) {
         JumpCount = other.JumpCount;
+      }
+      if (other.pointAt_ != null) {
+        if (pointAt_ == null) {
+          PointAt = new global::Decentraland.Common.Vector3();
+        }
+        PointAt.MergeFrom(other.PointAt);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -613,6 +652,13 @@ namespace Decentraland.Pulse {
             JumpCount = input.ReadInt32();
             break;
           }
+          case 98: {
+            if (pointAt_ == null) {
+              PointAt = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(PointAt);
+            break;
+          }
         }
       }
     #endif
@@ -680,6 +726,13 @@ namespace Decentraland.Pulse {
           }
           case 88: {
             JumpCount = input.ReadInt32();
+            break;
+          }
+          case 98: {
+            if (pointAt_ == null) {
+              PointAt = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(PointAt);
             break;
           }
         }

@@ -97,6 +97,30 @@ namespace Decentraland.Pulse
             set { _headPitch = value; HeadPitch = Quantize.Encode(value, 0.0f, 180.0f, 6); }
         }
 
+        private float? _pointAtX;
+        /// <summary>Float accessor for <see cref="PointAtX"/>. Range [-3000.0f, 3000.0f], 17 bits, step ≈ 0.0457767.</summary>
+        public float PointAtXQuantized
+        {
+            get => _pointAtX ??= Quantize.Decode(PointAtX, -3000.0f, 3000.0f, 17);
+            set { _pointAtX = value; PointAtX = Quantize.Encode(value, -3000.0f, 3000.0f, 17); }
+        }
+
+        private float? _pointAtY;
+        /// <summary>Float accessor for <see cref="PointAtY"/>. Range [0.0f, 200.0f], 7 bits, step ≈ 1.5748.</summary>
+        public float PointAtYQuantized
+        {
+            get => _pointAtY ??= Quantize.Decode(PointAtY, 0.0f, 200.0f, 7);
+            set { _pointAtY = value; PointAtY = Quantize.Encode(value, 0.0f, 200.0f, 7); }
+        }
+
+        private float? _pointAtZ;
+        /// <summary>Float accessor for <see cref="PointAtZ"/>. Range [-3000.0f, 3000.0f], 17 bits, step ≈ 0.0457767.</summary>
+        public float PointAtZQuantized
+        {
+            get => _pointAtZ ??= Quantize.Decode(PointAtZ, -3000.0f, 3000.0f, 17);
+            set { _pointAtZ = value; PointAtZ = Quantize.Encode(value, -3000.0f, 3000.0f, 17); }
+        }
+
         /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
         public void ResetDecodedCache()
         {
@@ -111,6 +135,9 @@ namespace Decentraland.Pulse
             _slideBlend = null;
             _headYaw = null;
             _headPitch = null;
+            _pointAtX = null;
+            _pointAtY = null;
+            _pointAtZ = null;
         }
     }
 
