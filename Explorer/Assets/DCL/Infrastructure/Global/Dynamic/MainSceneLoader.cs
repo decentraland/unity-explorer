@@ -620,8 +620,12 @@ namespace Global.Dynamic
             else
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
+#if UNITY_WEBGL
+            return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+#else
             var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
+#endif
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
@@ -651,8 +655,12 @@ namespace Global.Dynamic
             else
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
+#if UNITY_WEBGL
+            return new IDiskCache.Fake();
+#else
             var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
             return diskCache;
+#endif
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

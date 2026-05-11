@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
@@ -68,3 +70,5 @@ namespace DCL.RuntimeDeepLink
         }
     }
 }
+
+#endif

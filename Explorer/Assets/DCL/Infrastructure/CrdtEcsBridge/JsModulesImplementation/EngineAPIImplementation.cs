@@ -35,8 +35,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler deserializeBatchSampler;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
+#if !UNITY_WEBGL
         private readonly MultiThreadSync multiThreadSync;
         private readonly MultiThreadSync.Owner syncOwner;
+#endif
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
@@ -53,9 +55,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
-            ISceneExceptionsHandler exceptionsHandler,
-            MultiThreadSync multiThreadSync,
-            MultiThreadSync.Owner syncOwner)
+            ISceneExceptionsHandler exceptionsHandler
+#if !UNITY_WEBGL
+            ,MultiThreadSync multiThreadSync,
+            MultiThreadSync.Owner syncOwner
+#endif
+        )
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -64,8 +69,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+#if !UNITY_WEBGL
             this.multiThreadSync = multiThreadSync;
             this.syncOwner = syncOwner;
+#endif
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -248,7 +255,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             try
             {
+#if !UNITY_WEBGL
                 using MultiThreadSync.Scope mutex = multiThreadSync.GetScope(syncOwner);
+#endif
 
                 applyBufferSampler.Begin();
 

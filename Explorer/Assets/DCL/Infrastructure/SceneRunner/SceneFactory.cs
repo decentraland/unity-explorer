@@ -194,7 +194,9 @@ namespace SceneRunner
 
             SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
 
+#if !UNITY_WEBGL
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
+#endif
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
             Option<ISceneAdmins> sceneAdmins = Option<ISceneAdmins>.None;
@@ -220,7 +222,11 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
+                    webRequestController, skyboxSettings,
+#if !UNITY_WEBGL
+                    engineAPIMutexOwner,
+#endif
+                    profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -250,7 +256,11 @@ namespace SceneRunner
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
                     crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
+                    skyboxSettings,
+#if !UNITY_WEBGL
+                    engineAPIMutexOwner,
+#endif
+                    profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,

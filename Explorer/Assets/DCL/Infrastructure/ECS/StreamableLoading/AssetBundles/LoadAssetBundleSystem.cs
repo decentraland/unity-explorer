@@ -65,7 +65,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle? assetBundle = null;
             AssetBundleLoadingResult? assetBundleResult = null;
 
-#if UNITY_WEBGL
+#if UNITY_WEBGL && FORCE_SHADER_BUNDLE_PRELOADER
             if (ShaderBundlePreloader.TryGetPreloadedBundle(intention.Hash ?? "", out AssetBundle? preloaded))
                 assetBundle = preloaded;
 #endif

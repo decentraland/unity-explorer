@@ -59,6 +59,9 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
+#if UNITY_WEBGL
+            throw new AutoLoginTokenNotFoundException();
+#else
             if (!File.Exists(TOKEN_PATH))
                 throw new AutoLoginTokenNotFoundException();
 
@@ -94,6 +97,7 @@ namespace DCL.Web3.Authenticators
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain,
                 IWeb3Identity.Web3IdentitySource.TokenFile);
+#endif
         }
 
         public UniTask LogoutAsync(CancellationToken ct) =>

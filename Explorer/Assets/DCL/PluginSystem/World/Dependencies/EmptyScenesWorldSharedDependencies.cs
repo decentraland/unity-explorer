@@ -11,15 +11,27 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly Dictionary<CRDTEntity, Entity> FakeEntitiesMap;
         public readonly Entity SceneRoot;
         public readonly ISceneData SceneData;
-        public readonly MultiThreadSync MultiThread;
 
-        public EmptyScenesWorldSharedDependencies(Dictionary<CRDTEntity, Entity> fakeEntitiesMap, Entity sceneRoot,
-            ISceneData sceneData, MultiThreadSync multiThreadSync)
+#if !UNITY_WEBGL
+        public readonly MultiThreadSync MultiThread;
+#endif
+
+        public EmptyScenesWorldSharedDependencies(
+                Dictionary<CRDTEntity, Entity> fakeEntitiesMap,
+                Entity sceneRoot,
+                ISceneData sceneData
+#if !UNITY_WEBGL
+                ,
+                MultiThreadSync multiThreadSync
+#endif
+                )
         {
             FakeEntitiesMap = fakeEntitiesMap;
             SceneRoot = sceneRoot;
             SceneData = sceneData;
+#if !UNITY_WEBGL
             MultiThread = multiThreadSync;
+#endif
         }
     }
 }

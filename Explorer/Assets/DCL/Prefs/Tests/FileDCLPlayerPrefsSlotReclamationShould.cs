@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL
+
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
@@ -180,3 +182,5 @@ namespace DCL.Prefs.Tests
         }
     }
 }
+
+#endif

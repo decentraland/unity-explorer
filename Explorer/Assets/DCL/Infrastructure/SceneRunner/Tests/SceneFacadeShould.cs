@@ -389,7 +389,9 @@ namespace SceneRunner.Tests
                     new URLAddress(),
                     new SceneEcsExecutor(),
                     Substitute.For<ISceneData>(),
+#if !UNITY_WEBGL
                     new MultiThreadSync(new SceneShortInfo()),
+#endif
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),

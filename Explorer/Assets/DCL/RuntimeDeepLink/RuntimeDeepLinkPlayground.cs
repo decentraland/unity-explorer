@@ -6,9 +6,11 @@ namespace DCL.RuntimeDeepLink
     {
         private void Start()
         {
+#if !UNITY_WEBGL
             IDeepLinkHandle.Null.INSTANCE
                            .StartListenForDeepLinksAsync(destroyCancellationToken)
                            .Forget();
+#endif
         }
     }
 }

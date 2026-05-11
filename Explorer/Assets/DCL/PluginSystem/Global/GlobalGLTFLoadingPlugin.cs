@@ -1,3 +1,7 @@
+// GLTFast forces usage of Task that is not compatible with WebGL
+// TRUST_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+#if !UNITY_WEBGL
+
 using Arch.SystemGroups;
 using DCL.WebRequests;
 using ECS;
@@ -55,3 +59,5 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
+
+#endif
