@@ -1,4 +1,4 @@
-using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.Profiling
 {
@@ -20,11 +20,11 @@ namespace DCL.Profiling
 
         private long total;
 
-        public long Total => Interlocked.Read(ref total);
+        public long Total => DCLInterlocked.Read(ref total);
 
         public void Add(long value)
         {
-            Interlocked.Add(ref total, value);
+            DCLInterlocked.Add(ref total, value);
 
             lock (lockObject)
             {
