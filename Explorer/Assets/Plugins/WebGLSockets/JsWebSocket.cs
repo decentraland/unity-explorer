@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using Cysharp.Threading.Tasks;
 using Utility.Networking;
 using RichTypes;
-using DCL.Diagnostics;
 
 namespace DCL.WebSockets.JS
 {
@@ -167,7 +166,7 @@ namespace DCL.WebSockets.JS
                 return;
             }
             // Connect failed (State=Closed/Aborted). Caller will typically dispose; use LogWarning so stack trace isn't mistaken for a crash.
-            ReportHub.LogWarning(ReportCategory.Unspecified, $"JsWebSocket.cs: Connect failed, handleId: {handleId}, message: {result.ErrorMessage}, uri: {uri}. Caller may dispose.");
+            // DCL.Diagnostics.ReportHub.LogWarning(ReportData.UNSPECIFIED, $"JsWebSocket.cs: Connect failed, handleId: {handleId}, message: {result.ErrorMessage}, uri: {uri}. Caller may dispose.");
             throw new WebSocketException();
         }
 
