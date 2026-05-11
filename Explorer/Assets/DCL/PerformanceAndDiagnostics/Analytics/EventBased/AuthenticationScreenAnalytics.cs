@@ -33,7 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnAuthenticationScreenStateChanged(AuthStatus state)
         {
-            UnityEngine.Debug.Log($"[DCL Analytics DEBUG] OnAuthenticationScreenStateChanged fired with state={state}, IsCurrentlyNewAccount={controller.IsCurrentlyNewAccount}, CurrentLoginMethod={controller.CurrentLoginMethod}");
+            UnityEngine.Debug.LogError($"[DCL Analytics DEBUG] OnAuthenticationScreenStateChanged fired with state={state}, IsCurrentlyNewAccount={controller.IsCurrentlyNewAccount}, CurrentLoginMethod={controller.CurrentLoginMethod}");
             switch (state)
             {
                 // Triggered WHEN login screen is shown
@@ -69,7 +69,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     });
                     break;
                 case AuthStatus.LoggedIn: // Triggered WHEN the user gets in Lobby
-                    UnityEngine.Debug.Log("[DCL Analytics DEBUG] LoggedIn case entered, about to Track LOGGED_IN");
+                    UnityEngine.Debug.LogError("[DCL Analytics DEBUG] LoggedIn case entered, about to Track LOGGED_IN");
                     try
                     {
                         analytics.Track(Authentication.LOGGED_IN, new JObject
@@ -77,7 +77,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                             { "method", controller.CurrentLoginMethod.ToString() },
                             { "is_new_account", controller.IsCurrentlyNewAccount },
                         }, isInstant: true);
-                        UnityEngine.Debug.Log("[DCL Analytics DEBUG] LOGGED_IN Track returned successfully");
+                        UnityEngine.Debug.LogError("[DCL Analytics DEBUG] LOGGED_IN Track returned successfully");
                     }
                     catch (System.Exception e)
                     {
@@ -86,7 +86,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     }
                     if (controller.IsCurrentlyNewAccount)
                     {
-                        UnityEngine.Debug.Log("[DCL Analytics DEBUG] IsCurrentlyNewAccount=true, about to Track NEW_ACCOUNT_ONBOARDING_STARTED");
+                        UnityEngine.Debug.LogError("[DCL Analytics DEBUG] IsCurrentlyNewAccount=true, about to Track NEW_ACCOUNT_ONBOARDING_STARTED");
                         try
                         {
                             // isInstant: true — this is the start of the in-Explorer onboarding step
@@ -98,7 +98,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                             {
                                 { "method", controller.CurrentLoginMethod.ToString() },
                             }, isInstant: true);
-                            UnityEngine.Debug.Log("[DCL Analytics DEBUG] NEW_ACCOUNT_ONBOARDING_STARTED Track returned successfully");
+                            UnityEngine.Debug.LogError("[DCL Analytics DEBUG] NEW_ACCOUNT_ONBOARDING_STARTED Track returned successfully");
                         }
                         catch (System.Exception e)
                         {
@@ -108,7 +108,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
                     }
                     else
                     {
-                        UnityEngine.Debug.Log("[DCL Analytics DEBUG] IsCurrentlyNewAccount=FALSE, skipping NEW_ACCOUNT_ONBOARDING_STARTED");
+                        UnityEngine.Debug.LogError("[DCL Analytics DEBUG] IsCurrentlyNewAccount=FALSE, skipping NEW_ACCOUNT_ONBOARDING_STARTED");
                     }
                     break;
 
