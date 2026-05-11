@@ -82,7 +82,10 @@ namespace DCL.AvatarRendering.Emotes
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
+                {
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+                    AssignFailedEmoteResult(emote, bodyShape);
+                }
 
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
@@ -104,7 +107,10 @@ namespace DCL.AvatarRendering.Emotes
                 if (gltfAssetResult.Succeeded && gltfAssetResult.TryToConvertToRegularAsset(out AttachmentRegularAsset regularAssetResult))
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
+                {
                     ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+                    AssignFailedEmoteResult(emote, bodyShape);
+                }
 
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
@@ -122,6 +128,21 @@ namespace DCL.AvatarRendering.Emotes
             }
             else
                 emote.AssetResults[bodyShape] = asset;
+        }
+
+        private void AssignFailedEmoteResult(IEmote emote, BodyShape bodyShape)
+        {
+            var failedResult = new StreamableLoadingResult<AttachmentRegularAsset>(
+                GetReportData(),
+                new Exception($"Emote {emote.DTO.id} failed to load"));
+
+            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+            {
+                emote.AssetResults[BodyShape.MALE] = failedResult;
+                emote.AssetResults[BodyShape.FEMALE] = failedResult;
+            }
+            else
+                emote.AssetResults[bodyShape] = failedResult;
         }
 
         private bool IsCancellationRequested<TAsset, TLoadingIntention>(
