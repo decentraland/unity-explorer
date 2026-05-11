@@ -159,7 +159,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             IWearable? newBodyShape = null;
             foreach (var w in wearables)
