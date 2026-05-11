@@ -57,7 +57,7 @@ namespace Utility.Multithreading
         public static UniTask Delay(
                 int sleepMS,
                 CancellationToken cancellationToken = default) =>
-            UniTask.Delay(sleepMS, cancellationToken);
+            UniTask.Delay(sleepMS, cancellationToken: cancellationToken);
 #else
         public static System.Threading.Tasks.Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
                 int sleepMS,
