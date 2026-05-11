@@ -154,6 +154,7 @@ namespace Global.Dynamic
         private readonly MultiplayerContainer multiplayerContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public IMVCManager MvcManager { get; }
 
@@ -197,7 +198,8 @@ namespace Global.Dynamic
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
             BannedNotificationHandler bannedNotificationHandler,
-            MultiplayerContainer multiplayerContainer)
+            MultiplayerContainer multiplayerContainer,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -217,6 +219,7 @@ namespace Global.Dynamic
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.multiplayerContainer = multiplayerContainer;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public override void Dispose()
@@ -227,6 +230,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            profileRepositoryWrapper.Dispose();
             multiplayerContainer.Dispose();
         }
 
@@ -697,7 +701,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             var communitiesEventBus = new CommunitiesEventBus();
@@ -1401,7 +1405,8 @@ namespace Global.Dynamic
                 selfProfile,
                 clipboard,
                 bannedNotificationHandler,
-                multiplayerContainer
+                multiplayerContainer,
+                profileRepositoryWrapper
             );
 
             // Init itself
