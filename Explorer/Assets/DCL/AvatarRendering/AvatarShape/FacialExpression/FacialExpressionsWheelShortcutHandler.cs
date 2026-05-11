@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.AvatarShape.FacialExpression
                     ignoreNextRelease = true;
                     break;
                 case FacialExpressionTriggerSource.WHEEL_SLOT:
-                    lockUntilTime = Time.time + QUICK_APPLY_LOCK_TIME;
+                    lockUntilTime = UnityEngine.Time.time + QUICK_APPLY_LOCK_TIME;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.AvatarShape.FacialExpression
                 return;
             }
 
-            if (Time.time < lockUntilTime)
+            if (UnityEngine.Time.time < lockUntilTime)
             {
                 lockUntilTime = 0f;
                 return;
