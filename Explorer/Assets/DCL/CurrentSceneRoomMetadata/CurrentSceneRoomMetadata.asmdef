@@ -1,5 +1,5 @@
 {
-    "name": "SceneBannedUsers",
+    "name": "CurrentSceneRoomMetadata",
     "rootNamespace": "",
     "references": [
         "GUID:702f733b4deb246808c6ce84d93b5c9c",
@@ -18,7 +18,8 @@
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
         "GUID:e56a0d6a94c144c784012e63b6043100",
         "GUID:f3634757d00dab2429c6c11e69404e97",
-        "GUID:4c25211e0ab124d6b8723366932f7d9b"
+        "GUID:1087662aaf1c5462baa91fb9484296fd",
+        "GUID:40cc3d3e494162646bdb002eed05aeec"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
