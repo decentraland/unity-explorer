@@ -76,16 +76,16 @@ namespace ECS.Unity.GliderProp
             cachedRenderers = GetComponentsInChildren<Renderer>(true);
         }
 
-        public void SetHidden(bool value)
+        public void SetHidden(bool isHidden)
         {
-            if (hidden == value) return;
+            if (hidden == isHidden) return;
 
-            hidden = value;
+            hidden = isHidden;
 
             foreach (Renderer propRenderer in cachedRenderers)
-                propRenderer.enabled = !value;
+                propRenderer.enabled = !isHidden;
 
-            if (value)
+            if (isHidden)
             {
                 IdleAudioSource.volume = 0;
                 MovingAudioSource.volume = 0;
