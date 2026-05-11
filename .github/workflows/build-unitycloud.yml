@@ -149,7 +149,6 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
         (github.ref == 'refs/heads/dev') ||
         (github.ref == 'refs/heads/main') ||
-        startsWith(github.ref, 'refs/heads/shape/') ||
         (github.event_name == 'workflow_dispatch') ||
         (
           github.event_name == 'pull_request' &&
