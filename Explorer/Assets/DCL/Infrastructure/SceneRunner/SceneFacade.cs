@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using RichTypes;
-using SceneRunner.Admins;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
@@ -42,8 +41,6 @@ namespace SceneRunner
         public bool IsEmpty => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
-
-        public Option<ISceneAdmins> SceneAdmins => deps.SceneAdmins;
 
         private int intervalMS;
 

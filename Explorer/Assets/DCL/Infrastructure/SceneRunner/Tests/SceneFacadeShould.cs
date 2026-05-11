@@ -37,7 +37,6 @@ using NSubstitute;
 using NUnit.Framework;
 using PortableExperiences.Controller;
 using RichTypes;
-using SceneRunner.Admins;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -61,7 +60,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
 using RichTypes;
-using SceneRunner.Admins;
 
 namespace SceneRunner.Tests
 {
@@ -399,9 +397,10 @@ namespace SceneRunner.Tests
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
-                    new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>(),
-                Option<ISceneAdmins>.None) { }
+                    new ECSWorldInstanceSharedDependencies()
+                ),
+                Substitute.For<ISceneRuntime>()
+            ) {}
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>
