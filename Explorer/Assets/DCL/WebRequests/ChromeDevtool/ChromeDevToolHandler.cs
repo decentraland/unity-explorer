@@ -27,9 +27,7 @@ namespace DCL.WebRequests.ChromeDevtool
         private readonly Dictionary<UnityWebRequest, ChromeDevToolWebRequestScope> uwrToScope;
         private readonly List<ChromeDevToolWebRequestScope?> webRequestScopes;
 
-#if !UNITY_WEBGL 
         private readonly IBridge bridge;
-#endif
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public ChromeDevToolHandler(int maxConcurrency, IBridge bridge)
@@ -96,7 +94,11 @@ namespace DCL.WebRequests.ChromeDevtool
 #endif
         }
 
+#if !UNITY_WEBGL 
         public BridgeStatus Status => bridge.Status;
+#else
+        public BridgeStatus Status => BridgeStatus.HasListeners;
+#endif
 
         public BridgeStartResult StartAndOpen()
         {
