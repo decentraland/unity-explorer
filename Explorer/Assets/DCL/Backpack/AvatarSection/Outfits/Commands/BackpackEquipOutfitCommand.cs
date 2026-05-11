@@ -6,7 +6,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
     public readonly struct BackpackEquipOutfitCommand
     {
         public readonly string BodyShape;
-        public readonly IReadOnlyCollection<string> Wearables;
+        public readonly IReadOnlyCollection<string?> Wearables;
         public readonly Color EyesColor;
         public readonly Color HairColor;
         public readonly Color SkinColor;

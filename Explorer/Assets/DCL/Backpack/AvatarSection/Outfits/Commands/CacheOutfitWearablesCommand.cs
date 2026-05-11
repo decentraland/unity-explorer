@@ -14,6 +14,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
     public class CacheOutfitWearablesCommand
     {
+        private const int V2_URN_WITH_TOKEN_SEGMENT_COUNT = 7; // urn:decentraland:matic:collections-v2:<collection>:<itemId>:<tokenId>
+
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStorage wearableStorage;
 
@@ -95,7 +97,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             // Ultra-defensive: split by ':' and detect a numeric-ish tail token
             string[]? parts = fullUrn.ToString().Split(':');
-            if (parts.Length >= 7 && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
+            if (parts.Length >= V2_URN_WITH_TOKEN_SEGMENT_COUNT && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
             {
                 // last is token, rebuild base without last
                 tokenId = parts[^1];
