@@ -5,7 +5,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -60,8 +59,12 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
         {
-            if (connectionUpdate == ConnectionUpdate.Connected)
-                view.SetInCallSection();
+            if (connectionUpdate != ConnectionUpdate.Connected) return;
+
+            // The LiveKit room is shared between private and community calls
+            if (privateCallOrchestrator.CurrentVoiceChatType.Value != VoiceChatType.PRIVATE) return;
+
+            view.SetInCallSection();
         }
 
         private void OnActiveSpeakersUpdated()
@@ -134,6 +137,7 @@ namespace DCL.VoiceChat
             statusSubscription?.Dispose();
             this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            this.voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             micController.Dispose();
         }
     }
