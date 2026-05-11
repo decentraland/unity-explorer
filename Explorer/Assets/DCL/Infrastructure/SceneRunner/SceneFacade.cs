@@ -5,7 +5,6 @@ using DCL.Profiling;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRunner.Admins;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
@@ -32,8 +31,6 @@ namespace SceneRunner
         public bool IsEmpty => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
-
-        public Option<ISceneAdmins> SceneAdmins => deps.SceneAdmins;
 
         public SceneRuntimeMetrics RuntimeMetrics => deps.SyncDeps.RuntimeMetrics;
 
@@ -169,7 +166,7 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        private async 
+        private async
 #if UNITY_WEBGL
             Cysharp.Threading.Tasks.UniTask<bool>
 #else

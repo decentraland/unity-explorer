@@ -5,7 +5,6 @@ using DCL.Profiling;
 using System;
 using System.Threading;
 using UnityEngine;
-using SceneRunner.Admins;
 using RichTypes;
 
 namespace SceneRunner.Scene
@@ -17,7 +16,6 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
-        Option<ISceneAdmins> SceneAdmins { get; }
         bool IsEmpty { get; }
         SceneRuntimeMetrics RuntimeMetrics { get; }
 
