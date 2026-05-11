@@ -32,6 +32,9 @@ namespace DCL.Emoji
         [field: SerializeField]
         public SearchBarView SearchPanelView { get; private set; }
 
+        [field: SerializeField]
+        public RectMask2D ClippingMask { get; private set; }
+
         private CanvasGroup canvasGroup;
         private RectTransform rectTransform;
         private bool initialized;
@@ -90,6 +93,10 @@ namespace DCL.Emoji
             canvasGroup.alpha = visible ? 1f : 0f;
             canvasGroup.blocksRaycasts = visible;
             canvasGroup.interactable = visible;
+
+            // RectMask2D registers with ClipperRegistry and pays per-child cull cost every CanvasUpdate
+            // even while the panel is offscreen / alpha=0. Disable while hidden to drop that cost.
+            ClippingMask.enabled = visible;
         }
 
         /// <summary>
