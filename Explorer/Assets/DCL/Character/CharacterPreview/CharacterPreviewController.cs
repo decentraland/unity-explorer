@@ -163,6 +163,24 @@ namespace DCL.CharacterPreview
             emoteComponent.Reset();
         }
 
+        /// <summary>
+        ///     Writes the resting facial expression layer on the preview avatar. No-ops until
+        ///     <see cref="AvatarFaceComponent"/> has been attached by the rendering pipeline
+        ///     (after wearable instantiation), so safe to call before the avatar has loaded.
+        /// </summary>
+        public void TrySetFace(int eyebrowsIndex, int eyesIndex, int mouthIndex)
+        {
+            if (!globalWorld.IsAlive(characterPreviewEntity)) return;
+
+            ref AvatarFaceComponent face = ref globalWorld.TryGetRef<AvatarFaceComponent>(characterPreviewEntity, out bool exists);
+            if (!exists) return;
+
+            face.EyebrowsExpressionIndex = eyebrowsIndex;
+            face.EyesExpressionIndex = eyesIndex;
+            face.MouthExpressionIndex = mouthIndex;
+            face.IsDirty = true;
+        }
+
         public bool IsPlayingEmote() =>
             globalWorld.TryGet(characterPreviewEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
 

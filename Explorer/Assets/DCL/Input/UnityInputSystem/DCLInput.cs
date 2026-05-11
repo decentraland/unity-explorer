@@ -2284,6 +2284,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""FaceExpression"",
+                    ""type"": ""Button"",
+                    ""id"": ""feeb0c11-cb40-43d3-a316-304e55aaa81d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""ToggleAvatarBubbles"",
                     ""type"": ""Button"",
                     ""id"": ""4209969a-2572-41c8-8380-1b57c867fe75"",
@@ -2456,6 +2465,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""EmoteWheel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""feeb0c11-17b4-412c-a2f2-e4477bb2d88a"",
+                    ""path"": ""<Keyboard>/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FaceExpression"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -4012,6 +4032,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 0"",
+                    ""type"": ""Button"",
+                    ""id"": ""fe100001-0000-4000-a000-000000000000"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -4311,6 +4340,267 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Slot 9"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""fe200000-0000-4000-b000-000000000001"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""fe200000-0000-4000-b000-000000000002"",
+                    ""path"": ""<Keyboard>/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""fe200000-0000-4000-b000-000000000003"",
+                    ""path"": ""<Keyboard>/0"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                }
+            ]
+        },
+        {
+            ""name"": ""FaceExpressionsWheel"",
+            ""id"": ""b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e"",
+            ""actions"": [
+                {
+                    ""name"": ""Close"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-00000000c105"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 0"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000000"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 1"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000001"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 2"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000002"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 3"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000003"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 4"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000004"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 5"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000005"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 6"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000006"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 7"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000007"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 8"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000008"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 9"",
+                    ""type"": ""Button"",
+                    ""id"": ""fee00000-0000-4000-c000-000000000009"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-00000000c105"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000000"",
+                    ""path"": ""<Keyboard>/0"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000001"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 1"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000002"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000003"",
+                    ""path"": ""<Keyboard>/3"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 3"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000004"",
+                    ""path"": ""<Keyboard>/4"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 4"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000005"",
+                    ""path"": ""<Keyboard>/5"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 5"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000006"",
+                    ""path"": ""<Keyboard>/6"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 6"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000007"",
+                    ""path"": ""<Keyboard>/7"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 7"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000008"",
+                    ""path"": ""<Keyboard>/8"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 8"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fee10000-0000-4000-d000-000000000009"",
+                    ""path"": ""<Keyboard>/9"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 9"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -4392,6 +4682,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_Settings = m_Shortcuts.FindAction("Settings", throwIfNotFound: true);
         m_Shortcuts_ToggleUI = m_Shortcuts.FindAction("ToggleUI", throwIfNotFound: true);
         m_Shortcuts_EmoteWheel = m_Shortcuts.FindAction("EmoteWheel", throwIfNotFound: true);
+        m_Shortcuts_FaceExpression = m_Shortcuts.FindAction("FaceExpression", throwIfNotFound: true);
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
@@ -4459,6 +4750,20 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_FaceExpressions_Slot7 = m_FaceExpressions.FindAction("Slot 7", throwIfNotFound: true);
         m_FaceExpressions_Slot8 = m_FaceExpressions.FindAction("Slot 8", throwIfNotFound: true);
         m_FaceExpressions_Slot9 = m_FaceExpressions.FindAction("Slot 9", throwIfNotFound: true);
+        m_FaceExpressions_Slot0 = m_FaceExpressions.FindAction("Slot 0", throwIfNotFound: true);
+        // FaceExpressionsWheel
+        m_FaceExpressionsWheel = asset.FindActionMap("FaceExpressionsWheel", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Close = m_FaceExpressionsWheel.FindAction("Close", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot0 = m_FaceExpressionsWheel.FindAction("Slot 0", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot1 = m_FaceExpressionsWheel.FindAction("Slot 1", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot2 = m_FaceExpressionsWheel.FindAction("Slot 2", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot3 = m_FaceExpressionsWheel.FindAction("Slot 3", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot4 = m_FaceExpressionsWheel.FindAction("Slot 4", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot5 = m_FaceExpressionsWheel.FindAction("Slot 5", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot6 = m_FaceExpressionsWheel.FindAction("Slot 6", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot7 = m_FaceExpressionsWheel.FindAction("Slot 7", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot8 = m_FaceExpressionsWheel.FindAction("Slot 8", throwIfNotFound: true);
+        m_FaceExpressionsWheel_Slot9 = m_FaceExpressionsWheel.FindAction("Slot 9", throwIfNotFound: true);
     }
 
     ~@DCLInput()
@@ -4473,6 +4778,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         UnityEngine.Debug.Assert(!m_InWorldCamera.enabled, "This will cause a leak and performance issues, DCLInput.InWorldCamera.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_VoiceChat.enabled, "This will cause a leak and performance issues, DCLInput.VoiceChat.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_FaceExpressions.enabled, "This will cause a leak and performance issues, DCLInput.FaceExpressions.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_FaceExpressionsWheel.enabled, "This will cause a leak and performance issues, DCLInput.FaceExpressionsWheel.Disable() has not been called.");
     }
 
     /// <summary>
@@ -5477,6 +5783,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_Settings;
     private readonly InputAction m_Shortcuts_ToggleUI;
     private readonly InputAction m_Shortcuts_EmoteWheel;
+    private readonly InputAction m_Shortcuts_FaceExpression;
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
     private readonly InputAction m_Shortcuts_ToggleNametags;
@@ -5524,6 +5831,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Shortcuts/EmoteWheel".
         /// </summary>
         public InputAction @EmoteWheel => m_Wrapper.m_Shortcuts_EmoteWheel;
+        /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/FaceExpression".
+        /// </summary>
+        public InputAction @FaceExpression => m_Wrapper.m_Shortcuts_FaceExpression;
         /// <summary>
         /// Provides access to the underlying input action "Shortcuts/ToggleAvatarBubbles".
         /// </summary>
@@ -5616,6 +5927,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @EmoteWheel.started += instance.OnEmoteWheel;
             @EmoteWheel.performed += instance.OnEmoteWheel;
             @EmoteWheel.canceled += instance.OnEmoteWheel;
+            @FaceExpression.started += instance.OnFaceExpression;
+            @FaceExpression.performed += instance.OnFaceExpression;
+            @FaceExpression.canceled += instance.OnFaceExpression;
             @ToggleAvatarBubbles.started += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled += instance.OnToggleAvatarBubbles;
@@ -5681,6 +5995,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @EmoteWheel.started -= instance.OnEmoteWheel;
             @EmoteWheel.performed -= instance.OnEmoteWheel;
             @EmoteWheel.canceled -= instance.OnEmoteWheel;
+            @FaceExpression.started -= instance.OnFaceExpression;
+            @FaceExpression.performed -= instance.OnFaceExpression;
+            @FaceExpression.canceled -= instance.OnFaceExpression;
             @ToggleAvatarBubbles.started -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled -= instance.OnToggleAvatarBubbles;
@@ -6499,6 +6816,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_FaceExpressions_Slot7;
     private readonly InputAction m_FaceExpressions_Slot8;
     private readonly InputAction m_FaceExpressions_Slot9;
+    private readonly InputAction m_FaceExpressions_Slot0;
     /// <summary>
     /// Provides access to input actions defined in input action map "FaceExpressions".
     /// </summary>
@@ -6546,6 +6864,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "FaceExpressions/Slot9".
         /// </summary>
         public InputAction @Slot9 => m_Wrapper.m_FaceExpressions_Slot9;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressions/Slot0".
+        /// </summary>
+        public InputAction @Slot0 => m_Wrapper.m_FaceExpressions_Slot0;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -6599,6 +6921,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Slot9.started += instance.OnSlot9;
             @Slot9.performed += instance.OnSlot9;
             @Slot9.canceled += instance.OnSlot9;
+            @Slot0.started += instance.OnSlot0;
+            @Slot0.performed += instance.OnSlot0;
+            @Slot0.canceled += instance.OnSlot0;
         }
 
         /// <summary>
@@ -6637,6 +6962,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Slot9.started -= instance.OnSlot9;
             @Slot9.performed -= instance.OnSlot9;
             @Slot9.canceled -= instance.OnSlot9;
+            @Slot0.started -= instance.OnSlot0;
+            @Slot0.performed -= instance.OnSlot0;
+            @Slot0.canceled -= instance.OnSlot0;
         }
 
         /// <summary>
@@ -6670,6 +6998,212 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="FaceExpressionsActions" /> instance referencing this action map.
     /// </summary>
     public FaceExpressionsActions @FaceExpressions => new FaceExpressionsActions(this);
+
+    // FaceExpressionsWheel
+    private readonly InputActionMap m_FaceExpressionsWheel;
+    private List<IFaceExpressionsWheelActions> m_FaceExpressionsWheelActionsCallbackInterfaces = new List<IFaceExpressionsWheelActions>();
+    private readonly InputAction m_FaceExpressionsWheel_Close;
+    private readonly InputAction m_FaceExpressionsWheel_Slot0;
+    private readonly InputAction m_FaceExpressionsWheel_Slot1;
+    private readonly InputAction m_FaceExpressionsWheel_Slot2;
+    private readonly InputAction m_FaceExpressionsWheel_Slot3;
+    private readonly InputAction m_FaceExpressionsWheel_Slot4;
+    private readonly InputAction m_FaceExpressionsWheel_Slot5;
+    private readonly InputAction m_FaceExpressionsWheel_Slot6;
+    private readonly InputAction m_FaceExpressionsWheel_Slot7;
+    private readonly InputAction m_FaceExpressionsWheel_Slot8;
+    private readonly InputAction m_FaceExpressionsWheel_Slot9;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "FaceExpressionsWheel".
+    /// </summary>
+    public struct FaceExpressionsWheelActions
+    {
+        private @DCLInput m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public FaceExpressionsWheelActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Close".
+        /// </summary>
+        public InputAction @Close => m_Wrapper.m_FaceExpressionsWheel_Close;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot0".
+        /// </summary>
+        public InputAction @Slot0 => m_Wrapper.m_FaceExpressionsWheel_Slot0;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot1".
+        /// </summary>
+        public InputAction @Slot1 => m_Wrapper.m_FaceExpressionsWheel_Slot1;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot2".
+        /// </summary>
+        public InputAction @Slot2 => m_Wrapper.m_FaceExpressionsWheel_Slot2;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot3".
+        /// </summary>
+        public InputAction @Slot3 => m_Wrapper.m_FaceExpressionsWheel_Slot3;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot4".
+        /// </summary>
+        public InputAction @Slot4 => m_Wrapper.m_FaceExpressionsWheel_Slot4;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot5".
+        /// </summary>
+        public InputAction @Slot5 => m_Wrapper.m_FaceExpressionsWheel_Slot5;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot6".
+        /// </summary>
+        public InputAction @Slot6 => m_Wrapper.m_FaceExpressionsWheel_Slot6;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot7".
+        /// </summary>
+        public InputAction @Slot7 => m_Wrapper.m_FaceExpressionsWheel_Slot7;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot8".
+        /// </summary>
+        public InputAction @Slot8 => m_Wrapper.m_FaceExpressionsWheel_Slot8;
+        /// <summary>
+        /// Provides access to the underlying input action "FaceExpressionsWheel/Slot9".
+        /// </summary>
+        public InputAction @Slot9 => m_Wrapper.m_FaceExpressionsWheel_Slot9;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_FaceExpressionsWheel; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="FaceExpressionsWheelActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(FaceExpressionsWheelActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="FaceExpressionsWheelActions" />
+        public void AddCallbacks(IFaceExpressionsWheelActions instance)
+        {
+            if (instance == null || m_Wrapper.m_FaceExpressionsWheelActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_FaceExpressionsWheelActionsCallbackInterfaces.Add(instance);
+            @Close.started += instance.OnClose;
+            @Close.performed += instance.OnClose;
+            @Close.canceled += instance.OnClose;
+            @Slot0.started += instance.OnSlot0;
+            @Slot0.performed += instance.OnSlot0;
+            @Slot0.canceled += instance.OnSlot0;
+            @Slot1.started += instance.OnSlot1;
+            @Slot1.performed += instance.OnSlot1;
+            @Slot1.canceled += instance.OnSlot1;
+            @Slot2.started += instance.OnSlot2;
+            @Slot2.performed += instance.OnSlot2;
+            @Slot2.canceled += instance.OnSlot2;
+            @Slot3.started += instance.OnSlot3;
+            @Slot3.performed += instance.OnSlot3;
+            @Slot3.canceled += instance.OnSlot3;
+            @Slot4.started += instance.OnSlot4;
+            @Slot4.performed += instance.OnSlot4;
+            @Slot4.canceled += instance.OnSlot4;
+            @Slot5.started += instance.OnSlot5;
+            @Slot5.performed += instance.OnSlot5;
+            @Slot5.canceled += instance.OnSlot5;
+            @Slot6.started += instance.OnSlot6;
+            @Slot6.performed += instance.OnSlot6;
+            @Slot6.canceled += instance.OnSlot6;
+            @Slot7.started += instance.OnSlot7;
+            @Slot7.performed += instance.OnSlot7;
+            @Slot7.canceled += instance.OnSlot7;
+            @Slot8.started += instance.OnSlot8;
+            @Slot8.performed += instance.OnSlot8;
+            @Slot8.canceled += instance.OnSlot8;
+            @Slot9.started += instance.OnSlot9;
+            @Slot9.performed += instance.OnSlot9;
+            @Slot9.canceled += instance.OnSlot9;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="FaceExpressionsWheelActions" />
+        private void UnregisterCallbacks(IFaceExpressionsWheelActions instance)
+        {
+            @Close.started -= instance.OnClose;
+            @Close.performed -= instance.OnClose;
+            @Close.canceled -= instance.OnClose;
+            @Slot0.started -= instance.OnSlot0;
+            @Slot0.performed -= instance.OnSlot0;
+            @Slot0.canceled -= instance.OnSlot0;
+            @Slot1.started -= instance.OnSlot1;
+            @Slot1.performed -= instance.OnSlot1;
+            @Slot1.canceled -= instance.OnSlot1;
+            @Slot2.started -= instance.OnSlot2;
+            @Slot2.performed -= instance.OnSlot2;
+            @Slot2.canceled -= instance.OnSlot2;
+            @Slot3.started -= instance.OnSlot3;
+            @Slot3.performed -= instance.OnSlot3;
+            @Slot3.canceled -= instance.OnSlot3;
+            @Slot4.started -= instance.OnSlot4;
+            @Slot4.performed -= instance.OnSlot4;
+            @Slot4.canceled -= instance.OnSlot4;
+            @Slot5.started -= instance.OnSlot5;
+            @Slot5.performed -= instance.OnSlot5;
+            @Slot5.canceled -= instance.OnSlot5;
+            @Slot6.started -= instance.OnSlot6;
+            @Slot6.performed -= instance.OnSlot6;
+            @Slot6.canceled -= instance.OnSlot6;
+            @Slot7.started -= instance.OnSlot7;
+            @Slot7.performed -= instance.OnSlot7;
+            @Slot7.canceled -= instance.OnSlot7;
+            @Slot8.started -= instance.OnSlot8;
+            @Slot8.performed -= instance.OnSlot8;
+            @Slot8.canceled -= instance.OnSlot8;
+            @Slot9.started -= instance.OnSlot9;
+            @Slot9.performed -= instance.OnSlot9;
+            @Slot9.canceled -= instance.OnSlot9;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="FaceExpressionsWheelActions.UnregisterCallbacks(IFaceExpressionsWheelActions)" />.
+        /// </summary>
+        /// <seealso cref="FaceExpressionsWheelActions.UnregisterCallbacks(IFaceExpressionsWheelActions)" />
+        public void RemoveCallbacks(IFaceExpressionsWheelActions instance)
+        {
+            if (m_Wrapper.m_FaceExpressionsWheelActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="FaceExpressionsWheelActions.AddCallbacks(IFaceExpressionsWheelActions)" />
+        /// <seealso cref="FaceExpressionsWheelActions.RemoveCallbacks(IFaceExpressionsWheelActions)" />
+        /// <seealso cref="FaceExpressionsWheelActions.UnregisterCallbacks(IFaceExpressionsWheelActions)" />
+        public void SetCallbacks(IFaceExpressionsWheelActions instance)
+        {
+            foreach (var item in m_Wrapper.m_FaceExpressionsWheelActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_FaceExpressionsWheelActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="FaceExpressionsWheelActions" /> instance referencing this action map.
+    /// </summary>
+    public FaceExpressionsWheelActions @FaceExpressionsWheel => new FaceExpressionsWheelActions(this);
     private int m_DesktopSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -7136,6 +7670,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEmoteWheel(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "FaceExpression" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFaceExpression(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "ToggleAvatarBubbles" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -7511,6 +8052,98 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     /// <seealso cref="FaceExpressionsActions.RemoveCallbacks(IFaceExpressionsActions)" />
     public interface IFaceExpressionsActions
     {
+        /// <summary>
+        /// Method invoked when associated input action "Slot 1" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot1(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 2" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot2(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 3" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot3(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 4" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot4(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 5" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot5(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 6" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot6(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 7" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot7(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 8" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot8(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 9" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot9(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 0" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot0(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "FaceExpressionsWheel" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="FaceExpressionsWheelActions.AddCallbacks(IFaceExpressionsWheelActions)" />
+    /// <seealso cref="FaceExpressionsWheelActions.RemoveCallbacks(IFaceExpressionsWheelActions)" />
+    public interface IFaceExpressionsWheelActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Close" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnClose(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Slot 0" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSlot0(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Slot 1" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

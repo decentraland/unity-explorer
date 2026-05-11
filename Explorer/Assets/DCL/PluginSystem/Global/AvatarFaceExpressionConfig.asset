@@ -14,30 +14,52 @@ MonoBehaviour:
   m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.AvatarFaceExpressionConfig
   Expressions:
   - Name: Idle
+    Icon: {fileID: 21300000, guid: 40e73f0f90309014e85648642b450b35, type: 3}
     EyebrowsIndex: 0
     EyesIndex: 0
     MouthIndex: 0
   - Name: Happy
+    Icon: {fileID: 21300000, guid: 6ba8f0c6358b99a42b8bcd62ecf17c42, type: 3}
     EyebrowsIndex: 1
     EyesIndex: 0
     MouthIndex: 13
-  - Name: Suspicius Left
-    EyebrowsIndex: 4
-    EyesIndex: 7
-    MouthIndex: 15
-  - Name: Suspicius Right
-    EyebrowsIndex: 5
-    EyesIndex: 6
-    MouthIndex: 15
+  - Name: Sad
+    Icon: {fileID: 21300000, guid: 0483d6feaa8d13742bd909baaf3eb082, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: Angry
+    Icon: {fileID: 21300000, guid: d32628cd806b94f44b8de91e17649985, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
   - Name: Surprised
+    Icon: {fileID: 21300000, guid: 56e05927f5bf6884482bbc76405c1f4c, type: 3}
     EyebrowsIndex: 1
     EyesIndex: 3
     MouthIndex: 7
-  - Name: Stoned
-    EyebrowsIndex: 3
-    EyesIndex: 1
-    MouthIndex: 3
-  - Name: Surprised
-    EyebrowsIndex: 3
-    EyesIndex: 3
-    MouthIndex: 11
+  - Name: Dizzy
+    Icon: {fileID: 21300000, guid: 1a0800345f0594d45896dea31252fefb, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: Relaxed
+    Icon: {fileID: 21300000, guid: 1b4569768c863f34ea705315c8058272, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: Smirk
+    Icon: {fileID: 21300000, guid: bf2b52c591cb3674fad42d0e8fb2c23a, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: WinkLeft
+    Icon: {fileID: 21300000, guid: 903044891eae81d4786012f510483810, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: WinkRight
+    Icon: {fileID: 21300000, guid: 2b0f4104a439bf649932844d3cd11b75, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0

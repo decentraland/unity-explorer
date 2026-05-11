@@ -14,6 +14,8 @@ namespace DCL.AvatarRendering.AvatarShape
     {
         public string Name;
 
+        public Sprite Icon;
+
         [Range(0, 15)]
         public int EyebrowsIndex;
 
