@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.FacialExpression;
@@ -26,7 +27,8 @@ namespace DCL.FacialExpressionsWheel
 
         private readonly SelfProfile selfProfile;
         private readonly AvatarFaceExpressionConfig expressionConfig;
-        private readonly IFacialExpressionApplier applier;
+        private readonly World world;
+        private readonly Entity playerEntity;
         private readonly IInputBlock inputBlock;
         private readonly ICursor cursor;
         private readonly IEventBus eventBus;
@@ -52,7 +54,8 @@ namespace DCL.FacialExpressionsWheel
             ViewFactoryMethod viewFactory,
             SelfProfile selfProfile,
             AvatarFaceExpressionConfig expressionConfig,
-            IFacialExpressionApplier applier,
+            World world,
+            Entity playerEntity,
             IInputBlock inputBlock,
             ICursor cursor,
             IEventBus eventBus,
@@ -61,7 +64,8 @@ namespace DCL.FacialExpressionsWheel
         {
             this.selfProfile = selfProfile;
             this.expressionConfig = expressionConfig;
-            this.applier = applier;
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.cursor = cursor;
             this.eventBus = eventBus;
@@ -152,7 +156,7 @@ namespace DCL.FacialExpressionsWheel
             previewController.OnHide();
 
             if (pendingChanged)
-                applier.Apply((byte)pendingEyebrowsIndex, (byte)pendingEyesIndex, (byte)pendingMouthIndex);
+                FacialExpressionApplier.Apply(world, playerEntity, (byte)pendingEyebrowsIndex, (byte)pendingEyesIndex, (byte)pendingMouthIndex);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

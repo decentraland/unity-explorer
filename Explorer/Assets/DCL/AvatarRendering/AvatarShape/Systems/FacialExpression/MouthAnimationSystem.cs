@@ -130,20 +130,18 @@ namespace DCL.AvatarRendering.AvatarShape
             if (msg.IsSystemMessage) return;
 
             if (msg.IsSentByOwnUser)
-                pendingSelf.Message = msg.Message;
-            else
-                StashRemoteMessage(msg.SenderWalletAddress, msg.Message);
-        }
-
-        private void StashRemoteMessage(string walletId, string message)
-        {
-            if (pendingByWallet.TryGetValue(walletId, out PendingInput existing))
             {
-                existing.Message = message;
-                pendingByWallet[walletId] = existing;
+                pendingSelf.Message = msg.Message;
+                return;
+            }
+
+            if (pendingByWallet.TryGetValue(msg.SenderWalletAddress, out PendingInput existing))
+            {
+                existing.Message = msg.Message;
+                pendingByWallet[msg.SenderWalletAddress] = existing;
             }
             else
-                pendingByWallet[walletId] = new PendingInput { Message = message };
+                pendingByWallet[msg.SenderWalletAddress] = new PendingInput { Message = msg.Message };
         }
 
         private void StashSpeaking(string walletId, bool isSpeaking, bool isSelf)
@@ -181,12 +179,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
             activeSpeakers.Clear();
             activeSpeakers.UnionWith(nextActiveSpeakers);
-        }
 
-        private void EnqueueSpeaking(string participantId, bool isSpeaking)
-        {
-            bool isSelf = voiceChatRoom.Participants.LocalParticipant()?.Identity == participantId;
-            StashSpeaking(participantId, isSpeaking, isSelf);
+            void EnqueueSpeaking(string participantId, bool isSpeaking)
+            {
+                bool isSelf = voiceChatRoom.Participants.LocalParticipant()?.Identity == participantId;
+                StashSpeaking(participantId, isSpeaking, isSelf);
+            }
         }
 
         private void OnParticipantUpdated(LKParticipant participant, UpdateFromParticipant update)

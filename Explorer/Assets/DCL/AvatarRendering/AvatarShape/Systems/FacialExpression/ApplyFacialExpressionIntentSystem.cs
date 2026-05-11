@@ -5,7 +5,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.FacialExpression;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 
@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
         protected override void Update(float t)
         {
-            SetupNetworkExpressionComponentQuery(World);
+            SetupLocalPlayerFacialExpressionQuery(World);
             ApplyIntentQuery(World);
         }
 
@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         [All(typeof(PlayerComponent), typeof(AvatarFaceComponent))]
         [None(typeof(LocalPlayerFacialExpressionComponent), typeof(DeleteEntityIntention))]
-        private void SetupNetworkExpressionComponent(in Entity entity)
+        private void SetupLocalPlayerFacialExpression(Entity entity)
         {
             World.Add(entity, new LocalPlayerFacialExpressionComponent());
         }
@@ -47,9 +47,9 @@ namespace DCL.AvatarRendering.AvatarShape
         [All(typeof(PlayerComponent), typeof(AvatarFaceComponent))]
         [None(typeof(DeleteEntityIntention))]
         private void ApplyIntent(
-            in Entity entity,
+            Entity entity,
             ref AvatarFaceComponent face,
-            ref LocalPlayerFacialExpressionComponent network,
+            ref LocalPlayerFacialExpressionComponent local,
             ref TriggerFacialExpressionIntent intent)
         {
             face.EyebrowsExpressionIndex = intent.EyebrowsIndex;
@@ -57,9 +57,9 @@ namespace DCL.AvatarRendering.AvatarShape
             face.MouthExpressionIndex = intent.MouthIndex;
             face.IsDirty = true;
 
-            network.EyebrowsIndex = intent.EyebrowsIndex;
-            network.EyesIndex = intent.EyesIndex;
-            network.MouthIndex = intent.MouthIndex;
+            local.EyebrowsIndex = intent.EyebrowsIndex;
+            local.EyesIndex = intent.EyesIndex;
+            local.MouthIndex = intent.MouthIndex;
 
             World.Remove<TriggerFacialExpressionIntent>(entity);
         }

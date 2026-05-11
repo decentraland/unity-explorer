@@ -5,6 +5,15 @@ using InputAction = UnityEngine.InputSystem.InputAction;
 
 namespace DCL.AvatarRendering.AvatarShape.FacialExpression
 {
+    public enum FacialExpressionTriggerSource
+    {
+        /// <summary>Click on a wheel slot, press [0-9], or use a cycler while the wheel is open.</summary>
+        WHEEL_SLOT,
+
+        /// <summary>Press Y+[0-9] while the wheel is closed.</summary>
+        SHORTCUT,
+    }
+
     /// <summary>
     ///     Owns the Y key (facial expressions shortcut) release handling. Receives expression-played
     ///     notifications via <see cref="NotifyExpressionPlayed"/>; when Y is released, applies
@@ -31,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.FacialExpression
         public void Dispose() =>
             dclInput.Shortcuts.FaceExpression.canceled -= OnShortcutReleased;
 
-        public virtual void NotifyExpressionPlayed(FacialExpressionTriggerSource source)
+        public void NotifyExpressionPlayed(FacialExpressionTriggerSource source)
         {
             switch (source)
             {

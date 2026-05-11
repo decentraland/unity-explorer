@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Movement;
 using ECS.Abstract;
 
 namespace DCL.Multiplayer.FacialExpression.Systems
