@@ -3,6 +3,7 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.VoiceChat.UI;
 using MVC;
@@ -64,9 +65,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; } = null!;
-
-        [field: Header("Controls")]
-        [field: SerializeField] internal Button controlsButton { get; private set; } = null!;
+        [field: SerializeField] public HelpMenuView HelpMenu { get; private set; } = null!;
 
         [field: Header("Chat")]
         [field: SerializeField] public HoverableAndSelectableButtonWithAnimator unreadMessagesButton { get; private set; } = null!;

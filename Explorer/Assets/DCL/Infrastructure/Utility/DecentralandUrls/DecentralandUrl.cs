@@ -148,5 +148,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Gatekeeper = 89,
 
         WhatsOnEventLink = 90,
+
+        Faqs = 91,
+        Discord = 92,
     }
 }

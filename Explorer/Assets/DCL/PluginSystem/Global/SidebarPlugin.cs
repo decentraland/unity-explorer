@@ -21,6 +21,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
+using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.VoiceChat.UI;
@@ -74,6 +75,7 @@ namespace DCL.PluginSystem.Global
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
+        private HelpMenuController? helpMenuController;
 
         private CancellationTokenSource controlsShortcutCts;
 
@@ -143,6 +145,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
+            helpMenuController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -165,6 +168,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -182,7 +186,8 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 globalWorld,
                 chatEventBus,
-                eventsApiService
+                eventsApiService,
+                helpMenuController
                 );
 
             mvcManager.RegisterController(controlsPanelController);
@@ -192,6 +197,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
+            mvcManager.RegisterController(helpMenuController);
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
