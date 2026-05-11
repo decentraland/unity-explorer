@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using Global.AppArgs;
 using Sentry;
 using Sentry.Extensibility;
 using Sentry.Unity;
@@ -46,9 +47,8 @@ namespace DCL.Diagnostics.Sentry
             // EXIT-DELAY INVESTIGATION (Test A):
             // When --exit-test-no-sentry-flush is passed, drop the 2s shutdown flush
             // to measure how much of the EXIT freeze is due to Sentry draining its
-            // queue at process termination. Flag kept in sync with AppArgsFlags.EXIT_TEST_NO_SENTRY_FLUSH.
-            // Remove once the investigation closes.
-            if (HasExitTestFlag("exit-test-no-sentry-flush"))
+            // queue at process termination. Remove once the investigation closes.
+            if (HasExitTestFlag(AppArgsFlags.EXIT_TEST_NO_SENTRY_FLUSH))
                 options.ShutdownTimeout = TimeSpan.Zero;
 
             if (!IsValidConfiguration(options))
