@@ -825,7 +825,8 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCache,
-                    includeBannedUsersFromScene),
+                    includeBannedUsersFromScene,
+                    emotesEventBus),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -1151,6 +1152,8 @@ namespace Global.Dynamic
                         userBlockingCache,
                         nearbyMuteService)
                 );
+
+                globalPlugins.Add(new MouthAnimationPlugin(chatHistory, roomHub, voiceChatContainer.VoiceChatOrchestrator));
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));

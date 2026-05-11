@@ -23,6 +23,7 @@ using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.FacialExpression;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.ECSComponents;
@@ -95,7 +96,9 @@ namespace DCL.PluginSystem.Global
         private FacialFeaturesTextures[] facialFeaturesTextures;
 
         private AvatarFaceAnimationSettings? faceAnimationSettings;
-        private AvatarFaceExpressionDefinition[] faceExpressions = Array.Empty<AvatarFaceExpressionDefinition>();
+        private AvatarFaceExpressionConfig? faceExpressionConfig;
+        private FacialExpressionsWheelShortcutHandler? facialExpressionsWheelShortcutHandler;
+        private readonly IEventBus eventBus;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -111,9 +114,11 @@ namespace DCL.PluginSystem.Global
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
             IUserBlockingCache userBlockingCache,
-            bool includeBannedUsersFromScene)
+            bool includeBannedUsersFromScene,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.eventBus = eventBus;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -137,6 +142,7 @@ namespace DCL.PluginSystem.Global
         {
             attachmentsAssetsCache.Dispose();
             avatarTransformMatrixJobWrapper.Dispose();
+            facialExpressionsWheelShortcutHandler?.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
         }
 
@@ -161,8 +167,8 @@ namespace DCL.PluginSystem.Global
 
             if (settings.FaceExpressionConfig != null && !string.IsNullOrEmpty(settings.FaceExpressionConfig.AssetGUID))
             {
-                AvatarFaceExpressionConfig config = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceExpressionConfig, ct)).Value;
-                faceExpressions = config.Expressions ?? Array.Empty<AvatarFaceExpressionDefinition>();
+                faceExpressionConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceExpressionConfig, ct)).Value;
+                facialExpressionsWheelShortcutHandler = new FacialExpressionsWheelShortcutHandler(eventBus);
             }
 
             debugContainerBuilder.TryAddWidget("Nametags")
@@ -209,8 +215,11 @@ namespace DCL.PluginSystem.Global
             if (faceAnimationSettings != null)
             {
                 AvatarFacialExpressionSystem.InjectToWorld(ref builder, faceAnimationSettings, eyebrowsTextureArray: null, eyeTextureArray: null, mouthPoseTextureArray: null);
-                UpdateFaceExpressionInputSystem.InjectToWorld(ref builder, faceExpressions);
+                ApplyFacialExpressionIntentSystem.InjectToWorld(ref builder);
             }
+
+            if (faceExpressionConfig != null && facialExpressionsWheelShortcutHandler != null)
+                UpdateFacialExpressionInputSystem.InjectToWorld(ref builder, faceExpressionConfig, facialExpressionsWheelShortcutHandler);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);

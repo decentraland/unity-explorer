@@ -65,6 +65,12 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.VOICE_CHAT:
                             SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
+                        case InputMapComponent.Kind.FACE_EXPRESSIONS_WHEEL:
+                            SetActionMapEnabled(isActive, DCLInput.Instance.FaceExpressionsWheel);
+                            break;
+                        case InputMapComponent.Kind.FACE_EXPRESSIONS:
+                            SetActionMapEnabled(isActive, DCLInput.Instance.FaceExpressions);
+                            break;
                     }
                 }
             }

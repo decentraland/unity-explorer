@@ -19,10 +19,6 @@ namespace DCL.FacialExpressionsWheel
 {
     public class FacialExpressionsWheelController : ControllerBase<FacialExpressionsWheelView>
     {
-        // Mirrors EmoteWheelShortcutHandler.QUICK_EMOTE_LOCK_TIME so a fast Y release after
-        // a slot click doesn't immediately re-toggle the wheel.
-        private const float QUICK_APPLY_LOCK_TIME = 0.5f;
-
         // Atlas grid is 4x4 = 16 slices per channel (see AvatarFacialExpressionConstants).
         private const int CHANNEL_ATLAS_SIZE = 16;
 
@@ -33,11 +29,8 @@ namespace DCL.FacialExpressionsWheel
         private readonly IFacialExpressionApplier applier;
         private readonly IInputBlock inputBlock;
         private readonly ICursor cursor;
-        private readonly IMVCManager mvcManager;
         private readonly IEventBus eventBus;
         private readonly FacialExpressionsCharacterPreviewController previewController;
-        private readonly DCLInput.ShortcutsActions shortcutsInput;
-        private readonly InputActionMap faceExpressionsInput;
         private readonly InputActionMap wheelInput;
 
         private UniTaskCompletionSource? closeViewTask;
@@ -47,13 +40,8 @@ namespace DCL.FacialExpressionsWheel
         private int pendingEyesIndex;
         private int pendingMouthIndex;
 
-        // Y-release coordination: Y+N consumed the release, or a slot click locks it briefly.
-        private bool ignoreNextRelease;
-        private float lockUntilTime;
-
         // True once the user has touched a slot or cycler. Gates the on-close commit so opening
-        // and closing without picking anything leaves the avatar untouched. Also reset to false
-        // after Y+N quick-apply (face already on avatar) and on tab-swap (discard).
+        // and closing without picking anything leaves the avatar untouched.
         private bool pendingChanged;
 
         private int selectedSlot = -1;
@@ -67,7 +55,6 @@ namespace DCL.FacialExpressionsWheel
             IFacialExpressionApplier applier,
             IInputBlock inputBlock,
             ICursor cursor,
-            IMVCManager mvcManager,
             IEventBus eventBus,
             FacialExpressionsCharacterPreviewController previewController)
             : base(viewFactory)
@@ -77,25 +64,16 @@ namespace DCL.FacialExpressionsWheel
             this.applier = applier;
             this.inputBlock = inputBlock;
             this.cursor = cursor;
-            this.mvcManager = mvcManager;
             this.eventBus = eventBus;
             this.previewController = previewController;
 
-            DCLInput input = DCLInput.Instance;
-            shortcutsInput = input.Shortcuts;
-            faceExpressionsInput = input.FaceExpressions;
-            wheelInput = input.FaceExpressionsWheel;
-
-            shortcutsInput.FaceExpression.canceled += OnFaceExpressionShortcutReleased;
-            ListenToSlotsInput(faceExpressionsInput, OnFaceExpressionsQuickApply);
+            wheelInput = DCLInput.Instance.FaceExpressionsWheel;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            shortcutsInput.FaceExpression.canceled -= OnFaceExpressionShortcutReleased;
-            UnregisterSlotsInput(faceExpressionsInput, OnFaceExpressionsQuickApply);
             UnregisterSlotsInput(wheelInput, OnSlotNumberPressed);
 
             fetchProfileCts.SafeCancelAndDispose();
@@ -192,7 +170,6 @@ namespace DCL.FacialExpressionsWheel
             ApplyExpressionToPreview(slot);
             HighlightSlot(slot);
             pendingChanged = true;
-            lockUntilTime = Time.time + QUICK_APPLY_LOCK_TIME;
         }
 
         private void OnSlotHover(int slot) =>
@@ -221,45 +198,6 @@ namespace DCL.FacialExpressionsWheel
             ApplyExpressionToPreview(slot);
             HighlightSlot(slot);
             pendingChanged = true;
-        }
-
-        private void OnFaceExpressionsQuickApply(InputAction.CallbackContext context)
-        {
-            int slot = FacialExpressionWheelUtils.SlotIndexFromActionName(context.action.name);
-            AvatarFaceExpressionDefinition def = expressionConfig.Expressions[slot];
-
-            applier.Apply((byte)def.EyebrowsIndex, (byte)def.EyesIndex, (byte)def.MouthIndex);
-
-            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
-            {
-                // Face already applied via shortcut; skip the on-close commit.
-                pendingChanged = false;
-                Close();
-            }
-            else
-            {
-                ignoreNextRelease = true;
-            }
-        }
-
-        private void OnFaceExpressionShortcutReleased(InputAction.CallbackContext _)
-        {
-            if (ignoreNextRelease)
-            {
-                ignoreNextRelease = false;
-                return;
-            }
-
-            if (Time.time < lockUntilTime)
-            {
-                lockUntilTime = 0f;
-                return;
-            }
-
-            if (State != ControllerState.ViewHidden && State != ControllerState.ViewHiding)
-                Close();
-            else
-                mvcManager.ShowAndForget(IssueCommand());
         }
 
         private void SwapToEmotes()
