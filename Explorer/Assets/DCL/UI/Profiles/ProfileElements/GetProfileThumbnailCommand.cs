@@ -29,7 +29,7 @@ namespace DCL.UI.ProfileElements
 
             Sprite? cachedSprite = profileRepository.GetProfileThumbnail(faceSnapshotUrl);
 
-            if (cachedSprite != null)
+            if (cachedSprite != null && profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl))
             {
                 property.SetLoaded(cachedSprite, true);
                 return;
@@ -42,12 +42,22 @@ namespace DCL.UI.ProfileElements
             if (ct.IsCancellationRequested)
                 return;
 
+            // Seed with this user's last known sprite (null if none) so we keep their previous picture during download
+            // and don't leak a sprite from a previous user when the property is reused (e.g. identity change).
+            Sprite? previousUserSprite = profileRepository.GetLatestThumbnailForUser(userId);
+            bool seededPreviousSprite = previousUserSprite != null;
+
+            property.UpdateValue(new ProfileThumbnailViewModel(ProfileThumbnailViewModel.State.LOADING, previousUserSprite, property.Value.ProfileColor, property.Value.FitAndCenterImage));
+
             try
             {
                 Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(faceSnapshotUrl, ct);
 
                 if (downloadedSprite != null)
-                    property.SetLoaded(downloadedSprite, false);
+                {
+                    if (profileRepository.StoreLatestThumbnailUrlForUser(userId, faceSnapshotUrl))
+                        property.SetLoaded(downloadedSprite, false);
+                }
                 else
                     UpdateFromError();
             }
@@ -58,8 +68,15 @@ namespace DCL.UI.ProfileElements
                 UpdateFromError();
             }
 
+            return;
+
             void UpdateFromError()
             {
+                // Tracked locally so concurrent updates to the property (parallel fetches, external SetLoaded) cannot
+                // confuse the decision to keep showing the previous picture vs. falling back to the placeholder.
+                if (seededPreviousSprite)
+                    return;
+
                 property.UpdateValue(fallback == null ? ProfileThumbnailViewModel.Error(property.Value.ProfileColor) : ProfileThumbnailViewModel.FromFallback(fallback, property.Value.ProfileColor));
             }
         }

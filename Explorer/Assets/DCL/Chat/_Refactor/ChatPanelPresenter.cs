@@ -130,7 +130,8 @@ namespace DCL.Chat
                 chatCommandRegistry.SelectChannel,
                 chatCommandRegistry.CloseChannel,
                 chatCommandRegistry.OpenConversation,
-                chatCommandRegistry.CreateChannelViewModel);
+                chatCommandRegistry.CreateChannelViewModel,
+                profileRepositoryWrapper);
 
             var emojiContainer = view.InputView.emojiContainer;
             var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);

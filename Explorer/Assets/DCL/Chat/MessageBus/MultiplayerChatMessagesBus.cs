@@ -126,7 +126,7 @@ namespace DCL.Chat.MessageBus
                     : receivedMessage.FromWalletId;
 
                 // If the user that sends the message is banned from the current scene, we ignore it
-                if (BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId)) return;
+                if (RoomMetadataCurrentScene.Instance.IsUserBanned(walletId)) return;
 
                 // If the message was already received through the scene or island pipe, we ignore it
                 if (messageDeduplication.TryPass(walletId, receivedMessage.Payload.Timestamp) == false) return;
