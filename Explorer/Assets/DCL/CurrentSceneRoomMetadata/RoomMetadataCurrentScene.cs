@@ -114,20 +114,13 @@ namespace DCL.SceneBannedUsers
 
             using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             if (adminsLock.Value == null)
-            {
                 return SceneAdminResult.NotLoadedYet();
-            }
 
             bool isAdmin = adminsLock.Value.Contains(userId);
 
-            if (isAdmin)
-            {
-                return SceneAdminResult.Success();
-            }
-            else
-            {
-                return SceneAdminResult.NotAdmin();
-            }
+            return isAdmin
+                ? SceneAdminResult.Success()
+                : SceneAdminResult.NotAdmin();
 #endif
         }
 

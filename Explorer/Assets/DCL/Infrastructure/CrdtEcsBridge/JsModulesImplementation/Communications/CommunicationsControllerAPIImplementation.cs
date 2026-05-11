@@ -4,7 +4,6 @@ using SceneRuntime;
 using System;
 using System.Text;
 using RichTypes;
-using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -44,10 +43,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             CommsMessageType commsMessageType = (CommsMessageType)message.Data[0];
             // Copy and filter batch
             ReadOnlySpan<byte> sourceData = message.Data;
+            bool isTrustedSource = message.IsTrustedSource;
             // Filtered data is already a view of the target array
             Span<byte> filteredUnbounded = array.Array.AsSpan(dataOffset);
-
-            bool isTrustedSource = IsTrustedSource(message.FromWalletId);
 
             // TODO This logic mostly duplicates CommunicationsControllerAPIImplementationBase.SendBinary we should standardise it later
             // Filter CRDT messages before receiving
@@ -75,18 +73,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             array.SetLength(totalLength);
             base.Enqueue(array);
-        }
-
-        private bool IsTrustedSource(string walletId)
-        {
-            SceneAdminResult result = RoomMetadataCurrentScene.Instance.IsAdmin(walletId);
-
-            return result.Match(
-                    onSuccess: () => true, // Message is considered safe if it's from a scene admin
-                    onLocalSceneDevelopment: () => true, //sceneAdmins are not applicable in cases like LSD
-                    onNotAdmin: () => false,
-                    onNotLoadedYet: () => false // Consider the user as non-admin until we know for sure
-                    );
         }
     }
 }

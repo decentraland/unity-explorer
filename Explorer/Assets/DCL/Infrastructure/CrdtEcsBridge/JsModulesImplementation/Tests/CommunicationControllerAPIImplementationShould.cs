@@ -99,7 +99,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
-            sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID));
+            sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID, isTrustedSource: true));
 
             byte[] walletBytes = Encoding.UTF8.GetBytes(WALLET_ID);
 
