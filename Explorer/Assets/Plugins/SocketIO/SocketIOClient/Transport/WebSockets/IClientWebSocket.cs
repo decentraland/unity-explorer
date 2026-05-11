@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace SocketIOClient.Transport.WebSockets
 {
@@ -9,16 +9,12 @@ namespace SocketIOClient.Transport.WebSockets
     {
         WebSocketState State { get; }
 
-        Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
+        UniTask ConnectAsync(Uri uri, CancellationToken cancellationToken);
 
-        Task DisconnectAsync(CancellationToken cancellationToken);
+        UniTask DisconnectAsync(CancellationToken cancellationToken);
 
-        Task SendAsync(ReadOnlyMemory<byte> bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
+        UniTask SendAsync(ReadOnlyMemory<byte> bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
 
-        Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken);
-
-        void AddHeader(string key, string val);
-
-        void SetProxy(IWebProxy proxy);
+        UniTask<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken);
     }
 }
