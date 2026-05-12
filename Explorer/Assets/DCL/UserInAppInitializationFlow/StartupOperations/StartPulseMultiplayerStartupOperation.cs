@@ -26,6 +26,7 @@ namespace DCL.UserInAppInitializationFlow
             await service.ConnectAsync(ct);
             Profile? profile = await selfProfile.ProfileAsync(ct);
             profilePropagation.Propagate(profile!);
+            await UniTask.SwitchToMainThread();
         }
     }
 }
