@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea799a483c3f4db8afbf38b0e6c08665, type: 3}
   m_Name: Nearby_Voice_Chat_Start_Speaking
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: e3332e438b434d43a7a41e82927a258d, type: 3}
+  - {fileID: 8300000, guid: 608ae0590cd5351428fa1240603cd697, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0.01
