@@ -97,7 +97,7 @@ namespace DCL.WebRequests.ChromeDevtool
 #if !UNITY_WEBGL 
         public BridgeStatus Status => bridge.Status;
 #else
-        public BridgeStatus Status => BridgeStatus.HasListeners;
+        public BridgeStatus Status => BridgeStatus.Offline;
 #endif
 
         public BridgeStartResult StartAndOpen()
