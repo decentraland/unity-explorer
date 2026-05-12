@@ -9,6 +9,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.MediaStream.YouTube;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
@@ -71,6 +72,13 @@ namespace DCL.SDKComponents.MediaStream
             cacheCleaner.Register(videoTexturesPool);
 
             mediaFactoryBuilder = new MediaFactoryBuilder(roomHubProxy, webRequestController, mediaVolume, frameBudget, mediaPlayerPrefab, videoTexturesPool, assetPreLoadCache, analyticsController);
+
+            // Pre-warm the YouTube InnerTube session (visitorData + cookies) off the critical
+            // path. Without this the first video share pays the warm-up GET synchronously
+            // before any player call. The warm-up is idempotent and self-recovers from
+            // failures — safe to fire-and-forget. CancellationToken.None because the warm-up
+            // is process-global, not tied to this container's init scope.
+            InnerTubeClient.PrewarmSessionAsync(CancellationToken.None).Forget();
         }
 
         public override void Dispose() =>

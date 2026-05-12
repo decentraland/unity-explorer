@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
@@ -48,7 +47,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IUrlResolverService urlResolverService)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
@@ -61,10 +60,7 @@ namespace DCL.SDKComponents.MediaStream
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;
             this.assetPreLoadCache = assetPreLoadCache;
-
-            urlResolverService = new UrlResolverServiceAnalyticsDecorator(
-                new UrlResolverService(webRequestController),
-                analyticsController);
+            this.urlResolverService = urlResolverService;
         }
 
         internal float worldVolumePercentage => mediaVolume.WorldVolumePercentage;

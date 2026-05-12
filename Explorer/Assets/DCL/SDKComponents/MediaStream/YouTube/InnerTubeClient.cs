@@ -55,11 +55,13 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         // ("Sign in to confirm you're not a bot").
         private static volatile string? visitorData;
 
-        // Short-TTL cache of player responses, keyed by VideoId. The resolver makes up to 3
+        // Cache of player responses, keyed by VideoId. The resolver makes up to 3
         // calls per video (IsLiveStreamAsync, GetStreamManifestAsync, GetStreamingManifestUrlAsync),
         // and our manifest-preferring fallback can hit up to 4 InnerTube clients per call.
         // Without this cache that's up to 12 network round-trips per resolve.
-        private const double PLAYER_RESPONSE_CACHE_TTL_SECONDS = 60;
+        // TTL bounded by YouTube stream URL expiry (~2-4h); 10 minutes is conservative enough
+        // to survive scene reloads and re-shares of the same video without re-fetching.
+        private const double PLAYER_RESPONSE_CACHE_TTL_SECONDS = 600;
         private static readonly Dictionary<string, (PlayerResponse Response, System.DateTime ExpiresAtUtc)> playerResponseCache = new ();
         private static readonly object playerResponseCacheLock = new ();
 
@@ -279,6 +281,14 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
             return PlayerResponse.Parse(responseText);
         }
+
+        /// <summary>
+        ///     Kicks the session warm-up so it runs off the critical path of the first video
+        ///     share. Safe to call multiple times — idempotent and concurrent-safe via the
+        ///     shared <see cref="warmupCompletion"/>. Fire-and-forget from app startup.
+        /// </summary>
+        internal static UniTask PrewarmSessionAsync(CancellationToken ct) =>
+            EnsureSessionWarmedUpAsync(ct);
 
         /// <summary>
         ///     Performs a one-time GET against <c>https://www.youtube.com/</c> on first use, to
