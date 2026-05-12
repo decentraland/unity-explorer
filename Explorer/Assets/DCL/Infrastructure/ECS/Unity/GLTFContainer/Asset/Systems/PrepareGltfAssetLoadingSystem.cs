@@ -49,7 +49,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             bool allowCaching = !options.PreviewingBuilderCollection;
 
             // Try loading from the cache
-            if (allowCaching && cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
+            if (allowCaching && cache.TryGet(intention.CacheKey, out GltfContainerAsset? asset))
             {
                 // Construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
@@ -69,7 +69,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
-                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name));
+            {
+                var abIntention = GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name);
+                // Pre-populate so PrepareAssetBundleLoadingParametersSystem doesn't have to look it up by the
+                // platform-suffixed hash (the digest map is keyed by bare hashes).
+                //This will go away when the urls include the depsDigest
+                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest
+                    && manifest.TryGetDepsDigest(intention.Hash, out string digest))
+                    abIntention.DepsDigest = digest;
+                World.Add(entity, abIntention);
+            }
         }
 
         public struct Options
