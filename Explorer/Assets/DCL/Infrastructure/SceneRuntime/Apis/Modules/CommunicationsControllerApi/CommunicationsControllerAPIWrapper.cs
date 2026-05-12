@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.V8;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -41,7 +42,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             {
                 for (var i = 0; i < dataList.Count; i++)
                 {
-                    var message = (ITypedArray<byte>)dataList[i];
+                    var message = new V8TypedArrayAdapter((ITypedArray<byte>)dataList[i]);
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)
