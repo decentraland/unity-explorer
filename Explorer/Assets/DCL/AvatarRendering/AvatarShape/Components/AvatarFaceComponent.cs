@@ -15,14 +15,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Renderer EyeRenderer;
         public Renderer MouthRenderer;
 
-        // Per-channel expression capability. False when the worn facial-feature wearable
-        // ships a legacy single-frame texture (no *_expressions.png atlas), so the renderer
-        // must not apply atlas slice overrides on that channel.
-        public bool EyebrowsHasExpressions;
-        public bool EyesHasExpressions;
-        public bool MouthHasExpressions;
+        // Per-channel atlas capability of the currently worn wearable. Stable across animation;
+        // only changes when a wearable swap rebinds the face renderers.
+        public bool EyebrowsHasExpressionAtlas;
+        public bool EyesHasExpressionAtlas;
+        public bool MouthHasExpressionAtlas;
 
-        // Base expression (resting layer). Eyes/mouth are restored to these when blink / mouth animation ends.
+        // Resting atlas cell per channel (0..N when capability bool is true, -1 otherwise).
+        // Eyes/mouth are restored to these when blink / mouth animation ends.
         public int EyebrowsExpressionIndex;
         public int EyesExpressionIndex;
         public int MouthExpressionIndex;

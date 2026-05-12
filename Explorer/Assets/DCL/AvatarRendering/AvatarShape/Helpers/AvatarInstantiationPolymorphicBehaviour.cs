@@ -37,13 +37,18 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 case WearableType.FacialFeature:
 
                     var texturesSet = facialFeaturesTextures.Value[category];
-                    texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = ((AttachmentTextureAsset)mainAsset).Texture;
+                    var mainTex = ((AttachmentTextureAsset)mainAsset).Texture;
+                    texturesSet[TextureArrayConstants.MAINTEX_ORIGINAL_TEXTURE] = mainTex;
 
                     // Mask is optional
                     var maskAssetRes = originalAssets[WearablePolymorphicBehaviour.MASK_ASSET_INDEX];
 
                     if (maskAssetRes is { Asset: not null })
                         texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID] = ((AttachmentTextureAsset)maskAssetRes.Value.Asset!).Texture;
+
+                    // WearablePromise.Result may be gone by the time the face system runs; stamp atlas capability here.
+                    if (resultWearable.HasFacialExpressionsTexture)
+                        facialFeaturesTextures.MarkHasExpressions(category);
 
                     return null;
                 default:

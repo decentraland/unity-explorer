@@ -12,10 +12,13 @@ namespace DCL.AvatarRendering.AvatarShape
     /// </summary>
     public static class AvatarFaceMaterialUtils
     {
+        // Note: no equality short-circuit against face.Current*Index. Wearable swaps recycle the
+        // skinning material pool, so the underlying material instance changes even when the renderer
+        // reference doesn't — an equality guard would happily skip writes while the new material sits
+        // at the shader-default sentinel and renders the full atlas. Per-frame SetInteger is cheap.
         public static void ApplyEyebrowsFrame(ref AvatarFaceComponent face, int eyebrowsIndex)
         {
             if (face.EyebrowsRenderer == null) return;
-            if (face.CurrentEyebrowsIndex == eyebrowsIndex) return;
 
             face.CurrentEyebrowsIndex = eyebrowsIndex;
             SetExpressionIndex(face.EyebrowsRenderer, eyebrowsIndex);
@@ -24,7 +27,6 @@ namespace DCL.AvatarRendering.AvatarShape
         public static void ApplyEyeFrame(ref AvatarFaceComponent face, int eyeIndex)
         {
             if (face.EyeRenderer == null) return;
-            if (face.CurrentEyeIndex == eyeIndex) return;
 
             face.CurrentEyeIndex = eyeIndex;
             SetExpressionIndex(face.EyeRenderer, eyeIndex);
@@ -33,7 +35,6 @@ namespace DCL.AvatarRendering.AvatarShape
         public static void ApplyMouthPose(ref AvatarFaceComponent face, int mouthPoseIndex)
         {
             if (face.MouthRenderer == null) return;
-            if (face.CurrentMouthPoseIndex == mouthPoseIndex) return;
 
             face.CurrentMouthPoseIndex = mouthPoseIndex;
             SetExpressionIndex(face.MouthRenderer, mouthPoseIndex);

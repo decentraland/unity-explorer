@@ -19,6 +19,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
+using Runtime.Wearables;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -252,6 +253,11 @@ namespace DCL.AvatarRendering.AvatarShape
                 if (resultWearable.Type == WearableType.BodyShape)
                     bodyShape = instance;
             }
+
+            // Freeze per-channel atlas capability for AvatarFacialExpressionSystem.
+            avatarShapeComponent.EyebrowsHasExpressionAtlas = facialFeatureTextures.HasExpressions(WearableCategories.Categories.EYEBROWS);
+            avatarShapeComponent.EyesHasExpressionAtlas = facialFeatureTextures.HasExpressions(WearableCategories.Categories.EYES);
+            avatarShapeComponent.MouthHasExpressionAtlas = facialFeatureTextures.HasExpressions(WearableCategories.Categories.MOUTH);
 
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
