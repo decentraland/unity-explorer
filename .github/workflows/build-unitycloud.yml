@@ -72,6 +72,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_sign:
+        description: 'Run Windows code-signing steps for testing (non-blocking)'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       profile:
@@ -472,7 +477,8 @@ jobs:
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
       - name: Download CodeSignTool
-        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
         run: |
           set -euo pipefail
           CST_VERSION="v1.3.2"
@@ -490,7 +496,8 @@ jobs:
           echo "CodeSignTool ready: $JAR"
 
       - name: Sign Windows executable
-        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
         env:
           ES_USERNAME: ${{ secrets.ES_USERNAME }}
           ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
@@ -518,7 +525,8 @@ jobs:
           echo "::notice::Signed $MAIN_EXE"
 
       - name: Verify Windows signature
-        if: matrix.target == 'windows64' && inputs.is_release_build == true
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
         run: |
           set -euo pipefail
           sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
