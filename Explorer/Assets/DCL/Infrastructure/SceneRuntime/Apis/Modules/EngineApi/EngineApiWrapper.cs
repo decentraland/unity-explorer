@@ -4,6 +4,7 @@ using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
+using SceneRuntime.V8;
 using System;
 using System.Threading;
 using UnityEngine.Profiling;
@@ -41,7 +42,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             {
                 Profiler.BeginThreadProfiling("SceneRuntime", threadName);
 
-                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(data, ref lastInput);
+                instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(new V8TypedArrayAdapter(data), ref lastInput);
 
                 PoolableByteArray result = api.CrdtSendToRenderer(lastInput.Memory);
 
