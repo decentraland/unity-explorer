@@ -34,6 +34,10 @@ namespace DCL.InWorldCamera.Systems
         {
             if (!World.Get<CameraComponent>(camera).CameraInputChangeEnabled) return;
 
+            //enables camera reel shortcuts to allow pressing K to open gallery (previously was disabled)
+            if (World.Has<InWorldCameraComponent>(camera) && !shortcutsInputSchema.CameraReel.enabled)
+                shortcutsInputSchema.CameraReel.Enable();
+
             if (shortcutsInputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
 
