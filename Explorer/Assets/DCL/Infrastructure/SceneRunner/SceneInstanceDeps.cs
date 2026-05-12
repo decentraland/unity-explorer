@@ -42,6 +42,7 @@ using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.ScenePermissions;
+using SceneRuntime.V8;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
@@ -280,7 +281,7 @@ namespace SceneRunner
         internal class WithRuntimeAndJsAPI : WithRuntimeAndJsAPIBase
         {
             public WithRuntimeAndJsAPI
-            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+            (SceneInstanceDependencies syncDeps, V8SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController,
                 SkyboxSettingsAsset skyboxSettings,
@@ -313,7 +314,7 @@ namespace SceneRunner
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
         {
             public WithRuntimeJsAndSDKObservablesEngineAPI
-            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+            (SceneInstanceDependencies syncDeps, V8SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ISceneCommunicationPipe messagePipesHub,
                 IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings,
 #if !UNITY_WEBGL

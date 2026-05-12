@@ -7,6 +7,7 @@ using ECS;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
+using SceneRuntime.V8;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -69,7 +70,7 @@ namespace SceneRuntime.Factory
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        internal async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+        internal async UniTask<V8SceneRuntimeImpl> CreateBySourceCodeAsync(
             string sourceCode,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
@@ -96,14 +97,14 @@ namespace SceneRuntime.Factory
 
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
 
-            return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
+            return new V8SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
                 engineFactory);
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
+        public async UniTask<V8SceneRuntimeImpl> CreateByPathAsync(
             URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,

@@ -5,6 +5,7 @@ using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.V8;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -50,7 +51,7 @@ namespace SceneRunner
 
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="V8SceneRuntimeImpl"/> through its
         /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
@@ -111,7 +112,7 @@ namespace SceneRunner
             }
             finally { sceneCodeIsRunning.Reset(); }
 
-            MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
+            MultithreadingUtility.AssertMainThread(nameof(V8SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
@@ -140,7 +141,7 @@ namespace SceneRunner
 
                     SceneStateProvider.TickNumber++;
 
-                    MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+                    MultithreadingUtility.AssertMainThread(nameof(V8SceneRuntimeImpl.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
@@ -201,7 +202,7 @@ namespace SceneRunner
 
         /// <remarks>
         /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="V8SceneRuntimeImpl"/> through its
         /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>

@@ -3,6 +3,7 @@ using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -44,7 +45,7 @@ namespace SceneRuntime.Apis.Modules
             ///     Either "Binary" or "Text"
             /// </summary>
             public string type;
-            public ITypedArray<byte> binary;
+            public IDCLTypedArray<byte> binary;
             public string text;
         }
     }

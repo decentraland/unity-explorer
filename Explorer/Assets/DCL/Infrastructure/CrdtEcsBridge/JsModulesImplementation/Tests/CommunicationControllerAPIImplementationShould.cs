@@ -6,7 +6,9 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using ECS;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using SceneRuntime.V8;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -49,9 +51,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             var uint8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
 
             jsOperations = Substitute.For<IJsOperations>();
-            jsOperations.NewArray().Returns(_ => arrayCtor.Invoke(true));
+            jsOperations.NewArray().Returns(_ => new V8ScriptObjectAdapter((ScriptObject)arrayCtor.Invoke(true)));
 
-            jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
+            jsOperations.GetTempUint8Array().Returns(_ => new V8TypedArrayAdapter((ITypedArray<byte>)uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE)));
 
             api = new CommunicationsControllerAPIImplementation(
                     sceneData,
