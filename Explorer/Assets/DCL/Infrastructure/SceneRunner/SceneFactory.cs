@@ -30,6 +30,7 @@ using SceneRuntime;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
+using SceneRuntime.V8;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -174,7 +175,7 @@ namespace SceneRunner
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, permissionsProvider, partitionProvider, ecsWorldFactory, entityFactory);
 
             // Try to create scene runtime
-            SceneRuntimeImpl sceneRuntime;
+            V8SceneRuntimeImpl sceneRuntime;
 
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
