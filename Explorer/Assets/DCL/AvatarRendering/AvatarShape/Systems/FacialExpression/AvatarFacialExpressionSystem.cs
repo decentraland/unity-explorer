@@ -80,10 +80,8 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             ReInitRenderersIfNeeded(ref face, in avatarShape);
 
-            // Run every frame: the skinning material pool can swap the face material under us on a
-            // wearable swap (same renderer instance, fresh shader-default _ExpressionIndex). Gating on
-            // IsDirty would let those pool-reset materials render the full atlas until the next input.
-            ApplyExpressionLayer(ref face);
+            if (face.IsDirty)
+                ApplyExpressionLayer(ref face);
 
             bool visible = avatarShape.IsVisible;
 
@@ -96,29 +94,37 @@ namespace DCL.AvatarRendering.AvatarShape
                 StepMouthAnimation(t, ref face, ref mouthInput, visible);
         }
 
-        // Wearable swaps replace the face renderers (pool may reuse the same instance with a
-        // fresh-default material). Detect any change in renderer ref or capability bool, then
-        // reset Current* / resting indices so the next ApplyExpressionLayer pushes the correct value.
+        // A wearable swap can return the same renderer instance from the cache but with a
+        // freshly-pooled skinning material whose _ExpressionIndex sits at the shader-default
+        // sentinel. Diff both the renderer ref AND its sharedMaterial against the cached pair so
+        // we don't miss that case; on any mismatch (or a capability bool change) reset Current*
+        // and the resting index, then flag IsDirty so ApplyExpressionLayer pushes the correct value.
         private void ReInitRenderersIfNeeded(ref AvatarFaceComponent face, in AvatarShapeComponent avatarShape)
         {
             Renderer? eyebrows = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyebrows");
             Renderer? eyes = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyes");
             Renderer? mouth = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Mouth");
 
+            Material? eyebrowsMat = eyebrows != null ? eyebrows.sharedMaterial : null;
+            Material? eyesMat = eyes != null ? eyes.sharedMaterial : null;
+            Material? mouthMat = mouth != null ? mouth.sharedMaterial : null;
+
             bool rebuilt = false;
 
-            if (eyebrows != null && (face.EyebrowsRenderer != eyebrows || face.EyebrowsHasExpressionAtlas != avatarShape.EyebrowsHasExpressionAtlas))
+            if (eyebrows != null && (face.EyebrowsRenderer != eyebrows || face.EyebrowsMaterial != eyebrowsMat || face.EyebrowsHasExpressionAtlas != avatarShape.EyebrowsHasExpressionAtlas))
             {
                 face.EyebrowsRenderer = eyebrows;
+                face.EyebrowsMaterial = eyebrowsMat;
                 face.EyebrowsHasExpressionAtlas = avatarShape.EyebrowsHasExpressionAtlas;
                 face.EyebrowsExpressionIndex = avatarShape.EyebrowsHasExpressionAtlas ? 0 : AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE;
                 face.CurrentEyebrowsIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE;
                 rebuilt = true;
             }
 
-            if (eyes != null && (face.EyeRenderer != eyes || face.EyesHasExpressionAtlas != avatarShape.EyesHasExpressionAtlas))
+            if (eyes != null && (face.EyeRenderer != eyes || face.EyeMaterial != eyesMat || face.EyesHasExpressionAtlas != avatarShape.EyesHasExpressionAtlas))
             {
                 face.EyeRenderer = eyes;
+                face.EyeMaterial = eyesMat;
                 face.EyesHasExpressionAtlas = avatarShape.EyesHasExpressionAtlas;
                 face.EyesExpressionIndex = avatarShape.EyesHasExpressionAtlas ? 0 : AvatarFacialExpressionConstants.NO_EYE_OVERRIDE;
                 face.CurrentEyeIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE;
@@ -130,9 +136,10 @@ namespace DCL.AvatarRendering.AvatarShape
                 rebuilt = true;
             }
 
-            if (mouth != null && (face.MouthRenderer != mouth || face.MouthHasExpressionAtlas != avatarShape.MouthHasExpressionAtlas))
+            if (mouth != null && (face.MouthRenderer != mouth || face.MouthMaterial != mouthMat || face.MouthHasExpressionAtlas != avatarShape.MouthHasExpressionAtlas))
             {
                 face.MouthRenderer = mouth;
+                face.MouthMaterial = mouthMat;
                 face.MouthHasExpressionAtlas = avatarShape.MouthHasExpressionAtlas;
                 face.MouthExpressionIndex = avatarShape.MouthHasExpressionAtlas ? 0 : AvatarFacialExpressionConstants.NO_MOUTH_POSE;
                 face.CurrentMouthPoseIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE;

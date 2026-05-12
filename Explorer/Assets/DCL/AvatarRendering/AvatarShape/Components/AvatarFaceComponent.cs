@@ -15,6 +15,16 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Renderer EyeRenderer;
         public Renderer MouthRenderer;
 
+        // Cached <see cref="Renderer.sharedMaterial"/> at the time we last wrote _ExpressionIndex.
+        // The skinning material pool can swap the material under us during a wearable swap while
+        // returning the SAME renderer instance from the wearable cache — the new material starts at
+        // the shader-default sentinel, so a renderer-ref-only diff would happily skip the write and
+        // the channel would render the full atlas. AvatarFacialExpressionSystem diffs these against
+        // <c>renderer.sharedMaterial</c> each frame to detect that case.
+        public Material EyebrowsMaterial;
+        public Material EyeMaterial;
+        public Material MouthMaterial;
+
         // Per-channel atlas capability of the currently worn wearable. Stable across animation;
         // only changes when a wearable swap rebinds the face renderers.
         public bool EyebrowsHasExpressionAtlas;
