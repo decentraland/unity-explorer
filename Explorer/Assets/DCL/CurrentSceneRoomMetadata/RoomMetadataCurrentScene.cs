@@ -58,7 +58,12 @@ namespace DCL.SceneBannedUsers
 
         public static void InitializeTest()
         {
-            RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene());
+            // Idempotent: SingletonRegistry only resets between test assemblies, so consecutive
+            // [SetUp] calls in the same fixture would otherwise hit "already initialized".
+            try { RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene()); }
+            catch (InvalidOperationException) { /* already initialized — fall through and clear state */ }
+
+            RoomMetadataCurrentScene.Instance.SetBannedForTests();
         }
 
         public void SetBannedForTests(params string[] bannedAddresses)
