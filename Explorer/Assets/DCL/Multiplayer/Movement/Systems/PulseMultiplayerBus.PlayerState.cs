@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Movement
 
             if (!pulseService.IsAuthenticated) return;
 
-            // TODO Override the last movement message in the pipe as it doesn't make sense to send more than 1
+            // Consecutive input messages are collapsed in ENetTransport
 
             var clientMessage = OutgoingMessage.Create(PacketMode.UNRELIABLE_SEQUENCED, ClientMessage.MessageOneofCase.Input);
             WritePlayerStateInput(message, clientMessage.Message.Input);

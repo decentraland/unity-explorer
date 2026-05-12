@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Decentraland.Pulse;
 using ENet;
 using Google.Protobuf;
 using Pulse.Transport;
@@ -248,19 +249,38 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
         }
 
         /// <summary>
-        ///     ENet is not thread-safe so we are obliged to write from the same thread we read
+        ///     ENet is not thread-safe so we are obliged to write from the same thread we read.
+        ///     Consecutive <see cref="ClientMessage.MessageOneofCase.Input"/> messages are collapsed:
+        ///     only the latest input in a contiguous run is sent, older ones are disposed.
         /// </summary>
         private void SendOutgoingMessages()
         {
-            while (messagePipe.TryReadOutgoingMessage(out OutgoingMessage msg))
+            if (!messagePipe.TryReadOutgoingMessage(out OutgoingMessage pending))
+                return;
+
+            while (messagePipe.TryReadOutgoingMessage(out OutgoingMessage next))
             {
-                ENetChannel channel = ToENetChannel(msg.PacketMode);
+                if (pending.Message.MessageCase == ClientMessage.MessageOneofCase.Input
+                    && next.Message.MessageCase == ClientMessage.MessageOneofCase.Input)
+                {
+                    pending.Dispose();
+                    pending = next;
+                    continue;
+                }
 
-                using OutgoingMessage _ = msg;
-
-                if (serverPeer != null)
-                    SendToPeer(serverPeer.Value, channel, msg.Message);
+                SendAndDispose(pending);
+                pending = next;
             }
+
+            SendAndDispose(pending);
+        }
+
+        private void SendAndDispose(OutgoingMessage msg)
+        {
+            using OutgoingMessage _ = msg;
+
+            if (serverPeer != null)
+                SendToPeer(serverPeer.Value, ToENetChannel(msg.PacketMode), msg.Message);
         }
 
         private void SendToPeer(Peer peer, ENetChannel channel, IMessage message)
