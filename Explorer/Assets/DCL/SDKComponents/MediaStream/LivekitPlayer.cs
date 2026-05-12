@@ -1,3 +1,6 @@
+// Currently media-streams are not supported for webgl
+#if !UNITY_WEBGL
+
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using DCL.SDKComponents.MediaStream;
@@ -426,3 +429,5 @@ namespace DCL.SDKComponents.MediaStream
         }
     }
 }
+
+#endif
