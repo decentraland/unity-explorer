@@ -19,6 +19,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
@@ -109,8 +110,15 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                             new CommonArguments(url), string.Empty, ct)
                     );
 
+                using PooledObject<List<TFullAvatarElement>> _ = ListPool<TFullAvatarElement>.Get(out List<TFullAvatarElement> builderItems);
+
                 await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                    LoadBuilderItem(ref intention, lambdaResponse);
+                    LoadBuilderItem(ref intention, lambdaResponse, builderItems);
+
+                // Create dependent asset promises on the intention entity's partition BEFORE returning,
+                // so they exist before the promise result is added and the entity is consumed/destroyed
+                // by the async caller.
+                AfterBuilderItemsLoaded(partition, builderItems);
             }
             else
             {
@@ -166,9 +174,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             return result;
         }
 
-        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TFullAvatarElementDTO>> lambdaResponse)
+        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TFullAvatarElementDTO>> lambdaResponse, List<TFullAvatarElement> builderItems)
         {
-            if (string.IsNullOrEmpty(builderContentURL)) return;
+            if (string.IsNullOrEmpty(builderContentURL))
+                return;
 
             if (lambdaResponse.CollectionElements is { Count: > 0 })
             {
@@ -188,6 +197,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         avatarElement.DTO.assetBundleManifestVersion = AssetBundleManifestVersion.CreateLSDAsset();
 
                     intention.AppendToResult(avatarElement);
+                    builderItems.Add(avatarElement);
                     totalCount++;
                 }
 
@@ -241,5 +251,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TFullAvatarElementDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
+
+        protected virtual void AfterBuilderItemsLoaded(IPartitionComponent partition, IReadOnlyList<TFullAvatarElement> builderItems) { }
     }
 }

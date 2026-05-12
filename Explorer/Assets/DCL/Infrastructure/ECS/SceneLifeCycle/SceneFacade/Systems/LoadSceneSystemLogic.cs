@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
 using SceneRunner.Scene;
+using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -15,7 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override string GetAssetBundleSceneId(string ipfsPathEntityId) =>
             ipfsPathEntityId;
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory) =>
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct) =>
             new SceneHashedContent(definition.content!, contentBaseUrl);
     }
 }

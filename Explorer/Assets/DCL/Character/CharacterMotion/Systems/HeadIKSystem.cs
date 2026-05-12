@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using Utility.Animations;
 using DCL.Character;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -167,11 +168,17 @@ namespace DCL.CharacterMotion.Systems
             in CharacterPlatformComponent platformComponent,
             in HandPointAtComponent handPointAtComponent)
         {
+            // Check the upper body layer animator state to detect masked emotes.
+            // The component lives in scene worlds (not global), so we check the animator directly.
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
+
             bool pitchEnabled = debugHeadIKIsEnabled &&
                                 rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } &&
                                 !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f) &&
                                 !stunComponent.IsStunned &&
                                 !emoteComponent.IsPlayingEmote &&
+                                !isPlayingMaskedEmote &&
                                 !platformComponent.PositionChanged;
             bool yawEnabled = pitchEnabled && cameraComponent.Mode != CameraMode.FirstPerson;
             headIK.SetEnabled(yawEnabled, pitchEnabled);

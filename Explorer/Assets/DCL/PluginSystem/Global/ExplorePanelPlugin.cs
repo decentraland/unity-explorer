@@ -419,7 +419,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock, navmapBus, categoryMappingSO.Value);
 
             SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.ShareContextMenuView,
-                navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
+                navmapView.WorldsWarningNotificationView, clipboard, webBrowser, decentralandUrlsSource);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
@@ -435,7 +435,7 @@ namespace DCL.PluginSystem.Global
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser, imageControllerProvider);
+                userCalendar, shareContextMenu, webBrowser, decentralandUrlsSource, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,

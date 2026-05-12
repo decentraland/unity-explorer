@@ -50,7 +50,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "c6a7da496f4b0d61ae70487c4ddf4c7e68c64d36"
+      "hash": "b9f9f75c3a0093c95a5b49420e7781c4f5d968b9"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
@@ -98,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "c1d582d62644c33e53e3c521c53663f37ad24fbe"
+      "hash": "bdb26fbf60fe2ecf0aac83967be8f4c2fa7e7e94"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -535,13 +535,13 @@
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "org.decentraland.clearscript": {
-      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#v2",
+      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#7.5.1.a",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "ae0c51ae4a6f2325f9757e9a0253ddbef8713a9b"
+      "hash": "5f385df93c2d1e4a9aed3dd0aad62c247c684a4b"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

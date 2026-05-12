@@ -40,7 +40,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
@@ -183,7 +183,7 @@ namespace Global.Dynamic
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                GetResolutionFromAppArgs(applicationParametersParser));
 
             World world = World.Create();
 
@@ -388,9 +388,9 @@ namespace Global.Dynamic
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
 
                 // Note that FileShare.None should lock the file to other processes, and it does,
-                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0, 0);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             }
             catch (IOException) { return true; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
@@ -816,6 +816,20 @@ namespace Global.Dynamic
                 GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
             };
+
+        private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+                return null;
+
+            string[] parts = resolutionArg.Split('x');
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                return new Vector2Int(w, h);
+
+            ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            return null;
+        }
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>

@@ -35,7 +35,18 @@ namespace ECS.StreamableLoading.GLTF
 
         public static GetGLTFIntention Create(string name, string hash, bool mecanimAnimationClips = false, ContentDefinition[]? contentMappings = null) => new (name, hash, mecanimAnimationClips, contentMappings);
 
+        // Identity: Hash + Name. Hash alone would be enough for content identity, but matching the
+        // sibling GetGltfContainerAssetIntention's shape (Name + Hash) keeps the two layers
+        // consistent
         public bool Equals(GetGLTFIntention other) =>
-            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) || Name == other.Name;
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) && Name == other.Name;
+
+        public override bool Equals(object? obj) =>
+            obj is GetGLTFIntention other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(
+                Hash == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(Hash),
+                Name);
     }
 }

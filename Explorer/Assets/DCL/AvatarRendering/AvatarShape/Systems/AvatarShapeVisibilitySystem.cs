@@ -154,7 +154,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!includeBannedUsersFromScene) return;
 
-            bool isBanned = BannedUsersFromCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
+            bool isBanned = RoomMetadataCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
 
             SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
         }
@@ -239,7 +239,7 @@ namespace DCL.AvatarRendering.AvatarShape
         private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, IAvatarView avatarView, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden, bool shouldPlayFootstepFX,
             in CharacterEmoteComponent characterEmoteComponent)
         {
-            bool isAnimationsEnabled = characterEmoteComponent.IsPlayingLegacyEmote ? avatarView.LegacyAnimation?.enabled ?? false : avatarView.AvatarAnimator.enabled;
+            bool isAnimationsEnabled = avatarView.AvatarAnimator.enabled;
 
             if (avatarCachedVisibility.IsVisible == shouldBeHidden
                 && isAnimationsEnabled == shouldPlayFootstepFX)
@@ -252,16 +252,8 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
 
-            if (characterEmoteComponent.IsPlayingLegacyEmote)
-            {
-                if (avatarView.LegacyAnimation != null)
-                    avatarView.LegacyAnimation.enabled = shouldPlayFootstepFX;
-            }
-            else
-            {
-                avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX;
-                avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX; // even when disabled the Animator fires events...
-            }
+            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
+            avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

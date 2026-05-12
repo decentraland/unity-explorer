@@ -2,9 +2,7 @@
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
-using System.IO;
 using System.Text;
-using SceneRunner.Admins;
 using RichTypes;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -12,19 +10,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
         private readonly IInstancePoolsProvider byteArrayPool;
-        private readonly Option<SceneAdmins> sceneAdmins;
 
         public CommunicationsControllerAPIImplementation(
                 ISceneData sceneData,
                 ISceneCommunicationPipe messagePipesHub,
                 IJsOperations jsOperations,
-                IInstancePoolsProvider byteArrayPool,
-                Option<SceneAdmins> sceneAdmins
+                IInstancePoolsProvider byteArrayPool
                 )
             : base(sceneData, messagePipesHub, jsOperations, ISceneCommunicationPipe.MsgType.Uint8Array)
         {
             this.byteArrayPool = byteArrayPool;
-            this.sceneAdmins = sceneAdmins;
         }
 
         protected override void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage message)
@@ -48,10 +43,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             CommsMessageType commsMessageType = (CommsMessageType)message.Data[0];
             // Copy and filter batch
             ReadOnlySpan<byte> sourceData = message.Data;
+            bool isTrustedSource = message.IsTrustedSource;
             // Filtered data is already a view of the target array
             Span<byte> filteredUnbounded = array.Array.AsSpan(dataOffset);
-
-            bool isTrustedSource = IsTrustedSource(message.FromWalletId);
 
             // TODO This logic mostly duplicates CommunicationsControllerAPIImplementationBase.SendBinary we should standardise it later
             // Filter CRDT messages before receiving
@@ -75,23 +69,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
 
             if (totalLength > IJsOperations.LIVEKIT_MAX_SIZE)
-                throw new InternalBufferOverflowException("Received a message larger than LIVEKIT_MAX_SIZE");
+                throw new Exception("Received a message larger than LIVEKIT_MAX_SIZE");
 
             array.SetLength(totalLength);
             base.Enqueue(array);
-        }
-
-        private bool IsTrustedSource(string walletId)
-        {
-            if (sceneAdmins.Has)
-            {
-                // Message is considered safe if it's from a scene admin
-                bool? adminResult = sceneAdmins.Value.IsAdmin(walletId);
-                // Consider the user as non-admin until we know for sure
-                return adminResult == null ? false : adminResult.Value;
-            }
-
-            return true; // sceneAdmins are not applicable in cases like LSD
         }
     }
 }

@@ -50,7 +50,6 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
-using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.FacialExpression;
 using DCL.Multiplayer.HealthChecks;
@@ -83,6 +82,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Prefs;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -101,7 +101,6 @@ using Global.Versioning;
 using DCL.LiveKit.Public;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -144,6 +143,7 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public IMVCManager MvcManager { get; }
 
@@ -186,7 +186,8 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler)
+            BannedNotificationHandler bannedNotificationHandler,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -205,6 +206,7 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public override void Dispose()
@@ -215,6 +217,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            profileRepositoryWrapper.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -339,8 +342,7 @@ namespace Global.Dynamic
             var builderDTOsURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiDtos));
             var builderContentURL = URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.BuilderApiContent));
 
-            var emotesCache = new MemoryEmotesStorage();
-            staticContainer.CacheCleaner.Register(emotesCache);
+            IEmoteStorage emotesCache = staticContainer.EmoteStorage;
             staticContainer.CacheCleaner.Register(trimmedEmoteCatalog);
             var equippedWearables = new EquippedWearables();
             var equippedEmotes = new EquippedEmotes();
@@ -416,7 +418,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData
             );
 
-            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
@@ -575,6 +577,7 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
@@ -636,6 +639,9 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, dynamicSettings.MultiplayerDebugSettings, userBlockingCache);
 
+            // Configure proxies for scene-side masked emote system
+            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
+
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -665,7 +671,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             var communitiesEventBus = new CommunitiesEventBus();
@@ -698,6 +704,13 @@ namespace Global.Dynamic
                     new RestNearbyMuteRepository(
                         staticContainer.WebRequestsContainer.WebRequestController,
                         bootstrapContainer.DecentralandUrlsSource))
+                : null;
+
+            NearbyVoiceChatStateModel? nearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyVoiceChatStateModel(
+                    DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                        ? NearbyVoiceChatState.DISABLED
+                        : NearbyVoiceChatState.IDLE)
                 : null;
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
@@ -797,13 +810,13 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     builderContentURL.Value,
-                    appArgs,
                     thumbnailProvider,
                     staticContainer.ScenesCache,
                     bootstrapContainer.DecentralandUrlsSource,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
-                    trimmedEmoteCatalog),
+                    trimmedEmoteCatalog,
+                staticContainer.EmotesContainer.EmotePlayer),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -1025,7 +1038,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 staticContainer.WebRequestsContainer.CreatePlugin(localSceneDevelopment),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.CompositeWeb3Provider, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.InputBlock, characterPreviewEventBus, backgroundMusic, globalWorld, bootstrapContainer.AppArgs, wearablesProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, profileChangesBus),
-                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController, staticContainer.RealmData, !appArgs.HasFlagWithValueFalse(AppArgsFlags.SKYBOX_TIME_ENABLED)),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
@@ -1106,7 +1119,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new BannedUsersPlugin(roomHub, staticContainer.RealmData, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
                 new SmartWearablesGlobalPlugin(wearableCatalog,
                     backpackEventBus,
                     staticContainer.PortableExperiencesController,
@@ -1162,12 +1175,13 @@ namespace Global.Dynamic
                         mainUIView.SidebarView.NearbyVoiceTip,
                         bootstrapContainer.VolumeBus,
                         userBlockingCache,
-                        nearbyMuteService)
+                        nearbyMuteService,
+                        nearbyStateModel)
                 );
 
                 globalPlugins.Add(new MouthAnimationPlugin(chatHistory, roomHub, voiceChatContainer.VoiceChatOrchestrator));
 
-            if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
+            if (!appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
 
             if (localSceneDevelopment)
@@ -1180,7 +1194,7 @@ namespace Global.Dynamic
 
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS))
-                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment));
+                globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, builderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
@@ -1306,7 +1320,10 @@ namespace Global.Dynamic
                         cameraReelStorageService,
                         entityParticipantTable,
                         staticContainer.ScenesCache,
-                        chatEventBus, translationSettings
+                        chatEventBus,
+                        translationSettings,
+                        nearbyStateModel,
+                        nearbyMuteService
                     )
                 );
 
@@ -1365,7 +1382,8 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler
+                bannedNotificationHandler,
+                profileRepositoryWrapper
             );
 
             // Init itself

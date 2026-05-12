@@ -104,7 +104,7 @@ namespace DCL.Backpack
             publishProfileCts?.SafeCancelAndDispose();
         }
 
-        private void EquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void EquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             equippedWearables.UnEquipAll();
 
