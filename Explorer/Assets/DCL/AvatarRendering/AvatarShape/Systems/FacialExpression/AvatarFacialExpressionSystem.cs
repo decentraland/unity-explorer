@@ -56,16 +56,23 @@ namespace DCL.AvatarRendering.AvatarShape
                 EyebrowsRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyebrows"),
                 EyeRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyes"),
                 MouthRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Mouth"),
-                EyebrowsExpressionIndex = 0,
+                EyebrowsExpressionIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE,
                 EyesExpressionIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
                 MouthExpressionIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
                 CurrentEyebrowsIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE,
                 CurrentEyeIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
                 CurrentMouthPoseIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
                 NextBlinkTime = Random.Range(settings.MinBlinkInterval, settings.MaxBlinkInterval),
+                IsDirty = true,
             };
 
             ResolveFaceExpressionFlags(in avatarShape, ref face);
+
+            // Atlas-bound channels must start at a valid cell (-1 disables slicing in the shader,
+            // which would expose the whole atlas). Idle (0) is the safe resting cell.
+            if (face.EyebrowsHasExpressions) face.EyebrowsExpressionIndex = 0;
+            if (face.EyesHasExpressions) face.EyesExpressionIndex = 0;
+            if (face.MouthHasExpressions) face.MouthExpressionIndex = 0;
 
             World.Add(entity, face, new AvatarMouthInputComponent());
         }

@@ -12,8 +12,6 @@ namespace DCL.AvatarRendering.AvatarShape
     /// </summary>
     public static class AvatarFaceMaterialUtils
     {
-        private static readonly MaterialPropertyBlock MPB = new ();
-
         public static void ApplyEyebrowsFrame(ref AvatarFaceComponent face, int eyebrowsIndex)
         {
             if (face.EyebrowsRenderer == null) return;
@@ -87,12 +85,15 @@ namespace DCL.AvatarRendering.AvatarShape
         }
 
         // Sentinel index (<0) disables atlas slicing in the shader so non-atlas wearables sample
-        // their full base map; >=0 picks one cell of the 4x4 atlas grid.
+        // their full base map; >=0 picks one cell of the 4x4 atlas grid. _ExpressionIndex lives
+        // in UnityPerMaterial CBuffer for SRP batcher, so MPB can't override it; each face
+        // renderer already has its own pooled material instance, so a direct write is safe.
         private static void SetExpressionIndex(Renderer renderer, int index)
         {
-            renderer.GetPropertyBlock(MPB);
-            MPB.SetInteger(TextureArrayConstants.EXPRESSION_INDEX_SHADER, index);
-            renderer.SetPropertyBlock(MPB);
+            Material material = renderer.sharedMaterial;
+
+            if (material != null)
+                material.SetInteger(TextureArrayConstants.EXPRESSION_INDEX_SHADER, index);
         }
     }
 }
