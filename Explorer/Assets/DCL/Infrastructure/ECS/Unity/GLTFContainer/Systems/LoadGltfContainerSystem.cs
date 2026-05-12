@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -29,13 +29,15 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly Func<string, string> resolveCacheKey;
 
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
-            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, Func<string, string> resolveCacheKey) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.resolveCacheKey = resolveCacheKey;
         }
 
         protected override void Update(float t)
@@ -63,7 +65,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             else
             {
                 // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), resolveCacheKey(hash)), partitionComponent);
                 component = new GltfContainerComponent(
                     sdkComponent.GetVisibleMeshesCollisionMask(),
                     sdkComponent.GetInvisibleMeshesCollisionMask(),
@@ -98,7 +100,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     );
                 else
                 {
-                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource(), resolveCacheKey(hash)), partitionComponent);
                     component.Promise = promise;
                     component.State = LoadingState.Loading;
                 }

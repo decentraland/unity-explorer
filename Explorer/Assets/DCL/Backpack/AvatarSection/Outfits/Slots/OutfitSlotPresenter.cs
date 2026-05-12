@@ -170,6 +170,12 @@ namespace DCL.Backpack.Slots
             view.SetEquipped(equipped);
         }
 
+        public void SetEquipLoading(bool loading) =>
+            view.SetEquipLoading(loading);
+
+        public void SetHoverEnabled(bool isEnabled) =>
+            view.SetHoverEnabled(isEnabled);
+
         private void SetState(OutfitSlotState newState, OutfitItem? item = null)
         {
             currentState = newState;

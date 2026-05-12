@@ -323,6 +323,18 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `resolution`
+**Type:** String (`WxH`)
+**Description:** Overrides the resolution on startup, taking precedence over both PlayerPrefs and the default resolution. Applies in both fullscreen and windowed modes. Format is width × height separated by `x`.
+
+**Usage:**
+```bash
+--resolution 1920x1080
+--resolution 2560x1440
+```
+
+---
+
 ## Feature Flags Configuration
 
 ### `feature-flags-url`

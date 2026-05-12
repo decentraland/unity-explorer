@@ -8,63 +8,64 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using UnityEngine.Pool;
 
 namespace DCL.Backpack.AvatarSection.Outfits.Commands
 {
-    public class PrewarmWearablesCacheCommand
+    public class CacheOutfitWearablesCommand
     {
+        private const int V2_URN_WITH_TOKEN_SEGMENT_COUNT = 7; // urn:decentraland:matic:collections-v2:<collection>:<itemId>:<tokenId>
+
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWearableStorage wearableStorage;
 
-        public PrewarmWearablesCacheCommand(IWearablesProvider wearablesProvider,
+        public CacheOutfitWearablesCommand(IWearablesProvider wearablesProvider,
             IWearableStorage wearableStorage)
         {
             this.wearablesProvider = wearablesProvider;
             this.wearableStorage = wearableStorage;
         }
 
-        public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, CancellationToken ct)
+        public async UniTask ExecuteAsync(IReadOnlyCollection<URN>? wearableUrns, BodyShape bodyShape, CancellationToken ct, List<IWearable> result, bool useFullUrns)
         {
             if (wearableUrns == null || wearableUrns.Count == 0)
                 return;
 
-            // 1) Split into base URNs and token mappings (base -> (full, token))
-            var baseUrns = new HashSet<URN>();
-            var tokenMappings = new List<(URN baseUrn, URN fullUrn, string tokenId)>();
+            using var a = HashSetPool<URN>.Get(out var baseUrns);
+            using var b = ListPool<(URN baseUrn, URN fullUrn, string tokenId)>.Get(out var tokenMappings);
+            using var c = ListPool<URN>.Get(out var missingUrns);
 
             foreach (var fullUrn in wearableUrns)
-            {
-                if (TrySplitBaseAndToken(fullUrn, out var baseUrn, out string tokenId))
+                if (!useFullUrns && TrySplitBaseAndToken(fullUrn, out var baseUrn, out string tokenId))
                 {
                     baseUrns.Add(baseUrn);
                     tokenMappings.Add((baseUrn, fullUrn, tokenId));
                 }
                 else
-                {
                     // Off-chain or no token: just ensure DTO exists
                     baseUrns.Add(fullUrn);
-                }
-            }
+
+            TryAdd(bodyShape, result, missingUrns);
+            foreach (var w in baseUrns)
+                TryAdd(w, result, missingUrns);
 
             try
             {
-                // 2) Ensure base DTOs exist in the cache (required by save/profile code paths)
-                await wearablesProvider.GetByPointersAsync(baseUrns, BodyShape.MALE, ct);
+                if (missingUrns.Count > 0)
+                    await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct, result);
 
-                // 3) Persist ownership so save/profile can resolve full URNs with tokens
                 foreach ((var baseUrn, var fullUrn, string tokenId) in tokenMappings)
-                {
                     // We don't strictly need transferredAt/price here; use safe defaults.
-                    wearableStorage.SetOwnedNft(
-                        baseUrn,
-                        new NftBlockchainOperationEntry(
-                            fullUrn,
-                            tokenId,
-                            DateTime.MinValue, // do we need this?
-                            price: 0m // do we need this?
-                        )
-                    );
-                }
+                    if (wearableStorage.GetOwnedNftCount(baseUrn) == 0)
+                        wearableStorage.SetOwnedNft(
+                            baseUrn,
+                            new NftBlockchainOperationEntry(
+                                fullUrn,
+                                tokenId,
+                                DateTime.MinValue, // do we need this?
+                                price: 0m // do we need this?
+                            )
+                        );
 
                 ReportHub.Log(ReportCategory.OUTFITS,
                     $"[OUTFIT_PREWARM] Cached {baseUrns.Count} base DTOs and {tokenMappings.Count} token ownership entries.");
@@ -73,10 +74,17 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 /* expected */
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, "[OUTFIT_PREWARM] Failed during cache pre-warming.");
-            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.OUTFITS); }
+        }
+
+        private void TryAdd(URN urn, List<IWearable> result, List<URN> missingUrns)
+        {
+            if (string.IsNullOrEmpty(urn)) return;
+
+            if (wearableStorage.TryGetElement(urn, out IWearable w))
+                result.Add(w);
+            else
+                missingUrns.Add(urn);
         }
 
         // Accepts V2 on-chain URNs of form:
@@ -89,7 +97,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             // Ultra-defensive: split by ':' and detect a numeric-ish tail token
             string[]? parts = fullUrn.ToString().Split(':');
-            if (parts.Length >= 6 && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
+            if (parts.Length >= V2_URN_WITH_TOKEN_SEGMENT_COUNT && parts[0] == "urn" && parts[2] == "matic" && parts[3] == "collections-v2")
             {
                 // last is token, rebuild base without last
                 tokenId = parts[^1];
