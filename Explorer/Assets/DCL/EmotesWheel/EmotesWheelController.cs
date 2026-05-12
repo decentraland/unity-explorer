@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.FacialExpression;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
@@ -35,6 +36,7 @@ namespace DCL.EmotesWheel
         private readonly ICursor cursor;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private readonly IMVCManager mvcManager;
+        private readonly IEventBus eventBus;
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
@@ -51,7 +53,8 @@ namespace DCL.EmotesWheel
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
             ICursor cursor,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IEventBus eventBus)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -64,6 +67,7 @@ namespace DCL.EmotesWheel
             emoteWheelInput = DCLInput.Instance.EmoteWheel;
             this.cursor = cursor;
             this.mvcManager = mvcManager;
+            this.eventBus = eventBus;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
         }
@@ -80,6 +84,7 @@ namespace DCL.EmotesWheel
         {
             viewInstance!.Closed += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpack);
+            viewInstance.FacialExpressionsTabButton.onClick.AddListener(SwapToFace);
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -230,6 +235,12 @@ namespace DCL.EmotesWheel
         private void OpenBackpack()
         {
             mvcManager.ShowAndForget(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+        }
+
+        private void SwapToFace()
+        {
+            Close();
+            eventBus.Publish(new RequestToggleFacialExpressionsWheelEvent());
         }
 
         private void UnblockUnwantedInputs()
