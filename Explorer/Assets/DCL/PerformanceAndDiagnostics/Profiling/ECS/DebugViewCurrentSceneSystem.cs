@@ -3,13 +3,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Utilities;
 using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using System;
-using System.Globalization;
 using UnityEngine;
 
 namespace DCL.Profiling.ECS
@@ -31,24 +29,7 @@ namespace DCL.Profiling.ECS
 
         private readonly DebugWidgetVisibilityBinding visibility;
 
-        private readonly ElementBinding<string> realFps;
-        private readonly ElementBinding<string> minFps;
-        private readonly ElementBinding<string> maxFps;
-        private readonly ElementBinding<string> hiccupsBinding;
-
-        private readonly ElementBinding<string> bytesFromTotal;
-        private readonly ElementBinding<string> bytesToTotal;
-        private readonly ElementBinding<string> bytesFromPerSec;
-        private readonly ElementBinding<string> bytesToPerSec;
-
-        private readonly ElementBinding<string> messagesFromTotal;
-        private readonly ElementBinding<string> messagesToTotal;
-        private readonly ElementBinding<string> messagesFromPerSec;
-        private readonly ElementBinding<string> messagesToPerSec;
-        private readonly ElementBinding<string> messagesFromMinMax;
-        private readonly ElementBinding<string> messagesToMinMax;
-        private readonly ElementBinding<string> messagesFromHiccups;
-        private readonly ElementBinding<string> messagesToHiccups;
+        private readonly StringBindings stringBindings;
 
         private readonly ElementBinding<LineChartBuffer> fpsChart;
         private readonly ElementBinding<LineChartBuffer> bytesFromChart;
@@ -82,24 +63,7 @@ namespace DCL.Profiling.ECS
             this.scenesCache = scenesCache;
 
             visibility = new DebugWidgetVisibilityBinding(true);
-            realFps = new ElementBinding<string>(string.Empty);
-            minFps = new ElementBinding<string>(string.Empty);
-            maxFps = new ElementBinding<string>(string.Empty);
-            hiccupsBinding = new ElementBinding<string>(string.Empty);
-
-            bytesFromTotal = new ElementBinding<string>(string.Empty);
-            bytesToTotal = new ElementBinding<string>(string.Empty);
-            bytesFromPerSec = new ElementBinding<string>(string.Empty);
-            bytesToPerSec = new ElementBinding<string>(string.Empty);
-
-            messagesFromTotal = new ElementBinding<string>(string.Empty);
-            messagesToTotal = new ElementBinding<string>(string.Empty);
-            messagesFromPerSec = new ElementBinding<string>(string.Empty);
-            messagesToPerSec = new ElementBinding<string>(string.Empty);
-            messagesFromMinMax = new ElementBinding<string>(string.Empty);
-            messagesToMinMax = new ElementBinding<string>(string.Empty);
-            messagesFromHiccups = new ElementBinding<string>(string.Empty);
-            messagesToHiccups = new ElementBinding<string>(string.Empty);
+            stringBindings = StringBindings.Create();
 
             fpsChart = new ElementBinding<LineChartBuffer>(new LineChartBuffer(fpsRing, 0, 0, 0));
             bytesFromChart = new ElementBinding<LineChartBuffer>(new LineChartBuffer(bytesFromRing, 0, 0, 0));
@@ -119,26 +83,26 @@ namespace DCL.Profiling.ECS
             OnCurrentSceneChanged(scenesCache.CurrentScene.Value);
 
             widgetBuilder.SetVisibilityBinding(visibility)
-                         .AddCustomMarker("Real tick FPS:", realFps)
-                         .AddCustomMarker("Min FPS (last 256 ticks):", minFps)
-                         .AddCustomMarker("Max FPS (last 256 ticks):", maxFps)
-                         .AddCustomMarker("Hiccups (last 256 ticks):", hiccupsBinding)
+                         .AddCustomMarker("Real tick FPS:", stringBindings.RealFps)
+                         .AddCustomMarker("Min FPS (last 256 ticks):", stringBindings.MinFps)
+                         .AddCustomMarker("Max FPS (last 256 ticks):", stringBindings.MaxFps)
+                         .AddCustomMarker("Hiccups (last 256 ticks):", stringBindings.Hiccups)
                          .AddControl(new DebugLineChartDef(fpsChart, "Tick FPS", new Color(0.18f, 0.80f, 0.44f), DebugLongMarkerDef.Unit.NoFormat), null)
-                         .AddCustomMarker("Bytes from scene:", bytesFromTotal)
-                         .AddCustomMarker("Bytes/s from scene:", bytesFromPerSec)
+                         .AddCustomMarker("Bytes from scene:", stringBindings.BytesFromTotal)
+                         .AddCustomMarker("Bytes/s from scene:", stringBindings.BytesFromPerSec)
                          .AddControl(new DebugLineChartDef(bytesFromChart, "Bytes/tick from scene", new Color(0.20f, 0.60f, 0.86f), DebugLongMarkerDef.Unit.Bytes), null)
-                         .AddCustomMarker("Msgs from scene:", messagesFromTotal)
-                         .AddCustomMarker("Msgs/s from scene:", messagesFromPerSec)
-                         .AddCustomMarker("Msgs/call min/max from scene:", messagesFromMinMax)
-                         .AddCustomMarker("Msg hiccups from scene:", messagesFromHiccups)
+                         .AddCustomMarker("Msgs from scene:", stringBindings.MessagesFromTotal)
+                         .AddCustomMarker("Msgs/s from scene:", stringBindings.MessagesFromPerSec)
+                         .AddCustomMarker("Msgs/call min/max from scene:", stringBindings.MessagesFromMinMax)
+                         .AddCustomMarker("Msg hiccups from scene:", stringBindings.MessagesFromHiccups)
                          .AddControl(new DebugLineChartDef(messagesFromChart, "Msgs/tick from scene", new Color(0.40f, 0.80f, 0.95f), DebugLongMarkerDef.Unit.NoFormat), null)
-                         .AddCustomMarker("Bytes to scene:", bytesToTotal)
-                         .AddCustomMarker("Bytes/s to scene:", bytesToPerSec)
+                         .AddCustomMarker("Bytes to scene:", stringBindings.BytesToTotal)
+                         .AddCustomMarker("Bytes/s to scene:", stringBindings.BytesToPerSec)
                          .AddControl(new DebugLineChartDef(bytesToChart, "Bytes/tick to scene", new Color(0.91f, 0.30f, 0.55f), DebugLongMarkerDef.Unit.Bytes), null)
-                         .AddCustomMarker("Msgs to scene:", messagesToTotal)
-                         .AddCustomMarker("Msgs/s to scene:", messagesToPerSec)
-                         .AddCustomMarker("Msgs/call min/max to scene:", messagesToMinMax)
-                         .AddCustomMarker("Msg hiccups to scene:", messagesToHiccups)
+                         .AddCustomMarker("Msgs to scene:", stringBindings.MessagesToTotal)
+                         .AddCustomMarker("Msgs/s to scene:", stringBindings.MessagesToPerSec)
+                         .AddCustomMarker("Msgs/call min/max to scene:", stringBindings.MessagesToMinMax)
+                         .AddCustomMarker("Msg hiccups to scene:", stringBindings.MessagesToHiccups)
                          .AddControl(new DebugLineChartDef(messagesToChart, "Msgs/tick to scene", new Color(0.98f, 0.55f, 0.75f), DebugLongMarkerDef.Unit.NoFormat), null);
         }
 
@@ -171,20 +135,20 @@ namespace DCL.Profiling.ECS
             lastSampleTime = now;
 
             int tickSampleCount = metrics.TickTimesNs.CopySnapshot(longScratch);
-            ComputeTickFps(tickSampleCount, out float currentFpsValue, out float minFpsValue, out float maxFpsValue, out int hiccupCount);
+            ComputeTickFps(longScratch, tickSampleCount, out float currentFpsValue, out float minFpsValue, out float maxFpsValue, out int hiccupCount);
 
             PushSample(fpsRing, ref fpsRingIndex, ref fpsRingCount, currentFpsValue);
             fpsChart.SetAndUpdate(new LineChartBuffer(fpsRing, fpsRingIndex, fpsRingCount, currentFpsValue));
 
-            PopulatePerTickChart(metrics.BytesFromScene, bytesFromChart, bytesFromRing);
-            PopulatePerTickChart(metrics.BytesToScene, bytesToChart, bytesToRing);
-            PopulatePerTickChart(metrics.MessagesFromScene, messagesFromChart, messagesFromRing);
-            PopulatePerTickChart(metrics.MessagesToScene, messagesToChart, messagesToRing);
+            PopulatePerTickChart(metrics.BytesFromScene, bytesFromChart, bytesFromRing, longScratch);
+            PopulatePerTickChart(metrics.BytesToScene, bytesToChart, bytesToRing, longScratch);
+            PopulatePerTickChart(metrics.MessagesFromScene, messagesFromChart, messagesFromRing, longScratch);
+            PopulatePerTickChart(metrics.MessagesToScene, messagesToChart, messagesToRing, longScratch);
 
             if (++framesSinceMetricsUpdate >= FRAME_STATS_COOLDOWN)
             {
                 framesSinceMetricsUpdate = 0;
-                UpdateStringBindings(metrics, currentFpsValue, minFpsValue, maxFpsValue, hiccupCount,
+                UpdateStringBindings(in stringBindings, metrics, currentFpsValue, minFpsValue, maxFpsValue, hiccupCount,
                     deltaBytesFrom, deltaBytesTo, deltaMessagesFrom, deltaMessagesTo, dt);
             }
         }
@@ -193,25 +157,6 @@ namespace DCL.Profiling.ECS
         {
             if (onCurrentSceneChanged != null)
                 scenesCache.CurrentScene.OnUpdate -= onCurrentSceneChanged;
-        }
-
-        private static void PushSample(float[] ring, ref int writeIndex, ref int count, float value)
-        {
-            ring[writeIndex] = value;
-            writeIndex = (writeIndex + 1) % ring.Length;
-            if (count < ring.Length) count++;
-        }
-
-        private static string FormatMessageHiccups(int hiccupCount)
-        {
-            string color = hiccupCount switch
-                           {
-                               < 1 => "green",
-                               < 5 => "yellow",
-                               _ => "red",
-                           };
-
-            return $"<color={color}>{hiccupCount}</color>";
         }
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
@@ -243,102 +188,6 @@ namespace DCL.Profiling.ECS
             bytesToChart.Value = new LineChartBuffer(bytesToRing, 0, 0, 0);
             messagesFromChart.Value = new LineChartBuffer(messagesFromRing, 0, 0, 0);
             messagesToChart.Value = new LineChartBuffer(messagesToRing, 0, 0, 0);
-        }
-
-        private void PopulatePerTickChart(SampledCounter counter, ElementBinding<LineChartBuffer> chart, float[] ring)
-        {
-            int count = counter.CopySnapshot(longScratch);
-
-            for (var i = 0; i < count; i++)
-                ring[i] = longScratch[i];
-
-            float displayValue = count > 0 ? ring[count - 1] : 0f;
-            chart.SetAndUpdate(new LineChartBuffer(ring, 0, count, displayValue));
-        }
-
-        private void ComputeTickFps(int sampleCount, out float currentFps, out float minFpsValue, out float maxFpsValue, out int hiccupCount)
-        {
-            currentFps = 0f;
-            minFpsValue = 0f;
-            maxFpsValue = 0f;
-            hiccupCount = 0;
-
-            if (sampleCount == 0) return;
-
-            long minNs = long.MaxValue;
-            long maxNs = long.MinValue;
-            long recentSumNs = 0;
-            int recentCount = 0;
-            int recentStart = sampleCount > RECENT_TICK_WINDOW ? sampleCount - RECENT_TICK_WINDOW : 0;
-
-            for (var i = 0; i < sampleCount; i++)
-            {
-                long ns = longScratch[i];
-                if (ns <= 0) continue;
-                if (ns < minNs) minNs = ns;
-                if (ns > maxNs) maxNs = ns;
-                if (ns > HICCUP_THRESHOLD_NS) hiccupCount++;
-
-                if (i >= recentStart)
-                {
-                    recentSumNs += ns;
-                    recentCount++;
-                }
-            }
-
-            if (recentCount > 0)
-                currentFps = 1e9f / ((float)recentSumNs / recentCount);
-
-            // Shortest tick = highest FPS (Max FPS); longest tick = lowest FPS (Min FPS).
-            if (minNs != long.MaxValue) maxFpsValue = 1e9f / minNs;
-            if (maxNs != long.MinValue) minFpsValue = 1e9f / maxNs;
-        }
-
-        private void UpdateStringBindings(SceneRuntimeMetrics metrics, float currentFpsValue, float minFpsValue, float maxFpsValue, int hiccupCount,
-            long deltaBytesFrom, long deltaBytesTo, long deltaMessagesFrom, long deltaMessagesTo, float dt)
-        {
-            int target = metrics.TargetFps;
-            string color = target > 0 && currentFpsValue + 1f < target ? "yellow" : "green";
-            if (currentFpsValue is > 0f and < 15f) color = "red";
-
-            realFps.Value = target > 0
-                ? $"<color={color}>{currentFpsValue:F1} fps (target {target})</color>"
-                : $"{currentFpsValue:F1} fps";
-
-            minFps.Value = minFpsValue > 0 ? $"{minFpsValue:F1} fps" : "—";
-            maxFps.Value = maxFpsValue > 0 ? $"{maxFpsValue:F1} fps" : "—";
-
-            string hiccupColor = hiccupCount switch
-                                 {
-                                     < 1 => "green",
-                                     < 5 => "yellow",
-                                     _ => "red",
-                                 };
-
-            hiccupsBinding.Value = $"<color={hiccupColor}>{hiccupCount}</color>";
-
-            bytesFromTotal.Value = BytesFormatter.Normalize((ulong)metrics.BytesFromScene.Total, false);
-            bytesToTotal.Value = BytesFormatter.Normalize((ulong)metrics.BytesToScene.Total, false);
-
-            bytesFromPerSec.Value = BytesFormatter.Normalize((ulong)Mathf.Max(0f, deltaBytesFrom / dt), false) + "/s";
-            bytesToPerSec.Value = BytesFormatter.Normalize((ulong)Mathf.Max(0f, deltaBytesTo / dt), false) + "/s";
-
-            messagesFromTotal.Value = metrics.MessagesFromScene.Total.ToString("N0", CultureInfo.InvariantCulture);
-            messagesToTotal.Value = metrics.MessagesToScene.Total.ToString("N0", CultureInfo.InvariantCulture);
-            messagesFromPerSec.Value = (deltaMessagesFrom / dt).ToString("F1", CultureInfo.InvariantCulture);
-            messagesToPerSec.Value = (deltaMessagesTo / dt).ToString("F1", CultureInfo.InvariantCulture);
-
-            SampledCounter.Stats messagesFromStats = metrics.MessagesFromScene.ComputeDynamicStats(MESSAGE_HICCUP_MEAN_MULTIPLIER);
-            messagesFromMinMax.Value = messagesFromStats.Count > 0
-                ? $"{messagesFromStats.Min} / {messagesFromStats.Max}"
-                : "—";
-            messagesFromHiccups.Value = FormatMessageHiccups(messagesFromStats.Hiccups);
-
-            SampledCounter.Stats messagesToStats = metrics.MessagesToScene.ComputeDynamicStats(MESSAGE_HICCUP_MEAN_MULTIPLIER);
-            messagesToMinMax.Value = messagesToStats.Count > 0
-                ? $"{messagesToStats.Min} / {messagesToStats.Max}"
-                : "—";
-            messagesToHiccups.Value = FormatMessageHiccups(messagesToStats.Hiccups);
         }
     }
 }
