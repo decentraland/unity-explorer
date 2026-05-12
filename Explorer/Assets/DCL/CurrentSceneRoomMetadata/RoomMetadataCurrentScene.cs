@@ -60,6 +60,14 @@ namespace DCL.SceneBannedUsers
         {
             RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene());
         }
+
+        public void SetBannedForTests(params string[] bannedAddresses)
+        {
+            using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            bannedLock.Value = bannedAddresses.Length == 0
+                ? null
+                : new HashSet<string>(bannedAddresses, StringComparer.OrdinalIgnoreCase);
+        }
 #endif
 
 
@@ -150,6 +158,12 @@ namespace DCL.SceneBannedUsers
         /// <returns>True is the user is currently banned from the current scene.</returns>
         public bool IsUserBanned(string userId)
         {
+#if UNITY_INCLUDE_TESTS
+            // Test ctor leaves roomHub null and includeBannedUsersFromScene false.
+            // Drive ban state purely through SetBannedForTests so system tests can flip it.
+            using var bannedLockTest = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            return bannedLockTest.Value?.Contains(userId) ?? false;
+#else
             if (!includeBannedUsersFromScene)
                 return false;
 
@@ -158,6 +172,7 @@ namespace DCL.SceneBannedUsers
 
             using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             return bannedLock.Value?.Contains(userId) ?? false;
+#endif
         }
     }
 }

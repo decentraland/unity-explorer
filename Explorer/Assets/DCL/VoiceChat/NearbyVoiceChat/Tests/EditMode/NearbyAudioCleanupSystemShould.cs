@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -55,6 +56,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SetUp()
         {
             EcsTestsUtils.SetUpFeaturesRegistry();
+            RoomMetadataCurrentScene.InitializeTest();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -76,6 +78,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateModel.Dispose();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
+
+            RoomMetadataCurrentScene.Instance.SetBannedForTests();
 
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
@@ -142,7 +146,20 @@ namespace DCL.VoiceChat.Nearby.Tests
             AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
-        // ── Trigger #4: listening gate ──────────────────────────────
+        // ── Trigger #4: scene-banned identity ───────────────────────
+
+        [Test]
+        public void SceneBannedIdentityCausesCleanup()
+        {
+            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            RoomMetadataCurrentScene.Instance.SetBannedForTests(PARTICIPANT_A);
+
+            system.Update(0);
+
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+        }
+
+        // ── Trigger #5: listening gate ──────────────────────────────
 
         [Test]
         public void SuppressedStateTearsDownAllAudioEntities()

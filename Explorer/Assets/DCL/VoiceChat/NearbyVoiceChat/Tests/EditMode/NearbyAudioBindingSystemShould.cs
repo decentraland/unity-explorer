@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -50,6 +51,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SetUp()
         {
             EcsTestsUtils.SetUpFeaturesRegistry();
+            RoomMetadataCurrentScene.InitializeTest();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -71,6 +73,8 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             bindings.Clear();
             stateModel.Dispose();
+
+            RoomMetadataCurrentScene.Instance.SetBannedForTests();
 
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
@@ -182,6 +186,43 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
             Assert.That(CountAudioEntities(), Is.EqualTo(1), "unblock must re-bind on the next tick");
+        }
+
+        [Test]
+        public void SceneBannedIdentitySkipsCreation()
+        {
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateStreamingAvatar(WALLET, SID);
+            registry.SeedActiveStream(WALLET, SID);
+            RoomMetadataCurrentScene.Instance.SetBannedForTests(WALLET);
+
+            system.Update(0);
+
+            Assert.That(CountAudioEntities(), Is.EqualTo(0),
+                "scene-banned identity must not allocate an audio entity");
+            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False,
+                "skipped creation must not poison the bindings index");
+        }
+
+        [Test]
+        public void SceneUnbanReBindsOnNextTick()
+        {
+            const string WALLET = "wallet-alice";
+            const string SID = "sid-1";
+
+            CreateStreamingAvatar(WALLET, SID);
+            registry.SeedActiveStream(WALLET, SID);
+            RoomMetadataCurrentScene.Instance.SetBannedForTests(WALLET);
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(0), "scene-banned tick must not allocate");
+
+            RoomMetadataCurrentScene.Instance.SetBannedForTests();
+
+            system.Update(0);
+            Assert.That(CountAudioEntities(), Is.EqualTo(1), "lift scene ban must re-bind on the next tick");
         }
 
         [Test]
