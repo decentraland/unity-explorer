@@ -214,7 +214,7 @@ namespace DCL.PluginSystem.Global
 
             if (faceAnimationSettings != null)
             {
-                AvatarFacialExpressionSystem.InjectToWorld(ref builder, faceAnimationSettings, eyebrowsTextureArray: null, eyeTextureArray: null, mouthPoseTextureArray: null);
+                AvatarFacialExpressionSystem.InjectToWorld(ref builder, faceAnimationSettings);
                 ApplyFacialExpressionIntentSystem.InjectToWorld(ref builder);
             }
 

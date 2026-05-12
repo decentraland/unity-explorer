@@ -25,21 +25,12 @@ namespace DCL.AvatarRendering.AvatarShape
     public partial class AvatarFacialExpressionSystem : BaseUnityLoopSystem
     {
         private readonly AvatarFaceAnimationSettings settings;
-        private readonly Texture2DArray? eyebrowsTextureArray;
-        private readonly Texture2DArray? eyeTextureArray;
-        private readonly Texture2DArray? mouthPoseTextureArray;
 
         internal AvatarFacialExpressionSystem(
             World world,
-            AvatarFaceAnimationSettings settings,
-            Texture2DArray? eyebrowsTextureArray,
-            Texture2DArray? eyeTextureArray,
-            Texture2DArray? mouthPoseTextureArray) : base(world)
+            AvatarFaceAnimationSettings settings) : base(world)
         {
             this.settings = settings;
-            this.eyebrowsTextureArray = eyebrowsTextureArray;
-            this.eyeTextureArray = eyeTextureArray;
-            this.mouthPoseTextureArray = mouthPoseTextureArray;
         }
 
         protected override void Update(float t)
@@ -208,13 +199,13 @@ namespace DCL.AvatarRendering.AvatarShape
             // texture: skip the MaterialPropertyBlock override so we don't paint global atlas slices
             // onto a single-frame face texture.
             if (face.EyebrowsHasExpressions)
-                AvatarFaceMaterialUtils.ApplyEyebrowsFrame(ref face, face.EyebrowsExpressionIndex, eyebrowsTextureArray);
+                AvatarFaceMaterialUtils.ApplyEyebrowsFrame(ref face, face.EyebrowsExpressionIndex);
 
             if (face.EyesHasExpressions && !face.IsBlinking)
-                AvatarFaceMaterialUtils.ApplyEyeFrame(ref face, face.EyesExpressionIndex, eyeTextureArray);
+                AvatarFaceMaterialUtils.ApplyEyeFrame(ref face, face.EyesExpressionIndex);
 
             if (face.MouthHasExpressions && face.AnimatingText == null)
-                AvatarFaceMaterialUtils.ApplyMouthPose(ref face, face.MouthExpressionIndex, mouthPoseTextureArray);
+                AvatarFaceMaterialUtils.ApplyMouthPose(ref face, face.MouthExpressionIndex);
         }
 
         // ─── Blink layer ──────────────────────────────────────────────────────
@@ -224,7 +215,7 @@ namespace DCL.AvatarRendering.AvatarShape
             if (!isVisible || !face.EyeRenderer.enabled)
             {
                 if (face.IsBlinking)
-                    AvatarFaceMaterialUtils.EndBlink(ref face, eyeTextureArray, settings.MinBlinkInterval, settings.MaxBlinkInterval);
+                    AvatarFaceMaterialUtils.EndBlink(ref face, settings.MinBlinkInterval, settings.MaxBlinkInterval);
 
                 return;
             }
@@ -239,16 +230,16 @@ namespace DCL.AvatarRendering.AvatarShape
                 face.BlinkFrameIndex++;
 
                 if (face.BlinkFrameIndex >= AvatarFacialExpressionConstants.BLINK_SEQUENCE.Length)
-                    AvatarFaceMaterialUtils.EndBlink(ref face, eyeTextureArray, settings.MinBlinkInterval, settings.MaxBlinkInterval);
+                    AvatarFaceMaterialUtils.EndBlink(ref face, settings.MinBlinkInterval, settings.MaxBlinkInterval);
                 else
-                    AvatarFaceMaterialUtils.ApplyEyeFrame(ref face, AvatarFacialExpressionConstants.BLINK_SEQUENCE[face.BlinkFrameIndex], eyeTextureArray);
+                    AvatarFaceMaterialUtils.ApplyEyeFrame(ref face, AvatarFacialExpressionConstants.BLINK_SEQUENCE[face.BlinkFrameIndex]);
             }
             else
             {
                 face.TimeSinceLastBlink += t;
 
                 if (face.TimeSinceLastBlink >= face.NextBlinkTime)
-                    AvatarFaceMaterialUtils.StartBlink(ref face, eyeTextureArray);
+                    AvatarFaceMaterialUtils.StartBlink(ref face);
             }
         }
 
@@ -258,7 +249,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!isVisible || !face.MouthRenderer.enabled)
             {
-                AvatarFaceMaterialUtils.StopMouthAnimation(ref face, mouthPoseTextureArray);
+                AvatarFaceMaterialUtils.StopMouthAnimation(ref face);
                 return;
             }
 
@@ -278,15 +269,14 @@ namespace DCL.AvatarRendering.AvatarShape
                 // Stop the voice loop if speaking ended mid-animation.
                 if (!isSpeaking && face.AnimatingText == AvatarFacialExpressionConstants.VOICE_CHAT_LOOP_TEXT)
                 {
-                    AvatarFaceMaterialUtils.StopMouthAnimation(ref face, mouthPoseTextureArray);
+                    AvatarFaceMaterialUtils.StopMouthAnimation(ref face);
                     return;
                 }
 
                 int mouthPose = AvatarFacialExpressionConstants.MapCharToMouthPose(face.AnimatingText, face.CharacterIndex);
                 AvatarFaceMaterialUtils.ApplyMouthPose(
                     ref face,
-                    mouthPose == AvatarFacialExpressionConstants.NO_MOUTH_POSE ? face.MouthExpressionIndex : mouthPose,
-                    mouthPoseTextureArray);
+                    mouthPose == AvatarFacialExpressionConstants.NO_MOUTH_POSE ? face.MouthExpressionIndex : mouthPose);
 
                 face.CharacterTimer += t;
 
@@ -308,7 +298,7 @@ namespace DCL.AvatarRendering.AvatarShape
             }
             else
             {
-                AvatarFaceMaterialUtils.StopMouthAnimation(ref face, mouthPoseTextureArray);
+                AvatarFaceMaterialUtils.StopMouthAnimation(ref face);
             }
         }
     }

@@ -7,88 +7,60 @@ namespace DCL.AvatarRendering.AvatarShape
 {
     /// <summary>
     ///     Material/MaterialPropertyBlock side-effects for face animation. The avatar facial
-    ///     expression system delegates all texture array binding here so it stays focused
+    ///     expression system delegates all expression-index binding here so it stays focused
     ///     on state transitions.
     /// </summary>
     public static class AvatarFaceMaterialUtils
     {
         private static readonly MaterialPropertyBlock MPB = new ();
 
-        public static void ApplyEyebrowsFrame(ref AvatarFaceComponent face, int eyebrowsIndex, Texture2DArray? eyebrowsTextureArray)
+        public static void ApplyEyebrowsFrame(ref AvatarFaceComponent face, int eyebrowsIndex)
         {
-            if (face.EyebrowsRenderer == null || eyebrowsTextureArray == null) return;
+            if (face.EyebrowsRenderer == null) return;
             if (face.CurrentEyebrowsIndex == eyebrowsIndex) return;
 
             face.CurrentEyebrowsIndex = eyebrowsIndex;
-
-            MPB.Clear();
-            MPB.SetTexture(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, eyebrowsTextureArray);
-            MPB.SetInteger(TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX, eyebrowsIndex);
-            face.EyebrowsRenderer.SetPropertyBlock(MPB);
+            SetExpressionIndex(face.EyebrowsRenderer, eyebrowsIndex);
         }
 
-        public static void ApplyEyeFrame(ref AvatarFaceComponent face, int eyeIndex, Texture2DArray? eyeTextureArray)
+        public static void ApplyEyeFrame(ref AvatarFaceComponent face, int eyeIndex)
         {
             if (face.EyeRenderer == null) return;
             if (face.CurrentEyeIndex == eyeIndex) return;
 
             face.CurrentEyeIndex = eyeIndex;
-
-            if (eyeIndex == AvatarFacialExpressionConstants.NO_EYE_OVERRIDE)
-            {
-                face.EyeRenderer.SetPropertyBlock(null);
-                return;
-            }
-
-            if (eyeTextureArray == null) return;
-
-            MPB.Clear();
-            MPB.SetTexture(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, eyeTextureArray);
-            MPB.SetInteger(TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX, eyeIndex);
-            face.EyeRenderer.SetPropertyBlock(MPB);
+            SetExpressionIndex(face.EyeRenderer, eyeIndex);
         }
 
-        public static void ApplyMouthPose(ref AvatarFaceComponent face, int mouthPoseIndex, Texture2DArray? mouthPoseTextureArray)
+        public static void ApplyMouthPose(ref AvatarFaceComponent face, int mouthPoseIndex)
         {
             if (face.MouthRenderer == null) return;
             if (face.CurrentMouthPoseIndex == mouthPoseIndex) return;
 
             face.CurrentMouthPoseIndex = mouthPoseIndex;
-
-            if (mouthPoseIndex == AvatarFacialExpressionConstants.NO_MOUTH_POSE)
-            {
-                face.MouthRenderer.SetPropertyBlock(null);
-                return;
-            }
-
-            if (mouthPoseTextureArray == null) return;
-
-            MPB.Clear();
-            MPB.SetTexture(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, mouthPoseTextureArray);
-            MPB.SetInteger(TextureArrayConstants.MAINTEX_ARR_SHADER_INDEX, mouthPoseIndex);
-            face.MouthRenderer.SetPropertyBlock(MPB);
+            SetExpressionIndex(face.MouthRenderer, mouthPoseIndex);
         }
 
-        public static void StartBlink(ref AvatarFaceComponent face, Texture2DArray? eyeTextureArray)
+        public static void StartBlink(ref AvatarFaceComponent face)
         {
             face.IsBlinking = true;
             face.BlinkFrameIndex = 0;
             face.BlinkFrameTimer = 0f;
-            ApplyEyeFrame(ref face, AvatarFacialExpressionConstants.BLINK_SEQUENCE[0], eyeTextureArray);
+            ApplyEyeFrame(ref face, AvatarFacialExpressionConstants.BLINK_SEQUENCE[0]);
         }
 
-        public static void EndBlink(ref AvatarFaceComponent face, Texture2DArray? eyeTextureArray, float minBlinkInterval, float maxBlinkInterval)
+        public static void EndBlink(ref AvatarFaceComponent face, float minBlinkInterval, float maxBlinkInterval)
         {
             face.IsBlinking = false;
             face.TimeSinceLastBlink = 0f;
             face.NextBlinkTime = Random.Range(minBlinkInterval, maxBlinkInterval);
-            ApplyEyeFrame(ref face, face.EyesExpressionIndex, eyeTextureArray);
+            ApplyEyeFrame(ref face, face.EyesExpressionIndex);
         }
 
-        public static void StopMouthAnimation(ref AvatarFaceComponent face, Texture2DArray? mouthPoseTextureArray)
+        public static void StopMouthAnimation(ref AvatarFaceComponent face)
         {
             face.AnimatingText = null;
-            ApplyMouthPose(ref face, face.MouthExpressionIndex, mouthPoseTextureArray);
+            ApplyMouthPose(ref face, face.MouthExpressionIndex);
         }
 
         /// <summary>
@@ -112,6 +84,15 @@ namespace DCL.AvatarRendering.AvatarShape
             }
 
             return null;
+        }
+
+        // Sentinel index (<0) disables atlas slicing in the shader so non-atlas wearables sample
+        // their full base map; >=0 picks one cell of the 4x4 atlas grid.
+        private static void SetExpressionIndex(Renderer renderer, int index)
+        {
+            renderer.GetPropertyBlock(MPB);
+            MPB.SetInteger(TextureArrayConstants.EXPRESSION_INDEX_SHADER, index);
+            renderer.SetPropertyBlock(MPB);
         }
     }
 }

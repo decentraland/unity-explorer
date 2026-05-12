@@ -167,9 +167,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 for (var i = 0; i < representations.Length; i++)
                 {
                     AvatarAttachmentDTO.Representation representation = representations[i];
+                    string[] shapes = representation.bodyShapes;
 
-                    if (representation.bodyShapes.Contains(bodyShape))
+                    for (var j = 0; j < shapes.Length; j++)
                     {
+                        if (shapes[j] != bodyShape) continue;
+
                         key = representation.mainFile;
                         return true;
                     }
