@@ -205,12 +205,11 @@ namespace SceneRunner
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
                     sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
                     webRequestController, skyboxSettings,
 #if !UNITY_WEBGL
                     engineAPIMutexOwner,
 #endif
-                    profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
+                    profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -244,8 +243,7 @@ namespace SceneRunner
 #if !UNITY_WEBGL
                     engineAPIMutexOwner,
 #endif
-                    profileRepository, systemClipboard, roomHub, sceneAdmins, installSource);
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
+                    profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
