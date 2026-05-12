@@ -45,7 +45,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
-using SceneRunner.Admins;
 using RichTypes;
 
 namespace SceneRunner
@@ -211,8 +210,6 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
-            public readonly Option<ISceneAdmins> SceneAdmins;
-
             /// <summary>
             ///     For Unit Tests only
             /// </summary>
@@ -225,8 +222,7 @@ namespace SceneRunner
                 ISimpleFetchApi simpleFetchApi,
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
-                ISceneRuntime runtime,
-                Option<ISceneAdmins> sceneAdmins
+                ISceneRuntime runtime
                 )
             {
                 EngineAPI = engineAPI;
@@ -238,7 +234,6 @@ namespace SceneRunner
                 SimpleFetchApi = simpleFetchApi;
                 SyncDeps = syncDeps;
                 Runtime = runtime;
-                SceneAdmins = sceneAdmins;
             }
 
             protected WithRuntimeAndJsAPIBase(
@@ -255,7 +250,6 @@ namespace SceneRunner
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : this(
                     engineApi,
@@ -268,12 +262,10 @@ namespace SceneRunner
                         syncDeps.sceneData,
                         messagePipesHub,
                         jsOperations,
-                        syncDeps.PoolsProvider,
-                        sceneAdmins
+                        syncDeps.PoolsProvider
                     ),
                     syncDeps,
-                    sceneRuntime,
-                    sceneAdmins
+                    sceneRuntime
                     ) { }
 
             public void Dispose()
@@ -282,11 +274,6 @@ namespace SceneRunner
 
                 Runtime.Dispose();
                 SyncDeps.Dispose();
-
-                if (SceneAdmins.Has)
-                {
-                    SceneAdmins.Value.Dispose();
-                }
             }
         }
 
@@ -303,7 +290,6 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
@@ -336,7 +322,6 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<ISceneAdmins> sceneAdmins,
                 string installSource)
                 : base(
                         new SDKObservableEventsEngineAPIImplementation(
@@ -367,7 +352,6 @@ namespace SceneRunner
                     skyboxSettings,
                     systemClipboard,
                     roomHub,
-                    sceneAdmins,
                     installSource
                   ) { }
         }

@@ -95,7 +95,7 @@ namespace DCL.Chat.ChatCommands
                 ViewMode = TitlebarViewMode.DirectMessage, IsOnline = userStatus.IsConsideredOnline, IsOfficial = isOfficial,
             };
 
-            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile, ct);
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile, ct).Forget();
 
             return viewModel;
         }

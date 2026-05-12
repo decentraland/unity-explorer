@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Ipfs;
 using DCL.Utility;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -30,6 +31,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             sceneData = Substitute.For<ISceneData>();
             sceneContent = Substitute.For<ISceneContent>();
             sceneData.SceneContent.Returns(sceneContent);
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
             system = new PrepareGltfAssetLoadingSystem(world, cache, sceneData, default);
         }
 

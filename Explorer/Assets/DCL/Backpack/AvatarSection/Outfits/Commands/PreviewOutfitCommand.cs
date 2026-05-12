@@ -43,7 +43,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 // Capture raw data for sync restore
                 CaptureOriginalDataState();
-                
+
                 // Capture DTO for visual restore
                 originalOutfit = await CreateOutfitFromEquippedAsync(ct);
             }
@@ -108,7 +108,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private async UniTask<Outfit> CreateOutfitFromEquippedAsync(CancellationToken ct)
         {
             var profile = await selfProfile.ProfileAsync(ct);
-            
+
             var (hair, eyes, skin) = equippedWearables.GetColors();
 
             equippedWearables.Items().TryGetValue(WearableCategories.Categories.BODY_SHAPE, out var bodyShapeWearable);
@@ -116,7 +116,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             var bodyShape = bodyShapeWearable?.GetUrn() ?? "";
 
             outfitsLogger.LogEquippedState("[PreviewOutfitCommand - outfit state]", profile?.UserId, equippedWearables);
-            
+
             return new Outfit
             {
                 bodyShape = bodyShape, wearables = equippedWearables
