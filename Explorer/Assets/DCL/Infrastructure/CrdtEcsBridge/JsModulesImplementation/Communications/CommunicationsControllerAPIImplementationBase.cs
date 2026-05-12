@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-        private readonly ScriptObject eventArray;
+        private readonly IDCLScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
         private readonly ISceneData sceneData;
 
@@ -105,15 +105,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 for (var i = 0; i < eventsToProcess.Count; i++)
                 {
                     PoolableByteArray src = eventsToProcess[i];
-                    ITypedArray<byte> dst = jsOperations.GetTempUint8Array();
-                    dst.WriteBytes(src.Span, 0ul, (ulong)src.Length, 0ul);
+                    IDCLTypedArray<byte> dst = jsOperations.GetTempUint8Array();
+                    dst.WriteBytes(src.Array, 0ul, (ulong)src.Length, 0ul);
                     src.Dispose();
-                    object subArray = dst.InvokeMethod("subarray", 0, src.Length);
+                    object subArray = ((IDCLScriptObject)dst).InvokeMethod("subarray", 0, src.Length);
                     eventArray.SetProperty(i, subArray);
                 }
 
                 eventsToProcess.Clear();
-                return eventArray;
+                return (ScriptObject)eventArray.GetNativeObject();
             }
         }
 
