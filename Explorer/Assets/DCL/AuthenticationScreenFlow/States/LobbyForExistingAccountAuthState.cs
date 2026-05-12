@@ -67,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
 
+            controller.IsCurrentlyNewAccount = false;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             Profile? profile = payload.profile;

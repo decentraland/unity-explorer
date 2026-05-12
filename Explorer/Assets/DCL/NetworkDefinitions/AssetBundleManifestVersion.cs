@@ -12,14 +12,26 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        //From v41 ISS is supported for scenes
-        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
+        //v2000 marks that it has ISS enabled
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 2000;
+
+        //From v49 the manifest exposes a per-file deps digest we can key the cache by
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST = 49;
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
+        private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
+
+        // Global kill-switch for the v49 deps-digest cache-keying scheme. Default off so the build is byte-identical
+        // to legacy behavior until the feature flag is rolled out. Flipped from bootstrap based on FeaturesRegistry.
+        // When false: SupportsDepsDigests reports false for every manifest, TryGetDepsDigest never returns a digest,
+        // and every downstream call site (cache dispatch, GLTF key compose, digest fetch) falls back to legacy.
+        public static bool DepsDigestKeyingEnabled;
+
         private bool? HasHashInPathValue;
         private bool? SupportsISS;
+        private bool? SupportsDepsDigestsValue;
 
 
         public bool assetBundleManifestRequestFailed;
@@ -27,31 +39,78 @@ public class AssetBundleManifestVersion
         public AssetBundleManifestVersionPerPlatform? assets;
 
         private HashSet<string>? convertedFiles;
+        private IReadOnlyDictionary<string, string>? depsDigests;
 
         public bool HasHashInPath()
         {
-            if (HasHashInPathValue == null)
-            {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    HasHashInPathValue = false;
-                else
-                    HasHashInPathValue = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
-            }
-
+            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
         }
 
         public bool SupportsInitialSceneState()
         {
-            if (SupportsISS == null)
+            SupportsISS ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+            return SupportsISS.Value;
+        }
+
+        /// <summary>
+        ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
+        ///     in use for cache keying. This is purely a version check; an individual asset may still have an
+        ///     empty digest (leaf ABs that aren't listed in the manifest's deps map).
+        /// </summary>
+        public bool SupportsDepsDigests()
+        {
+            if (!DepsDigestKeyingEnabled) return false;
+            SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
+            return SupportsDepsDigestsValue.Value;
+        }
+
+        //Try parse is required to avoid throwing exceptions when the version is not in the expected format, which can happen for LODs in example
+        private static bool TryParseVersionNumber(string? version, out int parsed)
+        {
+            parsed = 0;
+            if (string.IsNullOrEmpty(version) || version!.Length < 2 || version[0] != 'v')
+                return false;
+            return int.TryParse(version.AsSpan(1), out parsed);
+        }
+
+        /// <summary>
+        ///     Parses the manifest's <c>files[]</c> entries and stores the per-file deps digest map.
+        ///     Expects v49+ filenames in the form <c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>;
+        ///     legacy 2-part filenames split into fewer parts and are skipped.
+        /// </summary>
+        public void InjectDepsDigests(string[]? files)
+        {
+            if (!DepsDigestKeyingEnabled || files == null || files.Length == 0)
             {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    SupportsISS = false;
-                else
-                    SupportsISS = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+                depsDigests = null;
+                return;
             }
 
-            return SupportsISS.Value;
+            Dictionary<string, string>? map = null;
+
+            for (var i = 0; i < files.Length; i++)
+            {
+                string file = files[i];
+                if (string.IsNullOrEmpty(file)) continue;
+
+                string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
+                if (parts.Length < 3) continue;
+
+                map ??= new Dictionary<string, string>(new UrlHashComparer());
+                map[parts[0]] = parts[1];
+            }
+
+            depsDigests = map;
+        }
+
+        public bool TryGetDepsDigest(string hash, out string digest)
+        {
+            if (DepsDigestKeyingEnabled && depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
+                return true;
+
+            digest = string.Empty;
+            return false;
         }
 
         public string? GetAssetBundleManifestVersion() =>
@@ -129,7 +188,6 @@ public class AssetBundleManifestVersion
 
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
             assetBundleManifestVersion.assets = assets;
-            assetBundleManifestVersion.HasHashInPathValue = false;
 
             return assetBundleManifestVersion;
         }

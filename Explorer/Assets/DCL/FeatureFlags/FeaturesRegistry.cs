@@ -66,6 +66,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.AVATAR_CONTEXT_MENU] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
                 [FeatureId.PULSE] = (appArgs.HasFlag(AppArgsFlags.PULSE_MULTIPLAYER) || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE)) && !localSceneDevelopment,
+                [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -197,5 +198,6 @@ namespace DCL.FeatureFlags
         DOUBLE_CLICK_WALK = 61,
         NEARBY_VOICE_CHAT = 62,
         PULSE = 63,
+        AB_DEPS_DIGEST_CACHE_KEY = 64,
     }
 }
