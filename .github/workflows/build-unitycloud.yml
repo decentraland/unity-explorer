@@ -492,8 +492,16 @@ jobs:
             echo "::error::CodeSignTool JAR not found"
             exit 1
           fi
+          # CodeSignTool resolves ./conf/code_sign_tool.properties relative to CWD,
+          # so the sign step must run from the directory containing both jar/ and conf/.
+          CODESIGN_DIR=$(dirname "$(dirname "$JAR")")
+          if [[ ! -f "$CODESIGN_DIR/conf/code_sign_tool.properties" ]]; then
+            echo "::error::code_sign_tool.properties not found at $CODESIGN_DIR/conf/"
+            exit 1
+          fi
           echo "CODESIGN_JAR=$JAR" >> "$GITHUB_ENV"
-          echo "CodeSignTool ready: $JAR"
+          echo "CODESIGN_DIR=$CODESIGN_DIR" >> "$GITHUB_ENV"
+          echo "CodeSignTool ready: $JAR (cwd: $CODESIGN_DIR)"
 
       - name: Sign Windows executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -511,18 +519,30 @@ jobs:
             echo "::error::No main .exe found in build/"
             exit 1
           fi
+          MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
 
-          echo "Signing $MAIN_EXE ..."
+          echo "Signing $MAIN_EXE_ABS ..."
+          # CodeSignTool reads ./conf/code_sign_tool.properties, so cd into its root first.
+          # It also exits 0 on internal exceptions, so tee the output and fail explicitly.
+          pushd "$CODESIGN_DIR" > /dev/null
+          set -o pipefail
+          SIGN_LOG=$(mktemp)
           java -jar "$CODESIGN_JAR" sign \
             -username="$ES_USERNAME" \
             -password="$ES_PASSWORD" \
             -credential_id="$WINDOWS_CREDENTIAL_ID_SIGNER" \
             -totp_secret="$ES_TOTP_SECRET" \
-            -input_file_path="$MAIN_EXE" \
+            -input_file_path="$MAIN_EXE_ABS" \
             -override=true \
-            -malware_block=false
+            -malware_block=false 2>&1 | tee "$SIGN_LOG"
+          popd > /dev/null
 
-          echo "::notice::Signed $MAIN_EXE"
+          if grep -qE 'Exception|Error|Failed' "$SIGN_LOG"; then
+            echo "::error::CodeSignTool reported an error"
+            exit 1
+          fi
+
+          echo "::notice::Signed $MAIN_EXE_ABS"
 
       - name: Verify Windows signature
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
