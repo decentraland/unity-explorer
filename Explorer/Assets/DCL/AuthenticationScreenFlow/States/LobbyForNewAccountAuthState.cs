@@ -95,6 +95,7 @@ namespace DCL.AuthenticationScreenFlow
 
             InitializeAvatarAsync().Forget();
 
+            controller.IsCurrentlyNewAccount = true;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             view.Show();
@@ -354,6 +355,11 @@ namespace DCL.AuthenticationScreenFlow
                     // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
                     // freshly created profile is live
                     profileChangesBus.PushUpdate(newUserProfile);
+
+                    // Mark the analytics-visible end of the onboarding step. Anything between
+                    // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
+                    // setting up their account.
+                    controller.RaiseProfileFinalized();
 
                     await characterPreviewController.PlayJumpInEmoteAndAwaitItAsync();
 
