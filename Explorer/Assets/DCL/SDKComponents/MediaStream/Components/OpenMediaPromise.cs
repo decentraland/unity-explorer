@@ -35,12 +35,14 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaAddress = newMediaAddress;
             this.originalAddress = newMediaAddress;
 
+#if !UNITY_WEBGL
             if (mediaAddress.IsLivekitAddress(out _))
             {
                 isReachable = true;
                 status = Status.Resolved;
                 return;
             }
+#endif
 
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;

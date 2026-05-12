@@ -290,17 +290,16 @@ namespace DCL.SDKComponents.MediaStream
 
                     string target = ctx.isFromContentServer ? string.Format("{0}?includeMimeType", address.Url) : address.Url;
                     return player.OpenMedia(MediaPathType.AbsolutePathOrURL, target, ctx.autoPlay);
-                },
+                }
+#if !UNITY_WEBGL
+                ,
                 onLivekitAddress: static (ctx, address) =>
                 {
-#if !UNITY_WEBGL
                     bool result = ctx.player.IsLivekitPlayer(out var livekitPlayer);
                     livekitPlayer?.OpenMedia(address);
                     return result;
-#else
-                    return false;
-#endif
                 }
+#endif
             );
         }
 

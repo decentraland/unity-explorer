@@ -96,9 +96,11 @@ namespace DCL.SDKComponents.MediaStream
                 if (sdkComponent.HasPlaying && sdkComponent.Playing != component.IsPlaying)
                     component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
 
+#if !UNITY_WEBGL
                 if (component.IsPlaying)
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureAudioIsPlaying();
+#endif
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -146,12 +148,14 @@ namespace DCL.SDKComponents.MediaStream
                     component.MediaPlayer.UpdatePlaybackProperties(sdkComponent);
                 }
 
+#if !UNITY_WEBGL
                 if (component.IsPlaying)
 
                     // Covers cases like leaving and re-entering the scene
                     // or the stream not being available for some time, like OBS not started while the stream is active
                     if (component.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer))
                         livekitPlayer?.EnsureVideoIsPlaying();
+#endif
 
                 bool hasSpatialEnabledChanged = sdkComponent.HasSpatial && sdkComponent.Spatial != component.IsSpatial;
 
@@ -206,6 +210,7 @@ namespace DCL.SDKComponents.MediaStream
                     return;
             }
 
+#if !UNITY_WEBGL
             if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer))
             {
                 if (!livekitPlayer.IsVideoOpened)
@@ -214,6 +219,7 @@ namespace DCL.SDKComponents.MediaStream
                     return;
                 }
             }
+#endif
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -224,6 +230,7 @@ namespace DCL.SDKComponents.MediaStream
             int targetWidth = avText.width;
             int targetHeight = avText.height;
 
+#if !UNITY_WEBGL
             // Cap LiveKit video resolution to prevent GPU stalls from 4K+ streams.
             if (livekitPlayer != null && (avText.width > MAX_LIVEKIT_VIDEO_WIDTH || avText.height > MAX_LIVEKIT_VIDEO_HEIGHT))
             {
@@ -231,6 +238,7 @@ namespace DCL.SDKComponents.MediaStream
                 targetWidth = Mathf.RoundToInt(avText.width * scale);
                 targetHeight = Mathf.RoundToInt(avText.height * scale);
             }
+#endif
 
             if (assignedTexture.Texture.width != targetWidth || assignedTexture.Texture.height != targetHeight)
                 assignedTexture.Resize(targetWidth, targetHeight);
@@ -267,7 +275,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (enteredScene) return;
 
+#if !UNITY_WEBGL
             bool isLivekit = mediaPlayerComponent.MediaPlayer.IsLivekitPlayer(out _);
+#else
+            bool isLivekit = false;
+#endif
 
             // Livekit streams rely on the livekit room being active for the current scene only.
             // Non-livekit streams are also stopped when PlayCurrentSceneStreamOnly is on so they can be

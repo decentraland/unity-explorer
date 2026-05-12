@@ -146,8 +146,10 @@ namespace DCL.SDKComponents.MediaStream
 
             if (url.IsLivekitAddress())
             {
+#if !UNITY_WEBGL
                 isValidLocalPath = true;
                 isValidStreamUrl = true;
+#endif
             }
 
             else
@@ -177,8 +179,10 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MultiMediaPlayer player = address.Match(
                     (streamingRoom, mediaPlayerPool),
-                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool))
+#if !UNITY_WEBGL
+                    , onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+#endif
                 );
 
                 component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

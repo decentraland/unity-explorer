@@ -45,6 +45,7 @@ namespace DCL.SDKComponents.MediaStream
                 control.Stop();
         }
 
+#if !UNITY_WEBGL
         public static void UpdatePlayback(this LivekitPlayer mediaPlayer, bool hasPlaying, bool playing)
         {
             if (!mediaPlayer.MediaOpened)
@@ -63,6 +64,7 @@ namespace DCL.SDKComponents.MediaStream
             else if (mediaPlayer.State is PlayerState.PLAYING)
                 mediaPlayer.Stop();
         }
+#endif
 
         internal static UniTask SetPlaybackPropertiesAsync(IMediaControl control, PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false) =>
             SetPlaybackPropertiesAsync(control,

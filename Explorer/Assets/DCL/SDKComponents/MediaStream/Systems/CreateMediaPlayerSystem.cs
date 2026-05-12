@@ -56,9 +56,11 @@ namespace DCL.SDKComponents.MediaStream
         {
             var address = MediaAddress.New(sdkComponent.Src!);
 
+#if !UNITY_WEBGL
             // Streams rely on livekit room being active; which can only be in we are on the same scene. Let's not create media that is wrong
             if (address.IsLivekitAddress(out _) && !sceneStateProvider.IsCurrent)
                 return;
+#endif
 
             // MediaPlayerComponent / VideoTextureConsumer can be present in any combination
 
