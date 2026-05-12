@@ -10,7 +10,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         public static readonly NullParticipantsHub INSTANCE = new ();
         public static readonly LKParticipant NULL_PARTICIPANT = new ();
+#if !UNITY_WEBGL || UNITY_EDITOR
         public static readonly WeakReference<LKParticipant> WEAK_NULL_PARTICIPANT = new (NULL_PARTICIPANT);
+#endif
 
         public event ParticipantDelegate? UpdatesFromParticipant;
 

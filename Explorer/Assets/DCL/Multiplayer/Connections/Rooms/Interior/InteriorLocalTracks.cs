@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
+
 using DCL.Multiplayer.Connections.Rooms.Nulls;
 using LiveKit;
 using LiveKit.Rooms.Tracks;
@@ -24,3 +26,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         }
     }
 }
+
+#endif

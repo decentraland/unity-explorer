@@ -6,7 +6,9 @@ using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+#if !UNITY_WEBGL || UNITY_EDITOR
 using DCL.Multiplayer.Connections.FfiClients;
+#endif
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -122,7 +124,9 @@ namespace DCL.PluginSystem.Global
             gateKeeperSceneRoom.Dispose();
 
 #if !NO_LIVEKIT_MODE
+#if !UNITY_WEBGL || UNITY_EDITOR
             IFFIClient.Default.Dispose();
+#endif
 #endif
         }
 
@@ -135,7 +139,10 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
         {
 #if !NO_LIVEKIT_MODE
+
+#if !UNITY_WEBGL || UNITY_EDITOR
             IFFIClient.Default.EnsureInitialize();
+#endif 
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);

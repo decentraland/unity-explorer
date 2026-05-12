@@ -1,3 +1,5 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
+
 using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients;
 
@@ -5,7 +7,7 @@ namespace DCL.Multiplayer.Connections.FfiClients
 {
     public static class FfiClientExtensions
     {
-        public static void EnsureInitialize(this IFFIClient ffiClient)
+        public static void EnsureInitialize(this global::LiveKit.Internal.FFIClients.IFFIClient ffiClient)
         {
             bool initialized = ffiClient.Initialized();
             ReportHub.Log(ReportData.UNSPECIFIED, $"FfiClient initilized: {initialized}");
@@ -19,3 +21,5 @@ namespace DCL.Multiplayer.Connections.FfiClients
         }
     }
 }
+
+#endif

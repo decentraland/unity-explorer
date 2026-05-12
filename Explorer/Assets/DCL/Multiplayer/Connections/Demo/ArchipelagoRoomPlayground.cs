@@ -5,7 +5,9 @@ using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+#if !UNITY_WEBGL
 using DCL.Multiplayer.Connections.FfiClients;
+#endif
 using DCL.Multiplayer.Connections.Pools;
 using DCL.RealmNavigation;
 using DCL.Utility;
@@ -33,6 +35,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
+#if !UNITY_WEBGL
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
@@ -64,6 +67,9 @@ namespace DCL.Multiplayer.Connections.Demo
                 system.Update(UnityEngine.Time.deltaTime);
                 await UniTask.Yield();
             }
+#else
+            await UniTask.CompletedTask;
+#endif
         }
     }
 }

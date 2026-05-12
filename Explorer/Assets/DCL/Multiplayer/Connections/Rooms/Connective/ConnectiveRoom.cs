@@ -11,10 +11,6 @@ using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
-using LiveKit.Rooms.Participants.Factory;
-using LiveKit.Rooms.Streaming.Audio;
-using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
@@ -23,6 +19,13 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
 using DCL.LiveKit.Public;
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+using LiveKit.Rooms.Participants.Factory;
+using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks.Factory;
+#endif
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -78,6 +81,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 ParticipantsHub hub = new ();
 
+#if !UNITY_WEBGL
                 // Pass null for AudioTracks - Room constructor will create it automatically
                 Room origin = new Room(
                     new ArrayMemoryPool(),
@@ -93,6 +97,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     new AudioStreams(hub),
                     null
                 );
+#else
+                Room origin = new Room();
+#endif
 
                 return new LogRoom(origin, logPrefix);
             });

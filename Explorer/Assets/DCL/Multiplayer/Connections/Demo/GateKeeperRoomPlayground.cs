@@ -4,7 +4,9 @@ using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+#if !UNITY_WEBGL
 using DCL.Multiplayer.Connections.FfiClients;
+#endif
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
@@ -32,7 +34,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private async UniTaskVoid LaunchAsync()
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && !UNITY_WEBGL
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
