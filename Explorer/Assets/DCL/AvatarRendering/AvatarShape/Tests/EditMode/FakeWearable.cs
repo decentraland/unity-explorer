@@ -40,6 +40,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public WearableType Type { get; }
 
+        public bool HasFacialExpressionsTexture { get; set; }
+
         public WearableAssets[] WearableAssetResults { get; }
 
         public FakeWearable(

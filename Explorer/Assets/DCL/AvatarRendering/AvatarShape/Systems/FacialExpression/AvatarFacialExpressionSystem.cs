@@ -3,8 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.Common.Components;
+using Runtime.Wearables;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -56,21 +60,58 @@ namespace DCL.AvatarRendering.AvatarShape
         [None(typeof(AvatarFaceComponent), typeof(DeleteEntityIntention))]
         private void SetupFaceComponents(in Entity entity, ref AvatarShapeComponent avatarShape)
         {
-            World.Add(entity,
-                new AvatarFaceComponent
-                {
-                    EyebrowsRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyebrows"),
-                    EyeRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyes"),
-                    MouthRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Mouth"),
-                    EyebrowsExpressionIndex = 0,
-                    EyesExpressionIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
-                    MouthExpressionIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
-                    CurrentEyebrowsIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE,
-                    CurrentEyeIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
-                    CurrentMouthPoseIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
-                    NextBlinkTime = Random.Range(settings.MinBlinkInterval, settings.MaxBlinkInterval),
-                },
-                new AvatarMouthInputComponent());
+            var face = new AvatarFaceComponent
+            {
+                EyebrowsRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyebrows"),
+                EyeRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyes"),
+                MouthRenderer = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Mouth"),
+                EyebrowsExpressionIndex = 0,
+                EyesExpressionIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
+                MouthExpressionIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
+                CurrentEyebrowsIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE,
+                CurrentEyeIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE,
+                CurrentMouthPoseIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE,
+                NextBlinkTime = Random.Range(settings.MinBlinkInterval, settings.MaxBlinkInterval),
+            };
+
+            ResolveFaceExpressionFlags(in avatarShape, ref face);
+
+            World.Add(entity, face, new AvatarMouthInputComponent());
+        }
+
+        /// <summary>
+        ///     Reads the worn facial-feature wearables and stamps per-channel expression capability
+        ///     onto the face component. Wearables whose load picked up a `*_expressions.png` atlas
+        ///     enable the corresponding atlas-frame overrides; others stay static.
+        /// </summary>
+        private static void ResolveFaceExpressionFlags(in AvatarShapeComponent avatarShape, ref AvatarFaceComponent face)
+        {
+            face.EyebrowsHasExpressions = false;
+            face.EyesHasExpressions = false;
+            face.MouthHasExpressions = false;
+
+            StreamableLoadingResult<WearablesResolution>? result = avatarShape.WearablePromise.Result;
+
+            if (!result.HasValue || !result.Value.Succeeded) return;
+
+            IList<IWearable> wearables = result.Value.Asset.Wearables;
+
+            for (var i = 0; i < wearables.Count; i++)
+            {
+                IWearable wearable = wearables[i];
+
+                if (wearable.Type != WearableType.FacialFeature) continue;
+                if (!wearable.HasFacialExpressionsTexture) continue;
+
+                string category = wearable.GetCategory();
+
+                if (category == WearableCategories.Categories.EYEBROWS)
+                    face.EyebrowsHasExpressions = true;
+                else if (category == WearableCategories.Categories.EYES)
+                    face.EyesHasExpressions = true;
+                else if (category == WearableCategories.Categories.MOUTH)
+                    face.MouthHasExpressions = true;
+            }
         }
 
         // ─── Per-frame update ─────────────────────────────────────────────────
@@ -90,15 +131,19 @@ namespace DCL.AvatarRendering.AvatarShape
 
             bool visible = avatarShape.IsVisible;
 
-            if (face.EyeRenderer != null)
+            // Blink and mouth animation drive atlas slice overrides via MaterialPropertyBlock.
+            // Skip whole-channel when the wearable cannot atlas-slice, leaving the static face.
+            if (face.EyesHasExpressions && face.EyeRenderer != null)
                 StepBlink(t, ref face, visible);
 
-            if (face.MouthRenderer != null)
+            if (face.MouthHasExpressions && face.MouthRenderer != null)
                 StepMouthAnimation(t, ref face, ref mouthInput, visible);
         }
 
         private void ReInitRenderersIfNeeded(ref AvatarFaceComponent face, in AvatarShapeComponent avatarShape)
         {
+            bool rebuilt = false;
+
             if (face.EyebrowsRenderer == null)
             {
                 Renderer? r = AvatarFaceMaterialUtils.FindRendererWithSuffix(in avatarShape, "Mask_Eyebrows");
@@ -108,6 +153,7 @@ namespace DCL.AvatarRendering.AvatarShape
                     face.EyebrowsRenderer = r;
                     face.CurrentEyebrowsIndex = AvatarFacialExpressionConstants.NO_EYEBROWS_OVERRIDE;
                     face.IsDirty = true;
+                    rebuilt = true;
                 }
             }
 
@@ -124,6 +170,7 @@ namespace DCL.AvatarRendering.AvatarShape
                     face.TimeSinceLastBlink = 0f;
                     face.CurrentEyeIndex = AvatarFacialExpressionConstants.NO_EYE_OVERRIDE;
                     face.NextBlinkTime = Random.Range(settings.MinBlinkInterval, settings.MaxBlinkInterval);
+                    rebuilt = true;
                 }
             }
 
@@ -138,8 +185,14 @@ namespace DCL.AvatarRendering.AvatarShape
                     face.CharacterIndex = 0;
                     face.CharacterTimer = 0f;
                     face.CurrentMouthPoseIndex = AvatarFacialExpressionConstants.NO_MOUTH_POSE;
+                    rebuilt = true;
                 }
             }
+
+            // Wearable swap rebound at least one renderer: refresh per-channel capability flags
+            // from the new set of worn facial features.
+            if (rebuilt)
+                ResolveFaceExpressionFlags(in avatarShape, ref face);
         }
 
         /// <summary>
@@ -151,12 +204,16 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             face.IsDirty = false;
 
-            AvatarFaceMaterialUtils.ApplyEyebrowsFrame(ref face, face.EyebrowsExpressionIndex, eyebrowsTextureArray);
+            // Channels whose wearable lacks an `*_expressions.png` atlas keep the wearable's static
+            // texture: skip the MaterialPropertyBlock override so we don't paint global atlas slices
+            // onto a single-frame face texture.
+            if (face.EyebrowsHasExpressions)
+                AvatarFaceMaterialUtils.ApplyEyebrowsFrame(ref face, face.EyebrowsExpressionIndex, eyebrowsTextureArray);
 
-            if (!face.IsBlinking)
+            if (face.EyesHasExpressions && !face.IsBlinking)
                 AvatarFaceMaterialUtils.ApplyEyeFrame(ref face, face.EyesExpressionIndex, eyeTextureArray);
 
-            if (face.AnimatingText == null)
+            if (face.MouthHasExpressions && face.AnimatingText == null)
                 AvatarFaceMaterialUtils.ApplyMouthPose(ref face, face.MouthExpressionIndex, mouthPoseTextureArray);
         }
 

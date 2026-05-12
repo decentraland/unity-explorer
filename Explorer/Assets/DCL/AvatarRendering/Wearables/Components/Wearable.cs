@@ -53,6 +53,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public WearableType Type { get; private set; }
 
+        public bool HasFacialExpressionsTexture { get; set; }
+
         public bool IsLoading { get; private set; }
 
         public void UpdateLoadingStatus(bool isLoading)

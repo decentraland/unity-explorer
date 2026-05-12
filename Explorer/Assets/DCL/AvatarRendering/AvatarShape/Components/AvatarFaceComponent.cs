@@ -15,6 +15,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Renderer EyeRenderer;
         public Renderer MouthRenderer;
 
+        // Per-channel expression capability. False when the worn facial-feature wearable
+        // ships a legacy single-frame texture (no *_expressions.png atlas), so the renderer
+        // must not apply atlas slice overrides on that channel.
+        public bool EyebrowsHasExpressions;
+        public bool EyesHasExpressions;
+        public bool MouthHasExpressions;
+
         // Base expression (resting layer). Eyes/mouth are restored to these when blink / mouth animation ends.
         public int EyebrowsExpressionIndex;
         public int EyesExpressionIndex;

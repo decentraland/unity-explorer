@@ -34,6 +34,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public const int MAIN_ASSET_INDEX = 0;
         public const int MASK_ASSET_INDEX = 1;
 
+        // Wearables that ship a facial-expression atlas use these suffixes so the loader picks
+        // the matching main + mask pair instead of the legacy single-frame face texture.
+        // Example pair: `eyes_12_expressions.png` + `eyes_12_expressions_mask.png`.
+        private const string EXPRESSIONS_MAIN_FILE_SUFFIX = "_expressions.png";
+        private const string EXPRESSIONS_MASK_FILE_SUFFIX = "_expressions_mask.png";
+        private const string LEGACY_MASK_FILE_SUFFIX = "_mask.png";
+
         /// <summary>
         ///     Create a certain number of Asset Promises based on the type of the wearable,
         ///     if promises are already created does nothing and returns false
@@ -86,7 +93,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         /// <summary>
-        ///     Facial feature can consist of the main texture and the mask
+        ///     Facial feature can consist of the main texture and the mask. When the wearable
+        ///     ships an `*_expressions.png` atlas (4×4 expression grid), the loader substitutes it
+        ///     for the legacy single-frame texture and pairs the `*_expressions_mask.png` as mask.
+        ///     The DTO's mainFile pointer is unchanged; the substitution is loader-side only and
+        ///     flags <see cref="IWearable.HasFacialExpressionsTexture"/> so renderers can atlas-slice.
         /// </summary>
         private static bool TryCreateFacialFeaturePromises(
             in GetWearablesByPointersIntention intention,
@@ -101,8 +112,72 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             // 0 stands for the main texture
             // 1 stands for the mask
-            return TryCreateMainFilePromise(typeof(Texture), intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData)
+            return TryCreateFacialFeatureMainPromise(in intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData)
                    | TryCreateMaskPromise(intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
+        }
+
+        private static bool TryCreateFacialFeatureMainPromise(
+            in GetWearablesByPointersIntention intention,
+            URLSubdirectory customStreamingSubdirectory,
+            IWearable wearable,
+            IPartitionComponent partitionComponent,
+            ref WearableAssets wearableAssets,
+            BodyShape bodyShape,
+            World world,
+            ReportData reportData)
+        {
+            if (wearableAssets.Results[MAIN_ASSET_INDEX] != null)
+                return false;
+
+            bool hasExpressionsTexture = wearable.TryGetFileHashConditional(bodyShape,
+                static content => content.EndsWith(EXPRESSIONS_MAIN_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase),
+                out string? mainHash);
+
+            // Fallback path: no `*_expressions.png` content entry, OR the wearable's declared
+            // mainFile itself is one (TryGetFileHashConditional skips the mainFile).
+            if (!hasExpressionsTexture)
+            {
+                if (!wearable.TryGetMainFileHash(bodyShape, out mainHash))
+                {
+                    wearableAssets.Results[MAIN_ASSET_INDEX] =
+                        new StreamableLoadingResult<AttachmentAssetBase>(reportData, new Exception("Main file hash not found"));
+                    return false;
+                }
+
+                hasExpressionsTexture = TryGetMainFileKey(wearable, bodyShape, out string? mainFileKey)
+                                        && mainFileKey != null
+                                        && mainFileKey.EndsWith(EXPRESSIONS_MAIN_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase);
+            }
+
+            wearable.HasFacialExpressionsTexture = hasExpressionsTexture;
+
+            CreatePromise(typeof(Texture), intention, customStreamingSubdirectory, mainHash!,
+                wearable, MAIN_ASSET_INDEX, partitionComponent, world);
+            return true;
+        }
+
+        private static bool TryGetMainFileKey(IAvatarAttachment attachment, BodyShape bodyShape, out string? key)
+        {
+            AvatarAttachmentDTO? dto = attachment.DTO;
+
+            if (dto?.Metadata.AbstractData.representations != null)
+            {
+                AvatarAttachmentDTO.Representation[] representations = dto.Metadata.AbstractData.representations;
+
+                for (var i = 0; i < representations.Length; i++)
+                {
+                    AvatarAttachmentDTO.Representation representation = representations[i];
+
+                    if (representation.bodyShapes.Contains(bodyShape))
+                    {
+                        key = representation.mainFile;
+                        return true;
+                    }
+                }
+            }
+
+            key = null;
+            return false;
         }
 
         private static ref WearableAssets InitializeResultsArray(IWearable wearable, BodyShape bodyShape, int size)
@@ -131,9 +206,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (wearableAssets.Results[MASK_ASSET_INDEX] != null)
                 return false;
 
-            if (!wearable.TryGetFileHashConditional(bodyShape,
-                    static content => content.EndsWith("_mask.png", StringComparison.OrdinalIgnoreCase),
-                    out string mainFileHash))
+            // Expression-capable wearables pair their atlas with `*_expressions_mask.png`. Other
+            // wearables fall back to the legacy `*_mask.png` (excluding the expressions variant to
+            // avoid grabbing the wrong file when both pairs ship side-by-side).
+            Func<string, bool> contentMatch = wearable.HasFacialExpressionsTexture
+                ? static content => content.EndsWith(EXPRESSIONS_MASK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase)
+                : static content => content.EndsWith(LEGACY_MASK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase)
+                                    && !content.EndsWith(EXPRESSIONS_MASK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase);
+
+            if (!wearable.TryGetFileHashConditional(bodyShape, contentMatch, out string mainFileHash))
             {
                 // If there is no mask, we don't need to create a promise for it, and it's not an exception
                 wearableAssets.Results[MASK_ASSET_INDEX] = new StreamableLoadingResult<AttachmentAssetBase>((AttachmentTextureAsset)null);

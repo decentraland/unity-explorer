@@ -18,6 +18,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         WearableType Type { get; }
 
         /// <summary>
+        ///     True when a facial-feature wearable ships an `*_expressions.png` atlas. Driven by
+        ///     <see cref="WearablePolymorphicBehaviour"/> during promise creation.
+        /// </summary>
+        bool HasFacialExpressionsTexture { get; set; }
+
+        /// <summary>
         ///     Per <see cref="BodyShape" /> [MALE, FEMALE]
         /// </summary>
         WearableAssets[] WearableAssetResults { get; }
