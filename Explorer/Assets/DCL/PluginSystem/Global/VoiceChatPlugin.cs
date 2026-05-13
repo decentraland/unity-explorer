@@ -235,6 +235,9 @@ namespace DCL.PluginSystem.Global
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, stateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
+                var bannedPlayerWatcher = new NearbyVoiceBannedPlayerWatcher(roomHub, sceneRestrictionBusController, stateModel);
+                pluginScope.Add(bannedPlayerWatcher);
+
                 nearbyMuteService!.LoadAsync(ct).Forget();
 
                 nearbyVoiceChatManager = new NearbyVoiceChatManager(stateModel, islandRoom, voiceChatConfiguration, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
