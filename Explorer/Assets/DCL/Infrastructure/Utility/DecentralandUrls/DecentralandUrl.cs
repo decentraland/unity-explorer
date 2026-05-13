@@ -149,6 +149,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         WhatsOnEventLink = 90,
 
+        PeerContent = 91,
+
         Pulse = 100,
     }
 }

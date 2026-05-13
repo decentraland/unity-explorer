@@ -186,6 +186,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.PeerContent => $"https://peer.decentraland.{ENV}/content/contents",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.{ENV}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",

@@ -79,6 +79,7 @@ namespace DCL.DebugUtilities
                         { typeof(DebugTextFieldDef), new DebugElementBase<DebugTextFieldElement, DebugTextFieldDef>.Factory(viewsCatalog.TextField) },
                         { typeof(DebugToggleDef), new DebugElementBase<DebugToggleElement, DebugToggleDef>.Factory(viewsCatalog.Toggle) },
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
+                        { typeof(DebugLineChartDef), new DebugElementBase<DebugLineChartElement, DebugLineChartDef>.Factory(viewsCatalog.LineChart) },
                     },
                     allowedCategories
                 ),
