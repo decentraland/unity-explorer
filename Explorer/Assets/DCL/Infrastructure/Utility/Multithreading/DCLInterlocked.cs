@@ -42,6 +42,19 @@ namespace Utility.Multithreading
 
 #if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Add(ref long location, long value)
+        {
+            location += value;
+            return location;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Add(ref long location, long value) =>
+            Interlocked.Add(ref location, value);
+#endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Increment(ref int location)
         {
             location = location + 1;
