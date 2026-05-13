@@ -19,7 +19,7 @@ namespace DCL.UI.Sidebar.HelpMenu
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        public event Action? ContactSupportClicked;
+        public event Action? ContactSupportRequested;
 
         public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, IWebBrowser webBrowser)
             : base(viewFactory)
@@ -32,16 +32,23 @@ namespace DCL.UI.Sidebar.HelpMenu
         {
             base.Dispose();
             openControlsCts.SafeCancelAndDispose();
+
+            if (viewInstance == null) return;
+
+            viewInstance.MouseAndKeyControlsClicked -= OnMouseAndKeyControlsClicked;
+            viewInstance.FaqClicked -= OnFaqClicked;
+            viewInstance.ContactSupportClicked -= OnContactSupportClicked;
+            viewInstance.DiscordClicked -= OnDiscordClicked;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.CloseAreaButton.onClick.AddListener(OnClose);
-            viewInstance.MouseAndKeyControlsButton.onClick.AddListener(OnMouseAndKeyControlsClicked);
-            viewInstance.FaqButton.onClick.AddListener(OnFaqClicked);
-            viewInstance.ContactSupportButton.onClick.AddListener(OnContactSupportClicked);
-            viewInstance.DiscordButton.onClick.AddListener(OnDiscordClicked);
+
+            viewInstance!.MouseAndKeyControlsClicked += OnMouseAndKeyControlsClicked;
+            viewInstance.FaqClicked += OnFaqClicked;
+            viewInstance.ContactSupportClicked += OnContactSupportClicked;
+            viewInstance.DiscordClicked += OnDiscordClicked;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -51,35 +58,34 @@ namespace DCL.UI.Sidebar.HelpMenu
         }
 
         protected override void OnViewClose() =>
-            closeViewTask?.TrySetResult();
-
-        private void OnClose() =>
-            closeViewTask?.TrySetResult();
+            CloseView();
 
         private void OnMouseAndKeyControlsClicked()
         {
-            closeViewTask?.TrySetResult();
+            CloseView();
             openControlsCts = openControlsCts.SafeRestart();
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand(), openControlsCts.Token).Forget();
         }
 
         private void OnFaqClicked()
         {
-            closeViewTask?.TrySetResult();
+            CloseView();
             webBrowser.OpenUrl(DecentralandUrl.Faqs);
         }
 
         private void OnContactSupportClicked()
         {
-            closeViewTask?.TrySetResult();
+            CloseView();
             webBrowser.OpenUrl(DecentralandUrl.Help);
-            ContactSupportClicked?.Invoke();
+            ContactSupportRequested?.Invoke();
         }
 
         private void OnDiscordClicked()
         {
-            closeViewTask?.TrySetResult();
+            CloseView();
             webBrowser.OpenUrl(DecentralandUrl.Discord);
         }
+
+        private void CloseView() => closeViewTask?.TrySetResult();
     }
 }

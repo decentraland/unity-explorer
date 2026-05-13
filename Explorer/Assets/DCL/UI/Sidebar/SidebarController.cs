@@ -115,7 +115,7 @@ namespace DCL.UI.Sidebar
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
-            helpMenuController.ContactSupportClicked += OnContactSupportClicked;
+            helpMenuController.ContactSupportRequested += OnContactSupportClicked;
         }
 
         public override void Dispose()
@@ -123,7 +123,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             chatEventBusSubscription.Dispose();
-            helpMenuController.ContactSupportClicked -= OnContactSupportClicked;
+            helpMenuController.ContactSupportRequested -= OnContactSupportClicked;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
 
