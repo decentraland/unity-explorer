@@ -82,10 +82,39 @@ namespace SceneRunner
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
-        public void SetTargetFPS(int fps)
+        /// <remarks>
+        /// <see cref="SceneFacade"/> is a component in the global scene as an
+        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
+        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
+        /// shall be the chain of Dispose calls.
+        /// </remarks>
+        public async UniTask DisposeAsync()
         {
-            intervalMS = (int)(1000f / fps);
+            // Because of multithreading Disposing is not synced with the update loop
+            // so just mark it as disposed and let the update loop handle the disposal
+            SceneStateProvider.State.Set(SceneState.Disposing);
+
+            runtimeInstance.SetIsDisposing();
+
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+
+            // Let the scene loop finish gracefully to prevent synchronous exceptions:
+            // Microsoft.ClearScript.ScriptEngineException
+            // Error: Cannot access a disposed object.
+            while (sceneCodeIsRunning)
+                await UniTask.Yield(PlayerLoopTiming.Initialization);
+
+            DisposeInternal();
+            SceneData.InitialSceneStateInfo.Dispose();
+
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
+
+        private void DisposeInternal() =>
+            deps.Dispose();
+
+        public void SetTargetFPS(int fps) =>
+            intervalMS = (int)(1000f / fps);
 
         UniTask ISceneFacade.StartScene() =>
             runtimeInstance.StartScene();
@@ -99,25 +128,25 @@ namespace SceneRunner
         public bool IsSceneReady() =>
             SceneData.SceneLoadingConcluded;
 
-        /// <summary>
-        ///     Initializes the scene and runs JS startup code. Returns when the scene's onStart has completed.
-        ///     Must be called from a non-main thread (V8 execution requirement).
-        ///     If JS init throws, the scene is left in its current state and the exception is reported via
-        ///     <see cref="sceneExceptionsHandler"/>; callers should observe <see cref="SceneStateProvider"/>
-        ///     before proceeding to <see cref="UpdateLoopAsync"/>.
-        /// </summary>
-        public async UniTask<SceneState> StartAsync(int targetFPS, CancellationToken ct)
+        public void SetIsCurrent(bool isCurrent)
         {
-            MultithreadingUtility.AssertMainThread(nameof(StartAsync));
+            SceneStateProvider.IsCurrent = isCurrent;
+            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
+            deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+        }
+
+        public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
+        {
+            MultithreadingUtility.AssertMainThread(nameof(StartUpdateLoopAsync), isMainThread: false);
 
             if (SceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartAsync)} is already started!");
+                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
                 runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
-            SceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
+            SceneStateProvider.Start(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
             SetTargetFPS(targetFPS);
 
@@ -127,7 +156,7 @@ namespace SceneRunner
             // One-shot watchdog: if JS init doesn't complete within START_HANG_INTERRUPT_THRESHOLD_MS,
             // interrupt the engine and mark the scene as failed.
             var watchdogCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            // This is a safeguard to prevent the JS thread to become stuck keeping the scene state as running when it failed
+            // This is a safeguard to prevent the JS thread to become stuck due to an endless loop
             // See: https://github.com/decentraland/unity-explorer/issues/8654
             // https://github.com/decentraland/unity-explorer/issues/8493
             RunHangWatchdogAsync(START_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
@@ -145,30 +174,26 @@ namespace SceneRunner
                 sceneCodeIsRunning.Reset();
             }
 
-            MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
-
-            return SceneStateProvider.State.Value();
+            await UpdateLoopAsync(ct);
         }
 
-        /// <summary>
-        ///     Runs the per-tick update loop. Must be called after <see cref="StartAsync"/> completes
-        ///     and the scene state is still Running.
-        /// </summary>
-        public async UniTask UpdateLoopAsync(CancellationToken ct)
+        private async UniTask UpdateLoopAsync(CancellationToken ct)
         {
-            MultithreadingUtility.AssertMainThread(nameof(UpdateLoopAsync));
+            MultithreadingUtility.AssertMainThread(nameof(UpdateLoopAsync), isMainThread: false);
 
-            if (SceneStateProvider.IsNotRunningState())
-                return;
+            if (SceneStateProvider.State != SceneState.Starting)
+                throw new ThreadStateException($"{nameof(UpdateLoopAsync)} did not start!");
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
             var watchdogCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            // This is a safeguard to prevent the JS thread to become stuck keeping the scene state as running when it failed
+            // This is a safeguard to prevent the JS thread to become stuck keeping due to an endless loop
             // See: https://github.com/decentraland/unity-explorer/issues/8654
             // https://github.com/decentraland/unity-explorer/issues/8493
             RunHangWatchdogAsync(UPDATE_HANG_INTERRUPT_THRESHOLD_MS, watchdogCts.Token).Forget();
+
+            SceneStateProvider.State.Set(SceneState.Running);
 
             try
             {
@@ -178,8 +203,7 @@ namespace SceneRunner
                     if (ct.IsCancellationRequested) break;
 
                     // 2. don't try to run the update loop if the scene is not running
-                    if (SceneStateProvider.IsNotRunningState())
-                        break;
+                    if (SceneStateProvider.IsNotRunningState()) break;
 
                     stopWatch.Restart();
 
@@ -213,7 +237,7 @@ namespace SceneRunner
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await DCLTask.Delay(sleepMS, ct);
-                    MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay));
+                    MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay), isMainThread: false);
                     // Some scenes fail when delta time is large, locking the JS thread
                     // See: https://github.com/decentraland/unity-explorer/issues/8654
                     // https://github.com/decentraland/unity-explorer/issues/8493
@@ -289,46 +313,6 @@ namespace SceneRunner
             }
 
             return true;
-        }
-
-        public void SetIsCurrent(bool isCurrent)
-        {
-            SceneStateProvider.IsCurrent = isCurrent;
-            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-            deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
-        }
-
-        /// <remarks>
-        /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
-        /// shall be the chain of Dispose calls.
-        /// </remarks>
-        public async UniTask DisposeAsync()
-        {
-            // Because of multithreading Disposing is not synced with the update loop
-            // so just mark it as disposed and let the update loop handle the disposal
-            SceneStateProvider.State.Set(SceneState.Disposing);
-
-            runtimeInstance.SetIsDisposing();
-
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-
-            // Let the scene loop finish gracefully to prevent synchronous exceptions:
-            // Microsoft.ClearScript.ScriptEngineException
-            // Error: Cannot access a disposed object.
-            while (sceneCodeIsRunning)
-                await UniTask.Yield(PlayerLoopTiming.Initialization);
-
-            DisposeInternal();
-            SceneData.InitialSceneStateInfo.Dispose();
-
-            SceneStateProvider.State.Set(SceneState.Disposed);
-        }
-
-        private void DisposeInternal()
-        {
-            deps.Dispose();
         }
     }
 }

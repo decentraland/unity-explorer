@@ -97,23 +97,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             try
             {
-                await DCLTask.SwitchToThreadPool();
-                if (destroyCancellationToken.IsCancellationRequested) return;
-
-#if !UNITY_WEBGL
-
-                // Provide basic thread-pool synchronization context
-                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-#endif
-
-                SceneState startState = await scene.StartAsync(fps, destroyCancellationToken);
-
-                await UniTask.SwitchToMainThread(cancellationToken: destroyCancellationToken);
-
-                // If JS init failed (handler set state to an error) or destroy was triggered, stop here.
-                if (startState != SceneState.Running || destroyCancellationToken.IsCancellationRequested)
-                    return;
-
                 if (definitionComponent.IsPortableExperience)
                     scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
                 else
@@ -123,10 +106,16 @@ namespace ECS.SceneLifeCycle.Systems
 
                 await DCLTask.SwitchToThreadPool();
 
-                if (scene.SceneStateProvider.IsNotRunningState() || destroyCancellationToken.IsCancellationRequested)
-                    return;
+                if (destroyCancellationToken.IsCancellationRequested) return;
 
-                await scene.UpdateLoopAsync(destroyCancellationToken);
+#if !UNITY_WEBGL
+
+                // Provide basic thread-pool synchronization context
+                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
+
+                // The update of the scene is an endless task, needs to be forgotten
+                scene.StartUpdateLoopAsync(fps, destroyCancellationToken).Forget();
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }

@@ -36,7 +36,6 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using PortableExperiences.Controller;
-using RichTypes;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -59,7 +58,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner.Tests
 {
@@ -160,8 +158,7 @@ namespace SceneRunner.Tests
             cancellationTokenSource.CancelAfter(lifeTimeMs);
 
             // will end gracefully
-            await sceneFacade.StartAsync(fps, cancellationTokenSource.Token);
-            await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
+            await sceneFacade.StartUpdateLoopAsync(fps, cancellationTokenSource.Token);
 
             // Asserts are inside the method
         }
@@ -251,8 +248,7 @@ namespace SceneRunner.Tests
                 cancellationTokenSource.CancelAfter(lifeTime);
 
                 // will end gracefully
-                await sceneFacade.StartAsync(fps, cancellationTokenSource.Token);
-                await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
+                await sceneFacade.StartUpdateLoopAsync(fps, cancellationTokenSource.Token);
 
                 list.Add(Thread.CurrentThread.ManagedThreadId);
 
@@ -295,8 +291,7 @@ namespace SceneRunner.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(DURATION);
 
-            await sceneFacade.StartAsync(10, cancellationTokenSource.Token);
-            await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
+            await sceneFacade.StartUpdateLoopAsync(10, cancellationTokenSource.Token);
 
             await UniTask.SwitchToMainThread();
 
@@ -344,8 +339,7 @@ namespace SceneRunner.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(DURATION);
 
-            await sceneFacade.StartAsync(10, cancellationTokenSource.Token);
-            await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
+            await sceneFacade.StartUpdateLoopAsync(10, cancellationTokenSource.Token);
 
             await UniTask.SwitchToMainThread();
 

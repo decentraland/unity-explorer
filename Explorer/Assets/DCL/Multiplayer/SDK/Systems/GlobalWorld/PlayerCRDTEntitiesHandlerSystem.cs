@@ -73,6 +73,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void ResolvePlayerCRDTScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
         {
             bool newSceneIsValid = scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade currentScene)
+                                   && currentScene.SceneStateProvider.State == SceneState.Running
                                    && !currentScene.IsEmpty;
 
             if (globalPlayerCRDTEntity.SceneFacade != currentScene)
@@ -120,9 +121,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
                 // as the scene-level Writer systems need it to know which CRDT Entity to affect
                 if (playerCRDTEntity.SceneWorldEntity != Entity.Null)
-                {
                     sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
-                }
 
                 if (noLongerExists)
                     FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
