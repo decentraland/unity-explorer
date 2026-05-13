@@ -97,7 +97,7 @@ namespace DCL.Backpack.CharacterPreview
             emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             previewAvatarModel.Wearables ??= new List<URN>();
             previewAvatarModel.Wearables.Clear();

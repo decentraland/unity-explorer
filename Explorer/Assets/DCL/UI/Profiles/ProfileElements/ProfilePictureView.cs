@@ -71,8 +71,17 @@ namespace DCL.UI.ProfileElements
             switch (model.ThumbnailState)
             {
                 case ProfileThumbnailViewModel.State.LOADING:
-                    SetLoadingState(true);
-                    thumbnailImageView.Alpha = 0f;
+                    if (model.Sprite != null)
+                    {
+                        thumbnailImageView.SetImage(model.Sprite, model.FitAndCenterImage);
+                        SetLoadingState(false);
+                        thumbnailImageView.Alpha = 1f;
+                    }
+                    else
+                    {
+                        SetLoadingState(true);
+                        thumbnailImageView.Alpha = 0f;
+                    }
                     break;
                 case ProfileThumbnailViewModel.State.FALLBACK:
                 case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:

@@ -4,6 +4,7 @@ using DCL.Profiles;
 using DCL.UI.Controls.Configs;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -56,6 +57,8 @@ namespace DCL.UI.Controls
         [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
         private CancellationTokenSource copyAnimationCts = new ();
+        private CancellationTokenSource? loadThumbnailCts;
+        private readonly ReactiveProperty<ProfileThumbnailViewModel> thumbnail = new (ProfileThumbnailViewModel.Default());
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public override bool IsInteractable { get; set; }
@@ -69,6 +72,7 @@ namespace DCL.UI.Controls
             RemoveFriendButton.onClick.RemoveAllListeners();
             CancelFriendButton.onClick.RemoveAllListeners();
             copyAnimationCts.SafeCancelAndDispose();
+            loadThumbnailCts.SafeCancelAndDispose();
         }
 
         public override void RegisterCloseListener(Action listener)
@@ -93,7 +97,7 @@ namespace DCL.UI.Controls
             if (settings.showProfilePicture)
             {
                 ProfilePictureView.gameObject.SetActive(true);
-                ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData);
+                LoadProfilePicture(settings.userData);
             }
             else
                 ProfilePictureView.gameObject.SetActive(false);
@@ -106,6 +110,15 @@ namespace DCL.UI.Controls
 
             CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.NAME));
             CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.ADDRESS));
+        }
+
+        private void LoadProfilePicture(Profile.CompactInfo userData)
+        {
+            thumbnail.UpdateValue(ProfileThumbnailViewModel.Default(userData.UserNameColor));
+            ProfilePictureView.Bind(thumbnail);
+
+            loadThumbnailCts = loadThumbnailCts.SafeRestart();
+            GetProfileThumbnailCommand.Instance.ExecuteAsync(thumbnail, defaultEmptyThumbnail, userData, loadThumbnailCts.Token).Forget();
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
