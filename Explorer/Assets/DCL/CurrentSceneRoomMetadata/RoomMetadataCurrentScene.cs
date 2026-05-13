@@ -30,8 +30,8 @@ namespace DCL.SceneBannedUsers
     [Singleton]
     public partial class RoomMetadataCurrentScene
     {
-        private readonly IRoomHub roomHub;
-        private readonly IRealmData realmData;
+        private readonly IRoomHub? roomHub;
+        private readonly IRealmData? realmData;
         private readonly bool includeBannedUsersFromScene;
 
         private readonly Mutex<HashSet<string>?> bannedAddressesSet = new Mutex<HashSet<string>?>(null); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -52,7 +52,9 @@ namespace DCL.SceneBannedUsers
         }
 
 
-#if UNITY_INCLUDE_TESTS
+        // Test affordance: the parameterless ctor leaves roomHub/realmData null; consumers must live
+        // in the production assembly (no UNITY_INCLUDE_TESTS), so IsAdmin/IsUserBanned detect this at
+        // runtime via the null-roomHub check instead of a compile-time #if.
         private RoomMetadataCurrentScene()
         {
         }
@@ -74,7 +76,6 @@ namespace DCL.SceneBannedUsers
                 ? null
                 : new HashSet<string>(bannedAddresses, StringComparer.OrdinalIgnoreCase);
         }
-#endif
 
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
@@ -118,13 +119,13 @@ namespace DCL.SceneBannedUsers
 
         public SceneAdminResult IsAdmin(string userId)
         {
-#if UNITY_INCLUDE_TESTS
-            return SceneAdminResult.Success(); // consider always an admin during tests
-#else
+            if (roomHub == null)
+                return SceneAdminResult.Success(); // always-admin in tests (test ctor leaves roomHub null)
+
             if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return SceneAdminResult.NotLoadedYet();
 
-            if (realmData.IsLocalSceneDevelopment)
+            if (realmData!.IsLocalSceneDevelopment)
                 return SceneAdminResult.LocalSceneDevelopment();
 
             using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -136,15 +137,14 @@ namespace DCL.SceneBannedUsers
             return isAdmin
                 ? SceneAdminResult.Success()
                 : SceneAdminResult.NotAdmin();
-#endif
         }
 
         public Result<IEnumerable<string>> CurrentAdmins()
         {
-            if (roomHub.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
+            if (roomHub!.SceneRoom().Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                 return Result<IEnumerable<string>>.ErrorResult("Scene Admins are not available, Livekit room is disconnected");
 
-            if (realmData.IsLocalSceneDevelopment)
+            if (realmData!.IsLocalSceneDevelopment)
                 return Result<IEnumerable<string>>.ErrorResult("Scene Admins are not available in Local Scene Development");
 
             using var adminsLock = sceneAdminsAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -165,12 +165,13 @@ namespace DCL.SceneBannedUsers
         /// <returns>True is the user is currently banned from the current scene.</returns>
         public bool IsUserBanned(string userId)
         {
-#if UNITY_INCLUDE_TESTS
-            // Test ctor leaves roomHub null and includeBannedUsersFromScene false.
-            // Drive ban state purely through SetBannedForTests so system tests can flip it.
-            using var bannedLockTest = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-            return bannedLockTest.Value?.Contains(userId) ?? false;
-#else
+            if (roomHub == null)
+            {
+                // Test ctor: drive ban state purely through SetBannedForTests so system tests can flip it.
+                using var bannedLockTest = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+                return bannedLockTest.Value?.Contains(userId) ?? false;
+            }
+
             if (!includeBannedUsersFromScene)
                 return false;
 
@@ -179,7 +180,6 @@ namespace DCL.SceneBannedUsers
 
             using var bannedLock = bannedAddressesSet.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             return bannedLock.Value?.Contains(userId) ?? false;
-#endif
         }
     }
 }
