@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using Microsoft.ClearScript;
 using RichTypes;
 using SceneRunner.Scene;
@@ -41,6 +42,8 @@ namespace SceneRunner
         public bool IsEmpty => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
+
+        public SceneRuntimeMetrics RuntimeMetrics => deps.SyncDeps.RuntimeMetrics;
 
         private int intervalMS;
 
@@ -115,6 +118,8 @@ namespace SceneRunner
 
         public void SetTargetFPS(int fps) =>
             intervalMS = (int)(1000f / fps);
+            RuntimeMetrics.TargetFps = fps;
+        }
 
         UniTask ISceneFacade.StartScene() =>
             runtimeInstance.StartScene();
@@ -242,6 +247,7 @@ namespace SceneRunner
                     // See: https://github.com/decentraland/unity-explorer/issues/8654
                     // https://github.com/decentraland/unity-explorer/issues/8493
                     deltaTime = Math.Min(stopWatch.ElapsedMilliseconds / 1000f, MAX_DELTA_TIME);
+                    RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
                 }
             }
             catch (OperationCanceledException) { }
