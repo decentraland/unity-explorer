@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using DCL.Profiling;
 using ECS.TestSuite;
 using DCL.Diagnostics;
 using ECS;
@@ -87,7 +88,7 @@ namespace SceneRuntime.Factory.Tests
                 using SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path,
                     instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(Substitute.For<ISceneData>(), engineApi, instancePoolsProvider, sceneExceptionsHandler, new SceneRuntimeMetrics());
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert
