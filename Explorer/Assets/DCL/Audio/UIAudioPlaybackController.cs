@@ -207,6 +207,7 @@ namespace DCL.Audio
                 audioSource = GetAudioSourceFromPoolForCategory(audioClipConfig.Category);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
                 audioSource.pitch = pitch;
+                audioSource.volume = audioClipConfig.RelativeVolume;
                 audioSource.loop = false;
                 audioSource.Play();
                 ScheduleAudioSourceReleaseAsync(audioSource).Forget();
