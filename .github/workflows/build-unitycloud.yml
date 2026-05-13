@@ -476,73 +476,33 @@ jobs:
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
 
-      - name: Download CodeSignTool
+      - name: Locate Windows main executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
-        continue-on-error: true
         run: |
           set -euo pipefail
-          CST_VERSION="v1.3.2"
-          curl -sSL -o "$RUNNER_TEMP/CodeSignTool.zip" \
-            "https://github.com/SSLcom/CodeSignTool/releases/download/${CST_VERSION}/CodeSignTool-${CST_VERSION}.zip"
-          unzip -q "$RUNNER_TEMP/CodeSignTool.zip" -d "$RUNNER_TEMP/CodeSignTool"
-          rm "$RUNNER_TEMP/CodeSignTool.zip"
-
-          JAR=$(find "$RUNNER_TEMP/CodeSignTool" -name 'code_sign_tool-*.jar' | head -n1)
-          if [[ -z "$JAR" ]]; then
-            echo "::error::CodeSignTool JAR not found"
-            exit 1
-          fi
-          # CodeSignTool resolves ./conf/code_sign_tool.properties relative to CWD,
-          # so the sign step must run from the directory containing both jar/ and conf/.
-          CODESIGN_DIR=$(dirname "$(dirname "$JAR")")
-          if [[ ! -f "$CODESIGN_DIR/conf/code_sign_tool.properties" ]]; then
-            echo "::error::code_sign_tool.properties not found at $CODESIGN_DIR/conf/"
-            exit 1
-          fi
-          echo "CODESIGN_JAR=$JAR" >> "$GITHUB_ENV"
-          echo "CODESIGN_DIR=$CODESIGN_DIR" >> "$GITHUB_ENV"
-          echo "CodeSignTool ready: $JAR (cwd: $CODESIGN_DIR)"
-
-      - name: Sign Windows executable
-        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
-        continue-on-error: true
-        env:
-          ES_USERNAME: ${{ secrets.ES_USERNAME }}
-          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
-          WINDOWS_CREDENTIAL_ID_SIGNER: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
-          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
-        run: |
-          set -euo pipefail
-
           MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
           if [[ -z "$MAIN_EXE" ]]; then
             echo "::error::No main .exe found in build/"
             exit 1
           fi
           MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
+          echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $MAIN_EXE_ABS"
 
-          echo "Signing $MAIN_EXE_ABS ..."
-          # CodeSignTool reads ./conf/code_sign_tool.properties, so cd into its root first.
-          # It also exits 0 on internal exceptions, so tee the output and fail explicitly.
-          pushd "$CODESIGN_DIR" > /dev/null
-          set -o pipefail
-          SIGN_LOG=$(mktemp)
-          java -jar "$CODESIGN_JAR" sign \
-            -username="$ES_USERNAME" \
-            -password="$ES_PASSWORD" \
-            -credential_id="$WINDOWS_CREDENTIAL_ID_SIGNER" \
-            -totp_secret="$ES_TOTP_SECRET" \
-            -input_file_path="$MAIN_EXE_ABS" \
-            -override=true \
-            -malware_block=false 2>&1 | tee "$SIGN_LOG"
-          popd > /dev/null
-
-          if grep -qE 'Exception|Error|Failed' "$SIGN_LOG"; then
-            echo "::error::CodeSignTool reported an error"
-            exit 1
-          fi
-
-          echo "::notice::Signed $MAIN_EXE_ABS"
+      - name: Sign Windows executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@develop
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.MAIN_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
 
       - name: Verify Windows signature
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
@@ -551,7 +511,6 @@ jobs:
           set -euo pipefail
           sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
 
-          MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
           echo "Verifying signature on $MAIN_EXE ..."
           osslsigncode verify -in "$MAIN_EXE"
           echo "::notice::Signature verified for $MAIN_EXE"
