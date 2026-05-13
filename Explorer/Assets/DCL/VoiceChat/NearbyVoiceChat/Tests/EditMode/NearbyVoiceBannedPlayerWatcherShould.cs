@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [TearDown]
         public void TearDown()
         {
-            watcher.Dispose();
+            watcher?.Dispose();
             stateModel.Dispose();
         }
 
