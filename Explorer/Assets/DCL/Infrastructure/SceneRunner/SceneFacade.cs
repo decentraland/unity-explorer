@@ -116,7 +116,8 @@ namespace SceneRunner
         private void DisposeInternal() =>
             deps.Dispose();
 
-        public void SetTargetFPS(int fps) =>
+        public void SetTargetFPS(int fps)
+        {
             intervalMS = (int)(1000f / fps);
             RuntimeMetrics.TargetFps = fps;
         }
@@ -242,11 +243,16 @@ namespace SceneRunner
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await DCLTask.Delay(sleepMS, ct);
+
                     MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay), isMainThread: false);
+
+                    long elapsedTicks = stopWatch.Elapsed.Ticks;
+
                     // Some scenes fail when delta time is large, locking the JS thread
                     // See: https://github.com/decentraland/unity-explorer/issues/8654
                     // https://github.com/decentraland/unity-explorer/issues/8493
                     deltaTime = Math.Min(stopWatch.ElapsedMilliseconds / 1000f, MAX_DELTA_TIME);
+
                     RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
                 }
             }
