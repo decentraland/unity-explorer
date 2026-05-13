@@ -251,16 +251,19 @@ namespace DCL.Multiplayer.Movement
             if (delta.HasSlideBlend)
                 lastAnimState.SlideBlendValue = delta.SlideBlendQuantized;
 
-            uint flags = delta.StateFlags;
+            if (delta.HasStateFlags)
+            {
+                uint flags = delta.StateFlags;
 
-            last.headIKYawEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadYaw);
-            last.headIKPitchEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadPitch);
-            last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
-            last.isPointingAt = EnumUtils.HasFlag(flags, PlayerAnimationFlags.PointingAt);
-            lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
-            lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
-            lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
-            lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
+                last.headIKYawEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadYaw);
+                last.headIKPitchEnabled = EnumUtils.HasFlag(flags, PlayerAnimationFlags.HeadPitch);
+                last.isStunned = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Stunned);
+                last.isPointingAt = EnumUtils.HasFlag(flags, PlayerAnimationFlags.PointingAt);
+                lastAnimState.IsGrounded = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Grounded);
+                lastAnimState.IsLongJump = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongJump);
+                lastAnimState.IsFalling = EnumUtils.HasFlag(flags, PlayerAnimationFlags.Falling);
+                lastAnimState.IsLongFall = EnumUtils.HasFlag(flags, PlayerAnimationFlags.LongFall);
+            }
 
             if (delta.HasHeadYaw)
                 last.headYawAndPitch.x = delta.HeadYawQuantized;
