@@ -11,6 +11,7 @@ using UnityEditor;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UnityEngine;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -230,7 +231,7 @@ namespace DCL.Tests
             {
                 string message = $"ripgrep (rg) not found on PATH. Install it to run this convention check (e.g. `brew install ripgrep`). which-output: '{output}', err: '{p.StandardError.ReadToEnd()}'.";
 
-                if (UnityEngine.Application.isBatchMode)
+                if (Application.isBatchMode)
                     Assert.Fail(message);
                 else
                     Assert.Ignore(message);
@@ -472,6 +473,10 @@ namespace DCL.Tests
 
                 // Ignore namespace keyword
                 if (line.StartsWith("namespace"))
+                    continue;
+
+                // Ignore comment-only lines (//, ///, ////, etc.)
+                if (line.AsSpan().TrimStart().StartsWith("//"))
                     continue;
 
                 foreach ((Regex regex, string pattern) in patternList)

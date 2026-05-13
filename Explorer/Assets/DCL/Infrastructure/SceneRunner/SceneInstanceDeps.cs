@@ -21,6 +21,7 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Profiling;
 using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
 using DCL.Utilities;
@@ -63,6 +64,7 @@ namespace SceneRunner
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly ISceneExceptionsHandler ExceptionsHandler;
         public readonly ECSWorldFacade ECSWorldFacade;
+        public readonly SceneRuntimeMetrics RuntimeMetrics = new ();
 
         public readonly ICRDTWorldSynchronizer CRDTWorldSynchronizer;
         public readonly URLAddress SceneCodeUrl;
@@ -287,7 +289,8 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner),
+                        syncOwner,
+                        syncDeps.RuntimeMetrics),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
         }
 
@@ -313,7 +316,8 @@ namespace SceneRunner
                             syncDeps.systemGroupThrottler,
                             syncDeps.ExceptionsHandler,
                             syncDeps.ecsMultiThreadSync,
-                            syncOwner
+                            syncOwner,
+                            syncDeps.RuntimeMetrics
                             ),
                     syncDeps,
                     sceneRuntime,

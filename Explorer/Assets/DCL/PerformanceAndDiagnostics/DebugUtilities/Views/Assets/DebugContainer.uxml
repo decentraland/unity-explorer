@@ -7,11 +7,13 @@
         <ui:VisualElement name="Panel" style="flex-grow: 0; flex-direction: column; border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; margin-bottom: 6px; background-color: rgba(0, 0, 0, 0.9);">
             <ui:VisualElement name="Header" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); font-size: 12px; flex-direction: row; flex-shrink: 0;">
                 <ui:Label tabindex="-1" text="DEBUG PANEL" display-tooltip-when-elided="true" class="debug-text--header" style="flex-grow: 1; border-left-width: 10px; -unity-text-align: middle-left;" />
+                <ui:Button display-tooltip-when-elided="true" name="MaximizeButton" class="debug-panel-header-button debug-panel-header-button--square" />
                 <ui:Button text="✖" display-tooltip-when-elided="true" name="CloseButton" style="margin-left: 2px; margin-right: 2px; margin-top: 2px; margin-bottom: 2px; padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 2px; -unity-font-style: normal; border-left-width: 0; border-right-width: 6px; border-top-width: 0; border-bottom-width: 0; background-color: rgba(188, 188, 188, 0); align-self: center; border-left-color: rgba(149, 149, 149, 0); border-right-color: rgba(149, 149, 149, 0); border-top-color: rgba(149, 149, 149, 0); border-bottom-color: rgba(149, 149, 149, 0);" />
             </ui:VisualElement>
-            <ui:ScrollView horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" mouse-wheel-scroll-size="100">
+            <ui:ScrollView horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto" mouse-wheel-scroll-size="100" style="flex-grow: 1;">
                 <ui:VisualElement name="Parent" />
             </ui:ScrollView>
+            <ui:VisualElement name="ResizeHandle" class="debug-panel-resize-handle" />
         </ui:VisualElement>
     </DCL.DebugUtilities.Views.DebugContainer>
 </ui:UXML>
