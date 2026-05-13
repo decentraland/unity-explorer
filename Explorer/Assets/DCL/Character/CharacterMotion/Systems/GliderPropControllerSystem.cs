@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
@@ -29,7 +30,7 @@ namespace DCL.CharacterMotion.Systems
         private GameObjectPool<OneShotAudioSource> oneShotAudioPool;
         private SingleInstanceEntity tickEntity;
 
-        public GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GliderPropView gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
+        internal GliderPropControllerSystem(World world, CharacterMotionSettings.GlidingSettings glidingSettings, GliderPropView gliderPrefab, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.glidingSettings = glidingSettings;
             this.gliderPrefab = gliderPrefab;
@@ -77,6 +78,8 @@ namespace DCL.CharacterMotion.Systems
             RemoteEnablePropQuery(World);
             HandleStateTransitionQuery(World, tick);
             CleanUpDestroyedAvatarsPropQuery(World);
+
+            UpdatePropVisibilityQuery(World);
 
             // Visualization
             LocalUpdatePropAnimatorQuery(World);
@@ -152,6 +155,14 @@ namespace DCL.CharacterMotion.Systems
             gliderProp.View.gameObject.SetActive(false);
 
             World.Remove<GliderPropEnabled>(entity);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdatePropVisibility(in Entity entity, in GliderProp gliderProp, in AvatarShapeComponent avatarShape)
+        {
+            bool shouldHide = avatarShape.HiddenByModifierArea || World.Has<HiddenPlayerComponent>(entity);
+            gliderProp.View.SetHidden(shouldHide);
         }
 
         [Query]
