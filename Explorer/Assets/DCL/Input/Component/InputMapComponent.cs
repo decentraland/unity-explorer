@@ -31,6 +31,8 @@ namespace DCL.Input.Component
             SHORTCUTS = 1 << 5,
             IN_WORLD_CAMERA = 1 << 6,
             VOICE_CHAT = 1 << 7,
+            FACE_EXPRESSIONS_WHEEL = 1 << 8,
+            FACE_EXPRESSIONS = 1 << 9,
         }
 
         private Kind active;

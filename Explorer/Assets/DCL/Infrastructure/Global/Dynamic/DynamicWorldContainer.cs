@@ -51,6 +51,7 @@ using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.FacialExpression;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
@@ -650,6 +651,7 @@ namespace Global.Dynamic
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
+            var multiplayerFacialExpressionMessageBus = new MultiplayerFacialExpressionMessageBus(messagePipesHub);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
@@ -836,7 +838,20 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCache,
-                    includeBannedUsersFromScene),
+                    includeBannedUsersFromScene,
+                    emotesEventBus),
+                // FacialExpressionsWheelPlugin: disabled until wearables ship expression atlases.
+                // new FacialExpressionsWheelPlugin(
+                //     assetsProvisioner,
+                //     selfProfile,
+                //     staticContainer.InputBlock,
+                //     dclCursor,
+                //     emotesEventBus,
+                //     mvcManager,
+                //     globalWorld,
+                //     playerEntity,
+                //     characterPreviewFactory,
+                //     characterPreviewEventBus),
                 new MainUIPlugin(mvcManager, mainUIView, includeFriends),
                 new ProfilePlugin(profilesRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
@@ -1046,6 +1061,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(
                     assetsProvisioner,
                     multiplayerMovementMessageBus,
+                    multiplayerFacialExpressionMessageBus,
                     debugBuilder,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform,
@@ -1162,6 +1178,8 @@ namespace Global.Dynamic
                         nearbyMuteService,
                         nearbyStateModel)
                 );
+
+                globalPlugins.Add(new MouthAnimationPlugin(chatHistory, roomHub, voiceChatContainer.VoiceChatOrchestrator));
 
             if (!appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));

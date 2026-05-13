@@ -40,6 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public static readonly int MAINTEX_ORIGINAL_TEXTURE = WearableTextureConstants.MAINTEX_ORIGINAL_TEXTURE;
         public static readonly int MAINTEX_ARR_SHADER_INDEX = Shader.PropertyToID("_MainTexArr_ID");
         public static readonly int MAINTEX_ARR_TEX_SHADER = Shader.PropertyToID("_MainTexArr");
+        public static readonly int EXPRESSION_INDEX_SHADER = Shader.PropertyToID("_ExpressionIndex");
 
         public static readonly int BASE_MAP_ORIGINAL_TEXTURE = Shader.PropertyToID("_BaseMap");
         public static readonly int BASE_MAP_TEX_ARR_INDEX = Shader.PropertyToID("_BaseMapArr_ID");

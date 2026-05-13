@@ -206,6 +206,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.Reaction => (packet.Reaction as T).EnsureNotNull(),
                 Packet.MessageOneofCase.ChatReaction => (packet.ChatReaction as T).EnsureNotNull(),
+                Packet.MessageOneofCase.FacialExpression => (packet.FacialExpression as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => null,
                 _ => null,
             };

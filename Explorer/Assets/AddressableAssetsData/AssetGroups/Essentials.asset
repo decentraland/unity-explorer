@@ -170,6 +170,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69832a4fb177e7645af56a1f27d0dce2
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceAnimationSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6a252383173104e17acac54eb364afc4
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/PointAtMarker.prefab
     m_ReadOnly: 0
@@ -352,6 +357,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eae766b15f997414794bfd4f17de5949
     m_Address: F_Eyebrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f13fd0befee6d48479806b957b3ca94f
+    m_Address: Assets/DCL/PluginSystem/Global/AvatarFaceExpressionConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

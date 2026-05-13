@@ -28,6 +28,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public bool ShowOnlyWearables;
 
+        // Per-channel atlas capability stamped by AvatarInstantiatorSystem from the worn facial-feature wearables.
+        public bool EyebrowsHasExpressionAtlas;
+        public bool EyesHasExpressionAtlas;
+        public bool MouthHasExpressionAtlas;
+
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise,
             Color skinColor, Color hairColor, Color eyesColor, bool showOnlyWearables = false)
         {
@@ -45,6 +50,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
             IsPreview = false;
             ShowOnlyWearables = showOnlyWearables;
+            EyebrowsHasExpressionAtlas = false;
+            EyesHasExpressionAtlas = false;
+            MouthHasExpressionAtlas = false;
         }
 
         public void CreateOutlineCompatibilityList()
@@ -72,6 +80,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedAttachment>();
             OutlineCompatibleRenderers = new List<Renderer>();
             IsVisible = true;
+            EyebrowsHasExpressionAtlas = false;
+            EyesHasExpressionAtlas = false;
+            MouthHasExpressionAtlas = false;
         }
     }
 }

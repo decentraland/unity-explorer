@@ -587,9 +587,10 @@ namespace Global.Dynamic
         private void RestoreInputs()
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
-            // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
+            // We restore all inputs except EmoteWheel, FacialExpressionsWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
-                InputMapComponent.Kind.EMOTE_WHEEL);
+                InputMapComponent.Kind.EMOTE_WHEEL,
+                InputMapComponent.Kind.FACE_EXPRESSIONS_WHEEL);
 
             DCLInput.Instance.UI.Enable();
         }

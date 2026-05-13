@@ -25,6 +25,9 @@ namespace DCL.EmotesWheel
         public Button EditButton { get; set; } = null!;
 
         [field: SerializeField]
+        public Button FacialExpressionsTabButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public EmoteWheelSlotView[] Slots { get; set; } = null!;
 
         [field: SerializeField]

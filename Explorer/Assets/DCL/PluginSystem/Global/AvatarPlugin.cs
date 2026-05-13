@@ -21,7 +21,9 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using DCL.AvatarRendering;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Assets;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.FacialExpression;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.ECSComponents;
@@ -92,6 +94,11 @@ namespace DCL.PluginSystem.Global
 
         private FacialFeaturesTextures[] facialFeaturesTextures;
 
+        private AvatarFaceAnimationSettings? faceAnimationSettings;
+        private AvatarFaceExpressionConfig? faceExpressionConfig;
+        private FacialExpressionsWheelShortcutHandler? facialExpressionsWheelShortcutHandler;
+        private readonly IEventBus eventBus;
+
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
@@ -106,9 +113,11 @@ namespace DCL.PluginSystem.Global
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
             IUserBlockingCache userBlockingCache,
-            bool includeBannedUsersFromScene)
+            bool includeBannedUsersFromScene,
+            IEventBus eventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.eventBus = eventBus;
             this.frameTimeCapBudget = frameTimeCapBudget;
             this.realmData = realmData;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -132,6 +141,7 @@ namespace DCL.PluginSystem.Global
         {
             attachmentsAssetsCache.Dispose();
             avatarTransformMatrixJobWrapper.Dispose();
+            facialExpressionsWheelShortcutHandler?.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
         }
 
@@ -150,6 +160,15 @@ namespace DCL.PluginSystem.Global
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>().EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
             avatarRandomizerAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarRandomizerSettingsRef, ct)).Value;
+
+            if (settings.FaceAnimationSettings != null && !string.IsNullOrEmpty(settings.FaceAnimationSettings.AssetGUID))
+                faceAnimationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceAnimationSettings, ct)).Value;
+
+            if (settings.FaceExpressionConfig != null && !string.IsNullOrEmpty(settings.FaceExpressionConfig.AssetGUID))
+            {
+                faceExpressionConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FaceExpressionConfig, ct)).Value;
+                facialExpressionsWheelShortcutHandler = new FacialExpressionsWheelShortcutHandler(eventBus);
+            }
 
             debugContainerBuilder.TryAddWidget("Nametags")
                                 ?.AddToggleField("ShowNametags", _ => nametagsData.showNameTags = !nametagsData.showNameTags, nametagsData.showNameTags);
@@ -191,6 +210,15 @@ namespace DCL.PluginSystem.Global
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagHolderPool, nametagsData);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagHolderPool);
+
+            if (faceAnimationSettings != null)
+            {
+                AvatarFacialExpressionSystem.InjectToWorld(ref builder, faceAnimationSettings);
+                ApplyFacialExpressionIntentSystem.InjectToWorld(ref builder);
+            }
+
+            if (faceExpressionConfig != null && facialExpressionsWheelShortcutHandler != null)
+                UpdateFacialExpressionInputSystem.InjectToWorld(ref builder, faceExpressionConfig, facialExpressionsWheelShortcutHandler);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
@@ -363,6 +391,10 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<Texture> DefaultFemaleMouthTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyesTexture;
             public AssetReferenceT<Texture> DefaultFemaleEyebrowsTexture;
+
+            [Header("Facial Expressions")]
+            public AssetReferenceT<AvatarFaceAnimationSettings>? FaceAnimationSettings;
+            public AssetReferenceT<AvatarFaceExpressionConfig>? FaceExpressionConfig;
 
             [Serializable]
             public class NametagsDataRef : AssetReferenceT<NametagsData>

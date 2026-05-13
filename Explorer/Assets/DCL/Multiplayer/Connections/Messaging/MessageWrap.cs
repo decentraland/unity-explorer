@@ -107,7 +107,8 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o,
             [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o,
             [typeof(Reaction)] = (packet, o) => packet.Reaction = (Reaction)o,
-            [typeof(ChatReaction)] = (packet, o) => packet.ChatReaction = (ChatReaction)o
+            [typeof(ChatReaction)] = (packet, o) => packet.ChatReaction = (ChatReaction)o,
+            [typeof(FacialExpression)] = (packet, o) => packet.FacialExpression = (FacialExpression)o,
         };
     }
 }

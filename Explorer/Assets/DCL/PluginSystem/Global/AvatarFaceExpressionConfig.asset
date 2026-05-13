@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fc70577efb0ebd4fb2f7ed9436f8213, type: 3}
+  m_Name: AvatarFaceExpressionConfig
+  m_EditorClassIdentifier: AvatarShape::DCL.AvatarRendering.AvatarShape.AvatarFaceExpressionConfig
+  Expressions:
+  - Name: Idle
+    Icon: {fileID: 21300000, guid: 40e73f0f90309014e85648642b450b35, type: 3}
+    EyebrowsIndex: 0
+    EyesIndex: 0
+    MouthIndex: 0
+  - Name: Happy
+    Icon: {fileID: 21300000, guid: 6ba8f0c6358b99a42b8bcd62ecf17c42, type: 3}
+    EyebrowsIndex: 1
+    EyesIndex: 0
+    MouthIndex: 5
+  - Name: Sad
+    Icon: {fileID: 21300000, guid: 0483d6feaa8d13742bd909baaf3eb082, type: 3}
+    EyebrowsIndex: 4
+    EyesIndex: 2
+    MouthIndex: 7
+  - Name: Angry
+    Icon: {fileID: 21300000, guid: d32628cd806b94f44b8de91e17649985, type: 3}
+    EyebrowsIndex: 9
+    EyesIndex: 3
+    MouthIndex: 8
+  - Name: Surprised
+    Icon: {fileID: 21300000, guid: 56e05927f5bf6884482bbc76405c1f4c, type: 3}
+    EyebrowsIndex: 2
+    EyesIndex: 6
+    MouthIndex: 1
+  - Name: Dizzy
+    Icon: {fileID: 21300000, guid: 1a0800345f0594d45896dea31252fefb, type: 3}
+    EyebrowsIndex: 7
+    EyesIndex: 9
+    MouthIndex: 3
+  - Name: Relaxed
+    Icon: {fileID: 21300000, guid: 1b4569768c863f34ea705315c8058272, type: 3}
+    EyebrowsIndex: 3
+    EyesIndex: 1
+    MouthIndex: 4
+  - Name: Smirk
+    Icon: {fileID: 21300000, guid: bf2b52c591cb3674fad42d0e8fb2c23a, type: 3}
+    EyebrowsIndex: 5
+    EyesIndex: 8
+    MouthIndex: 2
+  - Name: WinkLeft
+    Icon: {fileID: 21300000, guid: 903044891eae81d4786012f510483810, type: 3}
+    EyebrowsIndex: 8
+    EyesIndex: 5
+    MouthIndex: 6
+  - Name: WinkRight
+    Icon: {fileID: 21300000, guid: 2b0f4104a439bf649932844d3cd11b75, type: 3}
+    EyebrowsIndex: 6
+    EyesIndex: 4
+    MouthIndex: 9
