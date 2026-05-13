@@ -62,6 +62,7 @@ using System.IO;
 using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.CrashReportHandler;
 using UnityEngine.UI;
 using Utility;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
@@ -163,6 +164,15 @@ namespace Global.Dynamic
                 Environment.GetCommandLineArgs()
 #endif
             );
+
+            // EXIT-DELAY INVESTIGATION (Test B):
+            // When --exit-test-no-crash-upload is passed, stop Unity's CrashReportHandler
+            // from capturing exceptions at runtime so it has nothing to upload to
+            // perf-events.cloud.unity3d.com when the process is quitting. This isolates
+            // whether the Cloud Diagnostics upload pipeline is contributing to the freeze.
+            // Remove once the investigation closes.
+            if (applicationParametersParser.HasFlag(AppArgsFlags.EXIT_TEST_NO_CRASH_UPLOAD))
+                CrashReportHandler.enableCaptureExceptions = false;
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
 

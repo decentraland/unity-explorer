@@ -287,6 +287,17 @@ namespace Global.Dynamic
 
         public void DisposeGlobalWorld()
         {
+            // EXIT-DELAY INVESTIGATION (Test C):
+            // When --exit-test-skip-dispose-quit is passed, skip the synchronous
+            // global-world + scene disposal during process termination. The OS
+            // reclaims memory on quit; avoiding this cascade short-circuits:
+            //  - N synchronous V8 ScriptEngine teardowns (one per loaded scene)
+            //  - IFinalizeWorldSystem NREs (e.g. ParticleSystem.Stop on destroyed instances)
+            //  - re-entrant MVCManager focus calls triggered by synchronous CTS cancellation
+            // Remove once the investigation closes.
+            if (UnityObjectUtils.IsQuitting && appArgs.HasFlag(AppArgsFlags.EXIT_TEST_SKIP_DISPOSE_QUIT))
+                return;
+
             List<ISceneFacade> loadedScenes = allScenes;
 
             if (globalWorld != null)

@@ -5,6 +5,13 @@ namespace Global.AppArgs
         public const string DEBUG = "debug";
         public const string DCL_EDITOR = "hub";
 
+        // EXIT-DELAY INVESTIGATION (#exit-app-delay): runtime toggles to isolate the
+        // dominant cause of the long freeze/crash when quitting from Genesis Plaza.
+        // Remove once the investigation concludes and a definitive fix is merged.
+        public const string EXIT_TEST_NO_SENTRY_FLUSH = "exit-test-no-sentry-flush";
+        public const string EXIT_TEST_NO_CRASH_UPLOAD = "exit-test-no-crash-upload";
+        public const string EXIT_TEST_SKIP_DISPOSE_QUIT = "exit-test-skip-dispose-quit";
+
         public const string SKIP_VERSION_CHECK = "skip-version-check";
         public const string SIMULATE_VERSION = "simulateVersion";
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";

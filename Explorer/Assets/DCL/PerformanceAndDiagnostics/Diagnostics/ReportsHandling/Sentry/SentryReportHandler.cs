@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using Global.AppArgs;
 using Sentry;
 using Sentry.Extensibility;
 using Sentry.Unity;
@@ -43,6 +44,13 @@ namespace DCL.Diagnostics.Sentry
             options.Enabled = true;
             options.TracesSampler = sentrySampler.Execute;
 
+            // EXIT-DELAY INVESTIGATION (Test A):
+            // When --exit-test-no-sentry-flush is passed, drop the 2s shutdown flush
+            // to measure how much of the EXIT freeze is due to Sentry draining its
+            // queue at process termination. Remove once the investigation closes.
+            if (HasExitTestFlag(AppArgsFlags.EXIT_TEST_NO_SENTRY_FLUSH))
+                options.ShutdownTimeout = TimeSpan.Zero;
+
             if (!IsValidConfiguration(options))
             {
 #if !UNITY_EDITOR
@@ -52,6 +60,16 @@ namespace DCL.Diagnostics.Sentry
             }
 
             SentrySdk.Init(options);
+        }
+
+        private static bool HasExitTestFlag(string flag)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string dashed = "--" + flag;
+            for (var i = 0; i < args.Length; i++)
+                if (args[i] == dashed)
+                    return true;
+            return false;
         }
 
         public void AddMeetMinimumRequirements(Scope scope, bool meets)
