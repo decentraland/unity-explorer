@@ -187,8 +187,7 @@ namespace SceneRunner
         {
             MultithreadingUtility.AssertMainThread(nameof(UpdateLoopAsync), isMainThread: false);
 
-            if (SceneStateProvider.State != SceneState.Starting)
-                throw new ThreadStateException($"{nameof(UpdateLoopAsync)} did not start!");
+            if (SceneStateProvider.State != SceneState.Starting) return;
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;

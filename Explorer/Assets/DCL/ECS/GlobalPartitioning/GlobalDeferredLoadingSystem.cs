@@ -86,8 +86,7 @@ namespace DCL.GlobalPartitioning
             if (teleportParcel.IsTeleporting
                 && scenesCache.TryGetByParcel(teleportParcel.Parcel, out ISceneFacade scene)
                 && scene.SceneStateProvider.State == SceneState.Running)
-                if (scenesCache.Contains(teleportParcel.Parcel))
-                    downloadOnlySceneMetadata = true;
+                downloadOnlySceneMetadata = true;
 
             sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }
