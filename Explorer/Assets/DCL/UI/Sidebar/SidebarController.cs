@@ -77,7 +77,6 @@ namespace DCL.UI.Sidebar
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
 
-        public event Action? HelpOpened;
         public event Action? PlacesOpened;
         public event Action? EventsOpened;
 
@@ -115,7 +114,6 @@ namespace DCL.UI.Sidebar
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
-            helpMenuController.ContactSupportRequested += OnContactSupportClicked;
         }
 
         public override void Dispose()
@@ -123,7 +121,6 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             chatEventBusSubscription.Dispose();
-            helpMenuController.ContactSupportRequested -= OnContactSupportClicked;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
 
@@ -408,8 +405,6 @@ namespace DCL.UI.Sidebar
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
-
-        private void OnContactSupportClicked() => HelpOpened?.Invoke();
 
         private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
         private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();

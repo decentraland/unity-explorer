@@ -3,7 +3,6 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.UI.Controls;
 using MVC;
-using System;
 using System.Threading;
 using Utility;
 
@@ -13,19 +12,19 @@ namespace DCL.UI.Sidebar.HelpMenu
     {
         private readonly IMVCManager mvcManager;
         private readonly IWebBrowser webBrowser;
+        private readonly SupportRequestService supportRequestService;
 
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource openControlsCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        public event Action? ContactSupportRequested;
-
-        public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, IWebBrowser webBrowser)
+        public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, IWebBrowser webBrowser, SupportRequestService supportRequestService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.webBrowser = webBrowser;
+            this.supportRequestService = supportRequestService;
         }
 
         public override void Dispose()
@@ -76,8 +75,7 @@ namespace DCL.UI.Sidebar.HelpMenu
         private void OnContactSupportClicked()
         {
             CloseView();
-            webBrowser.OpenUrl(DecentralandUrl.Help);
-            ContactSupportRequested?.Invoke();
+            supportRequestService.OpenSupport();
         }
 
         private void OnDiscordClicked()

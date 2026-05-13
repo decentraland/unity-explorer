@@ -35,6 +35,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -65,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly SupportRequestService supportRequestService;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -103,7 +105,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            SupportRequestService supportRequestService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -129,11 +132,13 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
+            this.supportRequestService = supportRequestService;
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.Controls.performed -= OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed -= OnSupportShortcutPerformed;
             controlsShortcutCts.SafeCancelAndDispose();
 
             sidebarController?.Dispose();
@@ -168,7 +173,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
-            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser);
+            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -201,6 +206,7 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
         }
 
         [Serializable]
@@ -213,9 +219,11 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
         }
 
-        private void OnControlsShortcutPerformed(UnityEngine.InputSystem.InputAction.CallbackContext _)
+        private void OnControlsShortcutPerformed(InputAction.CallbackContext _)
         {
             if (controlsPanelController == null) return;
+
+            if (Keyboard.current?.shiftKey.isPressed == true) return;
 
             if (controlsPanelController.State == ControllerState.ViewHidden)
             {
@@ -225,5 +233,8 @@ namespace DCL.PluginSystem.Global
             else
                 controlsShortcutCts.SafeCancelAndDispose();
         }
+
+        private void OnSupportShortcutPerformed(InputAction.CallbackContext _) =>
+            supportRequestService.OpenSupport();
     }
 }
