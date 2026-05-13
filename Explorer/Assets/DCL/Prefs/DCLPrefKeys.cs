@@ -82,6 +82,8 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string DEBUG_PANEL_MAXIMIZED = "DebugPanel_Maximized";
+        public const string DEBUG_PANEL_MAXIMIZED_WIDTH = "DebugPanel_MaximizedWidth";
         public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
 
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
