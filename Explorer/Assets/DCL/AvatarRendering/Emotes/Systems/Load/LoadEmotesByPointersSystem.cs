@@ -271,6 +271,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (audioType == AudioType.UNKNOWN)
                     continue;
 
+                // In LSD the realm content URL points at the local preview server, so i.e. audio clips requests cannot succeed,
+                // use the production catalyst instead.
                 string contentBaseUrl = localSceneDevelopment
                     ? urlsSource.Url(DecentralandUrl.PeerContent)
                     : urlsSource.Url(DecentralandUrl.Content);
