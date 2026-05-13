@@ -249,7 +249,7 @@ namespace DCL.PluginSystem.Global
                 nearbySpeakingAudibilityGate = new NearbySpeakingAudibilityGate(stateModel, voiceChatConfiguration);
                 pluginScope.Add(nearbySpeakingAudibilityGate);
 
-                nearbyMicrophoneAudioToggleHandler = new MicrophoneAudioToggleHandler(nearbySpeakingAudibilityGate.EffectiveOpenMic, pluginSettings.NearbyStopSpeakingAudio, pluginSettings.NearbyStartSpeakingAudio);
+                nearbyMicrophoneAudioToggleHandler = new MicrophoneAudioToggleHandler(nearbySpeakingAudibilityGate.EffectiveOpenMic, muteMicrophoneAudio, unmuteMicrophoneAudio);
                 pluginScope.Add(nearbyMicrophoneAudioToggleHandler);
 
                 // UI

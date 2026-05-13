@@ -18,5 +18,3 @@ MonoBehaviour:
   <PlayerEntryView>k__BackingField: {fileID: 8963568423167535619, guid: 1f35770447348416ab31f59bfd77ac2b, type: 3}
   <MuteMicrophoneAudio>k__BackingField: {fileID: 11400000, guid: 261a78e93a10e47e48497b48dff1cad0, type: 2}
   <UnmuteMicrophoneAudio>k__BackingField: {fileID: 11400000, guid: d99ca4a62bf3744c299beac41f2035b3, type: 2}
-  <NearbyStartSpeakingAudio>k__BackingField: {fileID: 11400000, guid: 85ce6978c292496dab46a0d227d4850a, type: 2}
-  <NearbyStopSpeakingAudio>k__BackingField: {fileID: 11400000, guid: 99eb725bfde34c3e9b1802e7885a381e, type: 2}
