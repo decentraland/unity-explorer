@@ -372,6 +372,7 @@ namespace DCL.Multiplayer.Movement
                     IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
                     IsLongFall = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongFall),
                     JumpCount = playerState.JumpCount,
+                    GlideState = ToNetworkMovementGlideState(playerState.GlideState),
                 },
                 isStunned = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Stunned),
                 isInstant = isInstant,
