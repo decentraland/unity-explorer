@@ -413,6 +413,7 @@ MonoBehaviour:
     dimensions: 256
     executeInEditMode: 0
     assignAsReflectionProbe: 1
+    updateInterval: 10
 --- !u!114 &8407763759742182732
 MonoBehaviour:
   m_ObjectHideFlags: 0

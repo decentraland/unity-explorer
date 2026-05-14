@@ -505,11 +505,11 @@
       "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
     },
     "decentraland.renderfeatures": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#feat/skybox-cubemap-update-interval",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d5e6427e41422d069e8c0b9b4a8d9ab606877b70"
+      "hash": "b4076aff2998b9dcca76ab8f5dd3ac55fd674124"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
