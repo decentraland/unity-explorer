@@ -1,4 +1,4 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.VoiceChat.Nearby;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -7,9 +7,11 @@ using UnityEngine;
 namespace DCL.VoiceChat.Tests
 {
     /// <summary>
-    ///     Documents <see cref="NearbyMicrophoneAudioToggleHandler"/> as an activation-aware boolean → SFX adapter:
-    ///     plays the on/off clip on every <see cref="NearbyVoiceChatStateModel.IsOpenMic"/> transition, at
-    ///     <c>0.2×</c> the asset volume when the session was triggered by push-to-talk, and at full volume otherwise.
+    ///     Documents <see cref="NearbyMicrophoneAudioToggleHandler"/> as a user-action SFX adapter:
+    ///     plays on/off cues only on user-driven <see cref="NearbyVoiceChatState.IDLE"/> ↔
+    ///     <see cref="NearbyVoiceChatState.OPEN_MIC"/> transitions, at <c>0.2×</c> the asset volume when the
+    ///     session was triggered by push-to-talk and at full volume otherwise. Suppress force-stops and system
+    ///     Resume transitions stay silent.
     /// </summary>
     public class NearbyMicrophoneAudioToggleHandlerShould
     {
@@ -18,6 +20,7 @@ namespace DCL.VoiceChat.Tests
         private const float TOLERANCE = 0.0001f;
 
         private NearbyVoiceChatStateModel stateModel = null!;
+        private VoiceChatConfiguration configuration = null!;
         private AudioClipConfig offClip = null!;
         private AudioClipConfig onClip = null!;
         private List<(AudioClipConfig clip, float scale)> played = null!;
@@ -27,6 +30,8 @@ namespace DCL.VoiceChat.Tests
         public void SetUp()
         {
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
+            configuration.NearbyPushToTalkVolumeScale = PUSH_TO_TALK_SCALE;
             offClip = ScriptableObject.CreateInstance<AudioClipConfig>();
             onClip = ScriptableObject.CreateInstance<AudioClipConfig>();
             offClip.name = "off";
@@ -35,7 +40,7 @@ namespace DCL.VoiceChat.Tests
             played = new List<(AudioClipConfig, float)>();
             UIAudioEventsBus.Instance.PlayUIAudioEvent += OnPlay;
 
-            handler = new NearbyMicrophoneAudioToggleHandler(stateModel, offClip, onClip);
+            handler = new NearbyMicrophoneAudioToggleHandler(stateModel, configuration, offClip, onClip);
         }
 
         [TearDown]
@@ -46,6 +51,7 @@ namespace DCL.VoiceChat.Tests
             stateModel.Dispose();
             Object.DestroyImmediate(offClip);
             Object.DestroyImmediate(onClip);
+            Object.DestroyImmediate(configuration);
         }
 
         private void OnPlay(AudioClipConfig clip, float scale) =>
@@ -110,6 +116,52 @@ namespace DCL.VoiceChat.Tests
 
             Assert.That(played.Count, Is.EqualTo(1));
             Assert.That(played[0].scale, Is.EqualTo(DEFAULT_SCALE).Within(TOLERANCE));
+        }
+
+        [Test]
+        public void NotPlayOffClipWhenSuppressedFromOpenMic()
+        {
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            played.Clear();
+
+            stateModel.Suppress(SuppressionReason.CALL);
+
+            Assert.That(played, Is.Empty);
+        }
+
+        [Test]
+        public void NotPlayOnClipWhenResumedToOpenMic()
+        {
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.Suppress(SuppressionReason.CALL);
+            played.Clear();
+
+            stateModel.Resume(SuppressionReason.CALL);
+
+            Assert.That(played, Is.Empty);
+        }
+
+        [Test]
+        public void StaySilentAcrossFullSuppressResumeCycle()
+        {
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            played.Clear();
+
+            stateModel.Suppress(SuppressionReason.SCENE);
+            stateModel.Resume(SuppressionReason.SCENE);
+
+            Assert.That(played, Is.Empty);
+        }
+
+        [Test]
+        public void NotPlayOffClipWhenDisabledFromOpenMic()
+        {
+            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            played.Clear();
+
+            stateModel.Disable();
+
+            Assert.That(played, Is.Empty);
         }
 
         [Test]

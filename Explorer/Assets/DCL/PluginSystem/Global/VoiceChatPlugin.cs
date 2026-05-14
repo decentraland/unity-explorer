@@ -245,7 +245,7 @@ namespace DCL.PluginSystem.Global
                 nearbyMicrophoneHandler = new NearbyMicrophoneHandler(stateModel, islandRoom, voiceChatConfiguration);
                 pluginScope.Add(nearbyMicrophoneHandler);
 
-                nearbyMicrophoneAudioToggleHandler = new NearbyMicrophoneAudioToggleHandler(stateModel, muteMicrophoneAudio, unmuteMicrophoneAudio);
+                nearbyMicrophoneAudioToggleHandler = new NearbyMicrophoneAudioToggleHandler(stateModel, voiceChatConfiguration, muteMicrophoneAudio, unmuteMicrophoneAudio);
                 pluginScope.Add(nearbyMicrophoneAudioToggleHandler);
 
                 // UI

@@ -1,33 +1,40 @@
-﻿using DCL.Audio;
+using DCL.Audio;
 using DCL.Utilities;
 using System;
 
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Nearby-flavour of <see cref="MicrophoneAudioToggleHandler"/>: plays start/stop speaking SFX on every
-    ///     <see cref="NearbyVoiceChatStateModel.IsOpenMic"/> transition, attenuated for push-to-talk so the cue
-    ///     reads as a subtle confirmation when the user hammers [T] but stays prominent for menu/button activations.
-    ///     Volume scale is sampled at the moment of the start transition and reused for the matching stop,
-    ///     so a session is symmetric in loudness.
+    ///     Plays start/stop speaking SFX on user-driven <see cref="NearbyVoiceChatState.IDLE"/> ↔
+    ///     <see cref="NearbyVoiceChatState.OPEN_MIC"/> transitions only.
+    ///     System-driven transitions stay silent so forced mutes never sound like a user toggle:
+    ///     a Suppress() force-stop is detected by a non-null <see cref="NearbyVoiceChatStateModel.ActiveSuppression"/>
+    ///     at the OPEN_MIC → IDLE tick (Suppress sets the reason before stopping), and a system Resume()
+    ///     is filtered out because it re-enters OPEN_MIC from SUPPRESSED, not from IDLE.
+    ///     Push-to-talk activations play at a reduced volume (see <see cref="VoiceChatConfiguration.NearbyPushToTalkVolumeScale"/>)
+    ///     so rapid taps stay subtle; other activations play at full.
     /// </summary>
     public class NearbyMicrophoneAudioToggleHandler : IDisposable
     {
-        private const float PUSH_TO_TALK_VOLUME_SCALE = 0.2f;
         private const float DEFAULT_VOLUME_SCALE = 1f;
 
         private readonly NearbyVoiceChatStateModel stateModel;
+        private readonly VoiceChatConfiguration configuration;
         private readonly AudioClipConfig offAudio;
         private readonly AudioClipConfig onAudio;
         private readonly IDisposable stateSubscription;
 
-        public NearbyMicrophoneAudioToggleHandler(NearbyVoiceChatStateModel stateModel, AudioClipConfig offAudio, AudioClipConfig onAudio)
+        private NearbyVoiceChatState previousState;
+
+        public NearbyMicrophoneAudioToggleHandler(NearbyVoiceChatStateModel stateModel, VoiceChatConfiguration configuration, AudioClipConfig offAudio, AudioClipConfig onAudio)
         {
             this.stateModel = stateModel;
+            this.configuration = configuration;
             this.offAudio = offAudio;
             this.onAudio = onAudio;
 
-            stateSubscription = stateModel.IsOpenMic.Subscribe(OnOpenMicChanged);
+            previousState = stateModel.State.Value;
+            stateSubscription = stateModel.State.Subscribe(OnStateChanged);
         }
 
         public void Dispose()
@@ -35,13 +42,22 @@ namespace DCL.VoiceChat.Nearby
             stateSubscription.Dispose();
         }
 
-        private void OnOpenMicChanged(bool isOpenMic)
+        private void OnStateChanged(NearbyVoiceChatState newState)
         {
+            NearbyVoiceChatState prev = previousState;
+            previousState = newState;
+
+            bool isUserStart = prev == NearbyVoiceChatState.IDLE && newState == NearbyVoiceChatState.OPEN_MIC;
+            bool isUserStop = prev == NearbyVoiceChatState.OPEN_MIC && newState == NearbyVoiceChatState.IDLE
+                                                                   && stateModel.ActiveSuppression.Value == null;
+
+            if (!isUserStart && !isUserStop) return;
+
             float volumeScale = stateModel.CurrentActivation == NearbyVoiceActivation.PUSH_TO_TALK
-                ? PUSH_TO_TALK_VOLUME_SCALE
+                ? configuration.NearbyPushToTalkVolumeScale
                 : DEFAULT_VOLUME_SCALE;
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(isOpenMic ? onAudio : offAudio, volumeScale);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isUserStart ? onAudio : offAudio, volumeScale);
         }
     }
 }
