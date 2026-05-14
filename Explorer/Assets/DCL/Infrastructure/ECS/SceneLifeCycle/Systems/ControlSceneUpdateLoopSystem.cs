@@ -114,8 +114,7 @@ namespace ECS.SceneLifeCycle.Systems
                 SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
-                // The update of the scene is an endless task, needs to be forgotten
-                scene.StartUpdateLoopAsync(fps, destroyCancellationToken).Forget();
+                await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
