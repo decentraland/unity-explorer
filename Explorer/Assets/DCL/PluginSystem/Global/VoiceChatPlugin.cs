@@ -172,6 +172,19 @@ namespace DCL.PluginSystem.Global
             return false;
         }
 
+        private static int GetExitTestNearbyInjectStopStage()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string prefix = "--" + AppArgsFlags.EXIT_TEST_NEARBY_INJECT_STOP + "=";
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i].StartsWith(prefix, StringComparison.Ordinal)
+                    && int.TryParse(args[i].AsSpan(prefix.Length), out int n))
+                    return n;
+            }
+            return 0; // 0 = no stop, all systems injected
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // EXIT-DELAY BISECTION (#8764): skip the nearby voice ECS systems independently
@@ -187,15 +200,41 @@ namespace DCL.PluginSystem.Global
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
+                // EXIT-DELAY BISECTION (#8764):
+                // Read --exit-test-nearby-inject-stop=N and stop after registering N ECS systems
+                // to identify which NEARBY voice system is leaving livekit_ffi tokio threads
+                // attached to the IL2CPP runtime.
+                int stopAfter = GetExitTestNearbyInjectStopStage();
+                if (stopAfter > 0)
+                    ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: NEARBY inject will stop after stage {stopAfter}");
+
                 var listenerState = new NearbyListenerState();
 
+                // Stage 1: NearbyLivekitBridgeSystem (primary suspect, bridges to livekit_ffi)
                 NearbyLivekitBridgeSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
-                NearbyAudibleRangeSystem.InjectToWorld(ref builder, voiceChatConfiguration, listenerState);
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
-                NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
-                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
-                NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
+                if (stopAfter == 1) return;
 
+                // Stage 2: NearbyAudibleRangeSystem
+                NearbyAudibleRangeSystem.InjectToWorld(ref builder, voiceChatConfiguration, listenerState);
+                if (stopAfter == 2) return;
+
+                // Stage 3: NearbyAudioBindingSystem
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                if (stopAfter == 3) return;
+
+                // Stage 4: NearbyAudioPositionSystem
+                NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
+                if (stopAfter == 4) return;
+
+                // Stage 5: NearbyAudioCleanupSystem
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                if (stopAfter == 5) return;
+
+                // Stage 6: NearbyVoiceChatNametagSystem
+                NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
+                if (stopAfter == 6) return;
+
+                // Stage 7: NearbyVoiceChatDebugSystem
                 NearbyVoiceChatDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer, roomHub.IslandRoom(), nearbyStateModel!, nearbyAudioStreamRegistry!, entityParticipantTable);
             }
         }
