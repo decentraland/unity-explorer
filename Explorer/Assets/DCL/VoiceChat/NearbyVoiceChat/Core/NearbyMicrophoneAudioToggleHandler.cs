@@ -7,10 +7,10 @@ namespace DCL.VoiceChat.Nearby
     /// <summary>
     ///     Plays start/stop speaking SFX on user-driven <see cref="NearbyVoiceChatState.IDLE"/> ↔
     ///     <see cref="NearbyVoiceChatState.OPEN_MIC"/> transitions only.
-    ///     System-driven transitions stay silent so forced mutes never sound like a user toggle:
-    ///     a Suppress() force-stop is detected by a non-null <see cref="NearbyVoiceChatStateModel.ActiveSuppression"/>
-    ///     at the OPEN_MIC → IDLE tick (Suppress sets the reason before stopping), and a system Resume()
-    ///     is filtered out because it re-enters OPEN_MIC from SUPPRESSED, not from IDLE.
+    ///     A Suppress() force-stop also produces an OPEN_MIC → IDLE tick, so the off-cue is gated on
+    ///     <see cref="NearbyVoiceChatStateModel.ActiveSuppression"/> being null (Suppress sets the reason
+    ///     before calling StopSpeaking, making it observable here). Resume always returns to IDLE
+    ///     (preBlockedState is captured after StopSpeaking), so no extra guard is needed on the on-cue.
     ///     Push-to-talk activations play at a reduced volume (see <see cref="VoiceChatConfiguration.NearbyPushToTalkVolumeScale"/>)
     ///     so rapid taps stay subtle; other activations play at full.
     /// </summary>
