@@ -49,6 +49,10 @@ namespace DCL.Utility
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
         {
+#if UNITY_EDITOR
+            // ensure isExiting is false on reopening
+            isExiting.Set(false);
+#endif
             Application.quitting += OnApplicationQuitting;
         }
 
