@@ -179,7 +179,7 @@ namespace DCL.PluginSystem.Global
             // halted before the NEARBY block ran.
             if (HasExitTestSkipNearbyVoiceSystems())
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "EXIT TEST: skipping NEARBY voice systems in InjectToWorld");
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: skipping NEARBY voice systems in InjectToWorld");
                 return;
             }
             if (nearbyAudioStreamRegistry == null)
@@ -218,7 +218,7 @@ namespace DCL.PluginSystem.Global
             // to the IL2CPP runtime, preventing process shutdown.
             int stopAfter = GetExitTestVoiceInitStopStage();
             if (stopAfter > 0)
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"EXIT TEST: VoiceChat init will stop after stage {stopAfter}");
+                ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: VoiceChat init will stop after stage {stopAfter}");
 
             // Stage 1: local-only handlers (no Room access)
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
