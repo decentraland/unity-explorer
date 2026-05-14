@@ -1,6 +1,9 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using DCL.Diagnostics;
 using UnityEngine;
 using Utility.Multithreading;
@@ -49,6 +52,9 @@ namespace DCL.Utility
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
         {
+            // Dirty reflection hack because there is no other way to view the subs of Application.quitting
+            Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
+
 #if UNITY_EDITOR
             // ensure isExiting is false on reopening
             isExiting.Set(false);
@@ -64,6 +70,7 @@ namespace DCL.Utility
             ReportHub.LogProductionInfo("[ExitUtils] triggered by Unity's Application.quitting");
             Exit();
         }
+
 
         public static void RegisterCleanUpCandidate(OnQuittingCleanUpCandidate candidate)
         {
@@ -125,12 +132,76 @@ namespace DCL.Utility
 
             ReportHub.LogProductionInfo($"[ExitUtils] CleanUpCandidates finished at {stopwatch.ElapsedMilliseconds}ms");
 
+            // Reflection may drop the values. resubscribe to be sure. 
+            ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
             UnityEngine.Application.Quit();
 #endif
             ReportHub.LogProductionInfo($"[ExitUtils] Quit call dispatched at {stopwatch.ElapsedMilliseconds}ms");
+        }
+
+        private static class Patch
+        {
+            private static readonly HashSet<Action> wrapped = new ();
+            private static FieldInfo quittingField;
+
+            // Method is safe to be called multiple times. Idempotentency
+            public static void ApplicationQuittingFirstSubscriberSelfPatchWithTimers()
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils.Patch] Invoke ApplicationQuittingFirstSubscriberSelfPatchWithTimers, actions wrapped {wrapped.Count}"); 
+
+                try
+                {
+                    quittingField ??= typeof(Application).GetField("quitting", BindingFlags.NonPublic | BindingFlags.Static);
+
+                    if (quittingField == null)
+                    {
+                        ReportHub.LogProductionInfo("[ExitUtils.Patch] Cannot find Application.quitting backing field, per-subscriber timing disabled");
+                        return;
+                    }
+
+                    Action? current = quittingField.GetValue(null) as Action;
+                    Delegate[] handlers = current?.GetInvocationList() ?? Array.Empty<Delegate>();
+
+                    Action selfFirst = ApplicationQuittingFirstSubscriberSelfPatchWithTimers;
+                    Action rebuilt = selfFirst;
+
+                    foreach (Delegate handler in handlers)
+                    {
+                        if (handler is not Action action) continue;
+                        if (action == selfFirst) continue;
+
+                        if (wrapped.Contains(action))
+                        {
+                            rebuilt += action;
+                            continue;
+                        }
+
+                        Action wrappedAction = WrapWithTimer(action);
+                        wrapped.Add(wrappedAction);
+                        rebuilt += wrappedAction;
+                    }
+
+                    quittingField.SetValue(null, rebuilt);
+                }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
+            }
+
+            private static Action WrapWithTimer(Action original)
+            {
+                string label = $"{original.Method.DeclaringType?.FullName}.{original.Method.Name}";
+
+                return () =>
+                {
+                    Stopwatch sw = Stopwatch.StartNew();
+
+                    try { original(); }
+                    catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
+                    finally { ReportHub.LogProductionInfo($"[ExitUtils.Patch] '{label}' Application.quitting subscriber took {sw.ElapsedMilliseconds}ms"); }
+                };
+            }
         }
     }
 }
