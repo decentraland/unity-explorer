@@ -143,6 +143,7 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public IMVCManager MvcManager { get; }
 
@@ -185,7 +186,8 @@ namespace Global.Dynamic
             SocialServicesContainer socialServicesContainer,
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
-            BannedNotificationHandler bannedNotificationHandler)
+            BannedNotificationHandler bannedNotificationHandler,
+            ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -204,6 +206,7 @@ namespace Global.Dynamic
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
         public override void Dispose()
@@ -214,6 +217,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            profileRepositoryWrapper.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -311,8 +315,10 @@ namespace Global.Dynamic
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
+            var supportRequestService = new SupportRequestService(bootstrapContainer.WebBrowser);
+
             IMVCManager mvcManager = dynamicWorldParams.EnableAnalytics
-                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller)
+                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller, supportRequestService)
                 : coreMvcManager;
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
@@ -571,8 +577,10 @@ namespace Global.Dynamic
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
                 new VersionChatCommand(dclVersion),
+                new SupportChatCommand(supportRequestService),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
             };
@@ -665,7 +673,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, thumbnailCache);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profilesRepository, profileCache, thumbnailCache, identityCache);
             GetProfileThumbnailCommand.Initialize(new GetProfileThumbnailCommand(profileRepositoryWrapper));
 
             var communitiesEventBus = new CommunitiesEventBus();
@@ -862,7 +870,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     eventsApiService,
-                    staticContainer.SmartWearableCache),
+                    staticContainer.SmartWearableCache,
+                    supportRequestService),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(
                     mvcManager,
@@ -1102,7 +1111,7 @@ namespace Global.Dynamic
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
                 new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
-                new BannedUsersPlugin(roomHub, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
+                new BannedUsersPlugin(roomHub, staticContainer.RealmData, bannedSceneController, staticContainer.LoadingStatus, includeBannedUsersFromScene),
                 new SmartWearablesGlobalPlugin(wearableCatalog,
                     backpackEventBus,
                     staticContainer.PortableExperiencesController,
@@ -1364,7 +1373,8 @@ namespace Global.Dynamic
                 socialServiceContainer,
                 selfProfile,
                 clipboard,
-                bannedNotificationHandler
+                bannedNotificationHandler,
+                profileRepositoryWrapper
             );
 
             // Init itself

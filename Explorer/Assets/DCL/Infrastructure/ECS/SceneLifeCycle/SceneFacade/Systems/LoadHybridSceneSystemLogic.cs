@@ -85,6 +85,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 definition.assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback(manifest.Version, manifest.Date);
                 definition.assetBundleManifestVersion.InjectContent(sceneId, definition.content);
+                definition.assetBundleManifestVersion.InjectDepsDigests(manifest.files);
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.SCENE_LOADING); }

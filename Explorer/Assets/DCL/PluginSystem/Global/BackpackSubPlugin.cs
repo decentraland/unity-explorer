@@ -1,5 +1,4 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
@@ -9,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
@@ -28,7 +28,6 @@ using Global.AppArgs;
 using MVC;
 using Runtime.Wearables;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -158,7 +157,8 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteStorage,
                 wearablesProvider,
-                emoteProvider);
+                emoteProvider,
+                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -286,7 +286,6 @@ namespace DCL.PluginSystem.Global
                 webController,
                 equippedWearables,
                 wearableStorage,
-                wearablesProvider,
                 nftNamesProvider,
                 eventBus,
                 deleteIcon,
