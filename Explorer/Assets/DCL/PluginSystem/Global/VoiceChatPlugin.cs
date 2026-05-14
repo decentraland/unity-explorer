@@ -21,6 +21,7 @@ using DCL.VoiceChat.Nearby.Systems;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -145,8 +146,45 @@ namespace DCL.PluginSystem.Global
             RustAudioClient.DeInit();
         }
 
+        // EXIT-DELAY BISECTION (#8764): helpers to read --exit-test-* flags directly
+        // from the process command line. Kept local to avoid plumbing IAppArgs through
+        // the plugin's DI graph for an investigation toggle.
+        private static int GetExitTestVoiceInitStopStage()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string prefix = "--" + AppArgsFlags.EXIT_TEST_VOICE_INIT_STOP + "=";
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i].StartsWith(prefix, StringComparison.Ordinal)
+                    && int.TryParse(args[i].AsSpan(prefix.Length), out int n))
+                    return n;
+            }
+            return 0; // 0 = no stop, full init
+        }
+
+        private static bool HasExitTestSkipNearbyVoiceSystems()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string dashed = "--" + AppArgsFlags.EXIT_TEST_SKIP_NEARBY_VOICE_SYSTEMS;
+            for (var i = 0; i < args.Length; i++)
+                if (args[i] == dashed)
+                    return true;
+            return false;
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            // EXIT-DELAY BISECTION (#8764): skip the nearby voice ECS systems independently
+            // of the InitializeAsync stop, and defensively guard against null when init was
+            // halted before the NEARBY block ran.
+            if (HasExitTestSkipNearbyVoiceSystems())
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "EXIT TEST: skipping NEARBY voice systems in InjectToWorld");
+                return;
+            }
+            if (nearbyAudioStreamRegistry == null)
+                return;
+
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {
                 var listenerState = new NearbyListenerState();
@@ -174,23 +212,40 @@ namespace DCL.PluginSystem.Global
             VoiceChatPluginSettings pluginSettings = voiceChatPluginSettingsAsset.Value;
             voiceChatConfiguration = pluginSettings.VoiceChatConfiguration;
 
+            // EXIT-DELAY BISECTION (#8764):
+            // Read --exit-test-voice-init-stop=N and stop initialization after stage N to
+            // identify which voice chat component keeps livekit_ffi tokio threads attached
+            // to the IL2CPP runtime, preventing process shutdown.
+            int stopAfter = GetExitTestVoiceInitStopStage();
+            if (stopAfter > 0)
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"EXIT TEST: VoiceChat init will stop after stage {stopAfter}");
+
+            // Stage 1: local-only handlers (no Room access)
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatConfiguration, voiceChatOrchestrator);
             pluginScope.Add(voiceChatHandler);
 
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
             pluginScope.Add(microphoneStateManager);
+            if (stopAfter == 1) return;
 
+            // Stage 2: MicrophoneTrackPublisher — first component that touches voice chat Room
             microphonePublisher = new MicrophoneTrackPublisher(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, VoiceChatType.COMMUNITY);
+            if (stopAfter == 2) return;
 
+            // Stage 3: RemoteTrackListener — second component that touches voice chat Room
             var callPlaybackSourcesHub = new PlaybackSourcesHub("Call", voiceChatConfiguration.ChatAudioMixerGroup.EnsureNotNull());
             remoteListener = new RemoteTrackListener(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatConfiguration,
                 callPlaybackSourcesHub);
+            if (stopAfter == 3) return;
 
+            // Stage 4: VoiceChatRoomManager (orchestrates publisher/listener)
             roomManager = new VoiceChatRoomManager(microphonePublisher, remoteListener, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager, voiceChatHandler);
             pluginScope.Add(roomManager);
+            if (stopAfter == 4) return;
 
+            // Stage 5: VoiceChatNametagsHandler (subscribes to Room events)
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
                 voiceChatOrchestrator,
@@ -198,18 +253,25 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
             pluginScope.Add(nametagsHandler);
+            if (stopAfter == 5) return;
 
+            // Stage 6: MicrophoneAudioToggleHandler (audio cues, no Room access)
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
             AudioClipConfig muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             AudioClipConfig unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
             microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
+            if (stopAfter == 6) return;
 
+            // Stage 7: VoiceChatPanelPresenter (UI)
             voiceChatPanelPresenter = new VoiceChatPanelPresenter(voiceChatPanelView, profileDataProvider, communityDataProvider, imageControllerProvider, voiceChatOrchestrator, voiceChatHandler, roomManager, roomHub, playerEntry, chatSharedAreaEventBus);
             pluginScope.Add(voiceChatPanelPresenter);
+            if (stopAfter == 7) return;
 
+            // Stage 8: VoiceChatDebugContainer
             voiceChatDebugContainer = new VoiceChatDebugContainer(debugContainer, microphonePublisher, roomHub.VoiceChatRoom().Room(), callPlaybackSourcesHub);
             pluginScope.Add(voiceChatDebugContainer);
+            if (stopAfter == 8) return;
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT))
             {

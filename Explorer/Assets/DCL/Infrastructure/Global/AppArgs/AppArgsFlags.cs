@@ -5,6 +5,14 @@ namespace Global.AppArgs
         public const string DEBUG = "debug";
         public const string DCL_EDITOR = "hub";
 
+        // EXIT-DELAY INVESTIGATION (#8764): bisection flags for VoiceChatPlugin init.
+        // Used with the value 1..8 to stop InitializeAsync at successive stages and
+        // identify which component leaves livekit_ffi tokio threads attached to the
+        // IL2CPP runtime, preventing process shutdown.
+        // Remove once the offending component is identified and the dispose path is fixed.
+        public const string EXIT_TEST_VOICE_INIT_STOP = "exit-test-voice-init-stop";
+        public const string EXIT_TEST_SKIP_NEARBY_VOICE_SYSTEMS = "exit-test-skip-nearby-voice-systems";
+
         public const string SKIP_VERSION_CHECK = "skip-version-check";
         public const string SIMULATE_VERSION = "simulateVersion";
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
