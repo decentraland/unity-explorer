@@ -1,13 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SDKComponents.MediaStream.YouTube;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -44,6 +44,12 @@ namespace DCL.SDKComponents.MediaStream
         private static readonly UTF8Encoding HLS_ENCODING = new (encoderShouldEmitUTF8Identifier: false);
 
         private readonly InnerTubeClient innerTube = new ();
+        private readonly IWebRequestController webRequestController;
+
+        public YouTubeVideoClient(IWebRequestController webRequestController)
+        {
+            this.webRequestController = webRequestController;
+        }
 
         public async UniTask<bool> IsLiveStreamAsync(VideoId videoId, CancellationToken ct)
         {
@@ -100,7 +106,7 @@ namespace DCL.SDKComponents.MediaStream
         ///     start playback after fetching the first ~5-10s chunk rather than the whole body
         ///     (issue #8350). If sidx fetch or parse fails, falls back to single-segment.
         /// </summary>
-        private static async UniTask<string?> TryWriteSynthesizedHlsAsync(VideoId videoId, PlayerResponse response, CancellationToken ct)
+        private async UniTask<string?> TryWriteSynthesizedHlsAsync(VideoId videoId, PlayerResponse response, CancellationToken ct)
         {
             try
             {
@@ -159,19 +165,20 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        ///     Fetches an inclusive byte range from <paramref name="url"/> using an HTTP Range
-        ///     header. Returns the response body on success or null on failure — callers treat
-        ///     null as "fall back to non-segmented playlist." Cancellation propagates.
+        ///     Fetches an inclusive byte range from <paramref name="url"/> via the project's
+        ///     <see cref="IWebRequestController"/>, using the built-in <c>Range</c> header support.
+        ///     Returns the response body on success or null on failure — callers treat null as
+        ///     "fall back to non-segmented playlist." Cancellation propagates.
         /// </summary>
-        private static async UniTask<byte[]?> TryFetchByteRangeAsync(string url, long start, long endInclusive, CancellationToken ct)
+        private async UniTask<byte[]?> TryFetchByteRangeAsync(string url, long start, long endInclusive, CancellationToken ct)
         {
-            using var request = UnityWebRequest.Get(url);
-            request.SetRequestHeader("Range", $"bytes={start}-{endInclusive}");
-            request.downloadHandler = new DownloadHandlerBuffer();
-
             try
             {
-                await request.SendWebRequest().WithCancellation(ct);
+                return await webRequestController
+                    .GetAsync(url, ct, ReportCategory.MEDIA_STREAM,
+                        headersInfo: new WebRequestHeadersInfo().WithRange(start, endInclusive),
+                        suppressErrors: true)
+                    .GetDataCopyAsync();
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
@@ -179,14 +186,6 @@ namespace DCL.SDKComponents.MediaStream
                 ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] sidx byte-range fetch failed: {ex.Message}");
                 return null;
             }
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] sidx byte-range fetch non-success: {request.result} {request.error}");
-                return null;
-            }
-
-            return request.downloadHandler.data;
         }
     }
 }
