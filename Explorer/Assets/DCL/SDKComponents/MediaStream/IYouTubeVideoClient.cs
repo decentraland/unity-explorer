@@ -110,7 +110,8 @@ namespace DCL.SDKComponents.MediaStream
         {
             try
             {
-                if (!HlsManifestBuilder.TrySelectVideoAndAudio(response.AdaptiveFormats, out AdaptiveFormatData videoStream, out AdaptiveFormatData audioStream))
+                if (response.DurationSeconds <= 0
+                    || !HlsManifestBuilder.TrySelectVideoAndAudio(response.AdaptiveFormats, out AdaptiveFormatData videoStream, out AdaptiveFormatData audioStream))
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM,
                         $"[{TAG}] HLS synthesis skipped for {videoId.Value} — no usable mp4 video+audio adaptive pair");
@@ -131,15 +132,8 @@ namespace DCL.SDKComponents.MediaStream
                 if (audioSidx != null)
                     audioSegments = SidxParser.Parse(audioSidx, audioStream.IndexRangeEnd + 1);
 
-                HlsManifestBuilder.PlaylistSet? playlists =
-                    HlsManifestBuilder.Build(response.AdaptiveFormats, response.DurationSeconds, videoSegments, audioSegments);
-
-                if (playlists == null)
-                {
-                    ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                        $"[{TAG}] HLS synthesis skipped for {videoId.Value} — builder rejected the selected pair");
-                    return null;
-                }
+                HlsManifestBuilder.PlaylistSet playlists =
+                    HlsManifestBuilder.Build(videoStream, audioStream, response.DurationSeconds, videoSegments, audioSegments);
 
                 // Per-video subdirectory keeps the 3 files together so the master playlist's
                 // relative URIs (audio.m3u8, video.m3u8) resolve correctly. Unity's
@@ -147,11 +141,11 @@ namespace DCL.SDKComponents.MediaStream
                 string playlistDir = Path.Combine(Application.temporaryCachePath, SYNTH_HLS_DIR_PREFIX + videoId.Value);
                 Directory.CreateDirectory(playlistDir);
 
-                File.WriteAllText(Path.Combine(playlistDir, VIDEO_PLAYLIST_NAME), playlists.Value.Video, HLS_ENCODING);
-                File.WriteAllText(Path.Combine(playlistDir, AUDIO_PLAYLIST_NAME), playlists.Value.Audio, HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, VIDEO_PLAYLIST_NAME), playlists.Video, HLS_ENCODING);
+                File.WriteAllText(Path.Combine(playlistDir, AUDIO_PLAYLIST_NAME), playlists.Audio, HLS_ENCODING);
 
                 string masterPath = Path.Combine(playlistDir, MASTER_PLAYLIST_NAME);
-                File.WriteAllText(masterPath, playlists.Value.Master, HLS_ENCODING);
+                File.WriteAllText(masterPath, playlists.Master, HLS_ENCODING);
 
                 return masterPath;
             }

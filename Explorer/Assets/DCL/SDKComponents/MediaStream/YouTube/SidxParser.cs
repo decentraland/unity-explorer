@@ -107,13 +107,15 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // reserved (2) + reference_count (2).
             pos += RESERVED_BYTES;
 
-            if (pos + UINT16_BYTES > boxBytes.Length) return null;
+            // Bounds check against the declared boxSize (not buffer length): tighter and
+            // spec-correct. Safe because boxSize <= boxBytes.Length is verified above.
+            if (pos + UINT16_BYTES > (int)boxSize) return null;
 
             ushort referenceCount = ReadUInt16Be(boxBytes, ref pos);
             if (referenceCount == 0) return null;
 
-            // Bail if the buffer can't hold every reference entry.
-            if (pos + (referenceCount * REFERENCE_ENTRY_BYTES) > boxBytes.Length) return null;
+            // Bail if the declared box can't hold every reference entry.
+            if (pos + (referenceCount * REFERENCE_ENTRY_BYTES) > (int)boxSize) return null;
 
             var segments = new List<SegmentInfo>(referenceCount);
             long currentByteOffset = anchorOffset + firstOffset;

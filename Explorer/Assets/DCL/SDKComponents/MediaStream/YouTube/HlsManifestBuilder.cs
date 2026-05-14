@@ -76,54 +76,38 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         }
 
         /// <summary>
-        ///     Returns the 3 playlist contents (master + video + audio), or <c>null</c> if the
-        ///     inputs don't permit synthesis (no usable video or audio adaptive stream, missing
-        ///     byte ranges, missing content length, etc.).
+        ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
+        ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
+        ///     are supplied the media playlists are split into one HLS segment per fmp4
+        ///     fragment — this avoids the multi-second buffer-fill stall AVPro exhibits when
+        ///     handed a single byte range covering the entire video body (issue #8350). Falls
+        ///     back to single-segment if either segment list is null or empty.
+        ///
+        ///     Caller is expected to have already validated the streams via
+        ///     <see cref="TrySelectVideoAndAudio"/>; this method does not re-check byte ranges
+        ///     or content length so the sidx data is structurally bound to the same streams
+        ///     that get written into the playlists.
         /// </summary>
-        public static PlaylistSet? Build(IReadOnlyList<AdaptiveFormatData> adaptive, int durationSeconds) =>
-            Build(adaptive, durationSeconds, videoSegments: null, audioSegments: null);
-
-        /// <summary>
-        ///     Same as <see cref="Build(IReadOnlyList&lt;AdaptiveFormatData&gt;,int)"/>, but if
-        ///     SIDX-derived segment tables are supplied for video and audio the media playlists
-        ///     are split into one HLS segment per fmp4 fragment. This avoids the multi-second
-        ///     buffer-fill stall AVPro exhibits when handed a single byte range covering the
-        ///     entire video body (issue #8350). Falls back to single-segment if either segment
-        ///     list is null or empty.
-        /// </summary>
-        public static PlaylistSet? Build(
-            IReadOnlyList<AdaptiveFormatData> adaptive,
+        public static PlaylistSet Build(
+            AdaptiveFormatData video,
+            AdaptiveFormatData audio,
             int durationSeconds,
-            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments,
-            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments)
+            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
+            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
         {
-            if (adaptive == null || adaptive.Count == 0 || durationSeconds <= 0)
-                return null;
-
-            AdaptiveFormatData? video = SelectBestVideo(adaptive);
-            AdaptiveFormatData? audio = SelectBestAudio(adaptive);
-
-            if (video == null || audio == null) return null;
-
-            // Both byte ranges AND a known contentLength are required: the media segment runs
-            // from indexRangeEnd+1 to contentLength-1, so without contentLength we can't write
-            // a valid EXT-X-BYTERANGE.
-            if (!video.Value.HasByteRanges || video.Value.ContentLength <= 0) return null;
-            if (!audio.Value.HasByteRanges || audio.Value.ContentLength <= 0) return null;
-
             bool segmented = videoSegments is { Count: > 0 }
                              && audioSegments is { Count: > 0 };
 
             string videoPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(video.Value, videoSegments!)
-                : BuildMediaPlaylist(video.Value, durationSeconds);
+                ? BuildSegmentedMediaPlaylist(video, videoSegments!)
+                : BuildMediaPlaylist(video, durationSeconds);
 
             string audioPlaylist = segmented
-                ? BuildSegmentedMediaPlaylist(audio.Value, audioSegments!)
-                : BuildMediaPlaylist(audio.Value, durationSeconds);
+                ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
+                : BuildMediaPlaylist(audio, durationSeconds);
 
             return new PlaylistSet(
-                BuildMaster(video.Value, audio.Value),
+                BuildMaster(video, audio),
                 videoPlaylist,
                 audioPlaylist);
         }
