@@ -23,6 +23,10 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     /// </summary>
     internal static class HlsManifestBuilder
     {
+        private const int DEFAULT_PLAYLIST_LENGTH = 2048;
+        private const int HEADER_PLAYLIST_LENGTH = 256;
+        private const int SEGMENT_PLAYLIST_LENGTH = 128;
+
         // Codecs every AVPro backend decodes reliably across Windows/macOS/iOS/Android.
         private const string PREFERRED_VIDEO_CODEC_PREFIX = "avc1";
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
@@ -107,8 +111,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             if (!video.Value.HasByteRanges || video.Value.ContentLength <= 0) return null;
             if (!audio.Value.HasByteRanges || audio.Value.ContentLength <= 0) return null;
 
-            bool segmented = videoSegments != null && videoSegments.Count > 0
-                             && audioSegments != null && audioSegments.Count > 0;
+            bool segmented = videoSegments is { Count: > 0 }
+                             && audioSegments is { Count: > 0 };
 
             string videoPlaylist = segmented
                 ? BuildSegmentedMediaPlaylist(video.Value, videoSegments!)
@@ -245,7 +249,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             int targetDurationSeconds = Math.Max(1, (int)Math.Ceiling(maxSegmentDuration));
 
             // Pre-size: header (~200) + per-segment (~120) gets close enough.
-            var sb = new StringBuilder(256 + (segments.Count * 128));
+            var sb = new StringBuilder(HEADER_PLAYLIST_LENGTH + (segments.Count * SEGMENT_PLAYLIST_LENGTH));
             sb.Append("#EXTM3U\n");
             sb.Append("#EXT-X-VERSION:7\n");
             sb.Append("#EXT-X-PLAYLIST-TYPE:VOD\n");
@@ -284,7 +288,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             long mediaOffset = stream.IndexRangeEnd + 1;
             long mediaSize = stream.ContentLength - mediaOffset;
 
-            var sb = new StringBuilder(2048);
+            var sb = new StringBuilder(DEFAULT_PLAYLIST_LENGTH);
             sb.Append("#EXTM3U\n");
             sb.Append("#EXT-X-VERSION:7\n");
             sb.Append("#EXT-X-PLAYLIST-TYPE:VOD\n");
