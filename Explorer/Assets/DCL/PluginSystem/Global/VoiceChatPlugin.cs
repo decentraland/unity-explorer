@@ -137,6 +137,30 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            // EXIT-DELAY BISECTION (#8764): when --exit-test-disconnect-rooms-on-quit is set,
+            // disconnect the LiveKit rooms explicitly before tearing down the plugin. Rationale:
+            // livekit_ffi tokio workers get attached to the IL2CPP managed runtime via the first
+            // managed callback they fire (track subscribed, participant update, etc.) and never
+            // detach. The only way to make them detach is to make the threads themselves exit,
+            // which happens when the tokio runtime owning them shuts down — which in turn happens
+            // when the LiveKit Room is disconnected. We block up to 3s for completion so we cap
+            // any potential hang in the disconnect path itself.
+            if (HasExitTestDisconnectRoomsOnQuit())
+            {
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: disconnecting LiveKit rooms on quit");
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                try
+                {
+                    roomHub.IslandRoom().DisconnectAsync(cts.Token).AsTask().Wait(cts.Token);
+                }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: IslandRoom disconnect failed: {ex.Message}"); }
+                try
+                {
+                    roomHub.VoiceChatRoom().Room().DisconnectAsync(cts.Token).AsTask().Wait(cts.Token);
+                }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: VoiceChatRoom disconnect failed: {ex.Message}"); }
+            }
+
             nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
 
@@ -183,6 +207,16 @@ namespace DCL.PluginSystem.Global
                     return n;
             }
             return 0; // 0 = no stop, all systems injected
+        }
+
+        private static bool HasExitTestDisconnectRoomsOnQuit()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string dashed = "--" + AppArgsFlags.EXIT_TEST_DISCONNECT_ROOMS_ON_QUIT;
+            for (var i = 0; i < args.Length; i++)
+                if (args[i] == dashed)
+                    return true;
+            return false;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

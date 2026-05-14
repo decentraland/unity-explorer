@@ -7,9 +7,11 @@ using DCL.Profiles;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using Global.AppArgs;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
@@ -48,6 +50,16 @@ namespace DCL.VoiceChat.Nearby.Systems
             sourceFactory.DisposeRoot();
         }
 
+        private static bool HasExitTestSkipAudioSourceCreate()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string dashed = "--" + AppArgsFlags.EXIT_TEST_SKIP_AUDIO_SOURCE_CREATE;
+            for (var i = 0; i < args.Length; i++)
+                if (args[i] == dashed)
+                    return true;
+            return false;
+        }
+
         protected override void Update(float t)
         {
             // Listening gate: skip the entire avatar query when nearby chat is SUPPRESSED or DISABLED.
@@ -80,6 +92,15 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                     // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
                     if (!stream.Resource.Has) continue;
+
+                    // EXIT-DELAY BISECTION (#8764): when --exit-test-skip-audio-source-create is set,
+                    // skip the LivekitAudioSource creation/Play() that triggers OnAudioFilterRead → FFI.
+                    // The system stays registered and iterates avatars normally — only the Create call
+                    // and the resulting NearbyAudioSourceComponent are bypassed. Used to isolate whether
+                    // the active AudioSource binding is what keeps livekit_ffi tokio workers attached
+                    // to the IL2CPP runtime, or whether the registration of the system alone is enough.
+                    if (HasExitTestSkipAudioSourceCreate())
+                        continue;
 
                     LivekitAudioSource source = sourceFactory.Create(key, stream);
 
