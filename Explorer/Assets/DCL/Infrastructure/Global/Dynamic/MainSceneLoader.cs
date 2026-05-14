@@ -447,12 +447,6 @@ namespace Global.Dynamic
 
             analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
-            // TEMP (PR #8736 CI piggyback): always skip the modal so the Windows T4 runner
-            // (fails MinimumSpecsGuard on 4 vCPU) doesn't block bootstrap on a screen that
-            // needs a human click. Revert the TEMP-return and the #if false below before
-            // merging the underlying feature.
-            return minimumSpecsGuard.Results;
-
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
