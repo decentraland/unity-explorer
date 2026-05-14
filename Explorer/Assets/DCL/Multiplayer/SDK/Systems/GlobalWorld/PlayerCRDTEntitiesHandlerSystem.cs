@@ -114,14 +114,18 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         private void RemoveComponent(Entity entity, ref PlayerCRDTEntity playerCRDTEntity, bool noLongerExists)
         {
-            if (playerCRDTEntity.AssignedToScene && playerCRDTEntity.SceneFacade != null)
+            if (playerCRDTEntity is { AssignedToScene: true, SceneFacade: not null })
             {
-                SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-
                 // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
-                // as the scene-level Writer systems need it to know which CRDT Entity to affect
-                if (playerCRDTEntity.SceneWorldEntity != Entity.Null)
+                // as the scene-level Writer systems need it to know which CRDT Entity to affect.
+                // Only post the cleanup intention if the previous scene's world is still running —
+                // writing to a Disposing/Disposed/error scene world races against its teardown.
+                if (playerCRDTEntity.SceneWorldEntity != Entity.Null
+                    && playerCRDTEntity.SceneFacade.SceneStateProvider.State == SceneState.Running)
+                {
+                    SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
                     sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
+                }
 
                 if (noLongerExists)
                     FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
