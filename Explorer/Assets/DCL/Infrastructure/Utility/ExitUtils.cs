@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using DCL.Diagnostics;
+using UnityEngine;
 using Utility.Multithreading;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -44,6 +45,19 @@ namespace DCL.Utility
     {
         private static readonly Mutex<List<OnQuittingCleanUpCandidate>> candidates = new (new ());
         private static readonly Atomic<bool> isExiting = new (false);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void SubscribeToApplicationQuitting()
+        {
+            Application.quitting += OnApplicationQuitting;
+        }
+
+        private static void OnApplicationQuitting()
+        {
+            Application.quitting -= OnApplicationQuitting;
+            ReportHub.LogProductionInfo("[ExitUtils] triggered by Unity's Application.quitting");
+            Exit();
+        }
 
         public static void RegisterCleanUpCandidate(OnQuittingCleanUpCandidate candidate)
         {

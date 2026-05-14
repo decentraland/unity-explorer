@@ -173,7 +173,12 @@ namespace DCL.Tests
         public void VerifyShouldNotUseApplicationQuitting()
         {
             const string pattern = @"Application\.quitting";
-            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Application.quitting.", ignorePaths: null);
+            // ExitUtils is the infrastructural wrapper that funnels Application.quitting into the cleanup pipeline
+            string[] ignorePaths = new []
+            {
+                "Assets/DCL/Infrastructure/Utility/ExitUtils.cs",
+            };
+            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Application.quitting.", ignorePaths);
         }
 
         [Test]
