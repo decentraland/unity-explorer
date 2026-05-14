@@ -10,7 +10,7 @@ using SceneRuntime;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
