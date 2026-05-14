@@ -26,6 +26,8 @@ namespace DCL.CharacterPreview
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
             characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
 
+            characterPreviewAvatarContainer.SetFOVSmoothDuration(cameraSettings.fieldOfViewDuration);
+
             OnChangePreviewCategory(AvatarWearableCategoryEnum.Body);
         }
 

@@ -39,7 +39,7 @@ MonoBehaviour:
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 27, y: 8}
     <fieldOfViewCurve>k__BackingField: 6
-    <fieldOfViewDuration>k__BackingField: 0.2
+    <fieldOfViewDuration>k__BackingField: 0.6
     <rotationEnabled>k__BackingField: 1
     <rotationModifier>k__BackingField: 1
     <rotationInertia>k__BackingField: 1

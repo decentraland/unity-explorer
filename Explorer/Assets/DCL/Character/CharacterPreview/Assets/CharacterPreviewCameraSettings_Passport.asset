@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <cameraSettings>k__BackingField:
     <cameraPositions>k__BackingField:
-    - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
+    - <verticalPosition>k__BackingField: {x: 0, y: 0.17, z: 0}
       <cameraFieldOfView>k__BackingField: 24
       <wearableCategoryEnum>k__BackingField: 4
     <dragEnabled>k__BackingField: 0
@@ -27,7 +27,7 @@ MonoBehaviour:
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
     <fieldOfViewCurve>k__BackingField: 6
-    <fieldOfViewDuration>k__BackingField: 0.2
+    <fieldOfViewDuration>k__BackingField: 0.6
     <rotationEnabled>k__BackingField: 1
     <rotationModifier>k__BackingField: 1
     <rotationInertia>k__BackingField: 1

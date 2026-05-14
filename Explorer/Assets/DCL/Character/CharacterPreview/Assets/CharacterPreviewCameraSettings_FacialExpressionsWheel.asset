@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d834b5e6adc04c359c4d6b299db0f5ae, type: 3}
-  m_Name: CharacterPreviewCameraSettings_LoadingScreen
+  m_Name: CharacterPreviewCameraSettings_FacialExpressionsWheel
   m_EditorClassIdentifier: 
   <cameraSettings>k__BackingField:
     <cameraPositions>k__BackingField:
-    - <verticalPosition>k__BackingField: {x: 1, y: 0, z: 1}
-      <cameraFieldOfView>k__BackingField: 26.2
+    - <verticalPosition>k__BackingField: {x: 0, y: 0.7, z: 0}
+      <cameraFieldOfView>k__BackingField: 5
       <wearableCategoryEnum>k__BackingField: 4
-    <dragEnabled>k__BackingField: 1
+    <dragEnabled>k__BackingField: 0
     <dragMovementModifier>k__BackingField: 0.3
     <minVerticalOffset>k__BackingField: -0.84
     <maxVerticalOffset>k__BackingField: 0.5
-    <scrollEnabled>k__BackingField: 1
+    <scrollEnabled>k__BackingField: 0
     <scrollModifier>k__BackingField: 1
     <fieldOfViewThresholdForPanning>k__BackingField: 32
     <fieldOfViewThresholdForReCentering>k__BackingField: 10
     <fieldOfViewLimits>k__BackingField: {x: 40, y: 16}
     <fieldOfViewCurve>k__BackingField: 6
-    <fieldOfViewDuration>k__BackingField: 0.6
+    <fieldOfViewDuration>k__BackingField: 0
     <rotationEnabled>k__BackingField: 1
     <rotationModifier>k__BackingField: 1
     <rotationInertia>k__BackingField: 1

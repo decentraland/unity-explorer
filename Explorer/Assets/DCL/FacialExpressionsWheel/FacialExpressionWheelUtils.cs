@@ -5,9 +5,6 @@ namespace DCL.FacialExpressionsWheel
 {
     public static class FacialExpressionWheelUtils
     {
-        public static int WrapChannelIndex(int currentIndex, int delta, int total) =>
-            ((currentIndex + delta) % total + total) % total;
-
         public static string GetSlotLabel(int slotIndex) =>
             slotIndex < 9 ? (slotIndex + 1).ToString() : "0";
 

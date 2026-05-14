@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.FacialExpression;
 using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
@@ -38,9 +39,9 @@ namespace DCL.FacialExpressionsWheel
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
 
-        private int pendingEyebrowsIndex;
-        private int pendingEyesIndex;
-        private int pendingMouthIndex;
+        private NumericCyclerController? eyebrowsCycler;
+        private NumericCyclerController? eyesCycler;
+        private NumericCyclerController? mouthCycler;
 
         // True once the user has touched a slot or cycler. Gates the on-close commit so opening
         // and closing without picking anything leaves the avatar untouched.
@@ -80,6 +81,10 @@ namespace DCL.FacialExpressionsWheel
 
             UnregisterSlotsInput(wheelInput, OnSlotNumberPressed);
 
+            eyebrowsCycler?.Dispose();
+            eyesCycler?.Dispose();
+            mouthCycler?.Dispose();
+
             fetchProfileCts.SafeCancelAndDispose();
             previewController.Dispose();
         }
@@ -99,9 +104,13 @@ namespace DCL.FacialExpressionsWheel
                 viewInstance.Slots[i].Setup(i, icon, OnSlotPlay, OnSlotHover, OnSlotFocusLeave);
             }
 
-            viewInstance.EyebrowsCycler.OnCycle += delta => CycleChannel(ref pendingEyebrowsIndex, delta, viewInstance.EyebrowsCycler);
-            viewInstance.EyesCycler.OnCycle += delta => CycleChannel(ref pendingEyesIndex, delta, viewInstance.EyesCycler);
-            viewInstance.MouthCycler.OnCycle += delta => CycleChannel(ref pendingMouthIndex, delta, viewInstance.MouthCycler);
+            eyebrowsCycler = new NumericCyclerController(viewInstance.EyebrowsCycler, CHANNEL_ATLAS_SIZE);
+            eyesCycler = new NumericCyclerController(viewInstance.EyesCycler, CHANNEL_ATLAS_SIZE);
+            mouthCycler = new NumericCyclerController(viewInstance.MouthCycler, CHANNEL_ATLAS_SIZE);
+
+            eyebrowsCycler.OnIndexChanged += OnChannelCycled;
+            eyesCycler.OnIndexChanged += OnChannelCycled;
+            mouthCycler.OnIndexChanged += OnChannelCycled;
         }
 
         protected override void OnBeforeViewShow()
@@ -139,7 +148,29 @@ namespace DCL.FacialExpressionsWheel
                 previewController.Initialize(profile.Avatar, Vector3.zero);
                 previewController.OnShow();
 
-                ApplyExpressionToPreview(slot: 0);
+                int eb = 0, ey = 0, mo = 0;
+
+                if (world.IsAlive(playerEntity) && world.Has<AvatarFaceComponent>(playerEntity))
+                {
+                    AvatarFaceComponent face = world.Get<AvatarFaceComponent>(playerEntity);
+                    eb = face.EyebrowsExpressionIndex;
+                    ey = face.EyesExpressionIndex;
+                    mo = face.MouthExpressionIndex;
+                }
+
+                eyebrowsCycler!.SetIndex(eb);
+                eyesCycler!.SetIndex(ey);
+                mouthCycler!.SetIndex(mo);
+
+                int matchedSlot = FindMatchingExpressionSlot(eb, ey, mo);
+                HighlightSlot(matchedSlot);
+
+                viewInstance!.CurrentExpressionName.text = matchedSlot >= 0 ? expressionConfig.Expressions[matchedSlot].Name : "Custom";
+
+                // Preview avatar's AvatarFaceComponent is added async by AvatarFacialExpressionSystem
+                // after wearables instantiate. Wait for it before pushing the seed indices, otherwise
+                // TrySetFace silently no-ops on first open.
+                await previewController.SetFaceWhenReadyAsync(eb, ey, mo, ct);
             }
         }
 
@@ -156,7 +187,7 @@ namespace DCL.FacialExpressionsWheel
             previewController.OnHide();
 
             if (pendingChanged)
-                FacialExpressionApplier.Apply(world, playerEntity, (byte)pendingEyebrowsIndex, (byte)pendingEyesIndex, (byte)pendingMouthIndex);
+                FacialExpressionApplier.Apply(world, playerEntity, (byte)eyebrowsCycler!.CurrentIndex, (byte)eyesCycler!.CurrentIndex, (byte)mouthCycler!.CurrentIndex);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -180,20 +211,41 @@ namespace DCL.FacialExpressionsWheel
             viewInstance!.CurrentExpressionName.text = expressionConfig.Expressions[slot].Name;
 
         private void OnSlotFocusLeave(int _) =>
-            viewInstance!.CurrentExpressionName.text = selectedSlot >= 0
-                ? expressionConfig.Expressions[selectedSlot].Name
-                : string.Empty;
+            viewInstance!.CurrentExpressionName.text = CurrentExpressionLabel();
 
-        private void CycleChannel(ref int currentIndex, int delta, FaceChannelCyclerView cyclerView)
+        private void OnChannelCycled(int _)
         {
-            currentIndex = FacialExpressionWheelUtils.WrapChannelIndex(currentIndex, delta, CHANNEL_ATLAS_SIZE);
-            cyclerView.SetIndex(currentIndex + 1, CHANNEL_ATLAS_SIZE);
+            int eb = eyebrowsCycler!.CurrentIndex;
+            int ey = eyesCycler!.CurrentIndex;
+            int mo = mouthCycler!.CurrentIndex;
 
-            HighlightSlot(-1);
-            viewInstance!.CurrentExpressionName.text = string.Empty;
+            int matchedSlot = FindMatchingExpressionSlot(eb, ey, mo);
+            HighlightSlot(matchedSlot);
 
-            previewController.SetFace(pendingEyebrowsIndex, pendingEyesIndex, pendingMouthIndex);
+            viewInstance!.CurrentExpressionName.text = matchedSlot >= 0
+                ? expressionConfig.Expressions[matchedSlot].Name
+                : "Custom";
+
+            previewController.SetFace(eb, ey, mo);
             pendingChanged = true;
+        }
+
+        private string CurrentExpressionLabel()
+        {
+            int matched = FindMatchingExpressionSlot(eyebrowsCycler!.CurrentIndex, eyesCycler!.CurrentIndex, mouthCycler!.CurrentIndex);
+            return matched >= 0 ? expressionConfig.Expressions[matched].Name : "Custom";
+        }
+
+        private int FindMatchingExpressionSlot(int eb, int ey, int mo)
+        {
+            for (var i = 0; i < expressionConfig.Expressions.Length; i++)
+            {
+                AvatarFaceExpressionDefinition def = expressionConfig.Expressions[i];
+                if (def.EyebrowsIndex == eb && def.EyesIndex == ey && def.MouthIndex == mo)
+                    return i;
+            }
+
+            return -1;
         }
 
         private void OnSlotNumberPressed(InputAction.CallbackContext context)
@@ -215,16 +267,14 @@ namespace DCL.FacialExpressionsWheel
         private void ApplyExpressionToPreview(int slot)
         {
             AvatarFaceExpressionDefinition def = expressionConfig.Expressions[slot];
-            pendingEyebrowsIndex = def.EyebrowsIndex;
-            pendingEyesIndex = def.EyesIndex;
-            pendingMouthIndex = def.MouthIndex;
 
-            previewController.SetFace(pendingEyebrowsIndex, pendingEyesIndex, pendingMouthIndex);
+            eyebrowsCycler!.SetIndex(def.EyebrowsIndex);
+            eyesCycler!.SetIndex(def.EyesIndex);
+            mouthCycler!.SetIndex(def.MouthIndex);
 
-            viewInstance!.EyebrowsCycler.SetIndex(pendingEyebrowsIndex + 1, CHANNEL_ATLAS_SIZE);
-            viewInstance.EyesCycler.SetIndex(pendingEyesIndex + 1, CHANNEL_ATLAS_SIZE);
-            viewInstance.MouthCycler.SetIndex(pendingMouthIndex + 1, CHANNEL_ATLAS_SIZE);
-            viewInstance.CurrentExpressionName.text = def.Name;
+            previewController.SetFace(def.EyebrowsIndex, def.EyesIndex, def.MouthIndex);
+
+            viewInstance!.CurrentExpressionName.text = def.Name;
         }
 
         private void HighlightSlot(int slot)

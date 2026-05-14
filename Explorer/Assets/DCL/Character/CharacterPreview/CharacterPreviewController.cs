@@ -34,6 +34,8 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
         private readonly Entity characterPreviewEntity;
+
+        public Entity PreviewEntity => characterPreviewEntity;
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
 

@@ -26,19 +26,16 @@ namespace DCL.FacialExpressionsWheel
         public Button EmotesTabButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button FacialExpressionsTabButton { get; private set; } = null!;
-
-        [field: SerializeField]
         public FacialExpressionWheelSlotView[] Slots { get; private set; } = null!;
 
         [field: SerializeField]
-        public FaceChannelCyclerView EyebrowsCycler { get; private set; } = null!;
+        public NumericCyclerView EyebrowsCycler { get; private set; } = null!;
 
         [field: SerializeField]
-        public FaceChannelCyclerView EyesCycler { get; private set; } = null!;
+        public NumericCyclerView EyesCycler { get; private set; } = null!;
 
         [field: SerializeField]
-        public FaceChannelCyclerView MouthCycler { get; private set; } = null!;
+        public NumericCyclerView MouthCycler { get; private set; } = null!;
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreview { get; private set; } = null!;

@@ -3,14 +3,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.FacialExpressionsWheel
+namespace DCL.UI
 {
     /// <summary>
-    ///     One row of the wheel footer (EYEBROWS / EYES / MOUTH). Hosts a label plus prev/next arrows
-    ///     to step through that channel's atlas slices, and a "current/total" index display.
-    ///     The view is dumb: clamping and bounds live in the controller. Label is authored in the prefab.
+    ///     Reusable prev / index / next stepper. Prev and next arrows emit a delta of -1 / +1 on
+    ///     <see cref="OnCycle"/>. Storage, wrap and bounds live in <see cref="NumericCyclerController"/>.
     /// </summary>
-    public class FaceChannelCyclerView : MonoBehaviour
+    public class NumericCyclerView : MonoBehaviour
     {
         public event Action<int>? OnCycle;
 

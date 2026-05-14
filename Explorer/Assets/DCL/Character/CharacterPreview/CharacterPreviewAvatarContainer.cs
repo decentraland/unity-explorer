@@ -18,11 +18,12 @@ namespace DCL.CharacterPreview
         private const float ANGULAR_VELOCITY_LOWER_THRES = 0.01f;
         private const float FOW_LOWER_THRES = 0.01f;
         private const float FOV_SPEED_COEFF = 3.5f;
-        private const float FOV_SMOOTH_TIME = 0.6f;
+        private const float FOV_SMOOTH_TIME_DEFAULT = 0.6f;
 
         private float fovTransitionStartTime;
         private float fovTransitionStartValue;
         private bool isFOVTransitioning;
+        private float fovSmoothDuration = FOV_SMOOTH_TIME_DEFAULT;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
         [field: SerializeField] internal Transform avatarParent { get; private set; }
@@ -84,10 +85,22 @@ namespace DCL.CharacterPreview
         public void StartFOVTransition(float targetFOV)
         {
             TargetFOV = targetFOV;
+
+            if (fovSmoothDuration <= 0f)
+            {
+                fovTransitionStartValue = targetFOV;
+                freeLookCamera.m_Lens.FieldOfView = targetFOV;
+                isFOVTransitioning = false;
+                return;
+            }
+
             fovTransitionStartTime = Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
             isFOVTransitioning = true;
         }
+
+        public void SetFOVSmoothDuration(float duration) =>
+            fovSmoothDuration = duration > 0f ? duration : 0f;
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
@@ -155,7 +168,7 @@ namespace DCL.CharacterPreview
             {
                 // Smooth transition for category changes
                 float elapsedTime = Time.time - fovTransitionStartTime;
-                float normalizedTime = Mathf.Clamp01(elapsedTime / FOV_SMOOTH_TIME);
+                float normalizedTime = Mathf.Clamp01(elapsedTime / fovSmoothDuration);
 
                 float easedTime = Mathf.SmoothStep(0f, 1f, normalizedTime);
                 newFOV = Mathf.Lerp(fovTransitionStartValue, TargetFOV, easedTime);
