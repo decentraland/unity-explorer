@@ -52,6 +52,8 @@ namespace DCL.Utility
 #if UNITY_EDITOR
             // ensure isExiting is false on reopening
             isExiting.Set(false);
+            using (var scope = candidates.Lock())
+                scope.Value.Clear();
 #endif
             Application.quitting += OnApplicationQuitting;
         }
