@@ -170,6 +170,13 @@ namespace DCL.Tests
         }
 
         [Test]
+        public void VerifyShouldNotUseApplicationQuitting()
+        {
+            const string pattern = @"Application\.quitting";
+            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Application.quitting.", ignorePaths: null);
+        }
+
+        [Test]
         public void VerifyShouldNotUseConcurrentCollection()
         {
             const string pattern = @"System\.Collections\.Concurrent";
