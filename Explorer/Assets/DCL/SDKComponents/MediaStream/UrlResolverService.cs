@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.SDKComponents.MediaStream.YouTube;
 using DCL.WebRequests;
 using System.Threading;
 using UnityEngine.Networking;
@@ -37,7 +38,9 @@ namespace DCL.SDKComponents.MediaStream
 
         private async UniTask<ResolvedMediaUrl> ResolveYouTubeAsync(string url, CancellationToken ct)
         {
+            YouTubeTrace.Log("urlResolver.youtube START");
             ResolvedYouTubeUrl? resolved = await youTubeResolver.ResolveAsync(url, ct);
+            YouTubeTrace.Log($"urlResolver.youtube END resolved={resolved != null}");
 
             if (resolved == null)
             {

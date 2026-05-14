@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream.YouTube;
 using RenderHeads.Media.AVProVideo;
 using System;
 using UnityEngine;
@@ -74,8 +75,12 @@ namespace DCL.SDKComponents.MediaStream
 
         internal static async UniTask SetPlaybackPropertiesAsync(IMediaControl control, float position, bool loop, float rate, bool isPlaying, bool isLiveStream = false)
         {
+            YouTubeTrace.Log($"playback.setProps START isPlaying={isPlaying} live={isLiveStream}");
+
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
+            float waitStart = UnityEngine.Time.realtimeSinceStartup;
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
+            YouTubeTrace.Log($"playback.bufferedTimes>0 waitedMs={(UnityEngine.Time.realtimeSinceStartup - waitStart) * 1000f:F0}");
 
             // The only way found to make the video initialization consistent and reliable even after a scene reload
             await UniTask.Delay(TimeSpan.FromSeconds(1f));
@@ -89,7 +94,10 @@ namespace DCL.SDKComponents.MediaStream
                 control.Seek(position);
 
             if (isPlaying)
+            {
+                YouTubeTrace.Log("playback.Play CALLED");
                 control.Play();
+            }
         }
 
         public static void UpdatePlaybackProperties(this MediaPlayer mediaPlayer, PBVideoPlayer sdkVideoPlayer)

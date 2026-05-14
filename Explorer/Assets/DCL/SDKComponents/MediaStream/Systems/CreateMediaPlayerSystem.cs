@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SDKComponents.MediaStream.YouTube;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
@@ -64,6 +65,8 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!World.Has<MediaPlayerComponent>(entity))
             {
+                YouTubeTrace.Log($"create.video START src={sdkComponent.Src}");
+
                 // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
                 bool isSpatialAudio = World!.Has<TransformComponent>(entity) && sdkComponent is {HasSpatial: true, Spatial: true };
 
@@ -72,7 +75,10 @@ namespace DCL.SDKComponents.MediaStream
                         sdkComponent.HasSpatialMinDistance ? sdkComponent.SpatialMinDistance : null,
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null,
                         out MediaPlayerComponent mediaPlayerComponent))
+                {
+                    YouTubeTrace.Log("create.video DEFERRED (budget)");
                     return;
+                }
 
                 World.Add(entity, mediaPlayerComponent);
             }

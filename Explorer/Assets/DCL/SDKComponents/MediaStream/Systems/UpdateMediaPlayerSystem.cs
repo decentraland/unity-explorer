@@ -6,14 +6,17 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
+using DCL.SDKComponents.MediaStream.YouTube;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Profiling;
 
 namespace DCL.SDKComponents.MediaStream
@@ -36,6 +39,11 @@ namespace DCL.SDKComponents.MediaStream
 
         private static float lastOpenMediaTime;
         private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
+
+        // [8350] AVPro event trace hook — single cached delegate so RemoveListener/AddListener
+        // is idempotent across repeated OpenMedia calls on the same player instance.
+        private static readonly UnityAction<MediaPlayer, MediaPlayerEvent.EventType, ErrorCode> AV_PRO_TRACE_LISTENER =
+            (mp, evt, err) => YouTubeTrace.Log($"avpro.event {evt} error={err}");
 
         public UpdateMediaPlayerSystem(
             World world,
@@ -285,6 +293,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.ResolvedUrlExpiresAt <= 0f) return false;
             if (UnityEngine.Time.realtimeSinceStartup <= component.ResolvedUrlExpiresAt) return false;
 
+            YouTubeTrace.Log("update.reinit-on-expired-yt FIRED");
             ReportHub.Log(ReportCategory.MEDIA_STREAM, "[YouTubeResolver] Resolved URL expired, triggering re-resolution");
             RemoveAndForceReInitialization(ref component, entity);
             return true;
@@ -300,12 +309,14 @@ namespace DCL.SDKComponents.MediaStream
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
 
+                YouTubeTrace.Log($"update.reinit-on-source-change FIRED self={selfUrl} new={otherUrl}");
                 RemoveAndForceReInitialization(ref component, entity);
                 return true;
             }
 
             if (component.MediaAddress == address) return false;
 
+            YouTubeTrace.Log($"update.reinit-on-source-change FIRED (non-url branch) self={component.MediaAddress} new={address}");
             RemoveAndForceReInitialization(ref component, entity);
             return true;
         }
@@ -343,6 +354,17 @@ namespace DCL.SDKComponents.MediaStream
 
                 lastOpenMediaTime = currentTime;
 
+                string resolvedUrlForLog = resolvedAddress.IsUrlMediaAddress(out var urlAddr) ? urlAddr!.Url : resolvedAddress.ToString();
+                YouTubeTrace.Log($"update.OpenMedia CALLED autoPlay={autoPlay} fromContentServer={component.IsFromContentServer} url={resolvedUrlForLog}");
+
+                // [8350] Attach our trace listener BEFORE OpenMedia so early lifecycle events
+                // (MetaDataReady, ReadyToPlay, etc.) are captured. Idempotent re-attach.
+                if (component.MediaPlayer.TryGetAvProPlayer(out MediaPlayer? avProForTrace) && avProForTrace != null)
+                {
+                    avProForTrace.Events.RemoveListener(AV_PRO_TRACE_LISTENER);
+                    avProForTrace.Events.AddListener(AV_PRO_TRACE_LISTENER);
+                }
+
                 ReportHub.Log(ReportCategory.MEDIA_STREAM,
                     $"[OpenMedia] Opening media: {component.MediaAddress} → {resolvedAddress}, Time: {currentTime:F3}, TimeSinceLastOpen: {timeSinceLastOpen:F3}s");
 
@@ -352,6 +374,7 @@ namespace DCL.SDKComponents.MediaStream
 
                 try { component.MediaPlayer.OpenMedia(resolvedAddress, component.IsFromContentServer, autoPlay); }
                 finally { Profiler.EndSample(); }
+                YouTubeTrace.Log("update.OpenMedia RETURNED");
 
                 return true;
             }

@@ -2,10 +2,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SDKComponents.MediaStream.YouTube;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -71,7 +73,7 @@ namespace DCL.SDKComponents.MediaStream
             // here (they'd need a different live format) so we don't synthesize for them.
             if (!response.IsLive && response.AdaptiveFormats.Count > 0)
             {
-                string? synthesizedPath = TryWriteSynthesizedHls(videoId, response);
+                string? synthesizedPath = await TryWriteSynthesizedHlsAsync(videoId, response, ct);
 
                 if (!string.IsNullOrEmpty(synthesizedPath))
                 {
@@ -91,18 +93,49 @@ namespace DCL.SDKComponents.MediaStream
         ///     cache, and returns the absolute path of the master playlist. Returns null on any
         ///     failure (no usable streams, write error, etc.) so the caller falls through to the
         ///     muxed path.
+        ///
+        ///     Pre-fetches the sidx (segment index) box for the selected video and audio streams
+        ///     via byte-range HTTP requests; that lets the playlist enumerate one HLS segment per
+        ///     fmp4 fragment instead of a single segment over the entire file. AVPro can then
+        ///     start playback after fetching the first ~5-10s chunk rather than the whole body
+        ///     (issue #8350). If sidx fetch or parse fails, falls back to single-segment.
         /// </summary>
-        private static string? TryWriteSynthesizedHls(VideoId videoId, PlayerResponse response)
+        private static async UniTask<string?> TryWriteSynthesizedHlsAsync(VideoId videoId, PlayerResponse response, CancellationToken ct)
         {
             try
             {
+                if (!HlsManifestBuilder.TrySelectVideoAndAudio(response.AdaptiveFormats, out AdaptiveFormatData videoStream, out AdaptiveFormatData audioStream))
+                {
+                    ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                        $"[{TAG}] HLS synthesis skipped for {videoId.Value} — no usable mp4 video+audio adaptive pair");
+                    return null;
+                }
+
+                IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null;
+                IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null;
+
+                YouTubeTrace.Log($"sidx.fetch START videoId={videoId.Value} videoBytes={videoStream.IndexRangeEnd - videoStream.IndexRangeStart + 1} audioBytes={audioStream.IndexRangeEnd - audioStream.IndexRangeStart + 1}");
+
+                // Fetch both sidx boxes in parallel. Each is typically a few KB.
+                (byte[]? videoSidx, byte[]? audioSidx) = await UniTask.WhenAll(
+                    TryFetchByteRangeAsync(videoStream.Url, videoStream.IndexRangeStart, videoStream.IndexRangeEnd, ct),
+                    TryFetchByteRangeAsync(audioStream.Url, audioStream.IndexRangeStart, audioStream.IndexRangeEnd, ct));
+
+                if (videoSidx != null)
+                    videoSegments = SidxParser.Parse(videoSidx, videoStream.IndexRangeEnd + 1);
+
+                if (audioSidx != null)
+                    audioSegments = SidxParser.Parse(audioSidx, audioStream.IndexRangeEnd + 1);
+
+                YouTubeTrace.Log($"sidx.fetch END videoSegs={videoSegments?.Count ?? -1} audioSegs={audioSegments?.Count ?? -1}");
+
                 HlsManifestBuilder.PlaylistSet? playlists =
-                    HlsManifestBuilder.Build(response.AdaptiveFormats, response.DurationSeconds);
+                    HlsManifestBuilder.Build(response.AdaptiveFormats, response.DurationSeconds, videoSegments, audioSegments);
 
                 if (playlists == null)
                 {
                     ReportHub.Log(ReportCategory.MEDIA_STREAM,
-                        $"[{TAG}] HLS synthesis skipped for {videoId.Value} — no usable mp4 video+audio adaptive pair");
+                        $"[{TAG}] HLS synthesis skipped for {videoId.Value} — builder rejected the selected pair");
                     return null;
                 }
 
@@ -120,12 +153,44 @@ namespace DCL.SDKComponents.MediaStream
 
                 return masterPath;
             }
+            catch (OperationCanceledException) { return null; }
             catch (Exception ex)
             {
                 ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
                     $"[{TAG}] HLS synthesis failed for {videoId.Value}: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        ///     Fetches an inclusive byte range from <paramref name="url"/> using an HTTP Range
+        ///     header. Returns the response body on success or null on failure — callers treat
+        ///     null as "fall back to non-segmented playlist." Cancellation propagates.
+        /// </summary>
+        private static async UniTask<byte[]?> TryFetchByteRangeAsync(string url, long start, long endInclusive, CancellationToken ct)
+        {
+            using var request = UnityWebRequest.Get(url);
+            request.SetRequestHeader("Range", $"bytes={start}-{endInclusive}");
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            try
+            {
+                await request.SendWebRequest().WithCancellation(ct);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] sidx byte-range fetch failed: {ex.Message}");
+                return null;
+            }
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                ReportHub.Log(ReportCategory.MEDIA_STREAM, $"[{TAG}] sidx byte-range fetch non-success: {request.result} {request.error}");
+                return null;
+            }
+
+            return request.downloadHandler.data;
         }
     }
 }
