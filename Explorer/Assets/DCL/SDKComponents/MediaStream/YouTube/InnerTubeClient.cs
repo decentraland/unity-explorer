@@ -146,22 +146,15 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         public async UniTask<PlayerResponse> FetchPlayerResponseAsync(VideoId videoId, CancellationToken ct)
         {
-            YouTubeTrace.Log($"innertube.fetch START videoId={videoId.Value}");
-
             // Cache hit short-circuits the entire fallback chain.
             lock (playerResponseCacheLock)
             {
                 if (playerResponseCache.TryGetValue(videoId.Value, out var cached)
                     && cached.ExpiresAtUtc > System.DateTime.UtcNow)
-                {
-                    YouTubeTrace.Log($"innertube.fetch CACHE-HIT videoId={videoId.Value}");
                     return cached.Response;
-                }
             }
 
-            YouTubeTrace.Log($"innertube.warmup START warmupState={warmupState}");
             await EnsureSessionWarmedUpAsync(ct);
-            YouTubeTrace.Log($"innertube.warmup END warmupState={warmupState}");
 
             Exception? lastError = null;
             PlayerResponse fallback = default;
@@ -173,11 +166,9 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
                 InnerTubeClientConfig config = CONFIGS[i];
 
-                YouTubeTrace.Log($"innertube.config[{i}].{config.ClientName} START");
                 try
                 {
                     PlayerResponse response = await FetchWithConfigAsync(config, videoId, ct);
-                    YouTubeTrace.Log($"innertube.config[{i}].{config.ClientName} END hls={!string.IsNullOrEmpty(response.HlsManifestUrl)} dash={!string.IsNullOrEmpty(response.DashManifestUrl)} muxed={response.MuxedStreams.Count}");
 
                     ReportHub.Log(ReportCategory.MEDIA_STREAM,
                         $"[{TAG}] {config.ClientName} response for {videoId.Value}: " +
@@ -188,7 +179,6 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     // Best case: this client returned an HLS or DASH manifest — clean A/V sync via AVPro.
                     if (response.HasStreamingManifest)
                     {
-                        YouTubeTrace.Log($"innertube.fetch END manifest={(string.IsNullOrEmpty(response.HlsManifestUrl) ? "dash" : "hls")} via={config.ClientName} videoId={videoId.Value}");
                         CachePlayerResponse(videoId.Value, response);
                         return response;
                     }
@@ -215,13 +205,11 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 }
                 catch (OperationCanceledException)
                 {
-                    YouTubeTrace.Log($"innertube.config[{i}].{config.ClientName} CANCELLED");
                     throw;
                 }
                 catch (Exception ex)
                 {
                     lastError = ex;
-                    YouTubeTrace.Log($"innertube.config[{i}].{config.ClientName} ERROR msg={ex.Message}");
                     ReportHub.Log(ReportCategory.MEDIA_STREAM,
                         $"[{TAG}] {config.ClientName} failed for {videoId.Value} ({ex.Message}), trying next client...");
                 }
@@ -230,14 +218,12 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             // No manifest from any client — use the muxed-only fallback if we collected one.
             if (hasFallback)
             {
-                YouTubeTrace.Log($"innertube.fetch END fallback=muxed videoId={videoId.Value}");
                 ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
                     $"[{TAG}] No client returned an HLS/DASH manifest for {videoId.Value}, falling back to muxed MP4 (may have A/V sync issues)");
                 CachePlayerResponse(videoId.Value, fallback);
                 return fallback;
             }
 
-            YouTubeTrace.Log($"innertube.fetch END all-failed videoId={videoId.Value}");
             throw lastError ?? new InvalidOperationException($"All InnerTube clients failed for {videoId.Value}");
         }
 

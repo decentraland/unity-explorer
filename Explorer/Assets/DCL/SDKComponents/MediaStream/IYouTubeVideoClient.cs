@@ -114,8 +114,6 @@ namespace DCL.SDKComponents.MediaStream
                 IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null;
                 IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null;
 
-                YouTubeTrace.Log($"sidx.fetch START videoId={videoId.Value} videoBytes={videoStream.IndexRangeEnd - videoStream.IndexRangeStart + 1} audioBytes={audioStream.IndexRangeEnd - audioStream.IndexRangeStart + 1}");
-
                 // Fetch both sidx boxes in parallel. Each is typically a few KB.
                 (byte[]? videoSidx, byte[]? audioSidx) = await UniTask.WhenAll(
                     TryFetchByteRangeAsync(videoStream.Url, videoStream.IndexRangeStart, videoStream.IndexRangeEnd, ct),
@@ -126,8 +124,6 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (audioSidx != null)
                     audioSegments = SidxParser.Parse(audioSidx, audioStream.IndexRangeEnd + 1);
-
-                YouTubeTrace.Log($"sidx.fetch END videoSegs={videoSegments?.Count ?? -1} audioSegs={audioSegments?.Count ?? -1}");
 
                 HlsManifestBuilder.PlaylistSet? playlists =
                     HlsManifestBuilder.Build(response.AdaptiveFormats, response.DurationSeconds, videoSegments, audioSegments);

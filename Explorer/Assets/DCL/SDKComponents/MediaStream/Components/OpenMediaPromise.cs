@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.SDKComponents.MediaStream.YouTube;
 using System.Threading;
 
 namespace DCL.SDKComponents.MediaStream
@@ -46,9 +45,7 @@ namespace DCL.SDKComponents.MediaStream
             mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
             string url = urlMediaAddress!.Url;
 
-            YouTubeTrace.Log($"promise.resolve START url={url}");
             ResolvedMediaUrl resolved = await urlResolverService.ResolveAsync(url, reportData, ct);
-            YouTubeTrace.Log($"promise.resolve END reachable={resolved.IsReachable} live={resolved.IsLiveStream} rewrote={resolved.DirectUrl != url}");
 
             isReachable = resolved.IsReachable;
             isLiveStream = resolved.IsLiveStream;

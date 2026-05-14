@@ -49,19 +49,12 @@ namespace DCL.SDKComponents.MediaStream
             string videoIdStr = videoId.Value.Value;
 
             if (TryGetCached(videoIdStr, out ResolvedYouTubeUrl cached))
-            {
-                YouTube.YouTubeTrace.Log($"resolver.cache HIT videoId={videoIdStr}");
                 return cached;
-            }
-
-            YouTube.YouTubeTrace.Log($"resolver.cache MISS videoId={videoIdStr}");
 
             bool urlHintsLive = youtubeUrl.Contains("/live/");
 
             // First attempt
-            YouTube.YouTubeTrace.Log($"resolver.attempt 1 START videoId={videoIdStr} hintsLive={urlHintsLive}");
             ResolvedYouTubeUrl? result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
-            YouTube.YouTubeTrace.Log($"resolver.attempt 1 END videoId={videoIdStr} success={result != null}");
 
             // Single retry with backoff
             if (result == null && !ct.IsCancellationRequested)
@@ -70,11 +63,7 @@ namespace DCL.SDKComponents.MediaStream
                 await UniTask.Delay(RETRY_BACKOFF_MS, cancellationToken: ct);
 
                 if (!ct.IsCancellationRequested)
-                {
-                    YouTube.YouTubeTrace.Log($"resolver.attempt 2 START videoId={videoIdStr}");
                     result = await TryResolveInternalAsync(videoId.Value, urlHintsLive, ct);
-                    YouTube.YouTubeTrace.Log($"resolver.attempt 2 END videoId={videoIdStr} success={result != null}");
-                }
             }
 
             if (result != null)
