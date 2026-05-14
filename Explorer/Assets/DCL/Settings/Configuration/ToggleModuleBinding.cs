@@ -47,6 +47,7 @@ namespace DCL.Settings.Configuration
             SUN_LENS_FLARE_FEATURE = 13,
             DOUBLE_TAP_TO_MOVE = 14,
             MUTE_MIC_IN_BACKGROUND_FEATURE = 15,
+            SPRING_BONE_SIMULATION_FEATURE = 16,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -91,6 +92,7 @@ namespace DCL.Settings.Configuration
                 ToggleFeatures.PLAY_CURRENT_SCENE_STREAM_ONLY_FEATURE => new PlayCurrentSceneStreamSettingsController(viewInstance, videoPrioritizationSettings, qualitySettingsController),
                 ToggleFeatures.DOUBLE_TAP_TO_MOVE => new DoubleTapToMoveSettingsController(viewInstance),
                 ToggleFeatures.MUTE_MIC_IN_BACKGROUND_FEATURE => new MuteMicInBackgroundController(viewInstance),
+                ToggleFeatures.SPRING_BONE_SIMULATION_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetSpringBoneSimulation, x => x.SpringBoneSimulation),
                 // add other cases...
                 _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
             };
