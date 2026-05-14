@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using System;
 using System.Threading;
 using UnityEngine;
-using SceneRunner.Admins;
 using RichTypes;
 
 namespace SceneRunner.Scene
@@ -16,8 +16,8 @@ namespace SceneRunner.Scene
         SceneEcsExecutor EcsExecutor { get; }
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
-        Option<SceneAdmins> SceneAdmins { get; }
         bool IsEmpty { get; }
+        SceneRuntimeMetrics RuntimeMetrics { get; }
 
         void Initialize();
 

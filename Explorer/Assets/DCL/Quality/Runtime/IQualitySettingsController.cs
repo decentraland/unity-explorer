@@ -41,6 +41,9 @@ namespace DCL.Quality.Runtime
         // Other
         bool PlayCurrentSceneStreamsOnly { get; }
 
+        // Physics
+        bool SpringBoneSimulation { get; }
+
         /// <summary>
         ///     Applies a full preset, resetting all individual overrides
         /// </summary>
@@ -78,6 +81,9 @@ namespace DCL.Quality.Runtime
         // General Shadows
         void SetShadowQuality(ShadowQualityLevel level);
         void SetShadowDistance(int distance);
+
+        // Physics
+        void SetSpringBoneSimulation(bool enabled);
 
         // Other
         void SetPlayCurrentSceneStreamsOnly(bool enabled);

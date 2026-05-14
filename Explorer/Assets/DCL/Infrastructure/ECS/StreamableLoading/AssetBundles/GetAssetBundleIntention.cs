@@ -35,6 +35,13 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         internal Hash128? cacheHash;
 
+        /// <summary>
+        ///     Per-file dependency digest from the v49+ scene asset-bundle manifest. Two scenes can request the same
+        ///     <see cref="Hash"/> with different dependency closures; this field disambiguates them in the cache.
+        ///     Empty for legacy (pre-v49) entries — those keep their historical key.
+        /// </summary>
+        public string? DepsDigest;
+
         public bool IsDependency;
         public bool LookForDependencies;
 
@@ -55,6 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
+            DepsDigest = null;
 
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
@@ -68,9 +76,8 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention other) =>
-
-            // It doesn't take into consideration the asset bundle version, so whatever is retrieved and cached first will be served for all versions
-            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash)
+            && StringComparer.OrdinalIgnoreCase.Equals(DepsDigest ?? string.Empty, other.DepsDigest ?? string.Empty);
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
@@ -89,7 +96,9 @@ namespace ECS.StreamableLoading.AssetBundles
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty);
+            HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(DepsDigest ?? string.Empty));
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
@@ -106,6 +115,10 @@ namespace ECS.StreamableLoading.AssetBundles
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
             {
                 keyPayload.Put(asset.Hash ?? asset.Name!);
+
+                // Only contribute to the disk key when present so legacy 2-part-filename entries keep their existing on-disk file.
+                if (!string.IsNullOrEmpty(asset.DepsDigest))
+                    keyPayload.Put(asset.DepsDigest);
             }
         }
 

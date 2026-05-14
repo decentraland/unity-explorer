@@ -24,13 +24,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
-
+        private readonly EmoteMaskCatalog emoteMaskCatalog;
         private readonly bool legacyAnimationsEnabled;
         private readonly bool forceBackfaceCullingEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, bool legacyAnimationsEnabled = false, bool forceBackfaceCullingEnabled = false)
+        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, bool legacyAnimationsEnabled = false, bool forceBackfaceCullingEnabled = false)
         {
             this.forceBackfaceCullingEnabled = forceBackfaceCullingEnabled;
+            this.emoteMaskCatalog = emoteMaskCatalog;
             this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
@@ -87,15 +88,36 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (emoteReferences.legacy)
             {
-                ReportHub.LogWarning(ReportCategory.EMOTE, $"Masked scene emote '{mainAsset.name}' was loaded as Legacy; masks require Mecanim and cannot be played.");
-                Stop(emoteReferences);
-                return false;
+                if (!PlayMaskedLegacyEmote(view, ref maskedEmote, emoteReferences, isLooping))
+                {
+                    Stop(emoteReferences);
+                    return false;
+                }
             }
-
-            PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
+            else
+                PlayMaskedMecanimEmote(view, ref maskedEmote, emoteReferences, isLooping);
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             maskedEmote.CurrentEmoteReference = emoteReferences;
+            return true;
+        }
+
+        private bool PlayMaskedLegacyEmote(in IAvatarView view, ref CharacterMaskedEmoteComponent maskedEmote, EmoteReferences emoteReferences, bool isLooping)
+        {
+            if (emoteReferences.avatarClip == null) return false;
+
+            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out AvatarMask? avatarMask))
+            {
+                ReportHub.LogError(ReportCategory.EMOTE,
+                    $"{nameof(EmoteMaskCatalog)} has no entry for {maskedEmote.Mask}, masked legacy emote ignored.");
+                return false;
+            }
+
+            view.StartMaskedLegacyEmote(emoteReferences.avatarClip, avatarMask!, isLooping);
+
+            maskedEmote.EmoteLoop = isLooping;
+
+            SetupPropAnimation(emoteReferences, isLooping);
             return true;
         }
 
@@ -109,6 +131,13 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         public void StopMasked(EmoteReferences emoteReference, in IAvatarView avatarView, AvatarEmoteMask mask)
         {
+            if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished)
+            {
+                avatarView.StopMaskedLegacyEmote();
+                Stop(emoteReference);
+                return;
+            }
+
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_REFRESH);
             avatarView.SetAnimatorTrigger(AnimationHashes.MASKED_EMOTE_STOP);
@@ -132,11 +161,16 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             bool shouldCancel = masked.StopEmote;
 
-            if (!shouldCancel && masked.IsPlaying)
+            if (!shouldCancel)
             {
-                string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
-                int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
-                shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+                if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished)
+                    shouldCancel = avatarView.HasMaskedLegacyEmoteFinished;
+                else if (masked.IsPlaying)
+                {
+                    string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
+                    int currentTag = avatarView.GetAnimatorCurrentStateTag(layer);
+                    shouldCancel = currentTag != AnimationHashes.MASKED_EMOTE && currentTag != AnimationHashes.MASKED_EMOTE_LOOP;
+                }
             }
 
             if (!shouldCancel) return false;
@@ -150,6 +184,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         public static void UpdateMaskedEmoteTag(ref CharacterMaskedEmoteComponent masked, IAvatarView avatarView)
         {
             if (masked.CurrentEmoteReference == null) return;
+
+            // Legacy-blender path doesn't use Mecanim layer tags; cancellation is driven
+            // by HasMaskedLegacyEmoteFinished on the avatar view, not by tag transitions.
+            if (avatarView.IsMaskedLegacyEmotePlaying || avatarView.HasMaskedLegacyEmoteFinished) return;
 
             string layer = AnimatorEmoteLayers.GetFromEmoteMask(masked.Mask);
             int currentStateTag = avatarView.GetAnimatorCurrentStateTag(layer);
@@ -316,13 +354,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 animationComp.Play(avatarClipName);
             }
 
-            if (emoteReferences.propClip != null && emoteReferences.animationComp != null)
-            {
-                Animation propAnimationComp = emoteReferences.animationComp;
-                string propClipName = emoteReferences.propClip.name;
-                propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
-                propAnimationComp.Play(propClipName);
-            }
+            SetupPropAnimation(emoteReferences, loop);
         }
 
         private void PlayMecanimEmote(in IAvatarView view, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool isLooping)
@@ -371,15 +403,24 @@ namespace DCL.AvatarRendering.Emotes.Play
             SetupPropAnimation(emoteReferences, maskedEmote.EmoteLoop);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetupPropAnimation(EmoteReferences emoteReferences, bool isLooping)
         {
-            if (emoteReferences.propClip != null && emoteReferences.animatorComp != null)
+            if (emoteReferences.propClip == null) return;
+
+            if (emoteReferences.animatorComp != null)
             {
                 int propTriggerHash = IsAnimatorImportedLocally(emoteReferences.animatorComp) ? AnimationHashes.PROP_ANIMATION_TRIGGER : emoteReferences.propClipHash;
 
                 emoteReferences.animatorComp.SetTrigger(propTriggerHash);
                 emoteReferences.animatorComp.SetBool(AnimationHashes.LOOP, isLooping);
+            }
+            else if (emoteReferences.animationComp != null)
+            {
+                // Legacy prop animation lives on the emote prefab's own Animation component
+                Animation propAnimationComp = emoteReferences.animationComp;
+                string propClipName = emoteReferences.propClip.name;
+                propAnimationComp[propClipName].wrapMode = isLooping ? WrapMode.Loop : WrapMode.Once;
+                propAnimationComp.Play(propClipName);
             }
 
             return;

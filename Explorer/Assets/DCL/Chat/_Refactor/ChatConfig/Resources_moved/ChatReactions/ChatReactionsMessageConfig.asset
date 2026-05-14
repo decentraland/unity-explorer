@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29a97ef075d8c414184d10c1056ad9ec, type: 3}
   m_Name: ChatReactionsMessageConfig
   m_EditorClassIdentifier: DCL.Social::DCL.Chat.Reactions.ChatReactionsMessageConfig
-  <FixedDefaultEmojiUnicodes>k__BackingField: 652600004ff4010022f6010023f9010025f5010031000000
+  <FixedDefaultEmojiUnicodes>k__BackingField: 652600004ff401004df401004ef4010023f9010025f5010022f60100
   <MaxRecentEmojis>k__BackingField: 3
   <MaxDistinctReactionsPerMessage>k__BackingField: 18
   <ReactionLimitMessage>k__BackingField: This message has reached the reaction limit.

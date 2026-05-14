@@ -8,10 +8,10 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Buffers.Binary;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace SceneRuntime.Apis.Modules.CommsApi
 {
@@ -37,8 +37,8 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         private readonly CommsWriter commsWriter = new ();
 
-        private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
-        private readonly ConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
+        private readonly DCLConcurrentDictionary<string, DCLConcurrentQueue<BufferedDataMessage>> topicBuffers = new ();
+        private readonly DCLConcurrentDictionary<string, (int count, int windowStartMs)> publishRateLimiters = new ();
 
         public CommsApiWrap(
             IRoomHub roomHub,
@@ -191,7 +191,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         public void SubscribeToTopic(string topic)
         {
             // method is called relatively rare, allocation new Queue is acceptable, pooling not required
-            topicBuffers.TryAdd(topic, new ConcurrentQueue<BufferedDataMessage>());
+            topicBuffers.TryAdd(topic, new DCLConcurrentQueue<BufferedDataMessage>());
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         [UsedImplicitly]
         public void UnsubscribeFromTopic(string topic)
         {
-            topicBuffers.TryRemove(topic, out ConcurrentQueue<BufferedDataMessage> _output);
+            topicBuffers.TryRemove(topic, out DCLConcurrentQueue<BufferedDataMessage> _output);
             // 'output' object is droped and will be collected by GC (it's assumed nothing else holds the reference)
         }
 
@@ -214,7 +214,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
         {
             try
             {
-                if (!topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue) || queue.IsEmpty)
+                if (!topicBuffers.TryGetValue(topic, out DCLConcurrentQueue<BufferedDataMessage> queue) || queue.IsEmpty)
                     return EMPTY_ARRAY;
 
                 lock (this)
@@ -248,7 +248,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
         /// <summary>
         /// Runs on the LiveKit callback thread (ORIGIN_THREAD), not the main thread.
-        /// Only thread-safe types (ConcurrentQueue, Encoding) are used here.
+        /// Only thread-safe types (DCLConcurrentQueue, Encoding) are used here.
         /// Decodes wire format: [topicLen 2 bytes LE][topic UTF-8][data UTF-8].
         /// </summary>
         private void OnDataReceived(ISceneCommunicationPipe.DecodedMessage message)
@@ -265,7 +265,7 @@ namespace SceneRuntime.Apis.Modules.CommsApi
 
             string topic = Encoding.UTF8.GetString(span.Slice(TOPIC_LENGTH_PREFIX_BYTES, topicLength));
 
-            if (topicBuffers.TryGetValue(topic, out ConcurrentQueue<BufferedDataMessage> queue))
+            if (topicBuffers.TryGetValue(topic, out DCLConcurrentQueue<BufferedDataMessage> queue))
             {
                 // DROP OLD POLICY. Dequeues oldest item to insert new one
                 if (queue.Count >= TOPIC_BUFFER_MAX_MESSAGE_COUNT)

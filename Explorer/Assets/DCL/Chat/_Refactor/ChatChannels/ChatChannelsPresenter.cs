@@ -3,6 +3,8 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat
@@ -25,6 +28,7 @@ namespace DCL.Chat
         private readonly CloseChannelCommand closeChannelCommand;
         private readonly OpenConversationCommand openConversationCommand;
         private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
+        private readonly ProfileRepositoryWrapper profileRepository;
         private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
         private readonly EventSubscriptionScope scope = new ();
 
@@ -41,7 +45,8 @@ namespace DCL.Chat
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
             OpenConversationCommand openConversationCommand,
-            CreateChannelViewModelCommand createChannelViewModelCommand)
+            CreateChannelViewModelCommand createChannelViewModelCommand,
+            ProfileRepositoryWrapper profileRepository)
         {
             this.view = view;
             this.chatEventBus = chatEventBus;
@@ -52,6 +57,7 @@ namespace DCL.Chat
             this.closeChannelCommand = closeChannelCommand;
             this.openConversationCommand = openConversationCommand;
             this.createChannelViewModelCommand = createChannelViewModelCommand;
+            this.profileRepository = profileRepository;
 
             lifeCts = new CancellationTokenSource();
 
@@ -75,6 +81,8 @@ namespace DCL.Chat
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+
+            profileRepository.UserThumbnailRefreshed += OnUserThumbnailRefreshed;
         }
 
         public void Dispose()
@@ -89,7 +97,20 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnMessageAdded;
             chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
 
+            profileRepository.UserThumbnailRefreshed -= OnUserThumbnailRefreshed;
+
             scope.Dispose();
+        }
+
+        private void OnUserThumbnailRefreshed(string userId)
+        {
+            if (!viewModels.TryGetValue(new ChatChannel.ChannelId(userId), out BaseChannelViewModel? vm)) return;
+            if (vm is not UserChannelViewModel userVm) return;
+
+            Sprite? sprite = profileRepository.GetLatestThumbnailForUser(userId);
+
+            if (sprite != null)
+                userVm.ProfilePicture.SetLoaded(sprite, false);
         }
 
         private void CommunityChannelMetadataUpdated(CommunityMetadataUpdatedEvent evt)

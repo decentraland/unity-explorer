@@ -84,8 +84,9 @@ Read `BuilderExtensions.cs` for the full list. The most common:
 | `AddFloatSliderField(string, ElementBinding<float>, min, max)` | Tune a float parameter |
 | `AddIntSliderField(string, ElementBinding<int>, min, max)` | Tune an int parameter |
 | `AddControlWithLabel(string, IDebugElementDef?, DebugHintDef?)` | Custom left-label + right-element row |
+| `AddControl(new DebugLineChartDef(...), null)` | Full-width sparkline chart (auto-scaled, `LineChartBuffer` ring binding, current value formatted via `DebugLongMarkerDef.Unit`) |
 
-For the complete element definition types, check the `Declarations/` folder — one `Debug*Def.cs` per element kind.
+For the complete element definition types, check the `Declarations/` folder — one `Debug*Def.cs` per element kind. Line charts in particular: see `DebugLineChartDef` / `DebugLineChartElement` and use `ElementBinding<LineChartBuffer>` with a reused `float[]` ring (re-pushing the same backing array each frame is allocation-free).
 
 ### Step 4: Wire IDebugContainerBuilder Through DI
 
@@ -165,6 +166,26 @@ This works because `AddCustomMarker` renders `ElementBinding<string>` through a 
 
 ---
 
+## Panel Layout States
+
+The container has three runtime states; widgets must render correctly in all three. The state is driven entirely by USS classes on `#Panel` — never hardcode pixel dimensions in widget UXML/USS.
+
+| State | USS class on `#Panel` | Trigger | What changes |
+|---|---|---|---|
+| Minimized (default) | (none) | Initial state, or close→reopen with maximized pref off | `width: 300px`, `max-height: 500px` |
+| Maximized | `debug-panel--maximized` | User clicks the square header button (between title and ✖) | `width: 450px` baseline, `max-height: 90%`, top margin clears the connection panel; non-header text +30%; chart plot height +50%; `DebugControl` columns shift to 65/35 with label wrapping enabled; left-edge resize handle becomes visible |
+| Wide | `debug-panel--maximized debug-panel--wide` | Drag width past `2 × baselineMaximizedWidth` | `#Parent` switches to `flex-direction: row; flex-wrap: wrap;` with each `DebugWidget` at `width: 50%`. Resize is clamped to `Screen.width * 0.7`. |
+
+Persisted state lives in `DCLPrefKeys.DEBUG_PANEL_MAXIMIZED` (bool) and `DEBUG_PANEL_MAXIMIZED_WIDTH` (float). The baseline width is read at runtime from `mainPanel.resolvedStyle.width` after the maximized class is applied — don't duplicate that 450 px constant in C#.
+
+**Implications when adding a widget:**
+- Use percent or `flex` layouts, not fixed `width: NNNpx`. Existing elements all stretch via `align-self: stretch` or percent flex-basis — match that.
+- Don't hardcode font sizes on text labels you create — inherit from `.unity-text-element` (12 px → 16 px when maximized via the `.debug-panel--maximized .unity-text-element` rule).
+- If your widget contains a category foldout, use class `debug-text--header` so it stays readable at 12 px in maximized mode (the rule re-pins headers).
+- A widget should look reasonable at 300, 450, 600, and 900+ px panel widths.
+
+---
+
 ## Reference Implementations
 
 When in doubt, read these existing implementations:
@@ -175,3 +196,4 @@ When in doubt, read these existing implementations:
 | A (system-direct) | `Rendering/GPUInstancing/Systems/DebugGPUInstancingSystem.cs` | Toggle + slider, settings sync, cleanup on dispose |
 | B (plugin-creates) | `PluginSystem/World/ParticleSystemPlugin.cs` + `SDKComponents/ParticleSystem/Systems/ParticleSystemBudgetSystem.cs` | Plugin creates bindings in InitializeAsync, system writes them |
 | C (helper class) | `Multiplayer/Connections/Systems/Debug/DebugWidgetRoomDisplay.cs` | Non-system class, decorator pattern, multiple widget instances |
+| Charts + appended widget | `PerformanceAndDiagnostics/Profiling/ECS/DebugViewCurrentSceneSystem.cs` | `DebugLineChartDef`/`LineChartBuffer` usage, appending rows to an existing category, gating Update on `widgetEnabled` (skip all work when `TryAddWidget` returned null), reactive subscription to `IScenesCache.CurrentScene` |
