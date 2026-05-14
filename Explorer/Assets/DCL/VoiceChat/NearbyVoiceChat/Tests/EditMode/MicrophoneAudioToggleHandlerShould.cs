@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.Tests
             Object.DestroyImmediate(onClip);
         }
 
-        private void OnPlay(AudioClipConfig clip) =>
+        private void OnPlay(AudioClipConfig clip, float volumeScale) =>
             played.Add(clip);
 
         [Test]
