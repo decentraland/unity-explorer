@@ -164,6 +164,7 @@ namespace DCL.Utility
 
                     Action? current = quittingField.GetValue(null) as Action;
                     Delegate[] handlers = current?.GetInvocationList() ?? Array.Empty<Delegate>();
+                    ReportHub.LogProductionInfo($"[ExitUtils.Patch] Delegates count from the original Application.quitting: {handlers.Length}");
 
                     Action selfFirst = ApplicationQuittingFirstSubscriberSelfPatchWithTimers;
                     Action rebuilt = selfFirst;
