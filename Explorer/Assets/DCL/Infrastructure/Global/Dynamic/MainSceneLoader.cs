@@ -195,17 +195,11 @@ namespace Global.Dynamic
 
             var assetsProvisioner = new AddressablesProvisioner();
 
-            ReportHub.LogProductionInfo("[BOOT] 01 - awaiting splash screen addressables");
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
-            ReportHub.LogProductionInfo("[BOOT] 02 - splash screen instance ready");
 
             // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
             if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
-            {
-                ReportHub.LogProductionInfo("[BOOT] 03 - instantiating AltTester prefab");
                 InstantiateAltTester(applicationParametersParser);
-                ReportHub.LogProductionInfo("[BOOT] 04 - AltTester prefab instantiated");
-            }
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
@@ -215,7 +209,6 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-            ReportHub.LogProductionInfo("[BOOT] 05 - awaiting BootstrapContainer.CreateAsync");
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 assetsProvisioner,
                 debugSettings,
@@ -234,38 +227,30 @@ namespace Global.Dynamic
                 dclVersion,
                 destroyCancellationToken
             );
-            ReportHub.LogProductionInfo("[BOOT] 06 - BootstrapContainer ready");
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
-                ReportHub.LogProductionInfo("[BOOT] 07 - awaiting PreInitializeSetupAsync");
                 await bootstrap.PreInitializeSetupAsync(destroyCancellationToken);
-                ReportHub.LogProductionInfo("[BOOT] 08 - PreInitializeSetupAsync done");
 
                 if (ShouldForceSingleRunningInstance(applicationParametersParser))
                 {
-                    ReportHub.LogProductionInfo("[BOOT] 08a - single-instance lock failed; showing popup and exiting");
                     await ShowSingleRunningInstancePopupAsync(assetsProvisioner, ct);
                     return;
                 }
 
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
 
-                ReportHub.LogProductionInfo("[BOOT] 09 - awaiting InitializeFeatureFlagsAsync (HTTP)");
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, ct);
-                ReportHub.LogProductionInfo("[BOOT] 10 - InitializeFeatureFlagsAsync done");
 
                 bootstrap.InitializeFeaturesRegistry();
 
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
                 bool isLoaded;
-                ReportHub.LogProductionInfo("[BOOT] 11 - awaiting LoadStaticContainerAsync");
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
-                ReportHub.LogProductionInfo($"[BOOT] 12 - LoadStaticContainerAsync done (isLoaded={isLoaded})");
 
                 if (!isLoaded)
                 {
@@ -279,7 +264,6 @@ namespace Global.Dynamic
 
                 OfficialWalletsHelper.Initialize(new OfficialWalletsHelper());
 
-                ReportHub.LogProductionInfo("[BOOT] 13 - awaiting LoadDynamicWorldContainerAsync");
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
@@ -293,7 +277,6 @@ namespace Global.Dynamic
                     coroutineRunner: this,
                     dclVersion,
                     destroyCancellationToken);
-                ReportHub.LogProductionInfo($"[BOOT] 14 - LoadDynamicWorldContainerAsync done (isLoaded={isLoaded})");
 
                 if (!isLoaded)
                 {
@@ -301,19 +284,14 @@ namespace Global.Dynamic
                     return;
                 }
 
-                ReportHub.LogProductionInfo("[BOOT] 15 - awaiting InitialGuardsCheck (Livekit/version/blocked-popup)");
                 if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, decentralandUrlsSource, ct))
                     return;
-                ReportHub.LogProductionInfo("[BOOT] 16 - InitialGuardsCheck passed");
 
-                ReportHub.LogProductionInfo("[BOOT] 17 - awaiting VerifyMinimumHardwareRequirementMetAsync");
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
-                ReportHub.LogProductionInfo("[BOOT] 18 - VerifyMinimumHardware done");
 
                 if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
-                ReportHub.LogProductionInfo("[BOOT] 19 - awaiting IsTrustedRealmAsync");
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
                     splashScreen.Value.Hide();
@@ -326,29 +304,19 @@ namespace Global.Dynamic
 
                     splashScreen.Value.Show();
                 }
-                ReportHub.LogProductionInfo("[BOOT] 20 - IsTrustedRealmAsync done");
 
                 DisableInputs();
 
-                ReportHub.LogProductionInfo("[BOOT] 21 - awaiting InitializePluginsAsync");
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
-                ReportHub.LogProductionInfo("[BOOT] 22 - InitializePluginsAsync done");
 
-                ReportHub.LogProductionInfo("[BOOT] 23 - creating GlobalWorld (CharacterObject + Camera spawn here)");
                 globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugContainer.RootDocument, playerEntity);
-                ReportHub.LogProductionInfo("[BOOT] 24 - GlobalWorld created");
 
-                ReportHub.LogProductionInfo("[BOOT] 25 - awaiting LoadStartingRealmAsync (HTTP)");
                 await LoadStartingRealmAsync(ct);
-                ReportHub.LogProductionInfo("[BOOT] 26 - LoadStartingRealmAsync done");
-
-                ReportHub.LogProductionInfo("[BOOT] 27 - awaiting LoadUserFlowAsync (auth + loading stages)");
                 await LoadUserFlowAsync(playerEntity, ct);
-                ReportHub.LogProductionInfo("[BOOT] 28 - LoadUserFlowAsync done; bootstrap complete");
 
                 //This is done to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded

@@ -88,19 +88,14 @@ namespace Global.Dynamic
 
         public async UniTask PreInitializeSetupAsync(CancellationToken token)
         {
-            ReportHub.LogProductionInfo("[BOOT.Pre] 1 - splashScreen.Show");
             splashScreen.Show();
 
-            ReportHub.LogProductionInfo("[BOOT.Pre] 2 - awaiting realmUrls.StartingRealmAsync");
             string realm = await realmUrls.StartingRealmAsync(token);
-            ReportHub.LogProductionInfo($"[BOOT.Pre] 3 - StartingRealmAsync returned '{realm}'");
             startingRealm = URLDomain.FromString(realm);
 
             // Initialize .NET logging ASAP since it might be used by another systems
             // Otherwise we might get exceptions in different platforms
-            ReportHub.LogProductionInfo("[BOOT.Pre] 4 - DotNetLoggingPlugin.Initialize");
             DotNetLoggingPlugin.Initialize();
-            ReportHub.LogProductionInfo("[BOOT.Pre] 5 - DotNetLoggingPlugin initialized");
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
@@ -287,9 +282,7 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            ReportHub.LogProductionInfo("[BOOT.Realm] 1 - awaiting realmUrls.StartingRealmAsync");
             string realm = await realmUrls.StartingRealmAsync(ct);
-            ReportHub.LogProductionInfo($"[BOOT.Realm] 2 - resolved starting realm '{realm}'");
             startingRealm = URLDomain.FromString(realm);
 
             if (startingRealm.HasValue == false)
@@ -297,7 +290,6 @@ namespace Global.Dynamic
 
             if (realmLaunchSettings.initialRealm is InitialRealm.World)
             {
-                ReportHub.LogProductionInfo("[BOOT.Realm] 3 - awaiting IsUserAuthorisedToAccessWorldAsync (HTTP)");
                 bool isAuthorized = await dynamicWorldContainer.RealmController
                     .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
 
@@ -317,9 +309,7 @@ namespace Global.Dynamic
                 }
             }
 
-            ReportHub.LogProductionInfo($"[BOOT.Realm] 4 - awaiting RealmController.SetRealmAsync('{startingRealm.Value}')");
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
-            ReportHub.LogProductionInfo("[BOOT.Realm] 5 - SetRealmAsync done");
         }
 
         public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
@@ -332,7 +322,6 @@ namespace Global.Dynamic
             BootstrapContainer bootstrapContainer,
             GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
         {
-            ReportHub.LogProductionInfo("[BOOT.User] 1 - splashScreen.Show");
             splashScreen.Show();
 
             IWeb3Authenticator authenticator = new TokenFileAuthenticator(
@@ -345,20 +334,17 @@ namespace Global.Dynamic
 
             try
             {
-                ReportHub.LogProductionInfo("[BOOT.User] 2 - awaiting authenticator.LoginAsync (auto-login token)");
                 IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
-                ReportHub.LogProductionInfo($"[BOOT.User] 3 - LoginAsync ok, identity={identity.Address}");
 
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
                 if (EnableAnalytics)
                     bootstrapContainer.Analytics.Controller.Identify(identity);
             }
-            catch (AutoLoginTokenNotFoundException) { ReportHub.LogProductionInfo("[BOOT.User] 3a - AutoLoginTokenNotFoundException (no cached token; will show auth UI)"); } // Exceptions on auto-login should not block the application bootstrap
-            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); ReportHub.LogProductionInfo("[BOOT.User] 3b - AutoLoginTokenInvalidException"); }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); ReportHub.LogProductionInfo($"[BOOT.User] 3c - LoginAsync threw {e.GetType().Name}"); }
+            catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
-            ReportHub.LogProductionInfo("[BOOT.User] 4 - awaiting UserInAppInAppInitializationFlow.ExecuteAsync");
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
                 (
@@ -368,10 +354,8 @@ namespace Global.Dynamic
                     world: globalWorld.EcsWorld,
                     playerEntity: playerEntity
                 ), ct);
-            ReportHub.LogProductionInfo("[BOOT.User] 5 - UserInAppInAppInitializationFlow.ExecuteAsync done");
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
-            ReportHub.LogProductionInfo("[BOOT.User] 6 - default UI opened; hiding splash");
 
             splashScreen.Hide();
         }
