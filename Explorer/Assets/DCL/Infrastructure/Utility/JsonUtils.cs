@@ -59,5 +59,54 @@ namespace DCL.Utility
             writer.WriteValue(color.a);
             writer.WriteEndObject();
         }
+
+        /// <summary>
+        ///     Deserializes a Vector3 from a JSON token containing x, y, and z properties.
+        /// </summary>
+        public static Vector3 DeserializeVector3(JToken? jObject, Vector3 fallback)
+        {
+            if (jObject == null) return fallback;
+
+            if (jObject.Type == JTokenType.Array)
+            {
+                var arr = (JArray)jObject;
+                return new Vector3(
+                    arr.Count > 0 ? arr[0].Value<float>() : 0,
+                    arr.Count > 1 ? arr[1].Value<float>() : 0,
+                    arr.Count > 2 ? arr[2].Value<float>() : 0);
+            }
+
+            return new Vector3(
+                jObject["x"]?.Value<float>() ?? 0,
+                jObject["y"]?.Value<float>() ?? 0,
+                jObject["z"]?.Value<float>() ?? 0);
+        }
+
+        /// <summary>
+        ///     Serializes a Unity Vector3 to JSON format with x, y, and z properties.
+        /// </summary>
+        public static void SerializeVector3(JsonWriter writer, Vector3 vector)
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("x");
+            writer.WriteValue(vector.x);
+            writer.WritePropertyName("y");
+            writer.WriteValue(vector.y);
+            writer.WritePropertyName("z");
+            writer.WriteValue(vector.z);
+            writer.WriteEndObject();
+        }
+    }
+
+    public class Vector3JsonConverter : JsonConverter<Vector3>
+    {
+        public override void WriteJson(JsonWriter writer, Vector3 value, JsonSerializer serializer) =>
+            JsonUtils.SerializeVector3(writer, value);
+
+        public override Vector3 ReadJson(JsonReader reader, Type objectType, Vector3 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null) return existingValue;
+            return JsonUtils.DeserializeVector3(JToken.Load(reader), existingValue);
+        }
     }
 }
