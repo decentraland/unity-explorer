@@ -133,7 +133,7 @@ namespace DCL.Utility
             ReportHub.LogProductionInfo($"[ExitUtils] CleanUpCandidates finished at {stopwatch.ElapsedMilliseconds}ms");
 
             // Reflection may drop the values. resubscribe to be sure. 
-            ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
+            Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
