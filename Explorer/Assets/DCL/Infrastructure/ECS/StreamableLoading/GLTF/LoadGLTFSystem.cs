@@ -216,7 +216,7 @@ namespace ECS.StreamableLoading.GLTF
                     await gltfImport.InstantiateSceneAsync(targetTransform, i);
                 }
             else
-                await gltfImport.InstantiateSceneAsync(rootContainerTransform);
+                await gltfImport.InstantiateMainSceneAsync(rootContainerTransform);
         }
 
         /// <summary>
