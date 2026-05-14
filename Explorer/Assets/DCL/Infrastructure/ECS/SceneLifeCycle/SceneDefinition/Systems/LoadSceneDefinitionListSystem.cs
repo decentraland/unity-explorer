@@ -125,6 +125,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+
+                // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
+                // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
+                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

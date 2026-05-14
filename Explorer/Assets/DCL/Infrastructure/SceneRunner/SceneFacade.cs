@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRunner.Admins;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
@@ -32,7 +32,7 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        public Option<ISceneAdmins> SceneAdmins => deps.SceneAdmins;
+        public SceneRuntimeMetrics RuntimeMetrics => deps.SyncDeps.RuntimeMetrics;
 
         private int intervalMS;
 
@@ -72,6 +72,7 @@ namespace SceneRunner
         public void SetTargetFPS(int fps)
         {
             intervalMS = (int)(1000f / fps);
+            RuntimeMetrics.TargetFps = fps;
         }
 
         UniTask ISceneFacade.StartScene() =>
@@ -157,13 +158,15 @@ namespace SceneRunner
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await DCLTask.Delay(sleepMS, ct);
                     MultithreadingUtility.AssertMainThread(nameof(DCLTask.Delay));
+                    long elapsedTicks = stopWatch.Elapsed.Ticks;
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
+                    RuntimeMetrics.TickTimesNs.Add(elapsedTicks * 100);
                 }
             }
             catch (OperationCanceledException) { }
         }
 
-        private async 
+        private async
 #if UNITY_WEBGL
             Cysharp.Threading.Tasks.UniTask<bool>
 #else
