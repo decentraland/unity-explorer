@@ -150,5 +150,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         WhatsOnEventLink = 90,
 
         PeerContent = 91,
+
+        Faqs = 92,
+        Discord = 93,
     }
 }
