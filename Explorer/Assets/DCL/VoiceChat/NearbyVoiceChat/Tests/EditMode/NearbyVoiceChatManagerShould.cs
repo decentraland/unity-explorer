@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents the slimmed <see cref="NearbyVoiceChatManager"/> as a pure state-orchestration adapter:
+    /// Documents the slimmed <see cref="NearbyVoiceChatSuppressor"/> as a pure state-orchestration adapter:
     /// translates external triggers (Community/Private call status, world loading) into
     /// Suppress/Resume on the state model.
     /// </summary>
@@ -33,7 +33,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void NotSuppressLoadingWhenAlreadyCompletedAtConstruction()
         {
             // Act
-            using var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
@@ -46,7 +46,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             loadingStatus = new FakeLoadingStatus(LoadingStatus.LoadingStage.Init);
 
             // Act
-            using var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
@@ -58,7 +58,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Arrange
             loadingStatus = new FakeLoadingStatus(LoadingStatus.LoadingStage.Init);
-            using var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Act
             loadingStatus.CurrentStage.Value = LoadingStatus.LoadingStage.Completed;
@@ -71,7 +71,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void SuppressOnCallInCall()
         {
             // Arrange
-            using var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Act
             callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
@@ -85,7 +85,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void ResumeOnCallDisconnected()
         {
             // Arrange
-            using var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
             callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
 
             // Act
@@ -99,7 +99,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void UnsubscribeAfterDispose()
         {
             // Arrange
-            var manager = new NearbyVoiceChatManager(stateModel, callStatus, loadingStatus);
+            var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
             manager.Dispose();
 
             // Act — should not trigger further state changes

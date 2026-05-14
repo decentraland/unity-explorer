@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
         private NearbyAudioStreamsRegistry? nearbyAudioStreamRegistry;
         private HashSet<StreamKey>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
-        private NearbyVoiceChatManager? nearbyVoiceChatManager;
+        private NearbyVoiceChatSuppressor? nearbyVoiceChatManager;
         private NearbyMicrophoneHandler? nearbyMicrophoneHandler;
         private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
@@ -239,7 +239,7 @@ namespace DCL.PluginSystem.Global
 
                 nearbyMuteService!.LoadAsync(ct).Forget();
 
-                nearbyVoiceChatManager = new NearbyVoiceChatManager(stateModel, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
+                nearbyVoiceChatManager = new NearbyVoiceChatSuppressor(stateModel, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
                 pluginScope.Add(nearbyVoiceChatManager);
 
                 nearbyMicrophoneHandler = new NearbyMicrophoneHandler(stateModel, islandRoom, voiceChatConfiguration);

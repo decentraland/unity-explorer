@@ -12,9 +12,9 @@ namespace DCL.VoiceChat
     ///     Microphone-track lifecycle (publish, retry, device-switch, focus pause, reconnect, VAD) is owned by <see cref="NearbyMicrophoneHandler"/>.
     ///     Remote audio binding is owned by <see cref="DCL.VoiceChat.Nearby.Systems.NearbyAudioBindingSystem"/> driven from <see cref="DCL.VoiceChat.Nearby.Audio.INearbyAudioStreamRegistry"/>.
     /// </summary>
-    public class NearbyVoiceChatManager : IDisposable
+    public class NearbyVoiceChatSuppressor : IDisposable
     {
-        private const string TAG = nameof(NearbyVoiceChatManager);
+        private const string TAG = nameof(NearbyVoiceChatSuppressor);
 
         private readonly NearbyVoiceChatStateModel stateModel;
 
@@ -23,7 +23,7 @@ namespace DCL.VoiceChat
 
         private bool disposed;
 
-        public NearbyVoiceChatManager(NearbyVoiceChatStateModel stateModel, IReadonlyReactiveProperty<VoiceChatStatus> callStatus, ILoadingStatus loadingStatus)
+        public NearbyVoiceChatSuppressor(NearbyVoiceChatStateModel stateModel, IReadonlyReactiveProperty<VoiceChatStatus> callStatus, ILoadingStatus loadingStatus)
         {
             this.stateModel = stateModel;
 
@@ -34,8 +34,6 @@ namespace DCL.VoiceChat
 
             loadingStageSubscription = loadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged);
             callStatusSubscription = callStatus.Subscribe(OnCallStatusChanged);
-
-            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"{TAG} Initialized");
         }
 
         public void Dispose()
@@ -45,8 +43,6 @@ namespace DCL.VoiceChat
 
             callStatusSubscription.Dispose();
             loadingStageSubscription.Dispose();
-
-            ReportHub.Log(ReportCategory.NEARBY_VOICE_CHAT, $"{TAG} Disposed");
         }
 
         private void OnCallStatusChanged(VoiceChatStatus status)
