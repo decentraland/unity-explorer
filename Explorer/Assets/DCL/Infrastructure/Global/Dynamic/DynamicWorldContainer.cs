@@ -21,6 +21,7 @@ using DCL.Chat.MessageBus;
 using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
@@ -750,6 +751,8 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            var springBoneSimulationSettings = new SpringBoneSimulationSettings();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -1004,7 +1007,8 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
                     worldPermissionsService,
-                    staticContainer.QualityContainer.RendererFeaturesCache
+                    staticContainer.QualityContainer.RendererFeaturesCache,
+                    springBoneSimulationSettings
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1119,7 +1123,8 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
-                new JumpIndicatorPlugin(assetsProvisioner)
+                new JumpIndicatorPlugin(assetsProvisioner),
+                new SpringBonesPlugin(springBoneSimulationSettings),
             };
 
             if (donationsService.DonationFeatureEnabled)
