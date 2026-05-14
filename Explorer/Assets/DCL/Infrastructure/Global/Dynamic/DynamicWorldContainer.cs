@@ -302,8 +302,10 @@ namespace Global.Dynamic
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
+            var supportRequestService = new SupportRequestService(bootstrapContainer.WebBrowser);
+
             IMVCManager mvcManager = dynamicWorldParams.EnableAnalytics
-                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller)
+                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics.Controller, supportRequestService)
                 : coreMvcManager;
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
@@ -614,6 +616,7 @@ namespace Global.Dynamic
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.SmartWearableCache),
                 new VersionChatCommand(dclVersion),
+                new SupportChatCommand(supportRequestService),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
                 new SceneAdminsChatCommand(),
@@ -901,7 +904,8 @@ namespace Global.Dynamic
                     passportBridge,
                     chatEventBus,
                     eventsApiService,
-                    staticContainer.SmartWearableCache),
+                    staticContainer.SmartWearableCache,
+                    supportRequestService),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(
                     mvcManager,

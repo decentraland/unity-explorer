@@ -151,6 +151,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         PeerContent = 91,
 
+        Faqs = 92,
+        Discord = 93,
+
         Pulse = 100,
     }
 }
