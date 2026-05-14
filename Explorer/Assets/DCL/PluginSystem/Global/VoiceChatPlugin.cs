@@ -86,6 +86,13 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource? nearbyTipCts;
         private VoiceChatConfiguration voiceChatConfiguration;
 
+        // EXIT-DELAY BISECTION (#8764): state for the wantsToQuit interception flow.
+        // disconnectsCompleted starts false; on the first wantsToQuit we cancel the quit,
+        // run the async room disconnects, set the flag, and re-issue Application.Quit().
+        // The second wantsToQuit sees the flag and returns true so Unity proceeds with shutdown.
+        private bool disconnectsCompleted;
+        private bool disconnectsInFlight;
+
         public VoiceChatPlugin(
             IRoomHub roomHub,
             VoiceChatPanelView voiceChatPanelView,
@@ -133,33 +140,22 @@ namespace DCL.PluginSystem.Global
             this.volumeBus = volumeBus;
 
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
+
+            // EXIT-DELAY BISECTION (#8764): hook Application.wantsToQuit so we can run the
+            // LiveKit room disconnects while the PlayerLoop is still pumping. Returning false
+            // cancels the quit, we drive the disconnects async, then re-issue Application.Quit()
+            // when complete. The second wantsToQuit invocation sees disconnectsCompleted=true
+            // and lets Unity proceed. This avoids the sync-over-async deadlock that .AsTask().Wait()
+            // hit in the previous attempt: blocking the main thread prevented UniTask continuations
+            // from resuming, so DisconnectInstruction.AwaitWithSuccess never completed.
+            if (HasExitTestDisconnectRoomsOnQuit())
+                Application.wantsToQuit += OnWantsToQuitInterceptForRoomDisconnect;
         }
 
         public void Dispose()
         {
-            // EXIT-DELAY BISECTION (#8764): when --exit-test-disconnect-rooms-on-quit is set,
-            // disconnect the LiveKit rooms explicitly before tearing down the plugin. Rationale:
-            // livekit_ffi tokio workers get attached to the IL2CPP managed runtime via the first
-            // managed callback they fire (track subscribed, participant update, etc.) and never
-            // detach. The only way to make them detach is to make the threads themselves exit,
-            // which happens when the tokio runtime owning them shuts down — which in turn happens
-            // when the LiveKit Room is disconnected. We block up to 3s for completion so we cap
-            // any potential hang in the disconnect path itself.
             if (HasExitTestDisconnectRoomsOnQuit())
-            {
-                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: disconnecting LiveKit rooms on quit");
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                try
-                {
-                    roomHub.IslandRoom().DisconnectAsync(cts.Token).AsTask().Wait(cts.Token);
-                }
-                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: IslandRoom disconnect failed: {ex.Message}"); }
-                try
-                {
-                    roomHub.VoiceChatRoom().Room().DisconnectAsync(cts.Token).AsTask().Wait(cts.Token);
-                }
-                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: VoiceChatRoom disconnect failed: {ex.Message}"); }
-            }
+                Application.wantsToQuit -= OnWantsToQuitInterceptForRoomDisconnect;
 
             nearbyTipCts.SafeCancelAndDispose();
             pluginScope.Dispose();
@@ -168,6 +164,53 @@ namespace DCL.PluginSystem.Global
                 voiceChatPluginSettingsAsset.Dispose();
 
             RustAudioClient.DeInit();
+        }
+
+        // EXIT-DELAY BISECTION (#8764): intercept the quit, run room disconnects asynchronously
+        // while the PlayerLoop is still active, then re-trigger Application.Quit() once complete.
+        private bool OnWantsToQuitInterceptForRoomDisconnect()
+        {
+            if (disconnectsCompleted)
+            {
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: wantsToQuit second pass — disconnects complete, allowing quit");
+                return true;
+            }
+
+            if (disconnectsInFlight)
+            {
+                // Should not happen because Unity only invokes wantsToQuit once per Quit() call,
+                // but guard against re-entry just in case.
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: wantsToQuit re-entered while disconnects in flight — blocking quit");
+                return false;
+            }
+
+            disconnectsInFlight = true;
+            ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: wantsToQuit — deferring quit to disconnect LiveKit rooms");
+            DisconnectRoomsThenQuitAsync().Forget();
+            return false;
+        }
+
+        private async UniTaskVoid DisconnectRoomsThenQuitAsync()
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            try
+            {
+                await UniTask.WhenAll(
+                    roomHub.IslandRoom().DisconnectAsync(cts.Token),
+                    roomHub.VoiceChatRoom().Room().DisconnectAsync(cts.Token));
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: LiveKit room disconnects complete");
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: LiveKit room disconnects timed out after 10s");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.ALWAYS);
+            }
+
+            disconnectsCompleted = true;
+            Application.Quit();
         }
 
         // EXIT-DELAY BISECTION (#8764): helpers to read --exit-test-* flags directly
