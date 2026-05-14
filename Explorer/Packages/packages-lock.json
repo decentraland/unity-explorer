@@ -98,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "e5b8af15a755baf19a2386ae3097bd157743c2f7"
+      "hash": "0254da1fb4491a8deee68e93a5285fca547d9386"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
