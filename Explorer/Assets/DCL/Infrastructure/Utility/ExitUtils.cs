@@ -101,7 +101,7 @@ namespace DCL.Utility
         public static void Exit()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            ReportHub.LogProductionInfo($"[ExitUtils] Exit requested at {stopwatch.ElapsedMilliseconds}ms");
+            ReportHub.LogProductionInfo($"[ExitUtils] Exit requested at {DateTime.UtcNow:O}");
 
             if (isExiting)
             {
