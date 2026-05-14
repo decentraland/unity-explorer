@@ -124,8 +124,8 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera(CameraMode? targetMode)
         {
-            if(hudController.State == ControllerState.ViewHiding 
-                || hudController.State == ControllerState.ViewHidden 
+            if(hudController.State == ControllerState.ViewHiding
+                || hudController.State == ControllerState.ViewHidden
                 || hudController.State == ControllerState.ViewShowing)
                 return;
 
@@ -249,6 +249,7 @@ namespace DCL.InWorldCamera.Systems
                     inputMapComponent.BlockInput(Kind.SHORTCUTS);
                     break;
                 case Kind.PLAYER:
+                    DCLInput.Instance.Shortcuts.CameraReel.Disable();
                     inputMapComponent.UnblockInput(Kind.PLAYER);
                     inputMapComponent.UnblockInput(Kind.SHORTCUTS);
                     break;
