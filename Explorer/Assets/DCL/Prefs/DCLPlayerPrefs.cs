@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Unity.Multiplayer.PlayMode;
@@ -125,14 +126,18 @@ namespace DCL.Prefs
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
+            // ExitUtils lives in Utility which already depends on DCL.Prefs (via PersistentSetting), so subscribe directly here
             Application.quitting += OnQuitting;
         }
 
         private static void OnQuitting()
         {
             Application.quitting -= OnQuitting;
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
             (dclPrefs as IDisposable)?.Dispose();
             dclPrefs = null;
+            UnityEngine.Debug.Log($"[DCLPlayerPrefs] cleanup took {stopwatch.ElapsedMilliseconds}ms");
         }
 
 #if UNITY_EDITOR
@@ -153,7 +158,7 @@ namespace DCL.Prefs
         private static void ResetNearbyVoiceIntroTip()
         {
             DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, save: true);
-            Debug.Log("Nearby Voice Intro Tip has been reset.");
+            UnityEngine.Debug.Log("Nearby Voice Intro Tip has been reset.");
         }
 #endif
     }

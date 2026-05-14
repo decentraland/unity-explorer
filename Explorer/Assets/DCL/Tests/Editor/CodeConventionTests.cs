@@ -173,12 +173,14 @@ namespace DCL.Tests
         public void VerifyShouldNotUseApplicationQuitting()
         {
             const string pattern = @"Application\.quitting";
-            // ExitUtils is the infrastructural wrapper that funnels Application.quitting into the cleanup pipeline
             string[] ignorePaths = new []
             {
+                // ExitUtils is the infrastructural wrapper that funnels Unity's quit event into the cleanup pipeline
                 "Assets/DCL/Infrastructure/Utility/ExitUtils.cs",
+                // DCL.Prefs cannot reference the Utility asmdef (cycle via PersistentSetting)
+                "Assets/DCL/Prefs/DCLPlayerPrefs.cs",
             };
-            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Application.quitting.", ignorePaths);
+            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Unity's quit event directly.", ignorePaths);
         }
 
         [Test]
