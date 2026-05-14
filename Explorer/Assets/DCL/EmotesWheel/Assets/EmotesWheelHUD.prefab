@@ -1770,7 +1770,6 @@ GameObject:
   - component: {fileID: 2263726648819706875}
   - component: {fileID: 354287178198379659}
   - component: {fileID: 8151960694815300835}
-  - component: {fileID: 5485597475768002028}
   - component: {fileID: 7393224432162247879}
   m_Layer: 5
   m_Name: CloseButton
@@ -1881,28 +1880,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!95 &5485597475768002028
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8712545561102699128}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c22edc5eaba53f342bc161d6cbd411de, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &7393224432162247879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1916,7 +1893,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 8151960694815300835}
-  <ButtonAnimator>k__BackingField: {fileID: 5485597475768002028}
+  <ButtonAnimator>k__BackingField: {fileID: 0}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &8969425724256707062
