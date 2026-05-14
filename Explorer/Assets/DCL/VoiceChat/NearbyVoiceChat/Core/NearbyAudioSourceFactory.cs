@@ -78,6 +78,30 @@ namespace DCL.VoiceChat.Nearby.Audio
 
         public void DisposeRoot()
         {
+            // Explicit teardown of LIVE and LEGACY instances before destroying the root.
+            // pool.Dispose() only runs the onRelease callback (Stop+Free) on instances
+            // currently in the pool; live and legacy instances would otherwise be
+            // destroyed via Unity.Destroy() on the parent container, which fires
+            // OnDestroy() (only DisposeWavWriter) but bypasses LivekitAudioSource.Stop()
+            // and LivekitAudioSource.Free(). The AudioSource then stays in Play state
+            // long enough for one or more OnAudioFilterRead callbacks to cross into
+            // livekit_ffi (AudioStream.ReadAudio), keeping the FFI subscriptions alive
+            // and attaching the consuming threads to the IL2CPP managed runtime.
+            // Those attached threads never detach, deadlocking il2cpp::vm::Runtime::Shutdown
+            // and producing the multi-second to minute-long EXIT freeze tracked in #8764.
+            foreach (LivekitAudioSource live in liveInstances)
+            {
+                if (live == null) continue;
+                live.Stop();
+                live.Free();
+            }
+            foreach (LivekitAudioSource legacy in legacyInstances)
+            {
+                if (legacy == null) continue;
+                legacy.Stop();
+                legacy.Free();
+            }
+
             pool.Dispose();
             UnityObjectUtils.SafeDestroyGameObject(pool.ParentContainer);
             liveInstances.Clear();
