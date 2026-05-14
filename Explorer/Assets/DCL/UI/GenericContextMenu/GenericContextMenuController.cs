@@ -95,14 +95,12 @@ namespace DCL.UI
             isNativeArrayInitialized = false;
         }
 
-        protected override void OnViewInstantiated()
-        {
+        protected override void OnViewInstantiated() =>
             viewRectTransform = viewInstance!.GetComponent<RectTransform>();
-            backgroundWorldRect = GetWorldRect(viewInstance!.BackgroundCloseButton.GetComponent<RectTransform>());
-        }
 
         protected override void OnBeforeViewShow()
         {
+            backgroundWorldRect = GetWorldRect(viewInstance!.BackgroundCloseButton.GetComponent<RectTransform>());
             internalCloseTask = new UniTaskCompletionSource();
             ConfigureContextMenu(viewInstance!.ControlsContainer, inputData.Config, inputData.AnchorPosition, inputData.OverlapRect);
         }
