@@ -23,7 +23,7 @@ namespace DCL.Utility
             this.callback = callback;
         }
 
-        public void Execute(Stopwatch stopwatch)
+        internal void Execute(Stopwatch stopwatch)
         {
             long startedAtMs = stopwatch.ElapsedMilliseconds;
 
