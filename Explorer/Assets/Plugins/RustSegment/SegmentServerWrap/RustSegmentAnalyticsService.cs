@@ -52,17 +52,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         // temportal sentry budget fix. TODO remove once the core issue solved
         private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
 
-        // Tracks Application.quitting so Dispose can skip the native teardown on EXIT.
-        // The native dispose calls into a Rust tokio Runtime drop that joins worker
-        // threads; if HTTP requests to api.segment.io are in-flight (very common given
-        // batched analytics), the main thread can stall for the full HTTP timeout.
-        // The OS reclaims those threads on process exit, so we can safely skip.
-        private static volatile bool isApplicationQuitting;
-
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void SubscribeApplicationQuitting() =>
-            UnityEngine.Application.quitting += () => isApplicationQuitting = true;
-
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -119,15 +108,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 cancellationTokenSource.Dispose();
 
                 instanceGuard.Value = null;
-
-                // Skip the native dispose when the process is exiting: SegmentServerDispose
-                // drops the Rust tokio Runtime, which joins worker threads and can stall the
-                // main thread for the full HTTP timeout if requests to api.segment.io are
-                // in-flight. The OS reclaims those threads on process exit. In-session
-                // dispose (account switch, re-init, etc.) still runs the full teardown.
-                if (isApplicationQuitting)
-                    return;
-
                 bool result = NativeMethods.SegmentServerDispose();
 
                 if (result == false)
