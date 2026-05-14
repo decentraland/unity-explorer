@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
             {
                 if (Result.Succeeded && Result.Asset.Value.Count > 0)
                 {
-                    if (Result.Asset.Value[0].SupportInitialSceneState())
+                    if (Result.Asset.Value[0].ISSDescriptor.SupportsBundle())
                     {
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later

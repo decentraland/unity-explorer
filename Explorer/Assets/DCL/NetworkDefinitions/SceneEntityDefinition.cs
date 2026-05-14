@@ -14,25 +14,18 @@ namespace DCL.Ipfs
         ///     Populated by <see cref="ISSDescriptor.ResolveAsync"/> during scene-definition loading.
         ///     Null until the load systems have run (e.g. for definitions built outside the loader, like wearable-preview scenes).
         /// </summary>
-        public ISSDescriptor? ISSDescriptor;
+        public ISSDescriptor ISSDescriptor;
 
         public SceneEntityDefinition() { }
 
         public SceneEntityDefinition(string id, SceneMetadata metadata, AssetBundleManifestVersion? assetBundleManifestVersion = null) : base(id, metadata)
         {
             this.assetBundleManifestVersion = assetBundleManifestVersion;
+            ISSDescriptor = ISSDescriptor.NULL;
         }
 
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
-
-        public bool SupportInitialSceneState()
-        {
-            if (assetBundleManifestVersion != null)
-                return assetBundleManifestVersion.SupportsInitialSceneState();
-
-            return false;
-        }
 
         public bool Contains(int x, int y)
         {

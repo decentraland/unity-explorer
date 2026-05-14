@@ -70,7 +70,7 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
+            if (level == 0 && sceneDefinitionComponent.Definition.ISSDescriptor.SupportsBundle()
                            && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
                 var initialSceneState = GetAssetBundleIntention.FromHash(

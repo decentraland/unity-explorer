@@ -46,6 +46,10 @@ namespace DCL.Ipfs
             Metadata = metadata;
         }
 
+        public bool SupportsBundle() =>
+            CurrentState == State.Bundle;
+
+        public static ISSDescriptor NULL => new ISSDescriptor(State.None, null);
         /// <summary>
         ///     Looks up the ISS state for the given scene: tries to fetch the descriptor JSON,
         ///     then HEAD-probes the legacy ISS asset bundle. Returns <see cref="NONE"/> if no descriptor exists.

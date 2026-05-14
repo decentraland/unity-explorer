@@ -71,7 +71,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
         {
-            if (sceneDefinitionComponent.SupportInitialSceneState())
+
+            if (sceneDefinitionComponent.ISSDescriptor.SupportsBundle())
             {
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),

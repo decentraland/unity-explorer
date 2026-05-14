@@ -12,15 +12,10 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        //From v41 ISS is supported for scenes
-        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 41;
-
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
         private bool? HasHashInPathValue;
-        private bool? SupportsISS;
-
 
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
@@ -39,19 +34,6 @@ public class AssetBundleManifestVersion
             }
 
             return HasHashInPathValue.Value;
-        }
-
-        public bool SupportsInitialSceneState()
-        {
-            if (SupportsISS == null)
-            {
-                if (string.IsNullOrEmpty(GetAssetBundleManifestVersion()))
-                    SupportsISS = false;
-                else
-                    SupportsISS = int.Parse(GetAssetBundleManifestVersion().AsSpan().Slice(1)) >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
-            }
-
-            return SupportsISS.Value;
         }
 
         public string? GetAssetBundleManifestVersion() =>
