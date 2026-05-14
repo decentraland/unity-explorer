@@ -125,6 +125,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+
+                sceneEntityDefinition.ISSDescriptor = await ISSDescriptor.ResolveAsync(
+                    sceneEntityDefinition, webRequestController, GetReportData(), ct);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

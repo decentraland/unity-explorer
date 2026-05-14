@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
@@ -44,6 +44,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception)
             await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment, skipException: true);
+
+            sceneEntityDefinition.ISSDescriptor = await ISSDescriptor.ResolveAsync(
+                sceneEntityDefinition, webRequestController, GetReportData(), ct);
 
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);

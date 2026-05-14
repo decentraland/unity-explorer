@@ -9,6 +9,13 @@ namespace DCL.Ipfs
         private string? logSceneName;
         private SceneFastLookup? SceneLookup;
 
+        /// <summary>
+        ///     Initial Scene State for this scene (descriptor JSON + bundle reachability).
+        ///     Populated by <see cref="ISSDescriptor.ResolveAsync"/> during scene-definition loading.
+        ///     Null until the load systems have run (e.g. for definitions built outside the loader, like wearable-preview scenes).
+        /// </summary>
+        public ISSDescriptor? ISSDescriptor;
+
         public SceneEntityDefinition() { }
 
         public SceneEntityDefinition(string id, SceneMetadata metadata, AssetBundleManifestVersion? assetBundleManifestVersion = null) : base(id, metadata)
