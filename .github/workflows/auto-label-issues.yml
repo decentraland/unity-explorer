@@ -88,7 +88,7 @@ jobs:
             - Apply all labels that clearly match (type, component, platform). Be comprehensive.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(cat:*)"
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(cat docs/incident-response.md),Bash(cat docs/issue-triage-categories.md)"
 
       - name: Copy Claude execution output to artifacts
         if: always()
