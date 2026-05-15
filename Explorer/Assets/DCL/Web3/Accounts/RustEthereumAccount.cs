@@ -1,11 +1,10 @@
+using DCL.RustEthereum;
 using DCL.Utilities.Extensions;
-using DCL.Web3;
 using DCL.Web3.Abstract;
-using DCL.Web3.Accounts;
 using Nethereum.Signer;
 using System;
 
-namespace Plugins.RustEthereum.SignServerWrap
+namespace DCL.Web3.Accounts
 {
     public class RustEthereumAccount : IWeb3Account
     {
@@ -17,36 +16,18 @@ namespace Plugins.RustEthereum.SignServerWrap
 
         public RustEthereumAccount(EthECKey key)
         {
-            this.verifierAccount = NethereumAccount.CreateForVerifyOnly(key);
+            verifierAccount = NethereumAccount.CreateForVerifyOnly(key);
 
             PrivateKey = key.GetPrivateKey().EnsureNotNull();
             Address = new Web3Address(key.GetPublicAddress()!);
             byte[] bytes = key.GetPrivateKeyAsBytes().EnsureNotNull();
-            var bytesLen = new UIntPtr((ulong)bytes.Length);
 
-            unsafe
-            {
-                fixed (byte* ptr = bytes)
-                {
-                    bool result = NativeMethods.SignServerInitialize(ptr, bytesLen);
-
-                    if (result == false)
-                        throw new Exception("Failed to initialize sign server");
-                }
-            }
+            if (!RustEthSignServer.Initialize(bytes))
+                throw new Exception("Failed to initialize sign server");
         }
 
-        public string Sign(string message)
-        {
-            const int SIZE_OF_SIGN = 65;
-
-            unsafe
-            {
-                byte* signatureBuffer = stackalloc byte[SIZE_OF_SIGN];
-                NativeMethods.SignServerSignMessage(message, signatureBuffer);
-                return ToHex(new Span<byte>(signatureBuffer, SIZE_OF_SIGN), true);
-            }
-        }
+        public string Sign(string message) =>
+            ToHex(RustEthSignServer.Sign(message), true);
 
         public bool Verify(string message, string signature) =>
             verifierAccount.Verify(message, signature);

@@ -128,6 +128,13 @@
       "dependencies": {},
       "hash": "f3dd251c7837cc2d844e1c07e741177a53676064"
     },
+    "com.decentraland.rust-ethereum": {
+      "version": "https://github.com/decentraland/rust-ethereum.git?path=unity#v0.2.3",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "dc9994994637d30b0a61e2354eb2bbb8e963fa33"
+    },
     "com.decentraland.unity-shared-dependencies": {
       "version": "git@github.com:decentraland/unity-shared-dependencies.git",
       "depth": 0,
