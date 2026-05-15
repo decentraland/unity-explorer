@@ -1,0 +1,109 @@
+name: AI Label Issues
+on:
+  issues:
+    types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to label'
+        required: true
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+
+      - name: AI label analysis
+        uses: anthropics/claude-code-action@v1
+        with:
+          allowed_bots: "sentry"
+          prompt: |
+            You are an issue triage assistant for the Decentraland Unity Explorer project.
+            Repository: ${{ github.repository }}
+            Issue: #${{ github.event.issue.number || github.event.inputs.issue_number }}
+
+            Steps:
+            1. Fetch all available labels:
+               gh label list --repo ${{ github.repository }} --json name,description --limit 100
+
+            2. Fetch the issue details:
+               gh issue view ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --json title,body,labels
+
+            3. Read the triage reference docs:
+               cat docs/incident-response.md
+               cat docs/issue-triage-categories.md
+
+            4. Analyze the issue using the docs you just read:
+               a. Determine issue type: bug, feature, enhancement, optimization, refactor, or other.
+               b. Identify the affected feature area(s) from the issue description.
+               c. Look up whether each affected feature is Primary or Secondary in the categories doc.
+               d. Determine severity using the SEV→label mapping from the incident management doc:
+                  - SEV-1 → 0-critical: Core platform broken for most users, no workaround
+                  - SEV-2 → 1-high: Primary category feature broken for some users; platform still partially works
+                  - SEV-3 → 2-medium: Secondary category feature degraded; main flows still work
+                  - SEV-4/5 → 3-low: Minor or cosmetic issues, low user impact
+                  Note: even a Secondary feature can reach SEV-2 if a large percentage of users are affected
+                  or core gameplay becomes impossible — judge this from the issue description.
+               e. Identify any platform mentions (Mac Only, Windows Only) or component tags (sdk, graphics, ui, performance, etc.).
+
+            5. Post a triage comment on the issue:
+               gh issue comment ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --body "$(cat <<'COMMENT'
+               ## Automated Triage
+
+               | | |
+               |---|---|
+               | **Issue type** | [bug / feature / enhancement / etc.] |
+               | **Affected area** | [feature name] |
+               | **Feature category** | [Primary / Secondary / N/A] |
+               | **Severity** | [SEV-X → label-name] |
+
+               **Reasoning:** [1–3 sentences explaining the severity decision, referencing Primary/Secondary classification and user impact as described in the issue]
+
+               **Labels applied:** [comma-separated list of all labels]
+
+               ---
+               *Auto-triaged. If labels are incorrect, update [issue triage categories](docs/issue-triage-categories.md) or [severity policy](docs/incident-response.md) and re-run triage.*
+               COMMENT
+               )"
+
+            6. Apply the selected labels:
+               gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }} --repo ${{ github.repository }} --add-label "label1,label2"
+
+            Rules:
+            - ALWAYS apply exactly one priority label: 0-critical, 1-high, 2-medium, or 3-low.
+            - Do NOT apply the "new" label.
+            - Only use labels that already exist in the fetched label list — never invent label names.
+            - Do NOT create new labels.
+            - Apply all labels that clearly match (type, component, platform). Be comprehensive.
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(cat:*)"
+
+      - name: Copy Claude execution output to artifacts
+        if: always()
+        run: |
+          if [ -f /home/runner/work/_temp/claude-execution-output.json ]; then
+            cp /home/runner/work/_temp/claude-execution-output.json artifacts/claude-execution-output_${{ github.event.issue.number || github.event.inputs.issue_number }}.json
+            echo "✓ Claude execution output captured"
+          else
+            echo "⚠ Claude execution output not found"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: label-analysis-${{ github.event.issue.number || github.event.inputs.issue_number }}
+          path: artifacts/
+          retention-days: 7

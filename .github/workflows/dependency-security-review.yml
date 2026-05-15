@@ -97,7 +97,18 @@ jobs:
       - name: Load review prompt
         if: steps.detect.outputs.has-changes == 'true'
         id: prompt
-        run: echo "instructions<<PROMPT_EOF" >> "$GITHUB_OUTPUT" && cat .github/prompts/dependency-security-review.md >> "$GITHUB_OUTPUT" && echo "PROMPT_EOF" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          DELIM="PROMPT_EOF_$(uuidgen)"
+          {
+            echo "instructions<<$DELIM"
+            gh api "repos/${{ github.repository }}/contents/.github/prompts/dependency-security-review.md?ref=$BASE_SHA" \
+              --jq '.content' | base64 -d
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Claude Dependency Review
         if: steps.detect.outputs.has-changes == 'true'
