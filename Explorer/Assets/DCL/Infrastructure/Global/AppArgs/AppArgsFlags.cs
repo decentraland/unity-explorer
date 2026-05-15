@@ -14,6 +14,7 @@ namespace Global.AppArgs
         public const string EXIT_TEST_SKIP_NEARBY_VOICE_SYSTEMS = "exit-test-skip-nearby-voice-systems";
         public const string EXIT_TEST_NEARBY_INJECT_STOP = "exit-test-nearby-inject-stop";
         public const string EXIT_TEST_SKIP_AUDIO_SOURCE_CREATE = "exit-test-skip-audio-source-create";
+        public const string EXIT_TEST_SKIP_GET_ACTIVE_STREAM = "exit-test-skip-get-active-stream";
         public const string EXIT_TEST_DISCONNECT_ROOMS_ON_QUIT = "exit-test-disconnect-rooms-on-quit";
         public const string EXIT_TEST_POST_DISCONNECT_DELAY_MS = "exit-test-post-disconnect-delay-ms";
 

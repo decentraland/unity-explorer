@@ -60,6 +60,21 @@ namespace DCL.VoiceChat.Nearby.Systems
             return false;
         }
 
+        // EXIT-DELAY BISECTION (#8764): skip the registry.GetActiveStream(key) call. The earlier
+        // SKIP_AUDIO_SOURCE_CREATE flag only skipped LivekitAudioSource.Create()/.Play(); it did
+        // NOT skip GetActiveStream, which lazily constructs an AudioStream and performs a
+        // synchronous FFI request. If this flag makes the exit consistently fast, GetActiveStream
+        // is what attaches the tokio workers to the IL2CPP runtime.
+        private static bool HasExitTestSkipGetActiveStream()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string dashed = "--" + AppArgsFlags.EXIT_TEST_SKIP_GET_ACTIVE_STREAM;
+            for (var i = 0; i < args.Length; i++)
+                if (args[i] == dashed)
+                    return true;
+            return false;
+        }
+
         protected override void Update(float t)
         {
             // Listening gate: skip the entire avatar query when nearby chat is SUPPRESSED or DISABLED.
@@ -88,6 +103,13 @@ namespace DCL.VoiceChat.Nearby.Systems
 
                 if (!bindings.Contains(key))
                 {
+                    // EXIT-DELAY BISECTION (#8764): when --exit-test-skip-get-active-stream is set,
+                    // bypass the registry.GetActiveStream(key) call entirely. That call lazily
+                    // constructs a LiveKit AudioStream and performs a synchronous FFI request;
+                    // we suspect it is what attaches tokio workers to the IL2CPP runtime.
+                    if (HasExitTestSkipGetActiveStream())
+                        continue;
+
                     Weak<AudioStream> stream = registry.GetActiveStream(key);
 
                     // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
