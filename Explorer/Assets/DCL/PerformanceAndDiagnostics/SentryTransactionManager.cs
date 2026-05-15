@@ -157,8 +157,7 @@ namespace DCL.PerformanceAndDiagnostics
         public SentryTransactionManager()
         {
             // Register for application lifecycle events to ensure transactions are finished
-            ExitUtils.BeforeApplicationQuitting += OnApplicationQuitting;
-            Application.quitting += OnApplicationQuitting;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(SentryTransactionManager), OnApplicationQuitting));
         }
 
         // Otherwise Sentry creates a new dictionary for every transaction
