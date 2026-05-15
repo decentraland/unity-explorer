@@ -46,7 +46,7 @@ namespace DCL.Utility
 
     public static class ExitUtils
     {
-        private static readonly Mutex<List<OnQuittingCleanUpCandidate>> candidates = new (new ());
+        private static readonly Mutex<List<OnQuittingCleanUpCandidate>> candidates = new (new ()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         private static readonly Atomic<bool> isExiting = new (false);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -61,7 +61,7 @@ namespace DCL.Utility
 #if UNITY_EDITOR
             // ensure isExiting is false on reopening
             isExiting.Set(false);
-            using (var scope = candidates.Lock())
+            using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 scope.Value.Clear();
 #endif
             Application.quitting += OnApplicationQuitting;
@@ -83,7 +83,7 @@ namespace DCL.Utility
                 return;
             }
 
-            using var scope = candidates.Lock();
+            using var scope = candidates.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             for (var i = 0; i < scope.Value.Count; i++)
             {
@@ -102,7 +102,7 @@ namespace DCL.Utility
                 return;
             }
 
-            using var scope = candidates.Lock();
+            using var scope = candidates.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
             for (var i = 0; i < scope.Value.Count; i++)
             {
@@ -127,7 +127,7 @@ namespace DCL.Utility
 
             isExiting.Set(true);
 
-            using (var scope = candidates.Lock())
+            using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
                 foreach (OnQuittingCleanUpCandidate candidate in scope.Value)
                     candidate.Execute(stopwatch);
