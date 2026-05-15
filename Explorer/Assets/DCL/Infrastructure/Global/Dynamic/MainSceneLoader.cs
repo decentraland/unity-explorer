@@ -250,7 +250,7 @@ namespace Global.Dynamic
                 // Checking for clock desync after feature flags (or any other process that performs an http request)
                 // potentially saves one extra HEAD request
                 var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
-                    ShowClockDesyncPopupAsync);
+                    ShowClockDesyncPopupAsync, bootstrapContainer.DecentralandUrlsSource);
 
                 await ensureClockSyncAction.ExecuteAsync(ct);
 

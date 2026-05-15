@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Time;
 using DCL.WebRequests;
 using System;
@@ -11,21 +12,23 @@ namespace DCL.PluginSystem.Global
     public class EnsureClockSync
     {
         private const double CLOCK_DESYNC_THRESHOLD_SECONDS = 60d;
-        private const string CLOCK_PROBE_URL = "https://decentraland.org/";
 
         public delegate UniTask<Result> RequestUserActionDelegate(CancellationToken ct);
 
         private readonly RealmClock realmClock;
         private readonly IWebRequestController webRequestController;
         private readonly RequestUserActionDelegate requestUserAction;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public EnsureClockSync(RealmClock realmClock,
             IWebRequestController webRequestController,
-            RequestUserActionDelegate requestUserAction)
+            RequestUserActionDelegate requestUserAction,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.realmClock = realmClock;
             this.webRequestController = webRequestController;
             this.requestUserAction = requestUserAction;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public async UniTask ExecuteAsync(CancellationToken ct)
@@ -34,7 +37,7 @@ namespace DCL.PluginSystem.Global
 
             while (response == Result.RESTART)
             {
-                await TryProbeServerTimeAsync(realmClock, webRequestController, ct);
+                await TryProbeServerTimeAsync(ct);
 
                 if (!IsDesync()) return;
 
@@ -53,16 +56,16 @@ namespace DCL.PluginSystem.Global
             return Math.Abs(delta.TotalSeconds) > CLOCK_DESYNC_THRESHOLD_SECONDS;
         }
 
-        private static async UniTask TryProbeServerTimeAsync(RealmClock realmClock, IWebRequestController controller, CancellationToken ct)
+        private async UniTask TryProbeServerTimeAsync(CancellationToken ct)
         {
             if (realmClock.HasSample) return;
 
             try
             {
                 // This will internally set the realm clock on success
-                await controller.IsHeadReachableAsync(
+                await webRequestController.IsHeadReachableAsync(
                     ReportCategory.STARTUP,
-                    URLAddress.FromString(CLOCK_PROBE_URL),
+                    URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Host)),
                     ct,
                     suppressErrors: true);
             }

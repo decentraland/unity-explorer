@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Time;
 using DCL.UI.ErrorPopup;
 using DCL.WebRequests;
@@ -22,11 +23,12 @@ namespace DCL.PluginSystem.Global
         public EnsureClockSyncPlugin(IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             RealmClock realmClock,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
-            ensureClockSync = new EnsureClockSync(realmClock, webRequestController, ShowClockDesyncPopupAsync);
+            ensureClockSync = new EnsureClockSync(realmClock, webRequestController, ShowClockDesyncPopupAsync, decentralandUrlsSource);
         }
 
         public void Dispose()
