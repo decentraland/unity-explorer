@@ -52,6 +52,9 @@ namespace DCL.Utility
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
         {
+#if UNITY_EDITOR
+            Patch.Reset();
+#endif
             // Dirty reflection hack because there is no other way to view the subs of Application.quitting
             Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
 
@@ -188,6 +191,11 @@ namespace DCL.Utility
                     quittingField.SetValue(null, rebuilt);
                 }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
+            }
+
+            public static void Reset()
+            {
+                wrapped.Clear();
             }
 
             private static Action WrapWithTimer(Action original)
