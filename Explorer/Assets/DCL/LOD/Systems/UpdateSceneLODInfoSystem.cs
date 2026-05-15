@@ -70,17 +70,23 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.ISSDescriptor.SupportsBundle()
-                           && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
+            if (level == 0
+                && sceneDefinitionComponent.Definition.ISSDescriptor != null
+                && sceneDefinitionComponent.Definition.ISSDescriptor.CurrentState != ISSDescriptor.State.None
+                && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
-                var initialSceneState = GetAssetBundleIntention.FromHash(
-                    GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
-                    typeof(GameObject),
-                    permittedSources: AssetSource.WEB,
-                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
-                    parentEntityID: sceneDefinitionComponent.Definition.id
-                );
-                sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
+                if (sceneDefinitionComponent.Definition.ISSDescriptor.SupportsBundle())
+                {
+                    var initialSceneState = GetAssetBundleIntention.FromHash(
+                        GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
+                        typeof(GameObject),
+                        permittedSources: AssetSource.WEB,
+                        assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
+                        parentEntityID: sceneDefinitionComponent.Definition.id
+                    );
+                    sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
+                }
+
                 sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
                 sceneLODInfo.CurrentLODLevelPromise = level;
                 return;

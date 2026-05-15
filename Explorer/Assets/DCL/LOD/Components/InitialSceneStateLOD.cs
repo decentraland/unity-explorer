@@ -80,7 +80,7 @@ namespace DCL.LOD.Components
             });
 
         public bool AllAssetsInstantiated() =>
-            AssetBundleData != null && Assets.Count == TotalAssetsToInstantiate;
+            ParentContainer != null && Assets.Count == TotalAssetsToInstantiate;
 
         public bool IsProcessing() =>
             CurrentState is State.PROCESSING;
@@ -88,12 +88,28 @@ namespace DCL.LOD.Components
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
-            if (ParentContainer == null)
-                ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
-            ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
+            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
             AssetBundleData = resultAsset;
             gltfCache = gltfContainerAssetsCache;
             TotalAssetsToInstantiate = assetHashCount;
+        }
+
+        /// <summary>
+        ///     Descriptor-only initialization: no shared ISS bundle to hold; each asset will arrive via its own promise.
+        /// </summary>
+        public void InitializeFromDescriptor(string sceneID, Vector3 sceneGeometryBaseParcelPosition, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
+        {
+            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
+            AssetBundleData = null;
+            gltfCache = gltfContainerAssetsCache;
+            TotalAssetsToInstantiate = assetHashCount;
+        }
+
+        private void EnsureParentContainer(string sceneID, Vector3 sceneGeometryBaseParcelPosition)
+        {
+            if (ParentContainer == null)
+                ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
+            ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
         }
 
         public void AddFailedAsset(string creationHelperAssetHash)

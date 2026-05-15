@@ -16,21 +16,18 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly string AssetBundleName;
 
-        public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
         private readonly AssetBundleData[] Dependencies;
 
-        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        //TODO: Rehook isISS
+        public AssetBundleData(AssetBundle assetBundle , Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "", bool isISS = false)
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
-            InitialSceneStateMetadata = initialSceneState;
-
             Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, InitialSceneStateMetadata.HasValue);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, isISS);
 
             Dependencies = dependencies;
 
@@ -38,7 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleName = Asset?.name;
 
             //We cannot unload an AB if its an ISS (Initial Scene State AB). It may be a dependency for dynamically isntanced AB
-            if (!InitialSceneStateMetadata.HasValue)
+            if (!isISS)
                 UnloadAB();
         }
 
@@ -157,10 +154,3 @@ public static class DictionaryExtensions
     }
 }
 
-public struct InitialSceneStateMetadata
-{
-    public List<string> assetHash;
-    public List<Vector3> positions;
-    public List<Quaternion> rotations;
-    public List<Vector3> scales;
-}

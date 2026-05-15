@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.CharacterCamera;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DG.Tweening;
@@ -63,9 +64,12 @@ namespace DCL.PluginSystem.World
         {
             //The scene container, which is only modified by the client, starts in a position that cannot be seen by the player. Once it finished loading
             //in GatherGLTFAssetSystem.cs, it will be moved to the correct position.
-            //If the static scene is supported, the transition between LOD and scene is seamless.
-            var sceneRootContainerTransform = GetNewTransform(position: sharedDependencies.SceneData.SceneEntityDefinition.ISSDescriptor.SupportsBundle() ?
-                sharedDependencies.SceneData.Geometry.BaseParcelPosition : MordorConstants.SCENE_MORDOR_POSITION);
+            //If any form of ISS is in play (bundle or descriptor), start at the real parcel position so the LOD->scene transition is seamless.
+            ISSDescriptor? iss = sharedDependencies.SceneData.SceneEntityDefinition.ISSDescriptor;
+            bool hasISS = iss != null && iss.CurrentState != ISSDescriptor.State.None;
+            var sceneRootContainerTransform = GetNewTransform(position: hasISS
+                ? sharedDependencies.SceneData.Geometry.BaseParcelPosition
+                : MordorConstants.SCENE_MORDOR_POSITION);
             sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
             builder.World.Add(persistentEntities.SceneContainer, new TransformComponent(sceneRootContainerTransform));
 

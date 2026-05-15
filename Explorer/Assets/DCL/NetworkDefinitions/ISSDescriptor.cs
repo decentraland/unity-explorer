@@ -23,6 +23,10 @@ namespace DCL.Ipfs
 
         private const string DESCRIPTOR_SUBDIR = "iss_descriptors";
 
+        // ISS is only baked starting from AB manifest version 49. Anything older cannot have ISS,
+        // so we skip the descriptor fetch + HEAD probe entirely for those scenes.
+        private const int MIN_ISS_AB_VERSION = 49;
+
         // Hardcoded for this test iteration — wire to DI later.
         private static readonly URLDomain STREAMING_ASSET_URL =
             URLDomain.FromString(
@@ -40,11 +44,37 @@ namespace DCL.Ipfs
         public State CurrentState { get; }
         public ISSDescriptorMetadata? Metadata { get; }
 
+        private HashSet<string>? cachedAssetHashes;
+
+        /// <summary>
+        ///     Set of asset hashes referenced by this scene's ISS. Lazily built from <see cref="Metadata"/>.
+        ///     Returns an empty set when the scene has no ISS.
+        /// </summary>
+        public HashSet<string> AssetHashes => cachedAssetHashes ??= BuildAssetHashes();
+
+        /// <summary>
+        ///     True if <paramref name="hash"/> is one of the assets covered by this scene's ISS.
+        /// </summary>
+        public bool IsPartOfISS(string hash) =>
+            CurrentState != State.None && AssetHashes.Contains(hash);
+
         private ISSDescriptor(State state, ISSDescriptorMetadata? metadata)
         {
             CurrentState = state;
             Metadata = metadata;
         }
+
+        private HashSet<string> BuildAssetHashes()
+        {
+            var set = new HashSet<string>();
+            if (Metadata.HasValue && Metadata.Value.assets != null)
+                foreach (var a in Metadata.Value.assets)
+                    set.Add(a.hash);
+            return set;
+        }
+
+        public bool SupportsDescriptor() =>
+            CurrentState == State.Descriptor;
 
         public bool SupportsBundle() =>
             CurrentState == State.Bundle;
@@ -60,6 +90,10 @@ namespace DCL.Ipfs
             ReportData reportCategory,
             CancellationToken ct)
         {
+            // Skip the network roundtrips entirely for AB versions that pre-date ISS support.
+            if (!IsManifestVersionISSCapable(sceneDefinition.assetBundleManifestVersion))
+                return NONE;
+
             ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(sceneDefinition.id, webRequestController, reportCategory, ct);
             if (!metadata.HasValue) return NONE;
 
@@ -70,13 +104,24 @@ namespace DCL.Ipfs
                 metadata);
         }
 
+        private static bool IsManifestVersionISSCapable(AssetBundleManifestVersion? manifestVersion)
+        {
+            if (manifestVersion == null || manifestVersion.assetBundleManifestRequestFailed) return false;
+
+            string version = manifestVersion.GetAssetBundleManifestVersion();
+            if (string.IsNullOrEmpty(version) || version.Length < 2) return false;
+
+            // Versions look like "v41" — strip the leading 'v' and compare numerically.
+            return int.TryParse(version.AsSpan().Slice(1), out int versionNum) && versionNum >= MIN_ISS_AB_VERSION;
+        }
+
         private static async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(
             string sceneID,
             IWebRequestController webRequestController,
             ReportData reportCategory,
             CancellationToken ct)
         {
-            URLAddress url = STREAMING_ASSET_URL.Append(URLPath.FromString($"{DESCRIPTOR_SUBDIR}/{sceneID}_StaticSceneDescriptor.json"));
+            URLAddress url = STREAMING_ASSET_URL.Append(URLPath.FromString($"{DESCRIPTOR_SUBDIR}/{sceneID}_InitialSceneState.json"));
 
             try
             {

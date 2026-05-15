@@ -71,29 +71,31 @@ namespace ECS.SceneLifeCycle.Systems
 
         private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
         {
+            ISSDescriptor? issDescriptor = sceneDefinitionComponent.ISSDescriptor;
+            if (issDescriptor == null || !issDescriptor.SupportsBundle())
+                return InitialSceneStateInfo.CreateEmpty();
 
-            if (sceneDefinitionComponent.ISSDescriptor.SupportsBundle())
+            var promise = AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
+                    assetBundleManifestVersion: sceneDefinitionComponent.assetBundleManifestVersion,
+                    parentEntityID: sceneDefinitionComponent.id),
+                    PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (!promise.Result.Value.Succeeded)
+                return InitialSceneStateInfo.CreateEmpty();
+
+            // The descriptor lives on SceneEntityDefinition (populated during definition loading) — NOT inside the bundle.
+            var result = new HashSet<string>();
+            if (issDescriptor.Metadata.HasValue && issDescriptor.Metadata.Value.assets != null)
             {
-                var promise = AssetBundlePromise.Create(world,
-                    GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
-                        assetBundleManifestVersion: sceneDefinitionComponent.assetBundleManifestVersion,
-                        parentEntityID: sceneDefinitionComponent.id),
-                        PartitionComponent.TOP_PRIORITY);
-
-                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-
-                if (promise.Result.Value.Succeeded)
-                {
-                    var result = new HashSet<string>();
-
-                    foreach (string s in promise.Result.Value.Asset.InitialSceneStateMetadata.Value.assetHash)
-                        result.Add($"{s}{PlatformUtils.GetCurrentPlatform()}");
-
-                    return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
-                }
+                string platform = PlatformUtils.GetCurrentPlatform();
+                foreach (ISSDescriptorAsset a in issDescriptor.Metadata.Value.assets)
+                    result.Add($"{a.hash}{platform}");
             }
 
-            return InitialSceneStateInfo.CreateEmpty();
+            return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
