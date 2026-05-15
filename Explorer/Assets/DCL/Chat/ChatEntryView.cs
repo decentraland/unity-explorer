@@ -1,10 +1,12 @@
+using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.History;
+using DCL.FeatureFlags;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using System;
 using System.Globalization;
 using DCL.Chat.ChatViewModels;
-using DCL.FeatureFlags;
 using DCL.Translation;
 using DCL.Utilities;
 using MVC;
@@ -27,8 +29,8 @@ namespace DCL.Chat
         private Action<string, ChatEntryView>? onMessageContextMenuClicked;
         private Func<bool>? IsTranslationActivated;
         private Func<bool>? IsAutoTranslationEnabled;
-        public event Action<string> OnTranslateRequested;
-        public event Action<string> OnRevertRequested;
+        public Action<string>? OnTranslateRequested;
+        public Action<string>? OnRevertRequested;
         private bool isPointerInside;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
@@ -39,6 +41,9 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
         [field: SerializeField] internal RectTransform dateDividerElement { get; private set; }
         [field: SerializeField] internal TMP_Text dateDividerText { get; private set; }
+
+        [field: Header("Reactions")]
+        [field: SerializeField] internal MessageReactionsView? messageReactionsView { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
@@ -52,6 +57,8 @@ namespace DCL.Chat
         private ChatMessage chatMessage;
         private ChatMessageViewModel currentViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
+
+        internal bool IsSentByOwnUser => currentViewModel?.Message.IsSentByOwnUser ?? false;
 
         private void Awake()
         {
@@ -119,7 +126,13 @@ namespace DCL.Chat
             if (viewModel.ShowDateDivider)
                 dateDividerText.text = GetDateRepresentation(chatMessage.SentTimestamp!.Value.Date);
 
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            if (messageReactionsView != null && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED))
+            {
+                messageReactionsView.CurrentMessageId = viewModel.Message.MessageId;
+                messageReactionsView.UpdateReactions(viewModel.Reactions);
+            }
+
+            RecalculateHeight();
 
             this.onMessageContextMenuClicked = onMessageContextMenuClicked;
             ChatEntryClicked = onProfileContextMenuClicked;
@@ -206,10 +219,33 @@ namespace DCL.Chat
         }
 
 
+        /// <summary>
+        /// Recalculates the entry height including reactions.
+        /// Called automatically by SetItemData; call again externally if reactions change after binding.
+        /// </summary>
+        public void RecalculateHeight()
+        {
+            float reactionsHeight = messageReactionsView != null ? messageReactionsView.CurrentHeight : 0f;
+            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                messageBubbleElement.backgroundRectTransform.sizeDelta.y + reactionsHeight);
+        }
+
+        /// <summary>
+        /// Initializes the reactions view if present (system message prefabs lack one).
+        /// Safe to call on every bind — the view's internal guard prevents re-initialization.
+        /// </summary>
+        public void InitializeReactions(ChatReactionsAtlasConfig atlasConfig, string walletAddress,
+            ChatReactionsMessageConfig config, ViewEventBus eventBus)
+        {
+            messageReactionsView?.Initialize(atlasConfig, walletAddress, config, eventBus);
+        }
+
         public void Reset()
         {
             if (!isPointerInside)
                 messageBubbleElement.Reset();
+
+            messageReactionsView?.Clear();
         }
 
         private void UpdateTranslationViewVisibility()

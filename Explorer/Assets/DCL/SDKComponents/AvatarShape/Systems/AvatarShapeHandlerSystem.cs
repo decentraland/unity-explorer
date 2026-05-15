@@ -38,15 +38,15 @@ namespace ECS.Unity.AvatarShape.Systems
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
         private readonly ISceneData sceneData;
-        private readonly bool localSceneDevelopment;
+        private readonly bool loadAssetsFromLocalScene;
 
         public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
-            ISceneData sceneData, bool localSceneDevelopment) : base(world)
+            ISceneData sceneData, bool loadAssetsFromLocalScene) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalTransformPool = globalTransformPool;
             this.sceneData = sceneData;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.loadAssetsFromLocalScene = loadAssetsFromLocalScene;
         }
 
         protected override void Update(float t)
@@ -146,7 +146,7 @@ namespace ECS.Unity.AvatarShape.Systems
                 return;
 
             // Scene emote files have to be loaded before the CharacterEmoteIntent can be used...
-            if (localSceneDevelopment)
+            if (loadAssetsFromLocalScene)
             {
                 // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
                 // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
@@ -165,7 +165,8 @@ namespace ECS.Unity.AvatarShape.Systems
                         emoteId,
                         hash,
                         bodyShape,
-                        loop: false), PartitionComponent.TOP_PRIORITY);
+                        loop: false,
+                        mask: AvatarEmoteMask.AemFullBody), PartitionComponent.TOP_PRIORITY);
             }
             else
             {

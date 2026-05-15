@@ -32,11 +32,73 @@ MonoBehaviour:
       Severity: 4
     - Category: AVATAR_MODIFIER_AREA
       Severity: 4
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 0
+    - Category: CAMERA_MODE_AREA
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 0
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 0
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 0
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 0
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 0
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 4
+    - Category: CAMERA_MODE_AREA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 4
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 4
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 4
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 4
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 4
+    - Category: ONBOARDING
+      Severity: 0
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 1
+    - Category: ALWAYS
+      Severity: 3
+    - Category: ONBOARDING
+      Severity: 4
+    - Category: ONBOARDING
+      Severity: 1
+    - Category: CHAT_TRANSLATE
+      Severity: 3
+    - Category: CHAT_TRANSLATE
+      Severity: 2
+    - Category: CHAT_TRANSLATE
+      Severity: 0
+    - Category: CHAT_TRANSLATE
+      Severity: 4
+    - Category: ANALYTICS_INTERNAL
+      Severity: 4
+    - Category: ANALYTICS_INTERNAL
+      Severity: 1
+    - Category: ALWAYS
+      Severity: 0
     - Category: ANALYTICS
       Severity: 0
     - Category: ANIMATOR
       Severity: 0
-    - Category: ARCHIPELAGO_REQUEST
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: ASSET_PRE_LOAD
       Severity: 0
     - Category: ASSETS_PROVISION
       Severity: 0
@@ -50,9 +112,29 @@ MonoBehaviour:
       Severity: 0
     - Category: AVATAR_ATTACH
       Severity: 0
-    - Category: CAMERA_MODE_AREA
+    - Category: BACKPACK
+      Severity: 0
+    - Category: BADGES
+      Severity: 0
+    - Category: CAMERA_REEL
       Severity: 0
     - Category: CHARACTER_TRIGGER_AREA
+      Severity: 0
+    - Category: CHAT_HISTORY
+      Severity: 0
+    - Category: CHAT_MESSAGES
+      Severity: 0
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 0
+    - Category: COMMS_API
+      Severity: 0
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 0
+    - Category: COMMS_SCENE_HANDLER
+      Severity: 0
+    - Category: COMMUNITIES
+      Severity: 0
+    - Category: COMMUNITY_VOICE_CHAT
       Severity: 0
     - Category: CRDT
       Severity: 0
@@ -60,15 +142,33 @@ MonoBehaviour:
       Severity: 0
     - Category: DEBUG
       Severity: 0
+    - Category: DISK_CACHE
+      Severity: 0
+    - Category: DONATIONS
+      Severity: 0
     - Category: ECS
       Severity: 0
     - Category: EMOTE
       Severity: 0
     - Category: ENGINE
       Severity: 0
+    - Category: EVENTS
+      Severity: 0
     - Category: FEATURE_FLAGS
       Severity: 0
+    - Category: FRIENDS
+      Severity: 0
     - Category: GENERIC_WEB_REQUEST
+      Severity: 0
+    - Category: GIFTING
+      Severity: 0
+    - Category: GLTF_CONTAINER
+      Severity: 0
+    - Category: GPU_INSTANCING
+      Severity: 0
+    - Category: HIGHLIGHTS
+      Severity: 0
+    - Category: IN_WORLD_CAMERA
       Severity: 0
     - Category: INPUT
       Severity: 0
@@ -76,9 +176,13 @@ MonoBehaviour:
       Severity: 0
     - Category: LANDSCAPE
       Severity: 0
+    - Category: LIGHT_SOURCE
+      Severity: 0
     - Category: LIVEKIT
       Severity: 0
     - Category: LOD
+      Severity: 0
+    - Category: MARKETPLACE_CREDITS
       Severity: 0
     - Category: MATERIALS
       Severity: 0
@@ -90,23 +194,29 @@ MonoBehaviour:
       Severity: 0
     - Category: MULTIPLAYER_MOVEMENT
       Severity: 0
-    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
-      Severity: 0
-    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
-      Severity: 0
-    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
-      Severity: 0
     - Category: MVC
       Severity: 0
-    - Category: PLAYER_AVATAR_BASE
+    - Category: MVC_STATE_MACHINE
       Severity: 0
-    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+    - Category: NEARBY_VOICE_CHAT
       Severity: 0
-    - Category: PLAYER_AVATAR_EQUIPPED
+    - Category: NFT_INFO_WEB_REQUEST
       Severity: 0
-    - Category: PLAYER_IDENTITY_DATA
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 0
+    - Category: OUTFITS
+      Severity: 0
+    - Category: PARTIAL_LOADING
+      Severity: 0
+    - Category: PARTICLE_SYSTEM
+      Severity: 0
+    - Category: PLACES
+      Severity: 0
+    - Category: PLAYER_SDK_DATA
       Severity: 0
     - Category: PLUGINS
+      Severity: 0
+    - Category: PORTABLE_EXPERIENCE
       Severity: 0
     - Category: PRIMITIVE_COLLIDERS
       Severity: 0
@@ -126,23 +236,49 @@ MonoBehaviour:
       Severity: 0
     - Category: ROADS
       Severity: 0
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 0
+    - Category: SCENE_ADMINS
+      Severity: 0
     - Category: SCENE_FACTORY
       Severity: 0
     - Category: SCENE_FETCH_REQUEST
       Severity: 0
     - Category: SCENE_LOADING
       Severity: 0
+    - Category: SCENE_PERMISSIONS
+      Severity: 0
     - Category: SCENE_UI
       Severity: 0
+    - Category: SDK_AUDIO_ANALYSIS
+      Severity: 0
     - Category: SDK_AUDIO_SOURCES
+      Severity: 0
+    - Category: SDK_CAMERA
+      Severity: 0
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
       Severity: 0
     - Category: SDK_OBSERVABLES
       Severity: 0
     - Category: SETTINGS_MENU
       Severity: 0
+    - Category: SKYBOX
+      Severity: 0
+    - Category: SOCIAL
+      Severity: 0
+    - Category: STARTUP
+      Severity: 0
     - Category: STREAMABLE_LOADING
       Severity: 0
+    - Category: SYNC
+      Severity: 0
     - Category: TEXTURE_WEB_REQUEST
+      Severity: 0
+    - Category: TEXTURES
+      Severity: 0
+    - Category: THUMBNAILS
+      Severity: 0
+    - Category: TRANSLATE
       Severity: 0
     - Category: TWEEN
       Severity: 0
@@ -150,75 +286,21 @@ MonoBehaviour:
       Severity: 0
     - Category: UNSPECIFIED
       Severity: 0
-    - Category: WEARABLE
-      Severity: 0
-    - Category: ARCHIPELAGO_REQUEST
-      Severity: 4
-    - Category: CAMERA_MODE_AREA
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
-      Severity: 4
-    - Category: PLAYER_AVATAR_BASE
-      Severity: 4
-    - Category: PLAYER_AVATAR_EMOTE_COMMAND
-      Severity: 4
-    - Category: PLAYER_AVATAR_EQUIPPED
-      Severity: 4
-    - Category: PLAYER_IDENTITY_DATA
-      Severity: 4
-    - Category: PLAYER_SDK_DATA
-      Severity: 0
-    - Category: BACKPACK
-      Severity: 0
-    - Category: BADGES
-      Severity: 0
-    - Category: HIGHLIGHTS
-      Severity: 0
-    - Category: ONBOARDING
-      Severity: 0
-    - Category: PORTABLE_EXPERIENCE
-      Severity: 0
-    - Category: SDK_CAMERA
-      Severity: 0
-    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
-      Severity: 0
-    - Category: STARTUP
-      Severity: 0
-    - Category: SYNC
-      Severity: 0
-    - Category: THUMBNAILS
-      Severity: 0
     - Category: VERSION_CONTROL
       Severity: 0
-    - Category: ARCHIPELAGO_REQUEST
-      Severity: 1
-    - Category: COMMS_SCENE_HANDLER
+    - Category: VOICE_CHAT
       Severity: 0
-    - Category: LIVEKIT
-      Severity: 2
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: COMMS_SCENE_HANDLER
-      Severity: 2
-    - Category: ALWAYS
-      Severity: 3
-    - Category: ALWAYS
-      Severity: 2
-    - Category: ALWAYS
-      Severity: 0
-    - Category: FRIENDS
+    - Category: WEARABLE
       Severity: 0
     - Category: ALWAYS
       Severity: 4
     - Category: ANALYTICS
       Severity: 4
     - Category: ANIMATOR
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_PRE_LOAD
       Severity: 4
     - Category: ASSETS_PROVISION
       Severity: 4
@@ -240,7 +322,21 @@ MonoBehaviour:
       Severity: 4
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 4
+    - Category: CHAT_HISTORY
+      Severity: 4
+    - Category: CHAT_MESSAGES
+      Severity: 4
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 4
+    - Category: COMMS_API
+      Severity: 4
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 4
     - Category: COMMS_SCENE_HANDLER
+      Severity: 4
+    - Category: COMMUNITIES
+      Severity: 4
+    - Category: COMMUNITY_VOICE_CHAT
       Severity: 4
     - Category: CRDT
       Severity: 4
@@ -249,6 +345,8 @@ MonoBehaviour:
     - Category: DEBUG
       Severity: 4
     - Category: DISK_CACHE
+      Severity: 4
+    - Category: DONATIONS
       Severity: 4
     - Category: ECS
       Severity: 4
@@ -263,6 +361,10 @@ MonoBehaviour:
     - Category: FRIENDS
       Severity: 4
     - Category: GENERIC_WEB_REQUEST
+      Severity: 4
+    - Category: GIFTING
+      Severity: 4
+    - Category: GLTF_CONTAINER
       Severity: 4
     - Category: GPU_INSTANCING
       Severity: 4
@@ -282,6 +384,8 @@ MonoBehaviour:
       Severity: 4
     - Category: LOD
       Severity: 4
+    - Category: MARKETPLACE_CREDITS
+      Severity: 4
     - Category: MATERIALS
       Severity: 4
     - Category: MEDIA_STREAM
@@ -294,9 +398,21 @@ MonoBehaviour:
       Severity: 4
     - Category: MVC
       Severity: 4
-    - Category: ONBOARDING
+    - Category: MVC_STATE_MACHINE
+      Severity: 4
+    - Category: NEARBY_VOICE_CHAT
+      Severity: 4
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 4
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 4
+    - Category: OUTFITS
       Severity: 4
     - Category: PARTIAL_LOADING
+      Severity: 4
+    - Category: PARTICLE_SYSTEM
+      Severity: 4
+    - Category: PLACES
       Severity: 4
     - Category: PLAYER_SDK_DATA
       Severity: 4
@@ -322,13 +438,21 @@ MonoBehaviour:
       Severity: 4
     - Category: ROADS
       Severity: 4
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 4
+    - Category: SCENE_ADMINS
+      Severity: 4
     - Category: SCENE_FACTORY
       Severity: 4
     - Category: SCENE_FETCH_REQUEST
       Severity: 4
     - Category: SCENE_LOADING
       Severity: 4
+    - Category: SCENE_PERMISSIONS
+      Severity: 4
     - Category: SCENE_UI
+      Severity: 4
+    - Category: SDK_AUDIO_ANALYSIS
       Severity: 4
     - Category: SDK_AUDIO_SOURCES
       Severity: 4
@@ -340,6 +464,10 @@ MonoBehaviour:
       Severity: 4
     - Category: SETTINGS_MENU
       Severity: 4
+    - Category: SKYBOX
+      Severity: 4
+    - Category: SOCIAL
+      Severity: 4
     - Category: STARTUP
       Severity: 4
     - Category: STREAMABLE_LOADING
@@ -348,7 +476,11 @@ MonoBehaviour:
       Severity: 4
     - Category: TEXTURE_WEB_REQUEST
       Severity: 4
+    - Category: TEXTURES
+      Severity: 4
     - Category: THUMBNAILS
+      Severity: 4
+    - Category: TRANSLATE
       Severity: 4
     - Category: TWEEN
       Severity: 4
@@ -358,6 +490,8 @@ MonoBehaviour:
       Severity: 4
     - Category: VERSION_CONTROL
       Severity: 4
+    - Category: VOICE_CHAT
+      Severity: 4
     - Category: WEARABLE
       Severity: 4
     - Category: ALWAYS
@@ -365,6 +499,10 @@ MonoBehaviour:
     - Category: ANALYTICS
       Severity: 1
     - Category: ANIMATOR
+      Severity: 1
+    - Category: ASSET_BUNDLES
+      Severity: 1
+    - Category: ASSET_PRE_LOAD
       Severity: 1
     - Category: ASSETS_PROVISION
       Severity: 1
@@ -386,7 +524,21 @@ MonoBehaviour:
       Severity: 1
     - Category: CHARACTER_TRIGGER_AREA
       Severity: 1
+    - Category: CHAT_HISTORY
+      Severity: 1
+    - Category: CHAT_MESSAGES
+      Severity: 1
+    - Category: CHROME_DEVTOOL_PROTOCOL
+      Severity: 1
+    - Category: COMMS_API
+      Severity: 1
+    - Category: COMMS_CHAT_HANDLER
+      Severity: 1
     - Category: COMMS_SCENE_HANDLER
+      Severity: 1
+    - Category: COMMUNITIES
+      Severity: 1
+    - Category: COMMUNITY_VOICE_CHAT
       Severity: 1
     - Category: CRDT
       Severity: 1
@@ -395,6 +547,8 @@ MonoBehaviour:
     - Category: DEBUG
       Severity: 1
     - Category: DISK_CACHE
+      Severity: 1
+    - Category: DONATIONS
       Severity: 1
     - Category: ECS
       Severity: 1
@@ -409,6 +563,10 @@ MonoBehaviour:
     - Category: FRIENDS
       Severity: 1
     - Category: GENERIC_WEB_REQUEST
+      Severity: 1
+    - Category: GIFTING
+      Severity: 1
+    - Category: GLTF_CONTAINER
       Severity: 1
     - Category: GPU_INSTANCING
       Severity: 1
@@ -428,6 +586,8 @@ MonoBehaviour:
       Severity: 1
     - Category: LOD
       Severity: 1
+    - Category: MARKETPLACE_CREDITS
+      Severity: 1
     - Category: MATERIALS
       Severity: 1
     - Category: MEDIA_STREAM
@@ -440,9 +600,21 @@ MonoBehaviour:
       Severity: 1
     - Category: MVC
       Severity: 1
-    - Category: ONBOARDING
+    - Category: MVC_STATE_MACHINE
+      Severity: 1
+    - Category: NEARBY_VOICE_CHAT
+      Severity: 1
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 1
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 1
+    - Category: OUTFITS
       Severity: 1
     - Category: PARTIAL_LOADING
+      Severity: 1
+    - Category: PARTICLE_SYSTEM
+      Severity: 1
+    - Category: PLACES
       Severity: 1
     - Category: PLAYER_SDK_DATA
       Severity: 1
@@ -468,176 +640,64 @@ MonoBehaviour:
       Severity: 1
     - Category: ROADS
       Severity: 1
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 1
+    - Category: SCENE_ADMINS
+      Severity: 1
     - Category: SCENE_FACTORY
       Severity: 1
     - Category: SCENE_FETCH_REQUEST
       Severity: 1
     - Category: SCENE_LOADING
       Severity: 1
+    - Category: SCENE_PERMISSIONS
+      Severity: 1
     - Category: SCENE_UI
-      Severity: 1
-    - Category: SDK_AUDIO_SOURCES
-      Severity: 1
-    - Category: SDK_CAMERA
-      Severity: 1
-    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
-      Severity: 1
-    - Category: SDK_OBSERVABLES
-      Severity: 1
-    - Category: SETTINGS_MENU
-      Severity: 1
-    - Category: STARTUP
-      Severity: 1
-    - Category: STREAMABLE_LOADING
-      Severity: 1
-    - Category: SYNC
-      Severity: 1
-    - Category: TEXTURE_WEB_REQUEST
-      Severity: 1
-    - Category: THUMBNAILS
-      Severity: 1
-    - Category: TWEEN
-      Severity: 1
-    - Category: UI
-      Severity: 1
-    - Category: UNSPECIFIED
-      Severity: 1
-    - Category: VERSION_CONTROL
-      Severity: 1
-    - Category: WEARABLE
-      Severity: 1
-    - Category: MARKETPLACE_CREDITS
-      Severity: 0
-    - Category: MARKETPLACE_CREDITS
-      Severity: 4
-    - Category: MARKETPLACE_CREDITS
-      Severity: 1
-    - Category: COMMUNITIES
-      Severity: 0
-    - Category: COMMUNITIES
-      Severity: 4
-    - Category: COMMUNITIES
-      Severity: 1
-    - Category: CHAT_HISTORY
-      Severity: 4
-    - Category: CHAT_MESSAGES
-      Severity: 4
-    - Category: COMMS_CHAT_HANDLER
-      Severity: 4
-    - Category: CHAT_MESSAGES
-      Severity: 1
-    - Category: COMMS_CHAT_HANDLER
-      Severity: 1
-    - Category: CHAT_HISTORY
-      Severity: 1
-    - Category: SKYBOX
-      Severity: 4
-    - Category: SKYBOX
-      Severity: 1
-    - Category: CHROME_DEVTOOL_PROTOCOL
-      Severity: 0
-    - Category: CHROME_DEVTOOL_PROTOCOL
-      Severity: 2
-    - Category: CHROME_DEVTOOL_PROTOCOL
-      Severity: 4
-    - Category: CHROME_DEVTOOL_PROTOCOL
-      Severity: 1
-    - Category: ASSET_BUNDLES
-      Severity: 4
-    - Category: ASSET_BUNDLES
-      Severity: 1
-    - Category: ASSET_BUNDLES
-      Severity: 0
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 0
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 4
-    - Category: COMMUNITY_VOICE_CHAT
-      Severity: 1
-    - Category: VOICE_CHAT
-      Severity: 0
-    - Category: VOICE_CHAT
-      Severity: 4
-    - Category: VOICE_CHAT
-      Severity: 1
-    - Category: CHAT_TRANSLATE
-      Severity: 3
-    - Category: CHAT_TRANSLATE
-      Severity: 2
-    - Category: CHAT_TRANSLATE
-      Severity: 0
-    - Category: CHAT_TRANSLATE
-      Severity: 4
-    - Category: TRANSLATE
-      Severity: 0
-    - Category: TRANSLATE
-      Severity: 4
-    - Category: TRANSLATE
-      Severity: 1
-    - Category: OUTFITS
-      Severity: 0
-    - Category: OUTFITS
-      Severity: 4
-    - Category: OUTFITS
-      Severity: 1
-    - Category: GIFTING
-      Severity: 2
-    - Category: GIFTING
-      Severity: 0
-    - Category: GIFTING
-      Severity: 4
-    - Category: GIFTING
-      Severity: 1
-    - Category: SOCIAL
-      Severity: 0
-    - Category: SOCIAL
-      Severity: 4
-    - Category: SOCIAL
-      Severity: 1
-    - Category: MVC_STATE_MACHINE
-      Severity: 0
-    - Category: MVC_STATE_MACHINE
-      Severity: 4
-    - Category: MVC_STATE_MACHINE
-      Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 0
-    - Category: TEXTURES
-      Severity: 0
-    - Category: TEXTURES
-      Severity: 4
-    - Category: TEXTURES
-      Severity: 1
-    - Category: RUNTIME_DEEPLINKS
-      Severity: 4
-    - Category: RUNTIME_DEEPLINKS
-      Severity: 1
-    - Category: SCENE_PERMISSIONS
-      Severity: 4
-    - Category: SCENE_PERMISSIONS
       Severity: 1
     - Category: SDK_AUDIO_ANALYSIS
       Severity: 1
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_INFO_WEB_REQUEST
+    - Category: SDK_AUDIO_SOURCES
       Severity: 1
-    - Category: NFT_SHAPE_WEB_REQUEST
+    - Category: SDK_CAMERA
       Severity: 1
-    - Category: PLACES
-      Severity: 4
-    - Category: PLACES
+    - Category: SDK_LOCAL_SCENE_DEVELOPMENT
       Severity: 1
-    - Category: ANALYTICS_INTERNAL
-      Severity: 4
-    - Category: ANALYTICS_INTERNAL
+    - Category: SDK_OBSERVABLES
       Severity: 1
+    - Category: SETTINGS_MENU
+      Severity: 1
+    - Category: SKYBOX
+      Severity: 1
+    - Category: SOCIAL
+      Severity: 1
+    - Category: STARTUP
+      Severity: 1
+    - Category: STREAMABLE_LOADING
+      Severity: 1
+    - Category: SYNC
+      Severity: 1
+    - Category: TEXTURE_WEB_REQUEST
+      Severity: 1
+    - Category: TEXTURES
+      Severity: 1
+    - Category: THUMBNAILS
+      Severity: 1
+    - Category: TRANSLATE
+      Severity: 1
+    - Category: TWEEN
+      Severity: 1
+    - Category: UI
+      Severity: 1
+    - Category: UNSPECIFIED
+      Severity: 1
+    - Category: VERSION_CONTROL
+      Severity: 1
+    - Category: VOICE_CHAT
+      Severity: 1
+    - Category: WEARABLE
+      Severity: 1
+    - Category: ALWAYS
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

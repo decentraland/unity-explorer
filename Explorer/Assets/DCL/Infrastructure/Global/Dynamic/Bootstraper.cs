@@ -2,11 +2,11 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat;
 using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
@@ -14,13 +14,10 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.UI;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
@@ -38,8 +35,6 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Text;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -177,6 +172,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
+                    EditorPositionOverrideActive = realmLaunchSettings.HasEditorPositionOverride(),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
@@ -219,6 +215,7 @@ namespace Global.Dynamic
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                FeatureFlagsConfiguration.Reset();
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
@@ -227,6 +224,10 @@ namespace Global.Dynamic
         public void InitializeFeaturesRegistry()
         {
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
+
+            // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
+            // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.AB_DEPS_DIGEST_CACHE_KEY);
         }
 
         public GlobalWorld CreateGlobalWorld(
@@ -323,13 +324,17 @@ namespace Global.Dynamic
         {
             splashScreen.Show();
 
+            IWeb3Authenticator authenticator = new TokenFileAuthenticator(
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                webRequestsContainer.WebRequestController,
+                bootstrapContainer.Web3AccountFactory);
+
+            if (EnableAnalytics)
+                authenticator = new TrackedTokenFileAuthenticator((TokenFileAuthenticator)authenticator, bootstrapContainer.Analytics.Controller);
+
             try
             {
-                IWeb3Identity identity = await new TokenFileAuthenticator(
-                          URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                          webRequestsContainer.WebRequestController,
-                          bootstrapContainer.Web3AccountFactory)
-                     .LoginAsync(new LoginPayload(), ct); // doesn't use payload
+                IWeb3Identity identity = await authenticator.LoginAsync(new LoginPayload(), ct); // doesn't use payload
 
                 bootstrapContainer.IdentityCache!.Identity = identity;
 
@@ -337,6 +342,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.Controller.Identify(identity);
             }
             catch (AutoLoginTokenNotFoundException) { } // Exceptions on auto-login should not block the application bootstrap
+            catch (AutoLoginTokenInvalidException e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(

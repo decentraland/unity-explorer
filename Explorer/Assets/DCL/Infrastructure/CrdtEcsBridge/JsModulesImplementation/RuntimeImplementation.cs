@@ -12,12 +12,15 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
@@ -29,14 +32,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
+        private const string AGENT = "unity-explorer";
+        private const string PLATFORM = "desktop";
+
         private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
         private readonly IRealmData realmData;
         private readonly IWebRequestController webRequestController;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly IRoomHub roomHub;
+        private readonly string installSource;
 
-        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, IRoomHub roomHub)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData, IRealmData realmData, IWebRequestController webRequestController, SkyboxSettingsAsset skyboxSettings, IRoomHub roomHub, string installSource)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
@@ -44,6 +51,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.webRequestController = webRequestController;
             this.skyboxSettings = skyboxSettings;
             this.roomHub = roomHub;
+            this.installSource = installSource;
         }
 
         public void Dispose() { }
@@ -60,7 +68,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
                 NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
 
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
                 // create script byte array
                 ITypedArray<byte> array = jsOperations.NewUint8Array(nativeBytes.Length);
@@ -128,5 +136,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 content: sceneData.SceneEntityDefinition.content,
                 metadataJson: sceneData.SceneEntityDefinition.metadata.OriginalJson
             );
+
+        public IRuntime.GetExplorerInformationResponse GetExplorerInformation() =>
+            new()
+            {
+                agent = AGENT,
+                platform = PLATFORM,
+                configurationsJson = JsonConvert.SerializeObject(new Dictionary<string, string>
+                {
+                    ["installSource"] = installSource,
+                }),
+            };
+
+
     }
 }

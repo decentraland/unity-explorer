@@ -38,7 +38,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             this.environment = environment;
@@ -49,20 +49,31 @@ namespace DCL.Browser.DecentralandUrls
             {
                 // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
-                // Content and lambdas url are hardcoded to a particular catalyst
                 // Adapter info (both scene and room) also have to responde to the `.today` environment
                 // Archipelago status as well, to have a clear minimap
                 // All the remaining urls should use the `Org` domain, that's why we change the domain to forcefully `.org`
                 // It's a catalyst that replicates the org environment and eth network, but doesn't propagate back to the production catalysts
                 Url(DecentralandUrl.AssetBundleRegistry);
+                Url(DecentralandUrl.AssetBundleRegistryVersion);
                 Url(DecentralandUrl.AssetBundlesCDN);
+                Url(DecentralandUrl.Profiles);
+                Url(DecentralandUrl.ProfilesMetadata);
+                Url(DecentralandUrl.EntitiesActive);
+                Url(DecentralandUrl.EntitiesActiveElements);
+                Url(DecentralandUrl.WorldEntitiesActive);
                 Url(DecentralandUrl.ArchipelagoStatus);
                 Url(DecentralandUrl.ArchipelagoHotScenes);
                 Url(DecentralandUrl.Genesis);
-                Url(DecentralandUrl.GatekeeperStatus);
-                Url(DecentralandUrl.GateKeeperSceneAdapter);
+                Url(DecentralandUrl.Gatekeeper);
                 Url(DecentralandUrl.RemotePeers);
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
+            }
+
+            // TODO address it later, direct cache injection as a behaviour looks unelegant
+            if (!string.IsNullOrEmpty(gatekeeperBaseOverride))
+            {
+                cache[DecentralandUrl.Gatekeeper] = new UrlData(CacheBehaviour.STATIC, gatekeeperBaseOverride);
+                cache[DecentralandUrl.LocalGateKeeperSceneAdapter] = new UrlData(CacheBehaviour.STATIC, $"{gatekeeperBaseOverride}/get-scene-adapter");
             }
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
@@ -79,6 +90,9 @@ namespace DCL.Browser.DecentralandUrls
 
         public string Probe(DecentralandUrl decentralandUrl)
         {
+            if (cache.TryGetValue(decentralandUrl, out UrlData cached))
+                return cached.Url!;
+
             UrlData rawUrl = RawUrl(decentralandUrl);
 
             return rawUrl.ToString().Replace(ENV, decentralandDomain);
@@ -125,7 +139,7 @@ namespace DCL.Browser.DecentralandUrls
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
-        private void ResetRealmDependentUrls(RealmKind __)
+        private void ResetRealmDependentUrls(RealmKind realmKind)
         {
             using PooledObject<List<DecentralandUrl>> _ = ListPool<DecentralandUrl>.Get(out List<DecentralandUrl>? realmDependentCachedUrls);
 
@@ -161,27 +175,32 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.Gatekeeper => $"https://comms-gatekeeper.decentraland.{ENV}",
+                DecentralandUrl.GateKeeperSceneAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/get-scene-adapter",
                 DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
-                DecentralandUrl.ChatAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/private-messages/token",
+                DecentralandUrl.ChatAdapter => $"{Url(DecentralandUrl.Gatekeeper)}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
-                DecentralandUrl.EventsWebpage => $"https://decentraland.{ENV}/events",
+                DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",
+                DecentralandUrl.WhatsOnEventLink => $"https://decentraland.{ENV}/whats-on/?id={{0}}",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.PeerContent => $"https://peer.decentraland.{ENV}/content/contents",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.{ENV}/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
+                DecentralandUrl.Faqs => $"https://docs.decentraland.{ENV}/faqs/decentraland-101",
+                DecentralandUrl.Discord => $"https://decentraland.{ENV}/discord/",
                 DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
-                DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
+                DecentralandUrl.GatekeeperStatus => $"{Url(DecentralandUrl.Gatekeeper)}/status",
                 DecentralandUrl.Genesis => $"https://realm-provider-ea.decentraland.{ENV}/main",
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
@@ -191,7 +210,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistryVersion => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
+                DecentralandUrl.AssetBundleRegistryVersion => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldPermissions => $"https://worlds-content-server.decentraland.{ENV}/world/{{0}}/permissions",
                 DecentralandUrl.WorldComms => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/comms",
@@ -214,23 +233,30 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ManaUsdRateApiUrl => "https://api.coingecko.com/api/v3/simple/price?ids=decentraland&vs_currencies=usd",
                 DecentralandUrl.JumpInGenesisCityLink => $"https://decentraland.{ENV}/jump/?position={{0}},{{1}}",
                 DecentralandUrl.JumpInWorldLink => $"https://decentraland.{ENV}/jump/?realm={{0}}",
+                DecentralandUrl.ReportUserForm => $"https://decentraland.{ENV}/report/players?player_address={{0}}&reported_address={{1}}",
+                DecentralandUrl.BannedUsers => $"{Url(DecentralandUrl.Gatekeeper)}/users/{{0}}/bans",
+                DecentralandUrl.SceneAdmins => $"{Url(DecentralandUrl.Gatekeeper)}/scene-admin",
 
-                DecentralandUrl.Profiles => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles",
-                DecentralandUrl.ProfilesMetadata => $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
+
+                DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
+                DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
-
-                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
+                DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
-                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{RawUrl(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
+                // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
+                DecentralandUrl.EntitiesActiveElements => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active",
+
+                DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 DecentralandUrl.EntitiesDeployment => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.EntitiesBaseUrl.Value : null),
-                DecentralandUrl.Lambdas => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/lambdas/" :
-                    realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
-                DecentralandUrl.Content => UrlData.RealmDependent(environment == DecentralandEnvironment.Today ? "https://peer-testing.decentraland.org/content/" :
-                    realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
+                DecentralandUrl.Lambdas => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.LambdasBaseUrl.Value : null),
+                DecentralandUrl.Content => UrlData.RealmDependent(realmData.Configured ? realmData.Ipfs.ContentBaseUrl.Value : null),
+
+                DecentralandUrl.SocialServiceMutes => $"https://social-api.decentraland.{ENV}/v1/mutes",
+
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!),
             };
 

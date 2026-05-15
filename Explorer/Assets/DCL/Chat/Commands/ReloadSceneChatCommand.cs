@@ -1,10 +1,12 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
+using DCL.CharacterMotion.Components;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Chat.Commands
 {
@@ -45,6 +47,9 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
+            if(globalWorld.Has<CharacterRigidTransform>(playerEntity))
+                ResetExternalPhysics(globalWorld.Get<CharacterRigidTransform>(playerEntity));
+
             if (isLocalSceneDevelopmentMode)
                 globalWorld.Add<StopCharacterMotion>(playerEntity);
 
@@ -65,6 +70,16 @@ namespace DCL.Chat.Commands
             {
                 globalWorld.Remove<StopCharacterMotion>(playerEntity);
             }
+        }
+
+        private static void ResetExternalPhysics(CharacterRigidTransform rigidTransform)
+        {
+            rigidTransform.ExternalForce =
+            rigidTransform.ExternalAcceleration =
+            rigidTransform.ExternalImpulse =
+            rigidTransform.ExternalVelocity =
+            rigidTransform.GravityVelocity =
+            rigidTransform.SlopeGravity = Vector3.zero;
         }
     }
 }

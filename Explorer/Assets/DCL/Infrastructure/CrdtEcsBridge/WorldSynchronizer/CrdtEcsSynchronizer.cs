@@ -1,4 +1,4 @@
-﻿using Arch.Buffer;
+using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -26,7 +26,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         // We can't use a mutex as it must be acquired and released by the same thread
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
-        private readonly SemaphoreSlim semaphore = new (1, 1);
+        private readonly DCLSemaphoreSlim semaphore = new (1, 1);
 
         private bool disposed;
 
@@ -56,27 +56,40 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             // Timeout in Editor will fire up if the pause is enabled
             // So just wait while on pause
+#if UNITY_EDITOR
             MultithreadingUtility.WaitWhileOnPause();
+#endif
 
             const int RENT_WAIT_TIMEOUT = 5000;
 
+#if !UNITY_WEBGL
+// TODO it must be fixed for the WebGL build
             if (!semaphore.Wait(RENT_WAIT_TIMEOUT))
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
+#endif
 
             return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool);
         }
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
-            if (disposed)
+            try
             {
-                // If the scene was disposed before just dispose the sync buffer
-                syncCommandBuffer.Dispose();
-                return;
+                if (disposed)
+                    // If the scene was disposed before just dispose the sync buffer
+                    syncCommandBuffer.Dispose();
+                else
+                    syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             }
-
-            syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
-            semaphore.Release();
+            finally
+            {
+#if !UNITY_WEBGL
+                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
+                // including the disposed early-return and any exception thrown by Apply,
+                // otherwise the slot leaks and subsequent Rents time out forever.
+                semaphore.Release();
+#endif
+            }
         }
     }
 }

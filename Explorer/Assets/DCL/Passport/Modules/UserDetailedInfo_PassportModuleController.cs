@@ -129,9 +129,11 @@ namespace DCL.Passport.Modules
             try
             {
                 SetInfoSectionAsSavingStatus(true);
-                descriptionController.SaveDataIntoProfile();
-                additionalFieldsController.SaveDataIntoProfile();
-                await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct);
+                //create a copy to avoid mutating the cached profile in-place, otherwise the deploy would not see changes in the profile
+                Profile profileCopy = new ProfileBuilder().From(currentProfile).Build();
+                descriptionController.SaveDataIntoProfile(profileCopy);
+                additionalFieldsController.SaveDataIntoProfile(profileCopy);
+                await passportProfileInfoController.UpdateProfileAsync(profileCopy, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

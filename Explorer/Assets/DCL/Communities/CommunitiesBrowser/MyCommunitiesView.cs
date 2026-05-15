@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 using CommunityData = DCL.Communities.CommunitiesDataProvider.DTOs.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
@@ -30,7 +31,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private ThumbnailLoader? thumbnailLoader;
         private ICommunityCallOrchestrator? communityCallOrchestrator;
 
-        //TODO FRAN: MAKE THIS HAVE ANY USE!
         private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
 
         private void Awake()
@@ -53,6 +53,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void InitializeCommunitiesList(int itemTotalCount)
         {
+            myCommunityThumbnailsLoadingCts = myCommunityThumbnailsLoadingCts.SafeRestart();
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
@@ -87,6 +88,7 @@ namespace DCL.Communities.CommunitiesBrowser
             communitiesIds.Clear();
             myCommunitiesLoopList.SetListItemCount(0, false);
             SetAsEmpty(true);
+            myCommunityThumbnailsLoadingCts = myCommunityThumbnailsLoadingCts.SafeRestart();
         }
 
         public void AddCommunitiesItems(CommunityData[] communities, bool resetPos)

@@ -7,14 +7,15 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
+using DCL.Profiling;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace CrdtEcsBridge.JsModulesImplementation
 {
@@ -41,6 +42,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
+        private readonly SceneRuntimeMetrics metrics;
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
 
@@ -55,7 +57,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
             MultiThreadSync multiThreadSync,
-            MultiThreadSync.Owner syncOwner)
+            MultiThreadSync.Owner syncOwner,
+            SceneRuntimeMetrics metrics)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -68,6 +71,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.syncOwner = syncOwner;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
+            this.metrics = metrics;
 
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
             worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
@@ -94,6 +98,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             deserializeBatchSampler.End();
 
+            metrics.MessagesFromScene.Add(messages.Count);
+
             worldSyncBufferSampler.Begin();
 
             // as we no longer wait for a buffer to apply the thread should be frozen
@@ -102,9 +108,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // Reconcile CRDT state
             for (var i = 0; i < messages.Count; i++)
             {
+                CRDTMessage message = messages[i];
+
+                // Skip Creator Hub components leaked from main.composite (inspector::*,
+                // specific asset-packs:: tooling metadata, composite::root) and phantom
+                // Creator Hub tags (custom components with empty data, e.g. cube-id).
+                if (message.Type is CRDTMessageType.PUT_COMPONENT
+                        or CRDTMessageType.DELETE_COMPONENT
+                        or CRDTMessageType.APPEND_COMPONENT
+                    && CreatorHubComponentFilter.ShouldFilter(in message))
+                {
+                    message.Data.Dispose();
+                    continue;
+                }
+
                 crdtProcessMessagesSampler.Begin();
 
-                CRDTMessage message = messages[i];
                 CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
@@ -142,6 +161,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 // Create CRDT Messages from the current state
                 // we know exactly how big the array should be
                 int messagesCount = crdtProtocol.GetMessagesCount();
+                metrics.MessagesToScene.Add(messagesCount);
                 ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(messagesCount);
 
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
@@ -190,6 +210,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+
+                    metrics.MessagesToScene.Add(outgoingMessagesSyncBlock.Messages.Count);
                 }
 
                 outgoingMessagesSampler.End();

@@ -1,16 +1,15 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
+using Utility.Multithreading;
 
 namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly ConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
+        private readonly DCLConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, string> userNameToIdMap = new ();
 
         public ProfileTier? Get(string id) =>
             profiles.GetValueOrDefault(id);
@@ -37,15 +36,12 @@ namespace DCL.Profiles
             if (profiles.TryGetValue(id, out ProfileTier existingProfile))
             {
                 // The cached full profile can be never replaced by the compact version
-                Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
+               UnityEngine.Assertions.Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
 
                 if (existingProfile != profile)
                 {
-                    // Inherit ProfilePicture (as it's dynamically resolved)
-                    if (existingProfile.GetKind() < profile.GetKind() && existingProfile.FaceSnapshotUrl == profile.FaceSnapshotUrl)
-                        profile.ProfilePicture = existingProfile.ProfilePicture;
-                    else
-                        existingProfile.Dispose();
+                    InheritDynamicState(existingProfile, profile);
+                    existingProfile.Dispose();
                 }
             }
 
@@ -53,6 +49,23 @@ namespace DCL.Profiles
             userNameToIdMap[profile.DisplayName] = id;
 
             UpdateProfilingCounter();
+        }
+
+        private static void InheritDynamicState(ProfileTier from, ProfileTier to)
+        {
+            // Only inherit if the snapshot URL hasn't changed — otherwise the old picture/promise is stale.
+            if (from.FaceSnapshotUrl != to.FaceSnapshotUrl)
+                return;
+
+            // Detach on the source after transfer so Dispose doesn't cancel or dereference work we just moved.
+            to.ProfilePicture = from.ProfilePicture;
+            from.ProfilePicture = null;
+
+            if (from.IsFull(out Profile? fromFull) && to.IsFull(out Profile? toFull))
+            {
+                toFull.PicturePromise = fromFull.PicturePromise;
+                fromFull.PicturePromise = null;
+            }
         }
 
         public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)

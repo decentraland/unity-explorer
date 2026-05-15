@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.CharacterMotion.Components;
@@ -8,7 +8,6 @@ using DCL.CharacterMotion.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
-using System;
 using UnityEngine;
 using Utility;
 
@@ -57,6 +56,7 @@ namespace DCL.CharacterMotion.Systems
             Transform characterTransform = characterController.transform;
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
             Vector3 gravityDelta = CalculateGravityDelta(dt, rigidTransform, platformComponent);
+            Vector3 externalDelta = rigidTransform.ExternalVelocity * dt;
             Vector3 prevPos = characterTransform.position;
 
             // Force the platform collider to update its position, so slope modifier raycast can work properly
@@ -81,6 +81,7 @@ namespace DCL.CharacterMotion.Systems
                 collisionFlags = characterController.Move(
                     movementDelta
                     + gravityDelta
+                    + externalDelta
                     + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;

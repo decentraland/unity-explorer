@@ -1,0 +1,17 @@
+{
+    "name": "DCL.NativeWindowManager",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8614faad1014549c88b57654b0fb41bd",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

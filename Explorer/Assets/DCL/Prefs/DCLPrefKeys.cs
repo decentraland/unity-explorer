@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace DCL.Prefs
 {
     public static class DCLPrefKeys
@@ -8,6 +6,8 @@ namespace DCL.Prefs
 
         public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
         public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
+
+        public const string LAUNCH_COUNT = "LaunchCount";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
 
@@ -34,25 +34,45 @@ namespace DCL.Prefs
         public const string PS_CHUNK_CULL_DISTANCE = "ChunkCullDistance";
         public const string PS_MAX_SIMULTANEOUS_VIDEOS = "MaxSimultaneousVideos";
 
-        public const string SETTINGS_VSYNC_ENABLED = "Settings_VSync";
+        // New quality settings controller
+        public const string PS_QUALITY_PRESET = "QualityPreset";
+        public const string PS_CUSTOM_BASE_PRESET = "QS_CustomBasePreset";
+        public const string PS_FPS_LIMIT = "QS_FpsLimit";
+        public const string PS_VSYNC = "QS_VSync";
+        public const string PS_RESOLUTION_SCALE = "QS_ResolutionScale";
+        public const string PS_MSAA = "QS_MSAA";
+        public const string PS_HDR_NEW = "QS_HDR";
+        public const string PS_BLOOM = "QS_Bloom";
+        public const string PS_AVATAR_OUTLINE = "QS_AvatarOutline";
+        public const string PS_SCENE_DISTANCE = "QS_SceneDistance";
+        public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
+        public const string PS_GRASS_PRESET = "QS_GrassPreset";
+        public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SUN_LENS_FLARE = "QS_SunLensFlare";
+        public const string PS_SCENE_LIGHTS = "QS_SceneLights";
+        public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
+        public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
+        public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
+        public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
+        public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
+        public const string PS_RESOLUTION = "QS_Resolution";
+
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
         public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
         public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
-        public const string SETTINGS_ENVIRONMENT_DISTANCE = "Settings_EnvironmentDistance";
-        public const string SETTINGS_FPS_LIMIT = "Settings_FpsLimit";
-        public const string SETTINGS_GRAPHICS_QUALITY = "Settings_GraphicsQuality";
         public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
-        public const string SETTINGS_RESOLUTION = "Settings_Resolution";
-        public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
+
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
-        public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
+        public const string SETTINGS_FULLSCREEN = "Settings_Fullscreen";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
-        public const string SETTINGS_UPSCALER = "Settings_Upscaler";
+
+        public const string SETTINGS_POINT_AT_MARKER_VISIBILITY = "Settings_PointAtMarkerVisibility";
 
         public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
         public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";
@@ -63,6 +83,8 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string DEBUG_PANEL_MAXIMIZED = "DebugPanel_Maximized";
+        public const string DEBUG_PANEL_MAXIMIZED_WIDTH = "DebugPanel_MaximizedWidth";
         public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
 
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
@@ -76,8 +98,17 @@ namespace DCL.Prefs
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
+
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
+
+        public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
+        public const string SETTINGS_MUTE_MIC_IN_BACKGROUND = "Settings_MuteMicInBackground";
+
+        public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
+        public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
     }
 }

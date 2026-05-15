@@ -9,5 +9,7 @@ namespace SceneRunner.Scene
         bool TryGetContentUrl(string contentPath, out URLAddress result);
 
         bool TryGetHash(string name, out string hash);
+
+        bool IsRawAsset(string contentPath) => false;
     }
 }

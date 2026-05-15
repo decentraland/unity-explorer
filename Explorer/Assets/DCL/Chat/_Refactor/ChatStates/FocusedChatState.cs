@@ -28,6 +28,9 @@ namespace DCL.Chat.ChatStates
             inputBlocker.Unblock();
         }
 
+        public override void OnBlurRequested() =>
+            stateMachine.Enter<DefaultChatState>();
+
         public override void OnClickOutside() =>
             stateMachine.Enter<DefaultChatState>();
 

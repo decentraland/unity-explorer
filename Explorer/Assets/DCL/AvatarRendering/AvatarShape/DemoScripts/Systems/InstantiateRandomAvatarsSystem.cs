@@ -68,6 +68,16 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private readonly AvatarRandomizerAsset avatarRandomizerAsset;
 
         private bool networkAvatar;
+        private bool forceMaleOnly;
+
+        private readonly IndexedElementBinding emoteDropdownBinding;
+
+        private const string EMOTE_URN_PREFIX = "urn:decentraland:off-chain:base-emotes:";
+
+        private static readonly List<string> EMOTE_CHOICES = new ()
+        {
+            "None", "clap", "cry", "dance", "disco", "hammer", "kiss", "money", "robot", "tektonik", "tik",
+        };
 
         internal InstantiateRandomAvatarsSystem(
             World world,
@@ -81,10 +91,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
             networkAvatar = true;
+            emoteDropdownBinding = new IndexedElementBinding(EMOTE_CHOICES, EMOTE_CHOICES[0]);
 
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
                         .AddToggleField("Network avatar", evt => networkAvatar = evt.newValue, true)
+                        .AddToggleField("Force male only", evt => forceMaleOnly = evt.newValue, false)
                         .AddIntFieldWithConfirmation(30, "Instantiate", AddRandomAvatar)
                         .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
                         .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
@@ -92,7 +104,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                         .AddSingleButton("Randomize Wearables of Avatars", RandomizeWearablesOfAvatars);
 
             debugBuilder.TryAddWidget("Avatar Creator")
-                       ?.AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
+                       ?.AddControl(new DebugDropdownDef(emoteDropdownBinding, "Emote"), null)
+                        .AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
                         .AddStringFieldsWithConfirmation(3, "Instantiate Female", InstantiateFemaleAvatar);
         }
 
@@ -256,7 +269,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             for (var i = 0; i < avatarRandomizerAsset.Avatars.Count && i < randomAvatarsToInstantiate; i++)
             {
-                AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                AvatarRandomizer currentRandomizer = GetRandomizer();
                 var wearables = new List<string>();
 
                 foreach (string avatarWearable in avatarRandomizerAsset.Avatars[i].pointers)
@@ -267,7 +280,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
             for (int i = avatarRandomizerAsset.Avatars.Count; i < randomAvatarsToInstantiate; i++)
             {
-                AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
+                AvatarRandomizer currentRandomizer = GetRandomizer();
                 avatarIndex++;
                 var wearables = new List<string>();
 
@@ -277,6 +290,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 CreateAvatar(characterControllerSettings, startXPosition, startZPosition, wearables, currentRandomizer.BodyShape, i, randomAvatarsToInstantiate);
             }
         }
+
+        private AvatarRandomizer GetRandomizer() =>
+            forceMaleOnly ? randomizers[0] : randomizers[Random.Range(0, randomizers.Length)];
 
         private void CreateAvatar(ICharacterControllerSettings characterControllerSettings, float startXPosition, float startZPosition, List<string> wearables, string bodyShape,
             int avatarIndex, int randomAvatarToInstantiate)
@@ -306,13 +322,19 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
+            bool hasEmote = emoteDropdownBinding.Index > 0;
+            var emoteComponent = new CharacterEmoteComponent { EmoteLoop = hasEmote };
+
             if (networkAvatar)
             {
-                World.Create(profile,
+                Entity entity = World.Create(profile,
                     transformComp,
                     new CharacterAnimationComponent(),
-                    new CharacterEmoteComponent(),
+                    emoteComponent,
                     new RandomAvatar());
+
+                if (hasEmote)
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
             }
             else
             {
@@ -323,12 +345,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController.slopeLimit = 50f;
                 characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
 
-                World.Create(profile,
+                Entity entity = World.Create(profile,
                     transformComp,
                     characterController,
                     new CharacterRigidTransform(),
                     new CharacterAnimationComponent(),
-                    new CharacterEmoteComponent(),
+                    emoteComponent,
                     new CharacterPlatformComponent(),
                     new StunComponent(),
                     new FeetIKComponent(),
@@ -342,6 +364,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new JumpState(),
                     new RandomAvatar()
                 );
+
+                if (hasEmote)
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
             }
         }
 

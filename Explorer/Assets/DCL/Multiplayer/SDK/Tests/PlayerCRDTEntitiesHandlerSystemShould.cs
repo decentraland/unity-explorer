@@ -14,6 +14,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility.Multithreading;
 using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -258,6 +259,112 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.TryGet(entity4, out playerCRDTEntity));
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void NotAssignPlayerWhenSceneIsStarting(bool isMainPlayer)
+        {
+            scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Starting));
+
+            fakeCharacterUnityTransform.position = Vector3.one; // Inside scene 1
+
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
+            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+            Assert.That(playerCRDTEntity.SceneFacade, Is.Null);
+            Assert.That(playerCRDTEntity.SceneWorldEntity, Is.EqualTo(Entity.Null));
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AssignPlayerWhenSceneTransitionsFromStartingToRunning(bool isMainPlayer)
+        {
+            scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Starting));
+
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
+
+            // First tick: scene still Starting — gate blocks assignment
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
+            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+
+            // Scene finishes initializing
+            scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Running));
+
+            // Next tick: reconciliation query auto-retries and assigns
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
+            Assert.IsTrue(playerCRDTEntity.AssignedToScene);
+            Assert.That(playerCRDTEntity.SceneFacade, Is.EqualTo(scene1Facade));
+            Assert.IsTrue(scene1World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
+        }
+
+        [Test]
+        public void SkipSceneSideCleanupWhenPreviousSceneIsDisposing()
+        {
+            // Player walks into scene1 while it's Running — gets assigned normally.
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
+            Assert.IsTrue(playerCRDTEntity.AssignedToScene);
+            Entity scene1Entity = playerCRDTEntity.SceneWorldEntity;
+
+            // Scene1 transitions out of Running before the player leaves.
+            scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Disposing));
+
+            // Player walks somewhere with no valid scene to trigger the reassignment path.
+            fakeCharacterUnityTransform.position = Vector3.one * 100;
+            system.Update(0);
+
+            // Global state still reflects "not in any scene" — global cleanup must always run.
+            Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
+            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+
+            // Scene-side cleanup write must be skipped: posting DeleteEntityIntention to a
+            // disposing world would race with its teardown.
+            Assert.That(scene1World.Has<DeleteEntityIntention>(scene1Entity), Is.False);
+        }
+
+        [Test]
+        public void NotAssignPlayerWhenSceneIsDisposingFromTheStart()
+        {
+            scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Disposing));
+
+            fakeCharacterUnityTransform.position = Vector3.one;
+
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
+                new CharacterTransform(fakeCharacterUnityTransform)
+            );
+
+            system.Update(0);
+
+            Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
+            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+            Assert.That(playerCRDTEntity.SceneFacade, Is.Null);
         }
     }
 }

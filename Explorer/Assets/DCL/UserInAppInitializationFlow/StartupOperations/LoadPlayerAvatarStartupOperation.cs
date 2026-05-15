@@ -2,9 +2,11 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using ECS.Prioritization.Components;
 using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow
@@ -37,9 +39,16 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity = args.FlowParameters.PlayerEntity;
 
             if (world.Has<Profile>(playerEntity))
-                world.Set(playerEntity, profile!);
+            {
+                // Make all systems update again since the previous profile was already stored and processed, but we now updated it
+                profile!.IsDirty = true;
+                world.Set(playerEntity, profile);
+            }
             else
                 world.Add(playerEntity, profile!);
+
+            // Trigger the local player picture download
+            ProfileUtils.CreateProfilePicturePromise(profile!, world, PartitionComponent.TOP_PRIORITY);
 
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately

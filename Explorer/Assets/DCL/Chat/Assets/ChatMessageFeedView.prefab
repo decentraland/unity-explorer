@@ -267,7 +267,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -419,7 +419,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -633,6 +633,7 @@ GameObject:
   - component: {fileID: 7876013243935759455}
   - component: {fileID: 7665502455413759823}
   - component: {fileID: 1807510319441030586}
+  - component: {fileID: 1225778807064636369}
   m_Layer: 5
   m_Name: ChatMessageFeedView
   m_TagString: Untagged
@@ -690,7 +691,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -787,6 +788,8 @@ MonoBehaviour:
   chatEntriesCanvasGroup: {fileID: 1807510319441030586}
   loopList: {fileID: 7876013243935759455}
   scrollRect: {fileID: 2232783587231390383}
+  entryGreyOutOpacity: 0.6
+  <reactionEventBus>k__BackingField: {fileID: 1225778807064636369}
 --- !u!225 &1807510319441030586
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -799,6 +802,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1225778807064636369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6563487890893190376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 411e0fb359ea4460ba3233e229e54754, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MVC::MVC.ViewEventBus
 --- !u!1 &8567759641822011191
 GameObject:
   m_ObjectHideFlags: 0
@@ -902,6 +917,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.thumbnailLoader = thumbnailLoader;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
-            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.WhatsOnNewEventLink)}?community_id={{0}}&utm_source=explorer&utm_campaign=communities";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -105,13 +105,13 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event, decentralandUrlsSource));
 
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData.Event)}&utm_source=explorer&utm_campaign=communities");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData.Event, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=communities");
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {
@@ -204,7 +204,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var item in eventResponse.Value.data.events)
                 eventPlaceIds.Add(item.place_id);
 
-            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
+            Result<PlacesData.IPlacesAPIResponse> placesResponse = await placesAPIService.GetDestinationsByIdsAsync(eventPlaceIds, ct)
                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)

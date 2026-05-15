@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
@@ -158,7 +159,159 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.AreEqual(Overflow.Hidden, visualElement.style.overflow.value);
         }
 
-        // --- ApplyDefaultUiBackgroundValues tests ---
+        [Test]
+        public void SetupVisualElement_SetsOverflowHidden_WhenOverflowIsYgoScroll()
+        {
+            // Arrange - Unity has no native Overflow.Scroll; we map YgoScroll to Hidden and use inner ScrollView
+            var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
+
+            // Act
+            UiElementUtils.SetupTransformVisualElement(visualElement, ref pbUiTransform);
+
+            // Assert
+            Assert.AreEqual(Overflow.Hidden, visualElement.style.overflow.value);
+        }
+
+        [Test]
+        public void EnsureScrollMode_CreatesInnerScrollView_WhenOverflowIsYgoScroll()
+        {
+            // Arrange
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
+
+            // Act
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert
+            Assert.IsNotNull(component.InnerScrollView);
+            Assert.AreSame(component.InnerScrollView.contentContainer, component.ContentContainer);
+            Assert.AreEqual(ScrollerVisibility.AlwaysVisible, component.InnerScrollView.horizontalScrollerVisibility);
+            Assert.AreEqual(ScrollerVisibility.AlwaysVisible, component.InnerScrollView.verticalScrollerVisibility);
+        }
+
+        [Test]
+        public void EnsureScrollMode_RemovesInnerScrollView_WhenOverflowChangesFromScrollToVisible()
+        {
+            // Arrange - enable scroll then disable
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+            Assert.IsNotNull(component.InnerScrollView);
+
+            pbUiTransform.Overflow = YGOverflow.YgoVisible;
+
+            // Act
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert
+            Assert.IsNull(component.InnerScrollView);
+            Assert.AreSame(component.Transform, component.ContentContainer);
+        }
+
+        [Test]
+        public void EnsureScrollMode_WhenOverflowChangesToScroll_MovesExistingChildrenIntoScrollViewContentContainer()
+        {
+            // Arrange — transform already has children, then overflow is set to scroll
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var child1 = new VisualElement();
+            var child2 = new VisualElement();
+            var child3 = new VisualElement();
+            component.Transform.Add(child1);
+            component.Transform.Add(child2);
+            component.Transform.Add(child3);
+
+            var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
+
+            // Act
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert — ScrollView is the only direct child of Transform; original children are in contentContainer
+            Assert.IsNotNull(component.InnerScrollView);
+            Assert.AreEqual(1, component.Transform.childCount);
+            Assert.AreSame(component.InnerScrollView, component.Transform[0]);
+            var content = component.InnerScrollView.contentContainer;
+            Assert.AreEqual(3, content.childCount);
+            Assert.AreSame(child1, content[0]);
+            Assert.AreSame(child2, content[1]);
+            Assert.AreSame(child3, content[2]);
+        }
+
+        [Test]
+        public void EnsureScrollMode_WhenOverflowChangesFromScrollToVisible_MovesChildrenBackToTransform()
+        {
+            // Arrange — already in scroll mode with children in contentContainer, then overflow set to visible
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var pbUiTransform = new PBUiTransform { Overflow = YGOverflow.YgoScroll };
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            var child1 = new VisualElement();
+            var child2 = new VisualElement();
+            component.ContentContainer.Add(child1);
+            component.ContentContainer.Add(child2);
+            Assert.AreEqual(2, component.InnerScrollView.contentContainer.childCount);
+
+            pbUiTransform.Overflow = YGOverflow.YgoVisible;
+
+            // Act
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert — ScrollView removed; children are back on Transform in order
+            Assert.IsNull(component.InnerScrollView);
+            Assert.AreEqual(2, component.Transform.childCount);
+            Assert.AreSame(child1, component.Transform[0]);
+            Assert.AreSame(child2, component.Transform[1]);
+        }
+
+        [Test]
+        public void EnsureScrollMode_UpdatesContentContainerLayoutProperties_WhenModelChanges()
+        {
+            // Arrange — create scroll mode with initial layout properties
+            var component = new UITransformComponent();
+            component.InitializeAsChild("UITransform", new CRDTEntity(0), new CRDTEntity(0));
+            var pbUiTransform = new PBUiTransform
+            {
+                Overflow = YGOverflow.YgoScroll,
+                FlexDirection = YGFlexDirection.YgfdColumn,
+                JustifyContent = YGJustify.YgjFlexStart,
+                AlignItems = YGAlign.YgaStretch,
+                AlignContent = YGAlign.YgaFlexStart,
+                FlexWrap = YGWrap.YgwNoWrap
+            };
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+            var content = component.InnerScrollView.contentContainer;
+            Assert.AreEqual(FlexDirection.Column, content.style.flexDirection.value);
+            Assert.AreEqual(Justify.FlexStart, content.style.justifyContent.value);
+            Assert.AreEqual(Align.Stretch, content.style.alignItems.value);
+            Assert.AreEqual(Align.FlexStart, content.style.alignContent.value);
+            Assert.AreEqual(Wrap.NoWrap, content.style.flexWrap.value);
+
+            // Act — change all layout properties and re-apply
+            pbUiTransform.FlexDirection = YGFlexDirection.YgfdRow;
+            pbUiTransform.JustifyContent = YGJustify.YgjCenter;
+            pbUiTransform.AlignItems = YGAlign.YgaCenter;
+            pbUiTransform.AlignContent = YGAlign.YgaStretch;
+            pbUiTransform.FlexWrap = YGWrap.YgwWrap;
+            UiElementUtils.SetupTransformVisualElement(component.Transform, ref pbUiTransform);
+            UiElementUtils.EnsureScrollMode(component, in pbUiTransform);
+
+            // Assert — contentContainer should reflect all updated properties
+            Assert.AreEqual(FlexDirection.Row, content.style.flexDirection.value);
+            Assert.AreEqual(Justify.Center, content.style.justifyContent.value);
+            Assert.AreEqual(Align.Center, content.style.alignItems.value);
+            Assert.AreEqual(Align.Stretch, content.style.alignContent.value);
+            Assert.AreEqual(Wrap.Wrap, content.style.flexWrap.value);
+        }
 
         [Test]
         public void ApplyWhiteBackgroundWhenNoPBUiBackground()

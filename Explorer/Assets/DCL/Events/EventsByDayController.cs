@@ -108,8 +108,15 @@ namespace DCL.Events
 
             view.SetEventsCounter(dayText);
 
-            await eventsController.RefreshFriendsAndCommunitiesDataAsync(ct);
+            await UniTask.WhenAll(
+                LoadDayEventsAsync(fromDate, dayText, ct),
+                LoadFriendsAndRefreshCardsAsync(ct),
+                LoadCommunitiesAndRefreshCardsAsync(ct)
+            );
+        }
 
+        private async UniTask LoadDayEventsAsync(DateTime fromDate, string dayText, CancellationToken ct)
+        {
             var fromDateUtc = fromDate.ToUniversalTime();
             var toDateUtc = fromDate.AddDays(1).AddSeconds(-1).ToUniversalTime();
             Result<IReadOnlyList<EventDTO>> eventsResult = await eventsApiService.GetEventsByDateRangeAsync(fromDateUtc, toDateUtc, true, ct)
@@ -145,6 +152,26 @@ namespace DCL.Events
 
             view.SetEventsCounter($"{dayText} ({eventsResult.Value.Count})");
             view.SetEventsGridAsLoading(false);
+        }
+
+        private async UniTask LoadFriendsAndRefreshCardsAsync(CancellationToken ct)
+        {
+            await eventsController.RefreshFriendsDataAsync(ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            view.RefreshVisibleCardsFriendsData();
+        }
+
+        private async UniTask LoadCommunitiesAndRefreshCardsAsync(CancellationToken ct)
+        {
+            await eventsController.RefreshCommunitiesDataAsync(ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            view.RefreshVisibleCardsCommunityData();
         }
 
         private void UnloadEvents()

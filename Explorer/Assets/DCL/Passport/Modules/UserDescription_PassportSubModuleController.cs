@@ -31,8 +31,8 @@ namespace DCL.Passport.Modules
         public void ResetEdition() =>
             view.DescriptionForEditMode.text = view.Description.text;
 
-        public void SaveDataIntoProfile() =>
-            currentProfile.Description = view.DescriptionForEditMode.text;
+        public void SaveDataIntoProfile(Profile profile) =>
+            profile.Description = view.DescriptionForEditMode.text;
 
         public void SetAsInteractable(bool isInteractable) =>
             view.DescriptionForEditMode.interactable = isInteractable;

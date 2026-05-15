@@ -1,4 +1,4 @@
-﻿using DCL.SDKComponents.AvatarLocomotion.Components;
+using DCL.SDKComponents.AvatarLocomotion.Components;
 using DCL.SDKComponents.AvatarLocomotion.Systems;
 using UnityEngine;
 
@@ -366,6 +366,84 @@ namespace DCL.CharacterMotion.Settings
             set => impl.StepOffset = value;
         }
 
+        public float PointAtMaxDistance
+        {
+            get => impl.PointAtMaxDistance;
+            set => impl.PointAtMaxDistance = value;
+        }
+
+        public float PointAtDuration
+        {
+            get => impl.PointAtDuration;
+            set => impl.PointAtDuration = value;
+        }
+
+        public float PointAtArmReach
+        {
+            get => impl.PointAtArmReach;
+            set => impl.PointAtArmReach = value;
+        }
+
+        public float PointAtRotationHorizontalRightThreshold
+        {
+            get => impl.PointAtRotationHorizontalRightThreshold;
+            set => impl.PointAtRotationHorizontalRightThreshold = value;
+        }
+
+        public float PointAtRotationHorizontalLeftThreshold
+        {
+            get => impl.PointAtRotationHorizontalLeftThreshold;
+            set => impl.PointAtRotationHorizontalLeftThreshold = value;
+        }
+
+        public float PointAtRotationVerticalUpThreshold
+        {
+            get => impl.PointAtRotationVerticalUpThreshold;
+            set => impl.PointAtRotationVerticalUpThreshold = value;
+        }
+
+        public float PointAtRotationVerticalDownThreshold
+        {
+            get => impl.PointAtRotationVerticalDownThreshold;
+            set => impl.PointAtRotationVerticalDownThreshold = value;
+        }
+
+        public float PointAtRotationSpeed
+        {
+            get => impl.PointAtRotationSpeed;
+            set => impl.PointAtRotationSpeed = value;
+        }
+
+        public float PointAtRotationSpeedAnimMultiplier
+        {
+            get => impl.PointAtRotationSpeedAnimMultiplier;
+            set => impl.PointAtRotationSpeedAnimMultiplier = value;
+        }
+
+        public float CharacterMass
+        {
+            get => impl.CharacterMass;
+            set => impl.CharacterMass = value;
+        }
+
+        public float ExternalEnvDrag
+        {
+            get => impl.ExternalEnvDrag;
+            set => impl.ExternalEnvDrag = value;
+        }
+
+        public float ExternalGroundFriction
+        {
+            get => impl.ExternalGroundFriction;
+            set => impl.ExternalGroundFriction = value;
+        }
+
+        public float MaxExternalVelocity
+        {
+            get => impl.MaxExternalVelocity;
+            set => impl.MaxExternalVelocity = value;
+        }
+
         public float HeadIKWeightChangeSpeed
         {
             get => impl.HeadIKWeightChangeSpeed;
@@ -377,5 +455,13 @@ namespace DCL.CharacterMotion.Settings
             get => impl.HeadIKRemotePlayersDistance;
             set => impl.HeadIKRemotePlayersDistance = value;
         }
+
+        public float PointAndClickArrivalDistance => impl.PointAndClickArrivalDistance;
+
+        public float PointAndClickStuckCheckInterval => impl.PointAndClickStuckCheckInterval;
+
+        public float PointAndClickStuckMinMovement => impl.PointAndClickStuckMinMovement;
+
+        public float PointAndClickMaxRaycastDistance => impl.PointAndClickMaxRaycastDistance;
     }
 }

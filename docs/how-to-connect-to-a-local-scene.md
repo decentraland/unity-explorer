@@ -47,7 +47,7 @@ For example you could be interested in testing some scenes from the [SDK Goerli 
 
 1. Set the Main Scene Loader -> Startup Config -> Initial Realm to "Localhost".
 2. Set the initial position to one of the locally running scene.
-3. Toggle the "Use Remote Asset Bundles" according to your need. If it's off then the original raw GLTFs from the locally running scene will be loaded instead of downloading their asset bundle version (if it exists).
+3. Toggle the "Use Remote Asset Bundles" according to your need. If it's off then the original raw GLTFs from the locally running scene will be loaded instead of downloading their asset bundle version (if it exists). Note: edits to a `.glb` file are picked up on `/reload` even though the dev server's content hash is path-based (and so unchanged across content edits) — `ECSReloadScene` drains the asset caches eagerly on every LSD reload to force fresh loads.
 4. Hit PLAY and the editor should connect to the locally running scene.
 
 ## Connecting a custom build to the scene

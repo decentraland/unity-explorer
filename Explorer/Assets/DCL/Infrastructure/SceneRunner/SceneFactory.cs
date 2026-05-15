@@ -32,11 +32,12 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -58,13 +59,14 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData? realmData;
+        private readonly IRealmData realmData;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
+        private readonly string installSource;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -83,14 +85,16 @@ namespace SceneRunner
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
             IRemoteMetadata remoteMetadata,
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            string installSource)
         {
+            Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
             this.sharedPoolsProvider = sharedPoolsProvider;
@@ -112,6 +116,7 @@ namespace SceneRunner
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
             this.dclEnvironment = dclEnvironment;
+            this.installSource = installSource;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -197,8 +202,8 @@ namespace SceneRunner
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
-                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
-                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
+                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
+                    webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -218,16 +223,18 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
             else
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
-                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
-                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub);
+                    crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController,
+                    skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -246,9 +253,11 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
 
@@ -276,7 +285,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)

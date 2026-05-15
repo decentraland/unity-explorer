@@ -4,13 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat.ChatStates;
+using DCL.Chat;
 using DCL.Chat.History;
 using DCL.EventsApi;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
-using DCL.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -21,10 +20,11 @@ using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
+using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
+using DCL.VoiceChat.UI;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -35,6 +35,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -52,23 +53,33 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly Arch.Core.World world;
+        private readonly Arch.Core.World globalWorld;
         private readonly Entity playerEntity;
-        private readonly bool includeCameraReel;
-        private readonly bool includeFriends;
-        private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
         private readonly IPassportBridge passportBridge;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly SupportRequestService supportRequestService;
+
+        private SidebarController? sidebarController;
+        private NotificationsPanelController? notificationsPanelController;
+        private SidebarProfileButtonPresenter? profileButtonPresenter;
+        private ProfileMenuController? profileMenuController;
+        private SkyboxMenuController? skyboxMenuController;
+        private ControlsPanelController? controlsPanelController;
+        private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
+        private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
+        private NearbyVoicePanelController? nearbyVoicePanelController;
+        private HelpMenuController? helpMenuController;
+
+        private CancellationTokenSource controlsShortcutCts;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -82,23 +93,20 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            Arch.Core.World world,
+            Arch.Core.World globalWorld,
             Entity playerEntity,
-            bool includeCameraReel,
-            bool includeFriends,
-            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
-            ISharedSpaceManager sharedSpaceManager,
             ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrls,
             IPassportBridge passportBridge,
-            IEventBus eventBus,
+            ChatEventBus chatEventBus,
+            HttpEventsApiService eventsApiService,
             SmartWearableCache smartWearableCache,
-            HttpEventsApiService eventsApiService)
+            SupportRequestService supportRequestService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -111,26 +119,39 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.world = world;
+            this.globalWorld = globalWorld;
             this.playerEntity = playerEntity;
-            this.includeCameraReel = includeCameraReel;
-            this.includeFriends = includeFriends;
-            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
-            this.profileRepositoryWrapper = profileDataProvider;
-            this.sharedSpaceManager = sharedSpaceManager;
+            profileRepositoryWrapper = profileDataProvider;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
-            this.eventBus = eventBus;
             this.passportBridge = passportBridge;
             this.smartWearableCache = smartWearableCache;
+            this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
+            this.supportRequestService = supportRequestService;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            DCLInput.Instance.Shortcuts.Controls.performed -= OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed -= OnSupportShortcutPerformed;
+            controlsShortcutCts.SafeCancelAndDispose();
+
+            sidebarController?.Dispose();
+            notificationsPanelController?.Dispose();
+            profileButtonPresenter?.Dispose();
+            profileMenuController?.Dispose();
+            skyboxMenuController?.Dispose();
+            controlsPanelController?.Dispose();
+            smartWearablesSideBarTooltipController?.Dispose();
+            sidebarSettingsWidgetController?.Dispose();
+            nearbyVoicePanelController?.Dispose();
+            helpMenuController?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
@@ -144,50 +165,76 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
-            mvcManager.RegisterController(new SidebarController(() =>
+            controlsPanelController = new ControlsPanelController(() => controlsPanelView);
+            notificationsPanelController = new NotificationsPanelController(() => mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper);
+            profileButtonPresenter = new SidebarProfileButtonPresenter( mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus);
+            profileMenuController = new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, globalWorld, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper);
+            skyboxMenuController = new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController);
+            smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
+            sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
+            nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
+
+            sidebarController = new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
                     view.gameObject.SetActive(true);
                     return view;
                 },
                 mvcManager,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationIconTypes, notificationDefaultThumbnails, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, passportBridge, profileRepositoryWrapper),
-                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset, sceneRestrictionBusController),
-                new ControlsPanelController(() => controlsPanelView),
-                new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache),
+                profileButtonPresenter,
+                smartWearablesSideBarTooltipController,
                 webBrowser,
-                includeCameraReel,
-                includeFriends,
-                includeMarketplaceCredits,
                 chatHistory,
-                sharedSpaceManager,
                 selfProfile,
                 realmData,
                 decentralandUrls,
-                eventBus,
-                eventsApiService
-            ));
+                globalWorld,
+                chatEventBus,
+                eventsApiService,
+                helpMenuController
+                );
+
+            mvcManager.RegisterController(controlsPanelController);
+            mvcManager.RegisterController(notificationsPanelController);
+            mvcManager.RegisterController(profileMenuController);
+            mvcManager.RegisterController(skyboxMenuController);
+            mvcManager.RegisterController(smartWearablesSideBarTooltipController);
+            mvcManager.RegisterController(sidebarSettingsWidgetController);
+            mvcManager.RegisterController(nearbyVoicePanelController);
+            mvcManager.RegisterController(helpMenuController);
+            mvcManager.RegisterController(sidebarController);
+
+            DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
         }
 
         [Serializable]
         public class SidebarSettings : IDCLPluginSettings
         {
-            [field: SerializeField]
-            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
-
-            [field: SerializeField]
-            public SkyboxSettingsAsset SettingsAsset { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceGameObject ControlsPanelPrefab;
+            [field: SerializeField] public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NotificationDefaultThumbnails> NotificationDefaultThumbnailsSO { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; } = null!;
+            [field: SerializeField] public SkyboxSettingsAsset SettingsAsset { get; private set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
         }
+
+        private void OnControlsShortcutPerformed(InputAction.CallbackContext _)
+        {
+            if (controlsPanelController == null) return;
+
+            if (Keyboard.current?.shiftKey.isPressed == true) return;
+
+            if (controlsPanelController.State == ControllerState.ViewHidden)
+            {
+                controlsShortcutCts = controlsShortcutCts.SafeRestart();
+                mvcManager.ShowAsync(ControlsPanelController.IssueCommand(), controlsShortcutCts.Token).Forget();
+            }
+            else
+                controlsShortcutCts.SafeCancelAndDispose();
+        }
+
+        private void OnSupportShortcutPerformed(InputAction.CallbackContext _) =>
+            supportRequestService.OpenSupport();
     }
 }

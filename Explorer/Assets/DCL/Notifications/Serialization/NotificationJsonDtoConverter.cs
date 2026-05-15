@@ -1,4 +1,4 @@
-using DCL.Communities;
+using DCL.FeatureFlags;
 using DCL.NotificationsBus.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,6 +42,9 @@ namespace DCL.Notifications.Serialization
         private const string TRANSFER_RECEIVED_TYPE = "transfer_received";
         private const string COMMUNITY_VOICE_CHAT_STARTED_TYPE = "community_voice_chat_started";
         private const string TIP_RECEIVED_TYPE = "tip_received";
+        private const string BAN_WARNING_TYPE = "ban_warning";
+        private const string BANNED_TYPE = "banned";
+        private const string BAN_LIFTED_TYPE = "ban_lifted";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -58,6 +61,8 @@ namespace DCL.Notifications.Serialization
 
         public override void WriteJson(JsonWriter writer, List<INotification>? value, JsonSerializer serializer)
         {
+            if (value == null) return;
+
             writer.WriteStartArray();
             foreach (var item in value)
                 serializer.Serialize(writer, item);
@@ -111,13 +116,16 @@ namespace DCL.Notifications.Serialization
                     COMMUNITY_INVITE_RECEIVED_TYPE => new CommunityUserInvitedNotification(),
                     COMMUNITY_REQUEST_TO_JOIN_ACCEPTED_TYPE => new CommunityUserRequestToJoinAcceptedNotification(),
                     COMMUNITY_DELETED_CONTENT_VIOLATION_TYPE => new CommunityDeletedContenViolationNotification(),
-                    COMMUNITY_POST_ADDED_TYPE => CommunitiesFeatureAccess.Instance.IsAnnouncementsFeatureEnabled() ? new CommunityPostAddedNotification() : null,
+                    COMMUNITY_POST_ADDED_TYPE => FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS) ? new CommunityPostAddedNotification() : null,
                     COMMUNITY_OWNERSHIP_TRANSFERRED_TYPE => new CommunityOwnershipTransferredNotification(),
                     USER_BANNED_FROM_SCENE_TYPE => new UserBannedFromSceneNotification(),
                     USER_UNBANNED_FROM_SCENE_TYPE => new UserUnbannedFromSceneNotification(),
                     TRANSFER_RECEIVED_TYPE => new GiftReceivedNotification(),
                     COMMUNITY_VOICE_CHAT_STARTED_TYPE => new CommunityVoiceChatStartedNotification(),
                     TIP_RECEIVED_TYPE => new TipReceivedNotification(),
+                    BAN_WARNING_TYPE => new BanWarningNotification(),
+                    BANNED_TYPE => new BannedNotification(),
+                    BAN_LIFTED_TYPE => new BanLiftedNotification(),
                     _ => null,
                 };
 

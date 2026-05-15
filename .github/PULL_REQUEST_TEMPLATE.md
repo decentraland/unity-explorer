@@ -17,11 +17,48 @@ Please provide a clear and detailed description of your changes. Include:
 
 ## Test Instructions
 <!--
-Provide clear, specific steps for testing these changes. Remember:
-- QA team members may not have the same technical context
-- Be explicit about test requirements and expected outcomes
-- Include any specific configuration needed
+Provide clear, copy-pasteable steps for testing these changes.
+
+### Quick reference
+
+# Run this PR (with cache)
+metaforge explorer run <this-PR-number>
+
+# Run this PR (without cache — clears Explorer data)
+metaforge explorer run <this-PR-number> --clear
+
+# Run this PR (fresh account — clears everything and creates a new account)
+metaforge account create --clear
+metaforge explorer run <this-PR-number>
+
+# Tail logs while testing
+metaforge explorer logs tail --filter "<relevant text>"
+
+# Run automation tests against this PR
+metaforge explorer test <this-PR-number>
 -->
+
+**Steps (standard run)**:
+```bash
+metaforge explorer run XXXX  # ← replace with this PR number
+```
+
+**Expected result**:
+<!-- What should the reviewer see/verify? -->
+
+**Steps (fresh account)**:
+```bash
+metaforge account create --clear
+metaforge explorer run XXXX  # ← replace with this PR number
+```
+
+**Expected result**:
+<!-- What should the reviewer see/verify? -->
+
+**Automation** (if applicable):
+```bash
+metaforge explorer test XXXX
+```
 
 ### Prerequisites
 - [ ] List any required setup steps
@@ -45,4 +82,4 @@ Provide clear, specific steps for testing these changes. Remember:
 - [ ] For SDK features: Test scene is included
 
 ## Code Review Reference
-Please review our [Code Review Standards](https://github.com/decentraland/unity-renderer/blob/master/docs/code-review-standards.md) before submitting.
+Please review our [Branch & PR Standards](../docs/branch-and-pr-standards.md) before submitting. It explains the automated review flow, QA/DEV approval requirements, and what each label does — especially useful for first-time contributors.

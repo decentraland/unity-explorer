@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.ChangeRealmPrompt;
-using DCL.Chat.EventBus;
-using DCL.Communities;
+using DCL.Chat;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
@@ -14,15 +14,16 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using UnityEngine;
 using DCL.Passport;
+using DCL.Profiles.Self;
 
 namespace MVC
 {
@@ -34,63 +35,66 @@ namespace MVC
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
-        private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IProfileRepository profileRepository;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ISelfProfile selfProfile;
+        private readonly NearbyMuteService? nearbyMuteService;
 
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource? cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
         private CommunityPlayerEntryContextMenu? communityPlayerEntryContextMenu;
         private ChatOptionsContextMenuController? chatOptionsContextMenuController;
-        private CommunityContextMenuController communityContextMenuController;
+        private CommunityContextMenuController? communityContextMenuController;
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
             IProfileCache profileCache,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             GenericUserProfileContextMenuSettings contextMenuSettings,
-            bool includeUserBlocking,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator, ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IProfileRepository profileRepository,
-            ISharedSpaceManager sharedSpaceManager,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
             IVoiceChatOrchestrator voiceChatOrchestrator,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISelfProfile selfProfile,
+            NearbyMuteService? nearbyMuteService = null)
         {
+            this.nearbyMuteService = nearbyMuteService;
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
             this.contextMenuSettings = contextMenuSettings;
-            this.includeUserBlocking = includeUserBlocking;
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.profileRepository = profileRepository;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communitiesDataProvider = communitiesDataProvider;
             this.includeCommunities = includeCommunities;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.selfProfile = selfProfile;
         }
 
         public async UniTask ShowExternalUrlPromptAsync(URLAddress url, CancellationToken ct) =>
@@ -109,17 +113,17 @@ namespace MVC
             await mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(Web3Address walletId, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null)
+            Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, Action? onShow = null, bool isOpenedOnWorldAvatar = false)
         {
             Profile.CompactInfo? profile = await profileRepository.GetCompactAsync(walletId, ct);
 
             if (profile == null)
                 return;
 
-            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint);
+            await ShowUserProfileContextMenuAsync(profile.Value, position, offset, ct, onHide, onShow, closeMenuTask, anchorPoint, isOpenedOnWorldAvatar);
         }
 
-        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        public async UniTask ShowCommunityPlayerEntryContextMenuAsync(string participantWalletId, bool isSpeaker, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask, Action? onHide = null, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
         {
             if (string.IsNullOrEmpty(participantWalletId)) return;
 
@@ -131,7 +135,7 @@ namespace MVC
         }
 
         public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, Vector2 offset, CancellationToken ct, UniTask closeMenuTask,
-            Action onHide = null, Action onShow = null)
+            Action? onHide = null, Action? onShow = null)
         {
             ProfileTier? profile = profileCache.GetByUserName(userName);
             if (profile == null) return;
@@ -144,20 +148,20 @@ namespace MVC
             await chatOptionsContextMenuController.ShowContextMenuAsync(transformPosition, closeMenuTask, onContextMenuHide);
         }
 
-        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide, Action onContextMenuShow,
-            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT)
+        private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
+            UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, includeUserBlocking, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, decentralandUrlsSource);
-            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
-        private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action onContextMenuHide,
+        private async UniTask ShowCommunityPlayerEntryContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
-                friendServiceProxy, chatEventBus, mvcManager,
+                friendServiceProxy, mvcManager,
                 contextMenuSettings, analytics, onlineUsersProvider,
-                realmNavigator, friendOnlineStatusCacheProxy, sharedSpaceManager,
+                realmNavigator, friendOnlineStatusCacheProxy,
                 voiceChatContextMenuSettings, voiceChatOrchestrator, communitiesDataProvider, decentralandUrlsSource);
 
             await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);

@@ -7,6 +7,8 @@ namespace DCL.UI
     public class GenericUserProfileContextMenuSettings : ScriptableObject
     {
         [field: SerializeField] public GenericContextMenuControlConfig BlockButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig ReportButtonConfig { get; private set; }
+        [field: SerializeField] public Sprite ReportModalSprite { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig JumpInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig GiftInButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }
@@ -14,5 +16,7 @@ namespace DCL.UI
         [field: SerializeField] public GenericContextMenuControlConfig OpenConversationButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig StartCallButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig InviteToCommunityConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig HushNearbyButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig HearNearbyButtonConfig { get; private set; }
     }
 }

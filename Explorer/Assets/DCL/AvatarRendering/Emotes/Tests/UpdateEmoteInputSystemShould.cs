@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
+using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
@@ -326,16 +327,14 @@ namespace DCL.AvatarRendering.Emotes.Tests
         // Mock implementation of IEmotesMessageBus
         private class MockEmotesMessageBus : IEmotesMessageBus
         {
-            public List<(URN emoteId, bool loopCyclePassed)> SentEmotes = new ();
-
-            public void Send(URN urn, bool loopCyclePassed)
-            {
-                SentEmotes.Add((urn, loopCyclePassed));
-            }
-
+            public List<(URN emoteId, bool loopCyclePassed, AvatarEmoteMask mask)> SentEmotes = new ();
+            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() => throw new NotImplementedException();
+            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) => SentEmotes.Add((urn, loopCyclePassed, mask));
+            public void SendStop() => throw new NotImplementedException();
             public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
             public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
             public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
+            public void SaveForRetry(RemoteEmoteStopIntention intention) => throw new NotImplementedException();
         }
     }
 }

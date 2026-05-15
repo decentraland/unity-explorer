@@ -7,6 +7,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -38,6 +39,7 @@ namespace DCL.Settings
 
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly QualitySettingsController qualitySettingsController;
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
@@ -53,18 +55,19 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
-        private readonly bool isTranslationChatEnabled;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
         private readonly IAppArgs appParameters;
+        private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
-        public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+        public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            QualitySettingsController qualitySettingsController,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
@@ -78,13 +81,14 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
-            bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            IAppArgs appParameters,
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.qualitySettingsController = qualitySettingsController;
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
@@ -98,10 +102,10 @@ namespace DCL.Settings
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.upscalingController = upscalingController;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
             this.appParameters = appParameters;
+            this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -184,7 +188,7 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -201,6 +205,7 @@ namespace DCL.Settings
                             await module.CreateModuleAsync
                             (
                                 generalGroupView.ModulesContainer,
+                                qualitySettingsController,
                                 realmPartitionSettingsAsset,
                                 videoPrioritizationSettings,
                                 landscapeData,
@@ -216,9 +221,9 @@ namespace DCL.Settings
                                 upscalingController,
                                 assetsProvisioner,
                                 volumeBus,
-                                isTranslationChatEnabled,
                                 eventBus,
-                                appParameters);
+                                appParameters,
+                                pointAtMarkerVisibilitySettings);
 
                         if (controller != null)
                             controllers.Add(controller);

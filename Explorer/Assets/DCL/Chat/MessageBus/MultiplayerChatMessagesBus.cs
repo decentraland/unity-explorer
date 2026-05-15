@@ -12,9 +12,9 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.SceneBannedUsers;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.Rfc4;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
@@ -29,7 +29,7 @@ namespace DCL.Chat.MessageBus
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ChatMessageFactory messageFactory;
         private readonly ChatMessageRateLimiter? messageRateLimiter;
@@ -46,14 +46,14 @@ namespace DCL.Chat.MessageBus
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
             ChatMessageFactory messageFactory,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             DecentralandEnvironment decentralandEnvironment,
             IWeb3IdentityCache identityCache,
             IRoomHub roomHub)
         {
             this.messagePipesHub = messagePipesHub;
             messageDeduplication = new MessageDeduplication<double>();
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.identityCache = identityCache;
             this.messageFactory = messageFactory;
 
@@ -99,10 +99,10 @@ namespace DCL.Chat.MessageBus
             nearbyChannelBuffer?.Dispose();
         }
 
-        private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason)
+        private void OnIslandConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason)
         {
             //We clear the buffer if we disconnect from the island, so we won't keep receiving messages from that nearby area.
-            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == DisconnectReason.UnknownReason)
+            if (connectionUpdate == ConnectionUpdate.Disconnected && disconnectReason == LKDisconnectReason.UnknownReason)
                 nearbyChannelBuffer!.Reset();
         }
 
@@ -126,7 +126,7 @@ namespace DCL.Chat.MessageBus
                     : receivedMessage.FromWalletId;
 
                 // If the user that sends the message is banned from the current scene, we ignore it
-                if (BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId)) return;
+                if (RoomMetadataCurrentScene.Instance.IsUserBanned(walletId)) return;
 
                 // If the message was already received through the scene or island pipe, we ignore it
                 if (messageDeduplication.TryPass(walletId, receivedMessage.Payload.Timestamp) == false) return;
@@ -191,11 +191,14 @@ namespace DCL.Chat.MessageBus
             if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(walletId)) return false;
 
             newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] RECEIVED message: protoTimestamp={receivedMessage.Payload.Timestamp} messageId={newMessage.MessageId} from={walletId}");
+
             return true;
         }
 
         private bool IsUserBlockedAndMessagesHidden(string walletAddress) =>
-            userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.HideChatMessages && userBlockingCacheProxy.Object!.UserIsBlocked(walletAddress);
+            userBlockingCache.HideChatMessages && userBlockingCache.UserIsBlocked(walletAddress);
 
         private void OnBufferedMessageReleased(ChatMessage message)
         {
@@ -242,7 +245,11 @@ namespace DCL.Chat.MessageBus
             chat.Payload.ClearForwardedFrom(); // It has to be reset in every use. To be filled by the server.
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
-            chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            
+            string msgId = ChatUtils.GetId(identityCache.Identity?.Address ?? "", timestamp);
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] SENT message: timestamp={timestamp} messageId={msgId}");
+
+            chat.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
     }
 }

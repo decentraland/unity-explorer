@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.ControllerShowParams;
-using DCL.Chat.EventBus;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -10,11 +8,9 @@ using DCL.Friends.UI.Requests;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -27,6 +23,11 @@ using System.Threading;
 using UnityEngine.Pool;
 using DCL.Backpack.Gifting.Presenters;
 using DCL.Backpack.Gifting.Views;
+using DCL.Browser;
+using DCL.Chat;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
+using DCL.UI.ConfirmationDialog;
 using Utility;
 using FriendshipStatus = DCL.Friends.FriendshipStatus;
 
@@ -43,18 +44,19 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const string MANAGE_REQUEST_ERROR_TEXT = "There was an error managing the user request. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
-
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISelfProfile selfProfile;
+        private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
 
-        private GetCommunityResponse.CommunityData? communityData = null;
+        private GetCommunityResponse.CommunityData? communityData;
 
         private int requestAmount;
 
@@ -74,6 +76,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
         private CancellationTokenSource communityOperationCts = new ();
+        private CancellationTokenSource? reportConfirmationDialogCts;
         private UniTaskCompletionSource? panelLifecycleTask;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.MEMBERS;
 
@@ -82,18 +85,21 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
-            ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            ISelfProfile selfProfile) : base(view, PAGE_SIZE)
+            ISelfProfile selfProfile,
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.selfProfile = selfProfile;
+            this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             this.view.InitGrid();
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
@@ -104,10 +110,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.ElementManageRequestClicked += OnManageRequestClicked;
 
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
-            this.view.OpenUserChatRequested += OpenChatWithUserAsync;
+            this.view.OpenUserChatRequested += OpenChatWithUser;
             this.view.GiftUserRequested += OnGiftUserRequested;
             this.view.CallUserRequested += CallUserAsync;
             this.view.BlockUserRequested += BlockUserClickedAsync;
+            this.view.ReportUserRequested += ReportUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
             this.view.TransferOwnershipRequested += OnTransferOwnership;
@@ -135,6 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             communityOperationCts.SafeCancelAndDispose();
+            reportConfirmationDialogCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
             view.ElementMainButtonClicked -= OnMainButtonClicked;
             view.ContextMenuUserProfileButtonClicked -= HandleContextMenuUserProfileButtonAsync;
@@ -143,9 +151,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.ElementManageRequestClicked -= OnManageRequestClicked;
 
             view.OpenProfilePassportRequested -= OpenProfilePassport;
-            view.OpenUserChatRequested -= OpenChatWithUserAsync;
+            view.OpenUserChatRequested -= OpenChatWithUser;
             view.CallUserRequested -= CallUserAsync;
             view.BlockUserRequested -= BlockUserClickedAsync;
+            view.ReportUserRequested -= ReportUserClickedAsync;
             view.GiftUserRequested -= OnGiftUserRequested;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
@@ -234,6 +243,21 @@ namespace DCL.Communities.CommunitiesCard.Members
             catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
         }
 
+        private void ReportUserClickedAsync(ICommunityMemberData profile)
+        {
+            reportConfirmationDialogCts = reportConfirmationDialogCts.SafeRestart();
+
+            ReportUserHelper.ShowConfirmAndReportAsync(
+                ViewDependencies.ConfirmationDialogOpener,
+                view.ReportSprite,
+                ReportCategory.COMMUNITIES,
+                profile.Address,
+                selfProfile,
+                webBrowser,
+                decentralandUrlsSource,
+                reportConfirmationDialogCts.Token).Forget();
+        }
+
         private void OnBanUser(ICommunityMemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
@@ -319,7 +343,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             string? userAddress = web3IdentityCache.Identity?.Address;
 
-            for (int i = 0; i < memberList.Count; i++)
+            for (var i = 0; i < memberList.Count; i++)
                 if (memberList[i].Address.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     memberList.RemoveAt(i);
@@ -401,26 +425,18 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             try
             {
-                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
+                ChatOpener.Instance.OpenPrivateConversationWithUserId(profile.Address);
+                //TODO FRAN & DAVIDE: This is not clean or pretty, but works for now. Ideally we should be able to await
                 await UniTask.Delay(500);
-                chatEventBus.StartCallInCurrentConversation();
+                chatEventBus.RaiseStartCallEvent();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}"); }
         }
 
-        private async void OpenChatWithUserAsync(ICommunityMemberData profile)
-        {
-            try
-            {
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatMainSharedAreaControllerShowParams(true, true));
-                chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.COMMUNITIES); }
-        }
+        private void OpenChatWithUser(ICommunityMemberData profile) =>
+            ChatOpener.Instance.OpenPrivateConversationWithUserId(profile.Address);
+
 
         private void OpenProfilePassport(ICommunityMemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportParams(profile.Address)), cancellationToken).Forget();

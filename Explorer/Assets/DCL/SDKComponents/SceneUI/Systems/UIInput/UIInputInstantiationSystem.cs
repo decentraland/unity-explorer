@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
                 sdkModel.Value,
                 sdkModel.Placeholder,
                 sdkModel.GetPlaceholderColor());
-            uiTransformComponent.Transform.Add(newUIInputComponent.TextField);
+            uiTransformComponent.ContentContainer.Add(newUIInputComponent.TextField);
 
             UiElementUtils.ApplyDefaultUiTransformValues(in pbUiTransform, uiTransformComponent.Transform);
             UiElementUtils.ApplyDefaultUiBackgroundValues(World, entity, uiTransformComponent.Transform);

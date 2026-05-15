@@ -53,7 +53,6 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetEmotesDTOByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetTrimmedEmotesByParamIntention, TrimmedEmotesResponse>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 
@@ -83,11 +82,11 @@ namespace DCL.GlobalPartitioning
             //We check if the player is teleporting, and if the scene we want to teleport to has started.
             //If so, only scene metadata will be allowed to de downloaded
             TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
-            if (teleportParcel.IsTeleporting)
-            {
-                if (scenesCache.Contains(teleportParcel.Parcel))
-                    downloadOnlySceneMetadata = true;
-            }
+
+            if (teleportParcel.IsTeleporting
+                && scenesCache.TryGetByParcel(teleportParcel.Parcel, out ISceneFacade scene)
+                && scene.SceneStateProvider.State == SceneState.Running)
+                downloadOnlySceneMetadata = true;
 
             sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }

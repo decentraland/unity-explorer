@@ -69,4 +69,10 @@ Explorer/UserSettings
 **/.cursor/
 Explorer/.cursorignore
 .cursorignore
-CLAUDE.md
+
+#Claude
+.claude/settings.local.json
+.claude/worktrees/
+
+# API Keys
+.env

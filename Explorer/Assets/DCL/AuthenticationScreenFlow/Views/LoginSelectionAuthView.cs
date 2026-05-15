@@ -118,6 +118,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             mainElementsPanel.SetActive(false);
             loadingSpinner.SetActive(false);
+            SetEmailInputFieldSpinnerActive(false);
 
             HideAsync(CancellationToken.None).Forget();
         }
@@ -127,6 +128,12 @@ namespace DCL.AuthenticationScreenFlow
             mainElementsPanel.SetActive(!isLoading);
             loadingSpinner.SetActive(isLoading);
         }
+
+        public void SetEmailInputFieldSpinnerActive(bool isActive) =>
+            EmailInputField.SetSpinnerActive(isActive);
+
+        public void SetEmailInputFieldErrorState(bool hasError) =>
+            EmailInputField.SetErrorState(hasError);
 
         public override async UniTask ShowAsync(CancellationToken ct)
         {

@@ -18,6 +18,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -25,7 +26,10 @@ using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
+using UnityEngine.Pool;
 using UnityEngine.Scripting;
+using Utility;
+using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -88,7 +92,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             var nativeData = downloadHandler.nativeData;
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             using (deserializationSampler.Auto())
             {
@@ -112,6 +116,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 }
             }
 
+            RemoveDuplicates(intention.TargetCollection);
+
             analytics.OnRequestFinished(intention.TargetCollection.Count);
 
             foreach (SceneEntityDefinition sceneEntityDefinition in intention.TargetCollection)
@@ -119,10 +125,38 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
                 //Could be removed once the asset bundle manifest registry has been battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+
+                // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
+                // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
+                await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(
                 new SceneDefinitions(intention.TargetCollection));
+        }
+
+        private void RemoveDuplicates(List<SceneEntityDefinition> list)
+        {
+            if (list.Count <= 1)
+                return;
+
+            var seenIds = HashSetPool<string>.Get();
+            seenIds.EnsureCapacity(list.Count);
+
+            int write = 0;
+
+            for (int read = 0; read < list.Count; read++)
+            {
+                var item = list[read];
+
+                if (seenIds.Add(item.id))
+                    list[write++] = item;
+            }
+
+            if (write < list.Count)
+                list.RemoveRange(write, list.Count - write);
+
+            HashSetPool<string>.Release(seenIds);
         }
 
         [Preserve]

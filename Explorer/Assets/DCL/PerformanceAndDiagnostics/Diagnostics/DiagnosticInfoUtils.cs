@@ -3,9 +3,9 @@ using Sentry;
 using Sentry.Unity;
 using System;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using UnityEngine.Device;
+using Utility.Networking;
 
 namespace DCL.Diagnostics
 {
@@ -57,6 +57,7 @@ namespace DCL.Diagnostics
                 Screen.currentResolution.height,
                 Screen.currentResolution.refreshRateRatio
             );
+            stringBuilder.AppendFormat("Window Mode: {0}\n", Screen.fullScreenMode.ToString());
             AppendFooter(stringBuilder);
 
 

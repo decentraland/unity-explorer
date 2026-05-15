@@ -125,6 +125,14 @@ namespace DCL.Prefs
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
+            Application.quitting += OnQuitting;
+        }
+
+        private static void OnQuitting()
+        {
+            Application.quitting -= OnQuitting;
+            (dclPrefs as IDisposable)?.Dispose();
+            dclPrefs = null;
         }
 
 #if UNITY_EDITOR
@@ -140,6 +148,13 @@ namespace DCL.Prefs
         [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
+
+        [MenuItem("Decentraland/PlayerPrefs/Reset Nearby Voice Intro Tip")]
+        private static void ResetNearbyVoiceIntroTip()
+        {
+            DeleteKey(DCLPrefKeys.NEARBY_VOICE_TIP_DISMISSED, save: true);
+            Debug.Log("Nearby Voice Intro Tip has been reset.");
+        }
 #endif
     }
 }

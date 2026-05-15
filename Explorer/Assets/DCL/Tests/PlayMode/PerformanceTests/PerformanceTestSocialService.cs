@@ -2,10 +2,10 @@
 using DCL.SocialService;
 using Google.Protobuf;
 using rpc_csharp;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
 using Unity.PerformanceTesting;
+using Utility.Multithreading;
 
 namespace DCL.Tests.PlayMode.PerformanceTests
 {
@@ -17,9 +17,10 @@ namespace DCL.Tests.PlayMode.PerformanceTests
 
         private readonly IRPCSocialServices core;
 
-        private readonly ConcurrentDictionary<uint, long> requests = new ();
+        private readonly DCLConcurrentDictionary<uint, long> requests = new ();
 
         public RpcClient? Client => core.Client;
+        public bool IsDisconnecting { get; }
 
         public bool WarmingUp { private get; set; }
 

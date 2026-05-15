@@ -8,6 +8,7 @@ using UnityEngine;
 using DCL.Billboard.Demo.World;
 using System.Diagnostics.CodeAnalysis;
 using Unity.PerformanceTesting;
+using Unity.Profiling;
 using CameraType = DCL.ECSComponents.CameraType;
 
 namespace DCL.Billboard.Tests
@@ -105,10 +106,18 @@ namespace DCL.Billboard.Tests
 
             world.SetUp();
 
+            ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
+
             Measure
                .Method(world.Update)
                .GC()
                .Run();
+
+            long gcBytes = gcAlloc.LastValue;
+            gcAlloc.Dispose();
+
+            Debug.Log($"[BillboardSystem] {randomCounts} entities — GC.Alloc last: {gcBytes} bytes");
+            Assert.That(gcBytes, Is.EqualTo(0), $"BillboardSystem.Update must be allocation-free, but allocated {gcBytes} bytes with {randomCounts} entities");
         }
 
         private static (Transform transform, BillboardSystem system) Construct(BillboardMode mode, Vector3? cameraPos = null)

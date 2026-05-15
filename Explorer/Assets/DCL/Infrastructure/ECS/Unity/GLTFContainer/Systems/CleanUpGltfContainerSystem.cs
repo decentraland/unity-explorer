@@ -10,7 +10,6 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -63,13 +62,8 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                //TODO (JUANI) : Newly instantiated asset will remain in the bridge
-                cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
                 entityCollidersSceneCache.Remove(result.Asset);
-
-                // Since NoCache is used for Raw GLTFs, we have to manually dispose of the Data
-                if (result.Asset.AssetData is GLTFData)
-                    result.Asset.Dispose();
+                cache.Dereference(component.CacheKey, result.Asset, putInBridge && result.Asset.IsISS);
             }
 
             component.RootGameObject = null;

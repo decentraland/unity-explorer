@@ -1,0 +1,10 @@
+name: Validate PR Title
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - dev
+jobs:
+  semantic:
+    uses: decentraland/actions/.github/workflows/validate-pr-title.yml@main

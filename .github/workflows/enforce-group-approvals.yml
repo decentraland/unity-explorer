@@ -1,6 +1,7 @@
 name: Enforce QA and DEV Approvals
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [dev]
     types:
@@ -54,6 +55,12 @@ jobs:
           if jq -r '.[].name' <<< "$LABELS_JSON" | grep -q "auto-pr"; then
             echo "✅ Skipping approval validation due to 'auto-pr' label."
             exit 0
+          fi
+
+          REQUIRES_DEV=true
+          if jq -r '.[].name' <<< "$LABELS_JSON" | grep -q "claude-approved"; then
+            REQUIRES_DEV=false
+            echo "ℹ️ 'claude-approved' label found — DEV approval NOT required (Claude auto-approved)."
           fi
 
           REQUIRES_QA=true
@@ -114,18 +121,43 @@ jobs:
             fi
           done
 
-          if { [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ]; } || [ "$HAS_DEV_APPROVAL" != true ]; then
+          QA_MISSING=false
+          DEV_MISSING=false
+          [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && QA_MISSING=true
+          [ "$REQUIRES_DEV" == true ] && [ "$HAS_DEV_APPROVAL" != true ] && DEV_MISSING=true
+
+          if [ "$QA_MISSING" == true ] || [ "$DEV_MISSING" == true ]; then
             MISSING=()
-            [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
-            [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
+            [ "$QA_MISSING" == true ] && MISSING+=("QA approval")
+            [ "$DEV_MISSING" == true ] && MISSING+=("DEV approval")
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
             echo "❌ PR must have at least 1: $MISSING_MSG."
             echo "APPROVAL_CHECK=failed" >> $GITHUB_ENV
+            echo "MISSING_MSG=Waiting on: $MISSING_MSG" >> $GITHUB_ENV
             exit 1
           fi
 
           echo "✅ PR has the required approvals."
           echo "APPROVAL_CHECK=passed" >> $GITHUB_ENV
+          echo "MISSING_MSG=" >> $GITHUB_ENV
+
+      - name: Set approval status on commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          if [ "$APPROVAL_CHECK" == "passed" ]; then
+            STATE="success"
+            DESC="QA and DEV approvals satisfied"
+          else
+            STATE="failure"
+            DESC="${MISSING_MSG:-Waiting on: QA approval, DEV approval}"
+          fi
+
+          gh api "repos/$REPO_OWNER/$REPO_NAME/statuses/$HEAD_SHA" \
+            -f state="$STATE" \
+            -f context="QA and DEV Approvals" \
+            -f description="$DESC"
 
       - name: Search Failed "Enforce QA and DEV Approvals" Run
         env:

@@ -26,7 +26,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Settings.ModuleControllers;
+using DCL.Quality.Runtime;
 using DCL.Settings.Utils;
 using DCL.UI;
 using DCL.Utilities;
@@ -40,11 +40,12 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Newtonsoft.Json.Linq;
 using Global.AppArgs;
+using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
@@ -58,6 +59,7 @@ using DCL.UI.ErrorPopup;
 using DG.Tweening;
 using ECS;
 using System.IO;
+using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -87,6 +89,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -177,18 +180,26 @@ namespace Global.Dynamic
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
-            if (applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE))
-                WindowModeUtils.ApplyWindowedMode();
+            NativeWindowManager.Initialize(
+                applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
+                applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
+                GetResolutionFromAppArgs(applicationParametersParser));
 
             World world = World.Create();
 
             var realmData = new RealmData();
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings);
+            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
+            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
 
             splashScreen = (await assetsProvisioner.ProvideInstanceAsync(splashScreenRef, ct: ct));
+
+            // Alttester Automation (only works when ALTTESTER define is set), needs to run after splash is instantiated
+            if (applicationParametersParser.HasFlag(AppArgsFlags.ALTTESTER))
+                InstantiateAltTester(applicationParametersParser);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory, decentralandEnvironment);
@@ -377,9 +388,9 @@ namespace Global.Dynamic
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
 
                 // Note that FileShare.None should lock the file to other processes, and it does,
-                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0, 0);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             }
             catch (IOException) { return true; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
@@ -391,7 +402,7 @@ namespace Global.Dynamic
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
-            ControllerBase<BlockedScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
+            ControllerBase<BlockedScreenView, BlockedScreenParameters>.ViewFactoryMethod viewFactory =
                 BlockedScreenController.CreateLazily(blockedPopupPrefab.Value.GetComponent<BlockedScreenView>(), null);
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
@@ -404,16 +415,15 @@ namespace Global.Dynamic
                 new UnitySystemInfoProvider(),
                 new PlatformDriveInfoProvider());
 
-            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
             if (!hasMinimumSpecs)
             {
-                DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, GraphicsQualitySettingsController.MIN_SPECS_GRAPHICS_QUALITY_LEVEL, true);
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, UpscalingController.MIN_SPECS_UPSCALER_VALUE, true);
+                SavedQualitySettingsApplier.EnforceLowPreset();
             }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
-            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope => { bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs); });
             UnityDiagnosticsCenter.Instance.SetMeetsMinimumRequirements(hasMinimumSpecs);
@@ -722,6 +732,36 @@ namespace Global.Dynamic
             return input.SelectedOption;
         }
 
+        private void InstantiateAltTester(IAppArgs appArgs)
+        {
+#if ALTTESTER
+            // Temporary parent needed because AltTester's Awake method relies on the name being
+            // AltTesterPrefab (and not AltTesterPrefab(Clone))
+            var tempParent = new GameObject("AltTesterParent");
+            tempParent.SetActive(false);
+            var instance = Instantiate(altTesterPrefab, tempParent.transform);
+            instance.name = "AltTesterPrefab";
+            instance.transform.SetParent(null);
+            Destroy(tempParent);
+
+            if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
+            {
+                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+
+                var split = endpoint.Split(':');
+
+                if (split.Length != 2 || !int.TryParse(split[1], out var port))
+                {
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"Invalid Alttester endpoint (needs to be host:port): {endpoint}");
+                    return;
+                }
+
+                runner.InstrumentationSettings.AltServerHost = split[0];
+                runner.InstrumentationSettings.AltServerPort = port;
+            }
+#endif
+        }
+
         /// <summary>
         /// Required to fix crash on exit, ticket - https://github.com/decentraland/unity-explorer/issues/6180
         /// </summary>
@@ -763,6 +803,31 @@ namespace Global.Dynamic
             {
                 ReportHub.Log(data, "Finish checking");
             }
+        }
+
+        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
+            mode switch
+            {
+                GatekeeperMode.Org => null,
+                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
+                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                GatekeeperMode.Localhost => "http://localhost:3000",
+                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+            };
+
+        private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+                return null;
+
+            string[] parts = resolutionArg.Split('x');
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                return new Vector2Int(w, h);
+
+            ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            return null;
         }
 
         [Serializable]

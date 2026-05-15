@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.SkyBox.Components;
 using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
@@ -25,6 +26,7 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IRealmData realmData;
+        private readonly bool skyboxTimeEnabled;
 
         private SkyboxSettings settingsJson;
 
@@ -35,20 +37,23 @@ namespace DCL.SkyBox
             Light directionalLight,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
-            IRealmData realmData)
+            IRealmData realmData,
+            bool skyboxTimeEnabled = true)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
             this.realmData = realmData;
+            this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
+            if (skyboxTimeEnabled)
+                SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
@@ -68,12 +73,21 @@ namespace DCL.SkyBox
 
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
+                // Read the persisted quality setting. On first launch or when running concurrently with
+                // QualitySettingsController init, this may not yet be written — ApplySunLensFlare will
+                // correct the component's enabled state once QualitySettingsController finishes initializing.
+                bool lensFlareEnabled = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, defaultValue: true);
+
                 skyboxRenderController.Initialize(
                     skyboxSettings.SkyboxMaterial,
                     directionalLight,
                     skyboxAnimation,
-                    skyboxSettings.TimeOfDayNormalized
+                    skyboxSettings.TimeOfDayNormalized,
+                    lensFlareEnabled
                 );
+
+                if (!skyboxTimeEnabled)
+                    skyboxRenderController.DisableSkyboxTime();
             }
             catch (OperationCanceledException)
             {

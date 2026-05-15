@@ -4,9 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Components;
 using ECS.Abstract;
-using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

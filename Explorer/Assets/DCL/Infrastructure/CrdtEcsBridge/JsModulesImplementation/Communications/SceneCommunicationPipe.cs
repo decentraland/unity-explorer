@@ -4,10 +4,12 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -35,6 +37,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             {
                 ReadOnlySpan<byte> decodedMessage = message.Payload.Data.Span;
                 ISceneCommunicationPipe.MsgType msgType = DecodeMessage(ref decodedMessage);
+                bool isTrustedSource = IsTrustedSource(message.FromWalletId);
 
                 if (decodedMessage.Length == 0)
                     return;
@@ -51,8 +54,26 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                     if (!sceneMessageHandlers.TryGetValue(key, out handler))
                         return;
 
-                handler(new ISceneCommunicationPipe.DecodedMessage(decodedMessage, message.FromWalletId));
+                ISceneCommunicationPipe.DecodedMessage dm = new (
+                    decodedMessage,
+                    message.FromWalletId,
+                    isTrustedSource
+                );
+
+                handler(dm);
             }
+        }
+
+        private bool IsTrustedSource(string walletId)
+        {
+            SceneAdminResult result = RoomMetadataCurrentScene.Instance.IsAdmin(walletId);
+
+            return result.Match(
+                    onSuccess: () => true, // Message is considered safe if it's from a scene admin
+                    onLocalSceneDevelopment: () => true, //sceneAdmins are not applicable in cases like LSD
+                    onNotAdmin: () => false,
+                    onNotLoadedYet: () => false // Consider the user as non-admin until we know for sure
+                    );
         }
 
         private static ISceneCommunicationPipe.MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
@@ -89,7 +110,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
-            sceneMessage.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
+            sceneMessage.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
         }
 
         private readonly struct SubscriberKey : IEquatable<SubscriberKey>

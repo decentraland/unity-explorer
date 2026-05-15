@@ -1,7 +1,6 @@
 ﻿using DCL.Chat.ChatServices;
 using MVC;
 using UnityEngine.Assertions;
-using Utility;
 
 namespace DCL.Chat.ChatInput
 {
@@ -13,11 +12,11 @@ namespace DCL.Chat.ChatInput
     {
         private readonly MVCStateMachine<ChatInputState> stateMachine;
         private readonly ChatInputView view;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly ChatConfig.ChatConfig config;
         private readonly CurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, IEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
+        public BlockedChatInputState(MVCStateMachine<ChatInputState> stateMachine, ChatInputView view, ChatEventBus eventBus, ChatConfig.ChatConfig config, CurrentChannelService currentChannelService)
         {
             this.stateMachine = stateMachine;
             this.view = view;
@@ -48,6 +47,7 @@ namespace DCL.Chat.ChatInput
                     PrivateConversationUserStateService.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
                     PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
                     PrivateConversationUserStateService.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
+                    PrivateConversationUserStateService.ChatUserState.OTHER_CLIENT => config.ConnectedFromAnotherClientMessage,
                     _ => string.Empty
                 };
             }
@@ -78,13 +78,13 @@ namespace DCL.Chat.ChatInput
         }
 
         private void BlockedInputClicked() =>
-            eventBus.Publish(new ChatEvents.ClickableBlockedInputClickedEvent());
+            eventBus.RaiseClickableBlockedInputClickedEvent();
 
         private void RequestFocusedState()
         {
             // It's a global event as we need to switch the state of the whole Chat View
             // Switching the state of the Chat View will lead to switching the state of the Chat Input
-            eventBus.Publish(new ChatEvents.FocusRequestedEvent());
+            eventBus.RaiseFocusRequestedEvent();
         }
     }
 }
