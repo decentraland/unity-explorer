@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility;
@@ -39,13 +40,20 @@ namespace DCL.Browser.DecentralandUrls
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null)
+        public DecentralandUrlsSource(
+            DecentralandEnvironment environment,
+            IRealmData realmData,
+            ILaunchMode launchMode,
+            GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
+            string customGatekeeperUrl = "",
+            string? cliGatekeeperUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             this.environment = environment;
             this.realmData = realmData;
             this.launchMode = launchMode;
-            this.gatekeeperBaseOverride = string.IsNullOrEmpty(gatekeeperBaseOverride) ? null : gatekeeperBaseOverride;
+            this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
+            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
 
             if (environment == DecentralandEnvironment.Today)
             {
@@ -85,6 +93,27 @@ namespace DCL.Browser.DecentralandUrls
             }
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
+        }
+
+        private static string? ResolveGatekeeperOverride(GatekeeperMode mode, string customUrl, string? cliOverride, out string source)
+        {
+            if (!string.IsNullOrEmpty(cliOverride))
+            {
+                source = "CLI";
+                return cliOverride;
+            }
+
+            source = mode.ToString();
+
+            return mode switch
+            {
+                GatekeeperMode.Org => null,
+                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
+                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
+                GatekeeperMode.Localhost => "http://localhost:3000",
+                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+            };
         }
 
         /// <summary>

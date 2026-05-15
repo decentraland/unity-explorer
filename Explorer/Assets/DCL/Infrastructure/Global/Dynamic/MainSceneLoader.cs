@@ -188,17 +188,16 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            string? gatekeeperBaseOverride = debugSettings.GatekeeperBaseOverride;
 
-            // CLI arg takes precedence (enables override in running builds)
-            bool cliOverride = applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl)
-                               && !string.IsNullOrEmpty(cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
 
-            if (cliOverride)
-                gatekeeperBaseOverride = cliGatekeeperUrl;
-
-            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {(cliOverride ? "CLI" : debugSettings.GatekeeperMode.ToString())})");
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
+            var decentralandUrlsSource = new GatewayUrlsSource(
+                decentralandEnvironment,
+                realmData,
+                launchSettings,
+                debugSettings.GatekeeperMode,
+                debugSettings.CustomGatekeeperUrl,
+                cliGatekeeperUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
