@@ -177,11 +177,13 @@ namespace ECS.SceneLifeCycle
 
         private static LocalBounds CalculateLocalBounds(IReadOnlyList<Vector2Int> sceneParcels, Vector2Int referenceParcel)
         {
-            if (sceneParcels == null || sceneParcels.Count == 0)
+            if (sceneParcels.Count == 0)
                 return new LocalBounds(0, ParcelMathHelper.PARCEL_SIZE, 0, ParcelMathHelper.PARCEL_SIZE);
 
-            int minParcelX = int.MaxValue, maxParcelX = int.MinValue;
-            int minParcelY = int.MaxValue, maxParcelY = int.MinValue;
+            int minParcelX = int.MaxValue;
+            int maxParcelX = int.MinValue;
+            int minParcelY = int.MaxValue;
+            int maxParcelY = int.MinValue;
 
             for (var i = 0; i < sceneParcels.Count; i++)
             {
