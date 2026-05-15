@@ -268,7 +268,7 @@ jobs:
       issues: write
       statuses: write
     steps:
-      - name: Get PR head SHA
+      - name: Resolve PR head (rejects post-comment pushes)
         id: pr
         uses: actions/github-script@v7
         with:
@@ -278,6 +278,28 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
+
+            const commit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.data.head.sha
+            });
+
+            const commentAt = new Date(context.payload.comment.created_at);
+            const commitAt  = new Date(commit.data.commit.committer.date);
+
+            if (commitAt > commentAt) {
+              const shortSha = pr.data.head.sha.substring(0, 7);
+              core.setFailed(
+                `@claude review skipped: this PR was updated after your comment.\n` +
+                `Head commit ${shortSha} (committed ${commitAt.toISOString()}) ` +
+                `is newer than your comment (${commentAt.toISOString()}).\n` +
+                `Take a look at the latest changes, then comment @claude review ` +
+                `again if you still want a review.`
+              );
+              return;
+            }
+
             core.setOutput('sha', pr.data.head.sha);
             core.setOutput('base_sha', pr.data.base.sha);
             core.setOutput('is_draft', pr.data.draft);
