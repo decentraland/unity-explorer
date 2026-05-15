@@ -209,6 +209,15 @@ namespace DCL.PluginSystem.Global
                 ReportHub.LogException(ex, ReportCategory.ALWAYS);
             }
 
+            int postDelayMs = GetExitTestPostDisconnectDelayMs();
+            if (postDelayMs > 0)
+            {
+                ReportHub.LogWarning(ReportCategory.ALWAYS, $"EXIT TEST: post-disconnect delay {postDelayMs}ms before Application.Quit()");
+                try { await UniTask.Delay(postDelayMs, ignoreTimeScale: true); }
+                catch (Exception ex) { ReportHub.LogException(ex, ReportCategory.ALWAYS); }
+                ReportHub.LogWarning(ReportCategory.ALWAYS, "EXIT TEST: post-disconnect delay elapsed");
+            }
+
             disconnectsCompleted = true;
             Application.Quit();
         }
@@ -260,6 +269,22 @@ namespace DCL.PluginSystem.Global
                 if (args[i] == dashed)
                     return true;
             return false;
+        }
+
+        // EXIT-DELAY BISECTION (#8764): post-disconnect delay in ms before Application.Quit().
+        // Hypothesis: after DisconnectAsync returns, the FFI tokio runtime needs a brief window
+        // to wind down its worker threads. Returning 0 keeps the previous behavior.
+        private static int GetExitTestPostDisconnectDelayMs()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            string prefix = "--" + AppArgsFlags.EXIT_TEST_POST_DISCONNECT_DELAY_MS + "=";
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i].StartsWith(prefix, StringComparison.Ordinal)
+                    && int.TryParse(args[i].AsSpan(prefix.Length), out int n))
+                    return n;
+            }
+            return 0;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
