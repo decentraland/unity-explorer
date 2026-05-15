@@ -1,5 +1,4 @@
 using Arch.Core;
-using CodeLess.Singletons;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
@@ -51,9 +50,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [SetUp]
         public void SetUp()
         {
-            SingletonRegistry.Reset();
             EcsTestsUtils.SetUpFeaturesRegistry();
-            RoomMetadataCurrentScene.InitializeTest();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -61,7 +58,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             sourceFactory = new FakeNearbyAudioSourceFactory();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
@@ -376,7 +373,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {
-                var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory);
+                var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory, RoomMetadataCurrentScene.CreateForTest());
 
                 const string WALLET = "wallet-alice";
                 const string SID = "sid-1";

@@ -61,6 +61,8 @@ namespace DCL.SceneBannedUsers
         {
             RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene());
         }
+
+        public static RoomMetadataCurrentScene CreateForTest() => new ();
 #endif
 
 

@@ -1,5 +1,4 @@
 using Arch.Core;
-using CodeLess.Singletons;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
@@ -56,9 +55,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         [SetUp]
         public void SetUp()
         {
-            SingletonRegistry.Reset();
             EcsTestsUtils.SetUpFeaturesRegistry();
-            RoomMetadataCurrentScene.InitializeTest();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -67,7 +64,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()

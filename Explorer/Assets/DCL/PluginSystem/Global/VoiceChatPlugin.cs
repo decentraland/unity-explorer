@@ -32,6 +32,7 @@ using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.RealmNavigation;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.UI;
 using Utility;
 using Utility.Multithreading;
@@ -153,9 +154,9 @@ namespace DCL.PluginSystem.Global
 
                 NearbyLivekitBridgeSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
                 NearbyAudibleRangeSystem.InjectToWorld(ref builder, voiceChatConfiguration, listenerState);
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
-                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
 
                 NearbyVoiceChatDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer, roomHub.IslandRoom(), nearbyStateModel!, nearbyAudioStreamRegistry!, entityParticipantTable);

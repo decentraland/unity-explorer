@@ -43,17 +43,19 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioSourceFactory sourceFactory;
+        private readonly RoomMetadataCurrentScene roomMetadataCurrentScene;
 
         // Mismatch with registry.RebuildEpoch ⇒ output-device changed since last tick.
         private int lastSeenRebuildEpoch;
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
+            this.roomMetadataCurrentScene = roomMetadataCurrentScene;
 
             lastSeenRebuildEpoch = registry.RebuildEpoch;
         }
@@ -92,7 +94,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
             bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<NearbyAudioStreamerComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
-            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity) || RoomMetadataCurrentScene.Instance.IsUserBanned(comp.Key.identity))
+            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity) || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);
         }
 
