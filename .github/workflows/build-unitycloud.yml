@@ -72,6 +72,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_sign:
+        description: 'Run Windows code-signing steps for testing (non-blocking)'
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       profile:
@@ -128,6 +133,19 @@ on:
         required: false
         default: false
         type: boolean
+    secrets:
+      ES_USERNAME:
+        description: 'SSL.com username for Windows code signing'
+        required: false
+      ES_PASSWORD:
+        description: 'SSL.com password for Windows code signing'
+        required: false
+      WINDOWS_CREDENTIAL_ID_SIGNER:
+        description: 'SSL.com credential ID for Windows code signing'
+        required: false
+      ES_TOTP_SECRET:
+        description: 'SSL.com TOTP secret for Windows code signing'
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
@@ -457,6 +475,45 @@ jobs:
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
           PARAM_IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
           PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
+
+      - name: Locate Windows main executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        run: |
+          set -euo pipefail
+          MAIN_EXE=$(find build -maxdepth 1 -name '*.exe' ! -name 'UnityCrashHandler64.exe' | head -n1)
+          if [[ -z "$MAIN_EXE" ]]; then
+            echo "::error::No main .exe found in build/"
+            exit 1
+          fi
+          MAIN_EXE_ABS=$(readlink -f "$MAIN_EXE")
+          echo "MAIN_EXE=$MAIN_EXE_ABS" >> "$GITHUB_ENV"
+          echo "Located: $MAIN_EXE_ABS"
+
+      - name: Sign Windows executable
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        uses: sslcom/esigner-codesign@develop
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.WINDOWS_CREDENTIAL_ID_SIGNER }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ env.MAIN_EXE }}
+          override: 'true'
+          malware_block: 'false'
+          environment_name: PROD
+
+      - name: Verify Windows signature
+        if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq osslsigncode > /dev/null 2>&1
+
+          echo "Verifying signature on $MAIN_EXE ..."
+          osslsigncode verify -in "$MAIN_EXE"
+          echo "::notice::Signature verified for $MAIN_EXE"
 
       - name: 'Tar artifact to maintain original permissions'
         if: matrix.target == 'macos'
