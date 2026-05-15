@@ -230,14 +230,9 @@ jobs:
           gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
           echo "Re-run triggered successfully."
 
-  review:
+  check-member:
     if: |
       github.event.issue.pull_request != null &&
-      (
-        github.event.comment.author_association == 'OWNER' ||
-        github.event.comment.author_association == 'MEMBER' ||
-        github.event.comment.author_association == 'COLLABORATOR'
-      ) &&
       (
         contains(github.event.comment.body, '@claude review') ||
         contains(github.event.comment.body, '@claude re-review') ||
@@ -245,6 +240,26 @@ jobs:
       ) &&
       !contains(github.event.issue.labels.*.name, 'no review') &&
       !contains(github.event.issue.labels.*.name, 'auto-pr')
+    runs-on: ubuntu-latest
+    outputs:
+      is-member: ${{ steps.check.outputs.is-member }}
+    steps:
+      - name: Verify commenter is a decentraland org member
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          USER: ${{ github.event.comment.user.login }}
+        run: |
+          if gh api "/orgs/decentraland/members/$USER" --silent 2>/dev/null; then
+            echo "is-member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::User $USER is not a member of decentraland org; @claude review skipped"
+            echo "is-member=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  review:
+    needs: check-member
+    if: needs.check-member.outputs.is-member == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
