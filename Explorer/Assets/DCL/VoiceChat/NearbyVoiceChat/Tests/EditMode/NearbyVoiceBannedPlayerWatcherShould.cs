@@ -83,6 +83,9 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void IgnoreDuplicateForbiddenWhileAlreadyBanned()
         {
+            // Also covers a direct transition between two forbidden scenes: GateKeeperSceneRoom does not emit
+            // Connected/Disconnected on a forbidden→forbidden handoff (ConnectionStringAsync throws before reaching them),
+            // so the watcher only sees back-to-back ForbiddenAccess events.
             sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
             restrictionBus.ClearReceivedCalls();
 
@@ -99,6 +102,40 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
             restrictionBus.DidNotReceive().PushSceneRestriction(Arg.Any<SceneRestriction>());
+        }
+
+        [Test]
+        public void RestoreSuppressionAfterConnectedAndForbiddenAgain()
+        {
+            // Sequence: forbidden scene → moved to an allowed scene (Connected) → moved to another forbidden scene.
+            // After the second forbidden the watcher must re-suppress and push APPLIED again.
+            sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
+            sceneRoom.CurrentSceneRoomConnected += Raise.Event<Action>();
+            restrictionBus.ClearReceivedCalls();
+
+            sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
+
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SCENE_BAN));
+            restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
+                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.APPLIED));
+        }
+
+        [Test]
+        public void RestoreSuppressionAfterDisconnectedAndForbiddenAgain()
+        {
+            // Sequence: forbidden scene → null-scene transition (Disconnected) → forbidden scene again.
+            // After the second forbidden the watcher must re-suppress and push APPLIED again.
+            sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
+            sceneRoom.CurrentSceneRoomDisconnected += Raise.Event<Action>();
+            restrictionBus.ClearReceivedCalls();
+
+            sceneRoom.CurrentSceneRoomForbiddenAccess += Raise.Event<Action>();
+
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.SCENE_BAN));
+            restrictionBus.Received(1).PushSceneRestriction(Arg.Is<SceneRestriction>(r =>
+                r.Type == SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED && r.Action == SceneRestrictionsAction.APPLIED));
         }
 
         [Test]
