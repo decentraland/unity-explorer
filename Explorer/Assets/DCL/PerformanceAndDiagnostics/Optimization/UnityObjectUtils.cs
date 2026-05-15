@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using DCL.Utility;
 using Sentry;
 using Sentry.Unity;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Utility
                 SentrySdk.AddBreadcrumb("Application is quitting");
             }
 
-            Application.quitting += SetQuitting;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(UnityObjectUtils), SetQuitting));
         }
 
         // This code fixes the following situation: enter play mode, exit play

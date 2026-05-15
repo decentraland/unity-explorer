@@ -41,7 +41,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent -= OnMuteContinuousUIAudioEvent;
-            ExitUtils.BeforeApplicationQuitting -= OnBeforeApplicationQuitting;
+            ExitUtils.UnregisterCleanUpCandidate(nameof(UIAudioPlaybackController));
             mainCancellationTokenSource.SafeCancelAndDispose();
 
             foreach (KeyValuePair<AudioClipConfig, ContinuousPlaybackAudioData> audioData in audioDataPerAudioClipConfig)
@@ -66,7 +66,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent += OnMuteContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
-            ExitUtils.BeforeApplicationQuitting += OnBeforeApplicationQuitting;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(UIAudioPlaybackController), OnBeforeApplicationQuitting));
         }
 
         private CancellationTokenSource CreateLinkedCancellationTokenSource() =>
