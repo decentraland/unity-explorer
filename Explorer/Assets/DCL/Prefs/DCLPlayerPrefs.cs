@@ -125,14 +125,18 @@ namespace DCL.Prefs
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
+            // ExitUtils lives in Utility which already depends on DCL.Prefs (via PersistentSetting), so subscribe directly here
             Application.quitting += OnQuitting;
         }
 
         private static void OnQuitting()
         {
             Application.quitting -= OnQuitting;
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             (dclPrefs as IDisposable)?.Dispose();
             dclPrefs = null;
+            Debug.Log($"[ExitUtils] [DCLPlayerPrefs] cleanup took {stopwatch.ElapsedMilliseconds}ms");
         }
 
 #if UNITY_EDITOR
