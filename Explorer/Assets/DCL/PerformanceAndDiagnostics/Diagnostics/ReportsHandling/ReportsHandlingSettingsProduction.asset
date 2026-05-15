@@ -446,6 +446,8 @@ MonoBehaviour:
       Severity: 0
     - Category: MULTIPLAYER
       Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
