@@ -147,7 +147,7 @@ namespace DCL.Utility
             private static readonly HashSet<Action> wrapped = new ();
             private static FieldInfo quittingField;
 
-            // Method is safe to be called multiple times. Idempotentency
+            // Method is safe to be called multiple times. Idempotency
             public static void ApplicationQuittingFirstSubscriberSelfPatchWithTimers()
             {
                 ReportHub.LogProductionInfo($"[ExitUtils.Patch] Invoke ApplicationQuittingFirstSubscriberSelfPatchWithTimers, actions wrapped {wrapped.Count}"); 
