@@ -14,7 +14,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private const int BONE_MATRIX_BATCH_COUNT = 4;
 
         internal const int AVATAR_ARRAY_SIZE = 100;
-        private const int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
+        private const int BONES_ARRAY_LENGTH = ComputeShaderConstants.MAX_BONE_COUNT;
         private const int BONES_PER_AVATAR_LENGTH = AVATAR_ARRAY_SIZE * BONES_ARRAY_LENGTH;
 
         private bool disposed;
@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             transformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.ValidUnsafe(0);
             transformMatrixComponent.IsMainPlayer = true;
 
-            mainPlayerAvatar.Register(avatarBase.transform, transformMatrixComponent.bones.Inner);
+            mainPlayerAvatar.Register(avatarBase.transform, transformMatrixComponent.bones, dummyTransform);
         }
 
         /// <summary>
