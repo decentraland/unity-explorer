@@ -16,6 +16,7 @@ using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Nearby;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -48,6 +49,7 @@ namespace MVC
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISelfProfile selfProfile;
+        private readonly NearbyMuteService? nearbyMuteService;
 
         private CancellationTokenSource? cancellationTokenSource;
         private GenericUserProfileContextMenuController? genericUserProfileContextMenuController;
@@ -71,8 +73,10 @@ namespace MVC
             CommunitiesDataProvider communitiesDataProvider,
             IWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            NearbyMuteService? nearbyMuteService = null)
         {
+            this.nearbyMuteService = nearbyMuteService;
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
             this.friendServiceProxy = friendServiceProxy;
@@ -147,7 +151,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 

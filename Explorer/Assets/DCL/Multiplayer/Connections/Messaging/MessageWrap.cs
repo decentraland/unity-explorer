@@ -7,10 +7,11 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
 using LiveKit.Rooms.DataPipes;
-using DCL.LiveKit.Public;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading; 
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
@@ -49,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             if (sent)
                 throw new Exception("Request already sent");
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -104,7 +105,9 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(Movement)] = (packet, o) => packet.Movement = (Movement)o,
             [typeof(MovementCompressed)] = (packet, o) => packet.MovementCompressed = (MovementCompressed)o,
             [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o,
-            [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o
+            [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o,
+            [typeof(Reaction)] = (packet, o) => packet.Reaction = (Reaction)o,
+            [typeof(ChatReaction)] = (packet, o) => packet.ChatReaction = (ChatReaction)o
         };
     }
 }

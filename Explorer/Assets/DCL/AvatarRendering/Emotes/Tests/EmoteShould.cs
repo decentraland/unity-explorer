@@ -38,5 +38,22 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             Assert.IsFalse(emote.IsOnChain());
         }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void ReflectLoopFlagFromDto(bool loop)
+        {
+            var model = new EmoteDTO
+            {
+                metadata = new EmoteDTO.EmoteMetadataDto
+                {
+                    emoteDataADR74 = new EmoteDTO.EmoteMetadataDto.Data { loop = loop },
+                },
+            };
+
+            Emote emote = new Emote(new StreamableLoadingResult<EmoteDTO>(model));
+
+            Assert.AreEqual(loop, emote.IsLooping());
+        }
     }
 }

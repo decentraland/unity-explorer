@@ -135,6 +135,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 56a9743f8d94f684190dc11bb521fb78
+    m_Address: Scene.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 594ae6e7cd408424cb8433ddba60315d
     m_Address: Assets/DCL/Notifications/Assets/NotificationDefaultThumbnails.asset
     m_ReadOnly: 0
@@ -347,6 +352,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eae766b15f997414794bfd4f17de5949
     m_Address: F_Eyebrows_00
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3a58c428a71b443e883f8fac00cfbbd
+    m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/EmoteMaskCatalog.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

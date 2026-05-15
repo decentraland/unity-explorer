@@ -25,6 +25,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
+using DCL.SpringBones;
 using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -176,6 +177,7 @@ namespace DCL.PluginSystem.Global
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
+        private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -241,7 +243,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
-            IRendererFeaturesCache rendererFeaturesCache
+            IRendererFeaturesCache rendererFeaturesCache,
+            SpringBoneSimulationSettings springBoneSimulationSettings
             )
         {
             this.eventBus = eventBus;
@@ -310,6 +313,7 @@ namespace DCL.PluginSystem.Global
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
+            this.springBoneSimulationSettings = springBoneSimulationSettings;
         }
 
         public void Dispose()
@@ -419,7 +423,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock, navmapBus, categoryMappingSO.Value);
 
             SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.ShareContextMenuView,
-                navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
+                navmapView.WorldsWarningNotificationView, clipboard, webBrowser, decentralandUrlsSource);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 imageControllerProvider, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
@@ -435,7 +439,7 @@ namespace DCL.PluginSystem.Global
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
-                userCalendar, shareContextMenu, webBrowser, imageControllerProvider);
+                userCalendar, shareContextMenu, webBrowser, decentralandUrlsSource, imageControllerProvider);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
@@ -459,7 +463,8 @@ namespace DCL.PluginSystem.Global
                 landscapeData.Value,
                 rendererFeaturesCache,
                 appArgs,
-                analytics);
+                analytics,
+                springBoneSimulationSettings);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
@@ -598,7 +603,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(explorePanelController);
 
-            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            bool isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true);
 
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;

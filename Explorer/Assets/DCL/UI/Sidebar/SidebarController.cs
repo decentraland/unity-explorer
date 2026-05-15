@@ -8,7 +8,6 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
-using DCL.EventsApi;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
@@ -23,18 +22,20 @@ using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Skybox;
-using DCL.Utilities.Extensions;
-using DCL.Utility.Types;
 using ECS;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using DCL.CharacterCamera;
+using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
+using DCL.UI.Sidebar.HelpMenu;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.VoiceChat.UI;
 using ECS.Abstract;
+using System.Collections.Generic;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -56,14 +57,15 @@ namespace DCL.UI.Sidebar
         private readonly URLParameter marketplaceSourceParam = new ("utm_source", "sidebar");
         private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
+        private readonly HelpMenuController helpMenuController;
         private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
-
         private readonly HttpEventsApiService eventsApiService;
+
         private readonly CancellationTokenSource profileWidgetCts = new ();
-        private readonly CancellationTokenSource checkForLiveEventsCts = new ();
+        private CancellationTokenSource checkForLiveEventsCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts = new ();
         private CancellationTokenSource referralNotificationCts = new ();
         private CancellationTokenSource checkForCommunitiesFeatureCts = new ();
@@ -75,7 +77,6 @@ namespace DCL.UI.Sidebar
 
         private SingleInstanceEntity? camera => cameraInternal ??= globalWorld.CacheCamera();
 
-        public event Action? HelpOpened;
         public event Action? PlacesOpened;
         public event Action? EventsOpened;
 
@@ -90,7 +91,8 @@ namespace DCL.UI.Sidebar
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
             ChatEventBus chatEventBus,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            HelpMenuController helpMenuController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -103,12 +105,13 @@ namespace DCL.UI.Sidebar
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.chatEventBus = chatEventBus;
+            this.eventsApiService = eventsApiService;
+            this.helpMenuController = helpMenuController;
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             isDiscoverFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             isNearbyVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
-            this.eventsApiService = eventsApiService;
 
             chatEventBusSubscription = chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged);
         }
@@ -128,10 +131,8 @@ namespace DCL.UI.Sidebar
             {
                 viewInstance.settingsButton.onClick.RemoveListener(OnSettingsButtonClicked);
                 viewInstance.communitiesButton.onClick.RemoveListener(OnCommunitiesButtonClicked);
-                viewInstance.mapButton.onClick.RemoveListener(OnMapButtonClicked);
                 viewInstance.autoHideToggle.onValueChanged.RemoveListener(OnAutoHideToggleChanged);
                 viewInstance.helpButton.onClick.RemoveListener(OnHelpButtonClicked);
-                viewInstance.controlsButton.onClick.RemoveListener(OnControlsButtonClicked);
                 viewInstance.InWorldCameraButton.onClick.RemoveListener(OnOpenCameraButtonClicked);
                 viewInstance.marketplaceButton.onClick.RemoveListener(OnMarketplaceButtonClicked);
                 viewInstance.emotesWheelButton.onClick.RemoveListener(OnEmotesWheelButtonClicked);
@@ -204,10 +205,8 @@ namespace DCL.UI.Sidebar
 
             viewInstance!.settingsButton.onClick.AddListener(OnSettingsButtonClicked);
             viewInstance.communitiesButton.onClick.AddListener(OnCommunitiesButtonClicked);
-            viewInstance.mapButton.onClick.AddListener(OnMapButtonClicked);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
-            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
             viewInstance.InWorldCameraButton.onClick.AddListener(OnOpenCameraButtonClicked);
             viewInstance.marketplaceButton.onClick.AddListener(OnMarketplaceButtonClicked);
 
@@ -316,6 +315,9 @@ namespace DCL.UI.Sidebar
         {
             //We load the data into the profile widget
             profileButtonPresenter.LoadProfile();
+
+            checkForLiveEventsCts = checkForLiveEventsCts.SafeRestart();
+            FillLiveEventsAsync(checkForLiveEventsCts.Token).Forget();
         }
 
         protected override void OnViewClose()
@@ -356,8 +358,8 @@ namespace DCL.UI.Sidebar
         {
             while (!ct.IsCancellationRequested)
             {
-                Result<IReadOnlyList<EventsApi.EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
-                                                                                                   .SuppressToResultAsync(ReportCategory.EVENTS);
+                Result<IReadOnlyList<EventDTO>> liveEventsResult = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true)
+                                                                                         .SuppressToResultAsync(ReportCategory.EVENTS);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -376,7 +378,6 @@ namespace DCL.UI.Sidebar
 
         private void OnSettingsButtonClicked() => OpenExplorePanelInSection(ExploreSections.Settings);
         private void OnCommunitiesButtonClicked() => OpenExplorePanelInSection(ExploreSections.Communities);
-        private void OnMapButtonClicked() => OpenExplorePanelInSection(ExploreSections.Navmap);
         private void OnCameraReelButtonClicked() => OpenExplorePanelInSection(ExploreSections.CameraReel);
         private void OnPlacesButtonClicked()
         {
@@ -403,13 +404,8 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.sidebarConfigButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
-        private void OnHelpButtonClicked()
-        {
-            webBrowser.OpenUrl(DecentralandUrl.Help);
-            HelpOpened?.Invoke();
-        }
+        private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();
 
-        private void OnControlsButtonClicked() => OpenPanelAsync(null, ControlsPanelController.IssueCommand()).Forget();
         private void OnSidebarConfigButtonClicked() => OpenPanelAsync(viewInstance!.sidebarConfigButton, SidebarSettingsWidgetController.IssueCommand()).Forget();
         private void OnProfilePanelButtonClicked() => OpenPanelAsync(null, ProfileMenuController.IssueCommand()).Forget();
         private void OpenSkyboxSettingsPanel() => OpenPanelAsync(viewInstance!.skyboxButton, SkyboxMenuController.IssueCommand()).Forget();

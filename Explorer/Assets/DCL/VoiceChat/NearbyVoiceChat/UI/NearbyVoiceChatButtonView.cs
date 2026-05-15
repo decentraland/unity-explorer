@@ -68,16 +68,16 @@ namespace DCL.VoiceChat.UI
                                        {
                                            NearbyVoiceChatState.DISABLED => disconnectedSprites,
                                            NearbyVoiceChatState.IDLE => hearingSprites,
-                                           NearbyVoiceChatState.SPEAKING => speakingSprites,
+                                           NearbyVoiceChatState.OPEN_MIC => speakingSprites,
                                            NearbyVoiceChatState.SUPPRESSED => blockedSprites,
                                            _ => disconnectedSprites,
                                        };
 
-            greenDotImage.SetActive(state is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.SPEAKING);
+            greenDotImage.SetActive(state is NearbyVoiceChatState.IDLE or NearbyVoiceChatState.OPEN_MIC);
             unselectedImage.sprite = sprites.unselected;
             hoverStateImage.sprite = sprites.hover;
 
-            soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.SPEAKING);
+            soundWaveAnimator.gameObject.SetActive(state == NearbyVoiceChatState.OPEN_MIC);
         }
 
         public void InitializeSoundWave(Func<float> amplitudeProvider)

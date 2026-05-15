@@ -12,6 +12,8 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TriggerArea.Tests
@@ -22,6 +24,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         private IECSToCRDTWriter ecsToCRDTWriter;
         private IEntityCollidersSceneCache collidersSceneCache;
         private ISceneData sceneData;
+        private readonly List<PBTriggerAreaResult> capturedResults = new ();
         private PBTriggerAreaResult capturedResult;
         private Entity entity;
         private CRDTEntity crdtEntity;
@@ -131,11 +134,14 @@ namespace DCL.SDKComponents.TriggerArea.Tests
         }
 
         [Test]
-        public void PropagateOnTriggerStay()
+        public void DoesNotEmitStayMessagesOverMultipleUpdates()
         {
+            // After a single OnTriggerEnter, repeated Update() calls must NOT produce
+            // STAY messages. The SDK runtime is now responsible for synthesizing
+            // per-tick OnStay callbacks; the Explorer only emits ENTER and EXIT.
             SetupAreaWithSDKLayer(ColliderLayer.ClCustom2);
 
-            var colliderGO = new GameObject("SDKEntityCollider_Stay");
+            var colliderGO = new GameObject("SDKEntityCollider_NoStay");
             colliderGO.layer = PhysicsLayers.SDK_CUSTOM_LAYER;
             var box = colliderGO.AddComponent<BoxCollider>();
 
@@ -149,18 +155,69 @@ namespace DCL.SDKComponents.TriggerArea.Tests
                                     return true;
                                 });
 
+            ClearCapturedResult();
             SetupCRDTWriterCapture(firstCallOnly: false);
 
             world.Get<SDKEntityTriggerAreaComponent>(entity).SetMonoBehaviour(CreateAndAttachAreaMonoBehaviour(entity));
             var comp = world.Get<SDKEntityTriggerAreaComponent>(entity);
             comp.monoBehaviour!.OnTriggerEnter(box);
-            comp.monoBehaviour!.OnTriggerEnter(box); // remain inside
 
+            for (int i = 0; i < 5; i++)
+                system.Update(0);
+
+            // Exactly one captured message (the ENTER); zero STAY messages.
+            Assert.AreEqual(1, capturedResults.Count, "Expected exactly one CRDT message after enter + multiple updates.");
+            Assert.AreEqual(TriggerAreaEventType.TaetEnter, capturedResults[0].EventType);
+            Assert.IsFalse(capturedResults.Any(r => r.EventType == TriggerAreaEventType.TaetStay),
+                "No STAY messages must be emitted on the wire.");
+
+            Object.DestroyImmediate(colliderGO);
+        }
+
+        [Test]
+        public void EmitsEnterAndExitOnly()
+        {
+            SetupAreaWithSDKLayer(ColliderLayer.ClCustom2);
+
+            var colliderGO = new GameObject("SDKEntityCollider_EnterExitOnly");
+            colliderGO.layer = PhysicsLayers.SDK_CUSTOM_LAYER;
+            var box = colliderGO.AddComponent<BoxCollider>();
+
+            var sdkEntity = world.Create(PartitionComponent.TOP_PRIORITY);
+            AddTransformToEntity(sdkEntity);
+
+            collidersSceneCache.TryGetEntity(box, out Arg.Any<ColliderSceneEntityInfo>())
+                                .Returns(ci =>
+                                {
+                                    ci[1] = new ColliderSceneEntityInfo(sdkEntity, new CRDTEntity(28), ColliderLayer.ClCustom2);
+                                    return true;
+                                });
+
+            ClearCapturedResult();
+            SetupCRDTWriterCapture(firstCallOnly: false);
+
+            world.Get<SDKEntityTriggerAreaComponent>(entity).SetMonoBehaviour(CreateAndAttachAreaMonoBehaviour(entity));
+            var comp = world.Get<SDKEntityTriggerAreaComponent>(entity);
+
+            // Enter -> expect [ENTER]
+            comp.monoBehaviour!.OnTriggerEnter(box);
             system.Update(0);
+            Assert.AreEqual(1, capturedResults.Count);
+            Assert.AreEqual(TriggerAreaEventType.TaetEnter, capturedResults[0].EventType);
 
-            Assert.NotNull(capturedResult);
-            Assert.AreEqual(TriggerAreaEventType.TaetStay, capturedResult.EventType);
-            Assert.AreEqual((uint)ColliderLayer.ClCustom2, capturedResult.Trigger.Layers);
+            // Multiple updates while inside -> still just [ENTER]
+            for (int i = 0; i < 3; i++) system.Update(0);
+            Assert.AreEqual(1, capturedResults.Count, "No STAY messages should be emitted while inside.");
+
+            // Exit -> expect [ENTER, EXIT]
+            comp.monoBehaviour!.OnTriggerExit(box);
+            system.Update(0);
+            Assert.AreEqual(2, capturedResults.Count);
+            Assert.AreEqual(TriggerAreaEventType.TaetExit, capturedResults[1].EventType);
+
+            // Multiple updates after exit -> still just [ENTER, EXIT]
+            for (int i = 0; i < 3; i++) system.Update(0);
+            Assert.AreEqual(2, capturedResults.Count, "No additional messages should be emitted after exit.");
 
             Object.DestroyImmediate(colliderGO);
         }
@@ -228,7 +285,11 @@ namespace DCL.SDKComponents.TriggerArea.Tests
             return area;
         }
 
-        private void ClearCapturedResult() => capturedResult = null;
+        private void ClearCapturedResult()
+        {
+            capturedResult = null;
+            capturedResults.Clear();
+        }
 
         private void SetupCRDTWriterCapture(bool firstCallOnly = true)
         {
@@ -247,6 +308,7 @@ namespace DCL.SDKComponents.TriggerArea.Tests
                    var data = ci.ArgAt<TriggerAreaHandlerSystem.ResultData>(3);
                    prepare(res, data);
                    capturedResult = res;
+                   capturedResults.Add(res);
                    return res;
                });
         }

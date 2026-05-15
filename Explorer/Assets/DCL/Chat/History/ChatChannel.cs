@@ -85,6 +85,11 @@ namespace DCL.Chat.History
         public event ReadMessagesChangedDelegate? ReadMessagesChanged;
 
         /// <summary>
+        /// Raised when a reaction is added or removed for a message. Passes the messageId.
+        /// </summary>
+        public event Action<string>? ReactionChanged;
+
+        /// <summary>
         /// Gets all the messages contained in the thread. The first messages in the list are the latest added.
         /// </summary>
         public IReadOnlyList<ChatMessage> Messages => messages;
@@ -116,6 +121,7 @@ namespace DCL.Chat.History
         }
 
         private readonly List<ChatMessage> messages = new ();
+        private readonly Dictionary<string, ReactionSet> reactionsByMessageId = new ();
         private int readMessages;
         private bool isInitialized;
 
@@ -174,12 +180,66 @@ namespace DCL.Chat.History
             isInitialized = true;
         }
 
+        public bool AddReaction(string messageId, int emojiIndex, string walletAddress)
+        {
+            if (!reactionsByMessageId.TryGetValue(messageId, out ReactionSet? set))
+            {
+                set = new ReactionSet();
+                reactionsByMessageId[messageId] = set;
+            }
+
+            bool added = set.AddReaction(emojiIndex, walletAddress);
+
+            if (added)
+                ReactionChanged?.Invoke(messageId);
+
+            return added;
+        }
+
+        public bool RemoveReaction(string messageId, int emojiIndex, string walletAddress)
+        {
+            if (!reactionsByMessageId.TryGetValue(messageId, out ReactionSet? set))
+                return false;
+
+            bool removed = set.RemoveReaction(emojiIndex, walletAddress);
+
+            if (removed)
+            {
+                if (set.IsEmpty)
+                    reactionsByMessageId.Remove(messageId);
+
+                ReactionChanged?.Invoke(messageId);
+            }
+
+            return removed;
+        }
+
+        public ReactionSet? GetReactions(string messageId)
+        {
+            return reactionsByMessageId.GetValueOrDefault(messageId);
+        }
+
+        /// <summary>
+        /// Populates reactions silently (no events). Used during history load.
+        /// </summary>
+        public void FillReaction(string messageId, int emojiIndex, string walletAddress)
+        {
+            if (!reactionsByMessageId.TryGetValue(messageId, out ReactionSet? set))
+            {
+                set = new ReactionSet();
+                reactionsByMessageId[messageId] = set;
+            }
+
+            set.AddReaction(emojiIndex, walletAddress);
+        }
+
         /// <summary>
         /// Deletes all the messages of the channel.
         /// </summary>
         public void Clear()
         {
             messages.Clear();
+            reactionsByMessageId.Clear();
             isInitialized = false;
             MarkAllMessagesAsRead();
             Cleared?.Invoke(this);

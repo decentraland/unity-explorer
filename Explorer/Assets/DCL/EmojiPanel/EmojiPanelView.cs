@@ -9,7 +9,6 @@ namespace DCL.Emoji
     public class EmojiPanelView : MonoBehaviour
     {
         public event Action<float, bool> SectionSelected;
-
         public event Action EmojiFirstOpen;
 
         [field: SerializeField]
@@ -33,12 +32,107 @@ namespace DCL.Emoji
         [field: SerializeField]
         public SearchBarView SearchPanelView { get; private set; }
 
+        [field: SerializeField]
+        public RectMask2D ClippingMask { get; private set; }
+
+        private CanvasGroup canvasGroup;
+        private RectTransform rectTransform;
+        private bool initialized;
+
+        /// <summary>
+        /// The panel's default anchored position captured before any consumer moves it.
+        /// Uses anchoredPosition (not world position) so it stays correct across resolutions.
+        /// </summary>
+        public Vector2 DefaultAnchoredPosition { get; private set; }
+
+        public bool IsVisible => initialized && canvasGroup.alpha > 0f;
+
+        private void Awake()
+        {
+            EnsureInitialized();
+        }
+
         private void Start()
         {
             EmojiFirstOpen?.Invoke();
 
             foreach (EmojiSectionToggle emojiSectionToggle in EmojiSections)
                 emojiSectionToggle.SectionToggle.onValueChanged.AddListener((isOn) => SectionSelected?.Invoke(emojiSectionToggle.SectionPosition, isOn));
+        }
+
+        private void EnsureInitialized()
+        {
+            if (initialized) return;
+            initialized = true;
+
+            rectTransform = (RectTransform)transform;
+
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            DefaultAnchoredPosition = rectTransform.anchoredPosition;
+
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
+            if (!EmojiContainer.gameObject.activeSelf)
+                EmojiContainer.gameObject.SetActive(true);
+
+            SetVisible(false);
+        }
+
+        /// <summary>
+        /// Shows or hides the panel using CanvasGroup (no SetActive overhead).
+        /// The GameObject stays active so subsequent shows are instant.
+        /// </summary>
+        public void SetVisible(bool visible)
+        {
+            EnsureInitialized();
+
+            canvasGroup.alpha = visible ? 1f : 0f;
+            canvasGroup.blocksRaycasts = visible;
+            canvasGroup.interactable = visible;
+
+            // RectMask2D registers with ClipperRegistry and pays per-child cull cost every CanvasUpdate
+            // even while the panel is offscreen / alpha=0. Disable while hidden to drop that cost.
+            ClippingMask.enabled = visible;
+        }
+
+        /// <summary>
+        /// Resets the panel to its default anchored position (the chat-input position).
+        /// </summary>
+        public void ResetToDefaultPosition()
+        {
+            EnsureInitialized();
+            rectTransform.anchoredPosition = DefaultAnchoredPosition;
+        }
+
+        /// <summary>
+        /// Moves the panel to the given world position.
+        /// Callers should pre-apply any desired offset before calling.
+        /// </summary>
+        public void MoveTo(Vector3 worldPosition)
+        {
+            EnsureInitialized();
+            rectTransform.position = worldPosition;
+        }
+
+        /// <summary>
+        /// Keeps the default horizontal position and moves the panel
+        /// vertically to match the given world-space Y coordinate.
+        /// Used by message reactions so the panel stays horizontally stable.
+        /// </summary>
+        public void PositionCenteredAtWorldY(float worldY)
+        {
+            EnsureInitialized();
+            rectTransform.anchoredPosition = new Vector2(
+                DefaultAnchoredPosition.x,
+                rectTransform.anchoredPosition.y);
+
+            Vector3 pos = rectTransform.position;
+            pos.y = worldY;
+            rectTransform.position = pos;
         }
     }
 }

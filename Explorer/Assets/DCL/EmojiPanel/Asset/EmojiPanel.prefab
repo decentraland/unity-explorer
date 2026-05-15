@@ -67,7 +67,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -194,7 +194,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -268,7 +268,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0001008493}
+  m_AnchoredPosition: {x: 0, y: 0.0000014006794}
   m_SizeDelta: {x: -1.4689941, y: 18}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5364139152029377674
@@ -439,7 +439,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -623,6 +623,7 @@ MonoBehaviour:
   <EmojiSearchResults>k__BackingField: {fileID: 5257736242087549617}
   <EmojiSearchedContent>k__BackingField: {fileID: 6826751768916131577}
   <SearchPanelView>k__BackingField: {fileID: 7628895206988975841}
+  <ClippingMask>k__BackingField: {fileID: 4967157878725561385}
 --- !u!223 &3417165859806752584
 Canvas:
   m_ObjectHideFlags: 0
@@ -641,10 +642,11 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 999
+  m_SortingOrder: 2000
   m_TargetDisplay: 0
 --- !u!114 &5234265260374580207
 MonoBehaviour:
@@ -979,7 +981,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0f85301a9211845c8b8d39b4a4b05762, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1033,7 +1035,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 8287295318826585892}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99999696
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1384,7 +1386,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.3217
+      value: 0.336374
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1521,7 +1523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.754567
+      value: 0.76011
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1658,7 +1660,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.40746
+      value: 0.419764
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1928,7 +1930,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.5998
+      value: 0.609228
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2395,7 +2397,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.504
+      value: 0.514435
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2675,7 +2677,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7874130938599543881, guid: c2d8759656757465eb7d4e52b1b3c2d7, type: 3}
       propertyPath: <SectionPosition>k__BackingField
-      value: 0.1334173
+      value: 0.151678
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

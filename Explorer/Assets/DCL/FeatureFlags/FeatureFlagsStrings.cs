@@ -54,6 +54,7 @@ namespace DCL.FeatureFlags
         public const string BANNED_USERS_FROM_SCENE = "alfa-banned-users-from-scene";
         public const string CHAT_MESSAGE_BUFFER_CONFIG = "alfa-chat-message-buffer-config";
         public const string CHAT_MESSAGE_RATE_LIMIT = "alfa-chat-message-rate-limit";
+        public const string CHAT_REACTIONS_ENABLED = "alfa-chat-reactions";
         public const string CONFIG_VARIANT = "config";
         public const string HEAD_SYNC = "alfa-head-sync";
         public const string PRIVATE_CHAT_REQUIRES_TOPIC = "alfa-private-chat-requires-topic";
@@ -75,6 +76,7 @@ namespace DCL.FeatureFlags
         public const string NEARBY_VOICE_CHAT = "alfa-nearby-voice-chat";
         public const string AVATAR_CONTEXT_MENU = "alfa-avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "alfa-double-click-walk";
+        public const string AB_DEPS_DIGEST_CACHE_KEY = "alfa-ab-deps-digest-cache-key";
 
         public static class Endpoints
         {
@@ -122,7 +124,7 @@ namespace DCL.FeatureFlags
         GiftingEnabled,
         SkyboxSettings,
         SkyboxSettingsVariant,
-        ReportUser
+        ReportUser,
     }
 
     public static class FeatureFlagExtensions

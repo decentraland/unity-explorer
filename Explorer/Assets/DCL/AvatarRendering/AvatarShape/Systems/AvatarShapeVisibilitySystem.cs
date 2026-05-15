@@ -11,7 +11,6 @@ using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.SceneBannedUsers;
-using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -26,15 +25,15 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly Plane[] planes;
         private readonly float startFadeDithering;
         private readonly float endFadeDithering;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly bool includeBannedUsersFromScene;
 
         private SingleInstanceEntity camera;
         private GameObject? playerCamera;
 
-        public AvatarShapeVisibilitySystem(World world, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
+        public AvatarShapeVisibilitySystem(World world, IUserBlockingCache userBlockingCache, IRendererFeaturesCache outlineFeature, float startFadeDithering, float endFadeDithering, bool includeBannedUsersFromScene) : base(world)
         {
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.outlineFeature = outlineFeature.GetRendererFeature<RendererFeature_AvatarOutline>();
             planes = new Plane[6];
 
@@ -142,11 +141,9 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         private void BlockAvatars(in Entity entity, ref AvatarShapeComponent avatarShapeComponent)
         {
-            if (!userBlockingCacheProxy.Configured) return;
-
             if (avatarShapeComponent.InstantiatedWearables.Count == 0) return;
 
-            bool isBlocked = userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID);
+            bool isBlocked = userBlockingCache.UserIsBlocked(avatarShapeComponent.ID);
 
             SetHiddenComponent(entity, isBlocked, HiddenPlayerComponent.HiddenReason.BLOCKED);
         }
@@ -157,7 +154,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!includeBannedUsersFromScene) return;
 
-            bool isBanned = BannedUsersFromCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
+            bool isBanned = RoomMetadataCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
 
             SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
         }
@@ -255,7 +252,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
 
-            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX;
+            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
             avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;
         }
 
