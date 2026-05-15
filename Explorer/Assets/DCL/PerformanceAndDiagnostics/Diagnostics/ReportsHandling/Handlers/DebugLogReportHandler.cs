@@ -118,6 +118,7 @@ namespace DCL.Diagnostics
             string color = GetCategoryColor(in reportData);
 
             var debugLogBuilder = new StringBuilder();
+            debugLogBuilder.Append($"{DateTime.UtcNow:HH:mm:ss.fff} - ");
             debugLogBuilder.Append($"<color=#{color}>");
             debugLogBuilder.Append($"[{reportData.Category}]");
 

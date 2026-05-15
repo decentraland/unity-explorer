@@ -26,7 +26,7 @@ namespace DCL.Tests.Editor
         private static readonly HashSet<string> DEBUG_METHOD_NAMES = new () { "Log", "LogError", "LogWarning", "LogException" };
 
         private readonly string[] excludedFolders = { "Editor", "Stylized Grass Shader" };
-        private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
+        private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs", "DCLPlayerPrefs.cs" };
         private readonly string[] fileNameExclusionKeywords = { "Playground", "Test", "Sentry" };
 
         private readonly IReadOnlyCollection<string> pathIgnores = new List<string>
