@@ -63,13 +63,18 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         /// <summary>
         ///     Parses the sidx box contained in <paramref name="boxBytes"/>. The <paramref name="anchorOffset"/>
         ///     is the absolute file offset right after the sidx box ends (i.e. <c>IndexRangeEnd + 1</c>).
-        ///     The sub-segment offsets in the result are absolute file offsets, ready to plug into
-        ///     <c>#EXT-X-BYTERANGE</c>.
+        ///     On success, fills <paramref name="segments"/> (cleared first) with sub-segment entries
+        ///     whose offsets are absolute file offsets, ready to plug into <c>#EXT-X-BYTERANGE</c>.
+        ///     Returns <c>false</c> on any structural anomaly — caller falls back to the legacy
+        ///     single-segment playlist behavior. The caller owns <paramref name="segments"/> so it
+        ///     can pool/reuse the buffer across calls.
         /// </summary>
-        public static IReadOnlyList<SegmentInfo>? Parse(byte[] boxBytes, long anchorOffset)
+        public static bool TryParse(byte[] boxBytes, long anchorOffset, List<SegmentInfo> segments)
         {
+            segments.Clear();
+
             if (boxBytes.Length < MIN_SIDX_BOX_BYTES)
-                return null;
+                return false;
 
             int pos = 0;
 
@@ -77,8 +82,8 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             uint boxSize = ReadUInt32Be(boxBytes, ref pos);
             uint boxType = ReadUInt32Be(boxBytes, ref pos);
 
-            if (boxType != BOX_TYPE_SIDX) return null;
-            if (boxSize < MIN_SIDX_BOX_BYTES || boxSize > boxBytes.Length) return null;
+            if (boxType != BOX_TYPE_SIDX) return false;
+            if (boxSize < MIN_SIDX_BOX_BYTES || boxSize > boxBytes.Length) return false;
 
             // Full-box header: version (1 byte) + flags (3 bytes); only version is needed.
             byte version = boxBytes[pos];
@@ -88,7 +93,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             pos += REFERENCE_ID_BYTES;
 
             uint timescale = ReadUInt32Be(boxBytes, ref pos);
-            if (timescale == 0) return null;
+            if (timescale == 0) return false;
 
             // earliest_presentation_time + first_offset (size depends on version).
             long firstOffset;
@@ -109,15 +114,17 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
             // Bounds check against the declared boxSize (not buffer length): tighter and
             // spec-correct. Safe because boxSize <= boxBytes.Length is verified above.
-            if (pos + UINT16_BYTES > (int)boxSize) return null;
+            if (pos + UINT16_BYTES > (int)boxSize) return false;
 
             ushort referenceCount = ReadUInt16Be(boxBytes, ref pos);
-            if (referenceCount == 0) return null;
+            if (referenceCount == 0) return false;
 
             // Bail if the declared box can't hold every reference entry.
-            if (pos + (referenceCount * REFERENCE_ENTRY_BYTES) > (int)boxSize) return null;
+            if (pos + (referenceCount * REFERENCE_ENTRY_BYTES) > (int)boxSize) return false;
 
-            var segments = new List<SegmentInfo>(referenceCount);
+            if (segments.Capacity < referenceCount)
+                segments.Capacity = referenceCount;
+
             long currentByteOffset = anchorOffset + firstOffset;
 
             for (int i = 0; i < referenceCount; i++)
@@ -149,7 +156,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                 currentByteOffset += refSize;
             }
 
-            return segments.Count == 0 ? null : segments;
+            return segments.Count > 0;
         }
 
         private static uint ReadUInt32Be(byte[] data, ref int pos)

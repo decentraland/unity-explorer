@@ -6,7 +6,7 @@ using System.IO;
 namespace DCL.SDKComponents.MediaStream.Tests
 {
     /// <summary>
-    ///     Covers <see cref="SidxParser.Parse"/> — the bit that walks a YouTube fmp4
+    ///     Covers <see cref="SidxParser.TryParse"/> — the bit that walks a YouTube fmp4
     ///     sidx box and yields per-fragment byte offsets / sizes / durations.
     ///
     ///     Sample boxes are built by hand with <see cref="SidxBoxBuilder"/> so the test
@@ -17,6 +17,11 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private const long ANCHOR_OFFSET = 5_000;
         private const uint DEFAULT_TIMESCALE = 1_000;
         private const uint BOX_TYPE_SIDX = 0x73696478;
+
+        private readonly List<SidxParser.SegmentInfo> segments = new ();
+
+        [SetUp]
+        public void SetUp() => segments.Clear();
 
         // -------------------------------------------------------------------------
         // Valid input
@@ -31,21 +36,21 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 .Add(refSize: 1_750, durationTicks: 3_000)
                 .Build();
 
-            IReadOnlyList<SidxParser.SegmentInfo>? result = SidxParser.Parse(box, ANCHOR_OFFSET);
+            bool ok = SidxParser.TryParse(box, ANCHOR_OFFSET, segments);
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result!.Count, Is.EqualTo(3));
+            Assert.That(ok, Is.True);
+            Assert.That(segments.Count, Is.EqualTo(3));
 
-            Assert.That(result[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET));
-            Assert.That(result[0].ByteSize, Is.EqualTo(1_000));
-            Assert.That(result[0].DurationSeconds, Is.EqualTo(6.0).Within(1e-9));
+            Assert.That(segments[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET));
+            Assert.That(segments[0].ByteSize, Is.EqualTo(1_000));
+            Assert.That(segments[0].DurationSeconds, Is.EqualTo(6.0).Within(1e-9));
 
-            Assert.That(result[1].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 1_000));
-            Assert.That(result[1].ByteSize, Is.EqualTo(2_500));
+            Assert.That(segments[1].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 1_000));
+            Assert.That(segments[1].ByteSize, Is.EqualTo(2_500));
 
-            Assert.That(result[2].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 3_500));
-            Assert.That(result[2].ByteSize, Is.EqualTo(1_750));
-            Assert.That(result[2].DurationSeconds, Is.EqualTo(3.0).Within(1e-9));
+            Assert.That(segments[2].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 3_500));
+            Assert.That(segments[2].ByteSize, Is.EqualTo(1_750));
+            Assert.That(segments[2].DurationSeconds, Is.EqualTo(3.0).Within(1e-9));
         }
 
         [Test]
@@ -57,10 +62,28 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 .Add(refSize: 1_000, durationTicks: 6_000)
                 .Build();
 
-            IReadOnlyList<SidxParser.SegmentInfo>? result = SidxParser.Parse(box, ANCHOR_OFFSET);
+            bool ok = SidxParser.TryParse(box, ANCHOR_OFFSET, segments);
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result![0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + FIRST_OFFSET));
+            Assert.That(ok, Is.True);
+            Assert.That(segments[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + FIRST_OFFSET));
+        }
+
+        [Test]
+        public void Parse_ReuseList_ClearsPreviousEntries()
+        {
+            byte[] box = new SidxBoxBuilder(version: 0, timescale: DEFAULT_TIMESCALE, firstOffset: 0)
+                .Add(refSize: 1_000, durationTicks: 6_000)
+                .Build();
+
+            // Pre-fill the buffer with stale data — the parser must clear before filling.
+            segments.Add(new SidxParser.SegmentInfo(byteOffset: 999, byteSize: 999, durationSeconds: 9));
+            segments.Add(new SidxParser.SegmentInfo(byteOffset: 888, byteSize: 888, durationSeconds: 8));
+
+            bool ok = SidxParser.TryParse(box, ANCHOR_OFFSET, segments);
+
+            Assert.That(ok, Is.True);
+            Assert.That(segments.Count, Is.EqualTo(1));
+            Assert.That(segments[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET));
         }
 
         // -------------------------------------------------------------------------
@@ -68,7 +91,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         // -------------------------------------------------------------------------
 
         [Test]
-        public void Parse_WrongBoxType_ReturnsNull()
+        public void Parse_WrongBoxType_ReturnsFalse()
         {
             byte[] box = new SidxBoxBuilder(version: 0, timescale: DEFAULT_TIMESCALE, firstOffset: 0)
                 .Add(refSize: 1_000, durationTicks: 6_000)
@@ -80,34 +103,38 @@ namespace DCL.SDKComponents.MediaStream.Tests
             box[6] = 0x6F;
             box[7] = 0x66;
 
-            Assert.That(SidxParser.Parse(box, ANCHOR_OFFSET), Is.Null);
+            Assert.That(SidxParser.TryParse(box, ANCHOR_OFFSET, segments), Is.False);
+            Assert.That(segments, Is.Empty);
         }
 
         [Test]
-        public void Parse_TruncatedBuffer_ReturnsNull()
+        public void Parse_TruncatedBuffer_ReturnsFalse()
         {
             byte[] tooShort = new byte[16];
 
-            Assert.That(SidxParser.Parse(tooShort, ANCHOR_OFFSET), Is.Null);
+            Assert.That(SidxParser.TryParse(tooShort, ANCHOR_OFFSET, segments), Is.False);
+            Assert.That(segments, Is.Empty);
         }
 
         [Test]
-        public void Parse_ZeroReferenceCount_ReturnsNull()
+        public void Parse_ZeroReferenceCount_ReturnsFalse()
         {
             byte[] box = new SidxBoxBuilder(version: 0, timescale: DEFAULT_TIMESCALE, firstOffset: 0)
                 .Build();
 
-            Assert.That(SidxParser.Parse(box, ANCHOR_OFFSET), Is.Null);
+            Assert.That(SidxParser.TryParse(box, ANCHOR_OFFSET, segments), Is.False);
+            Assert.That(segments, Is.Empty);
         }
 
         [Test]
-        public void Parse_ZeroTimescale_ReturnsNull()
+        public void Parse_ZeroTimescale_ReturnsFalse()
         {
             byte[] box = new SidxBoxBuilder(version: 0, timescale: 0, firstOffset: 0)
                 .Add(refSize: 1_000, durationTicks: 6_000)
                 .Build();
 
-            Assert.That(SidxParser.Parse(box, ANCHOR_OFFSET), Is.Null);
+            Assert.That(SidxParser.TryParse(box, ANCHOR_OFFSET, segments), Is.False);
+            Assert.That(segments, Is.Empty);
         }
 
         // -------------------------------------------------------------------------
@@ -123,19 +150,19 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 .Add(refSize: 2_500, durationTicks: 6_000)
                 .Build();
 
-            IReadOnlyList<SidxParser.SegmentInfo>? result = SidxParser.Parse(box, ANCHOR_OFFSET);
+            bool ok = SidxParser.TryParse(box, ANCHOR_OFFSET, segments);
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result!.Count, Is.EqualTo(2));
+            Assert.That(ok, Is.True);
+            Assert.That(segments.Count, Is.EqualTo(2));
 
             // First media fragment is unchanged.
-            Assert.That(result[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET));
-            Assert.That(result[0].ByteSize, Is.EqualTo(1_000));
+            Assert.That(segments[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET));
+            Assert.That(segments[0].ByteSize, Is.EqualTo(1_000));
 
             // Second media fragment must be shifted past the skipped nested-sidx region
             // (1_000 + 500), proving the offset accounting stayed coherent.
-            Assert.That(result[1].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 1_500));
-            Assert.That(result[1].ByteSize, Is.EqualTo(2_500));
+            Assert.That(segments[1].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + 1_500));
+            Assert.That(segments[1].ByteSize, Is.EqualTo(2_500));
         }
 
         // -------------------------------------------------------------------------
@@ -153,10 +180,10 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 .Add(refSize: 1_000, durationTicks: 6_000)
                 .Build();
 
-            IReadOnlyList<SidxParser.SegmentInfo>? result = SidxParser.Parse(box, ANCHOR_OFFSET);
+            bool ok = SidxParser.TryParse(box, ANCHOR_OFFSET, segments);
 
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result![0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + FIRST_OFFSET_64));
+            Assert.That(ok, Is.True);
+            Assert.That(segments[0].ByteOffset, Is.EqualTo(ANCHOR_OFFSET + FIRST_OFFSET_64));
         }
 
         // -------------------------------------------------------------------------

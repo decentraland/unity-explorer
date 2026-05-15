@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -118,8 +119,8 @@ namespace DCL.SDKComponents.MediaStream
                     return null;
                 }
 
-                IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null;
-                IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null;
+                using var _ = ListPool<SidxParser.SegmentInfo>.Get(out var videoSegments);
+                using var __ = ListPool<SidxParser.SegmentInfo>.Get(out var audioSegments);
 
                 // Fetch both sidx boxes in parallel. Each is typically a few KB.
                 (byte[]? videoSidx, byte[]? audioSidx) = await UniTask.WhenAll(
@@ -127,10 +128,10 @@ namespace DCL.SDKComponents.MediaStream
                     TryFetchByteRangeAsync(audioStream.Url, audioStream.IndexRangeStart, audioStream.IndexRangeEnd, ct));
 
                 if (videoSidx != null)
-                    videoSegments = SidxParser.Parse(videoSidx, videoStream.IndexRangeEnd + 1);
+                    SidxParser.TryParse(videoSidx, videoStream.IndexRangeEnd + 1, videoSegments);
 
                 if (audioSidx != null)
-                    audioSegments = SidxParser.Parse(audioSidx, audioStream.IndexRangeEnd + 1);
+                    SidxParser.TryParse(audioSidx, audioStream.IndexRangeEnd + 1, audioSegments);
 
                 HlsManifestBuilder.PlaylistSet playlists =
                     HlsManifestBuilder.Build(videoStream, audioStream, response.DurationSeconds, videoSegments, audioSegments);
