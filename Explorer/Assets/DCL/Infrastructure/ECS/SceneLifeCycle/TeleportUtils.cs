@@ -79,14 +79,15 @@ namespace ECS.SceneLifeCycle
             Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
             Vector3 targetWorldPosition = parcelBaseWorldPosition;
 
-            List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
+            List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef?.metadata.spawnPoints;
 
-            if (spawnPoints is { Count: > 0 })
+            if (sceneDef != null && spawnPoints is { Count: > 0 })
             {
-                SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition);
+                LocalBounds bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, parcel);
 
-                // TODO validate offset position is within bounds of one of scene parcels
-                targetWorldPosition += GetSpawnPositionOffset(spawnPoint);
+                SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition, in bounds);
+
+                targetWorldPosition += GetSpawnPositionOffset(spawnPoint, in bounds);
 
                 if (spawnPoint.cameraTarget != null)
                     cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
@@ -95,7 +96,7 @@ namespace ECS.SceneLifeCycle
             return (targetWorldPosition, cameraTarget);
         }
 
-        private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
+        private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition, in LocalBounds bounds)
         {
             List<SceneMetadata.SpawnPoint> defaults = ListPool<SceneMetadata.SpawnPoint>.Get();
             defaults.AddRange(spawnPoints.Where(sp => sp.@default));
@@ -110,7 +111,7 @@ namespace ECS.SceneLifeCycle
                 for (var i = 0; i < elegibleSpawnPoints.Count; i++)
                 {
                     SceneMetadata.SpawnPoint sp = elegibleSpawnPoints[i];
-                    Vector3 spawnWorldPosition = GetSpawnPositionOffset(sp) + parcelBaseWorldPosition;
+                    Vector3 spawnWorldPosition = GetSpawnPositionOffset(sp, in bounds) + parcelBaseWorldPosition;
                     float distance = Vector3.Distance(targetWorldPosition, spawnWorldPosition);
 
                     if (distance < closestDistance)
@@ -128,51 +129,90 @@ namespace ECS.SceneLifeCycle
             return spawnPoint;
         }
 
-        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint)
+        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint, in LocalBounds bounds)
         {
-            static float GetRandomPoint(float[] coordArray)
+            static float GetRandomPointClamped(float[] coordArray, float axisMin, float axisMax)
             {
-                float randomPoint = 0;
-
                 switch (coordArray.Length)
                 {
                     case 1:
-                        randomPoint = coordArray[0];
-                        break;
+                        return Mathf.Clamp(coordArray[0], axisMin, axisMax);
                     case >= 2:
                     {
                         float min = coordArray[0];
                         float max = coordArray[1];
 
-                        if (Mathf.Approximately(min, max))
-                            return max;
-
                         if (min > max)
                             (min, max) = (max, min);
 
-                        randomPoint = (float)((RANDOM.NextDouble() * (max - min)) + min);
-                        break;
-                    }
-                }
+                        min = Mathf.Clamp(min, axisMin, axisMax);
+                        max = Mathf.Clamp(max, axisMin, axisMax);
 
-                return randomPoint;
+                        if (Mathf.Approximately(min, max))
+                            return max;
+
+                        return (float)((RANDOM.NextDouble() * (max - min)) + min);
+                    }
+                    default:
+                        return 0;
+                }
             }
 
-            static float? GetSpawnComponent(SceneMetadata.SpawnPoint.Coordinate coordinate)
+            static float? GetSpawnComponentClamped(SceneMetadata.SpawnPoint.Coordinate coordinate, float axisMin, float axisMax)
             {
                 if (coordinate.SingleValue != null)
-                    return coordinate.SingleValue.Value;
+                    return Mathf.Clamp(coordinate.SingleValue.Value, axisMin, axisMax);
 
                 if (coordinate.MultiValue != null)
-                    return GetRandomPoint(coordinate.MultiValue);
+                    return GetRandomPointClamped(coordinate.MultiValue, axisMin, axisMax);
 
                 return null;
             }
 
             return new Vector3(
-                GetSpawnComponent(spawnPoint.position.x) ?? ParcelMathHelper.PARCEL_SIZE / 2f,
-                GetSpawnComponent(spawnPoint.position.y) ?? 0,
-                GetSpawnComponent(spawnPoint.position.z) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
+                GetSpawnComponentClamped(spawnPoint.position.x, bounds.MinX, bounds.MaxX) ?? ParcelMathHelper.PARCEL_SIZE / 2f,
+                GetSpawnComponentClamped(spawnPoint.position.y, 0f, float.PositiveInfinity) ?? 0,
+                GetSpawnComponentClamped(spawnPoint.position.z, bounds.MinZ, bounds.MaxZ) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
+        }
+
+        private static LocalBounds CalculateLocalBounds(IReadOnlyList<Vector2Int> sceneParcels, Vector2Int referenceParcel)
+        {
+            if (sceneParcels == null || sceneParcels.Count == 0)
+                return new LocalBounds(0, ParcelMathHelper.PARCEL_SIZE, 0, ParcelMathHelper.PARCEL_SIZE);
+
+            int minParcelX = int.MaxValue, maxParcelX = int.MinValue;
+            int minParcelY = int.MaxValue, maxParcelY = int.MinValue;
+
+            for (var i = 0; i < sceneParcels.Count; i++)
+            {
+                Vector2Int p = sceneParcels[i];
+                if (p.x < minParcelX) minParcelX = p.x;
+                if (p.x > maxParcelX) maxParcelX = p.x;
+                if (p.y < minParcelY) minParcelY = p.y;
+                if (p.y > maxParcelY) maxParcelY = p.y;
+            }
+
+            return new LocalBounds(
+                (minParcelX - referenceParcel.x) * ParcelMathHelper.PARCEL_SIZE,
+                (maxParcelX - referenceParcel.x + 1) * ParcelMathHelper.PARCEL_SIZE,
+                (minParcelY - referenceParcel.y) * ParcelMathHelper.PARCEL_SIZE,
+                (maxParcelY - referenceParcel.y + 1) * ParcelMathHelper.PARCEL_SIZE);
+        }
+
+        private readonly struct LocalBounds
+        {
+            public readonly float MinX;
+            public readonly float MaxX;
+            public readonly float MinZ;
+            public readonly float MaxZ;
+
+            public LocalBounds(float minX, float maxX, float minZ, float maxZ)
+            {
+                MinX = minX;
+                MaxX = maxX;
+                MinZ = minZ;
+                MaxZ = maxZ;
+            }
         }
 
 
