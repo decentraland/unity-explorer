@@ -2304,6 +2304,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Support",
+                    "type": "Button",
+                    "id": "7b8c3d4e-5f6a-4b8c-9d0e-1f2a3b4c5d6e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2526,6 +2535,39 @@
                     "action": "CameraReel",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "SHIFT+H",
+                    "id": "2c9d4e1f-3a5b-4c7d-8e9f-0a1b2c3d4e5f",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Support",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "3d0e5f2a-4b6c-5d8e-9f0a-1b2c3d4e5f6a",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Support",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "4e1f6a3b-5c7d-6e9f-0a1b-2c3d4e5f6a7b",
+                    "path": "<Keyboard>/h",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Support",
+                    "isComposite": false,
+                    "isPartOfComposite": true
                 }
             ]
         },
