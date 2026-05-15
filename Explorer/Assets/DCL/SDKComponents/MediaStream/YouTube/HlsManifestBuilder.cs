@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace DCL.SDKComponents.MediaStream.YouTube
@@ -22,6 +23,10 @@ namespace DCL.SDKComponents.MediaStream.YouTube
     /// </summary>
     internal static class HlsManifestBuilder
     {
+        private const int DEFAULT_PLAYLIST_LENGTH = 2048;
+        private const int HEADER_PLAYLIST_LENGTH = 256;
+        private const int SEGMENT_PLAYLIST_LENGTH = 128;
+
         // Codecs every AVPro backend decodes reliably across Windows/macOS/iOS/Android.
         private const string PREFERRED_VIDEO_CODEC_PREFIX = "avc1";
         private const string PREFERRED_AUDIO_CODEC_PREFIX = "mp4a";
@@ -43,30 +48,68 @@ namespace DCL.SDKComponents.MediaStream.YouTube
         }
 
         /// <summary>
-        ///     Returns the 3 playlist contents (master + video + audio), or <c>null</c> if the
-        ///     inputs don't permit synthesis (no usable video or audio adaptive stream, missing
-        ///     byte ranges, missing content length, etc.).
+        ///     Selects the best video + audio pair from a list of adaptive formats and validates
+        ///     them as synthesizable (byte ranges present, content length known). Useful when the
+        ///     caller needs to know which streams will be used before invoking <see cref="Build(IReadOnlyList&lt;AdaptiveFormatData&gt;,int,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;,IReadOnlyList&lt;SidxParser.SegmentInfo&gt;)"/>
+        ///     — for example, to pre-fetch each stream's sidx box.
         /// </summary>
-        public static PlaylistSet? Build(IReadOnlyList<AdaptiveFormatData> adaptive, int durationSeconds)
+        public static bool TrySelectVideoAndAudio(
+            IReadOnlyList<AdaptiveFormatData> adaptive,
+            out AdaptiveFormatData video,
+            out AdaptiveFormatData audio)
         {
-            if (adaptive == null || adaptive.Count == 0 || durationSeconds <= 0)
-                return null;
+            video = default;
+            audio = default;
 
-            AdaptiveFormatData? video = SelectBestVideo(adaptive);
-            AdaptiveFormatData? audio = SelectBestAudio(adaptive);
+            if (adaptive == null || adaptive.Count == 0) return false;
 
-            if (video == null || audio == null) return null;
+            AdaptiveFormatData? v = SelectBestVideo(adaptive);
+            AdaptiveFormatData? a = SelectBestAudio(adaptive);
 
-            // Both byte ranges AND a known contentLength are required: the media segment runs
-            // from indexRangeEnd+1 to contentLength-1, so without contentLength we can't write
-            // a valid EXT-X-BYTERANGE.
-            if (!video.Value.HasByteRanges || video.Value.ContentLength <= 0) return null;
-            if (!audio.Value.HasByteRanges || audio.Value.ContentLength <= 0) return null;
+            if (v == null || a == null) return false;
+            if (!v.Value.HasByteRanges || v.Value.ContentLength <= 0) return false;
+            if (!a.Value.HasByteRanges || a.Value.ContentLength <= 0) return false;
+
+            video = v.Value;
+            audio = a.Value;
+            return true;
+        }
+
+        /// <summary>
+        ///     Builds the 3 HLS playlists (master + video + audio) from the pre-selected pair
+        ///     returned by <see cref="TrySelectVideoAndAudio"/>. If SIDX-derived segment tables
+        ///     are supplied the media playlists are split into one HLS segment per fmp4
+        ///     fragment — this avoids the multi-second buffer-fill stall AVPro exhibits when
+        ///     handed a single byte range covering the entire video body (issue #8350). Falls
+        ///     back to single-segment if either segment list is null or empty.
+        ///
+        ///     Caller is expected to have already validated the streams via
+        ///     <see cref="TrySelectVideoAndAudio"/>; this method does not re-check byte ranges
+        ///     or content length so the sidx data is structurally bound to the same streams
+        ///     that get written into the playlists.
+        /// </summary>
+        public static PlaylistSet Build(
+            AdaptiveFormatData video,
+            AdaptiveFormatData audio,
+            int durationSeconds,
+            IReadOnlyList<SidxParser.SegmentInfo>? videoSegments = null,
+            IReadOnlyList<SidxParser.SegmentInfo>? audioSegments = null)
+        {
+            bool segmented = videoSegments is { Count: > 0 }
+                             && audioSegments is { Count: > 0 };
+
+            string videoPlaylist = segmented
+                ? BuildSegmentedMediaPlaylist(video, videoSegments!)
+                : BuildMediaPlaylist(video, durationSeconds);
+
+            string audioPlaylist = segmented
+                ? BuildSegmentedMediaPlaylist(audio, audioSegments!)
+                : BuildMediaPlaylist(audio, durationSeconds);
 
             return new PlaylistSet(
-                BuildMaster(video.Value, audio.Value),
-                BuildMediaPlaylist(video.Value, durationSeconds),
-                BuildMediaPlaylist(audio.Value, durationSeconds));
+                BuildMaster(video, audio),
+                videoPlaylist,
+                audioPlaylist);
         }
 
         private static AdaptiveFormatData? SelectBestVideo(IReadOnlyList<AdaptiveFormatData> adaptive)
@@ -173,6 +216,51 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             return sb.ToString();
         }
 
+        private static string BuildSegmentedMediaPlaylist(AdaptiveFormatData stream, IReadOnlyList<SidxParser.SegmentInfo> segments)
+        {
+            // Init segment range: bytes [InitRangeStart..InitRangeEnd] inclusive.
+            long initSize = stream.InitRangeEnd - stream.InitRangeStart + 1;
+            long initOffset = stream.InitRangeStart;
+
+            // Per-segment EXTINF needs to be a finite duration; ceil over the max sub-segment
+            // duration for TARGETDURATION (HLS spec requires TARGETDURATION >= ceil(max EXTINF)).
+            double maxSegmentDuration = 0;
+
+            for (int i = 0; i < segments.Count; i++)
+                if (segments[i].DurationSeconds > maxSegmentDuration)
+                    maxSegmentDuration = segments[i].DurationSeconds;
+
+            int targetDurationSeconds = Math.Max(1, (int)Math.Ceiling(maxSegmentDuration));
+
+            // Pre-size: header (~200) + per-segment (~120) gets close enough.
+            var sb = new StringBuilder(HEADER_PLAYLIST_LENGTH + (segments.Count * SEGMENT_PLAYLIST_LENGTH));
+            sb.Append("#EXTM3U\n");
+            sb.Append("#EXT-X-VERSION:7\n");
+            sb.Append("#EXT-X-PLAYLIST-TYPE:VOD\n");
+            sb.Append("#EXT-X-TARGETDURATION:").Append(targetDurationSeconds).Append('\n');
+            sb.Append("#EXT-X-MEDIA-SEQUENCE:0\n");
+
+            // EXT-X-MAP: the init segment (moov box) — shared across all segments.
+            sb.Append("#EXT-X-MAP:URI=\"").Append(stream.Url).Append('"');
+            sb.Append(",BYTERANGE=\"").Append(initSize).Append('@').Append(initOffset).Append("\"\n");
+
+            // One HLS segment per fmp4 fragment. Each EXT-X-BYTERANGE points at a clean
+            // fragment boundary (sidx-described), so AVPro can decode a single segment in
+            // isolation and start playback after the first chunk lands.
+            for (int i = 0; i < segments.Count; i++)
+            {
+                SidxParser.SegmentInfo seg = segments[i];
+                sb.Append("#EXTINF:")
+                    .Append(seg.DurationSeconds.ToString("0.######", CultureInfo.InvariantCulture))
+                    .Append(",\n");
+                sb.Append("#EXT-X-BYTERANGE:").Append(seg.ByteSize).Append('@').Append(seg.ByteOffset).Append('\n');
+                sb.Append(stream.Url).Append('\n');
+            }
+
+            sb.Append("#EXT-X-ENDLIST\n");
+            return sb.ToString();
+        }
+
         private static string BuildMediaPlaylist(AdaptiveFormatData stream, int durationSeconds)
         {
             // Init segment range: bytes [InitRangeStart..InitRangeEnd] inclusive.
@@ -184,7 +272,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             long mediaOffset = stream.IndexRangeEnd + 1;
             long mediaSize = stream.ContentLength - mediaOffset;
 
-            var sb = new StringBuilder(2048);
+            var sb = new StringBuilder(DEFAULT_PLAYLIST_LENGTH);
             sb.Append("#EXTM3U\n");
             sb.Append("#EXT-X-VERSION:7\n");
             sb.Append("#EXT-X-PLAYLIST-TYPE:VOD\n");
