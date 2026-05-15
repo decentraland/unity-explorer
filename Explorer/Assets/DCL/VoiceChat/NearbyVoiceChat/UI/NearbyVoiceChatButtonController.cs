@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.UI
     {
         private const string CALL_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nduring Calls & Streams.";
         private const string SCENE_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nin this scene.";
-        private const string SCENE_BAN_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nyou are banned from this scene.";
+        private const string SCENE_BAN_SUPPRESSED_TEXT = "Nearby voice chat unavailable\nbecause this scene has restricted access.";
 
         private readonly NearbyVoiceChatButtonView view;
         private readonly ReactivePropertyExtensions.DisposableSubscription<NearbyVoiceChatState> stateSubscription;
@@ -39,8 +39,6 @@ namespace DCL.VoiceChat.UI
         {
             if (reason == null) return;
 
-            // LOADING falls through to CALL text — historical behavior preserved; users see a generic
-            // "unavailable" hint during the transient startup window.
             string text = reason switch
             {
                 SuppressionReason.SCENE => SCENE_SUPPRESSED_TEXT,

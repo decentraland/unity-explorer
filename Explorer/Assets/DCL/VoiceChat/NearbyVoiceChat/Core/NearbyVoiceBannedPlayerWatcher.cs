@@ -9,8 +9,7 @@ namespace DCL.VoiceChat
     /// <summary>
     ///     Suppresses Nearby voice chat for the local player while they are banned from the current scene.
     ///     Listens to scene-room access signals from the gatekeeper:
-    ///     a forbidden-access response engages suppression, any subsequent successful connect/disconnect
-    ///     of a new scene room releases it.
+    ///     a forbidden-access response engages suppression, any subsequent successful connect/disconnect of a new scene room releases it.
     /// </summary>
     public class NearbyVoiceBannedPlayerWatcher : IDisposable
     {
