@@ -1,7 +1,9 @@
 using Arch.Core;
+using CodeLess.Singletons;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -54,7 +56,9 @@ namespace DCL.VoiceChat.Nearby.Tests
         [SetUp]
         public void SetUp()
         {
+            SingletonRegistry.Reset();
             EcsTestsUtils.SetUpFeaturesRegistry();
+            RoomMetadataCurrentScene.InitializeTest();
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
