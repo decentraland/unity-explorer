@@ -279,21 +279,15 @@ jobs:
               pull_number: context.issue.number
             });
 
-            const commit = await github.rest.repos.getCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: pr.data.head.sha
-            });
-
             const commentAt = new Date(context.payload.comment.created_at);
-            const commitAt  = new Date(commit.data.commit.committer.date);
+            const pushedAt  = new Date(pr.data.head.repo.pushed_at);
 
-            if (commitAt > commentAt) {
+            if (pushedAt > commentAt) {
               const shortSha = pr.data.head.sha.substring(0, 7);
               core.setFailed(
                 `@claude review skipped: this PR was updated after your comment.\n` +
-                `Head commit ${shortSha} (committed ${commitAt.toISOString()}) ` +
-                `is newer than your comment (${commentAt.toISOString()}).\n` +
+                `Head commit ${shortSha} was pushed at ${pushedAt.toISOString()}, ` +
+                `after your comment at ${commentAt.toISOString()}.\n` +
                 `Take a look at the latest changes, then comment @claude review ` +
                 `again if you still want a review.`
               );
