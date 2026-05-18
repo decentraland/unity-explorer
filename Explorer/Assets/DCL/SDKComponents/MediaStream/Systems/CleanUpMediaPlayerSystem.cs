@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(DeleteEntityIntention))]
         private void HandleMediaPlayerDestruction(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
-            CleanUpMediaPlayer(in entity, ref mediaPlayer);
+            CleanUpMediaPlayer(entity, ref mediaPlayer);
         }
 
         [Query]
@@ -79,7 +79,7 @@ namespace DCL.SDKComponents.MediaStream
 
         // Also removes the MediaPlayerComponent component so no "concurrent" query can run on the already dispose media player
         // (e.g. HandleMediaPlayerDestruction runs just before the scene teardown (FinalizeMediaPlayerComponent)
-        private void CleanUpMediaPlayer(in Entity entity, ref MediaPlayerComponent mediaPlayerComponent)
+        private void CleanUpMediaPlayer(Entity entity, ref MediaPlayerComponent mediaPlayerComponent)
         {
             mediaPlayerComponent.Dispose();
             World.Remove<MediaPlayerComponent>(entity);
@@ -96,7 +96,7 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         private void FinalizeMediaPlayerComponent(Entity entity, ref MediaPlayerComponent component) =>
-            CleanUpMediaPlayer(in entity, ref component);
+            CleanUpMediaPlayer(entity, ref component);
 
         [Query]
         private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
