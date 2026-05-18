@@ -3,7 +3,6 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Nulls
@@ -44,5 +43,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
     public class NullAudioStreams : NullStreams<AudioStream, AudioStreamInfo>, IAudioStreams
     {
         public static readonly NullAudioStreams INSTANCE = new ();
+
+        // -1 is the resolver's sentinel for "stream missing / never decoded a frame"
+        public int GetLastFrameReceivedAt(StreamKey streamKey) => -1;
     }
 }

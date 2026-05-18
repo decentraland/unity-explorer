@@ -33,7 +33,9 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// </summary>
     public class NearbyAudioBindingSystemShould : UnitySystemTestBase<NearbyAudioBindingSystem>
     {
-        private static readonly QueryDescription AUDIO_SOURCE_QUERY = new QueryDescription().WithAll<NearbyAudioSourceComponent>();
+        // Co-located after slice 4: NearbyAudioSourceComponent lives on the avatar entity itself, alongside
+        // AvatarBase. The "audio source count" question is therefore "how many avatars carry the component".
+        private static readonly QueryDescription AUDIO_SOURCE_QUERY = new QueryDescription().WithAll<NearbyAudioSourceComponent, AvatarBase>();
 
         private static readonly FieldInfo HEAD_ANCHOR_FIELD =
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -77,7 +79,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void SingleAvatarSingleStreamCreatesOneEntity()
+        public void SingleAvatarSingleStreamAddsComponentOnAvatar()
         {
             const string WALLET = "wallet-alice";
             Entity avatarEntity = CreateStreamingAvatar(WALLET, "sid-1");
@@ -87,9 +89,12 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(1));
 
-            NearbyAudioSourceComponent comp = GetSingleAudioComponent();
+            // Co-location: the component must live on the avatar entity itself (no separate audio entity).
+            Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.True,
+                "component must be added directly onto the avatar entity (slice-4 co-location)");
+
+            NearbyAudioSourceComponent comp = world.Get<NearbyAudioSourceComponent>(avatarEntity);
             Assert.That(comp.Key, Is.EqualTo(new StreamKey(WALLET, "sid-1")));
-            Assert.That(comp.AvatarEntity, Is.EqualTo(avatarEntity));
             Assert.That(comp.LivekitAudioSource, Is.Not.Null);
         }
 

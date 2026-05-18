@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(NearbyAudioSourceComponent), typeof(DeleteEntityIntention))]
         [All(typeof(AvatarBase), typeof(NearbyAudioStreamerComponent), typeof(InAudibleRangeTag))]
         private void CreateAndBindAudioSourcesToStreamers(Entity avatarEntity, in Profile profile, in NearbyAudioStreamerComponent nearby)
         {
@@ -83,8 +83,8 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (!stream.Resource.Has) return;
 
             LivekitAudioSource source = sourceFactory.Create(key, stream);
+            World.Add(avatarEntity, new NearbyAudioSourceComponent(key, source));
 
-            World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
             bindings.Add(key);
         }
     }

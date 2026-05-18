@@ -14,21 +14,18 @@ using System.Collections.Generic;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Detection + teardown for Nearby audio-source entities.
+    ///     Detection + teardown for Nearby audio-source components (co-located on the avatar entity).
     ///     <para>
-    ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
+    ///         <b>Triggers:</b>
     ///         <list type="bullet">
-    ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with  <see cref="DeleteEntityIntention"/>.</description></item>
-    ///             <item><description><b>Trigger #2 (sid not active)</b> — registry's resolver no longer picks the bound <c>(walletId, sid)</c> (either the sid was evicted, or a fresher candidate won).</description></item>
-    ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns  <c>true</c> for the bound <c>walletId</c>.</description></item>
-    ///             <item><description><b>Trigger #4 (scene-banned)</b> — <see cref="RoomMetadataCurrentScene.IsUserBanned"/> returns <c>true</c> for the bound <c>walletId</c>.</description></item>
-    ///             <item><description><b>Trigger #5 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
+    ///             <item><description><b>#1 streamer marker gone</b> — avatar lost <see cref="NearbyAudioStreamerComponent"/>.</description></item>
+    ///             <item><description><b>#2 out of range</b> — avatar lost <see cref="InAudibleRangeTag"/>.</description></item>
+    ///             <item><description><b>#3 sid not active</b> — registry's resolver no longer picks the bound <c>(walletId, sid)</c>.</description></item>
+    ///             <item><description><b>#4 blocked</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns <c>true</c>.</description></item>
+    ///             <item><description><b>#5 scene-banned</b> — <see cref="RoomMetadataCurrentScene.IsUserBanned"/> returns <c>true</c>.</description></item>
+    ///             <item><description><b>#6 listening gate</b> — bulk removal when state is <see cref="NearbyVoiceChatState.SUPPRESSED"/> / <see cref="NearbyVoiceChatState.DISABLED"/>.</description></item>
+    ///             <item><description><b>#7 avatar dying</b> — avatar carries <see cref="DeleteEntityIntention"/>; dispose source, component goes away with the entity.</description></item>
     ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         <b>Teardown</b> — reacts to entities now carrying <see cref="DeleteEntityIntention"/>:
-    ///          - disposes the <see cref="LivekitAudioSource"/> to the pool via <see cref="NearbyAudioSourceFactory"/> (Stop → Free → SafeDestroyGameObject)
-    ///          - removes the <c>(walletId, sid) → entity</c> binding. Physical entity destruction is delegated to <see cref="DestroyEntitiesSystem"/>.
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
@@ -71,47 +68,62 @@ namespace DCL.VoiceChat.Nearby.Systems
                 sourceFactory.InvalidateForDeviceChange();
             }
 
-            // Listening-gate AND device-change are bulk archetype-moves; per-entity detection is skipped in either case.
+            // Listening-gate AND device-change are bulk component-removes; per-entity detection is skipped in either case.
             if (stateModel.IsListeningDisabled || deviceChanged)
-                World.Add<DeleteEntityIntention>(in LIVE_AUDIO_QUERY);
+            {
+                DisposeAllLiveSourcesQuery(World);
+                World.Remove<NearbyAudioSourceComponent>(in LIVE_AUDIO_QUERY);
+                bindings.Clear();
+            }
             else
-                FlagDoomedAudioEntitiesQuery(World);
+                CleanupDoomedSourceQuery(World);
 
-            TearDownMarkedAudioEntitiesQuery(World);
+            // Trigger #7: avatars marked for deletion still carry the component until the entity is destroyed
+            // elsewhere. Dispose the source; do NOT World.Remove (the avatar takes the component with it).
+            DisposeDyingAvatarSourcesQuery(World);
         }
 
         protected override void OnDispose()
         {
-            DisposeAllAudioSourcesQuery(World);
+            DisposeAllLiveSourcesQuery(World);
+            DisposeDyingAvatarSourcesQuery(World);
             bindings.Clear();
+        }
+
+        // !IsActiveSid covers two cases: (1) sid evicted entirely → resolver returns different sid or null;
+        // (2) sid demoted → resolver picked a fresher candidate. The ghost loser of the pick is reaped here
+        // so binding can spawn the new winner.
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void CleanupDoomedSource(Entity entity, ref NearbyAudioSourceComponent comp)
+        {
+            bool doomed = !World.Has<NearbyAudioStreamerComponent>(entity)
+                          || !World.Has<InAudibleRangeTag>(entity)
+                          || !registry.IsActiveSid(comp.Key.identity, comp.Key.sid)
+                          || userBlockingCache.UserIsBlocked(comp.Key.identity)
+                          || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity);
+
+            if (!doomed) return;
+
+            sourceFactory.Dispose(comp.LivekitAudioSource);
+            StreamKey key = comp.Key;
+            World.Remove<NearbyAudioSourceComponent>(entity);
+            bindings.Remove(key);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void FlagDoomedAudioEntities(Entity audioEntity, ref NearbyAudioSourceComponent comp)
+        private void DisposeAllLiveSources(ref NearbyAudioSourceComponent comp)
         {
-            Entity avatar = comp.AvatarEntity;
-
-            // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
-            // !IsActiveSid covers two cases: (1) sid evicted entirely → resolver returns different sid or null; (2) sid demoted →
-            // resolver picked a fresher candidate. The ghost loser of the pick is reaped here so binding can spawn the new winner.
-            bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<NearbyAudioStreamerComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
-            if (avatarGoneOrOutOfRange || !registry.IsActiveSid(comp.Key.identity, comp.Key.sid) || userBlockingCache.UserIsBlocked(comp.Key.identity) || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity))
-                World.Add<DeleteEntityIntention>(audioEntity);
+            sourceFactory.Dispose(comp.LivekitAudioSource);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void TearDownMarkedAudioEntities(ref NearbyAudioSourceComponent comp)
+        private void DisposeDyingAvatarSources(ref NearbyAudioSourceComponent comp)
         {
             sourceFactory.Dispose(comp.LivekitAudioSource);
             bindings.Remove(comp.Key);
-        }
-
-        [Query]
-        private void DisposeAllAudioSources(ref NearbyAudioSourceComponent comp)
-        {
-            sourceFactory.Dispose(comp.LivekitAudioSource);
         }
     }
 }

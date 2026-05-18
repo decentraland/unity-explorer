@@ -116,7 +116,10 @@ namespace DCL.VoiceChat.Nearby
             LivekitAudioSource source = LivekitAudioSource.New();
             gameObjects.Add(source.gameObject);
 
-            world.Create(new NearbyAudioSourceComponent(new StreamKey(id, "sid"), avatarEntity, source));
+            // Slice 4: NearbyAudioSourceComponent is co-located on the avatar; position query is now
+            // gated by NearbyAudioStreamerComponent. Both must be added so the benchmark hits the hot path.
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent("sid"));
+            world.Add(avatarEntity, new NearbyAudioSourceComponent(new StreamKey(id, "sid"), source));
         }
 
         private GameObject CreateTrackedGameObject(string name)

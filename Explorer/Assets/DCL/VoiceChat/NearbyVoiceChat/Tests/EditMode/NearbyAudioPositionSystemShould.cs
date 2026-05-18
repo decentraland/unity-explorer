@@ -20,11 +20,12 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// <summary>
     /// Documents the Nearby Audio Position System behavior — strict read+drive, no lifecycle responsibility:
     ///
-    /// - Reads avatar position via <see cref="NearbyAudioSourceComponent.AvatarEntity"/>.
+    /// - Reads avatar position from the SAME entity that carries <see cref="NearbyAudioSourceComponent"/>
+    ///   (co-located after slice 4 — no cross-entity hop).
     /// - Drives <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
     /// - Reprojects source position relative to the player head.
     ///
-    /// Structural changes for audio entities are owned exclusively by <see cref="NearbyAudioCleanupSystem"/>.
+    /// Structural changes for audio components are owned exclusively by <see cref="NearbyAudioCleanupSystem"/>.
     /// </summary>
     public class NearbyAudioPositionSystemShould : UnitySystemTestBase<NearbyAudioPositionSystem>
     {
@@ -429,14 +430,21 @@ namespace DCL.VoiceChat.Nearby.Tests
                 avatarBase,
                 new CharacterTransform(avatarGo.transform));
 
+            // Slice 4: PositionSystem's query is gated on NearbyAudioStreamerComponent (co-located on the
+            // avatar entity). Seed it so the per-frame contract tests below all hit the spatial pipeline.
+            world.Add(entity, new NearbyAudioStreamerComponent("sid-1"));
             world.Add<InAudibleRangeTag>(entity);
             return entity;
         }
 
+        // Slice 4: the audio-source component is co-located on the avatar entity. There is no separate
+        // audio entity anymore — this helper now just attaches the component to the existing avatar and
+        // returns the same Entity for tests that still bind a local to "audio entity".
         private Entity CreateAudioEntity(string identity, string sid, Entity avatarEntity, LivekitAudioSource source)
         {
             var key = new StreamKey(identity, sid);
-            return world.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
+            world.Add(avatarEntity, new NearbyAudioSourceComponent(key, source));
+            return avatarEntity;
         }
 
         private LivekitAudioSource CreateLivekitAudioSource()

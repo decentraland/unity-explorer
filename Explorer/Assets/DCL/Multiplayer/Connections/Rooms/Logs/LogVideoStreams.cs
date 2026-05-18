@@ -4,7 +4,6 @@ using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Rooms.Logs
@@ -66,6 +65,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
     public class LogAudioStreams : LogStreams<AudioStream, AudioStreamInfo>, IAudioStreams
     {
-        public LogAudioStreams(IStreams<AudioStream, AudioStreamInfo> origin) : base(origin, nameof(LogVideoStreams)) { }
+        private readonly IAudioStreams origin;
+
+        public LogAudioStreams(IAudioStreams origin) : base(origin, nameof(LogAudioStreams))
+        {
+            this.origin = origin;
+        }
+
+        public int GetLastFrameReceivedAt(StreamKey streamKey)
+        {
+            int tick = origin.GetLastFrameReceivedAt(streamKey);
+            ReportHub.Log(ReportCategory.LIVEKIT, $"{nameof(LogAudioStreams)}: {nameof(GetLastFrameReceivedAt)}: {streamKey.identity}, {streamKey.sid} -> {tick};");
+            return tick;
+        }
     }
 }

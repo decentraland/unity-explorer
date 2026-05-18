@@ -12,8 +12,9 @@ using UnityEngine;
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
-    ///     Reads position from the avatar entity referenced by <see cref="NearbyAudioSourceComponent.AvatarEntity"/>
-    ///     and drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
+    ///     Drives the <see cref="LivekitAudioSource"/> transform + spatial angles each frame.
+    ///     Reads <see cref="AvatarBase"/> from the same entity that carries the audio-source component
+    ///     (co-located after the slice-4 collapse — no cross-entity hop).
     /// </summary>
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudioBindingSystem))]
@@ -36,16 +37,12 @@ namespace DCL.VoiceChat.Nearby.Systems
         }
 
         [Query]
+        [All(typeof(NearbyAudioStreamerComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, ref NearbyAudioSourceComponent nearbyAudio)
+        private void SyncPositionsAndSpatialAngles([Data] Transform listenerTransform, [Data] Vector3 playerHeadPos, Entity entity, in AvatarBase avatarBase, ref NearbyAudioSourceComponent nearbyAudio)
         {
-            // Stale avatar entity reference — NearbyAudioCleanupSystem will tear this audio entity down in CleanUpGroup.
-            bool hasAvatar = World.TryGet(nearbyAudio.AvatarEntity, out AvatarBase? avatarBase);
-            if (!hasAvatar) return;
-
-            // Per-frame idempotent inactive-state application — self-healing
-            Entity avatar = nearbyAudio.AvatarEntity;
-            bool inactive = !World.TryGet(avatar, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
+            // Per-frame idempotent inactive-state application — self-healing.
+            bool inactive = !World.TryGet(entity, out InAudibleRangeTag rangeTag) || rangeTag.IsSuspended;
 
             LivekitAudioSource src = nearbyAudio.LivekitAudioSource;
 
@@ -61,7 +58,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (inactive) return;
 
             // reprojection, so gain is calculated relative to the head and not the camera position (audioListener is on the camera)
-            Vector3 remoteAvatarHeadPos = avatarBase!.HeadAnchorPoint.position;
+            Vector3 remoteAvatarHeadPos = avatarBase.HeadAnchorPoint.position;
             Vector3 sourcePos = listenerTransform.position + (remoteAvatarHeadPos - playerHeadPos);
 
             if ((sourcePos - nearbyAudio.LastWrittenPos).sqrMagnitude > POSITION_EPSILON_SQR)
