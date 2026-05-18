@@ -4,31 +4,33 @@ using System;
 
 namespace DCL.VoiceChat
 {
+    /// <summary>
+    ///     Plays an audio cue on every transition of a boolean reactive source —
+    ///     <paramref name="onAudio"/> when it flips to <c>true</c>, <paramref name="offAudio"/> when it flips to <c>false</c>.
+    ///     Source is generic so the handler can be reused for Community (mic enabled/disabled) and Nearby (OPEN_MIC enter/exit).
+    /// </summary>
     public class MicrophoneAudioToggleHandler : IDisposable
     {
-        private readonly AudioClipConfig muteMicrophoneAudio;
-        private readonly AudioClipConfig unmuteMicrophoneAudio;
-        private readonly IDisposable? microphoneStateSubscription;
+        private readonly AudioClipConfig offAudio;
+        private readonly AudioClipConfig onAudio;
+        private readonly IDisposable stateSubscription;
 
-        public MicrophoneAudioToggleHandler(
-            VoiceChatMicrophoneHandler voiceChatMicrophoneHandler,
-            AudioClipConfig muteMicrophoneAudio,
-            AudioClipConfig unmuteMicrophoneAudio)
+        public MicrophoneAudioToggleHandler(IReadonlyReactiveProperty<bool> source, AudioClipConfig offAudio, AudioClipConfig onAudio)
         {
-            this.muteMicrophoneAudio = muteMicrophoneAudio;
-            this.unmuteMicrophoneAudio = unmuteMicrophoneAudio;
+            this.offAudio = offAudio;
+            this.onAudio = onAudio;
 
-            microphoneStateSubscription = voiceChatMicrophoneHandler.IsMicrophoneEnabled.Subscribe(OnMicrophoneStateChanged);
+            stateSubscription = source.Subscribe(OnStateChanged);
         }
 
         public void Dispose()
         {
-            microphoneStateSubscription?.Dispose();
+            stateSubscription.Dispose();
         }
 
-        private void OnMicrophoneStateChanged(bool isEnabled)
+        private void OnStateChanged(bool isOn)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(isEnabled ? unmuteMicrophoneAudio : muteMicrophoneAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isOn ? onAudio : offAudio);
         }
     }
 }

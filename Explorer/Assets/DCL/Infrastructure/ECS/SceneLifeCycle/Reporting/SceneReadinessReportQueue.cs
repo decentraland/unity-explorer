@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Utilities;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,11 +22,10 @@ namespace ECS.SceneLifeCycle.Reporting
         public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
         {
             // Shortcut
-            if (scenesCache.Contains(parcel))
-            {
+            if (scenesCache.TryGetByParcel(parcel, out ISceneFacade scene)
+                && scene.SceneStateProvider.State == SceneState.Running)
                 // conclude immediately
                 report.SetProgress(1f);
-            }
 
             if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
                 queue[parcel] = queuedReport = new PooledLoadReportList(REPORT_POOL);

@@ -52,7 +52,7 @@ namespace DCL.UserInAppInitializationFlow
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
 
-            var loadingOperations = new List<IStartupOperation>()
+            var loadingOperations = new List<IStartupOperation>
             {
                 blocklistCheckStartupOperation,
                 loadPlayerAvatarStartupOperation,
