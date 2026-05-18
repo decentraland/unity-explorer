@@ -36,7 +36,9 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
 
-            if (sceneData.InitialSceneStateInfo.ISSAssets.Contains(assetBundleIntention.Hash))
+            // In Bundle-mode ISS the shared bundle holds every listed asset, so redirect per-asset requests
+            // to the bundle URL. Descriptor-mode and non-ISS scenes resolve their per-asset URLs unchanged.
+            if (sceneData.SceneEntityDefinition.ISSDescriptor.IsBundleAsset(assetBundleIntention.Hash!))
                 assetBundleIntention.Hash = GetAssetBundleIntention.BuildInitialSceneStateURL(assetBundleIntention.ParentEntityID);
 
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);

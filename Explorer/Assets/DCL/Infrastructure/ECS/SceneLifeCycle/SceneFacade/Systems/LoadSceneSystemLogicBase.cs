@@ -1,20 +1,16 @@
 ﻿using Arch.Core;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.SceneRunner.Scene;
-using DCL.Utility;
 using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
@@ -46,16 +42,16 @@ namespace ECS.SceneLifeCycle.Systems
             // Fixes possible race conditions with the setup of the scene definition, especially on Hybrid mode (LSD+remote ABs)
             await OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             await UniTask.SwitchToMainThread(ct);
-            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
-            var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
-            (ReadOnlyMemory<byte> mainCrdt, IInitialSceneState? ISSAssets) = await UniTask.WhenAll(loadMainCrdt, ISSContainedAssetsPromise);
+            // Both tasks start eagerly so they run concurrently; the ISS bundle (when present) attaches itself
+            // to definition.ISSDescriptor, so it doesn't need a value channel back here.
+            await LoadISSBundleAsync(world, definition, ct);
 
+            ReadOnlyMemory<byte> mainCrdt = await LoadMainCrdtAsync(hashedContent, reportCategory, ct);
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt),
-                ISSAssets);
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -69,11 +65,16 @@ namespace ECS.SceneLifeCycle.Systems
             return sceneFacade;
         }
 
-        private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
+        /// <summary>
+        ///     In Bundle-mode ISS, eagerly fetches the shared ISS asset bundle and binds it to
+        ///     <see cref="ISSDescriptor"/> so it stays cached for both the LOD path and SDK GLTF
+        ///     requests rewritten to its URL, then gets released on scene disposal. No-op for
+        ///     Descriptor / no-ISS scenes.
+        /// </summary>
+        private async UniTask LoadISSBundleAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
         {
-            ISSDescriptor? issDescriptor = sceneDefinitionComponent.ISSDescriptor;
-            if (issDescriptor == null || !issDescriptor.SupportsBundle())
-                return InitialSceneStateInfo.CreateEmpty();
+            ISSDescriptor descriptor = sceneDefinitionComponent.ISSDescriptor;
+            if (!descriptor.SupportsBundle()) return;
 
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
@@ -83,19 +84,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!promise.Result.Value.Succeeded)
-                return InitialSceneStateInfo.CreateEmpty();
-
-            // The descriptor lives on SceneEntityDefinition (populated during definition loading) — NOT inside the bundle.
-            var result = new HashSet<string>();
-            if (issDescriptor.Metadata.HasValue && issDescriptor.Metadata.Value.assets != null)
-            {
-                string platform = PlatformUtils.GetCurrentPlatform();
-                foreach (ISSDescriptorAsset a in issDescriptor.Metadata.Value.assets)
-                    result.Add($"{a.hash}{platform}");
-            }
-
-            return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
+            if (promise.Result.Value.Succeeded)
+                descriptor.AttachAssetBundle(promise.Result.Value.Asset.Dereference);
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

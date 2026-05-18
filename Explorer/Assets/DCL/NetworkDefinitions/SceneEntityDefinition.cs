@@ -12,16 +12,17 @@ namespace DCL.Ipfs
         /// <summary>
         ///     Initial Scene State for this scene (descriptor JSON + bundle reachability).
         ///     Populated by <see cref="ISSDescriptor.ResolveAsync"/> during scene-definition loading.
-        ///     Null until the load systems have run (e.g. for definitions built outside the loader, like wearable-preview scenes).
+        ///     Defaults to <see cref="ISSDescriptor.NONE"/> so consumers never have to null-check
+        ///     (definitions built outside the loader — wearable-preview / portable-experience —
+        ///     keep the NONE singleton and behave as "no ISS").
         /// </summary>
-        public ISSDescriptor ISSDescriptor;
+        public ISSDescriptor ISSDescriptor = ISSDescriptor.NONE;
 
         public SceneEntityDefinition() { }
 
         public SceneEntityDefinition(string id, SceneMetadata metadata, AssetBundleManifestVersion? assetBundleManifestVersion = null) : base(id, metadata)
         {
             this.assetBundleManifestVersion = assetBundleManifestVersion;
-            ISSDescriptor = ISSDescriptor.NULL;
         }
 
         public string GetLogSceneName() =>

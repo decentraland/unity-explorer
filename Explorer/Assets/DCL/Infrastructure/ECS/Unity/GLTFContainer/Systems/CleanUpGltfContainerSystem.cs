@@ -27,9 +27,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly ISSDescriptor? issDescriptor;
+        private readonly ISSDescriptor issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor? issDescriptor = null) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor issDescriptor) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
@@ -70,7 +70,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // Bridge only if the scene's partition allows it AND the descriptor still has a slot for this hash
                 // (capped to the exact number of times it appears in metadata.assets — no duplicates).
                 bool putInBridge = partitionAllowsBridge
-                                   && (issDescriptor?.TryReserveBridgeSlot(component.Hash) ?? false);
+                                   && issDescriptor.TryReserveBridgeSlot(component.Hash);
                 cache.Dereference(component.Hash, result.Asset, putInBridge);
             }
 

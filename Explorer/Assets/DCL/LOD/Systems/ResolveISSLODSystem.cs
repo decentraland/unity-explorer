@@ -7,6 +7,7 @@ using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utility;
 using ECS.Abstract;
+using System.Collections.Generic;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -51,8 +52,8 @@ namespace DCL.LOD.Systems
             if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
 
             // Only the bundle-mode path is owned by this query.
-            ISSDescriptor? issDescriptor = sceneDefinition.Definition.ISSDescriptor;
-            if (issDescriptor == null || issDescriptor.CurrentState != ISSDescriptor.State.Bundle) return;
+            ISSDescriptor issDescriptor = sceneDefinition.Definition.ISSDescriptor;
+            if (issDescriptor.CurrentState != ISSDescriptor.State.Bundle) return;
 
             // Skip if promise hasn't been created yet or is already consumed
             if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -67,21 +68,12 @@ namespace DCL.LOD.Systems
                 return;
             }
 
-            if (!issDescriptor.Metadata.HasValue)
-            {
-                MarkAssetBundleAsFailed(ref sceneLODInfo,
-                    $"No initial scene state descriptor available for {sceneLODInfo.id}, will try to do the old LOD");
-                Result.Asset!.Dereference();
-                return;
-            }
-
-            ISSDescriptorMetadata metadata = issDescriptor.Metadata.Value;
-            int count = metadata.assets?.Count ?? 0;
+            IReadOnlyList<ISSDescriptorAsset> assets = issDescriptor.Assets;
 
             initialSceneStateLOD.Initialize(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition, Result.Asset!,
-                gltfCache, count);
+                gltfCache, assets.Count);
 
-            SpawnAssetPromises(initialSceneStateLOD, metadata, sceneDefinition, fromBundle: true);
+            SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, fromBundle: true);
         }
 
         [Query]
@@ -92,20 +84,18 @@ namespace DCL.LOD.Systems
             if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
 
             // Only the descriptor-mode path is owned by this query.
-            ISSDescriptor? issDescriptor = sceneDefinition.Definition.ISSDescriptor;
-            if (issDescriptor == null || issDescriptor.CurrentState != ISSDescriptor.State.Descriptor) return;
-            if (!issDescriptor.Metadata.HasValue) return;
+            ISSDescriptor issDescriptor = sceneDefinition.Definition.ISSDescriptor;
+            if (issDescriptor.CurrentState != ISSDescriptor.State.Descriptor) return;
 
             // First-time entry: nothing to do once promises have been spawned.
             if (initialSceneStateLOD.ParentContainer != null) return;
 
-            ISSDescriptorMetadata metadata = issDescriptor.Metadata.Value;
-            int count = metadata.assets?.Count ?? 0;
+            IReadOnlyList<ISSDescriptorAsset> assets = issDescriptor.Assets;
 
             initialSceneStateLOD.InitializeFromDescriptor(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition,
-                gltfCache, count);
+                gltfCache, assets.Count);
 
-            SpawnAssetPromises(initialSceneStateLOD, metadata, sceneDefinition, fromBundle: false);
+            SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, fromBundle: false);
         }
 
         /// <summary>
@@ -113,18 +103,16 @@ namespace DCL.LOD.Systems
         ///     a new <see cref="AssetBundlePromise"/> for it. Used by both the bundle and the descriptor paths;
         ///     <paramref name="fromBundle"/> picks the per-asset bundle URL and the asset name to extract.
         /// </summary>
-        private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorMetadata metadata, SceneDefinitionComponent sceneDefinition, bool fromBundle)
+        private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, bool fromBundle)
         {
-            if (metadata.assets == null) return;
-
-            for (var i = 0; i < metadata.assets.Count; i++)
+            for (var i = 0; i < assets.Count; i++)
             {
-                ISSDescriptorAsset entry = metadata.assets[i];
+                ISSDescriptorAsset entry = assets[i];
 
                 if (gltfCache.TryGet(entry.hash, out var asset))
                 {
                     // We just consumed one bridged copy — free up its slot so a future SDK cleanup of the same hash can re-bridge.
-                    sceneDefinition.Definition.ISSDescriptor?.ReleaseBridgeSlot(entry.hash);
+                    sceneDefinition.Definition.ISSDescriptor.ReleaseBridgeSlot(entry.hash);
                     PositionAsset(initialSceneStateLOD, entry, asset, initialSceneStateLOD.ParentContainer.transform);
                     continue;
                 }

@@ -163,7 +163,7 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        private async 
+        private async
 #if UNITY_WEBGL
             Cysharp.Threading.Tasks.UniTask<bool>
 #else
@@ -225,7 +225,7 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            SceneData.InitialSceneStateInfo.Dispose();
+            SceneData.SceneEntityDefinition.ISSDescriptor.Dereference();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

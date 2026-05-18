@@ -39,31 +39,26 @@ namespace DCL.Ipfs
 
         private static readonly URLDomain ASSET_BUNDLE_URL = URLDomain.FromString("https://ab-cdn.decentraland.org");
 
-        public static readonly ISSDescriptor NONE = new (State.None, null);
+        public static readonly ISSDescriptor NONE = new (State.None, default);
 
         public State CurrentState { get; }
-        public ISSDescriptorMetadata? Metadata { get; }
-
-        private HashSet<string>? cachedAssetHashes;
-
-        /// <summary>
-        ///     Set of asset hashes referenced by this scene's ISS. Lazily built from <see cref="Metadata"/>.
-        ///     Returns an empty set when the scene has no ISS.
-        /// </summary>
-        public HashSet<string> AssetHashes => cachedAssetHashes ??= BuildAssetHashes();
+        public IReadOnlyList<ISSDescriptorAsset> Assets { get; }
 
         // hash -> how many times that hash appears in Metadata.assets (the cap for bridge slots)
-        private Dictionary<string, int>? cachedHashCapacity;
-        private Dictionary<string, int> HashCapacity => cachedHashCapacity ??= BuildHashCapacity();
+        private readonly Dictionary<string, int> hashCapacity;
 
         // hash -> how many copies are currently parked in the bridge
         private readonly Dictionary<string, int> bridgedCount = new ();
 
-        /// <summary>
-        ///     True if <paramref name="hash"/> is one of the assets covered by this scene's ISS.
-        /// </summary>
-        public bool IsPartOfISS(string hash) =>
-            CurrentState != State.None && AssetHashes.Contains(hash);
+        // Platform-suffixed hashes ({rawHash}{platform}) — matches the format the SDK GLTF loader uses
+        // when requesting per-asset bundles. Lets PrepareAssetBundleLoadingParametersSystem do O(1)
+        // "is this AB request one of the ISS hashes" checks in Bundle mode.
+        private readonly HashSet<string> bundleAssetHashes;
+
+        // Cleanup callback bound to the descriptor's lifetime (typically AssetBundleData.Dereference for
+        // the shared ISS bundle in Bundle mode). Typed as Action rather than AssetBundleData to avoid an
+        // asmdef cycle between DCL.Network and ECS. Invoked exactly once via Dereference().
+        private Action? releaseAssetBundle;
 
         /// <summary>
         ///     Attempts to reserve a bridge slot for <paramref name="hash"/>. Caps at the number of times the hash
@@ -74,7 +69,7 @@ namespace DCL.Ipfs
         public bool TryReserveBridgeSlot(string hash)
         {
             if (CurrentState == State.None) return false;
-            if (!HashCapacity.TryGetValue(hash, out int cap)) return false;
+            if (!hashCapacity.TryGetValue(hash, out int cap)) return false;
 
             int current = bridgedCount.TryGetValue(hash, out int n) ? n : 0;
             if (current >= cap) return false;
@@ -93,28 +88,62 @@ namespace DCL.Ipfs
                 bridgedCount[hash] = n - 1;
         }
 
-        private ISSDescriptor(State state, ISSDescriptorMetadata? metadata)
+        private ISSDescriptor(State state, ISSDescriptorMetadata metadata)
         {
             CurrentState = state;
-            Metadata = metadata;
+            // JsonUtility leaves the list null when the JSON field is missing — fall back to empty
+            // so consumers can iterate Assets without a null guard.
+            Assets = metadata.assets ?? new List<ISSDescriptorAsset>();
+            hashCapacity = BuildHashCapacity(Assets);
+            bundleAssetHashes = BuildBundleAssetHashes(Assets);
         }
 
-        private HashSet<string> BuildAssetHashes()
+        private static Dictionary<string, int> BuildHashCapacity(IReadOnlyList<ISSDescriptorAsset> assets)
         {
-            var set = new HashSet<string>();
-            if (Metadata.HasValue && Metadata.Value.assets != null)
-                foreach (var a in Metadata.Value.assets)
-                    set.Add(a.hash);
+            var counts = new Dictionary<string, int>(assets.Count);
+            for (var i = 0; i < assets.Count; i++)
+            {
+                string hash = assets[i].hash;
+                counts[hash] = counts.TryGetValue(hash, out int n) ? n + 1 : 1;
+            }
+            return counts;
+        }
+
+        private static HashSet<string> BuildBundleAssetHashes(IReadOnlyList<ISSDescriptorAsset> assets)
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+            var set = new HashSet<string>(assets.Count);
+            for (var i = 0; i < assets.Count; i++)
+                set.Add($"{assets[i].hash}{platform}");
             return set;
         }
 
-        private Dictionary<string, int> BuildHashCapacity()
+        /// <summary>
+        ///     Whether the given AB request hash (already platform-suffixed) refers to an asset that should be
+        ///     served by the shared ISS bundle. Only meaningful in <see cref="State.Bundle"/> — in any other
+        ///     state the per-asset bundle URLs resolve normally.
+        /// </summary>
+        public bool IsBundleAsset(string platformSuffixedHash) =>
+            CurrentState == State.Bundle && bundleAssetHashes.Contains(platformSuffixedHash);
+
+        /// <summary>
+        ///     Binds the shared ISS asset bundle to the descriptor's lifetime in Bundle mode. The provided
+        ///     callback (typically <c>AssetBundleData.Dereference</c>) fires once on <see cref="Dereference"/>
+        ///     so the bundle stays cached while the scene is alive and is released when it unloads.
+        /// </summary>
+        public void AttachAssetBundle(Action release)
         {
-            var counts = new Dictionary<string, int>();
-            if (Metadata.HasValue && Metadata.Value.assets != null)
-                foreach (var a in Metadata.Value.assets)
-                    counts[a.hash] = counts.TryGetValue(a.hash, out int n) ? n + 1 : 1;
-            return counts;
+            releaseAssetBundle = release;
+        }
+
+        /// <summary>
+        ///     Releases the bundle bound via <see cref="AttachAssetBundle"/>. Safe to call on <see cref="NONE"/>
+        ///     or on descriptors with no bundle attached — it's a no-op in those cases.
+        /// </summary>
+        public void Dereference()
+        {
+            releaseAssetBundle?.Invoke();
+            releaseAssetBundle = null;
         }
 
         public bool SupportsDescriptor() =>
@@ -123,7 +152,6 @@ namespace DCL.Ipfs
         public bool SupportsBundle() =>
             CurrentState == State.Bundle;
 
-        public static ISSDescriptor NULL => new ISSDescriptor(State.None, null);
         /// <summary>
         ///     Looks up the ISS state for the given scene: tries to fetch the descriptor JSON,
         ///     then HEAD-probes the legacy ISS asset bundle. Returns <see cref="NONE"/> if no descriptor exists.
@@ -145,14 +173,14 @@ namespace DCL.Ipfs
 
             return new ISSDescriptor(
                 bundleReachable ? State.Bundle : State.Descriptor,
-                metadata);
+                metadata.Value);
         }
 
         private static bool IsManifestVersionISSCapable(AssetBundleManifestVersion? manifestVersion)
         {
             if (manifestVersion == null || manifestVersion.assetBundleManifestRequestFailed) return false;
 
-            string version = manifestVersion.GetAssetBundleManifestVersion();
+            string? version = manifestVersion.GetAssetBundleManifestVersion();
             if (string.IsNullOrEmpty(version) || version.Length < 2) return false;
 
             // Versions look like "v41" — strip the leading 'v' and compare numerically.
@@ -171,7 +199,7 @@ namespace DCL.Ipfs
             {
                 return await webRequestController
                             .GetAsync(new CommonArguments(url), ct, reportCategory)
-                            .CreateFromJson<ISSDescriptorMetadata>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread);
+                            .CreateFromJson<ISSDescriptorMetadata>(WRJsonParser.Unity);
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception)
