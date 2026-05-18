@@ -13,6 +13,8 @@ on:
       - '**/*.bundle'
       - '**/*.aar'
       - '**/*.jar'
+      - '.github/workflows/**'
+      - '.github/prompts/**'
 
 jobs:
   detect-and-review:
@@ -31,7 +33,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Detect dependency changes
+      - name: Detect security-relevant changes
         id: detect
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
@@ -40,32 +42,55 @@ jobs:
           set -euo pipefail
           BASE_SHA=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
 
-          CHANGES=$(git diff --name-only "$BASE_SHA" -- \
+          DEPENDENCY_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
             'Explorer/Packages/manifest.json' \
             'Explorer/Packages/packages-lock.json' \
             'Explorer/Assets/Plugins/' \
-            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar')
+            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
 
-          if [ -z "$CHANGES" ]; then
-            echo "No dependency changes detected."
+          WORKFLOW_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
+            '.github/workflows/' \
+            '.github/prompts/' || true)
+
+          if [ -z "$DEPENDENCY_CHANGES" ] && [ -z "$WORKFLOW_CHANGES" ]; then
+            echo "No security-relevant changes detected."
             echo "has-changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "Dependency changes detected:"
-          echo "$CHANGES"
           echo "has-changes=true" >> "$GITHUB_OUTPUT"
 
-          # List new binaries specifically
+          DELIM="EOF_$(uuidgen)"
+
+          # New binaries (dependency review focus)
           NEW_BINARIES=$(git diff --name-only --diff-filter=A "$BASE_SHA" -- \
             '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
-          echo "new-binaries<<BINARIES_EOF" >> "$GITHUB_OUTPUT"
-          echo "$NEW_BINARIES" >> "$GITHUB_OUTPUT"
-          echo "BINARIES_EOF" >> "$GITHUB_OUTPUT"
+          {
+            echo "new-binaries<<$DELIM"
+            echo "$NEW_BINARIES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+          # Workflow / prompt files (workflow security focus)
+          {
+            echo "workflow-changes<<$DELIM"
+            echo "$WORKFLOW_CHANGES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ -n "$DEPENDENCY_CHANGES" ]; then
+            echo "Dependency changes detected:"
+            echo "$DEPENDENCY_CHANGES"
+          fi
           if [ -n "$NEW_BINARIES" ]; then
             echo ""
             echo "⚠️ New binary files added:"
             echo "$NEW_BINARIES"
+          fi
+          if [ -n "$WORKFLOW_CHANGES" ]; then
+            echo ""
+            echo "Workflow / prompt changes detected:"
+            echo "$WORKFLOW_CHANGES"
           fi
 
       - name: Add label
@@ -97,7 +122,18 @@ jobs:
       - name: Load review prompt
         if: steps.detect.outputs.has-changes == 'true'
         id: prompt
-        run: echo "instructions<<PROMPT_EOF" >> "$GITHUB_OUTPUT" && cat .github/prompts/dependency-security-review.md >> "$GITHUB_OUTPUT" && echo "PROMPT_EOF" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          DELIM="PROMPT_EOF_$(uuidgen)"
+          {
+            echo "instructions<<$DELIM"
+            gh api "repos/${{ github.repository }}/contents/.github/prompts/dependency-security-review.md?ref=$BASE_SHA" \
+              --jq '.content' | base64 -d
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Claude Dependency Review
         if: steps.detect.outputs.has-changes == 'true'
@@ -110,14 +146,17 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            This PR modifies external dependencies. Perform a security-focused review.
+            This PR touches dependency files, workflow files, prompt files, or some combination. Perform a security-focused review using the instructions below. Run the dependency-review section if dependency files changed and the workflow-review section if workflow / prompt files changed (both can apply on a single PR).
 
-            The following new binary files were added in this PR (pre-computed from the diff — these may not appear in `gh pr diff` output for large binaries):
+            New binary files added in this PR (pre-computed from the diff — may not appear in `gh pr diff` output for large binaries):
             ${{ steps.detect.outputs.new-binaries || 'None' }}
+
+            Workflow / prompt files changed in this PR:
+            ${{ steps.detect.outputs.workflow-changes || 'None' }}
 
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),WebFetch,Bash(curl:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
             --max-turns 40
 
       - name: Set final status
