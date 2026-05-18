@@ -15,6 +15,8 @@ namespace DCL.UI.Skybox
         [field: SerializeField] public CanvasGroup TopSliderGroup { get; private set; } = null!;
         [field: SerializeField] public CanvasGroup TextSliderGroup { get; private set; } = null!;
 
+        // Stops pointer-click events from bubbling up to the SidebarSkyboxButton ancestor,
+        // whose Button would otherwise re-trigger OpenSkyboxSettingsPanel and freeze the view.
         public void OnPointerClick(PointerEventData eventData) { }
     }
 }
