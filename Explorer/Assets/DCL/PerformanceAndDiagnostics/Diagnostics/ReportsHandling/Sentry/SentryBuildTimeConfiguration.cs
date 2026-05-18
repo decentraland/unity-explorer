@@ -24,6 +24,9 @@ namespace DCL.Diagnostics.Sentry
         {
             options.SetBeforeSend(AddUnspecifiedCategory);
 
+            // TODO enable it only when we ensure the custom implementation works correctly
+            // options.DisableAnrIntegration()
+
 #if UNITY_EDITOR
             bool isDirty = false;
 
