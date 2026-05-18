@@ -313,32 +313,17 @@ namespace DCL.VoiceChat.Nearby
         private void ForceMassCleanup() => registry?.ClearAll();
 
         // ── Fake stream registry ────────────────────────────────────
-        // Mirrors the binding test fake: Owned<AudioStream>(null) yields a Weak whose Resource.Has
-        // is true, so the binding system actually instantiates LivekitAudioSource through the real
-        // factory — we want the integration cost, not a stubbed-out short-circuit.
+        // Post-dedup: one active sid per wallet. Owned<AudioStream>(null) yields a Weak whose
+        // Resource.Has is true, so the binding system actually instantiates LivekitAudioSource through
+        // the real factory — we want the integration cost, not a stubbed-out short-circuit.
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            // COW-style storage to mirror production semantics: every Add publishes a NEW
-            // string[] reference, matching the registry's reference-equality contract.
-            private readonly Dictionary<string, string[]> sidsByIdentity = new ();
+            private readonly Dictionary<string, string> activeSidByIdentity = new ();
             private readonly Dictionary<StreamKey, Owned<AudioStream>> streamsByKey = new ();
 
             public void Add(string walletId, string sid)
             {
-                if (sidsByIdentity.TryGetValue(walletId, out string[]? prev))
-                {
-                    if (Array.IndexOf(prev, sid) < 0)
-                    {
-                        var next = new string[prev.Length + 1];
-                        Array.Copy(prev, next, prev.Length);
-                        next[prev.Length] = sid;
-                        sidsByIdentity[walletId] = next;
-                    }
-                }
-                else
-                {
-                    sidsByIdentity[walletId] = new[] { sid };
-                }
+                activeSidByIdentity[walletId] = sid;
 
                 var key = new StreamKey(walletId, sid);
                 if (!streamsByKey.ContainsKey(key))
@@ -346,30 +331,23 @@ namespace DCL.VoiceChat.Nearby
             }
 
             public void RemoveAll(string walletId) =>
-                sidsByIdentity.Remove(walletId);
+                activeSidByIdentity.Remove(walletId);
 
             public void ClearAll() =>
-                sidsByIdentity.Clear();
+                activeSidByIdentity.Clear();
 
-            public bool HasAudioStream(string walletId) => sidsByIdentity.ContainsKey(walletId);
-
-            public string[]? GetAudioSidsArray(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out string[]? arr) ? arr : null;
+            public bool HasAudioStream(string walletId) => activeSidByIdentity.ContainsKey(walletId);
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 streamsByKey.TryGetValue(key, out Owned<AudioStream>? owned)
                     ? owned.Downgrade()
                     : Weak<AudioStream>.Null;
 
-            public bool IsStreamGone(StreamKey key)
-            {
-                if (!sidsByIdentity.TryGetValue(key.identity, out string[]? arr)) return true;
-                return Array.IndexOf(arr, key.sid) < 0;
-            }
+            public string? GetActiveSid(string walletId) =>
+                activeSidByIdentity.TryGetValue(walletId, out string? sid) ? sid : null;
 
-            public string? GetActiveSid(string walletId) => null;
-
-            public bool IsActiveSid(string walletId, string sid) => false;
+            public bool IsActiveSid(string walletId, string sid) =>
+                activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid;
 
             public bool IsActiveSpeaker(string walletId) =>
                 throw new NotImplementedException();

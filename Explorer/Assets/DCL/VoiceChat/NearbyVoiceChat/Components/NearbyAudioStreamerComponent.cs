@@ -1,27 +1,25 @@
-using DCL.VoiceChat.Nearby.Audio;
-
 namespace DCL.VoiceChat.Nearby
 {
     /// <summary>
-    ///     Per-avatar mirror of the registry's audio sids for the avatar's walletId.
+    ///     Per-avatar mirror of the registry's single active audio sid for the avatar's walletId.
     ///     <para>
-    ///         <see cref="StreamSidsSnapshot"/> is a reference to a registry-owned copy-on-write <c>string[]</c>.
-    ///         Reference identity is the version signal: a different reference  ↔ content changed.
-    ///         <b>Never mutate.</b>
-    ///         Never retain across frames longer than the COW guarantees in <see cref="NearbyAudioStreamsRegistry"/>.
+    ///         <see cref="CurrentSid"/> is the resolver's pick (most-recent-frame winner). Never <c>null</c>
+    ///         while the component is attached — <see cref="NearbyLivekitBridgeSystem"/> guarantees the invariant
+    ///         by only attaching on a non-null resolver result and ref-mutating on flips.
     ///     </para>
     ///     <para>
     ///         Remote-only: the local participant (user) is never present in the registry's streaming snapshot.
-    ///         LiveKit does not raise <c>TrackSubscribed</c> for locally-published tracks, so this component is never attached to the local player avatar.
+    ///         LiveKit does not raise <c>TrackSubscribed</c> for locally-published tracks, so this component is never
+    ///         attached to the local player avatar.
     ///     </para>
     /// </summary>
     public struct NearbyAudioStreamerComponent
     {
-        public string[] StreamSidsSnapshot;
+        public string CurrentSid;
 
-        public NearbyAudioStreamerComponent(string[] streamSidsSnapshot)
+        public NearbyAudioStreamerComponent(string currentSid)
         {
-            StreamSidsSnapshot = streamSidsSnapshot;
+            CurrentSid = currentSid;
         }
     }
 }

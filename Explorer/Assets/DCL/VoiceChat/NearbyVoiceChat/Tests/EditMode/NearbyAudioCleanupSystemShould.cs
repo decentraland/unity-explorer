@@ -267,14 +267,16 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void FlagsAudioEntityWhenOneOfNSidsGoneButMarkerPresent()
+        public void FlagsLosingSidAudioEntityWhenResolverPicksSibling()
         {
-            // Multi-sid granularity — the marker is per-walletId, so removing one sid leaves
-            // the marker and the other sid's audio entity in place. Per-sid doom must arrive
-            // through the registry.IsStreamGone(comp.Key) fallback, not the marker shortcut.
+            // Ghost-vs-winner — the registry still holds two candidate sids for the wallet (LiveKit
+            // dropped an unsubscribe), but the resolver now picks only one. Both audio entities exist
+            // as a hangover from before the flip (sid-1 was the previous pick, sid-2 just won).
+            // Per-sid doom arrives via !registry.IsActiveSid(comp.Key.identity, comp.Key.sid) — the
+            // demoted ghost sid is reaped, the winner survives, the marker stays (it tracks the wallet,
+            // not the sid).
             const string SID_2 = "sid-2";
             (Entity audioEntity1, Entity avatarEntity, LivekitAudioSource source1) = SeedBinding(PARTICIPANT_A, SID_1);
-            registry.Add(PARTICIPANT_A, SID_2);
 
             // Sid-2 entity coexists; both audio entities share the same avatar (and its marker).
             var key2 = new StreamKey(PARTICIPANT_A, SID_2);
@@ -282,15 +284,42 @@ namespace DCL.VoiceChat.Nearby.Tests
             Entity audioEntity2 = world.Create(new NearbyAudioSourceComponent(key2, avatarEntity, source2));
             bindings.Add(key2);
 
-            // Drop only sid-1 from the registry. Marker stays (sid-2 still present).
-            registry.RemoveSid(PARTICIPANT_A, SID_1);
+            // Resolver flips to sid-2; sid-1 stays in the registry as a ghost.
+            registry.SetActiveSid(PARTICIPANT_A, SID_2);
 
             system.Update(0);
 
             AssertCleanedUp(audioEntity1, source1, PARTICIPANT_A, SID_1);
             Assert.That(world.Has<DeleteEntityIntention>(audioEntity2), Is.False,
-                "sibling sid must remain alive — multi-sid is the case the registry fallback exists for");
+                "winning sid must remain alive — only the demoted ghost is reaped");
             Assert.That(source2 == null, Is.False);
+        }
+
+        [Test]
+        public void GhostSidLosingResolverPickCausesCleanup()
+        {
+            // Test 9 from the spec — the audio entity's sid is no longer the resolver's pick.
+            // Distinct from RegistryMissingSidCausesCleanup: here the sid still EXISTS in the registry
+            // (HasAudioStream=true), it just lost the active-pick race. The !IsActiveSid predicate
+            // must reap it regardless of whether the registry still indexes the sid.
+            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+
+            // Resolver demotes sid-1 in favour of a fresher candidate; HasAudioStream stays true
+            // (registry still holds candidates for the identity).
+            const string SID_FRESH = "sid-fresh";
+            registry.SetActiveSid(PARTICIPANT_A, SID_FRESH);
+
+            // Sanity-check the precondition the test depends on.
+            Assert.That(registry.HasAudioStream(PARTICIPANT_A), Is.True,
+                "precondition: identity still indexed (only the active pick changed)");
+            Assert.That(registry.IsActiveSid(PARTICIPANT_A, SID_1), Is.False,
+                "precondition: bound sid is no longer the active one");
+            // The Asserts above bumped IsActiveSidCallCount via the precondition; reset before the system tick.
+            registry.ResetCallCounters();
+
+            system.Update(0);
+
+            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
@@ -315,7 +344,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void DoesNotQueryRegistryWhenMarkerAbsentPathDoomsEntity()
         {
             // Optional sanity — proves the cheap shortcut actually short-circuits the registry call.
-            // If the marker-absence clause fires, registry.IsStreamGone must NOT be invoked.
+            // If the marker-absence clause fires, registry.IsActiveSid must NOT be invoked.
             (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Remove<NearbyAudioStreamerComponent>(avatarEntity);
 
@@ -323,7 +352,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(registry.IsStreamGoneCallCount, Is.EqualTo(0),
+            Assert.That(registry.IsActiveSidCallCount, Is.EqualTo(0),
                 "marker-absence must short-circuit before the registry lookup");
             Assert.That(userBlockingCache.ReceivedCalls(), Is.Empty,
                 "marker-absence must short-circuit before the blocking cache lookup");
@@ -357,7 +386,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            Assert.That(registry.IsStreamGoneCallCount, Is.EqualTo(0),
+            Assert.That(registry.IsActiveSidCallCount, Is.EqualTo(0),
                 "InAudibleRangeTag absence must short-circuit before the registry lookup");
             Assert.That(userBlockingCache.ReceivedCalls(), Is.Empty,
                 "InAudibleRangeTag absence must short-circuit before the blocking cache lookup");
@@ -433,8 +462,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             // a live audio entity is both markers present — Bridge applied StreamingAudioComponent
             // and AudibleRangeMarker applied InAudibleRangeTag before Binding spawned the entity.
             // Pair all three in the seed so existing trigger tests exercise the intended fallbacks
-            // (IsStreamGone / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
-            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { sid }));
+            // (!IsActiveSid / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(sid));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 
@@ -475,66 +504,80 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            // Per-wallet sid set as a HashSet — cleanup tests only need point-lookup semantics
-            // (IsStreamGone), not COW reference identity. Bridge tests are the place that
-            // exercises reference-equality contract.
-            private readonly Dictionary<string, HashSet<string>> sidsByIdentity = new ();
+            // Per-wallet active sid map. Cleanup interrogates the registry via IsActiveSid;
+            // the resolver-dedup contract guarantees at most one active sid per identity, so a
+            // plain wallet → sid map suffices.
+            private readonly Dictionary<string, string> activeSidByIdentity = new ();
+
+            // Per-wallet "registry has at least one sid for this identity" flag, decoupled from
+            // active-pick state so tests can model the all-zeros window (HasAudioStream=true,
+            // GetActiveSid=null) and ghost-demotion (sid exists in the registry but lost the pick).
+            private readonly HashSet<string> hasAudioStreamByIdentity = new ();
 
             // Call counters for asserting short-circuit behaviour. NSubstitute is overkill here —
             // INearbyAudioStreamRegistry has a hand-rolled fake to drive trigger combinations,
             // and a single counter keeps the cleanup-shortcut test honest.
-            public int IsStreamGoneCallCount { get; private set; }
+            public int IsActiveSidCallCount { get; private set; }
 
-            public void ResetCallCounters() => IsStreamGoneCallCount = 0;
+            public void ResetCallCounters() => IsActiveSidCallCount = 0;
 
             public void Add(string walletId, string sid)
             {
-                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
-                {
-                    sids = new HashSet<string>();
-                    sidsByIdentity[walletId] = sids;
-                }
-
-                sids.Add(sid);
+                // Mirrors production: an Add publishes a new active pick. Tests that need to model
+                // ghost-vs-winner can use SetActiveSid / DemoteToGhost directly.
+                hasAudioStreamByIdentity.Add(walletId);
+                activeSidByIdentity[walletId] = sid;
             }
 
-            public void RemoveAll(string walletId) =>
-                sidsByIdentity.Remove(walletId);
+            public void RemoveAll(string walletId)
+            {
+                hasAudioStreamByIdentity.Remove(walletId);
+                activeSidByIdentity.Remove(walletId);
+            }
 
             public void RemoveSid(string walletId, string sid)
             {
-                if (sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
-                    sids.Remove(sid);
+                // Mirrors production semantics — when the registry drops the sid that was the active
+                // pick, the identity has no winner anymore. If it was not the active pick (i.e. a
+                // ghost), HasAudioStream stays unchanged.
+                if (activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid)
+                {
+                    activeSidByIdentity.Remove(walletId);
+                    hasAudioStreamByIdentity.Remove(walletId);
+                }
             }
 
-            public void ClearAll() =>
-                sidsByIdentity.Clear();
+            /// <summary>
+            /// Promotes a different sid to the active pick for <paramref name="walletId"/>, leaving the
+            /// previous one as a "ghost" — it still exists in the registry (HasAudioStream=true) but
+            /// <see cref="IsActiveSid"/> returns false for it. Models the resolver flipping winners.
+            /// </summary>
+            public void SetActiveSid(string walletId, string sid)
+            {
+                hasAudioStreamByIdentity.Add(walletId);
+                activeSidByIdentity[walletId] = sid;
+            }
+
+            public void ClearAll()
+            {
+                hasAudioStreamByIdentity.Clear();
+                activeSidByIdentity.Clear();
+            }
 
             public bool HasAudioStream(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) && sids.Count > 0;
-
-            public string[]? GetAudioSidsArray(string walletId)
-            {
-                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) || sids.Count == 0)
-                    return null;
-
-                var arr = new string[sids.Count];
-                sids.CopyTo(arr);
-                return arr;
-            }
+                hasAudioStreamByIdentity.Contains(walletId);
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 Weak<AudioStream>.Null;
 
-            public bool IsStreamGone(StreamKey key)
+            public string? GetActiveSid(string walletId) =>
+                activeSidByIdentity.TryGetValue(walletId, out string? sid) ? sid : null;
+
+            public bool IsActiveSid(string walletId, string sid)
             {
-                IsStreamGoneCallCount++;
-                return !sidsByIdentity.TryGetValue(key.identity, out HashSet<string>? sids) || !sids.Contains(key.sid);
+                IsActiveSidCallCount++;
+                return activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid;
             }
-
-            public string? GetActiveSid(string walletId) => null;
-
-            public bool IsActiveSid(string walletId, string sid) => false;
 
             public bool IsActiveSpeaker(string walletId) => false;
 

@@ -19,7 +19,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///         <b>Detection</b> — per tick tags doomed audio entities with <see cref="DeleteEntityIntention"/> on any of:
     ///         <list type="bullet">
     ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with  <see cref="DeleteEntityIntention"/>.</description></item>
-    ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
+    ///             <item><description><b>Trigger #2 (sid not active)</b> — registry's resolver no longer picks the bound <c>(walletId, sid)</c> (either the sid was evicted, or a fresher candidate won).</description></item>
     ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns  <c>true</c> for the bound <c>walletId</c>.</description></item>
     ///             <item><description><b>Trigger #4 (scene-banned)</b> — <see cref="RoomMetadataCurrentScene.IsUserBanned"/> returns <c>true</c> for the bound <c>walletId</c>.</description></item>
     ///             <item><description><b>Trigger #5 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
@@ -93,8 +93,10 @@ namespace DCL.VoiceChat.Nearby.Systems
             Entity avatar = comp.AvatarEntity;
 
             // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
+            // !IsActiveSid covers two cases: (1) sid evicted entirely → resolver returns different sid or null; (2) sid demoted →
+            // resolver picked a fresher candidate. The ghost loser of the pick is reaped here so binding can spawn the new winner.
             bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<NearbyAudioStreamerComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
-            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity) || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity))
+            if (avatarGoneOrOutOfRange || !registry.IsActiveSid(comp.Key.identity, comp.Key.sid) || userBlockingCache.UserIsBlocked(comp.Key.identity) || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);
         }
 

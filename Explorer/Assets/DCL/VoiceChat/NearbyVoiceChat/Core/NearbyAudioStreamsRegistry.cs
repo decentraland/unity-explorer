@@ -35,7 +35,7 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///         <b>Immutability contract.</b> Per-identity <c>string[]</c> arrays are copy-on-write
     ///         (every mutation publishes a new reference); the dictionary itself is swapped atomically on rehydrate / disconnect.
     ///         Do <b>not</b> reintroduce in-place mutation (array resize, pooled buffers, dict <c>Clear()</c>+rebuild) —
-    ///         the bridge's <c>ReferenceEquals</c> freshness check and the cleanup system's "stream gone" detection both rely on these invariants.
+    ///         <see cref="GetActiveSid"/> iterates the array assuming snapshot semantics; in-place edits would race the resolver.
     ///     </para>
     /// </summary>
     public sealed class NearbyAudioStreamsRegistry : INearbyAudioStreamRegistry
@@ -119,20 +119,8 @@ namespace DCL.VoiceChat.Nearby.Audio
         public bool HasAudioStream(string walletId) =>
             DCLVolatile.Read(ref streamsByIdentity).ContainsKey(walletId);
 
-        // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault
-        public string[]? GetAudioSidsArray(string walletId) =>
-            DCLVolatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? arr) ? arr : null;
-
         public Weak<AudioStream> GetActiveStream(StreamKey key) =>
             room.AudioStreams.ActiveStream(key);
-
-        public bool IsStreamGone(StreamKey key)
-        {
-            if (!DCLVolatile.Read(ref streamsByIdentity).TryGetValue(key.identity, out string[]? sids))
-                return true;
-
-            return Array.IndexOf(sids, key.sid) < 0;
-        }
 
         public string? GetActiveSid(string walletId)
         {
@@ -252,9 +240,8 @@ namespace DCL.VoiceChat.Nearby.Audio
         }
 
         // Publishes a NEW filtered array on every successful update; never mutates 'prev'.
-        // Required by the immutability contract in the class XML: NearbyLivekitBridgeSystem
-        // uses ReferenceEquals(observed, current) for its per-frame freshness check, so any
-        // in-place mutation of a published array would silently hide the change from the bridge.
+        // Required by the immutability contract in the class XML: GetActiveSid iterates the
+        // array assuming snapshot semantics — in-place edits would race the resolver mid-pick.
         // Single-writer assumption (serial FFI dispatch) — no CAS retry needed.
         private void RemoveAudioSid(string identity, string sid)
         {

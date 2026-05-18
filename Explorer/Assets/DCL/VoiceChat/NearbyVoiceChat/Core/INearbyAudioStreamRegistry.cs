@@ -19,20 +19,10 @@ namespace DCL.VoiceChat.Nearby.Audio
         bool HasAudioStream(string walletId);
 
         /// <summary>
-        /// Raw reference to the registry's copy-on-write sid array. <c>null</c> when the wallet is not indexed.
-        /// Used by <see cref="LiveKit.Rooms.IRoom"/>-driven systems that need to compare snapshots via
-        /// <see cref="object.ReferenceEquals(object,object)"/> — a different reference ↔ content changed.
-        /// <b>Never mutate.</b> Treat the returned array as immutable from the caller's perspective.
-        /// </summary>
-        string[]? GetAudioSidsArray(string walletId);
-
-        /// <summary>
         /// Resolves a stream lazily. Must be called from the main thread — <see cref="AudioStream"/>'s constructor
         /// reads Unity audio settings and performs a synchronous FFI request.
         /// </summary>
         Weak<AudioStream> GetActiveStream(StreamKey key);
-
-        bool IsStreamGone(StreamKey key);
 
         /// <summary>
         /// The single active sid for an identity (the candidate that most recently emitted a media frame across all

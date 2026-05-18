@@ -18,7 +18,7 @@ namespace DCL.VoiceChat.Nearby.Systems
     /// <summary>
     ///     Owns the creation part of the Nearby audio-source lifecycle.
     ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> + <see cref="NearbyAudioStreamerComponent"/> + <see cref="InAudibleRangeTag"/>)
-    ///     the system iterates the snapshotted sids on the entity itself and materializes an audio-source entity per <c>(walletId, sid)</c> pair that does not yet have one.
+    ///     the system materializes a single audio-source entity for the resolver-picked <c>(walletId, CurrentSid)</c> pair when one does not yet exist.
     ///     Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
     /// </summary>
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
@@ -71,25 +71,21 @@ namespace DCL.VoiceChat.Nearby.Systems
             // Skip blocked / scene-banned identities. Cleanup system handles already-bound entities; this filter prevents creation in the first place.
             if (userBlockingCache.UserIsBlocked(walletId) || roomMetadataCurrentScene.IsUserBanned(walletId)) return;
 
-            // Sids ride on the entity itself — no registry call on the per-avatar hot path.
-            // Bridge system guarantees SidsSnapshot is non-null for any entity that has the component.
-            foreach (string sid in nearby.StreamSidsSnapshot)
-            {
-                var key = new StreamKey(walletId, sid);
+            // The resolver dedup contract guarantees one active sid per participant — bridge keeps CurrentSid
+            // in sync with the registry's pick. Iterate it directly; no per-avatar registry call on the hot path.
+            var key = new StreamKey(walletId, nearby.CurrentSid);
 
-                if (!bindings.Contains(key))
-                {
-                    Weak<AudioStream> stream = registry.GetActiveStream(key);
+            if (bindings.Contains(key)) return;
 
-                    // Track was unsubscribed between collection (snapshot read) and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
-                    if (!stream.Resource.Has) continue;
+            Weak<AudioStream> stream = registry.GetActiveStream(key);
 
-                    LivekitAudioSource source = sourceFactory.Create(key, stream);
+            // Track was unsubscribed between bridge tick and resolve (GetActiveStream); skip to avoid a one-frame ghost source.
+            if (!stream.Resource.Has) return;
 
-                    World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-                    bindings.Add(key);
-                }
-            }
+            LivekitAudioSource source = sourceFactory.Create(key, stream);
+
+            World.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
+            bindings.Add(key);
         }
     }
 }

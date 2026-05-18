@@ -15,9 +15,9 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///     Runs every tick in <see cref="NearbyVoiceChatGroup"/>, before <see cref="NearbyAudioBindingSystem"/>.
     ///     Stateless — pass-through under the listening gate (markers reflect LiveKit, not nearby-chat policy; consumers gate on policy).
     ///     <para>
-    ///         Maintains the avatar's <see cref="NearbyAudioStreamerComponent.StreamSidsSnapshot"/> as a
-    ///         reference to the registry's copy-on-write sid array — <c>ReferenceEquals</c> is the
-    ///         freshness signal, no version counter is needed.
+    ///         Maintains the avatar's <see cref="NearbyAudioStreamerComponent.CurrentSid"/> as the resolver's pick.
+    ///         A flip from one active sid to another mutates the field in place; the cleanup system reaps the
+    ///         old <c>(walletId, oldSid)</c> audio entity on the next tick and binding creates the new one.
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
@@ -35,8 +35,8 @@ namespace DCL.VoiceChat.Nearby.Systems
         protected override void Update(float t)
         {
             // Order matters:
-            AddStreamingQuery(World); // 1. Attach NearbyAudioStreamerComponent to avatars whose stream just appeared.
-            RefreshStreamingQuery(World); // 2a. Refresh SidsSnapshot reference on avatars that already carry the component (ref-mutation only, no structural changes).
+            AddStreamingQuery(World); // 1. Attach NearbyAudioStreamerComponent to avatars whose resolver just picked an active sid.
+            RefreshStreamingQuery(World); // 2a. Mutate CurrentSid in place when the resolver flipped to a different sid (ref-mutation only, no structural changes).
             RemoveStreamingQuery(World); // 2b. Cascade-remove on avatars whose stream disappeared (structural changes).
             AddSpeakingQuery(World); // 3. Tag avatars whose active-speaker signal just rose (only those still streaming).
             RemoveSpeakingQuery(World); // 4. Untag avatars whose active-speaker signal just dropped.
@@ -50,9 +50,11 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
 
-            string[]? arr = registry.GetAudioSidsArray(walletId);
-            if (arr != null)
-                World.Add(entity, new NearbyAudioStreamerComponent(arr));
+            // Resolver null = either no sids (case a → no-op here, RemoveStreaming has no component to drop)
+            // or all-zeros window (case b → wait for next tick). Either way, do nothing on the Add path.
+            string? activeSid = registry.GetActiveSid(walletId);
+            if (activeSid != null)
+                World.Add(entity, new NearbyAudioStreamerComponent(activeSid));
         }
 
         [Query]
@@ -63,12 +65,15 @@ namespace DCL.VoiceChat.Nearby.Systems
             string userId = profile.UserId;
             if (string.IsNullOrEmpty(userId)) return;
 
-            string[]? current = registry.GetAudioSidsArray(userId);
-            if (current == null) return; // cleanup is RemoveStreaming's responsibility
+            // Null means: registry has no sids (RemoveStreaming handles), or all-zeros window (wait).
+            // Either way, do not touch CurrentSid here.
+            string? activeSid = registry.GetActiveSid(userId);
+            if (activeSid == null) return;
 
-            // Refresh path — registry published a new array (content changed) since we last observed.
-            if (!ReferenceEquals(nearby.StreamSidsSnapshot, current))
-                nearby.StreamSidsSnapshot = current;
+            // Flip path — resolver picked a different sid since we last observed (winner was demoted by a fresher candidate,
+            // or the previous sid was unsubscribed and a new one is active). Cleanup reaps the old (walletId, oldSid) entity.
+            if (!string.Equals(nearby.CurrentSid, activeSid, System.StringComparison.Ordinal))
+                nearby.CurrentSid = activeSid;
         }
 
         [Query]
@@ -77,7 +82,14 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void RemoveStreaming(Entity entity, in Profile profile)
         {
             string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId) || registry.GetAudioSidsArray(userId) != null) return;
+            if (string.IsNullOrEmpty(userId)) return;
+
+            // Critical guard: resolver returning null is ambiguous.
+            //   a) HasAudioStream == false → identity has zero sids → drop.
+            //   b) HasAudioStream == true  → all-zeros window (>=1 sid registered, none have emitted a frame yet) → wait, do not drop.
+            // RefreshStreaming already kept CurrentSid in sync with whichever sid is currently picked,
+            // so the only remaining job of RemoveStreaming is to detect case (a).
+            if (registry.HasAudioStream(userId)) return;
 
             // Drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
             World.Remove<NearbyAudioStreamerComponent>(entity);
