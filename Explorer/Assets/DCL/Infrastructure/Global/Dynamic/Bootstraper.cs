@@ -129,7 +129,6 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 diskCache,
                 partialsDiskCache,
-                bootstrapContainer.Environment,
                 ct,
                 appArgs
             );
