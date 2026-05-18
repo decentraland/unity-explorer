@@ -71,7 +71,8 @@ namespace DCL.LOD.Systems
             sceneLODInfo.ForgetAllLoadings(World);
 
             if (level == 0
-                && sceneDefinitionComponent.Definition.ISSDescriptor.SupportsDescriptor()
+                && sceneDefinitionComponent.Definition.ISSDescriptor != null
+                && sceneDefinitionComponent.Definition.ISSDescriptor.CurrentState != ISSDescriptor.State.None
                 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
                 if (sceneDefinitionComponent.Definition.ISSDescriptor.SupportsBundle())

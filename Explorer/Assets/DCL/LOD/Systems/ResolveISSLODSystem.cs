@@ -123,8 +123,6 @@ namespace DCL.LOD.Systems
 
                 if (gltfCache.TryGet(entry.hash, out var asset))
                 {
-                    // We just consumed one bridged copy — free up its slot so a future SDK cleanup of the same hash can re-bridge.
-                    sceneDefinition.Definition.ISSDescriptor?.ReleaseBridgeSlot(entry.hash);
                     PositionAsset(initialSceneStateLOD, entry, asset, initialSceneStateLOD.ParentContainer.transform);
                     continue;
                 }
@@ -166,7 +164,7 @@ namespace DCL.LOD.Systems
             {
                 if (stillRelevant)
                 {
-                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetNameInBundle, out GltfContainerAsset asset))
+                    if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetNameInBundle, isPartOfISS: true, out GltfContainerAsset asset))
                     {
                         if (isDebugScene)
                             UnityEngine.Debug.Log($"[Juani] ConvertFromAssetBundle OK {creationHelper.Entry.hash} (counted via AddResolvedAsset)");
