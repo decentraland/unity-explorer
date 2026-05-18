@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
-        public void BroadcastTeleport(string realmName, Vector3 worldPosition)
+        public void BroadcastTeleport(Vector3 worldPosition)
         {
             var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Movement
             TeleportRequest teleport = outgoing.Message.Teleport;
             teleport.ParcelIndex = parcelEncoder.Encode(parcelIndex);
             teleport.Position = relativePosition.ToProtoVector();
-            teleport.Realm = realmName;
+            teleport.Realm = realmData.RealmName;
 
             pulseService.Send(outgoing);
         }

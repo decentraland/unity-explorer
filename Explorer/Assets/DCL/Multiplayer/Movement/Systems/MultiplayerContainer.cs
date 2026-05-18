@@ -20,6 +20,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -40,10 +41,10 @@ namespace DCL.Multiplayer.Movement
                 this.liveKitMovementMessageBus = liveKitMovementMessageBus;
             }
 
-            public void BroadcastTeleport(string realmName, Vector3 worldPosition)
+            public void BroadcastTeleport(Vector3 worldPosition)
             {
-                pulseMultiplayerBus.BroadcastTeleport(realmName, worldPosition);
-                liveKitMovementMessageBus.BroadcastTeleport(realmName, worldPosition);
+                pulseMultiplayerBus.BroadcastTeleport(worldPosition);
+                liveKitMovementMessageBus.BroadcastTeleport(worldPosition);
             }
 
             public void Send(NetworkMovementMessage message)
@@ -207,6 +208,7 @@ namespace DCL.Multiplayer.Movement
 
         public static async UniTask<MultiplayerContainer> CreateAsync(
             IPluginSettingsContainer pluginSettingsContainer,
+            IRealmData realmData,
             IWeb3IdentityCache identityCache,
             MovementInbox movementInbox,
             LandscapeData landscapeData,
@@ -218,7 +220,7 @@ namespace DCL.Multiplayer.Movement
             ISelfProfile selfProfile,
             CancellationToken ct) =>
             new (
-                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, ct),
+                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, ct),
                 new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings),
                 selfProfile
             );

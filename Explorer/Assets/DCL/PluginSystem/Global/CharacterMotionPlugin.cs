@@ -133,7 +133,7 @@ namespace DCL.PluginSystem.Global
                 UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
-            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast, realmData);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CharacterVelocityDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);

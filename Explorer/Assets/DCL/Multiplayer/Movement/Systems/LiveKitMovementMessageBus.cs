@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Movement
             compressMessage = (message, compressed) => WriteToProto(messageEncoder.Compress(message), compressed);
         }
 
-        public void BroadcastTeleport(string realmName, Vector3 worldPosition) { }
+        public void BroadcastTeleport(Vector3 worldPosition) { }
 
         public void Send(NetworkMovementMessage message)
         {

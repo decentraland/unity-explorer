@@ -29,13 +29,11 @@ namespace DCL.CharacterMotion.Systems
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly IMovementMessageBus teleportBroadcast;
-        private readonly IRealmData realmData;
 
-        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IMovementMessageBus teleportBroadcast, IRealmData realmData) : base(world)
+        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IMovementMessageBus teleportBroadcast) : base(world)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.teleportBroadcast = teleportBroadcast;
-            this.realmData = realmData;
         }
 
         protected override void Update(float t)
@@ -168,7 +166,7 @@ namespace DCL.CharacterMotion.Systems
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
-            teleportBroadcast.BroadcastTeleport(realmData.RealmName, characterController.transform.position);
+            teleportBroadcast.BroadcastTeleport(characterController.transform.position);
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));

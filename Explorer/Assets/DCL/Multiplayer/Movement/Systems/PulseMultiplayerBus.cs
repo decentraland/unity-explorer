@@ -6,6 +6,7 @@ using DCL.Profiles.Self;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using Decentraland.Pulse;
+using ECS;
 using System;
 
 namespace DCL.Multiplayer.Movement
@@ -38,7 +39,8 @@ namespace DCL.Multiplayer.Movement
             PulseRemoveIntentions removeIntentions,
             IWeb3IdentityCache identityCache,
             ReconnectionSettings settings,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IRealmData realmData)
         {
             this.pulseService = pulseService;
             this.peerIdCache = peerIdCache;
@@ -47,6 +49,7 @@ namespace DCL.Multiplayer.Movement
             this.incomingProfiles = incomingProfiles;
             this.removeIntentions = removeIntentions;
             this.identityCache = identityCache;
+            this.realmData = realmData;
             this.selfProfile = selfProfile;
             this.settings = settings;
         }

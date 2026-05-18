@@ -60,6 +60,9 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("IA_ACTION_4")] IaAction4 = 11,
     [pbr::OriginalName("IA_ACTION_5")] IaAction5 = 12,
     [pbr::OriginalName("IA_ACTION_6")] IaAction6 = 13,
+    /// <summary>
+    /// Modifier key (Shift on desktop)
+    /// </summary>
     [pbr::OriginalName("IA_MODIFIER")] IaModifier = 14,
   }
 

@@ -469,6 +469,7 @@ namespace Global.Dynamic
 
                 multiplayerContainer = await MultiplayerContainer.CreateAsync(
                     settingsContainer,
+                    staticContainer.RealmData,
                     identityCache,
                     movementInbox,
                     staticContainer.QualityContainer.LandscapeData,

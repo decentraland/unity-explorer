@@ -9,6 +9,7 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.PluginSystem;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
+using ECS;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace DCL.Multiplayer.Movement
         internal readonly ParcelEncoder parcelEncoder;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly ISelfProfile selfProfile;
+        private readonly IRealmData realmData;
 
         public readonly PulseIncomingProfileAnnouncements IncomingProfiles;
         public readonly PulseRemoveIntentions RemoveIntentions;
@@ -40,25 +42,31 @@ namespace DCL.Multiplayer.Movement
         internal IProfilePropagation? pulseProfilePropagationBus { get; private set; }
 
         private PulseContainer(IWeb3IdentityCache identityCache, MovementInbox movementInbox,
-            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource, ISelfProfile selfProfile)
+            ParcelEncoder parcelEncoder, IDecentralandUrlsSource urlsSource, ISelfProfile selfProfile, IRealmData realmData)
         {
             this.identityCache = identityCache;
             this.movementInbox = movementInbox;
             this.parcelEncoder = parcelEncoder;
             this.urlsSource = urlsSource;
             this.selfProfile = selfProfile;
+            this.realmData = realmData;
             IncomingProfiles = new PulseIncomingProfileAnnouncements();
             RemoveIntentions = new PulseRemoveIntentions();
 
             FeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);
         }
 
-        public static async UniTask<PulseContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer,
-            IWeb3IdentityCache web3IdentityCache, MovementInbox movementInbox, LandscapeData landscapeData,
-            IDecentralandUrlsSource urlsSource, ISelfProfile selfProfile,
+        public static async UniTask<PulseContainer> CreateAsync(
+            IPluginSettingsContainer pluginSettingsContainer,
+            IWeb3IdentityCache web3IdentityCache,
+            MovementInbox movementInbox,
+            LandscapeData landscapeData,
+            IDecentralandUrlsSource urlsSource,
+            ISelfProfile selfProfile,
+            IRealmData realmData,
             CancellationToken ct)
         {
-            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData), urlsSource, selfProfile);
+            var container = new PulseContainer(web3IdentityCache, movementInbox, new ParcelEncoder(landscapeData.terrainData), urlsSource, selfProfile, realmData);
             await container.InitializeContainerAsync<PulseContainer, Settings>(pluginSettingsContainer, ct);
             return container;
         }
@@ -71,7 +79,7 @@ namespace DCL.Multiplayer.Movement
             pulseMultiplayerService = FeatureEnabled ? new PulseMultiplayerService(transport, messagePipe, urlsSource) : new IPulseMultiplayerService.Dummy();
 
             pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox,
-                parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings, selfProfile);
+                parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings, selfProfile, realmData);
             pulseMultiplayerBus.SubscribeToIncomingMessages();
 
             pulseProfilePropagationBus = FeatureEnabled ? new PulseProfilePropagationBus(pulseMultiplayerService) : new IProfilePropagation.Dummy();

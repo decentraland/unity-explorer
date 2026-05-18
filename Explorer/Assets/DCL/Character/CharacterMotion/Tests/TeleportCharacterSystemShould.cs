@@ -32,9 +32,7 @@ namespace DCL.CharacterMotion.Tests
         public void Setup()
         {
             teleportBroadcast = Substitute.For<IMovementMessageBus>();
-            IRealmData? realmData = Substitute.For<IRealmData>();
-            realmData.RealmName.Returns("Test");
-            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>(), teleportBroadcast, realmData);
+            system = new TeleportCharacterSystem(world, sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>(), teleportBroadcast);
             characterController = new GameObject().AddComponent<CharacterController>();
             camera = new GameObject().AddComponent<Camera>();
 
@@ -58,7 +56,7 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False);
             Assert.That(characterController.transform.position, Is.EqualTo(Vector3.one * 100));
-            teleportBroadcast!.Received(1).BroadcastTeleport("Test", Vector3.one * 100);
+            teleportBroadcast!.Received(1).BroadcastTeleport(Vector3.one * 100);
         }
 
         [Test]
@@ -90,7 +88,7 @@ namespace DCL.CharacterMotion.Tests
 
             Assert.That(cameraSamplingData.Position, Is.EqualTo(camera!.transform.position));
             Assert.That(cameraSamplingData.IsDirty, Is.True);
-            teleportBroadcast!.DidNotReceive().BroadcastTeleport("Test", Arg.Any<Vector3>());
+            teleportBroadcast!.DidNotReceive().BroadcastTeleport(Arg.Any<Vector3>());
         }
 
         [Test]

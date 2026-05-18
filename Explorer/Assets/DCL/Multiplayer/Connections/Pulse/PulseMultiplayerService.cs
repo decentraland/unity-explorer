@@ -81,6 +81,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public UniTask DisconnectAsync()
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
+            disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
             return transport.DisconnectAsync(DisconnectReason.GRACEFUL).AsUniTask();
         }
 
