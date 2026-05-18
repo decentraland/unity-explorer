@@ -34,6 +34,7 @@ MonoBehaviour:
   - rid: 1154744868092248158
   - rid: 6697045322133929986
   - rid: 2410810641358782727
+  - rid: 8121969354881106021
   - rid: 2799748311381442562
   - rid: 1501337502808539138
   - rid: 7162477498503790594
@@ -1259,6 +1260,9 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 8121969354881106021
+      type: {class: EnsureClockSyncPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
     - rid: 8428018503705165926
       type: {class: JumpIndicatorPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

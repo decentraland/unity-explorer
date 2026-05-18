@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.Groups;
@@ -20,7 +21,8 @@ namespace DCL.VoiceChat.Nearby.Systems
     ///             <item><description><b>Trigger #1 (avatar gone)</b> — linked avatar entity is dead or flagged with  <see cref="DeleteEntityIntention"/>.</description></item>
     ///             <item><description><b>Trigger #2 (stream gone)</b> — registry no longer reports the bound <c>(walletId, sid)</c>.</description></item>
     ///             <item><description><b>Trigger #3 (blocked)</b> — <see cref="IUserBlockingCache.UserIsBlocked"/> returns  <c>true</c> for the bound <c>walletId</c>.</description></item>
-    ///             <item><description><b>Trigger #4 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
+    ///             <item><description><b>Trigger #4 (scene-banned)</b> — <see cref="RoomMetadataCurrentScene.IsUserBanned"/> returns <c>true</c> for the bound <c>walletId</c>.</description></item>
+    ///             <item><description><b>Trigger #5 (listening gate)</b> — bulk removal when <see cref="NearbyVoiceChatStateModel"/> is in   <see cref="NearbyVoiceChatState.SUPPRESSED"/> or <see cref="NearbyVoiceChatState.DISABLED"/>;</description></item>
     ///         </list>
     ///     </para>
     ///     <para>
@@ -41,17 +43,19 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioSourceFactory sourceFactory;
+        private readonly RoomMetadataCurrentScene roomMetadataCurrentScene;
 
         // Mismatch with registry.RebuildEpoch ⇒ output-device changed since last tick.
         private int lastSeenRebuildEpoch;
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
+            this.roomMetadataCurrentScene = roomMetadataCurrentScene;
 
             lastSeenRebuildEpoch = registry.RebuildEpoch;
         }
@@ -90,7 +94,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // Component absence ≠ avatar gone. Component absence ≠ specific sid gone either. Both fallbacks must remain.
             bool avatarGoneOrOutOfRange = !World.IsAlive(avatar) || World.Has<DeleteEntityIntention>(avatar) || !World.Has<NearbyAudioStreamerComponent>(avatar) || !World.Has<InAudibleRangeTag>(avatar);
-            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity))
+            if (avatarGoneOrOutOfRange || registry.IsStreamGone(comp.Key) || userBlockingCache.UserIsBlocked(comp.Key.identity) || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity))
                 World.Add<DeleteEntityIntention>(audioEntity);
         }
 

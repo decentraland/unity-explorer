@@ -37,8 +37,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(PBAudioStream), typeof(CustomMediaStream), typeof(PBVideoPlayer))]
         private void HandleOriginalComponentRemoval(Entity e, ref MediaPlayerComponent mediaPlayer)
         {
-            CleanUpMediaPlayer(ref mediaPlayer);
-            World.Remove<MediaPlayerComponent>(e);
+            CleanUpMediaPlayer(e, ref mediaPlayer);
         }
 
         /// <summary>
@@ -63,9 +62,9 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleMediaPlayerDestruction(ref MediaPlayerComponent mediaPlayer)
+        private void HandleMediaPlayerDestruction(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
-            CleanUpMediaPlayer(ref mediaPlayer);
+            CleanUpMediaPlayer(entity, ref mediaPlayer);
         }
 
         [Query]
@@ -90,8 +89,13 @@ namespace DCL.SDKComponents.MediaStream
             }
         }
 
-        private void CleanUpMediaPlayer(ref MediaPlayerComponent mediaPlayerComponent) =>
+        // Also removes the MediaPlayerComponent component so no "concurrent" query can run on the already dispose media player
+        // (e.g. HandleMediaPlayerDestruction runs just before the scene teardown (FinalizeMediaPlayerComponent)
+        private void CleanUpMediaPlayer(Entity entity, ref MediaPlayerComponent mediaPlayerComponent)
+        {
             mediaPlayerComponent.Dispose();
+            World.Remove<MediaPlayerComponent>(entity);
+        }
 
         public void FinalizeComponents(in Query query)
         {
@@ -103,8 +107,8 @@ namespace DCL.SDKComponents.MediaStream
             videoTextureConsumer.Dispose();
 
         [Query]
-        private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>
-            CleanUpMediaPlayer(ref component);
+        private void FinalizeMediaPlayerComponent(Entity entity, ref MediaPlayerComponent component) =>
+            CleanUpMediaPlayer(entity, ref component);
 
         [Query]
         private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
