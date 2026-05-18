@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Time;
 using DCL.Utility;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
@@ -45,7 +46,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var character = new ExposedTransform();
             var totalBudget = 15;
 
-            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            var webRequests = new WebRequestController(new WebRequestsAnalyticsContainer(null, null), identityCache, new RequestHub(urlsSource), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
