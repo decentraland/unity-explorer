@@ -82,13 +82,27 @@ namespace DCL.Diagnostics.Sentry
             // Don't report events while in the background.
             if (!Paused)
             {
-                var message = $"DclApplication not responding for at least {DetectionTimeoutMs} ms.";
+                
+
+                System.Text.StringBuilder sb = new ();
+                sb.Append("DclApplication not responding for at least ");
+                sb.Append(DetectionTimeoutMs);
+                sb.Append(" ms. ");
+
+                string message = sb.ToString();
+
                 Logger?.LogInfo("Detected an DclAnr event: {0}", message);
 
                 var exception = new DclApplicationNotRespondingException(message);
                 exception.SetSentryMechanism(Mechanism, "Main thread unresponsive.", false);
                 OnApplicationNotResponding?.Invoke(this, exception);
             }
+        }
+
+        public static string CurrentCallStack()
+        {
+            // TODO impl, native part required
+            return "";
         }
     }
 
