@@ -1,2 +1,7 @@
 # CODEOWNERS file
 * @decentraland/QA @decentraland/explorer-devs
+
+# Last-match-wins: narrow CI-sensitive paths to DEV team only.
+/.github/prompts/**   @decentraland/explorer-devs
+/.github/workflows/** @decentraland/explorer-devs
+/CODEOWNERS           @decentraland/explorer-devs
