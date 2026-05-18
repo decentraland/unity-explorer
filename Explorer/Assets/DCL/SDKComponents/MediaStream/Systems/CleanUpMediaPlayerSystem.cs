@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(PBAudioStream), typeof(CustomMediaStream), typeof(PBVideoPlayer))]
         private void HandleOriginalComponentRemoval(Entity e, ref MediaPlayerComponent mediaPlayer)
         {
-            CleanUpMediaPlayer(in e, ref mediaPlayer);
+            CleanUpMediaPlayer(e, ref mediaPlayer);
         }
 
         /// <summary>
