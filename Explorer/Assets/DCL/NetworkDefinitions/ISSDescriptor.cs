@@ -52,11 +52,46 @@ namespace DCL.Ipfs
         /// </summary>
         public HashSet<string> AssetHashes => cachedAssetHashes ??= BuildAssetHashes();
 
+        // hash -> how many times that hash appears in Metadata.assets (the cap for bridge slots)
+        private Dictionary<string, int>? cachedHashCapacity;
+        private Dictionary<string, int> HashCapacity => cachedHashCapacity ??= BuildHashCapacity();
+
+        // hash -> how many copies are currently parked in the bridge
+        private readonly Dictionary<string, int> bridgedCount = new ();
+
         /// <summary>
         ///     True if <paramref name="hash"/> is one of the assets covered by this scene's ISS.
         /// </summary>
         public bool IsPartOfISS(string hash) =>
             CurrentState != State.None && AssetHashes.Contains(hash);
+
+        /// <summary>
+        ///     Attempts to reserve a bridge slot for <paramref name="hash"/>. Caps at the number of times the hash
+        ///     appears in the descriptor — so the bridge never holds more copies of an asset than the scene needs.
+        ///     Returns true if reserved (caller should bridge the asset). Pair with <see cref="ReleaseBridgeSlot"/>
+        ///     when the bridged copy leaves the cache.
+        /// </summary>
+        public bool TryReserveBridgeSlot(string hash)
+        {
+            if (CurrentState == State.None) return false;
+            if (!HashCapacity.TryGetValue(hash, out int cap)) return false;
+
+            int current = bridgedCount.TryGetValue(hash, out int n) ? n : 0;
+            if (current >= cap) return false;
+
+            bridgedCount[hash] = current + 1;
+            return true;
+        }
+
+        /// <summary>
+        ///     Releases a slot previously reserved via <see cref="TryReserveBridgeSlot"/>.
+        ///     Call when a bridged copy is popped out of the cache (LOD pull) or evicted.
+        /// </summary>
+        public void ReleaseBridgeSlot(string hash)
+        {
+            if (bridgedCount.TryGetValue(hash, out int n) && n > 0)
+                bridgedCount[hash] = n - 1;
+        }
 
         private ISSDescriptor(State state, ISSDescriptorMetadata? metadata)
         {
@@ -71,6 +106,15 @@ namespace DCL.Ipfs
                 foreach (var a in Metadata.Value.assets)
                     set.Add(a.hash);
             return set;
+        }
+
+        private Dictionary<string, int> BuildHashCapacity()
+        {
+            var counts = new Dictionary<string, int>();
+            if (Metadata.HasValue && Metadata.Value.assets != null)
+                foreach (var a in Metadata.Value.assets)
+                    counts[a.hash] = counts.TryGetValue(a.hash, out int n) ? n + 1 : 1;
+            return counts;
         }
 
         public bool SupportsDescriptor() =>
