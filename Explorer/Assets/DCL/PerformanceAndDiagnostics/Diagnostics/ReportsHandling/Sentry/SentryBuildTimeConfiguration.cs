@@ -24,8 +24,13 @@ namespace DCL.Diagnostics.Sentry
         {
             options.SetBeforeSend(AddUnspecifiedCategory);
 
-            // TODO enable it only when we ensure the custom implementation works correctly
-            // options.DisableAnrIntegration()
+            // Implements custom ANR tracing with minidumps and callstack collection
+            SentryMonoBehaviour monoInstance = SentryMonoBehaviour.Instance;
+            DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
+            options.AddIntegration(anrIntegration);
+
+            // TODO validate correctness //enable it only when we ensure the custom implementation works correctly
+            options.DisableAnrIntegration();
 
 #if UNITY_EDITOR
             bool isDirty = false;
