@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Character.Components;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -83,9 +84,11 @@ namespace DCL.VoiceChat.Nearby
             // Shared state: RangeSystem produces, PositionSystem consumes (matches production wiring).
             var listenerState = new NearbyListenerState();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
+
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
-            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
             audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration, listenerState);
             audibleRangeSystem.Initialize();
