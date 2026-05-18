@@ -84,10 +84,13 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
-            bool forceRediscover = pendingVideoRediscovery;
-            if (forceRediscover) pendingVideoRediscovery = false;
+            // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
+            // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
+            // already handles "look for a better source" safely, and re-allocating cvs while a subscription
+            // is mid-flight can stomp the in-flight Weak<IVideoStream> and stall playback (observed on Windows).
+            pendingVideoRediscovery = false;
 
-            if (IsVideoOpened && !forceRediscover)
+            if (IsVideoOpened)
             {
                 TryFollowVideoStreamToActiveSpeaker(playingAddress.Value);
             }
