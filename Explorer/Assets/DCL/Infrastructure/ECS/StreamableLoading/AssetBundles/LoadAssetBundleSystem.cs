@@ -72,14 +72,16 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetBundle == null)
             {
-                state.SetProgress(0);
-                state.SetContentLength(-1);
+                long contentLength = await webRequestController.GetDecompressedContentLengthAsync(intention.CommonArguments.URL, ct);
+                state.ContentLength = contentLength;
+
                 assetBundleResult = await webRequestController.GetAssetBundleAsync(
                     intention.CommonArguments,
                     new GetAssetBundleArguments(loadingMutex, intention.cacheHash),
                     ct,
                     GetReportCategory(),
-                    progressHandler: state,
+                    expectedContentLength: contentLength,
+                    progressReporter: state,
                     suppressErrors: true); // Suppress errors because here we have our own error handling
                 assetBundle = assetBundleResult.Value.AssetBundle;
             }

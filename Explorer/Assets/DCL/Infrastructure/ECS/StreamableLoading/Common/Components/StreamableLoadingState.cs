@@ -1,6 +1,5 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
@@ -12,7 +11,7 @@ namespace ECS.StreamableLoading.Common.Components
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public class StreamableLoadingState : IStreamableLoadingProgressHandler
+    public class StreamableLoadingState : IProgress<float>
     {
         public enum Status : byte
         {
@@ -48,7 +47,7 @@ namespace ECS.StreamableLoading.Common.Components
                 state.disposed = false;
                 state.Value = Status.NotStarted;
                 state.Progress = 0f;
-                state.ContentLength = 0;
+                state.ContentLength = -1;
             },
             actionOnRelease: state =>
             {
@@ -80,7 +79,9 @@ namespace ECS.StreamableLoading.Common.Components
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
 
         public float Progress { get; private set; }
-        public long ContentLength { get; private set; }
+        public long ContentLength { get; internal set; }
+
+        public void Report(float value) => Progress = value;
 
         public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
@@ -173,8 +174,5 @@ namespace ECS.StreamableLoading.Common.Components
 
             POOL.Release(this);
         }
-
-        public void SetProgress(float progress) => Progress = progress;
-        public void SetContentLength(long length) => ContentLength = length;
     }
 }

@@ -33,7 +33,8 @@ namespace DCL.WebRequests
             bool suppressErrors = false,
             DownloadHandler? downloadHandler = null,
             bool ignoreIrrecoverableErrors = false,
-            IStreamableLoadingProgressHandler? progressHandler = null
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -51,7 +52,7 @@ namespace DCL.WebRequests
                     suppressErrors,
                     downloadHandler,
                     ignoreIrrecoverableErrors
-                ), op, progressHandler
+                ), op, expectedContentLength, progressReporter
             )!;
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(commonArguments, args, webRequestOp, ct, reportData, headersInfo, signInfo);
 
-        public static async UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
+        public static UniTask<AssetBundleLoadingResult> GetAssetBundleAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetAssetBundleArguments args,
@@ -220,17 +221,10 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             bool suppressErrors = false,
-            IStreamableLoadingProgressHandler? progressHandler = null
-            )
-        {
-            if (progressHandler != null)
-            {
-                long contentLength = await controller.GetDecompressedContentLengthAsync(commonArguments.URL, ct);
-                progressHandler.SetContentLength(contentLength);
-            }
-
-            return await controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, progressHandler: progressHandler);
-        }
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
+            ) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, expectedContentLength: expectedContentLength, progressReporter: progressReporter);
 
         public static async UniTask<long> GetDecompressedContentLengthAsync(
             this IWebRequestController controller,

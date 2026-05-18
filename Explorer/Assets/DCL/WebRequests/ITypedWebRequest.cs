@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -19,9 +20,9 @@ namespace DCL.WebRequests
 
     public static class TypedWebRequestExtensions
     {
-        public static async UniTask SendRequest<T>(this T typedWebRequest, CancellationToken token, IStreamableLoadingProgressHandler? progressHandler = null) where T: ITypedWebRequest
+        public static async UniTask SendRequest<T>(this T typedWebRequest, CancellationToken token, long expectedContentLength = -1, IProgress<float>? progressReporter = null) where T: ITypedWebRequest
         {
-            if (progressHandler == null)
+            if (progressReporter == null)
             {
                 // WithCancellation has a special overload for UnityWebRequestAsyncOperation
                 // that checks request.result and throws UnityWebRequestException on failure automatically.
@@ -29,23 +30,20 @@ namespace DCL.WebRequests
                 return;
             }
 
-            long contentLength = progressHandler.ContentLength;
             UnityWebRequestAsyncOperation op = typedWebRequest.UnityWebRequest.SendWebRequest();
 
             while (!op.isDone)
             {
-                if (token.IsCancellationRequested)
-                    return;
-
-                if (contentLength > 0)
-                    progressHandler.SetProgress(op.webRequest.downloadedBytes / (float)contentLength);
+                if (expectedContentLength > 0)
+                    progressReporter.Report(op.webRequest.downloadedBytes / (float)expectedContentLength);
                 else
-                    progressHandler.SetProgress(op.progress); // Unreliable for on-the-fly compressed responses, but best-effort fallback
+                    progressReporter.Report(op.progress); // Unreliable for on-the-fly compressed responses, but best-effort fallback
 
-                await UniTask.Yield();
+                // UniTask.Yield(token) throws OperationCanceledException on cancel, matching the non-reporting path.
+                await UniTask.Yield(token);
             }
 
-            progressHandler.SetProgress(1f);
+            progressReporter.Report(1f);
 
             // The manual polling loop above bypasses UniTask's automatic error handling,
             // so we must check the result and throw explicitly here.

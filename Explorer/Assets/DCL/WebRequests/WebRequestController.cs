@@ -40,7 +40,8 @@ namespace DCL.WebRequests
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
             TWebRequestOp op,
-            IStreamableLoadingProgressHandler? progressHandler = null)
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
@@ -78,7 +79,7 @@ namespace DCL.WebRequests
 
                         analyticsContainer.OnRequestStarted(in envelope, request);
 
-                        await request.SendRequest(envelope.Ct, progressHandler);
+                        await request.SendRequest(envelope.Ct, expectedContentLength, progressReporter);
                         analyticsContainer.OnRequestFinished(request);
                     }
                     try
