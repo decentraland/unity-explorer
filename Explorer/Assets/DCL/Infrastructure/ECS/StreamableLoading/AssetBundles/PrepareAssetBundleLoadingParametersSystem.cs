@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.Groups;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 
@@ -38,7 +39,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // In Bundle-mode ISS the shared bundle holds every listed asset, so redirect per-asset requests
             // to the bundle URL. Descriptor-mode and non-ISS scenes resolve their per-asset URLs unchanged.
-            if (sceneData.SceneEntityDefinition.ISSDescriptor.IsBundleAsset(assetBundleIntention.Hash!))
+            // No-op until LoadSceneSystemLogicBase resolves the descriptor (cache miss returns false).
+            if (ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(sceneData.SceneEntityDefinition), out ISSDescriptor descriptor)
+                && descriptor.IsBundleAsset(assetBundleIntention.Hash!))
                 assetBundleIntention.Hash = GetAssetBundleIntention.BuildInitialSceneStateURL(assetBundleIntention.ParentEntityID);
 
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);

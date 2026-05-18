@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles.EarlyAsset;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -71,12 +72,19 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
             {
                 if (Result.Succeeded && Result.Asset.Value.Count > 0)
                 {
-                    if (Result.Asset.Value[0].ISSDescriptor.SupportsBundle())
+                    // ISS bundle prewarm only fires if the descriptor is already in the cache (resolved by an
+                    // earlier scene-loading pass). Since descriptor resolution is now lazy and triggered by the
+                    // LOD / SDK runtime path, this is typically a miss on first realm load — the bundle gets
+                    // fetched later by those paths. Future: also lazily trigger resolution here to keep the
+                    // early-warm optimization.
+                    SceneEntityDefinition firstDefinition = Result.Asset.Value[0];
+                    if (ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(firstDefinition), out ISSDescriptor descriptor)
+                        && descriptor.SupportsBundle())
                     {
                         //Do nothing. We just needed loaded in memory, we dont care the result.
                         //Whoever needs it, will grab it later
                         //Test URL
-                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest(Result.Asset.Value[0]));
+                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest(firstDefinition));
                     }
                 }
 

@@ -24,6 +24,8 @@ namespace DCL.LOD.Components
         public enum State
         {
             UNINITIALIZED,
+            // Descriptor request fired; waiting for cache to populate. Next UpdateLODLevel tick rechecks.
+            AWAITING_DESCRIPTOR,
             PROCESSING,
             FAILED,
             RESOLVED

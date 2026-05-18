@@ -10,6 +10,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -27,14 +28,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly ISSDescriptor issDescriptor;
+        private readonly SceneEntityDefinition sceneDefinition;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor issDescriptor) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, SceneEntityDefinition sceneDefinition) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
-            this.issDescriptor = issDescriptor;
+            this.sceneDefinition = sceneDefinition;
         }
 
         protected override void Update(float t)
@@ -69,8 +70,11 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 // Bridge only if the scene's partition allows it AND the descriptor still has a slot for this hash
                 // (capped to the exact number of times it appears in metadata.assets — no duplicates).
+                // Descriptor is looked up from the cache per call; resolves to NONE before lazy resolution completes
+                // (during which TryReserveBridgeSlot returns false → no bridging, which is the safe default).
                 bool putInBridge = partitionAllowsBridge
-                                   && issDescriptor.TryReserveBridgeSlot(component.Hash);
+                                   && ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(sceneDefinition), out ISSDescriptor descriptor)
+                                   && descriptor.TryReserveBridgeSlot(component.Hash);
                 cache.Dereference(component.Hash, result.Asset, putInBridge);
             }
 

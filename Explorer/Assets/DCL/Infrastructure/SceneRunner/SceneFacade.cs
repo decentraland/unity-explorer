@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -225,7 +226,9 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            SceneData.SceneEntityDefinition.ISSDescriptor.Dereference();
+            // Release the shared ISS bundle (if any) — descriptor is looked up via the global cache by scene id.
+            if (ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(SceneData.SceneEntityDefinition), out ISSDescriptor descriptor))
+                descriptor.Dereference();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

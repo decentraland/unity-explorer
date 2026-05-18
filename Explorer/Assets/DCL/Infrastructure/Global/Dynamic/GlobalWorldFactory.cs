@@ -32,7 +32,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
+using DCL.PluginSystem.World;
 using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -164,6 +166,10 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+
+            // ISS descriptor loader: shared singleton cache so the LOD path and the scene runtime path
+            // dedupe requests, and so non-async consumers (plugins, cleanup) can look up resolved descriptors.
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, AssetBundlesPlugin.STREAMING_ASSETS_URL, assetBundleCdnUrl, ISSDescriptorCache.INSTANCE);
 
             if (hybridSceneParams.EnableHybridScene)
             {

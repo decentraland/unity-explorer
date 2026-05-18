@@ -126,8 +126,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 //Could be removed once the asset bundle manifest registry has been battle tested
                 await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
 
-                sceneEntityDefinition.ISSDescriptor = await ISSDescriptor.ResolveAsync(
-                    sceneEntityDefinition, webRequestController, GetReportData(), ct);
+                // ISS descriptor resolution is now lazy — triggered by the LOD path / SDK runtime loader
+                // via LoadISSDescriptorSystem, gated by AB manifest v49+.
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(

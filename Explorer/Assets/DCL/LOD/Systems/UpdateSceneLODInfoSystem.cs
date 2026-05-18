@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
@@ -14,6 +14,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -21,6 +22,8 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using ISSDescriptorPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.InitialSceneState.ISSDescriptor,
+    ECS.StreamableLoading.AssetBundles.InitialSceneState.GetISSDescriptor>;
 
 namespace DCL.LOD.Systems
 {
@@ -70,25 +73,44 @@ namespace DCL.LOD.Systems
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0
-                && sceneDefinitionComponent.Definition.ISSDescriptor.SupportsDescriptor()
-                && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
+            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
-                if (sceneDefinitionComponent.Definition.ISSDescriptor.SupportsBundle())
-                {
-                    var initialSceneState = GetAssetBundleIntention.FromHash(
-                        GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
-                        typeof(GameObject),
-                        permittedSources: AssetSource.WEB,
-                        assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
-                        parentEntityID: sceneDefinitionComponent.Definition.id
-                    );
-                    sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
-                }
+                GetISSDescriptor intention = GetISSDescriptor.For(sceneDefinitionComponent.Definition);
 
-                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
-                sceneLODInfo.CurrentLODLevelPromise = level;
-                return;
+                if (ISSDescriptorCache.INSTANCE.TryGet(intention, out ISSDescriptor descriptor))
+                {
+                    if (descriptor.SupportsDescriptor() || descriptor.SupportsBundle())
+                    {
+                        if (descriptor.SupportsBundle())
+                        {
+                            var initialSceneState = GetAssetBundleIntention.FromHash(
+                                GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
+                                typeof(GameObject),
+                                permittedSources: AssetSource.WEB,
+                                assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
+                                parentEntityID: sceneDefinitionComponent.Definition.id
+                            );
+                            sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
+                        }
+
+                        sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
+                        sceneLODInfo.CurrentLODLevelPromise = level;
+                        return;
+                    }
+                    // descriptor.NONE — descriptor resolved but no ISS for this scene; fall through to legacy LOD.
+                }
+                else
+                {
+                    // Descriptor not yet resolved. Spawn the promise once (state guard avoids leaking
+                    // a new entity every frame) and wait — UpdateLODLevel re-fires next tick and the
+                    // cache will have the entry.
+                    if (sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.AWAITING_DESCRIPTOR)
+                    {
+                        ISSDescriptorPromise.Create(World, intention, partitionComponent);
+                        sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.AWAITING_DESCRIPTOR;
+                    }
+                    return;
+                }
             }
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
