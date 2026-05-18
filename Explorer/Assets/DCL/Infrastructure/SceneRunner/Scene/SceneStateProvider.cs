@@ -17,9 +17,9 @@ namespace SceneRunner.Scene
 
         public ref readonly SceneEngineStartInfo EngineStartInfo => ref engineStartInfo;
 
-        public void SetRunning(SceneEngineStartInfo startInfo)
+        public void Start(SceneEngineStartInfo startInfo)
         {
-            State.Set(SceneState.Running);
+            State.Set(SceneState.Starting);
             engineStartInfo = startInfo;
             TickNumber = 0;
         }

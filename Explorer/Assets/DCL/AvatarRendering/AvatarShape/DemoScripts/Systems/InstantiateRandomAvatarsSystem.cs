@@ -70,6 +70,15 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private bool networkAvatar;
         private bool forceMaleOnly;
 
+        private readonly IndexedElementBinding emoteDropdownBinding;
+
+        private const string EMOTE_URN_PREFIX = "urn:decentraland:off-chain:base-emotes:";
+
+        private static readonly List<string> EMOTE_CHOICES = new ()
+        {
+            "None", "clap", "cry", "dance", "disco", "hammer", "kiss", "money", "robot", "tektonik", "tik",
+        };
+
         internal InstantiateRandomAvatarsSystem(
             World world,
             IDebugContainerBuilder debugBuilder,
@@ -82,6 +91,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
             networkAvatar = true;
+            emoteDropdownBinding = new IndexedElementBinding(EMOTE_CHOICES, EMOTE_CHOICES[0]);
 
             debugBuilder.TryAddWidget("Avatar Debug")
                        ?.SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
@@ -94,7 +104,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                         .AddSingleButton("Randomize Wearables of Avatars", RandomizeWearablesOfAvatars);
 
             debugBuilder.TryAddWidget("Avatar Creator")
-                       ?.AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
+                       ?.AddControl(new DebugDropdownDef(emoteDropdownBinding, "Emote"), null)
+                        .AddStringFieldsWithConfirmation(3, "Instantiate Male", InstantiateMaleAvatar)
                         .AddStringFieldsWithConfirmation(3, "Instantiate Female", InstantiateFemaleAvatar);
         }
 
@@ -311,13 +322,19 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
+            bool hasEmote = emoteDropdownBinding.Index > 0;
+            var emoteComponent = new CharacterEmoteComponent { EmoteLoop = hasEmote };
+
             if (networkAvatar)
             {
-                World.Create(profile,
+                Entity entity = World.Create(profile,
                     transformComp,
                     new CharacterAnimationComponent(),
-                    new CharacterEmoteComponent(),
+                    emoteComponent,
                     new RandomAvatar());
+
+                if (hasEmote)
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
             }
             else
             {
@@ -328,12 +345,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 characterController.slopeLimit = 50f;
                 characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
 
-                World.Create(profile,
+                Entity entity = World.Create(profile,
                     transformComp,
                     characterController,
                     new CharacterRigidTransform(),
                     new CharacterAnimationComponent(),
-                    new CharacterEmoteComponent(),
+                    emoteComponent,
                     new CharacterPlatformComponent(),
                     new StunComponent(),
                     new FeetIKComponent(),
@@ -347,6 +364,9 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     new JumpState(),
                     new RandomAvatar()
                 );
+
+                if (hasEmote)
+                    World.Add(entity, new CharacterEmoteIntent { EmoteId = new URN(EMOTE_URN_PREFIX + emoteDropdownBinding.Value), Spatial = true, TriggerSource = TriggerSource.SELF });
             }
         }
 

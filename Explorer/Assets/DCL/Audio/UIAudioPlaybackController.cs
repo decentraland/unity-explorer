@@ -41,7 +41,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent -= OnMuteContinuousUIAudioEvent;
-            ExitUtils.BeforeApplicationQuitting -= OnBeforeApplicationQuitting;
+            ExitUtils.UnregisterCleanUpCandidate(nameof(UIAudioPlaybackController));
             mainCancellationTokenSource.SafeCancelAndDispose();
 
             foreach (KeyValuePair<AudioClipConfig, ContinuousPlaybackAudioData> audioData in audioDataPerAudioClipConfig)
@@ -66,7 +66,7 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.MuteContinuousUIAudioEvent += OnMuteContinuousUIAudioEvent;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
             mainCancellationTokenSource = new CancellationTokenSource();
-            ExitUtils.BeforeApplicationQuitting += OnBeforeApplicationQuitting;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(UIAudioPlaybackController), OnBeforeApplicationQuitting));
         }
 
         private CancellationTokenSource CreateLinkedCancellationTokenSource() =>
@@ -149,7 +149,7 @@ namespace DCL.Audio
             AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, audioClipConfig, audioSource.clip.length, audioSource).Forget();
         }
 
-        private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
+        private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig, float volumeScale)
         {
             if (!CheckAudioClips(audioClipConfig) || !CheckAudioCategory(audioClipConfig)) return;
 
@@ -157,7 +157,7 @@ namespace DCL.Audio
 
             if (settings == null || !settings.AudioEnabled) return;
 
-            PlaySingleAudio(audioClipConfig);
+            PlaySingleAudio(audioClipConfig, volumeScale);
         }
 
         private bool CheckAudioClips(AudioClipConfig audioClipConfig)
@@ -189,24 +189,26 @@ namespace DCL.Audio
             return true;
         }
 
-        private void PlaySingleAudio(AudioClipConfig audioClipConfig)
+        private void PlaySingleAudio(AudioClipConfig audioClipConfig, float volumeScale)
         {
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
             if (audioClipConfig.AudioClips[clipIndex] == null) return;
 
             float pitch = AudioPlaybackUtilities.GetPitchWithVariation(audioClipConfig);
+            float volume = audioClipConfig.RelativeVolume * volumeScale;
             AudioSource audioSource;
 
             if (pitch == 0)
             {
                 audioSource = GetDefaultAudioSourceForCategory(audioClipConfig.Category);
-                audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
+                audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], volume);
             }
             else
             {
                 audioSource = GetAudioSourceFromPoolForCategory(audioClipConfig.Category);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
                 audioSource.pitch = pitch;
+                audioSource.volume = volume;
                 audioSource.loop = false;
                 audioSource.Play();
                 ScheduleAudioSourceReleaseAsync(audioSource).Forget();

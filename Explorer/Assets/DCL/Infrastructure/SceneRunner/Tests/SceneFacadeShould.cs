@@ -36,7 +36,6 @@ using MVC;
 using NSubstitute;
 using NUnit.Framework;
 using PortableExperiences.Controller;
-using RichTypes;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -59,7 +58,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
-using RichTypes;
 
 namespace SceneRunner.Tests
 {
@@ -206,7 +204,8 @@ namespace SceneRunner.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(DURATION);
 
-            await sceneFacade.StartUpdateLoopAsync(fps, cancellationTokenSource.Token);
+            await sceneFacade.StartAsync(fps, cancellationTokenSource.Token);
+            await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
 
             float tolerance = Mathf.Max(0.02f, expectedDT * 0.1f);
 

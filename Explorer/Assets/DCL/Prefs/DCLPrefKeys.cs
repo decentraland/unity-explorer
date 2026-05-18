@@ -55,6 +55,7 @@ namespace DCL.Prefs
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
         public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
+        public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
         public const string PS_RESOLUTION = "QS_Resolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
@@ -82,6 +83,8 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string DEBUG_PANEL_MAXIMIZED = "DebugPanel_Maximized";
+        public const string DEBUG_PANEL_MAXIMIZED_WIDTH = "DebugPanel_MaximizedWidth";
         public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
 
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";

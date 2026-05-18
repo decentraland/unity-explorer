@@ -29,3 +29,4 @@ MonoBehaviour:
   shadowsQualityLevel: 0
   shadowDistance: 40
   playCurrentSceneStreamsOnly: 1
+  springBoneSimulation: 0
