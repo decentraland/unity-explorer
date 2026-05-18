@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utility;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -127,10 +128,10 @@ namespace DCL.LOD.Systems
                 }
 
                 // Bundle mode: refetch the shared ISS bundle (cached) so ref counting is correct.
-                // Descriptor mode: fetch each asset's own bundle by its hash.
+                // Descriptor mode: fetch each asset's own bundle — must include the platform suffix to match the deployed AB filename.
                 string promiseHash = fromBundle
                     ? GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id)
-                    : entry.hash;
+                    : $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
 
                 AssetBundlePromise promise = AssetBundlePromise.Create(World,
                     GetAssetBundleIntention.FromHash(promiseHash,
@@ -138,7 +139,7 @@ namespace DCL.LOD.Systems
                         parentEntityID: sceneDefinition.Definition.id),
                     PartitionComponent.TOP_PRIORITY);
 
-                ISSAssetCreationHelper assetCreationHelper = new ISSAssetCreationHelper(initialSceneStateLOD, entry, fromBundle);
+                ISSAssetCreationHelper assetCreationHelper = new ISSAssetCreationHelper(initialSceneStateLOD, entry);
 
                 World.Create(promise, assetCreationHelper);
             }
@@ -147,20 +148,29 @@ namespace DCL.LOD.Systems
         [Query]
         private void ConvertFromAssetBundle(Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
         {
+            const string DEBUG_SCENE_ID = "bafkreift34mmemx7fvrf6mpoaab7qy2dceq5vwpwehq3wunv5dwulbjveu";
+
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
             if (!assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
                 return;
 
+            bool isDebugScene = creationHelper.InitialSceneStateLOD.SceneID == DEBUG_SCENE_ID;
+            bool stillRelevant = creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
+                                 && creationHelper.InitialSceneStateLOD.ParentContainer != null;
+
             if (Result.Succeeded)
             {
-                if (creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
-                    && creationHelper.InitialSceneStateLOD.ParentContainer != null)
+                if (stillRelevant)
                 {
                     if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetNameInBundle, isPartOfISS: true, out GltfContainerAsset asset))
+                    {
+                        if (isDebugScene)
+                            UnityEngine.Debug.Log($"[Juani] ConvertFromAssetBundle OK {creationHelper.Entry.hash} (counted via AddResolvedAsset)");
                         PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.Entry, asset,
                             creationHelper.InitialSceneStateLOD.ParentContainer.transform);
+                    }
                     else
                     {
                         ReportHub.LogWarning(GetReportData(), $"Failed to load {creationHelper.Entry.hash} for LOD, the result may not look correct");
@@ -173,6 +183,13 @@ namespace DCL.LOD.Systems
                     Result.Asset!.Dereference();
                 }
             }
+            else if (stillRelevant)
+            {
+                // AB promise failed (e.g. 404 / network). Count it so AllAssetsInstantiated can settle
+                // and UnloadLODForISS gets a chance to bridge the successful assets.
+                creationHelper.InitialSceneStateLOD.AddFailedAsset(creationHelper.Entry.hash);
+            }
+
             World.Destroy(entity);
         }
 
@@ -202,13 +219,14 @@ namespace DCL.LOD.Systems
 
     public struct ISSAssetCreationHelper
     {
-        public ISSAssetCreationHelper(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry, bool fromBundle)
+        public ISSAssetCreationHelper(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry)
         {
             InitialSceneStateLOD = initialSceneStateLOD;
             Entry = entry;
             // Bundle mode: the shared ISS bundle contains many assets keyed by hash.
             // Descriptor mode: per-asset bundle has a single asset, so passing empty name to TryGetAsset returns it.
-            AssetNameInBundle = fromBundle ? entry.hash : string.Empty;
+            // Both shared ISS bundles and per-asset bundles are baked with assets named by their content hash.
+            AssetNameInBundle = entry.hash;
             Generation = initialSceneStateLOD.Generation;
         }
 

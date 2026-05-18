@@ -50,7 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            UnloadSceneLODForISSQuery(World);
+            UnloadLODForISSQuery(World);
             UnloadLODQuery(World);
             UnloadLODWhenSceneReadyQuery(World);
         }
@@ -64,7 +64,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void UnloadSceneLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
+        private void UnloadLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
             ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)

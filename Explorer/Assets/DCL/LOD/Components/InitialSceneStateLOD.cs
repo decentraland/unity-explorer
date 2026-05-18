@@ -13,6 +13,7 @@ namespace DCL.LOD.Components
     public class InitialSceneStateLOD
     {
         private readonly List<ISSStoredAsset> Assets = new ();
+        public string SceneID { get; private set; } = string.Empty;
         public GameObject ParentContainer { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }
@@ -107,6 +108,7 @@ namespace DCL.LOD.Components
 
         private void EnsureParentContainer(string sceneID, Vector3 sceneGeometryBaseParcelPosition)
         {
+            SceneID = sceneID;
             if (ParentContainer == null)
                 ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
