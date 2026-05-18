@@ -1,8 +1,9 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.Groups;
@@ -26,12 +27,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly ISSDescriptor? issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor? issDescriptor = null) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.issDescriptor = issDescriptor;
         }
 
         protected override void Update(float t)
@@ -58,12 +61,17 @@ namespace ECS.Unity.GLTFContainer.Systems
             DestroyWithScenePartitionQuery(World);
         }
 
-        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool putInBridge)
+        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool partitionAllowsBridge)
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
                 entityCollidersSceneCache.Remove(result.Asset);
-                cache.Dereference(component.Hash, result.Asset, putInBridge && result.Asset.IsISS);
+
+                // Bridge only if the scene's partition allows it AND the descriptor still has a slot for this hash
+                // (capped to the exact number of times it appears in metadata.assets — no duplicates).
+                bool putInBridge = partitionAllowsBridge
+                                   && (issDescriptor?.TryReserveBridgeSlot(component.Hash) ?? false);
+                cache.Dereference(component.Hash, result.Asset, putInBridge);
             }
 
             component.RootGameObject = null;

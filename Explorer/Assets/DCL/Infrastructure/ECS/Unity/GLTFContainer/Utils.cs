@@ -11,7 +11,7 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, bool isPartOfISS, out GltfContainerAsset gltfContainerAsset)
+        public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, out GltfContainerAsset gltfContainerAsset)
         {
             if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))
             {
@@ -25,7 +25,7 @@ namespace ECS.Unity.GLTFContainer
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container, assetBundleData, isPartOfISS);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
             GameObject? instance = Object.Instantiate(asset, containerTransform);
 
