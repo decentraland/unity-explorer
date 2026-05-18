@@ -35,6 +35,20 @@ namespace DCL.VoiceChat.Nearby.Audio
         bool IsStreamGone(StreamKey key);
 
         /// <summary>
+        /// The single active sid for an identity (the candidate that most recently emitted a media frame across all
+        /// known sids), or <c>null</c> if the identity has no sids OR none of its candidates have ever emitted a frame.
+        /// The latter is a transient "not-yet-decided" window: the bridge will re-poll next tick and self-heal.
+        /// </summary>
+        string? GetActiveSid(string walletId);
+
+        /// <summary>
+        /// <c>true</c> when <paramref name="sid"/> is the resolver's current pick for <paramref name="walletId"/>.
+        /// Cleanup uses this in place of "sid disappeared from snapshot" — it also reaps demoted ghost sids that
+        /// still exist in the registry but lost to a fresher candidate.
+        /// </summary>
+        bool IsActiveSid(string walletId, string sid);
+
+        /// <summary>
         /// Returns <c>true</c> if <paramref name="walletId"/> was present in the latest
         /// <see cref="LiveKit.Rooms.ActiveSpeakers.IActiveSpeakers.Updated"/> snapshot. Pull-based and
         /// allocation-free so per-frame ECS systems can call it without touching <see cref="LiveKit.Rooms.IRoom"/>.

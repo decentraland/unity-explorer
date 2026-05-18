@@ -481,6 +481,10 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public bool IsStreamGone(StreamKey key) => !streamsByKey.ContainsKey(key);
 
+            public string? GetActiveSid(string walletId) => null;
+
+            public bool IsActiveSid(string walletId, string sid) => false;
+
             public bool IsActiveSpeaker(string walletId) => false;
 
             public int RebuildEpoch => 0;

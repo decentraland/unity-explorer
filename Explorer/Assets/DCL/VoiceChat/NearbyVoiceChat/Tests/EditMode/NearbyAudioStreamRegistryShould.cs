@@ -5,6 +5,7 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
@@ -29,6 +30,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
+        private IAudioStreams audioStreams = null!;
         private NearbyAudioStreamsRegistry registry = null!;
 
         [SetUp]
@@ -39,6 +41,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             room.Participants.Returns(participantsHub);
             activeSpeakers = new FakeActiveSpeakers();
             room.ActiveSpeakers.Returns(activeSpeakers);
+            audioStreams = Substitute.For<IAudioStreams>();
+            // -1 sentinel matches production: missing stream / never decoded a frame.
+            audioStreams.GetLastFrameReceivedAt(default).ReturnsForAnyArgs(-1);
+            audioStreams.ClearReceivedCalls(); // stub-setup call counts as received; clear so DidNotReceive assertions are clean.
+            room.AudioStreams.Returns(audioStreams);
             registry = new NearbyAudioStreamsRegistry(room);
         }
 
@@ -448,6 +455,91 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(registry.IsStreamGone(new StreamKey(WALLET_A, SID_1)), Is.True);
             Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+        }
+
+        // ── Active-sid resolver (frame-activity oracle) ──────────────
+
+        [Test]
+        public void ReturnNullActiveSidForUnknownWallet()
+        {
+            Assert.That(registry.GetActiveSid("0xUNKNOWN"), Is.Null);
+        }
+
+        [Test]
+        public void ReturnSingleSidAsActiveWithoutConsultingFrameOracle()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_1));
+            audioStreams.DidNotReceiveWithAnyArgs().GetLastFrameReceivedAt(default);
+        }
+
+        [Test]
+        public void ReturnNullActiveSidWhenAllCandidatesAreGhosts()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+            // Both stay at the default -1 sentinel — none have ever decoded a frame.
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.Null);
+        }
+
+        [Test]
+        public void PickTheOnlyCandidateWithFrameActivity()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(100);
+            // SID_1 keeps the default -1 sentinel (ghost).
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
+        }
+
+        [Test]
+        public void PickTheNewestCandidateWhenSeveralAreLive()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_1)).Returns(100);
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(200);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
+        }
+
+        [Test]
+        public void TreatTickCounterWrapAroundAsNewerNotOlder()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            // Pre-wrap (older), positive end of the range.
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_1)).Returns(int.MaxValue - 50);
+            // Post-wrap (newer in unchecked arithmetic), negative end of the range.
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(int.MinValue + 50);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2),
+                "unchecked(SID_2_tick - SID_1_tick) == 101 > 0 — resolver must prefer the post-wrap candidate");
+        }
+
+        [Test]
+        public void IsActiveSidTrueForWinnerFalseForGhostLoser()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(500);
+            // SID_1 keeps -1 (ghost).
+
+            Assert.That(registry.IsActiveSid(WALLET_A, SID_2), Is.True);
+            Assert.That(registry.IsActiveSid(WALLET_A, SID_1), Is.False);
+        }
+
+        [Test]
+        public void IsActiveSidFalseWhenWalletHasNoSids()
+        {
+            Assert.That(registry.IsActiveSid("0xUNKNOWN", SID_1), Is.False);
         }
 
         [Test]

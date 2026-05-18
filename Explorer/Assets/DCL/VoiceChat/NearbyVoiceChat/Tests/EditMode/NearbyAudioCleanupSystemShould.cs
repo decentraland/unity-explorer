@@ -532,6 +532,10 @@ namespace DCL.VoiceChat.Nearby.Tests
                 return !sidsByIdentity.TryGetValue(key.identity, out HashSet<string>? sids) || !sids.Contains(key.sid);
             }
 
+            public string? GetActiveSid(string walletId) => null;
+
+            public bool IsActiveSid(string walletId, string sid) => false;
+
             public bool IsActiveSpeaker(string walletId) => false;
 
             public int RebuildEpoch => 0;

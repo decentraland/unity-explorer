@@ -574,6 +574,10 @@ namespace DCL.VoiceChat.Nearby
                 return Array.IndexOf(arr, key.sid) < 0;
             }
 
+            public string? GetActiveSid(string walletId) => null;
+
+            public bool IsActiveSid(string walletId, string sid) => false;
+
             public bool IsActiveSpeaker(string walletId) => activeSpeakers.Contains(walletId);
 
             public int RebuildEpoch => 0;

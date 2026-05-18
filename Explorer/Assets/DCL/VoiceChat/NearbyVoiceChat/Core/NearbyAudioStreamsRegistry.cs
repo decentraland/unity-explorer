@@ -134,6 +134,42 @@ namespace DCL.VoiceChat.Nearby.Audio
             return Array.IndexOf(sids, key.sid) < 0;
         }
 
+        public string? GetActiveSid(string walletId)
+        {
+            if (!DCLVolatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? sids) || sids.Length == 0)
+                return null;
+
+            // Hot path: a single candidate is the active sid by definition; do not consult the frame oracle.
+            if (sids.Length == 1) return sids[0];
+
+            int bestTick = 0;
+            string? bestSid = null;
+
+            foreach (string sid in sids)
+            {
+                int t = room.AudioStreams.GetLastFrameReceivedAt(new StreamKey(walletId, sid));
+
+                // -1 sentinel: AudioStream missing or never decoded a frame. Ghosts and not-yet-live tracks both
+                // land here; we cannot let them win against a candidate that has provably emitted audio.
+                if (t == -1) continue;
+
+                // unchecked(t - bestTick) > 0 is wrap-safe across the ~49-day Environment.TickCount window.
+                if (bestSid is null || unchecked(t - bestTick) > 0)
+                {
+                    bestTick = t;
+                    bestSid = sid;
+                }
+            }
+
+            return bestSid;
+        }
+
+        public bool IsActiveSid(string walletId, string sid)
+        {
+            string? active = GetActiveSid(walletId);
+            return active is not null && string.Equals(active, sid, StringComparison.Ordinal);
+        }
+
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
         {
             switch (update)
