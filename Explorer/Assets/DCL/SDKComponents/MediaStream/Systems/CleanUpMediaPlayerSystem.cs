@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleMediaPlayerDestruction(in Entity entity, ref MediaPlayerComponent mediaPlayer)
+        private void HandleMediaPlayerDestruction(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(in entity, ref mediaPlayer);
         }
@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.MediaStream
             videoTextureConsumer.Dispose();
 
         [Query]
-        private void FinalizeMediaPlayerComponent(in Entity entity, ref MediaPlayerComponent component) =>
+        private void FinalizeMediaPlayerComponent(Entity entity, ref MediaPlayerComponent component) =>
             CleanUpMediaPlayer(in entity, ref component);
 
         [Query]
