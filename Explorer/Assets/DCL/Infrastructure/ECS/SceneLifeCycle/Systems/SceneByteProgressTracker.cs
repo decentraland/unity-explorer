@@ -8,38 +8,47 @@ namespace ECS.SceneLifeCycle.Systems
 {
     /// <summary>
     ///     Byte-weighted progress accumulator for a scene's GLTF assets.
-    ///     Tracks per-entity ContentLength and computes a download-data aware progress value,
-    ///     falling back to a count-based estimate when no byte data is available.
+    ///     Tracks per-entity ContentLength and weights assets whose size was never observed
+    ///     as <see cref="UNKNOWN_ASSET_BYTES"/> so they still contribute a fixed share to total progress.
     /// </summary>
     internal class SceneByteProgressTracker : IDisposable
     {
-        private readonly HashSet<Entity> tracked;
+        // Flat weight for assets that finished before we ever read their ContentLength.
+        // Small enough that a stream of unknowns can't dominate real bytes, large enough to register as progress.
+        private const long UNKNOWN_ASSET_BYTES = 1024;
+
+        private readonly Dictionary<Entity, long> sizes;
 
         private long completedBytes;
         private long totalBytesExpected;
         private int entitiesWithKnownSize;
 
-        // Byte-weighted math can dip when a small entity finishes while a new large unknown entity registers (avg shifts up).
+        // Per-frame accumulator: weighted bytes for entities still loading.
+        // Reset by ComputeAndClamp at frame end.
+        private long inProgressWeightedBytes;
+
+        // Byte-weighted math can dip when a small entity finishes while a new large unknown entity registers.
         // Clamping locally avoids visual regression without affecting other AsyncLoadProcessReport callers (e.g. teleport retry).
         private float maxReportedProgress;
 
         public SceneByteProgressTracker()
         {
-            tracked = HashSetPool<Entity>.Get();
+            sizes = DictionaryPool<Entity, long>.Get();
         }
 
         public void Dispose()
         {
-            HashSetPool<Entity>.Release(tracked);
+            DictionaryPool<Entity, long>.Release(sizes);
         }
 
         /// <summary>
-        ///     First sighting with known length: accumulate ContentLength into totalBytesExpected exactly once.
+        ///     First sighting with known length: accumulate ContentLength into totalBytesExpected exactly once
+        ///     and remember it so the finish path doesn't need to re-read the loading state.
         ///     Idempotent for already-tracked entities or unknown sizes.
         /// </summary>
         public void RegisterIfNew(Entity entity, long contentLength)
         {
-            if (contentLength > 0 && tracked.Add(entity))
+            if (contentLength > 0 && sizes.TryAdd(entity, contentLength))
             {
                 totalBytesExpected += contentLength;
                 entitiesWithKnownSize++;
@@ -47,55 +56,52 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         /// <summary>
-        ///     Clean finish: credit the entity's actual ContentLength.
-        ///     Falls back to average size when length is unknown.
+        ///     Clean finish: credit the entity's stored ContentLength from registration,
+        ///     or <see cref="UNKNOWN_ASSET_BYTES"/> if its size was never observed.
         /// </summary>
-        public void CreditFinish(Entity entity, long contentLength)
+        public void CreditFinish(Entity entity)
         {
-            if (contentLength > 0)
+            if (sizes.Remove(entity, out long contentLength))
                 completedBytes += contentLength;
             else
-                CreditAverageSize();
-
-            tracked.Remove(entity);
+                completedBytes += UNKNOWN_ASSET_BYTES;
         }
 
         /// <summary>
-        ///     Sudden death (no clean finish observed): credit average size if entity was previously tracked.
+        ///     Sudden death (no clean finish observed): credit the entity's registered ContentLength so
+        ///     totalBytesExpected stays balanced. No-op if the entity was never registered.
         /// </summary>
         public void CreditDeath(Entity entity)
         {
-            if (tracked.Remove(entity))
-                CreditAverageSize();
+            if (sizes.Remove(entity, out long contentLength))
+                completedBytes += contentLength;
         }
 
         /// <summary>
-        ///     Compute byte-weighted progress and clamp it to non-regressing.
-        ///     Falls back to count-based progress when no byte data is available.
+        ///     Accumulate weighted in-progress bytes for an entity that is still loading this frame.
         /// </summary>
-        public float ComputeAndClamp(long inProgressWeightedBytes, int totalAssetsToResolve, int assetsResolved)
+        public void AccumulateInProgress(float entityProgress, long contentLength)
         {
-            float progress = Compute(inProgressWeightedBytes, totalAssetsToResolve, assetsResolved);
+            if (contentLength > 0)
+                inProgressWeightedBytes += (long)(entityProgress * contentLength);
+        }
+
+        /// <summary>
+        ///     Returns this frame's progress value, guaranteed never to go down between frames.
+        ///     Call once per frame: it also clears the per-frame in-progress accumulator.
+        /// </summary>
+        public float ComputeAndClamp(int totalAssetsToResolve)
+        {
+            float progress = Compute(totalAssetsToResolve);
+            inProgressWeightedBytes = 0;
             maxReportedProgress = Mathf.Max(maxReportedProgress, progress);
             return maxReportedProgress;
         }
 
-        private void CreditAverageSize()
+        private float Compute(int totalAssetsToResolve)
         {
-            if (entitiesWithKnownSize > 0 && totalBytesExpected > 0)
-                completedBytes += totalBytesExpected / entitiesWithKnownSize;
-        }
-
-        private float Compute(long inProgressWeightedBytes, int totalAssetsToResolve, int assetsResolved)
-        {
-            // Fallback: count-based progress when no byte data is available
-            if (entitiesWithKnownSize <= 0 || totalBytesExpected <= 0)
-                return totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1f;
-
-            // Estimate unknown assets using average size of known assets
-            long avgSize = totalBytesExpected / entitiesWithKnownSize;
-            int unknownCount = totalAssetsToResolve - entitiesWithKnownSize;
-            long effectiveTotal = totalBytesExpected + avgSize * Math.Max(0, unknownCount);
+            int unknownCount = Math.Max(0, totalAssetsToResolve - entitiesWithKnownSize);
+            long effectiveTotal = totalBytesExpected + (UNKNOWN_ASSET_BYTES * unknownCount);
 
             return effectiveTotal > 0
                 ? Mathf.Clamp01((float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)

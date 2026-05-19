@@ -104,10 +104,14 @@ namespace ECS.SceneLifeCycle.Systems
                 concluded = true;
 
                 List<Entity> toDelete = ListPool<Entity>.Get();
-                long inProgressWeightedBytes = 0;
+
+                // iterate over entities
 
                 foreach (Entity entityRef in entitiesUnderObservation!)
                 {
+                    // if entity has died
+                    // or entity no longer contains GltfContainerComponent
+                    // continue
                     if (!World.IsAlive(entityRef)
                         || !World.TryGet(entityRef, out GltfContainerComponent gltfContainerComponent))
                     {
@@ -116,25 +120,22 @@ namespace ECS.SceneLifeCycle.Systems
                         continue;
                     }
 
-                    (long contentLength, float entityProgress) = ReadLoadingState(in gltfContainerComponent);
-                    progressTracker!.RegisterIfNew(entityRef, contentLength);
-
                     if (gltfContainerComponent.State == LoadingState.Loading)
                     {
+                        (long contentLength, float entityProgress) = ReadLoadingState(in gltfContainerComponent);
+                        progressTracker!.RegisterIfNew(entityRef, contentLength);
                         concluded = false;
-
-                        if (contentLength > 0)
-                            inProgressWeightedBytes += (long)(entityProgress * contentLength);
+                        progressTracker.AccumulateInProgress(entityProgress, contentLength);
                     }
                     else
                     {
-                        progressTracker.CreditFinish(entityRef, contentLength);
+                        progressTracker!.CreditFinish(entityRef);
                         toDelete.Add(entityRef);
                     }
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = progressTracker!.ComputeAndClamp(inProgressWeightedBytes, totalAssetsToResolve, assetsResolved);
+                float progress = progressTracker!.ComputeAndClamp(totalAssetsToResolve);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
@@ -190,9 +191,7 @@ namespace ECS.SceneLifeCycle.Systems
         private (long contentLength, float progress) ReadLoadingState(in GltfContainerComponent gltfContainerComponent)
         {
             Entity promiseEntity = gltfContainerComponent.Promise.Entity;
-
-            if (!World.IsAlive(promiseEntity)
-                || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
+            if (!World.IsAlive(promiseEntity) || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
                 return (0, 0f);
 
             return (loadingState.ContentLength, loadingState.Progress);
