@@ -6,7 +6,7 @@ using NUnit.Framework;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Global.Tests.EditMode
+namespace Global.Tests.PlayMode
 {
     public class BootstraperShould
     {
