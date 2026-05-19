@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using Global.Dynamic;
 using MVC;
 using NSubstitute;
@@ -5,14 +6,24 @@ using NUnit.Framework;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Global.Tests.EditMode
+namespace Global.Tests.PlayMode
 {
     public class BootstraperShould
     {
+        private IMVCManager mvcManager;
+
+        [SetUp]
+        public async void Setup()
+        {
+            mvcManager = Substitute.For<IMVCManager>();
+            await UniTask.Yield();
+        }
+
         [Test]
         public async Task DisableHudOnStartup_OnlyTouchesMVCCanvases_NotSceneUIDocuments()
         {
-            IMVCManager mvcManager = Substitute.For<IMVCManager>();
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => mvcManager != null);
 
             await Bootstrap.DisableHudOnStartupAsync(mvcManager, CancellationToken.None);
 
@@ -23,7 +34,9 @@ namespace Global.Tests.EditMode
         [Test]
         public async Task DisableHudOnStartup_DoesNothing_WhenCancelledBeforeFrameAdvances()
         {
-            IMVCManager mvcManager = Substitute.For<IMVCManager>();
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => mvcManager != null);
+
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
