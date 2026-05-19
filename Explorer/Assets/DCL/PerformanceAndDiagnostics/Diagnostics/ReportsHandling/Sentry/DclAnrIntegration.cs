@@ -12,6 +12,7 @@ using Sentry.Unity;
 using Sentry.Unity.Integrations;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
+using RichTypes;
 
 namespace DCL.Diagnostics.Sentry
 {
@@ -77,18 +78,33 @@ namespace DCL.Diagnostics.Sentry
 
         internal abstract void Stop(bool wait = false);
 
+        private static string NewDumpMessage()
+        {
+#if UNITY_STANDALONE_WIN
+            Result<string> dumpResult = ThreadsDumpUtility.CollectDumpInfoBase64();
+            if (dumpResult.Success == false)
+            {
+                return $"Dump cannot be collected: {dumpResult.ErrorMessage}";
+            }
+
+            return $"Dump collected: {dumpResult.Value}";
+#else
+            return "Dump is not available on macOS yet";
+#endif
+        }
+
         protected void Report()
         {
             // Don't report events while in the background.
             if (!Paused)
             {
-                
+                string dumpMessage = NewDumpMessage();
 
                 System.Text.StringBuilder sb = new ();
                 sb.Append("DclApplication not responding for at least ");
                 sb.Append(DetectionTimeoutMs);
                 sb.Append(" ms. ");
-
+                sb.Append(dumpMessage);
                 string message = sb.ToString();
 
                 Logger?.LogInfo("Detected an DclAnr event: {0}", message);
@@ -97,12 +113,6 @@ namespace DCL.Diagnostics.Sentry
                 exception.SetSentryMechanism(Mechanism, "Main thread unresponsive.", false);
                 OnApplicationNotResponding?.Invoke(this, exception);
             }
-        }
-
-        public static string CurrentCallStack()
-        {
-            // TODO impl, native part required
-            return "";
         }
     }
 
@@ -254,4 +264,70 @@ namespace DCL.Diagnostics.Sentry
             }
         }
     }
+
+// Not supported on macOS yet
+#if UNITY_STANDALONE_WIN
+
+    public static class ThreadsDumpUtility
+    {
+        // procdump.exe -accepteula -mt <PID> dump.dmp
+        public static Result CollectDumpInfoFile(string targetDmpPath)
+        {
+            const string NAME = "procdump.exe";
+            string dirPath = Application.streamingAssetsPath;
+            string exeFile = System.IO.Path.Combine(dirPath, NAME);
+
+            int pid = Process.GetCurrentProcess().Id; // IL2CPP safe
+
+            string[] exeArgs = new []
+            {
+                "-accepteula",
+                "-mt",
+                pid.ToString(),
+                targetDmpPath,
+            };
+
+            Result<int> result = Plugins.DclNativeProcesses.DclProcesses.Start(fileName: exeFile, args: exeArgs);
+            if (result.Success == false)
+            {
+                return Result.ErrorResult($"Cannot collect: {result.ErrorMessage}");
+            }
+
+            return Result.SuccessResult();
+        }
+
+        public static string NewDumpFilePath()
+        {
+            string fileName = System.IO.Path.GetRandomFileName();
+            string filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+            return filePath;
+        }
+
+        public static Result<string> CollectDumpInfoBase64()
+        {
+            string filePath = ThreadsDumpUtility.NewDumpFilePath();
+
+            Result result = ThreadsDumpUtility.CollectDumpInfoFile(filePath);
+            if (result.Success == false)
+            {
+                return Result<string>.ErrorResult($"Cannot collect: {result.ErrorMessage}");
+            }
+
+            bool exists = System.IO.File.Exists(filePath);
+            if (exists == false)
+            {
+                return Result<string>.ErrorResult($"Temp File does not exist after writing: {filePath}");
+            }
+
+            byte[] bytes = System.IO.File.ReadAllBytes(filePath); // yes, it allocs but rarely called
+            string base64String = System.Convert.ToBase64String(bytes);
+
+            System.IO.File.Delete(filePath); // clean the temp file
+
+            return Result<string>.SuccessResult(base64String);
+        }
+    }
+
+#endif
+
 }
