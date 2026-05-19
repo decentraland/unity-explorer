@@ -11,35 +11,29 @@ using ECS.LifeCycle.Components;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using RichTypes;
-using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
     /// <summary>
     ///     Owns the creation part of the Nearby audio-source lifecycle.
     ///     For every avatar entity (<see cref="Profile"/> + <see cref="AvatarBase"/> + <see cref="NearbyAudioStreamerComponent"/> + <see cref="InAudibleRangeTag"/>)
-    ///     the system materializes a single audio-source entity for the resolver-picked <c>(walletId, CurrentSid)</c> pair when one does not yet exist.
-    ///     Throttled to a fixed budget per frame so a crowd ramp-up does not spike a single tick.
+    ///     the system materializes the audio-source component for the resolver-picked <c>(walletId, CurrentSid)</c> pair when one does not yet exist.
     /// </summary>
     [UpdateInGroup(typeof(NearbyVoiceChatGroup))]
     [UpdateAfter(typeof(NearbyAudibleRangeSystem))]
     [UpdateBefore(typeof(NearbyAudioPositionSystem))]
     public partial class NearbyAudioBindingSystem : BaseUnityLoopSystem
     {
-        internal const int MAX_CREATIONS_PER_FRAME = 10;
-
         private readonly INearbyAudioStreamRegistry registry;
-        private readonly HashSet<StreamKey> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioSourceFactory sourceFactory;
         private readonly RoomMetadataCurrentScene roomMetadataCurrentScene;
 
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
         {
             this.registry = registry;
-            this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
@@ -73,9 +67,10 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             // The resolver dedup contract guarantees one active sid per participant — bridge keeps CurrentSid
             // in sync with the registry's pick. Iterate it directly; no per-avatar registry call on the hot path.
+            // Dedup against duplicate creation lives in the [None<NearbyAudioSourceComponent>] archetype filter — one
+            // source per avatar entity is the invariant, and the one-avatar-per-walletId invariant from the profile
+            // layer guarantees this also dedups by StreamKey.
             var key = new StreamKey(walletId, nearby.CurrentSid);
-
-            if (bindings.Contains(key)) return;
 
             Weak<AudioStream> stream = registry.GetActiveStream(key);
 
@@ -84,8 +79,6 @@ namespace DCL.VoiceChat.Nearby.Systems
 
             LivekitAudioSource source = sourceFactory.Create(key, stream);
             World.Add(avatarEntity, new NearbyAudioSourceComponent(key, source));
-
-            bindings.Add(key);
         }
     }
 }

@@ -24,11 +24,9 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// <summary>
     /// Documents <see cref="NearbyAudioBindingSystem"/> contract:
     ///
-    /// - One audio-source entity per <c>(walletId, sid)</c> pair, created only when the avatar entity is fully ready
-    ///   (Profile + AvatarBase + StreamingAudioComponent + InAudibleRangeTag, no DeleteEntityIntention).
-    /// - Throttled to <see cref="NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME"/> per tick — large crowd ramp-ups
-    ///   spread across multiple frames instead of spiking a single one.
-    /// - Idempotent: re-ticking with no registry changes does not duplicate bindings.
+    /// - One audio-source component per avatar entity, created only when the avatar is fully ready
+    ///   (Profile + AvatarBase + NearbyAudioStreamerComponent + InAudibleRangeTag, no DeleteEntityIntention).
+    /// - Idempotent: re-ticking with no registry changes does not duplicate sources.
     /// - Hot path reads sids from the per-entity <see cref="NearbyAudioStreamerComponent"/>, not the registry.
     /// </summary>
     public class NearbyAudioBindingSystemShould : UnitySystemTestBase<NearbyAudioBindingSystem>
@@ -41,7 +39,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry;
-        private HashSet<StreamKey> bindings;
         private IUserBlockingCache userBlockingCache;
         private NearbyVoiceChatStateModel stateModel;
 
@@ -55,12 +52,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
-            bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             sourceFactory = new FakeNearbyAudioSourceFactory();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
+            system = new NearbyAudioBindingSystem(world, registry, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
@@ -72,7 +68,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             gameObjects.Clear();
 
-            bindings.Clear();
             stateModel.Dispose();
 
             EcsTestsUtils.TearDownFeaturesRegistry();
@@ -154,8 +149,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "blocked identity must not allocate an audio entity");
-            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False,
-                "skipped creation must not poison the bindings index");
         }
 
         [Test]
@@ -248,8 +241,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "Weak<AudioStream>.Null on resolve must not create an audio entity");
-            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False,
-                "skipped creation must not poison the bindings index");
         }
 
         // ── Archetype gate via StreamingAudioComponent / InAudibleRangeTag ─
@@ -269,7 +260,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "absent StreamingAudioComponent must skip the avatar at archetype level");
-            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False);
         }
 
         [Test]
@@ -287,7 +277,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(CountAudioEntities(), Is.EqualTo(1));
-            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.True);
         }
 
         [Test]
@@ -323,7 +313,6 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             Assert.That(CountAudioEntities(), Is.EqualTo(0),
                 "absent InAudibleRangeTag must skip the avatar at archetype level");
-            Assert.That(bindings.Contains(new StreamKey(WALLET, SID)), Is.False);
         }
 
         [Test]
@@ -361,12 +350,11 @@ namespace DCL.VoiceChat.Nearby.Tests
             mock.IsActiveSpeaker(Arg.Any<string>()).ReturnsForAnyArgs(false);
 
             // Replace registry with the mock for the lifetime of this test.
-            var localBindings = new HashSet<StreamKey>();
             using var localStateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {
-                var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory, RoomMetadataCurrentScene.CreateForTest());
+                var localSystem = new NearbyAudioBindingSystem(world, mock, userBlockingCache, localStateModel, localFactory, RoomMetadataCurrentScene.CreateForTest());
 
                 const string WALLET = "wallet-alice";
                 const string SID = "sid-1";

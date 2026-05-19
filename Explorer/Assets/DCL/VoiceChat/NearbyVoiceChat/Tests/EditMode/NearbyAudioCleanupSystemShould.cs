@@ -30,9 +30,9 @@ namespace DCL.VoiceChat.Nearby.Tests
     /// - Listening-gate / device-change paths bulk-remove the component from every live entity.
     /// - Avatars carrying <see cref="DeleteEntityIntention"/> get only their source disposed — the
     ///   component goes away with the entity when DestroyEntitiesSystem runs.
-    /// - Tests assert the system's own contribution: component removed (live triggers) / source disposed,
-    ///   bindings index in sync. They do NOT assert avatar-entity destruction (out of scope).
-    /// - <see cref="NearbyAudioCleanupSystem.Dispose"/> disposes any survivors and clears bindings.
+    /// - Tests assert the system's own contribution: component removed (live triggers) / source disposed.
+    ///   They do NOT assert avatar-entity destruction (out of scope).
+    /// - <see cref="NearbyAudioCleanupSystem.Dispose"/> disposes any survivors.
     /// </summary>
     public class NearbyAudioCleanupSystemShould : UnitySystemTestBase<NearbyAudioCleanupSystem>
     {
@@ -46,7 +46,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry = null!;
-        private HashSet<StreamKey> bindings = null!;
         private IUserBlockingCache userBlockingCache = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
         private VoiceChatConfiguration configuration = null!;
@@ -59,13 +58,12 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
-            bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
+            system = new NearbyAudioCleanupSystem(world, registry, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
@@ -74,7 +72,6 @@ namespace DCL.VoiceChat.Nearby.Tests
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
-            bindings.Clear();
             stateModel.Dispose();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
@@ -97,11 +94,9 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             system.Update(0);
 
-            // Trigger #7 disposes the source and drops the bindings entry, but does NOT World.Remove the
-            // component — the dying avatar will take it down on physical destruction.
+            // Trigger #7 disposes the source but does NOT World.Remove the component — the dying avatar
+            // will take it down on physical destruction.
             AssertSourceTornDown(source);
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.False,
-                "bindings entry must be dropped when the avatar is on its way out");
         }
 
         // ── Trigger #2: stream gone ─────────────────────────────────
@@ -161,7 +156,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0), "all audio components must be removed");
-            Assert.That(bindings, Is.Empty);
             foreach ((Entity avatarEntity, LivekitAudioSource source, _) in seeded)
             {
                 Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False,
@@ -188,7 +182,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0));
-            Assert.That(bindings, Is.Empty);
             foreach ((Entity avatarEntity, LivekitAudioSource source, _) in seeded)
             {
                 Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False);
@@ -267,7 +260,6 @@ namespace DCL.VoiceChat.Nearby.Tests
                 "healthy steady-state entity must keep its audio-source component");
             Assert.That(world.IsAlive(avatarEntity), Is.True);
             Assert.That(source == null, Is.False, "LivekitAudioSource must remain alive");
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
         }
 
         // FlagsLosingSidAudioEntityWhenResolverPicksSibling — DELETED.
@@ -318,8 +310,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             AssertSourceTornDown(source);
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.False,
-                "bindings entry must be dropped for a dying avatar");
             Assert.That(world.Has<NearbyAudioStreamerComponent>(avatarEntity), Is.True,
                 "Bridge's [None<DeleteEntityIntention>] filter prevents component removal on a doomed avatar");
         }
@@ -389,7 +379,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.IsAlive(avatarEntity), Is.True);
             Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.True);
             Assert.That(source == null, Is.False);
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(1));
         }
 
@@ -412,22 +401,19 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             foreach (LivekitAudioSource source in sources)
                 AssertSourceTornDown(source);
-
-            Assert.That(bindings, Is.Empty);
         }
 
         // ── Helpers ─────────────────────────────────────────────────
 
         // Slice 4: cleanup contract for the LIVE doom path — component removed from the avatar entity,
-        // source torn down, binding dropped. The avatar entity itself stays alive (it's the avatar; it
-        // just no longer carries an audio-source pair).
+        // source torn down. The avatar entity itself stays alive (it's the avatar; it just no longer
+        // carries an audio-source pair).
         private void AssertCleanedUp(Entity avatarEntity, LivekitAudioSource source, string walletId, string sid)
         {
             Assert.That(world.IsAlive(avatarEntity), Is.True, "avatar entity destruction is out of scope here");
             Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False,
                 "audio-source component must be removed from the avatar");
             AssertSourceTornDown(source, "LivekitAudioSource must be torn down (destroyed in legacy path, parked inactive in pool path)");
-            Assert.That(bindings.Contains(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
         }
 
         // A2 made source teardown reference-stable: the pool keeps the GO alive after Dispose. Both
@@ -457,7 +443,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             var key = new StreamKey(walletId, sid);
             LivekitAudioSource source = CreateLivekitAudioSource(key);
             world.Add(avatarEntity, new NearbyAudioSourceComponent(key, source));
-            bindings.Add(key);
 
             return (avatarEntity, avatarEntity, source);
         }

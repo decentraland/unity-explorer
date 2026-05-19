@@ -8,8 +8,6 @@ using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using LiveKit.Rooms.Streaming;
-using System.Collections.Generic;
 
 namespace DCL.VoiceChat.Nearby.Systems
 {
@@ -36,7 +34,6 @@ namespace DCL.VoiceChat.Nearby.Systems
             new QueryDescription().WithAll<NearbyAudioSourceComponent>().WithNone<DeleteEntityIntention>();
 
         private readonly INearbyAudioStreamRegistry registry;
-        private readonly HashSet<StreamKey> bindings;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioSourceFactory sourceFactory;
@@ -45,10 +42,9 @@ namespace DCL.VoiceChat.Nearby.Systems
         // Mismatch with registry.RebuildEpoch ⇒ output-device changed since last tick.
         private int lastSeenRebuildEpoch;
 
-        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
+        internal NearbyAudioCleanupSystem(World world, INearbyAudioStreamRegistry registry, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
         {
             this.registry = registry;
-            this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
@@ -73,7 +69,6 @@ namespace DCL.VoiceChat.Nearby.Systems
             {
                 DisposeAllLiveSourcesQuery(World);
                 World.Remove<NearbyAudioSourceComponent>(in LIVE_AUDIO_QUERY);
-                bindings.Clear();
             }
             else
             {
@@ -91,7 +86,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         {
             DisposeAllLiveSourcesQuery(World);
             DisposeDyingAvatarSourcesQuery(World);
-            bindings.Clear();
         }
 
         // Trigger #1: avatar lost NearbyAudioStreamerComponent — unconditional reap.
@@ -125,9 +119,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void DisposeAndRemove(Entity entity, ref NearbyAudioSourceComponent comp)
         {
             sourceFactory.Dispose(comp.LivekitAudioSource);
-            StreamKey key = comp.Key;
             World.Remove<NearbyAudioSourceComponent>(entity);
-            bindings.Remove(key);
         }
 
         [Query]
@@ -142,7 +134,6 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void DisposeDyingAvatarSources(ref NearbyAudioSourceComponent comp)
         {
             sourceFactory.Dispose(comp.LivekitAudioSource);
-            bindings.Remove(comp.Key);
         }
     }
 }

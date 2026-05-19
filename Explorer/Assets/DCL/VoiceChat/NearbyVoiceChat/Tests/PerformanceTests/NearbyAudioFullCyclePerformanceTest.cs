@@ -46,7 +46,6 @@ namespace DCL.VoiceChat.Nearby
         private readonly List<GameObject> gameObjects = new (256);
 
         private FakeStreamRegistry registry;
-        private HashSet<StreamKey> bindings;
         private NearbyVoiceChatStateModel stateModel;
         private VoiceChatConfiguration configuration;
         private NearbyAudioSourceFactory sourceFactory;
@@ -69,7 +68,6 @@ namespace DCL.VoiceChat.Nearby
             world.Create(new PlayerComponent(playerGo.transform));
 
             registry = new FakeStreamRegistry();
-            bindings = new HashSet<StreamKey>();
             IUserBlockingCache userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
@@ -86,9 +84,9 @@ namespace DCL.VoiceChat.Nearby
 
             RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
+            system = new NearbyAudioBindingSystem(world, registry, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
-            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
+            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             markerSystem = new NearbyLivekitBridgeSystem(world, registry);
             audibleRangeSystem = new NearbyAudibleRangeSystem(world, configuration, listenerState);
             audibleRangeSystem.Initialize();
@@ -124,7 +122,6 @@ namespace DCL.VoiceChat.Nearby
                 if (go != null) Object.DestroyImmediate(go);
             gameObjects.Clear();
 
-            bindings.Clear();
             stateModel.Dispose();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
@@ -496,9 +493,9 @@ namespace DCL.VoiceChat.Nearby
             }
         }
 
-        private static int ComputeRampUpTicks(int participantCount) =>
-            ((participantCount + NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME - 1)
-             / NearbyAudioBindingSystem.MAX_CREATIONS_PER_FRAME) + 1;
+        // Binding now materializes every ready avatar in a single tick (no per-tick budget); two ticks are
+        // enough for the marker + binding + position chain to reach steady state regardless of participant count.
+        private static int ComputeRampUpTicks(int participantCount) => 2;
 
         private Entity CreateAvatarEntity(string walletId)
         {

@@ -75,7 +75,6 @@ namespace DCL.VoiceChat.Nearby
         // ── World/system state ──────────────────────────────────────
         private World world;
         private FakeStreamRegistry registry;
-        private HashSet<StreamKey> bindings;
         private NearbyVoiceChatStateModel stateModel;
         private VoiceChatConfiguration configuration;
         private NearbyAudioSourceFactory sourceFactory;
@@ -123,7 +122,6 @@ namespace DCL.VoiceChat.Nearby
             listenerState.BindListener(camera.transform, playerGo.transform);
 
             registry = new FakeStreamRegistry();
-            bindings = new HashSet<StreamKey>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
@@ -133,10 +131,10 @@ namespace DCL.VoiceChat.Nearby
 
             RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
 
-            bindingSystem = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
+            bindingSystem = new NearbyAudioBindingSystem(world, registry, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
             positionSystem.Initialize();
-            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
+            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
         }
 
         private void Update()
@@ -290,9 +288,8 @@ namespace DCL.VoiceChat.Nearby
             int markedCount = world.CountEntities(in DELETE_INTENTION_QUERY);
 
             GUI.Label(new Rect(10, 10, 480, 20), $"Avatars: {avatars.Count}/{targetAvatarCount}");
-            GUI.Label(new Rect(10, 30, 480, 20), $"Bindings: {bindings.Count}");
-            GUI.Label(new Rect(10, 50, 480, 20), $"Audio entities: {audioCount} (marked for delete: {markedCount})");
-            GUI.Label(new Rect(10, 70, 480, 20), $"State: {stateModel.State.Value} (Inspector target: {forceState})");
+            GUI.Label(new Rect(10, 30, 480, 20), $"Audio entities: {audioCount} (marked for delete: {markedCount})");
+            GUI.Label(new Rect(10, 50, 480, 20), $"State: {stateModel.State.Value} (Inspector target: {forceState})");
         }
 
         // ── Inspector context-menu actions ──────────────────────────

@@ -242,7 +242,7 @@ namespace DCL.VoiceChat.Nearby.Audio
         // Publishes a NEW filtered array on every successful update; never mutates 'prev'.
         // Required by the immutability contract in the class XML: GetActiveSid iterates the
         // array assuming snapshot semantics — in-place edits would race the resolver mid-pick.
-        // Single-writer assumption (serial FFI dispatch) — no CAS retry needed.
+        // Single-writer assumption (serial FFI dispatch).
         private void RemoveAudioSid(string identity, string sid)
         {
             DCLConcurrentDictionary<string, string[]> snap = DCLVolatile.Read(ref streamsByIdentity);
