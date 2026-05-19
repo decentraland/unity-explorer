@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -8,6 +9,9 @@ using DCL.Profiling.ECS;
 using DCL.RealmNavigation;
 using ECS;
 using ECS.Abstract;
+using Newtonsoft.Json;
+using System;
+using System.IO;
 using UnityEngine;
 using Utility.Json;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -30,6 +34,11 @@ namespace DCL.Analytics.Systems
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
 
+        // When non-null, every emitted PERFORMANCE_REPORT payload is also appended to this file as one
+        // compact JSON object per line (NDJSON). Enabled via -perfRecord or -alttester CLI flags.
+        private readonly string? perfRecordFilePath;
+        private bool perfRecordFileWriteFailed;
+
         private float lastReportTime;
 
         public PerformanceAnalyticsSystem(
@@ -39,7 +48,8 @@ namespace DCL.Analytics.Systems
             IRealmData realmData,
             IProfiler profiler,
             IReadOnlyEntityParticipantTable entityParticipantTable,
-            JsonObjectBuilder jsonObjectBuilder) : base(world)
+            JsonObjectBuilder jsonObjectBuilder,
+            string? perfRecordFilePath = null) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
@@ -48,7 +58,11 @@ namespace DCL.Analytics.Systems
             this.loadingStatus = loadingStatus;
             this.jsonObjectBuilder = jsonObjectBuilder;
             this.entityParticipantTable = entityParticipantTable;
+            this.perfRecordFilePath = perfRecordFilePath;
             config = analytics.Configuration;
+
+            if (perfRecordFilePath != null)
+                ReportHub.Log(ReportCategory.ANALYTICS, $"PerformanceAnalyticsSystem: dumping PERFORMANCE_REPORT payloads to '{perfRecordFilePath}'.");
         }
 
         protected override void Update(float t)
@@ -150,6 +164,23 @@ namespace DCL.Analytics.Systems
             using PooledJsonObject pooled = jsonObjectBuilder.BuildPooled();
 
             analytics.Track(General.PERFORMANCE_REPORT, pooled.Json);
+
+            if (perfRecordFilePath != null && !perfRecordFileWriteFailed)
+                AppendPayloadToFile(pooled.Json.ToString(Formatting.None));
+        }
+
+        private void AppendPayloadToFile(string compactJson)
+        {
+            try
+            {
+                File.AppendAllText(perfRecordFilePath!, compactJson + "\n");
+            }
+            catch (Exception e)
+            {
+                // Disable further writes after first failure so we don't spam the log every interval.
+                perfRecordFileWriteFailed = true;
+                ReportHub.LogException(e, ReportCategory.ANALYTICS);
+            }
         }
     }
 }

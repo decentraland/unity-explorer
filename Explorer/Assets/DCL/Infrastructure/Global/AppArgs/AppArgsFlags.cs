@@ -94,6 +94,13 @@ namespace Global.AppArgs
         public const string MULTIPLE_RUNNING_INSTANCES = "multi-instance";
         public const string ALTTESTER = "alttester";
 
+        /// <summary>
+        /// When set (or when <see cref="ALTTESTER"/> is set), every emitted PERFORMANCE_REPORT analytics
+        /// payload is also dumped to <c>Application.persistentDataPath/perf-&lt;launch-timestamp&gt;.json</c>
+        /// as NDJSON (one report per line). Consumed by explorer-automation perf canary tests.
+        /// </summary>
+        public const string PERF_RECORD = "perfRecord";
+
         public const string REPORT_USER = "report-user";
 
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";

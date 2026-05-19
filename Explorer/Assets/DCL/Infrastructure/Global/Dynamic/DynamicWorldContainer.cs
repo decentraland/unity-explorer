@@ -1314,6 +1314,7 @@ namespace Global.Dynamic
                         staticContainer.ScenesCache,
                         chatEventBus,
                         translationSettings,
+                        appArgs,
                         nearbyStateModel,
                         nearbyMuteService
                     )

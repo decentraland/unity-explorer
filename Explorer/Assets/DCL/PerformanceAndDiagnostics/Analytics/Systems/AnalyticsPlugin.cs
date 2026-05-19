@@ -15,6 +15,10 @@ using DCL.VoiceChat.Nearby;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using Global.AppArgs;
+using System;
+using System.IO;
+using UnityEngine;
 using Utility;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
@@ -34,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventBus eventBus;
         private readonly IScenesCache scenesCache;
         private readonly ITranslationSettings translationSettings;
+        private readonly IAppArgs appArgs;
         private readonly NearbyVoiceChatStateModel? nearbyVoiceStateModel;
         private readonly NearbyMuteService? nearbyMuteService;
 
@@ -58,6 +63,7 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IEventBus eventBus,
             ITranslationSettings translationSettings,
+            IAppArgs appArgs,
             NearbyVoiceChatStateModel? nearbyVoiceStateModel = null,
             NearbyMuteService? nearbyMuteService = null
         )
@@ -74,6 +80,7 @@ namespace DCL.PluginSystem.Global
             this.eventBus = eventBus;
             this.translationSettings = translationSettings;
             this.scenesCache = scenesCache;
+            this.appArgs = appArgs;
             this.nearbyVoiceStateModel = nearbyVoiceStateModel;
             this.nearbyMuteService = nearbyMuteService;
 
@@ -100,7 +107,7 @@ namespace DCL.PluginSystem.Global
             if (nearbyVoiceStateModel != null && nearbyMuteService != null)
                 nearbyVoiceChatAnalytics = new NearbyVoiceChatAnalytics(analytics, nearbyVoiceStateModel, nearbyMuteService);
 
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder());
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, loadingStatus, realmData, profiler, entityParticipantTable, new JsonObjectBuilder(), ResolvePerfRecordFilePath());
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
@@ -109,6 +116,15 @@ namespace DCL.PluginSystem.Global
             AvatarInstantiatorAnalyticsSystem.InjectToWorld(ref builder, analytics);
             ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
             DebugAnalyticsSystem.InjectToWorld(ref builder, analytics, debugContainerBuilder);
+        }
+
+        private string? ResolvePerfRecordFilePath()
+        {
+            if (!appArgs.HasFlag(AppArgsFlags.PERF_RECORD) && !appArgs.HasFlag(AppArgsFlags.ALTTESTER))
+                return null;
+
+            string timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            return Path.Combine(Application.persistentDataPath, $"perf-{timestamp}.json");
         }
     }
 }
