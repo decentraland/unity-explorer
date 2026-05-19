@@ -48,11 +48,12 @@ jobs:
                 f.filename === 'CODEOWNERS'
               );
               if (touchesSensitive) {
-                core.notice('Auto-review disabled: PR modifies .github/prompts, .github/workflows, or CODEOWNERS. Human review required.');
+                core.notice('Sensitive paths modified (.github/prompts, .github/workflows, or CODEOWNERS): Claude will review but not auto-approve. Human DEV review required; QA can still be waived if Claude reports QA_REQUIRED: NO.');
               }
             }
 
-            core.setOutput('is-auto-review', (isAutoReview && !touchesSensitive).toString());
+            core.setOutput('is-auto-review', isAutoReview.toString());
+            core.setOutput('touches-sensitive', touchesSensitive.toString());
 
       - name: Set status to pending
         if: steps.check-type.outputs.is-auto-review == 'true'
@@ -127,6 +128,7 @@ jobs:
             const prNumber = ${{ github.event.pull_request.number }};
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const touchesSensitive = '${{ steps.check-type.outputs.touches-sensitive }}' === 'true';
 
             const comments = await github.rest.issues.listComments({
               owner, repo, issue_number: prNumber, per_page: 100
@@ -153,8 +155,12 @@ jobs:
             );
             const prLabels = (context.payload.pull_request.labels || []).map(l => l.name);
             const COMPLEX_MARKER = '🔍 Claude reviewed this PR and found no blocking issues';
+            const SENSITIVE_MARKER = '🔒 Claude reviewed this PR — sensitive paths modified';
 
-            if (hasReviewResult && passed && isSimple) {
+            const canAutoApprove = hasReviewResult && passed && isSimple && !touchesSensitive;
+            const canWaiveQa = hasReviewResult && passed && isSimple && !qaRequired;
+
+            if (canAutoApprove) {
               if (ourApprovals.length === 0) {
                 const approvalBody = qaRequired
                   ? 'Auto-approved by Claude — simple fix/chore with no blocking issues. QA approval is still required.'
@@ -163,33 +169,49 @@ jobs:
                   owner, repo, pull_number: prNumber, event: 'APPROVE', body: approvalBody
                 });
               }
-              const labels = qaRequired ? ['claude-approved'] : ['claude-approved', 'no QA needed'];
-              await github.rest.issues.addLabels({ owner, repo, issue_number: prNumber, labels });
-              if (qaRequired && prLabels.includes('no QA needed')) {
-                await github.rest.issues.removeLabel({
-                  owner, repo, issue_number: prNumber, name: 'no QA needed'
-                }).catch(e => console.log(`removeLabel: ${e.message}`));
-              }
-            } else if (hasReviewResult && (failed || !isSimple)) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: prNumber, labels: ['claude-approved']
+              });
+            } else if (hasReviewResult) {
               for (const r of ourApprovals) {
                 await github.rest.pulls.dismissReview({
                   owner, repo, pull_number: prNumber, review_id: r.id,
                   message: 'Dismissed: latest Claude review no longer auto-approves this PR.'
                 }).catch(e => console.log(`dismissReview: ${e.message}`));
               }
-              for (const name of ['claude-approved', 'no QA needed']) {
-                if (!prLabels.includes(name)) continue;
+              if (prLabels.includes('claude-approved')) {
                 await github.rest.issues.removeLabel({
-                  owner, repo, issue_number: prNumber, name
-                }).catch(e => console.log(`removeLabel ${name}: ${e.message}`));
+                  owner, repo, issue_number: prNumber, name: 'claude-approved'
+                }).catch(e => console.log(`removeLabel claude-approved: ${e.message}`));
               }
-              if (!failed && !isSimple && !comments.data.some(c =>
+              if (touchesSensitive && passed && isSimple && !comments.data.some(c =>
+                  c.user?.login === 'github-actions[bot]' && c.body?.startsWith(SENSITIVE_MARKER))) {
+                const qaNote = qaRequired
+                  ? 'QA approval is still required.'
+                  : 'No QA needed (Claude reported `QA_REQUIRED: NO`).';
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: prNumber,
+                  body: `${SENSITIVE_MARKER} (\`.github/prompts\`, \`.github/workflows\`, or \`CODEOWNERS\`). Claude will not auto-approve these PRs — human DEV review is required. ${qaNote}`
+                });
+              } else if (!touchesSensitive && passed && !isSimple && !comments.data.some(c =>
                   c.user?.login === 'github-actions[bot]' && c.body?.startsWith(COMPLEX_MARKER))) {
                 await github.rest.issues.createComment({
                   owner, repo, issue_number: prNumber,
                   body: COMPLEX_MARKER + ', but assessed it as **complex** — human DEV review is still required before merging.'
                 });
               }
+            }
+
+            if (canWaiveQa) {
+              if (!prLabels.includes('no QA needed')) {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: prNumber, labels: ['no QA needed']
+                });
+              }
+            } else if (hasReviewResult && prLabels.includes('no QA needed')) {
+              await github.rest.issues.removeLabel({
+                owner, repo, issue_number: prNumber, name: 'no QA needed'
+              }).catch(e => console.log(`removeLabel no QA needed: ${e.message}`));
             }
 
             for (const c of claudeComments.slice(0, -1)) {
@@ -207,6 +229,10 @@ jobs:
               description = 'Claude review encountered an error';
             } else if (failed) {
               description = 'Claude found issues that must be resolved';
+            } else if (touchesSensitive && isSimple) {
+              description = canWaiveQa
+                ? 'No blocking issues — sensitive paths, DEV review required (no QA needed)'
+                : 'No blocking issues — sensitive paths, DEV review required';
             } else if (isSimple) {
               description = 'No blocking issues found — PR auto-approved';
             } else {
