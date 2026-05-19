@@ -374,24 +374,18 @@ namespace DCL.Diagnostics.Sentry
 
         public static Result<string> CollectDumpInfoBase64()
         {
-            string filePath = ThreadsDumpUtility.NewDumpFilePath();
-
-            Result result = ThreadsDumpUtility.CollectDumpInfoFile(filePath);
+            Result<(string filePath, string zipPath)> result = CollectAndArchiveDumpInfoToAppDir();
             if (result.Success == false)
             {
-                return Result<string>.ErrorResult($"Cannot collect: {result.ErrorMessage}");
+                return Result<string>.ErrorResult($"Error on Dump Current: {result.ErrorMessage}");
             }
 
-            bool exists = System.IO.File.Exists(filePath);
-            if (exists == false)
-            {
-                return Result<string>.ErrorResult($"Temp File does not exist after writing: {filePath}");
-            }
-
-            byte[] bytes = System.IO.File.ReadAllBytes(filePath); // yes, it allocs but rarely called
+            byte[] bytes = System.IO.File.ReadAllBytes(result.Value.zipPath); // yes, it allocs but rarely called
             string base64String = System.Convert.ToBase64String(bytes);
 
-            System.IO.File.Delete(filePath); // clean the temp file
+            // clean the temp files
+            System.IO.File.Delete(result.Value.filePath);
+            System.IO.File.Delete(result.Value.zipPath);
 
             return Result<string>.SuccessResult(base64String);
         }
