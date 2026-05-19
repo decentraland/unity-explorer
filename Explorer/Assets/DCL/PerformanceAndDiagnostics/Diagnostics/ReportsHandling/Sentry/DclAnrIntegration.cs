@@ -299,6 +299,7 @@ namespace DCL.Diagnostics.Sentry
         public static string NewDumpFilePath()
         {
             string fileName = System.IO.Path.GetRandomFileName();
+            fileName = System.IO.Path.ChangeExtension(fileName, ".dmp");
             string filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
             return filePath;
         }
@@ -326,6 +327,24 @@ namespace DCL.Diagnostics.Sentry
 
             return Result<string>.SuccessResult(base64String);
         }
+
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Tools/ProcDump/Dump Current")]
+        public static void DumpCurrent()
+        {
+            string filePath = NewDumpFilePath();
+            Result result = CollectDumpInfoFile(filePath);
+            if (result.Success == false)
+            {
+                Debug.LogError($"Error on dumping: {result.ErrorMessage}");
+                return;
+            }
+
+            Debug.Log($"Successfully dumped at: {filePath}");
+        }
+#endif
+
     }
 
 #endif
