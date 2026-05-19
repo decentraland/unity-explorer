@@ -13,6 +13,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using MVC;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Communities
@@ -239,9 +240,8 @@ namespace DCL.Communities
 
         public void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> newCommunities)
         {
-            string[] previouslyJoined = joinedCommunityIds.Count == 0 ? Array.Empty<string>() : new string[joinedCommunityIds.Count];
-            if (previouslyJoined.Length > 0)
-                joinedCommunityIds.CopyTo(previouslyJoined);
+            using PooledObject<HashSet<string>> _ = HashSetPool<string>.Get(out HashSet<string> previouslyJoined);
+            previouslyJoined.UnionWith(joinedCommunityIds);
 
             communities.Clear();
             joinedCommunityIds.Clear();
@@ -257,7 +257,7 @@ namespace DCL.Communities
                     CommunityRemoved?.Invoke(id);
 
             foreach (string id in joinedCommunityIds)
-                if (Array.IndexOf(previouslyJoined, id) < 0)
+                if (!previouslyJoined.Contains(id))
                     CommunityJoined?.Invoke(id);
         }
 

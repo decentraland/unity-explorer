@@ -10,7 +10,7 @@ namespace DCL.VoiceChat
         private readonly ICommunityCallOrchestrator orchestrator;
         private readonly ICommunityDataService communityDataService;
 
-        private readonly Dictionary<string, IDisposable> perCommunitySubscriptions = new ();
+        private readonly Dictionary<string, ReactivePropertyExtensions.DisposableSubscription<bool>> perCommunitySubscriptions = new ();
         private readonly HashSet<string> liveJoinedCommunityIds = new ();
         private readonly ReactiveProperty<bool> hasAnyJoinedCommunityLive = new (false);
 
@@ -60,7 +60,7 @@ namespace DCL.VoiceChat
 
         private void RemoveSubscription(string communityId)
         {
-            if (perCommunitySubscriptions.TryGetValue(communityId, out IDisposable? subscription))
+            if (perCommunitySubscriptions.TryGetValue(communityId, out var subscription))
             {
                 subscription.Dispose();
                 perCommunitySubscriptions.Remove(communityId);
@@ -87,7 +87,7 @@ namespace DCL.VoiceChat
             communityDataService.CommunityJoined -= OnCommunityJoined;
             communityDataService.CommunityRemoved -= OnCommunityRemoved;
 
-            foreach (IDisposable subscription in perCommunitySubscriptions.Values)
+            foreach (var subscription in perCommunitySubscriptions.Values)
                 subscription.Dispose();
 
             perCommunitySubscriptions.Clear();
