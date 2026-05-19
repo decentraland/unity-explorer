@@ -6,6 +6,7 @@ using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NewNotification;
 using DCL.Optimization.PerformanceBudgeting;
@@ -128,7 +129,6 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 diskCache,
                 partialsDiskCache,
-                bootstrapContainer.Environment,
                 ct,
                 appArgs
             );
@@ -223,6 +223,10 @@ namespace Global.Dynamic
         public void InitializeFeaturesRegistry()
         {
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
+
+            // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
+            // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.
+            AssetBundleManifestVersion.DepsDigestKeyingEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.AB_DEPS_DIGEST_CACHE_KEY);
         }
 
         public GlobalWorld CreateGlobalWorld(

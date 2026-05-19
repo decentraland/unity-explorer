@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
@@ -9,9 +10,11 @@ using DCL.Quality;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -112,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var renderer = wearableGO.AddComponent<MeshRenderer>();
 
             // CachedAttachment requires proper initialization - we use reflection to create one with Renderers list
-            var attachment = new Loading.Assets.CachedAttachment(null, wearableGO, false);
+            var attachment = new Loading.Assets.CachedAttachment(null, wearableGO, false, Array.Empty<SpringBoneData>());
             // The Renderers list is created but empty, we need to add a renderer to it
             attachment.Renderers.Add(renderer);
 

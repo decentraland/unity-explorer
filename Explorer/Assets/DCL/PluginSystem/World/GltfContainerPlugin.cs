@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
@@ -117,7 +118,11 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder, buffer));
 
             // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
+            // Bridge GLTF cache keying to the AB layer without leaking AB symbols into LoadGltfContainerSystem:
+            // when the scene's manifest has a deps digest for the hash, the key becomes "hash@digest", else the bare hash.
+            var sceneData = sharedDependencies.SceneData;
+            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
+                hash => sceneData.SceneEntityDefinition.assetBundleManifestVersion.ComposeCacheKey(hash));
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

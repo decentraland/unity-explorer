@@ -171,7 +171,6 @@ namespace Global
             bool enableAnalytics,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
-            DecentralandEnvironment environment,
             CancellationToken ct,
             IAppArgs appArgs,
             bool enableGPUInstancing = true)

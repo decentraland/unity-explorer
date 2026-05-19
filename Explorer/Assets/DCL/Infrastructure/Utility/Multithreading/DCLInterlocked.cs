@@ -42,6 +42,19 @@ namespace Utility.Multithreading
 
 #if UNITY_WEBGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Add(ref long location, long value)
+        {
+            location += value;
+            return location;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Add(ref long location, long value) =>
+            Interlocked.Add(ref location, value);
+#endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Increment(ref int location)
         {
             location = location + 1;
@@ -77,6 +90,22 @@ namespace Utility.Multithreading
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Exchange(ref int location, int value)
+        {
+            return Interlocked.Exchange(ref location, value);
+        }
+#endif
+
+#if UNITY_WEBGL
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Exchange(ref long location, long value)
+        {
+            long previous = location;
+            location = value;
+            return previous;
+        }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static long Exchange(ref long location, long value)
         {
             return Interlocked.Exchange(ref location, value);
         }

@@ -73,7 +73,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 bool putInBridge = partitionAllowsBridge
                                    && issDescriptor != null
                                    && issDescriptor.TryReserveBridgeSlot(component.Hash);
-                cache.Dereference(component.Hash, result.Asset, putInBridge);
+                cache.Dereference(component.CacheKey, result.Asset, putInBridge);
             }
 
             component.RootGameObject = null;

@@ -49,4 +49,4 @@ jobs:
             - You may apply appropriate topic labels based on the issue content
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh label list:*),Bash(gh label create:*),Bash(gh issue close:*)"
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh label list:*),Bash(gh issue comment ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue close ${{ github.event.issue.number || github.event.inputs.issue_number }}:*)"

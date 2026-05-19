@@ -129,7 +129,7 @@ namespace DCL.Backpack.EmotesSection
             );
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             if (!string.IsNullOrEmpty(command.BodyShape))
                 currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);

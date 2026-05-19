@@ -18,7 +18,6 @@ using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-
     /// <summary>
     ///     Starts the scene or changes fps of its execution
     /// </summary>
@@ -68,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!promise.TryConsume(World, out var result) || !result.Succeeded) return;
 
             ISceneFacade scene = result.Asset!;
-            StartScene(definitionComponent, partition, scene);
+            StartAndUpdateSceneAsync(definitionComponent, partition, scene).Forget();
 
             World.Add(entity, scene);
         }
@@ -80,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             World.Add(entity, new SmartWearableSceneStarted());
 
-            StartScene(definitionComponent, partition, scene);
+            StartAndUpdateSceneAsync(definitionComponent, partition, scene).Forget();
         }
 
         [Query]
@@ -92,42 +91,33 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }
 
-        private void StartScene(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
+        private async UniTaskVoid StartAndUpdateSceneAsync(SceneDefinitionComponent definitionComponent, PartitionComponent partition, ISceneFacade scene)
         {
             int fps = realmPartitionSettings.GetSceneUpdateFrequency(partition);
-            RunOnThreadPoolAsync().Forget();
 
-            // So we know the scene has started
-            if (definitionComponent.IsPortableExperience)
-                scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
-            else
-                scenesCache.Add(scene, definitionComponent.Parcels);
-
-            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
-
-            return;
-
-            async UniTaskVoid RunOnThreadPoolAsync()
+            try
             {
-                try
-                {
-                    await DCLTask.SwitchToThreadPool();
+                if (definitionComponent.IsPortableExperience)
+                    scenesCache.AddPortableExperienceScene(scene, definitionComponent.IpfsPath.EntityId);
+                else
+                    scenesCache.Add(scene, definitionComponent.Parcels);
 
-                    if (destroyCancellationToken.IsCancellationRequested) return;
+                ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
+
+                await DCLTask.SwitchToThreadPool();
+
+                if (destroyCancellationToken.IsCancellationRequested) return;
 
 #if !UNITY_WEBGL
-                    // Provide basic thread-pool synchronization context
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+
+                // Provide basic thread-pool synchronization context
+                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 #endif
 
-                    // FPS is set by another system
-                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, GetReportData());
-                }
+                await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
             }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
     }
 }

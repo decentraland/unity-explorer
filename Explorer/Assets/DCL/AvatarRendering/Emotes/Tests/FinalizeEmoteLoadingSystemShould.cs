@@ -225,7 +225,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed by AssetPromise framework (even on failure).");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result for body shape should be null on failure.");
+            Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue, "Asset result should be set to a failed result to prevent retry loops.");
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].Value.Succeeded, "Asset result should be marked as failed.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote should not be loading after a failed asset load attempt (status updated).");
         }
 
@@ -345,7 +346,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsFalse(world.IsAlive(emoteEntity), "Carrier entity should be destroyed.");
             Assert.IsFalse(world.IsAlive(resultHolderEntity), "Result-holder entity should be destroyed (even on failure).");
 
-            Assert.IsNull(mockEmote.AssetResults[bodyShape], "Asset result should be null on failure.");
+            Assert.IsTrue(mockEmote.AssetResults[bodyShape].HasValue, "Asset result should be set to a failed result to prevent retry loops.");
+            Assert.IsFalse(mockEmote.AssetResults[bodyShape].Value.Succeeded, "Asset result should be marked as failed.");
             Assert.IsFalse(mockEmote.IsLoading, "Emote loading status should be false after failure.");
         }
 
