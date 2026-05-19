@@ -89,7 +89,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             lock (sceneMessageHandlers)
             {
-                // Dont add but replace
                 // See: https://github.com/decentraland/unity-explorer/issues/8183
                 sceneMessageHandlers[key] = onSceneMessage;
             }
