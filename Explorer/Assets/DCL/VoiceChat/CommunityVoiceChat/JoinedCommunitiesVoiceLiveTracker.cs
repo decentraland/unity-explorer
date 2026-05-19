@@ -14,8 +14,6 @@ namespace DCL.VoiceChat
         private readonly HashSet<string> liveJoinedCommunityIds = new ();
         private readonly ReactiveProperty<bool> hasAnyJoinedCommunityLive = new (false);
 
-        private IDisposable? currentCommunityIdSubscription;
-
         public IReadonlyReactiveProperty<bool> HasAnyJoinedCommunityLive => hasAnyJoinedCommunityLive;
 
         public JoinedCommunitiesVoiceLiveTracker(
@@ -27,8 +25,6 @@ namespace DCL.VoiceChat
 
             communityDataService.CommunityJoined += OnCommunityJoined;
             communityDataService.CommunityRemoved += OnCommunityRemoved;
-
-            currentCommunityIdSubscription = orchestrator.CurrentCommunityId.Subscribe(OnCurrentCommunityIdChanged);
 
             foreach (string id in communityDataService.JoinedCommunityIds)
                 AddSubscription(id);
@@ -48,9 +44,6 @@ namespace DCL.VoiceChat
             liveJoinedCommunityIds.Remove(communityId);
             Recompute();
         }
-
-        private void OnCurrentCommunityIdChanged(string _) =>
-            Recompute();
 
         private void AddSubscription(string communityId)
         {
@@ -86,28 +79,13 @@ namespace DCL.VoiceChat
 
         private void Recompute()
         {
-            string mine = orchestrator.CurrentCommunityId.Value;
-            bool anyOther = false;
-
-            foreach (string id in liveJoinedCommunityIds)
-            {
-                if (!string.Equals(id, mine, StringComparison.OrdinalIgnoreCase))
-                {
-                    anyOther = true;
-                    break;
-                }
-            }
-
-            hasAnyJoinedCommunityLive.Value = anyOther;
+            hasAnyJoinedCommunityLive.Value = liveJoinedCommunityIds.Count > 0;
         }
 
         public void Dispose()
         {
             communityDataService.CommunityJoined -= OnCommunityJoined;
             communityDataService.CommunityRemoved -= OnCommunityRemoved;
-
-            currentCommunityIdSubscription?.Dispose();
-            currentCommunityIdSubscription = null;
 
             foreach (IDisposable subscription in perCommunitySubscriptions.Values)
                 subscription.Dispose();
