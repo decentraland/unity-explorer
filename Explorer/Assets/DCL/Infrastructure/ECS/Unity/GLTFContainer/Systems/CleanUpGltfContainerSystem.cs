@@ -3,14 +3,13 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
-using DCL.Ipfs;
 using DCL.LOD.Systems;
+using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -28,14 +27,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly SceneEntityDefinition sceneDefinition;
+        private readonly IISSDescriptor? issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, SceneEntityDefinition sceneDefinition) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, IISSDescriptor? issDescriptor) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
-            this.sceneDefinition = sceneDefinition;
+            this.issDescriptor = issDescriptor;
         }
 
         protected override void Update(float t)
@@ -69,12 +68,11 @@ namespace ECS.Unity.GLTFContainer.Systems
                 entityCollidersSceneCache.Remove(result.Asset);
 
                 // Bridge only if the scene's partition allows it AND the descriptor still has a slot for this hash
-                // (capped to the exact number of times it appears in metadata.assets — no duplicates).
-                // Descriptor is looked up from the cache per call; resolves to NONE before lazy resolution completes
-                // (during which TryReserveBridgeSlot returns false → no bridging, which is the safe default).
+                // (capped to the exact number of times it appears in the descriptor — no duplicates).
+                // Null descriptor means no ISS for this scene → no bridging.
                 bool putInBridge = partitionAllowsBridge
-                                   && ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(sceneDefinition), out ISSDescriptor descriptor)
-                                   && descriptor.TryReserveBridgeSlot(component.Hash);
+                                   && issDescriptor != null
+                                   && issDescriptor.TryReserveBridgeSlot(component.Hash);
                 cache.Dereference(component.Hash, result.Asset, putInBridge);
             }
 

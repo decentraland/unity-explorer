@@ -2,6 +2,8 @@
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
 using Org.BouncyCastle.Utilities.Collections;
 using System;
 using System.Collections.Generic;
@@ -27,6 +29,19 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public int InternalJobIndex { get; set; }
 
+        /// <summary>
+        ///     Initial Scene State descriptor for this scene. Defaults to <see cref="ISSDescriptor.NONE"/>;
+        ///     populated by <c>ResolveISSDescriptorSystem</c> once the lazy promise resolves. Read in [Query]
+        ///     systems (UpdateSceneLODInfoSystem, ResolveISSLODSystem) that don't have an ISceneData handle.
+        /// </summary>
+        public ISSDescriptor ISSDescriptor;
+
+        /// <summary>
+        ///     In-flight ISS descriptor promise — <c>AssetPromise.NULL</c> while either no promise is active
+        ///     or the promise has been consumed and the result stashed into <see cref="ISSDescriptor"/>.
+        /// </summary>
+        public AssetPromise<ISSDescriptor, GetISSDescriptor> ISSDescriptorPromise;
+
 
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;
@@ -47,6 +62,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneGeometry = sceneGeometry;
             InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
+            ISSDescriptor = ISSDescriptor.NONE;
+            ISSDescriptorPromise = AssetPromise<ISSDescriptor, GetISSDescriptor>.NULL;
 
             EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, SceneLoadingMemoryConstants.MAX_SCENE_SIZE);
             EstimatedMemoryUsageForLODMB = (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.LOD_REDUCTION) + (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.QUALITY_REDUCTED_LOD_REDUCTION);

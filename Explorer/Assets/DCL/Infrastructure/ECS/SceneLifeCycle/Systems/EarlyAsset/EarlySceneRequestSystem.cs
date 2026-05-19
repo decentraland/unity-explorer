@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles.EarlyAsset;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -70,23 +69,9 @@ namespace ECS.SceneLifeCycle.Systems.EarlyAsset
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> Result))
             {
-                if (Result.Succeeded && Result.Asset.Value.Count > 0)
-                {
-                    // ISS bundle prewarm only fires if the descriptor is already in the cache (resolved by an
-                    // earlier scene-loading pass). Since descriptor resolution is now lazy and triggered by the
-                    // LOD / SDK runtime path, this is typically a miss on first realm load — the bundle gets
-                    // fetched later by those paths. Future: also lazily trigger resolution here to keep the
-                    // early-warm optimization.
-                    SceneEntityDefinition firstDefinition = Result.Asset.Value[0];
-                    if (ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(firstDefinition), out ISSDescriptor descriptor)
-                        && descriptor.SupportsBundle())
-                    {
-                        //Do nothing. We just needed loaded in memory, we dont care the result.
-                        //Whoever needs it, will grab it later
-                        //Test URL
-                        World.Create(EarlyAssetBundleFlag.CreateAssetBundleRequest(firstDefinition));
-                    }
-                }
+                // ISS bundle prewarm previously fired here based on the eagerly-resolved descriptor.
+                // Resolution is lazy now (LOD path / SDK runtime loader), so the prewarm is dropped —
+                // the bundle is fetched by those paths when they actually need it.
 
                 //Nothing to do with it after creation of the early asset bundle request
                 World.Destroy(entity);

@@ -167,9 +167,15 @@ namespace Global.Dynamic
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
-            // ISS descriptor loader: shared singleton cache so the LOD path and the scene runtime path
-            // dedupe requests, and so non-async consumers (plugins, cleanup) can look up resolved descriptors.
-            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, AssetBundlesPlugin.STREAMING_ASSETS_URL, assetBundleCdnUrl, ISSDescriptorCache.INSTANCE);
+            // ISS descriptor loader. NoCache with ongoing-request dedup is enough — the descriptor is held
+            // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
+            // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, AssetBundlesPlugin.STREAMING_ASSETS_URL, assetBundleCdnUrl,
+                new NoCache<ISSDescriptor, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false));
+
+            // Bridges the loader's resolved descriptor onto SceneDefinitionComponent.ISSDescriptor for [Query]
+            // consumers that don't have ISceneData (UpdateSceneLODInfoSystem, ResolveISSLODSystem).
+            ResolveISSDescriptorSystem.InjectToWorld(ref builder);
 
             if (hybridSceneParams.EnableHybridScene)
             {

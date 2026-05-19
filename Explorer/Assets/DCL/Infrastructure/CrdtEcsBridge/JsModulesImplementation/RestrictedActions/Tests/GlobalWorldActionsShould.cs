@@ -329,6 +329,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public bool SceneLoadingConcluded { get; set; } = true;
 
+            public DCL.SceneRunner.Scene.IISSDescriptor? ISSDescriptor => null;
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();
             public ISceneContent SceneContent => new SceneNonHashedContent(URLDomain.FromString("file://mock/"));

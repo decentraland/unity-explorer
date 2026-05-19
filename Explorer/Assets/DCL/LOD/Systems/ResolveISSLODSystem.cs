@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
+using DCL.SceneRunner.Scene;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
@@ -52,8 +53,8 @@ namespace DCL.LOD.Systems
             if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
 
             // Only the bundle-mode path is owned by this query.
-            if (!TryGetDescriptor(sceneDefinition.Definition, out ISSDescriptor issDescriptor)) return;
-            if (issDescriptor.CurrentState != ISSDescriptor.State.Bundle) return;
+            ISSDescriptor issDescriptor = sceneDefinition.ISSDescriptor;
+            if (issDescriptor.CurrentState != IISSDescriptor.State.Bundle) return;
 
             // Skip if promise hasn't been created yet or is already consumed
             if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
@@ -84,8 +85,8 @@ namespace DCL.LOD.Systems
             if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
 
             // Only the descriptor-mode path is owned by this query.
-            if (!TryGetDescriptor(sceneDefinition.Definition, out ISSDescriptor issDescriptor)) return;
-            if (issDescriptor.CurrentState != ISSDescriptor.State.Descriptor) return;
+            ISSDescriptor issDescriptor = sceneDefinition.ISSDescriptor;
+            if (issDescriptor.CurrentState != IISSDescriptor.State.Descriptor) return;
 
             // First-time entry: nothing to do once promises have been spawned.
             if (initialSceneStateLOD.ParentContainer != null) return;
@@ -112,8 +113,7 @@ namespace DCL.LOD.Systems
                 if (gltfCache.TryGet(entry.hash, out var asset))
                 {
                     // We just consumed one bridged copy — free up its slot so a future SDK cleanup of the same hash can re-bridge.
-                    if (TryGetDescriptor(sceneDefinition.Definition, out ISSDescriptor descriptor))
-                        descriptor.ReleaseBridgeSlot(entry.hash);
+                    sceneDefinition.ISSDescriptor.ReleaseBridgeSlot(entry.hash);
                     PositionAsset(initialSceneStateLOD, entry, asset, initialSceneStateLOD.ParentContainer.transform);
                     continue;
                 }
@@ -205,9 +205,6 @@ namespace DCL.LOD.Systems
             //We need to re-evaluate the LOD to see if we can get the old method
             sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
         }
-
-        private static bool TryGetDescriptor(DCL.Ipfs.SceneEntityDefinition definition, out ISSDescriptor descriptor) =>
-            ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(definition), out descriptor);
 
     }
 

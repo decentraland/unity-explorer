@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace SceneRunner.Scene
         public SceneEntityDefinition SceneEntityDefinition { get; }
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
+        public IISSDescriptor? ISSDescriptor { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
@@ -37,7 +39,8 @@ namespace SceneRunner.Scene
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
-            StaticSceneMessages staticSceneMessages)
+            StaticSceneMessages staticSceneMessages,
+            IISSDescriptor? issDescriptor = null)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
@@ -45,6 +48,7 @@ namespace SceneRunner.Scene
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id, sceneDefinition.metadata.sdkVersion);
             Geometry = geometry;
+            ISSDescriptor = issDescriptor;
         }
 
         public bool HasRequiredPermission(string permission)

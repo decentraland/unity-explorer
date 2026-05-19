@@ -48,14 +48,15 @@ namespace ECS.SceneLifeCycle.Systems
             // Both tasks start eagerly so they run concurrently; if ISS is in play, also prefetches the
             // shared Bundle-mode AB on the descriptor so the scene's GLTF requests hit the cache.
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
-            UniTask loadISS = ResolveAndPrefetchISSAsync(world, definition, partition, ct);
+            UniTask<ISSDescriptor?> loadISS = ResolveAndPrefetchISSAsync(world, definition, partition, ct);
             ReadOnlyMemory<byte> mainCrdt = await loadMainCrdt;
-            await loadISS;
+            ISSDescriptor? issDescriptor = await loadISS;
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt),
+                issDescriptor);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -70,35 +71,35 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         /// <summary>
-        ///     Lazily resolves the ISS descriptor (gated by v49+ manifest) and, if Bundle mode is
-        ///     selected, eagerly fetches the shared ISS asset bundle and attaches it to the descriptor
-        ///     so it stays cached for the LOD path and SDK GLTF requests rewritten to its URL.
-        ///     No-op for pre-v49 scenes and for descriptors that have no shared bundle.
+        ///     Lazily resolves the ISS descriptor (the loader gates pre-v49 manifests to <see cref="ISSDescriptor.NONE"/>)
+        ///     and, if Bundle mode is selected, eagerly fetches the shared ISS asset bundle and attaches it to
+        ///     the descriptor so it stays cached for the LOD path and SDK GLTF requests rewritten to its URL.
+        ///     Returns the resolved descriptor so the caller can stash it on <see cref="SceneData.ISSDescriptor"/>.
         /// </summary>
-        private async UniTask ResolveAndPrefetchISSAsync(World world, SceneEntityDefinition definition, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<ISSDescriptor?> ResolveAndPrefetchISSAsync(World world, SceneEntityDefinition definition, IPartitionComponent partition, CancellationToken ct)
         {
-            GetISSDescriptor intention = GetISSDescriptor.For(definition);
+            ISSDescriptorPromise promise = ISSDescriptorPromise.Create(world, GetISSDescriptor.For(definition), partition);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!ISSDescriptorCache.INSTANCE.TryGet(intention, out ISSDescriptor descriptor))
+            ISSDescriptor descriptor = promise.Result is { Succeeded: true } result ? result.Asset! : ISSDescriptor.NONE;
+
+            if (descriptor.SupportsBundle())
             {
-                ISSDescriptorPromise promise = ISSDescriptorPromise.Create(world, intention, partition);
-                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+                AssetBundlePromise bundlePromise = AssetBundlePromise.Create(world,
+                    GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(definition.id),
+                        assetBundleManifestVersion: definition.assetBundleManifestVersion,
+                        parentEntityID: definition.id),
+                    PartitionComponent.TOP_PRIORITY);
 
-                descriptor = promise.Result is { Succeeded: true } result ? result.Asset! : ISSDescriptor.NONE;
+                bundlePromise = await bundlePromise.ToUniTaskAsync(world, cancellationToken: ct);
+
+                if (bundlePromise.Result.Value.Succeeded)
+                    descriptor.AttachAssetBundle(bundlePromise.Result.Value.Asset);
             }
 
-            if (!descriptor.SupportsBundle()) return;
-
-            AssetBundlePromise bundlePromise = AssetBundlePromise.Create(world,
-                GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(definition.id),
-                    assetBundleManifestVersion: definition.assetBundleManifestVersion,
-                    parentEntityID: definition.id),
-                PartitionComponent.TOP_PRIORITY);
-
-            bundlePromise = await bundlePromise.ToUniTaskAsync(world, cancellationToken: ct);
-
-            if (bundlePromise.Result.Value.Succeeded)
-                descriptor.AttachAssetBundle(bundlePromise.Result.Value.Asset);
+            // Return null for the NONE singleton so SceneData can store "no ISS" as null rather than
+            // forwarding the singleton's Dereference no-op through every scene unload.
+            return descriptor.CurrentState == DCL.SceneRunner.Scene.IISSDescriptor.State.None ? null : descriptor;
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

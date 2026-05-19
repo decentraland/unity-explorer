@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Groups;
@@ -56,7 +57,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             bool bundleReachable = await IsBundleReachableAsync(intention.SceneId, intention.ManifestVersion!, ct);
 
             var descriptor = new ISSDescriptor(
-                bundleReachable ? ISSDescriptor.State.Bundle : ISSDescriptor.State.Descriptor,
+                bundleReachable ? IISSDescriptor.State.Bundle : IISSDescriptor.State.Descriptor,
                 metadata.Value);
 
             return new StreamableLoadingResult<ISSDescriptor>(descriptor);

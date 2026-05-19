@@ -30,7 +30,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY, new SceneEntityDefinition("test", new SceneMetadata()));
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY, null);
         }
 
         [Test]

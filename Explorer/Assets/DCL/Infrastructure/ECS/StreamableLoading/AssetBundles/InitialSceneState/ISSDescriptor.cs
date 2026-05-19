@@ -1,23 +1,23 @@
+using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     The Initial Scene State for a single scene. Tells us whether ISS is unavailable,
-    ///     served by an asset bundle, or served as a descriptor with per-asset bundles.
-    ///     Built by <c>LoadISSDescriptorSystem</c> from the descriptor JSON + a HEAD probe of the
-    ///     legacy ISS bundle. Cached per <c>GetISSDescriptor</c> intention (keyed by scene id).
+    ///     The Initial Scene State for a single scene. Tells us whether ISS is unavailable, served by
+    ///     a shared asset bundle, or served as a descriptor with per-asset bundles. Built by
+    ///     <see cref="LoadISSDescriptorSystem"/> from the descriptor JSON + a HEAD probe of the legacy
+    ///     ISS bundle; held on <see cref="DCL.SceneRunner.Scene.ISceneData.ISSDescriptor"/> via the
+    ///     <see cref="IISSDescriptor"/> interface so the SceneRunner layer doesn't need to reference
+    ///     the ECS asmdef where this class lives.
     /// </summary>
-    public class ISSDescriptor
+    public class ISSDescriptor : IISSDescriptor
     {
-        public enum State { None, Bundle, Descriptor }
+        public static readonly ISSDescriptor NONE = new (IISSDescriptor.State.None, default);
 
-        public static readonly ISSDescriptor NONE = new (State.None, default);
-
-        public State CurrentState { get; }
+        public IISSDescriptor.State CurrentState { get; }
         public IReadOnlyList<ISSDescriptorAsset> Assets { get; }
 
         // hash -> how many times that hash appears in the descriptor (the cap for bridge slots)
@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         // and rewritten SDK GLTF requests both hit the cache. Released by Dereference().
         private AssetBundleData? assetBundle;
 
-        public ISSDescriptor(State state, ISSDescriptorMetadata metadata)
+        public ISSDescriptor(IISSDescriptor.State state, ISSDescriptorMetadata metadata)
         {
             CurrentState = state;
             // JsonUtility leaves the list null when the JSON field is missing — fall back to empty
@@ -45,15 +45,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             bundleAssetHashes = BuildBundleAssetHashes(Assets);
         }
 
-        /// <summary>
-        ///     Attempts to reserve a bridge slot for <paramref name="hash"/>. Caps at the number of times the hash
-        ///     appears in the descriptor — so the bridge never holds more copies of an asset than the scene needs.
-        ///     Returns true if reserved (caller should bridge the asset). Pair with <see cref="ReleaseBridgeSlot"/>
-        ///     when the bridged copy leaves the cache.
-        /// </summary>
         public bool TryReserveBridgeSlot(string hash)
         {
-            if (CurrentState == State.None) return false;
+            if (CurrentState == IISSDescriptor.State.None) return false;
             if (!hashCapacity.TryGetValue(hash, out int cap)) return false;
 
             int current = bridgedCount.TryGetValue(hash, out int n) ? n : 0;
@@ -63,37 +57,25 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             return true;
         }
 
-        /// <summary>
-        ///     Releases a slot previously reserved via <see cref="TryReserveBridgeSlot"/>.
-        ///     Call when a bridged copy is popped out of the cache (LOD pull) or evicted.
-        /// </summary>
         public void ReleaseBridgeSlot(string hash)
         {
             if (bridgedCount.TryGetValue(hash, out int n) && n > 0)
                 bridgedCount[hash] = n - 1;
         }
 
-        /// <summary>
-        ///     Whether the given AB request hash (already platform-suffixed) refers to an asset that should be
-        ///     served by the shared ISS bundle. Only meaningful in <see cref="State.Bundle"/> — in any other
-        ///     state the per-asset bundle URLs resolve normally.
-        /// </summary>
         public bool IsBundleAsset(string platformSuffixedHash) =>
-            CurrentState == State.Bundle && bundleAssetHashes.Contains(platformSuffixedHash);
+            CurrentState == IISSDescriptor.State.Bundle && bundleAssetHashes.Contains(platformSuffixedHash);
 
         /// <summary>
         ///     Binds the shared ISS asset bundle to the descriptor's lifetime in Bundle mode. Held ref-counted
-        ///     until <see cref="Dereference"/> fires on scene unload.
+        ///     until <see cref="Dereference"/> fires on scene unload. Impl-only; consumers across asmdef
+        ///     boundaries don't need to know about <c>AssetBundleData</c>.
         /// </summary>
         public void AttachAssetBundle(AssetBundleData bundle)
         {
             assetBundle = bundle;
         }
 
-        /// <summary>
-        ///     Releases the shared ISS bundle reference (if any). Safe to call on <see cref="NONE"/> or on
-        ///     descriptors with no bundle attached — it's a no-op in those cases.
-        /// </summary>
         public void Dereference()
         {
             assetBundle?.Dereference();
@@ -101,10 +83,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         }
 
         public bool SupportsDescriptor() =>
-            CurrentState == State.Descriptor;
+            CurrentState == IISSDescriptor.State.Descriptor;
 
         public bool SupportsBundle() =>
-            CurrentState == State.Bundle;
+            CurrentState == IISSDescriptor.State.Bundle;
 
         private static Dictionary<string, int> BuildHashCapacity(IReadOnlyList<ISSDescriptorAsset> assets)
         {
@@ -131,14 +113,5 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     public struct ISSDescriptorMetadata
     {
         public List<ISSDescriptorAsset> assets;
-    }
-
-    [Serializable]
-    public struct ISSDescriptorAsset
-    {
-        public string hash;
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 scale;
     }
 }

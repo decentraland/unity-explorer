@@ -2,10 +2,10 @@
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SceneRunner.Scene;
 using DG.Tweening;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
@@ -65,9 +65,9 @@ namespace DCL.PluginSystem.World
             //The scene container, which is only modified by the client, starts in a position that cannot be seen by the player. Once it finished loading
             //in GatherGLTFAssetSystem.cs, it will be moved to the correct position.
             //If any form of ISS is in play (bundle or descriptor), start at the real parcel position so the LOD->scene transition is seamless.
-            // By the time plugins inject, LoadSceneSystemLogicBase has resolved the descriptor and populated the cache.
-            bool hasISS = ISSDescriptorCache.INSTANCE.TryGet(GetISSDescriptor.For(sharedDependencies.SceneData.SceneEntityDefinition), out ISSDescriptor iss)
-                          && iss.CurrentState != ISSDescriptor.State.None;
+            // SceneData carries the resolved descriptor (null when there's no ISS); base-parcel start avoids
+            // the LOD→scene Mordor flicker when ISS pre-populated the world.
+            bool hasISS = sharedDependencies.SceneData.ISSDescriptor != null;
             var sceneRootContainerTransform = GetNewTransform(position: hasISS
                 ? sharedDependencies.SceneData.Geometry.BaseParcelPosition
                 : MordorConstants.SCENE_MORDOR_POSITION);
