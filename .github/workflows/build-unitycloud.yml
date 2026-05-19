@@ -8,6 +8,7 @@ on:
       - synchronize
       - ready_for_review
       - labeled
+      - unlabeled
   merge_group: {}
   push:
     branches:
@@ -152,9 +153,11 @@ concurrency:
   cancel-in-progress: >-
     ${{
       github.event_name != 'pull_request' ||
-      github.event.action != 'labeled' ||
+      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
       github.event.label.name == 'force-build' ||
-      github.event.label.name == 'clean-build'
+      github.event.label.name == 'clean-build' ||
+      github.event.label.name == 'windows-only' ||
+      github.event.label.name == 'macos-only'
     }}
 
 jobs:
@@ -183,8 +186,13 @@ jobs:
             ) ||
             github.event.action == 'ready_for_review' ||
             (
-              github.event.action == 'labeled' &&
-              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+              (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+              (
+                github.event.label.name == 'force-build' ||
+                github.event.label.name == 'clean-build' ||
+                github.event.label.name == 'windows-only' ||
+                github.event.label.name == 'macos-only'
+              )
             )
           )
         )
@@ -200,6 +208,7 @@ jobs:
       clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
       install_source: ${{ steps.set_defaults.outputs.install_source }}
+      targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -407,6 +416,37 @@ jobs:
           IFS=,
           echo "options=${options[*]}" | tee -a "$GITHUB_OUTPUT"
 
+      - name: Determine build targets
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "Labels: '$labels'"
+
+          has_windows_only=false
+          has_macos_only=false
+          if echo "$labels" | grep -qw 'windows-only'; then has_windows_only=true; fi
+          if echo "$labels" | grep -qw 'macos-only'; then has_macos_only=true; fi
+
+          if [ "$has_windows_only" = "true" ] && [ "$has_macos_only" = "true" ]; then
+            echo "::error::Both 'windows-only' and 'macos-only' labels are applied. Remove one — they are mutually exclusive."
+            exit 1
+          fi
+
+          if [ "$has_windows_only" = "true" ]; then
+            targets='["windows64"]'
+          elif [ "$has_macos_only" = "true" ]; then
+            targets='["macos"]'
+          else
+            targets='["windows64","macos"]'
+          fi
+
+          echo "Targets: $targets"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -416,7 +456,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ['windows64', 'macos']
+        target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -801,4 +841,43 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel
+
+  build-gate:
+    name: Build Gate (Windows + macOS)
+    runs-on: ubuntu-latest
+    needs: [prebuild, build]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Verify both targets built and passed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          should_build='${{ needs.prebuild.outputs.should_build }}'
+          prebuild_result='${{ needs.prebuild.result }}'
+
+          # No Explorer/ changes, draft without override, or perf_test path — gate is not applicable.
+          if [ "$prebuild_result" != "success" ] || [ "$should_build" != "true" ]; then
+            echo "Gate not applicable (prebuild=$prebuild_result, should_build='$should_build'). Passing."
+            exit 0
+          fi
+
+          targets='${{ needs.prebuild.outputs.targets }}'
+          echo "Targets that ran: $targets"
+
+          has_windows=$(echo "$targets" | jq 'any(. == "windows64")')
+          has_macos=$(echo "$targets" | jq 'any(. == "macos")')
+          if [ "$has_windows" != "true" ] || [ "$has_macos" != "true" ]; then
+            echo "::error::Build Gate requires both Windows and macOS builds. This run was filtered to: $targets"
+            echo "::error::Remove the 'windows-only' or 'macos-only' label so both targets build, then push or re-trigger."
+            exit 1
+          fi
+
+          build_result='${{ needs.build.result }}'
+          if [ "$build_result" != "success" ]; then
+            echo "::error::Build matrix did not succeed (result: $build_result)"
+            exit 1
+          fi
+
+          echo "Both Windows and macOS builds passed."
 # Test change
