@@ -273,7 +273,7 @@ namespace DCL.Diagnostics.Sentry
         // procdump.exe -accepteula -mt <PID> dump.dmp
         public static Result CollectDumpInfoFile(string targetDmpPath)
         {
-            const string NAME = "procdump.exe";
+            const string NAME = "procdump/procdump.exe";
             string dirPath = Application.streamingAssetsPath;
             string exeFile = System.IO.Path.Combine(dirPath, NAME);
 
