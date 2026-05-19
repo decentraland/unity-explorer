@@ -401,26 +401,36 @@ namespace DCL.Diagnostics.Sentry
         [UnityEditor.MenuItem("Tools/ProcDump/Dump Current")]
         public static void DumpCurrent()
         {
+            Result<(string filePath, string zipPath)> result = CollectAndArchiveDumpInfoToAppDir();
+            if (result.Success == false)
+            {
+                Debug.LogError($"Error on Dump Current: {result.ErrorMessage}");
+                return;
+            }
+
+            Debug.Log($"Successfully dumped and archive at: {result.Value.filePath}, {result.Value.zipPath}");
+        }
+#endif
+
+        public static Result<(string filePath, string zipPath)> CollectAndArchiveDumpInfoToAppDir()
+        {
             string filePath = NewDumpFilePath();
             Result result = CollectDumpInfoFile(filePath);
             if (result.Success == false)
             {
-                Debug.LogError($"Error on dumping: {result.ErrorMessage}");
-                return;
+                return Result<(string filePath, string zipPath)>.ErrorResult($"Error on dumping: {result.ErrorMessage}");
             }
 
             Result<string> zipPathResult = ArchiveIntoZip(filePath);
             if (zipPathResult.Success == false)
             {
-                Debug.LogError($"Error on archiving: {zipPathResult.ErrorMessage}");
-                return;
+                return Result<(string filePath, string zipPath)>.ErrorResult($"Error on archiving: {zipPathResult.ErrorMessage}");
             }
 
             string zipPath = zipPathResult.Value;
 
-            Debug.Log($"Successfully dumped and archive at: {filePath}, {zipPath}");
+            return Result<(string filePath, string zipPath)>.SuccessResult((filePath, zipPath));
         }
-#endif
 
     }
 
