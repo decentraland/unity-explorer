@@ -31,8 +31,8 @@ namespace DCL.Prefs
             public bool HasKey(string key) { Warn(); return false; }
             public void DeleteKey(string key) => Warn();
             public void DeleteAll() => Warn();
-            public void Save() { }
-            public void SaveSync() { }
+            public void Save() => Warn();
+            public void SaveSync() => Warn();
 
             [System.Diagnostics.Conditional("UNITY_EDITOR")]
             private static void Warn([System.Runtime.CompilerServices.CallerMemberName] string caller = "")
