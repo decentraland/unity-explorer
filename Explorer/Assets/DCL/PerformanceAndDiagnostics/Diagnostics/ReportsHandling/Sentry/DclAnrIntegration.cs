@@ -13,6 +13,8 @@ using Sentry.Unity.Integrations;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using RichTypes;
+using System.IO;
+using System.IO.Compression;
 
 namespace DCL.Diagnostics.Sentry
 {
@@ -293,7 +295,54 @@ namespace DCL.Diagnostics.Sentry
                 return Result.ErrorResult($"Cannot collect: {result.ErrorMessage}");
             }
 
+            Result waitResult = WaitUntilDumpReady(targetDmpPath);
+            if (waitResult.Success == false)
+            {
+                return Result.ErrorResult($"Target file is not written: {waitResult.ErrorMessage}");
+            }
+
             return Result.SuccessResult();
+        }
+
+        public static Result WaitUntilDumpReady(string targetDmpPath)
+        {
+            const int TIMEOUT_MS = 5_000;
+            const int POLL_MS = 100;
+
+            Stopwatch sw = Stopwatch.StartNew();
+
+            while (sw.ElapsedMilliseconds < TIMEOUT_MS)
+            {
+                if (File.Exists(targetDmpPath))
+                {
+                    try
+                    {
+                        using FileStream stream = new FileStream(
+                                targetDmpPath,
+                                FileMode.Open,
+                                FileAccess.Read,
+                                FileShare.None
+                                );
+
+                        if (stream.Length > 0)
+                            return Result.SuccessResult();
+                    }
+                    catch (IOException)
+                    {
+                        // still being written
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        // transient access state
+                    }
+                }
+
+                Thread.Sleep(POLL_MS);
+            }
+
+            return Result.ErrorResult(
+                    $"Timed out waiting for dump file: {targetDmpPath}"
+                    );
         }
 
         public static string NewDumpFilePath()
@@ -302,6 +351,25 @@ namespace DCL.Diagnostics.Sentry
             fileName = System.IO.Path.ChangeExtension(fileName, ".dmp");
             string filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
             return filePath;
+        }
+        
+        // Returns zip path
+        public static Result<string> ArchiveIntoZip(string filePath)
+        {
+            bool exists = System.IO.File.Exists(filePath);
+
+            if (exists == false)
+            {
+                return Result<string>.ErrorResult("Original file does not exist");
+            }
+
+            string zipPath = System.IO.Path.ChangeExtension(filePath, ".zip");
+            string fileName = System.IO.Path.GetFileName(filePath);
+
+            using ZipArchive zip = ZipFile.Open(zipPath, ZipArchiveMode.Create);
+            zip.CreateEntryFromFile(filePath, fileName);
+
+            return Result<string>.SuccessResult(zipPath);
         }
 
         public static Result<string> CollectDumpInfoBase64()
@@ -341,7 +409,16 @@ namespace DCL.Diagnostics.Sentry
                 return;
             }
 
-            Debug.Log($"Successfully dumped at: {filePath}");
+            Result<string> zipPathResult = ArchiveIntoZip(filePath);
+            if (zipPathResult.Success == false)
+            {
+                Debug.LogError($"Error on archiving: {zipPathResult.ErrorMessage}");
+                return;
+            }
+
+            string zipPath = zipPathResult.Value;
+
+            Debug.Log($"Successfully dumped and archive at: {filePath}, {zipPath}");
         }
 #endif
 
