@@ -88,7 +88,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             SubscriberKey key = new (sceneId, msgType);
 
             lock (sceneMessageHandlers)
-                sceneMessageHandlers.Add(key, onSceneMessage);
+            {
+                sceneMessageHandlers[key] = onSceneMessage;
+            }
         }
 
         public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
