@@ -1017,7 +1017,8 @@ namespace Global.Dynamic
                     staticContainer.PublishIpfsEntityCommand,
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
-                    springBoneSimulationSettings
+                    springBoneSimulationSettings,
+                    joinedCommunitiesVoiceLiveTracker
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

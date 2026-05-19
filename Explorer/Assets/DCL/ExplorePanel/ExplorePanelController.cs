@@ -17,8 +17,10 @@ using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.VoiceChat;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -41,7 +43,10 @@ namespace DCL.ExplorePanel
         private readonly IMVCManager mvcManager;
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private bool includeCommunities;
+
+        private IDisposable? communitiesLiveBadgeSubscription;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -81,7 +86,8 @@ namespace DCL.ExplorePanel
             EventsController eventsController,
             IInputBlock inputBlock,
             HttpEventsApiService eventsApiService,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -97,6 +103,7 @@ namespace DCL.ExplorePanel
             this.communitiesBrowserController = communitiesBrowserController;
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.eventsApiService = eventsApiService;
+            this.communitiesLiveTracker = communitiesLiveTracker;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
 
@@ -113,6 +120,9 @@ namespace DCL.ExplorePanel
             profileMenuCts.SafeCancelAndDispose();
             setupExploreSectionsCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
+
+            communitiesLiveBadgeSubscription?.Dispose();
+            communitiesLiveBadgeSubscription = null;
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
@@ -128,6 +138,15 @@ namespace DCL.ExplorePanel
             setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
             viewInstance!.SetLiveEventsCounter(0);
+
+            viewInstance.CommunitiesLiveBadge.SetActive(communitiesLiveTracker.HasAnyJoinedCommunityLive.Value);
+            communitiesLiveBadgeSubscription = communitiesLiveTracker.HasAnyJoinedCommunityLive.Subscribe(OnCommunitiesLiveStateChanged);
+        }
+
+        private void OnCommunitiesLiveStateChanged(bool hasAnyLive)
+        {
+            if (viewInstance != null)
+                viewInstance.CommunitiesLiveBadge.SetActive(hasAnyLive);
         }
 
         private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
