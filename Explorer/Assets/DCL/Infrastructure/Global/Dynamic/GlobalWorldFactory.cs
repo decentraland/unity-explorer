@@ -34,7 +34,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
-using DCL.PluginSystem.World;
+using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -170,8 +170,9 @@ namespace Global.Dynamic
             // ISS descriptor loader. NoCache with ongoing-request dedup is enough — the descriptor is held
             // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
             // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
-            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, AssetBundlesPlugin.STREAMING_ASSETS_URL, assetBundleCdnUrl,
-                new NoCache<ISSDescriptor, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false));
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
+                new NoCache<ISSDescriptor, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
+                new DiskCacheOptions<ISSDescriptor, GetISSDescriptor>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptor.DiskHashCompute.INSTANCE, "iss"));
 
             // Bridges the loader's resolved descriptor onto SceneDefinitionComponent.ISSDescriptor for [Query]
             // consumers that don't have ISceneData (UpdateSceneLODInfoSystem, ResolveISSLODSystem).

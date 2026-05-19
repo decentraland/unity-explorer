@@ -37,8 +37,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         [None(typeof(DeleteEntityIntention))]
         private void SpawnPromise(ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partition)
         {
-            // Skip if already resolved (non-NONE descriptor) or a promise is already in flight.
-            if (sceneDefinitionComponent.ISSDescriptor.CurrentState != DCL.SceneRunner.Scene.IISSDescriptor.State.None) return;
+            // Skip if already resolved (NONE or otherwise) or a promise is already in flight.
+            if (sceneDefinitionComponent.ISSDescriptorResolved) return;
             if (sceneDefinitionComponent.ISSDescriptorPromise.Entity != Entity.Null) return;
 
             sceneDefinitionComponent.ISSDescriptorPromise = AssetPromise<ISSDescriptor, GetISSDescriptor>.Create(
@@ -56,6 +56,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             sceneDefinitionComponent.ISSDescriptor = result is { Succeeded: true } ? result.Asset! : ISSDescriptor.NONE;
             sceneDefinitionComponent.ISSDescriptorPromise = AssetPromise<ISSDescriptor, GetISSDescriptor>.NULL;
+            sceneDefinitionComponent.ISSDescriptorResolved = true;
         }
     }
 }

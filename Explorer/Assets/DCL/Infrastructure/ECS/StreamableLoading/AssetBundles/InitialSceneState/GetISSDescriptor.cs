@@ -1,4 +1,5 @@
 using DCL.Ipfs;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
@@ -41,5 +42,24 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         public override string ToString() =>
             $"Get ISS Descriptor: {SceneId}";
+
+        public class DiskHashCompute : AbstractDiskHashCompute<GetISSDescriptor>
+        {
+            // Bump if the on-disk format changes incompatibly. v2: switched from "state byte + raw JSON"
+            // to a single JSON document with state field, so files open in text editors.
+            private const int ITERATION_NUMBER = 2;
+
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            private DiskHashCompute() { }
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetISSDescriptor asset)
+            {
+                // Entity hash uniquely identifies the deploy — when the scene re-deploys, sceneId changes
+                // and the old cache entry becomes inert (LRU evicts it). No need to mix in the manifest version.
+                keyPayload.Put(asset.SceneId);
+                keyPayload.Put(ITERATION_NUMBER);
+            }
+        }
     }
 }

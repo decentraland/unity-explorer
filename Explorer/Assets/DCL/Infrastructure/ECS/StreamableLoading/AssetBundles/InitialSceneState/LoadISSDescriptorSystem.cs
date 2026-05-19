@@ -12,16 +12,17 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Threading;
 
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     Resolves <see cref="ISSDescriptor"/> for a scene: fetches the descriptor JSON from
-    ///     StreamingAssets and HEAD-probes the legacy ISS bundle URL to decide between
-    ///     Bundle and Descriptor modes. Returns <see cref="ISSDescriptor.NONE"/> when no
-    ///     descriptor JSON exists for the scene.
+    ///     Resolves <see cref="ISSDescriptor"/> for a scene: fetches the static scene descriptor JSON from
+    ///     the LOD manifest bucket and HEAD-probes the legacy ISS bundle URL to decide between Bundle and
+    ///     Descriptor modes. Returns <see cref="ISSDescriptor.NONE"/> when no descriptor JSON exists for
+    ///     the scene.
     /// </summary>
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
@@ -30,17 +31,19 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         // ISS is only baked starting from AB manifest version 49. Anything older cannot have ISS, so
         // we short-circuit to NONE without touching the network.
         private const int MIN_ISS_AB_VERSION = 49;
-        private const string DESCRIPTOR_SUBDIR = "iss_descriptors";
+
+        // Hardcoded for this iteration — wire to DI once the dev/prod bucket split lands.
+        private static readonly URLDomain DESCRIPTOR_BASE_URL =
+            URLDomain.FromString("https://lod-unity-bucket-dev-0871c25.s3.us-east-1.amazonaws.com/lods-unity/manifests/");
 
         private readonly IWebRequestController webRequestController;
-        private readonly URLDomain streamingAssetURL;
         private readonly URLDomain assetBundleURL;
 
-        internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController, URLDomain streamingAssetURL, URLDomain assetBundleURL, IStreamableCache<ISSDescriptor, GetISSDescriptor> cache)
-            : base(world, cache)
+        internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController, URLDomain assetBundleURL,
+            IStreamableCache<ISSDescriptor, GetISSDescriptor> cache, DiskCacheOptions<ISSDescriptor, GetISSDescriptor>? diskCacheOptions = null)
+            : base(world, cache, diskCacheOptions)
         {
             this.webRequestController = webRequestController;
-            this.streamingAssetURL = streamingAssetURL;
             this.assetBundleURL = assetBundleURL;
         }
 
@@ -60,6 +63,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 bundleReachable ? IISSDescriptor.State.Bundle : IISSDescriptor.State.Descriptor,
                 metadata.Value);
 
+            UnityEngine.Debug.Log($"[JUANI] ISS resolved for {intention.SceneId}: {descriptor.CurrentState} ({descriptor.Assets.Count} assets)");
+
             return new StreamableLoadingResult<ISSDescriptor>(descriptor);
         }
 
@@ -76,12 +81,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
         {
-            URLAddress url = streamingAssetURL.Append(URLPath.FromString($"{DESCRIPTOR_SUBDIR}/{sceneId}_InitialSceneState.json"));
+            URLAddress url = DESCRIPTOR_BASE_URL.Append(URLPath.FromString($"{sceneId}_StaticSceneDescriptor.json"));
 
             try
             {
+                // Missing-descriptor is the expected case for non-ISS scenes — suppress the underlying 404
+                // log so it doesn't spam every realm load.
                 return await webRequestController
-                            .GetAsync(new CommonArguments(url), ct, GetReportData())
+                            .GetAsync(new CommonArguments(url), ct, GetReportData(), suppressErrors: true)
                             .CreateFromJson<ISSDescriptorMetadata>(WRJsonParser.Unity);
             }
             catch (OperationCanceledException) { throw; }

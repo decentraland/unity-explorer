@@ -42,6 +42,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         /// </summary>
         public AssetPromise<ISSDescriptor, GetISSDescriptor> ISSDescriptorPromise;
 
+        /// <summary>
+        ///     True once the descriptor promise has resolved (to a real descriptor OR to NONE). Lets
+        ///     <c>ResolveISSDescriptorSystem</c> distinguish "not started" from "resolved-to-NONE" — both
+        ///     of which leave <see cref="ISSDescriptor"/> as the NONE singleton.
+        /// </summary>
+        public bool ISSDescriptorResolved;
+
 
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;
@@ -64,6 +71,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IsPortableExperience = isPortableExperience;
             ISSDescriptor = ISSDescriptor.NONE;
             ISSDescriptorPromise = AssetPromise<ISSDescriptor, GetISSDescriptor>.NULL;
+            ISSDescriptorResolved = false;
 
             EstimatedMemoryUsageInMB = Mathf.Clamp(parcels.Count * 15, 0, SceneLoadingMemoryConstants.MAX_SCENE_SIZE);
             EstimatedMemoryUsageForLODMB = (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.LOD_REDUCTION) + (EstimatedMemoryUsageInMB / SceneLoadingMemoryConstants.QUALITY_REDUCTED_LOD_REDUCTION);
