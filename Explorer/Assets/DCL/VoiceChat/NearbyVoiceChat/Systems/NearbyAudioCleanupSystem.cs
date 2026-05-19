@@ -76,7 +76,11 @@ namespace DCL.VoiceChat.Nearby.Systems
                 bindings.Clear();
             }
             else
-                CleanupDoomedSourceQuery(World);
+            {
+                ReapOrphanedSourceQuery(World);     // #1: streamer marker gone
+                ReapOutOfRangeSourceQuery(World);   // #2: audible-range tag gone
+                ReapFilteredSourceQuery(World);     // #3 sid demoted / #4 blocked / #5 scene-banned
+            }
 
             // Trigger #7: avatars marked for deletion still carry the component until the entity is destroyed
             // elsewhere. Dispose the source; do NOT World.Remove (the avatar takes the component with it).
@@ -90,21 +94,36 @@ namespace DCL.VoiceChat.Nearby.Systems
             bindings.Clear();
         }
 
-        // !IsActiveSid covers two cases: (1) sid evicted entirely → resolver returns different sid or null;
-        // (2) sid demoted → resolver picked a fresher candidate. The ghost loser of the pick is reaped here
-        // so binding can spawn the new winner.
+        // Trigger #1: avatar lost NearbyAudioStreamerComponent — unconditional reap.
         [Query]
+        [None(typeof(DeleteEntityIntention), typeof(NearbyAudioStreamerComponent))]
+        private void ReapOrphanedSource(Entity entity, ref NearbyAudioSourceComponent comp) =>
+            DisposeAndRemove(entity, ref comp);
+
+        // Trigger #2: avatar left audible range — unconditional reap.
+        [Query]
+        [All(typeof(NearbyAudioStreamerComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(InAudibleRangeTag))]
+        private void ReapOutOfRangeSource(Entity entity, ref NearbyAudioSourceComponent comp) =>
+            DisposeAndRemove(entity, ref comp);
+
+        // Triggers #3/#4/#5: !IsActiveSid covers sid evicted entirely (resolver picks different/null sid)
+        // AND sid demoted (resolver picked a fresher candidate — ghost loser reaped here so binding spawns the winner).
+        [Query]
+        [All(typeof(NearbyAudioStreamerComponent), typeof(InAudibleRangeTag))]
         [None(typeof(DeleteEntityIntention))]
-        private void CleanupDoomedSource(Entity entity, ref NearbyAudioSourceComponent comp)
+        private void ReapFilteredSource(Entity entity, ref NearbyAudioSourceComponent comp)
         {
-            bool doomed = !World.Has<NearbyAudioStreamerComponent>(entity)
-                          || !World.Has<InAudibleRangeTag>(entity)
-                          || !registry.IsActiveSid(comp.Key.identity, comp.Key.sid)
-                          || userBlockingCache.UserIsBlocked(comp.Key.identity)
-                          || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity);
+            bool keep = registry.IsActiveSid(comp.Key.identity, comp.Key.sid)
+                        && !userBlockingCache.UserIsBlocked(comp.Key.identity)
+                        && !roomMetadataCurrentScene.IsUserBanned(comp.Key.identity);
 
-            if (!doomed) return;
+            if (!keep)
+                DisposeAndRemove(entity, ref comp);
+        }
 
+        private void DisposeAndRemove(Entity entity, ref NearbyAudioSourceComponent comp)
+        {
             sourceFactory.Dispose(comp.LivekitAudioSource);
             StreamKey key = comp.Key;
             World.Remove<NearbyAudioSourceComponent>(entity);
