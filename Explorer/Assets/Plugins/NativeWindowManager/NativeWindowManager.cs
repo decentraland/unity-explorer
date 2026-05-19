@@ -101,9 +101,16 @@ namespace Plugins.NativeWindowManager
             else if (!desiredFullscreen)
                 ApplyConstraints(true);
 
-            // Apply saved/overridden resolution
+            // Apply saved/overridden resolution.
+            // When the caller explicitly overrides resolution in fullscreen, use ExclusiveFullScreen so the
+            // OS does a real DXGI mode-switch instead of clamping the borderless window to the desktop size
+            // (FullScreenWindow ignores SetResolution's WxH on Windows). Required by headless CI hosts that
+            // boot at 1024x768 — visual-regression captures need the framebuffer at the requested size.
             Vector2Int targetResolution = resolutionOverride ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
-            Screen.SetResolution(targetResolution.x, targetResolution.y, desiredFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+            FullScreenMode targetMode = desiredFullscreen
+                ? (resolutionOverride.HasValue ? FullScreenMode.ExclusiveFullScreen : FullScreenMode.FullScreenWindow)
+                : FullScreenMode.Windowed;
+            Screen.SetResolution(targetResolution.x, targetResolution.y, targetMode);
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
