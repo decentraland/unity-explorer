@@ -14,8 +14,7 @@ from requests.adapters import HTTPAdapter
 # Local
 import utils
 
-# Exit code that nick-fields/retry watches for in-step retries
-RETRYABLE_EXIT_CODE = 99
+RETRYABLE_EXIT_CODE = 99  # nick-fields/retry only retries on this code
 
 from zipfile import ZipFile, ZipInfo
 
@@ -38,18 +37,16 @@ is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 
-# Cadence (seconds)
-POLL_TIME = int(os.getenv('POLL_TIME', '60'))                   # base poll cadence
-QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))      # throttled cadence while queued and unchanged
-STALE_THRESHOLD = int(os.getenv('STALE_POLL_THRESHOLD', '600')) # status unchanged > this -> throttle polling
+POLL_TIME = int(os.getenv('POLL_TIME', '60'))
+QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))
+STALE_THRESHOLD = int(os.getenv('STALE_POLL_THRESHOLD', '600'))
 
-# Per-phase budgets (seconds). Queue time and active build time are accounted separately
-# so a long Unity Cloud queue does not eat into the actual build window.
-QUEUE_TIMEOUT = int(os.getenv('QUEUE_TIMEOUT', '14400'))        # default 4h in created/queued/sentToBuilder
-BUILD_TIMEOUT = int(os.getenv('BUILD_TIMEOUT', '10800'))        # default 3h once status is started/restarted
+# Queue time and active build time use separate budgets so a long Unity Cloud
+# queue does not eat into the actual build window.
+QUEUE_TIMEOUT = int(os.getenv('QUEUE_TIMEOUT', '14400'))
+BUILD_TIMEOUT = int(os.getenv('BUILD_TIMEOUT', '10800'))
 
-# Unity Cloud Build statuses
-# https://docs.unity.com/cloud-build/api.html (buildStatus enum)
+# Unity Cloud Build buildStatus enum: https://docs.unity.com/cloud-build/api.html
 QUEUE_STATUSES = {'created', 'queued', 'sentToBuilder'}
 ACTIVE_STATUSES = {'started', 'restarted'}
 TERMINAL_STATUSES = {'success', 'failure', 'canceled', 'unknown'}
@@ -285,7 +282,7 @@ def run_build(branch, clean):
     sys.exit(1)
     
 def cancel_build(id):
-    # Best-effort, idempotent: don't fail the cancel path if Unity says the build is already done.
+    # Idempotent: Unity 4xx's a DELETE on a terminal build, so skip in that case.
     try:
         check = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS, timeout=30)
         if check.status_code == 200:
@@ -303,7 +300,6 @@ def cancel_build(id):
     else:
         print("Build failed to cancel with status code:", response.status_code)
         print("Response body:", response.text)
-        # Best-effort; do not abort the cancel step
 
 def poll_build(id):
     if id == -1:
@@ -515,12 +511,10 @@ def delete_current_target():
     sys.exit(0)
 
 def try_resume_build():
-    """If build_info.json points to a still-trackable build, return (target, id, status).
+    """Reattach to an in-flight build from build_info.json so the next retry attempt
+    keeps the same Unity Cloud queue position instead of POSTing a fresh build.
 
-    The persisted record survives across nick-fields/retry attempts within a single
-    GitHub Actions step. Reattaching avoids creating a new Unity Cloud build that
-    would go to the back of the queue — which is exactly the wrong thing under
-    concurrency pressure.
+    Returns (target, id, status, elapsed_seconds) or None.
     """
     info = utils.read_build_info()
     if info is None:
@@ -548,10 +542,12 @@ def try_resume_build():
         utils.delete_build_info()
         return None
 
-    current_status = resp.json().get('buildStatus')
+    body = resp.json()
+    current_status = body.get('buildStatus')
     if current_status in QUEUE_STATUSES or current_status in ACTIVE_STATUSES:
-        print(f'Resuming persisted build: target={persisted_target}, id={persisted_id}, status={current_status}')
-        return persisted_target, persisted_id, current_status
+        elapsed = int(body.get('totalTimeInSeconds') or 0)
+        print(f'Resuming persisted build: target={persisted_target}, id={persisted_id}, status={current_status}, elapsed={datetime.timedelta(seconds=elapsed)}')
+        return persisted_target, persisted_id, current_status, elapsed
 
     print(f'Persisted build status={current_status} - not resumable. Discarding build_info.')
     utils.delete_build_info()
@@ -599,18 +595,22 @@ def write_step_summary(target, build_id, final_status, phase_durations, queue_re
         print(f'Warning: could not write step summary: {e}')
 
 
-def run_poll_loop(id, build_already_active=False):
+def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     """Polls the build, enforcing queue and build budgets separately.
 
-    Returns (final_outcome: str, phase_durations: dict, queue_reasons: set,
-             queue_elapsed: float, build_elapsed: float).
+    On QUEUE_TIMEOUT the runner yields without cancelling so the next retry
+    attempt can reattach via try_resume_build and keep the queue position.
+    BUILD_TIMEOUT still cancels — a runaway active build should not keep
+    holding a Unity Cloud slot.
+
+    Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed).
     """
     phase_durations = collections.defaultdict(float)
     queue_reasons = set()
 
     now = time.time()
     queue_start = now
-    build_start = now if build_already_active else None
+    build_start = (now - resumed_build_elapsed) if build_already_active else None
     last_status = None
     last_status_change = now
     last_poll = now
@@ -618,17 +618,18 @@ def run_poll_loop(id, build_already_active=False):
     while True:
         now = time.time()
 
-        # Attribute the elapsed slice since the last poll to whichever status we last saw.
         if last_status is not None:
             phase_durations[last_status] += now - last_poll
         last_poll = now
 
-        # Enforce phase budgets before polling so a stuck phase cannot loiter past its cap.
         if build_start is None:
             queue_elapsed = now - queue_start
             if queue_elapsed > QUEUE_TIMEOUT:
-                print(f'Queue timeout exceeded ({datetime.timedelta(seconds=int(queue_elapsed))} > {datetime.timedelta(seconds=QUEUE_TIMEOUT)}). Cancelling build...')
-                cancel_build(id)
+                print(
+                    f'Queue timeout exceeded ({datetime.timedelta(seconds=int(queue_elapsed))} '
+                    f'> {datetime.timedelta(seconds=QUEUE_TIMEOUT)}). '
+                    f'Yielding runner; build stays queued for the next attempt to reattach.'
+                )
                 return 'queue_timeout', phase_durations, queue_reasons, queue_elapsed, 0.0
         else:
             build_elapsed = now - build_start
@@ -644,11 +645,9 @@ def run_poll_loop(id, build_already_active=False):
         if queued_reason and status in QUEUE_STATUSES:
             queue_reasons.add(queued_reason)
 
-        # Detect queue -> active transition once.
         if build_start is None and status in ACTIVE_STATUSES:
             build_start = now
-            queue_total_seen = now - queue_start
-            print(f'Build picked up by builder after {datetime.timedelta(seconds=int(queue_total_seen))} in queue.')
+            print(f'Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
 
         if status != last_status:
             queue_elapsed = (build_start or now) - queue_start
@@ -665,7 +664,6 @@ def run_poll_loop(id, build_already_active=False):
             build_elapsed = (now - build_start) if build_start else 0
             return status, phase_durations, queue_reasons, queue_elapsed, build_elapsed
 
-        # Adaptive polling: throttle while sitting in queue with no status change.
         if status in QUEUE_STATUSES and (now - last_status_change) > STALE_THRESHOLD:
             poll_interval = QUEUE_POLL_TIME
         else:
@@ -677,16 +675,13 @@ def run_poll_loop(id, build_already_active=False):
         time.sleep(poll_interval)
 
 
-# Entrypoint here ->
 args = parser.parse_args()
 
-# Tracks whether we attached to an existing in-flight build rather than creating a fresh one.
 build_already_active = False
+resumed_build_elapsed = 0
 
-# MODE: Delete
 if args.delete:
     delete_current_target()
-# MODE: Resume / Cancel — operate on the persisted in-flight build
 elif args.resume or args.cancel:
     build_info = utils.read_build_info()
     if build_info is None:
@@ -697,31 +692,27 @@ elif args.resume or args.cancel:
 
     if args.cancel:
         cancel_build(id)
+        sys.exit(0)
 
-# MODE: Create (default)
 else:
-
-    # Validate branch name before proceeding
     branch_name = os.getenv('BRANCH_NAME')
     validate_branch_name(branch_name)
 
-    # Auto-resume: if a previous attempt in this step left an in-flight build behind
-    # (typical when nick-fields/retry fires after a queue timeout), reattach to it
-    # instead of POSTing a fresh build that would go to the back of the Unity Cloud queue.
     resumed = try_resume_build()
     if resumed is not None:
-        target_name, id, resumed_status = resumed
+        target_name, id, resumed_status, resumed_elapsed = resumed
         os.environ['TARGET'] = target_name
         build_already_active = resumed_status in ACTIVE_STATUSES
+        if build_already_active:
+            resumed_build_elapsed = resumed_elapsed
     else:
-        # Clone current target — clones $TARGET, retargets to $BRANCH_NAME, replaces $TARGET.
         try:
             clone_current_target(True)
         except Exception as e:
             print(f"Operation failed: {e}")
 
-        # Set ENVs (Parameters) immediately before starting the build to avoid race
-        # conditions with other concurrent builds on shared targets.
+        # Set parameters immediately before run_build to avoid races with concurrent
+        # builds on shared targets.
         set_parameters(get_param_env_variables())
 
         def get_clean_build_bool():
@@ -737,18 +728,19 @@ else:
         utils.persist_build_info(os.getenv('TARGET'), id)
         print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
-# Poll with separate queue and build budgets
-final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(id, build_already_active=build_already_active)
+final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
+    id,
+    build_already_active=build_already_active,
+    resumed_build_elapsed=resumed_build_elapsed,
+)
 write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
 
 if final_outcome in ('queue_timeout', 'build_timeout'):
-    # Best-effort: capture whatever Unity has produced so the upload-log step has something to show.
-    try:
-        download_log(id)
-    except Exception as e:
-        print(f'Warning: could not download log after timeout: {e}')
-    # Exit with the retryable code so nick-fields/retry picks us up. The persisted build_info
-    # lets the next attempt reattach via try_resume_build instead of re-queuing.
+    if final_outcome == 'build_timeout':
+        try:
+            download_log(id)
+        except Exception as e:
+            print(f'Warning: could not download log after timeout: {e}')
     sys.exit(RETRYABLE_EXIT_CODE)
 
 print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')

@@ -394,8 +394,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
-    # Outer ceiling — must be >= the Execute Unity Cloud build step timeout
-    # (450 min) plus a margin for the surrounding setup/upload/cancel steps.
+    # Safety ceiling around the 450m retry budget + surrounding steps.
     timeout-minutes: 510
     strategy:
       fail-fast: false
@@ -421,9 +420,7 @@ jobs:
       - name: Execute Unity Cloud build
         uses: nick-fields/retry@v3
         with:
-          # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + 30m buffer so the outer
-          # step timeout only ever fires as a safety net — the Python script enforces
-          # the real per-phase budgets and exits 99 on cleanly-cancelled timeout.
+          # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
           timeout_minutes: 450
           max_attempts: 2
           retry_on_exit_code: 99
@@ -437,11 +434,11 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60                # base poll cadence (s) while status is changing
-          QUEUE_POLL_TIME: 120         # throttled poll cadence (s) while queued and unchanged
-          STALE_POLL_THRESHOLD: 600    # status unchanged > this (s) -> throttle
-          QUEUE_TIMEOUT: 14400         # 4h cap for created/queued/sentToBuilder
-          BUILD_TIMEOUT: 10800         # 3h cap for started/restarted (resets at queue->active transition)
+          POLL_TIME: 60
+          QUEUE_POLL_TIME: 120
+          STALE_POLL_THRESHOLD: 600
+          QUEUE_TIMEOUT: 14400
+          BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
@@ -744,9 +741,7 @@ jobs:
           path: shader_compilation_report.log
           if-no-files-found: warn
 
-      # Runs on workflow cancel and on step failure (including the outer step timeout
-      # winning the race against the Python timeouts). Best-effort: the script no-ops
-      # if the persisted build is already in a terminal state.
+      # Also runs on failure() so an outer-step timeout doesn't leave a Unity-side build holding a slot.
       - name: Cancel Unity Cloud build
         if: ${{ cancelled() || failure() }}
         env:
