@@ -164,9 +164,16 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         ///     As done by GamersNexus:
         ///     https://www.youtube.com/watch?v=WcTxrzFqdyw#t=34m17s
         /// </remarks>
-        private static float PercentWorst(List<float> times, float fraction) =>
-            times.OrderByDescending(i => i)
-                 .Take((int)(times.Count * fraction))
-                 .Average();
+        private static float PercentWorst(List<float> times, float fraction)
+        {
+            // Short sampling windows can yield < 1/fraction samples (e.g. an
+            // InWorld fixture that runs ~15s at ~30 FPS produces ~450 samples,
+            // so (int)(450 * 0.001f) is 0 and Take(0).Average() throws). Floor
+            // the count to 1 so 0.1% worst on small windows just reports the
+            // single worst frame instead of crashing summary generation.
+            if (times.Count == 0) return 0f;
+            var k = Math.Max(1, (int)(times.Count * fraction));
+            return times.OrderByDescending(i => i).Take(k).Average();
+        }
     }
 }
