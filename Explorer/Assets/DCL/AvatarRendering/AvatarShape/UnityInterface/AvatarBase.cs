@@ -144,7 +144,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             if (!AvatarAnimator)
                 return;
 
-            Debug.Log("POSITION:" + this.transform.position);
+            // Debug.Log("POSITION:" + this.transform.position);
 
             RandomID = Random.Range(0, 1000);
 
