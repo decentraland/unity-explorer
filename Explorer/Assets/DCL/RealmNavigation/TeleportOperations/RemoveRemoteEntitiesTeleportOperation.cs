@@ -24,7 +24,7 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            // Drop in-flight profile downloads and queued announcements from the previous realm must so they don't appear as ghosts
+            // Drop in-flight profile downloads and queued announcements from the previous realm so they don't appear as ghosts
             remoteAnnouncements.Reset();
             remoteProfiles.Reset();
             remoteEntities.ForceRemoveAll(globalWorld);
