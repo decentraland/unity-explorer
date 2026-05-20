@@ -387,18 +387,17 @@ More detailed instructions on how to test can be found in the description of rel
 
 Visual regression tests need a deterministic scene: a fixed window, no time-of-day drift, no procedural terrain, and no overlapping HUD UI on top of the rendered output. The flags below are the canonical set passed to the Explorer when capturing or comparing reference frames.
 
-| Flag | Effect in visual tests |
-| --- | --- |
+| Flag                                | Effect in visual tests |
+|-------------------------------------| --- |
 | `--landscape-terrain-enabled false` | Disables the procedural landscape terrain so the empty/grid background is identical across runs. Requires `--debug` (the flag is gated to debug builds). |
-| `--skybox-time-enabled false` | Freezes the skybox time-of-day cycle so lighting, sun position, and shadows stay constant frame-to-frame. |
-| `--resolution 1920x1080` | Forces a fixed render resolution. Capturing at the same resolution that the reference frames were taken at avoids upscaler/MSAA differences. Only honored in fullscreen mode. |
-| `--windowed-mode` | Forces windowed mode so the OS doesn't apply display-server-specific fullscreen scaling. Pair with `--resolution` to lock the captured framebuffer size. |
-| `--disable-hud` | Hides the HUD (chat, minimap, notifications, etc.) so transient UI doesn't pollute the captured frame. SDK UI from scenes remains visible. |
-| `--skip-minimum-specs-screen` | Skips the "performance adjusted to your device" screen on sub-spec hardware and prevents the automatic low-quality preset from overriding `--graphics`. |
+| `--skybox-time-enabled false`       | Freezes the skybox time-of-day cycle so lighting, sun position, and shadows stay constant frame-to-frame. |
+| `--resolution 1024x768`             | Forces a fixed render resolution. Capturing at the same resolution that the reference frames were taken at avoids upscaler/MSAA differences. Only honored in fullscreen mode. |
+| `--disable-hud`                     | Hides the HUD (chat, minimap, notifications, etc.) so transient UI doesn't pollute the captured frame. SDK UI from scenes remains visible. |
+| `--skip-minimum-specs-screen`       | Skips the "performance adjusted to your device" screen on sub-spec hardware and prevents the automatic low-quality preset from overriding `--graphics`. |
 
 **Example launch:**
 ```bash
---debug --landscape-terrain-enabled false --skybox-time-enabled false --resolution 1920x1080 --windowed-mode --disable-hud --skip-minimum-specs-screen
+--landscape-terrain-enabled false --skybox-time-enabled false --resolution 1024x768 --disable-hud --skip-minimum-specs-screen
 ```
 
 ---
