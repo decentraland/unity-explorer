@@ -37,16 +37,19 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly AssetBundleLoadingMutex loadingMutex;
         private readonly IWebRequestController webRequestController;
+        private readonly bool byteWeightedProgress;
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
             AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache)
+            IDiskCache<PartialLoadingState> partialDiskCache,
+            bool byteWeightedProgress) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
+            this.byteWeightedProgress = byteWeightedProgress;
         }
 
         private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
@@ -72,8 +75,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetBundle == null)
             {
-                long contentLength = await webRequestController.GetDecompressedContentLengthAsync(intention.CommonArguments.URL, ct);
-                state.ContentLength = contentLength;
+                long contentLength = -1;
+
+                // When byte-weighted progress is off, skip the HEAD round-trip and leave state.ContentLength=-1
+                // so GatherGltfAssetsSystem falls back to count-based progress (no per-entity byte weighting).
+                if (byteWeightedProgress)
+                {
+                    contentLength = await webRequestController.GetDecompressedContentLengthAsync(intention.CommonArguments.URL, ct);
+                    state.ContentLength = contentLength;
+                }
 
                 assetBundleResult = await webRequestController.GetAssetBundleAsync(
                     intention.CommonArguments,
@@ -81,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     ct,
                     GetReportCategory(),
                     expectedContentLength: contentLength,
-                    progressReporter: state,
+                    progressReporter: byteWeightedProgress ? state : null,
                     suppressErrors: true); // Suppress errors because here we have our own error handling
                 assetBundle = assetBundleResult.Value.AssetBundle;
             }

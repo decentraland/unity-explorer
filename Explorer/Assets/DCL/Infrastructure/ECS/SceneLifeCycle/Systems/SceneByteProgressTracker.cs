@@ -13,9 +13,10 @@ namespace ECS.SceneLifeCycle.Systems
     /// </summary>
     internal class SceneByteProgressTracker : IDisposable
     {
-        // Flat weight for assets that finished before we ever read their ContentLength.
-        // Small enough that a stream of unknowns can't dominate real bytes, large enough to register as progress.
-        private const long UNKNOWN_ASSET_BYTES = 1024;
+        // Flat weight for assets with no observed ContentLength (cache hits, HEAD failures).
+        // Kept at 1 byte so unknowns don't skew the bar away from real-download progress: cache hits
+        // are effectively free, just held by finalize budget, and shouldn't drag the percentage down.
+        private const long UNKNOWN_ASSET_BYTES = 1;
 
         private readonly Dictionary<Entity, long> sizes;
 
@@ -86,17 +87,29 @@ namespace ECS.SceneLifeCycle.Systems
                 inProgressWeightedBytes += (long)(entityProgress * contentLength);
         }
 
+        // Asymptotic smoothing. state.Progress per entity reports only the main AB's UWR progress (not its
+        // dependencies), so when each main AB finishes the aggregate steps up by (1 - last) * contentLength.
+        // Lerping toward target hides those spikes; conclude path still snaps to 1.0.
+        private const float SMOOTHING_FACTOR = 0.15f;
+
         /// <summary>
         ///     Returns this frame's progress value, guaranteed never to go down between frames.
         ///     Call once per frame: it also clears the per-frame in-progress accumulator.
         /// </summary>
         public float ComputeAndClamp(int totalAssetsToResolve)
         {
-            float progress = Compute(totalAssetsToResolve);
+            float target = Compute(totalAssetsToResolve);
             inProgressWeightedBytes = 0;
-            maxReportedProgress = Mathf.Max(maxReportedProgress, progress);
+            float smoothed = Mathf.Lerp(maxReportedProgress, target, SMOOTHING_FACTOR);
+            maxReportedProgress = Mathf.Max(maxReportedProgress, smoothed);
             return maxReportedProgress;
         }
+
+        // Cap below 1.0 because AsyncLoadProcessReport.SetProgress(>=1f) auto-resolves its completion source,
+        // which closes the loading screen. In-progress credits can saturate effectiveTotal during the finalize-wait
+        // window (entities are downloaded but still in LoadingState.Loading); only the explicit conclude path
+        // in GatherGltfAssetsSystem should report 1.0.
+        private const float MAX_IN_PROGRESS = 0.99f;
 
         private float Compute(int totalAssetsToResolve)
         {
@@ -104,7 +117,7 @@ namespace ECS.SceneLifeCycle.Systems
             long effectiveTotal = totalBytesExpected + (UNKNOWN_ASSET_BYTES * unknownCount);
 
             return effectiveTotal > 0
-                ? Mathf.Clamp01((float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)
+                ? Mathf.Min(MAX_IN_PROGRESS, (float)(completedBytes + inProgressWeightedBytes) / effectiveTotal)
                 : 0f;
         }
     }
