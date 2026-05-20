@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running // CurrentState will be != Running at start, so we need to connect
-                || Room().Info.ConnectionState == LKConnectionState.ConnDisconnected) // If the room was running but our connection was lost at some point, we need to reconnect
+                || Room().Info.ConnectionState != LKConnectionState.ConnConnected) // If the room was running but our connection was lost (or stuck reconnecting), we need to reconnect
             {
                 string connectionString = await ConnectionStringAsync(token);
                 await TryConnectToRoomAsync(connectionString, token);
