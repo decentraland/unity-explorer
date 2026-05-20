@@ -96,8 +96,6 @@ namespace DCL.Emoji
                 view.SearchInputBlurred -= RestoreShortcuts;
             }
 
-            HideTooltip();
-
             allEmojis.Clear();
             searchResults.Clear();
             allRows.Clear();
