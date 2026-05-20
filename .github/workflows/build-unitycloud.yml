@@ -52,6 +52,11 @@ on:
         required: false
         type: boolean
         default: false
+      script_debugging:
+        description: 'Enable Script Debugging (forces Development build)'
+        required: false
+        type: boolean
+        default: false
       delta_threshold_macos_mb:
         description: 'Warn if macOS growth > this MB (0 = off)'
         required: false
@@ -99,6 +104,10 @@ on:
         required: true
         type: string
       sentry_enabled:
+        required: false
+        type: boolean
+        default: false
+      script_debugging:
         required: false
         type: boolean
         default: false
@@ -407,6 +416,22 @@ jobs:
 
           if [[ "$profile" == "deep" ]]; then
             options+=("EnableDeepProfilingSupport")
+          fi
+
+          # Script Debugging: input toggle (workflow_dispatch / workflow_call) or 'script-debugging' PR label.
+          # AllowDebugging requires a Development build to be honored by Unity.
+          script_debugging="${{ github.event.inputs.script_debugging || inputs.script_debugging }}"
+
+          if [[ "$script_debugging" != "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            script_debugging=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'script-debugging' && echo true || echo false)
+          fi
+
+          if [[ "$script_debugging" == "true" ]]; then
+            # Add Development only if not already added by profile mode
+            if [[ ! " ${options[*]} " =~ " Development " ]]; then
+              options+=("Development")
+            fi
+            options+=("AllowDebugging")
           fi
 
           # Write the array as a comma-separated string
