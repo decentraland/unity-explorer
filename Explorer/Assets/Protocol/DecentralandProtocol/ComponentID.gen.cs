@@ -63,5 +63,6 @@ namespace DCL.ECS7
         public const int PHYSICS_COMBINED_IMPULSE = 1215;
         public const int PHYSICS_COMBINED_FORCE = 1216;
         public const int PARTICLE_SYSTEM = 1217;
+        public const int AUDIO_SOURCE_EFFECT = 1401;
     }
 }
