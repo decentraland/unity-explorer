@@ -24,8 +24,7 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            // In-flight profile downloads and queued announcements from the previous realm must be dropped here:
-            // otherwise they resolve after the teleport and TryCreateOrUpdateRemoteEntity rebuilds them as ghost avatars in the new realm.
+            // Drop in-flight profile downloads and queued announcements from the previous realm must so they don't appear as ghosts
             remoteAnnouncements.Reset();
             remoteProfiles.Reset();
             remoteEntities.ForceRemoveAll(globalWorld);
