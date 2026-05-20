@@ -1124,6 +1124,7 @@ namespace Global.Dynamic
                 new AvatarLocomotionOverridesGlobalPlugin(),
                 new JumpIndicatorPlugin(assetsProvisioner),
                 new SpringBonesPlugin(springBoneSimulationSettings),
+                new EnsureClockSyncPlugin(realmNavigator, mvcManager, bootstrapContainer.RealmClock, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
             };
 
             if (donationsService.DonationFeatureEnabled)
