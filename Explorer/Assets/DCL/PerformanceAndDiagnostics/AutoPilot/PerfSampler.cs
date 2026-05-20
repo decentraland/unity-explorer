@@ -51,7 +51,8 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
             if (sampling)
             {
-                Debug.LogWarning(
+                DCL.Diagnostics.ReportHub.LogWarning(
+                    DCL.Diagnostics.ReportCategory.ALWAYS,
                     $"{nameof(PerfSampler)}.{nameof(Begin)} called while a sampling session is already active. Ignoring.");
                 return;
             }
