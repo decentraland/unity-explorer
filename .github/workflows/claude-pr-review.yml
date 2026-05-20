@@ -134,7 +134,9 @@ jobs:
               owner, repo, issue_number: prNumber, per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -215,9 +217,14 @@ jobs:
             }
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner, repo, comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;
@@ -422,7 +429,9 @@ jobs:
               per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -433,11 +442,14 @@ jobs:
             const hasReviewResult = output.includes('REVIEW_RESULT:');
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;
