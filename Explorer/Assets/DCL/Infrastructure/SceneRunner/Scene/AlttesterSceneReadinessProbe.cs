@@ -54,7 +54,9 @@ namespace SceneRunner.Scene
             ISceneFacade? facade = currentFacade;
             if (facade == null) return string.Empty;
             Vector2Int parcel = facade.Info.BaseParcel;
-            return parcel.x + "," + parcel.y;
+            var sb = new StringBuilder(16);
+            sb.Append(parcel.x).Append(',').Append(parcel.y);
+            return sb.ToString();
         }
 
         /// <summary>

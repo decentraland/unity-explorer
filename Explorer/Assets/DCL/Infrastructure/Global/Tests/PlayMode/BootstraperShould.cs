@@ -13,7 +13,7 @@ namespace Global.Tests.PlayMode
         private IMVCManager mvcManager;
 
         [SetUp]
-        public async void Setup()
+        public async Task Setup()
         {
             mvcManager = Substitute.For<IMVCManager>();
             await UniTask.Yield();
@@ -22,9 +22,6 @@ namespace Global.Tests.PlayMode
         [Test]
         public async Task DisableHudOnStartup_OnlyTouchesMVCCanvases_NotSceneUIDocuments()
         {
-            // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => mvcManager != null);
-
             await Bootstrap.DisableHudOnStartupAsync(mvcManager, CancellationToken.None);
 
             mvcManager.Received(1).SetAllViewsCanvasActive(false);
@@ -34,9 +31,6 @@ namespace Global.Tests.PlayMode
         [Test]
         public async Task DisableHudOnStartup_DoesNothing_WhenCancelledBeforeFrameAdvances()
         {
-            // Workaround for Unity bug not awaiting async Setup correctly
-            await UniTask.WaitUntil(() => mvcManager != null);
-
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
