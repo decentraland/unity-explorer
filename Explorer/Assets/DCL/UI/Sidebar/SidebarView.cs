@@ -41,6 +41,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button eventsButton { get; private set; } = null!;
         [field: SerializeField] internal TMP_Text liveEventsCounterText { get; private set; } = null!;
         [field: SerializeField] internal GameObject liveEventsCounterContainer { get; private set; } = null!;
+        [field: SerializeField] internal GameObject communitiesLiveBadge { get; private set; } = null!;
 
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; } = null!;
