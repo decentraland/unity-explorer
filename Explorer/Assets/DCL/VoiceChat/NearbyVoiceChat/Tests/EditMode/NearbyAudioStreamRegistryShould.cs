@@ -499,14 +499,14 @@ namespace DCL.VoiceChat.Nearby.Tests
             audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(500);
             // SID_1 keeps -1 (ghost).
 
-            Assert.That(registry.IsActiveSid(WALLET_A, SID_2), Is.True);
-            Assert.That(registry.IsActiveSid(WALLET_A, SID_1), Is.False);
+            Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_2)), Is.True);
+            Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_1)), Is.False);
         }
 
         [Test]
         public void IsActiveSidFalseWhenWalletHasNoSids()
         {
-            Assert.That(registry.IsActiveSid("0xUNKNOWN", SID_1), Is.False);
+            Assert.That(registry.IsActiveSid(new StreamKey("0xUNKNOWN", SID_1)), Is.False);
         }
 
         [Test]
@@ -539,7 +539,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         // on per-sid index probing were either deleted (reference-equality on the array) or were
         // already updated to use the resolver semantics directly.
         private bool ContainsSid(string walletId, string sid) =>
-            registry.IsActiveSid(walletId, sid);
+            registry.IsActiveSid(new StreamKey(walletId, sid));
 
         private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
         {

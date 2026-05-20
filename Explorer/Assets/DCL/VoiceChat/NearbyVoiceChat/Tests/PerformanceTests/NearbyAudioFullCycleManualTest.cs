@@ -343,8 +343,8 @@ namespace DCL.VoiceChat.Nearby
             public string? GetActiveSid(string walletId) =>
                 activeSidByIdentity.TryGetValue(walletId, out string? sid) ? sid : null;
 
-            public bool IsActiveSid(string walletId, string sid) =>
-                activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid;
+            public bool IsActiveSid(StreamKey key) =>
+                activeSidByIdentity.TryGetValue(key.identity, out string? active) && active == key.sid;
 
             public bool IsActiveSpeaker(string walletId) =>
                 throw new NotImplementedException();

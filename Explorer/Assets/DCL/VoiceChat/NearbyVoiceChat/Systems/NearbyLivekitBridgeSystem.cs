@@ -50,8 +50,6 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
 
-            // Resolver null = either no sids (case a → no-op here, RemoveStreaming has no component to drop)
-            // or all-zeros window (case b → wait for next tick). Either way, do nothing on the Add path.
             string? activeSid = registry.GetActiveSid(walletId);
             if (activeSid != null)
                 World.Add(entity, new NearbyAudioStreamerComponent(activeSid));
@@ -66,12 +64,10 @@ namespace DCL.VoiceChat.Nearby.Systems
             if (string.IsNullOrEmpty(userId)) return;
 
             // Null means: registry has no sids (RemoveStreaming handles), or all-zeros window (wait).
-            // Either way, do not touch CurrentSid here.
             string? activeSid = registry.GetActiveSid(userId);
             if (activeSid == null) return;
 
-            // Flip path — resolver picked a different sid since we last observed (winner was demoted by a fresher candidate,
-            // or the previous sid was unsubscribed and a new one is active). Cleanup reaps the old (walletId, oldSid) entity.
+            // Cleanup reaps the old (walletId, oldSid) entity.
             if (!string.Equals(nearby.CurrentSid, activeSid, System.StringComparison.Ordinal))
                 nearby.CurrentSid = activeSid;
         }
@@ -82,14 +78,7 @@ namespace DCL.VoiceChat.Nearby.Systems
         private void RemoveStreaming(Entity entity, in Profile profile)
         {
             string userId = profile.UserId;
-            if (string.IsNullOrEmpty(userId)) return;
-
-            // Critical guard: resolver returning null is ambiguous.
-            //   a) HasAudioStream == false → identity has zero sids → drop.
-            //   b) HasAudioStream == true  → all-zeros window (>=1 sid registered, none have emitted a frame yet) → wait, do not drop.
-            // RefreshStreaming already kept CurrentSid in sync with whichever sid is currently picked,
-            // so the only remaining job of RemoveStreaming is to detect case (a).
-            if (registry.HasAudioStream(userId)) return;
+            if (string.IsNullOrEmpty(userId) || registry.HasAudioStream(userId)) return;
 
             // Drop NearbyAudioStreamerComponent and every dependent marker so invariants (speaking ⊆ streaming, audible ⊆ streaming) hold.
             World.Remove<NearbyAudioStreamerComponent>(entity);

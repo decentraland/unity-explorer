@@ -30,9 +30,6 @@ namespace DCL.VoiceChat.Nearby.Systems
     [LogCategory(ReportCategory.NEARBY_VOICE_CHAT)]
     public partial class NearbyAudioCleanupSystem : BaseUnityLoopSystem
     {
-        private static readonly QueryDescription LIVE_AUDIO_QUERY =
-            new QueryDescription().WithAll<NearbyAudioSourceComponent>().WithNone<DeleteEntityIntention>();
-
         private readonly INearbyAudioStreamRegistry registry;
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
@@ -64,22 +61,17 @@ namespace DCL.VoiceChat.Nearby.Systems
                 sourceFactory.InvalidateForDeviceChange();
             }
 
-            // Listening-gate AND device-change are bulk component-removes; per-entity detection is skipped in either case.
+            // Listening-gate AND device-change wipe every live source; per-entity detection is skipped in either case.
             if (stateModel.IsListeningDisabled || deviceChanged)
-            {
                 DisposeAllLiveSourcesQuery(World);
-                World.Remove<NearbyAudioSourceComponent>(in LIVE_AUDIO_QUERY);
-            }
             else
             {
                 ReapOrphanedSourceQuery(World);     // #1: streamer marker gone
                 ReapOutOfRangeSourceQuery(World);   // #2: audible-range tag gone
-                ReapFilteredSourceQuery(World);     // #3 sid demoted / #4 blocked / #5 scene-banned
+                ReapFilteredSourceQuery(World);     // #3-4-5 sid demoted / user blocked or banned by the scene
             }
 
-            // Trigger #7: avatars marked for deletion still carry the component until the entity is destroyed
-            // elsewhere. Dispose the source; do NOT World.Remove (the avatar takes the component with it).
-            DisposeDyingAvatarSourcesQuery(World);
+            DisposeDyingAvatarSourcesQuery(World); // #7: avatars marked for deletion
         }
 
         protected override void OnDispose()
@@ -88,31 +80,32 @@ namespace DCL.VoiceChat.Nearby.Systems
             DisposeDyingAvatarSourcesQuery(World);
         }
 
-        // Trigger #1: avatar lost NearbyAudioStreamerComponent — unconditional reap.
+        // #1: avatar is not a streamer anymore (lost NearbyAudioStreamerComponent).
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(NearbyAudioStreamerComponent))]
         private void ReapOrphanedSource(Entity entity, ref NearbyAudioSourceComponent comp) =>
             DisposeAndRemove(entity, ref comp);
 
-        // Trigger #2: avatar left audible range — unconditional reap.
+        // #2: avatar left audible range.
         [Query]
         [All(typeof(NearbyAudioStreamerComponent))]
         [None(typeof(DeleteEntityIntention), typeof(InAudibleRangeTag))]
         private void ReapOutOfRangeSource(Entity entity, ref NearbyAudioSourceComponent comp) =>
             DisposeAndRemove(entity, ref comp);
 
-        // Triggers #3/#4/#5: !IsActiveSid covers sid evicted entirely (resolver picks different/null sid)
+        // #3/#4/#5:
+        // !IsActiveSid covers sid evicted entirely (resolver picks different/null sid)
         // AND sid demoted (resolver picked a fresher candidate — ghost loser reaped here so binding spawns the winner).
         [Query]
         [All(typeof(NearbyAudioStreamerComponent), typeof(InAudibleRangeTag))]
         [None(typeof(DeleteEntityIntention))]
         private void ReapFilteredSource(Entity entity, ref NearbyAudioSourceComponent comp)
         {
-            bool keep = registry.IsActiveSid(comp.Key.identity, comp.Key.sid)
-                        && !userBlockingCache.UserIsBlocked(comp.Key.identity)
-                        && !roomMetadataCurrentScene.IsUserBanned(comp.Key.identity);
+            bool remove = userBlockingCache.UserIsBlocked(comp.Key.identity)
+                          || roomMetadataCurrentScene.IsUserBanned(comp.Key.identity)
+                          || !registry.IsActiveSid(comp.Key);
 
-            if (!keep)
+            if (remove)
                 DisposeAndRemove(entity, ref comp);
         }
 
@@ -124,10 +117,8 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void DisposeAllLiveSources(ref NearbyAudioSourceComponent comp)
-        {
-            sourceFactory.Dispose(comp.LivekitAudioSource);
-        }
+        private void DisposeAllLiveSources(Entity entity, ref NearbyAudioSourceComponent comp) =>
+            DisposeAndRemove(entity, ref comp);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]

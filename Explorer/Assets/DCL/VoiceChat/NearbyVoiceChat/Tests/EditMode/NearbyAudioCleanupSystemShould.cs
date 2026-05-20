@@ -286,7 +286,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             // Sanity-check the precondition the test depends on.
             Assert.That(registry.HasAudioStream(PARTICIPANT_A), Is.True,
                 "precondition: identity still indexed (only the active pick changed)");
-            Assert.That(registry.IsActiveSid(PARTICIPANT_A, SID_1), Is.False,
+            Assert.That(registry.IsActiveSid(new StreamKey(PARTICIPANT_A, SID_1)), Is.False,
                 "precondition: bound sid is no longer the active one");
             // The Asserts above bumped IsActiveSidCallCount via the precondition; reset before the system tick.
             registry.ResetCallCounters();
@@ -545,10 +545,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             public string? GetActiveSid(string walletId) =>
                 activeSidByIdentity.TryGetValue(walletId, out string? sid) ? sid : null;
 
-            public bool IsActiveSid(string walletId, string sid)
+            public bool IsActiveSid(StreamKey key)
             {
                 IsActiveSidCallCount++;
-                return activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid;
+                return activeSidByIdentity.TryGetValue(key.identity, out string? active) && active == key.sid;
             }
 
             public bool IsActiveSpeaker(string walletId) => false;

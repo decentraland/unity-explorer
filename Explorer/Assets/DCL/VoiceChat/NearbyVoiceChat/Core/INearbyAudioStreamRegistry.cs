@@ -32,11 +32,11 @@ namespace DCL.VoiceChat.Nearby.Audio
         string? GetActiveSid(string walletId);
 
         /// <summary>
-        /// <c>true</c> when <paramref name="sid"/> is the resolver's current pick for <paramref name="walletId"/>.
+        /// <c>true</c> when <paramref name="key"/>.sid is the resolver's current pick for <paramref name="key"/>.identity.
         /// Cleanup uses this in place of "sid disappeared from snapshot" — it also reaps demoted ghost sids that
         /// still exist in the registry but lost to a fresher candidate.
         /// </summary>
-        bool IsActiveSid(string walletId, string sid);
+        bool IsActiveSid(StreamKey key);
 
         /// <summary>
         /// Returns <c>true</c> if <paramref name="walletId"/> was present in the latest

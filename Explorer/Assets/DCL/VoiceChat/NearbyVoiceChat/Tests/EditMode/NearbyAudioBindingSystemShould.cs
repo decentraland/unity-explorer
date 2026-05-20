@@ -346,7 +346,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             mock.HasAudioStream(Arg.Any<string>()).ReturnsForAnyArgs(false);
             mock.GetActiveStream(Arg.Any<StreamKey>()).ReturnsForAnyArgs(Weak<AudioStream>.Null);
             mock.GetActiveSid(Arg.Any<string>()).ReturnsForAnyArgs((string?)null);
-            mock.IsActiveSid(Arg.Any<string>(), Arg.Any<string>()).ReturnsForAnyArgs(false);
+            mock.IsActiveSid(Arg.Any<StreamKey>()).ReturnsForAnyArgs(false);
             mock.IsActiveSpeaker(Arg.Any<string>()).ReturnsForAnyArgs(false);
 
             // Replace registry with the mock for the lifetime of this test.
@@ -367,7 +367,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
                 mock.DidNotReceive().GetActiveSid(Arg.Any<string>());
                 mock.DidNotReceive().HasAudioStream(Arg.Any<string>());
-                mock.DidNotReceive().IsActiveSid(Arg.Any<string>(), Arg.Any<string>());
+                mock.DidNotReceive().IsActiveSid(Arg.Any<StreamKey>());
             }
             finally
             {
@@ -460,7 +460,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             public string? GetActiveSid(string walletId) => null;
 
-            public bool IsActiveSid(string walletId, string sid) => false;
+            public bool IsActiveSid(StreamKey key) => false;
 
             public bool IsActiveSpeaker(string walletId) => false;
 

@@ -137,11 +137,9 @@ namespace DCL.VoiceChat.Nearby.Audio
             {
                 int t = room.AudioStreams.GetLastFrameReceivedAt(new StreamKey(walletId, sid));
 
-                // -1 sentinel: AudioStream missing or never decoded a frame. Ghosts and not-yet-live tracks both
-                // land here; we cannot let them win against a candidate that has provably emitted audio.
+                // -1 sentinel: AudioStream missing or never decoded a frame.
                 if (t == -1) continue;
 
-                // unchecked(t - bestTick) > 0 is wrap-safe across the ~49-day Environment.TickCount window.
                 if (bestSid is null || unchecked(t - bestTick) > 0)
                 {
                     bestTick = t;
@@ -152,10 +150,10 @@ namespace DCL.VoiceChat.Nearby.Audio
             return bestSid;
         }
 
-        public bool IsActiveSid(string walletId, string sid)
+        public bool IsActiveSid(StreamKey key)
         {
-            string? active = GetActiveSid(walletId);
-            return active is not null && string.Equals(active, sid, StringComparison.Ordinal);
+            string? active = GetActiveSid(key.identity);
+            return active is not null && string.Equals(active, key.sid, StringComparison.Ordinal);
         }
 
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
