@@ -117,7 +117,6 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
                     return;
 
                 // Reset() may have cancelled and cleared pendingProfiles while we were awaiting.
-                // Without this guard a stale profile from a previous realm would slip into the next consumer pass and create a ghost avatar.
                 if (cts.IsCancellationRequested || !pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out PendingRequest currentRequest))
                     return;
 
