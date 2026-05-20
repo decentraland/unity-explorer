@@ -162,6 +162,11 @@ namespace DCL.Diagnostics
         public const string SDK_AUDIO_ANALYSIS = nameof(SDK_AUDIO_ANALYSIS);
 
         /// <summary>
+        ///     Scene-driven audio post-processing effects targeting avatar voice streams.
+        /// </summary>
+        public const string AUDIO_EFFECTS = nameof(AUDIO_EFFECTS);
+
+        /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
         /// </summary>
         public const string MEDIA_STREAM = nameof(MEDIA_STREAM);

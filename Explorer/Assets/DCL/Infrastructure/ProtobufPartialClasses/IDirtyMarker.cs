@@ -241,4 +241,9 @@ namespace DCL.ECSComponents
     {
         public bool IsDirty { get; set; }
     }
+
+    public partial class PBAudioSourceEffect : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
 }

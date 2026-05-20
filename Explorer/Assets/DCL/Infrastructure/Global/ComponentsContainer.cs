@@ -122,6 +122,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarShape>.Create(ComponentID.AVATAR_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioSource>.Create(ComponentID.AUDIO_SOURCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAudioSourceEffect>.Create(ComponentID.AUDIO_SOURCE_EFFECT).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenSequence>.Create(ComponentID.TWEEN_SEQUENCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
