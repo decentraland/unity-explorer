@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.Global
 
             if (appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
             {
-                var autoPilot = new AutoPilot(appArgs, loadingStatus, profiler);
+                var autoPilot = new AutoPilot(appArgs, loadingStatus);
                 autoPilot.RunAsync().Forget();
             }
         }

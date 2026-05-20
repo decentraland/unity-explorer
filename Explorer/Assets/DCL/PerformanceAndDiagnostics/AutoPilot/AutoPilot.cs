@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiling;
 using DCL.RealmNavigation;
 using Global.AppArgs;
 using System;
@@ -12,13 +11,11 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
     {
         private readonly IAppArgs appArgs;
         private readonly ILoadingStatus loadingStatus;
-        private readonly IProfiler profiler;
 
-        public AutoPilot(IAppArgs appArgs, ILoadingStatus loadingStatus, IProfiler profiler)
+        public AutoPilot(IAppArgs appArgs, ILoadingStatus loadingStatus)
         {
             this.appArgs = appArgs;
             this.loadingStatus = loadingStatus;
-            this.profiler = profiler;
         }
 
         public async UniTask RunAsync()
@@ -34,9 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
                 if (csvFile == null)
                     throw new Exception($"{nameof(csvFile)} is null");
 
-                if (!appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY, out string summaryFile))
-                    throw new Exception(
-                        $"--{AppArgsFlags.AUTOPILOT_SUMMARY} requires --{AppArgsFlags.AUTOPILOT_CSV}");
+                appArgs.TryGetValue(AppArgsFlags.AUTOPILOT_SUMMARY, out string summaryFile);
 
                 while (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                     await UniTask.Yield();
