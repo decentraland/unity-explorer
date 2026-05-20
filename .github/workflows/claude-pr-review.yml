@@ -8,10 +8,6 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
 
-concurrency:
-  group: claude-review-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   auto-review:
     if: |
@@ -20,6 +16,9 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-auto-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -317,6 +316,9 @@ jobs:
     needs: check-member
     if: needs.check-member.outputs.is-member == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-on-demand-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
