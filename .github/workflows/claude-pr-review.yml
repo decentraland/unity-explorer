@@ -133,8 +133,9 @@ jobs:
               owner, repo, issue_number: prNumber, per_page: 100
             });
 
+            const VERDICT_RE = /(?:^|\n)REVIEW_RESULT: (PASS|FAIL)\b/;
             const claudeComments = comments.data.filter(c =>
-              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+              c.user?.login === 'claude[bot]' && VERDICT_RE.test(c.body || '')
             );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
@@ -431,8 +432,9 @@ jobs:
               per_page: 100
             });
 
+            const VERDICT_RE = /(?:^|\n)REVIEW_RESULT: (PASS|FAIL)\b/;
             const claudeComments = comments.data.filter(c =>
-              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+              c.user?.login === 'claude[bot]' && VERDICT_RE.test(c.body || '')
             );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
