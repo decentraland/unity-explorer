@@ -98,6 +98,9 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
             Assert.IsTrue(scene1World.TryGet(playerCRDTEntity.SceneWorldEntity, out PlayerSceneCRDTEntity scenePlayerCRDTEntity));
             Assert.AreEqual(playerCRDTEntity.CRDTEntity, scenePlayerCRDTEntity.CRDTEntity);
+
+            if (isMainPlayer)
+                Assert.AreEqual(scene1Facade.PersistentEntities.Player, playerCRDTEntity.SceneWorldEntity);
         }
 
         [TestCase(true)]
@@ -146,8 +149,19 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity newState));
             Assert.IsFalse(newState.AssignedToScene);
-            Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
-            Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), Is.True);
+
+            if (isMainPlayer)
+            {
+                // Local player: PersistentEntities.Player has PlayerSceneCRDTEntity removed, not destroyed
+                Assert.IsFalse(scene1World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
+                Assert.IsFalse(scene1World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
+            }
+            else
+            {
+                // Remote player: separate entity gets DeleteEntityIntention
+                Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
+                Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), Is.True);
+            }
         }
 
         [TestCase(true)]
@@ -180,7 +194,21 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
             Assert.That(playerCRDTEntity.SceneFacade, Is.EqualTo(scene2Facade));
             Assert.IsTrue(scene2Facade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
-            Assert.That(scene1Facade.EcsExecutor.World.Has<DeleteEntityIntention>(scene1Entity), Is.True);
+
+            if (isMainPlayer)
+            {
+                // Local player: old scene's persistent player loses PlayerSceneCRDTEntity (not destroyed)
+                Assert.IsFalse(scene1Facade.EcsExecutor.World.Has<DeleteEntityIntention>(scene1Entity));
+                Assert.IsFalse(scene1Facade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(scene1Entity));
+
+                // New scene uses its persistent player entity
+                Assert.AreEqual(scene2Facade.PersistentEntities.Player, playerCRDTEntity.SceneWorldEntity);
+            }
+            else
+            {
+                // Remote player: old entity gets DeleteEntityIntention
+                Assert.That(scene1Facade.EcsExecutor.World.Has<DeleteEntityIntention>(scene1Entity), Is.True);
+            }
         }
 
         [Test]
@@ -344,9 +372,10 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
             Assert.IsFalse(playerCRDTEntity.AssignedToScene);
 
-            // Scene-side cleanup write must be skipped: posting DeleteEntityIntention to a
-            // disposing world would race with its teardown.
+            // Scene-side cleanup write must be skipped: RemovePlayerFromScene gates on Running,
+            // so neither DeleteEntityIntention nor PlayerSceneCRDTEntity removal should happen.
             Assert.That(scene1World.Has<DeleteEntityIntention>(scene1Entity), Is.False);
+            Assert.That(scene1World.Has<PlayerSceneCRDTEntity>(scene1Entity), Is.True);
         }
 
         [Test]

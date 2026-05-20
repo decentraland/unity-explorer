@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
@@ -28,7 +29,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PlayerComponent))]
         private void PropagateProfileToScene(Profile profile, in PlayerCRDTEntity playerCRDTEntity)
         {
             if ((playerCRDTEntity.IsDirty || profile.IsDirty) && playerCRDTEntity.AssignedToScene)

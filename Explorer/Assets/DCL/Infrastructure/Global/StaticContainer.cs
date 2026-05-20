@@ -68,6 +68,7 @@ using DCL.UI;
 using ECS.Unity.AssetLoad.Cache;
 using Global.Dynamic;
 using Utility;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
 namespace Global
@@ -134,6 +135,7 @@ namespace Global
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
         public AssetPreLoadCache AssetPreLoadCache { get; private set; }
+        public CharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; }
 
         public void Dispose()
         {
@@ -281,6 +283,9 @@ namespace Global
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
+            container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(
+                componentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus, container.GltfContainerAssetsCache, appArgs, componentsContainer.ComponentPoolsRegistry.RootContainerTransform()),
@@ -317,7 +322,7 @@ namespace Global
                     container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
-                new MultiplayerPlugin(),
+                new MultiplayerPlugin(globalWorld, playerEntity, container.CharacterDataPropagationUtility),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),

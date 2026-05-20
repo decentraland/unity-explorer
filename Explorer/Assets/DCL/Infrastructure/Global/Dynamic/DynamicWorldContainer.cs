@@ -552,7 +552,7 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
-            var characterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
+            CharacterDataPropagationUtility characterDataPropagationUtility = staticContainer.CharacterDataPropagationUtility;
 
             var currentSceneInfo = new CurrentSceneInfo();
 
