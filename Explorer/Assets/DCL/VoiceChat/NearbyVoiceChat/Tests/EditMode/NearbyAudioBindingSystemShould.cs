@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -57,7 +58,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             sourceFactory = new FakeNearbyAudioSourceFactory();
 
-            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            system = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
@@ -372,7 +373,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             var localFactory = new FakeNearbyAudioSourceFactory();
             try
             {
-                var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory);
+                var localSystem = new NearbyAudioBindingSystem(world, mock, localBindings, userBlockingCache, localStateModel, localFactory, RoomMetadataCurrentScene.CreateForTest());
 
                 const string WALLET = "wallet-alice";
                 const string SID = "sid-1";
