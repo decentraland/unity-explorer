@@ -692,6 +692,7 @@ elif args.resume or args.cancel:
 
     if args.cancel:
         cancel_build(id)
+        utils.delete_build_info()
         sys.exit(0)
 
 else:
@@ -737,17 +738,19 @@ write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queu
 
 if final_outcome in ('queue_timeout', 'build_timeout'):
     if final_outcome == 'build_timeout':
+        # Build was cancelled; the persisted info points to a dead build.
+        utils.delete_build_info()
         try:
             download_log(id)
         except Exception as e:
             print(f'Warning: could not download log after timeout: {e}')
     sys.exit(RETRYABLE_EXIT_CODE)
 
+utils.delete_build_info()
+
 print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
 
-# Handle build artifact
 download_artifact(id)
-# Handle build log
 download_log(id)
 
 if not build_healthy:
