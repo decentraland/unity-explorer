@@ -186,8 +186,9 @@ jobs:
                 issue_number: ${{ github.event.pull_request.number }},
               });
 
+              const VERDICT_RE = /(?:^|\n)DEPENDENCY_REVIEW: (PASS|BLOCK|NEEDS_ATTENTION)\b/;
               const claudeComments = comments.filter(c =>
-                c.user?.login === 'claude[bot]' && c.body?.includes('DEPENDENCY_REVIEW:')
+                c.user?.login === 'claude[bot]' && VERDICT_RE.test(c.body || '')
               );
               const claudeComment = claudeComments[claudeComments.length - 1];
 
