@@ -93,10 +93,16 @@ namespace Plugins.NativeWindowManager
         {
             disableWindowConstraints = disableConstraints;
 
-            // Fullscreen by default. --windowed-mode forces windowed; otherwise the saved pref decides
-            // (also defaulting to fullscreen when absent).
-            bool fullscreen = !windowedModeRequested
-                              && DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN, true);
+            // --windowed-mode forces windowed; otherwise the saved pref decides; when neither is
+            // present we inherit Unity's persisted mode so we don't override what the user (or
+            // platform) last chose.
+            bool fullscreen;
+            if (windowedModeRequested)
+                fullscreen = false;
+            else if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FULLSCREEN))
+                fullscreen = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN);
+            else
+                fullscreen = Screen.fullScreenMode != FullScreenMode.Windowed;
 
             // --resolution takes priority over the saved pref.
             Vector2Int targetResolution = resolutionOverride
