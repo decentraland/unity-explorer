@@ -21,6 +21,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
+using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.VoiceChat.UI;
@@ -34,6 +35,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -64,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEventBus chatEventBus;
         private readonly SmartWearableCache smartWearableCache;
         private readonly HttpEventsApiService eventsApiService;
+        private readonly SupportRequestService supportRequestService;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -74,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private SmartWearablesSideBarTooltipController? smartWearablesSideBarTooltipController;
         private SidebarSettingsWidgetController? sidebarSettingsWidgetController;
         private NearbyVoicePanelController? nearbyVoicePanelController;
+        private HelpMenuController? helpMenuController;
 
         private CancellationTokenSource controlsShortcutCts;
 
@@ -101,7 +105,8 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            SmartWearableCache smartWearableCache)
+            SmartWearableCache smartWearableCache,
+            SupportRequestService supportRequestService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -127,11 +132,13 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
+            this.supportRequestService = supportRequestService;
         }
 
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.Controls.performed -= OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed -= OnSupportShortcutPerformed;
             controlsShortcutCts.SafeCancelAndDispose();
 
             sidebarController?.Dispose();
@@ -143,6 +150,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController?.Dispose();
             sidebarSettingsWidgetController?.Dispose();
             nearbyVoicePanelController?.Dispose();
+            helpMenuController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -165,6 +173,7 @@ namespace DCL.PluginSystem.Global
             smartWearablesSideBarTooltipController = new SmartWearablesSideBarTooltipController(() => mainUIView.SidebarView.SmartWearablesTooltipView, smartWearableCache);
             sidebarSettingsWidgetController = new SidebarSettingsWidgetController(() => mainUIView.SidebarView.SidebarConfigPanelView);
             nearbyVoicePanelController = new NearbyVoicePanelController(() => mainUIView.SidebarView.NearbyVoiceWidget!);
+            helpMenuController = new HelpMenuController(() => mainUIView.SidebarView.HelpMenu, mvcManager, webBrowser, supportRequestService);
 
             sidebarController = new SidebarController(() =>
                 {
@@ -182,7 +191,8 @@ namespace DCL.PluginSystem.Global
                 decentralandUrls,
                 globalWorld,
                 chatEventBus,
-                eventsApiService
+                eventsApiService,
+                helpMenuController
                 );
 
             mvcManager.RegisterController(controlsPanelController);
@@ -192,9 +202,11 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(smartWearablesSideBarTooltipController);
             mvcManager.RegisterController(sidebarSettingsWidgetController);
             mvcManager.RegisterController(nearbyVoicePanelController);
+            mvcManager.RegisterController(helpMenuController);
             mvcManager.RegisterController(sidebarController);
 
             DCLInput.Instance.Shortcuts.Controls.performed += OnControlsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.Support.performed += OnSupportShortcutPerformed;
         }
 
         [Serializable]
@@ -207,9 +219,11 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject ControlsPanelPrefab { get; private set; } = null!;
         }
 
-        private void OnControlsShortcutPerformed(UnityEngine.InputSystem.InputAction.CallbackContext _)
+        private void OnControlsShortcutPerformed(InputAction.CallbackContext _)
         {
             if (controlsPanelController == null) return;
+
+            if (Keyboard.current?.shiftKey.isPressed == true) return;
 
             if (controlsPanelController.State == ControllerState.ViewHidden)
             {
@@ -219,5 +233,8 @@ namespace DCL.PluginSystem.Global
             else
                 controlsShortcutCts.SafeCancelAndDispose();
         }
+
+        private void OnSupportShortcutPerformed(InputAction.CallbackContext _) =>
+            supportRequestService.OpenSupport();
     }
 }

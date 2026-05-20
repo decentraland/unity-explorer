@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -16,12 +17,10 @@ namespace SceneRunner.Scene
         PersistentEntities PersistentEntities { get; }
         ISceneData SceneData { get; }
         bool IsEmpty { get; }
+        SceneRuntimeMetrics RuntimeMetrics { get; }
 
         void Initialize();
 
-        /// <summary>
-        ///     Start an update loop with a given FPS
-        /// </summary>
         UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct);
 
         /// <summary>

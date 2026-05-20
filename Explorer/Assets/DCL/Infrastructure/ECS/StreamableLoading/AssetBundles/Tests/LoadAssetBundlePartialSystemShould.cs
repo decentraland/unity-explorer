@@ -4,6 +4,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Time;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -90,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             var totalBudget = 15;
             var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
-            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.TEST, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)));
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.TEST, new IWeb3IdentityCache.Default(), new RequestHub(Substitute.For<IDecentralandUrlsSource>()), new WebRequestBudget(totalBudget, new ElementBinding<ulong>((ulong)totalBudget)), new RealmClock());
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
 

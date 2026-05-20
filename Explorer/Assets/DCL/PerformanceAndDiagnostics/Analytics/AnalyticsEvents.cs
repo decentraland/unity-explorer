@@ -114,9 +114,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PROFILE_FETCHING = "profile_fetching";
             public const string PROFILE_FETCHING_CACHED = "profile_fetching_cached";
 
+            // Fires after authentication succeeds and the flow transitions into ProfileFetching.
+            // Companion to LOGIN_REQUESTED so we can measure the auth-attempt → auth-success conversion.
+            public const string AUTH_COMPLETED = "auth_completed";
+
             // 4. LOBBY
             public const string LOGGED_IN = "logged_in";
             public const string LOGGED_IN_CACHED = "logged_in_cached";
+
+            // Fires when a new-account user reaches the avatar-customization lobby (LobbyForNewAccountAuthState).
+            // Companion to PROFILE_FINALIZED for measuring the in-Explorer onboarding step.
+            public const string NEW_ACCOUNT_ONBOARDING_STARTED = "new_account_onboarding_started";
+
+            // Fires when a new-account user successfully publishes their profile (FinalizeNewUser succeeds).
+            // Marks the end of the onboarding step that today is invisible to analytics.
+            public const string PROFILE_FINALIZED = "profile_finalized";
         }
 
         public static class Friends

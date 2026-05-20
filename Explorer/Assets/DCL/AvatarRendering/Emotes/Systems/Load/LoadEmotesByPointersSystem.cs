@@ -34,6 +34,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         private readonly IEmoteStorage emoteStorage;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly URLSubdirectory customStreamingSubdirectory;
+        private readonly bool localSceneDevelopment;
         private readonly URLBuilder urlBuilder = new ();
 
         internal LoadEmotesByPointersSystem(
@@ -43,13 +44,15 @@ namespace DCL.AvatarRendering.Emotes.Load
             IEmoteStorage emoteStorage,
             IDecentralandUrlsSource urlsSource,
             URLSubdirectory customStreamingSubdirectory,
-            EntitiesAnalytics entitiesAnalytics
+            EntitiesAnalytics entitiesAnalytics,
+            bool localSceneDevelopment
         )
             : base(world, cache, webRequestController, entitiesAnalytics)
         {
             this.emoteStorage = emoteStorage;
             this.urlsSource = urlsSource;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override EmotesDTOList CreateAssetFromListOfDTOs(RepoolableList<EmoteDTO> list) =>
@@ -268,8 +271,14 @@ namespace DCL.AvatarRendering.Emotes.Load
                 if (audioType == AudioType.UNKNOWN)
                     continue;
 
+                // In LSD the realm content URL points at the local preview server, so i.e. audio clips requests cannot succeed,
+                // use the production catalyst instead.
+                string contentBaseUrl = localSceneDevelopment
+                    ? urlsSource.Url(DecentralandUrl.PeerContent)
+                    : urlsSource.Url(DecentralandUrl.Content);
+
                 urlBuilder.Clear();
-                urlBuilder.AppendDomain(URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content))).AppendPath(new URLPath(item.hash));
+                urlBuilder.AppendDomain(URLDomain.FromString(contentBaseUrl)).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem

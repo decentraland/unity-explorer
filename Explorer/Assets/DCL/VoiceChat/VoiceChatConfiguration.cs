@@ -52,6 +52,11 @@ namespace DCL.VoiceChat
         [Range(0, 2000)]
         public int NearbyMaxLiveInstances = 300;
 
+        [Tooltip("Volume scale applied to the start/stop microphone SFX when a Nearby session is triggered by push-to-talk. " +
+                 "Lower values keep rapid PTT taps subtle; other activations always play at full volume.")]
+        [Range(0f, 1f)]
+        public float NearbyPushToTalkVolumeScale = 0.2f;
+
         public AnimationCurve NearbyCustomRolloffCurve = new (
             new Keyframe(0f, 1f, 0f, 0f),
             new Keyframe(3f, 1f, 0f, 0f),

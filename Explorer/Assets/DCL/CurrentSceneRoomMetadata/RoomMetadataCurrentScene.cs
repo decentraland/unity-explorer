@@ -2,6 +2,7 @@
 
 using CodeLess.Attributes;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms.Nulls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.LiveKit.Public;
 using ECS;
@@ -60,6 +61,8 @@ namespace DCL.SceneBannedUsers
         {
             RoomMetadataCurrentScene.Initialize(new RoomMetadataCurrentScene());
         }
+
+        public static RoomMetadataCurrentScene CreateForTest() => new ();
 #endif
 
 
@@ -76,7 +79,8 @@ namespace DCL.SceneBannedUsers
 
         private void UpdateBannedList(string metadata)
         {
-            if (string.IsNullOrEmpty(metadata)) return;
+            // 'metadata == NullRoomInfo.METADATA_SENTINEL' is intendent to avoid Sentry noise. tradeoff: A bit leaks the internal implementation.
+            if (string.IsNullOrEmpty(metadata) || metadata == NullRoomInfo.METADATA_SENTINEL) return;
 
             Result<SceneRoomMetadata> result = SceneRoomMetadata.FromJson(metadata);
 
