@@ -146,6 +146,7 @@ namespace DCL.PluginSystem.Global
         private readonly UpscalingController upscalingController;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -244,7 +245,8 @@ namespace DCL.PluginSystem.Global
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
             IRendererFeaturesCache rendererFeaturesCache,
-            SpringBoneSimulationSettings springBoneSimulationSettings
+            SpringBoneSimulationSettings springBoneSimulationSettings,
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker
             )
         {
             this.eventBus = eventBus;
@@ -314,6 +316,7 @@ namespace DCL.PluginSystem.Global
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.springBoneSimulationSettings = springBoneSimulationSettings;
+            this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
         }
 
         public void Dispose()
@@ -599,7 +602,8 @@ namespace DCL.PluginSystem.Global
                     eventsController,
                     inputBlock,
                     eventsApiService,
-                    mvcManager);
+                    mvcManager,
+                    joinedCommunitiesVoiceLiveTracker);
 
             mvcManager.RegisterController(explorePanelController);
 
