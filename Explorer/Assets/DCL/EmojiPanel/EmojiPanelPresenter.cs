@@ -94,8 +94,6 @@ namespace DCL.Emoji
                 view.SearchTextChanged -= OnSearchTextChanged;
                 view.SearchInputFocused -= BlockShortcuts;
                 view.SearchInputBlurred -= RestoreShortcuts;
-
-                view.EmojiLoopList.SetListItemCount(0, true);
             }
 
             HideTooltip();
