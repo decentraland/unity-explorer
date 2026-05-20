@@ -828,20 +828,35 @@ jobs:
             *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
           esac
 
+      - name: Compute S3 destination path
+        env:
+          RESOLVED_DESTINATION_PATH: "${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
+          }}"
+        run: |
+          echo "DESTINATION_PATH=${RESOLVED_DESTINATION_PATH}" >> $GITHUB_ENV
+
       - name: Upload artifact to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: "${{
-            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
-            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
-          }}"
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+
+      - name: Print S3 upload URL
+        run: |
+          ARTIFACT_URL="https://explorer-artifacts.decentraland.org/${DESTINATION_PATH}/${{ env.artifact_name }}.zip"
+          echo "::notice::Artifact uploaded to: ${ARTIFACT_URL}"
+          {
+            echo "### Artifact upload URL (${{ matrix.target }})"
+            echo
+            echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
