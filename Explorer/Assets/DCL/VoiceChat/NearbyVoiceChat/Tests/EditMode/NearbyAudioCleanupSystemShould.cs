@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -63,7 +64,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
