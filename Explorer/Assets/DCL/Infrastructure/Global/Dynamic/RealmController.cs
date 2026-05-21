@@ -8,7 +8,6 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -54,11 +53,9 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
@@ -92,7 +89,6 @@ namespace Global.Dynamic
         }
 
         public RealmController(
-            IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
@@ -107,14 +103,11 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider,
-            IWorldPermissionsService worldPermissionsService)
+            WorldManifestProvider worldManifestProvider)
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
-            this.worldPermissionsService = worldPermissionsService;
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
@@ -202,31 +195,6 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
-
-        public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
-        {
-            if (!TryExtractWorldName(realm, out string worldName))
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to extract world name from realm '{realm}'.");
-                return false;
-            }
-
-            WorldAccessCheckContext context;
-            try
-            {
-                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                return false;
-            }
-
-            return context.Result == WorldAccessCheckResult.Allowed;
-        }
 
         private static bool TryExtractWorldName(URLDomain realm, out string worldName)
         {

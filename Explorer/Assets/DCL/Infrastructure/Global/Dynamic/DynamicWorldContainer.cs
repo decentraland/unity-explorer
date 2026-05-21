@@ -381,7 +381,6 @@ namespace Global.Dynamic
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
-                identityCache,
                 dynamicWorldParams.StaticLoadPositions,
                 debugBuilder,
                 loadingScreenTimeout,
@@ -390,8 +389,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment,
-                worldPermissionsService);
+                bootstrapContainer.Environment);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -514,7 +512,9 @@ namespace Global.Dynamic
                 roomHub,
                 localSceneDevelopment,
                 staticContainer.CharacterContainer,
-                moderationDataProvider);
+                moderationDataProvider,
+                worldPermissionsService,
+                chatHistory);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
