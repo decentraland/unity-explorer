@@ -65,11 +65,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
 
     public class LogAudioStreams : LogStreams<AudioStream, AudioStreamInfo>, IAudioStreams
     {
-        private readonly IAudioStreams origin;
-
-        public LogAudioStreams(IAudioStreams origin) : base(origin, nameof(LogAudioStreams))
-        {
-            this.origin = origin;
-        }
+        public LogAudioStreams(IAudioStreams origin) : base(origin, nameof(LogAudioStreams)) { }
     }
 }
