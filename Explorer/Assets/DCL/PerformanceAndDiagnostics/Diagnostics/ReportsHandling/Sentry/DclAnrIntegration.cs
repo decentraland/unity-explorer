@@ -289,7 +289,7 @@ namespace DCL.Diagnostics.Sentry
                 targetDmpPath,
             };
 
-            Result<int> result = Plugins.DclNativeProcesses.DclProcesses.Start(fileName: exeFile, args: exeArgs);
+            Result<int> result = Plugins.DclNativeProcesses.DclProcesses.ExecuteBlocking(fileName: exeFile, args: exeArgs);
             if (result.Success == false)
             {
                 return Result.ErrorResult($"Cannot collect: {result.ErrorMessage}");
