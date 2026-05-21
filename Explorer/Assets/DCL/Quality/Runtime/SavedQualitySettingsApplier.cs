@@ -1,4 +1,7 @@
+using DCL.Diagnostics;
 using DCL.Prefs;
+using Global.AppArgs;
+using System;
 using Utility;
 
 namespace DCL.Quality.Runtime
@@ -8,6 +11,26 @@ namespace DCL.Quality.Runtime
     /// </summary>
     public static class SavedQualitySettingsApplier
     {
+        /// <summary>
+        ///     Reads a quality preset override from app arguments (e.g. --graphics high).
+        ///     Custom is rejected — only Low/Medium/High are valid.
+        /// </summary>
+        public static bool TryGetPresetOverride(IAppArgs appArgs, out QualityPresetLevel preset)
+        {
+            preset = default;
+
+            if (!appArgs.TryGetValue(AppArgsFlags.GRAPHICS, out string? value) || string.IsNullOrEmpty(value))
+                return false;
+
+            if (!Enum.TryParse(value, ignoreCase: true, out preset) || preset == QualityPresetLevel.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid value for --{AppArgsFlags.GRAPHICS}: '{value}'. Expected Low, Medium or High.");
+                return false;
+            }
+
+            return true;
+        }
+
         public struct SavedValues
         {
             public int FpsLimit;
