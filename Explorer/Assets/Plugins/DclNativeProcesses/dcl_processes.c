@@ -15,10 +15,11 @@
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <spawn.h> 
+#include <spawn.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -127,8 +128,8 @@ int start_process(char* filename, char** args, int argc) {
 
     // posix_spawnp searches PATH, it inherits current env and file actions/attrs.
     int rc = posix_spawnp(
-            &pid, 
-            filename, 
+            &pid,
+            filename,
             NULL, // file_actions
             NULL, // attrp
             argv, environ
@@ -140,5 +141,55 @@ int start_process(char* filename, char** args, int argc) {
         return -1;
     }
     return (int)pid;
-#endif   
+#endif
+}
+
+int dcl_start_process_blocking(char* filename, char** args, int argc) {
+    char** argv = make_argv_internal(filename, args, argc);
+    if (!argv) return -1;
+
+#ifdef _WIN32
+    // _P_WAIT blocks until the child exits and returns its exit code (-1 on spawn failure).
+    intptr_t rc = _spawnvp(_P_WAIT, filename, (const char* const*)argv);
+    int saved_errno = errno;
+    free(argv);
+
+    if (rc == -1) {
+        errno = saved_errno;
+        return -1;
+    }
+    return (int)rc;
+#endif
+
+#ifdef __APPLE__
+    pid_t pid = -1;
+
+    int rc = posix_spawnp(
+            &pid,
+            filename,
+            NULL, // file_actions
+            NULL, // attrp
+            argv, environ
+            );
+    free(argv);
+
+    if (rc != 0) {
+        errno = rc;
+        return -1;
+    }
+
+    int status = 0;
+    while (waitpid(pid, &status, 0) == -1) {
+        if (errno != EINTR) {
+            return -1;
+        }
+    }
+
+    if (WIFEXITED(status)) {
+        return WEXITSTATUS(status);
+    }
+
+    // killed by signal or otherwise abnormal termination
+    return -1;
+#endif
 }

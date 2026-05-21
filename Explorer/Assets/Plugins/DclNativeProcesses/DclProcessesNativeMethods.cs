@@ -29,6 +29,14 @@ namespace Plugins.DclNativeProcesses
             string[] args,
             int argc
         );
+
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int dcl_start_process_blocking(
+            string fileName,
+            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPUTF8Str, SizeParamIndex = 1)]
+            string[] args,
+            int argc
+        );
     }
 
     public static class DclProcesses
@@ -42,6 +50,13 @@ namespace Plugins.DclNativeProcesses
 
             int pid = resultCode;
             return Result<int>.SuccessResult(pid);
+        }
+
+        public static Result ExecuteBlocking(string fileName, string[] args)
+        {
+            int resultCode = DclProcessesNativeMethods.dcl_start_process_blocking(fileName, args, args.Length);
+            if (resultCode != 0) return Result.ErrorResult($"Error executing process: {resultCode}");
+            return Result.SuccessResult();
         }
     }
 
