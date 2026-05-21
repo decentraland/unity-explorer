@@ -29,7 +29,6 @@ namespace DCL.Diagnostics.Sentry
             DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
             options.AddIntegration(anrIntegration);
 
-            // TODO validate correctness //enable it only when we ensure the custom implementation works correctly
             options.DisableAnrIntegration();
 
 #if UNITY_EDITOR
