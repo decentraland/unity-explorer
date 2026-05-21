@@ -291,7 +291,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
         [TestCase(true)]
         [TestCase(false)]
-        public void NotAssignPlayerWhenSceneIsStarting(bool isMainPlayer)
+        public void AssignPlayerWhenSceneIsStarting(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Starting));
 
@@ -307,14 +307,14 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
-            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
-            Assert.That(playerCRDTEntity.SceneFacade, Is.Null);
-            Assert.That(playerCRDTEntity.SceneWorldEntity, Is.EqualTo(Entity.Null));
+            Assert.IsTrue(playerCRDTEntity.AssignedToScene);
+            Assert.That(playerCRDTEntity.SceneFacade, Is.EqualTo(scene1Facade));
+            Assert.IsTrue(scene1World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
         }
 
         [TestCase(true)]
         [TestCase(false)]
-        public void AssignPlayerWhenSceneTransitionsFromStartingToRunning(bool isMainPlayer)
+        public void KeepPlayerAssignedWhenSceneTransitionsFromStartingToRunning(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Starting));
 
@@ -327,16 +327,16 @@ namespace DCL.Multiplayer.SDK.Tests
             if (isMainPlayer)
                 world.Add(entity, new PlayerComponent());
 
-            // First tick: scene still Starting — gate blocks assignment
+            // First tick: scene is Starting — player is assigned immediately
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
-            Assert.IsFalse(playerCRDTEntity.AssignedToScene);
+            Assert.IsTrue(playerCRDTEntity.AssignedToScene);
 
             // Scene finishes initializing
             scene1Facade.SceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Running));
 
-            // Next tick: reconciliation query auto-retries and assigns
+            // Next tick: assignment persists through state transition
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out playerCRDTEntity));
