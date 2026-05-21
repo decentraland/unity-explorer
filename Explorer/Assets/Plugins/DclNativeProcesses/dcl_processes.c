@@ -37,13 +37,13 @@ char* get_process_name(pid_t pid) {
         char* buffer = malloc(sizeof(char) * MAX_PATH);
         // Get the process name
         if (GetModuleBaseNameA(hProcess, NULL, buffer, MAX_PATH)) {
+            CloseHandle(hProcess);
             return buffer;
         }
         else {
+            CloseHandle(hProcess);
             free(buffer);
         }
-
-        CloseHandle(hProcess);
     }
 #endif
 
