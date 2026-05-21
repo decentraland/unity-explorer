@@ -506,7 +506,7 @@ namespace DCL.Diagnostics.Sentry
 
     }
 
-    public readonly struct ProcessHandle
+    public readonly struct ProcessHandle : IDisposable
     {
         public readonly IntPtr handle;
 
@@ -579,7 +579,7 @@ namespace DCL.Diagnostics.Sentry
         public static Result CollectSelfMiniDump(string targetDmpPath)
         {
             using FileStream targetFile = File.Open(targetDmpPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            IntPtr hFile = targetFile.SafeFileHandle.GetDangerousHandle();
+            IntPtr hFile = targetFile.SafeFileHandle.DangerousGetHandle();
 
             UInt32 pid = (UInt32) Process.GetCurrentProcess().Id; // IL2CPP safe
             using ProcessHandle hProcess = ProcessInfoNative.OpenSelf(pid);
