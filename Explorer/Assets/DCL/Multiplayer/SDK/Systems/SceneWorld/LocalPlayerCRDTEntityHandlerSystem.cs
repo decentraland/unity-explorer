@@ -53,24 +53,24 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         public override void Initialize()
         {
-            if (!globalWorld.TryGet<Profile>(localPlayerEntity, out Profile? profile))
+            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
             Entity playerEntity = persistentEntities.Player;
             World.Add(playerEntity, new PlayerSceneCRDTEntity(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)));
 
-            characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, new SceneEcsExecutor(World), playerEntity);
+            characterDataPropagationUtility.CopyProfileToSceneEntity(profile!, World, playerEntity);
         }
 
         protected override void Update(float t)
         {
-            if (!globalWorld.TryGet<Profile>(localPlayerEntity, out Profile? profile))
+            if (!globalWorld.TryGet(localPlayerEntity, out Profile? profile))
                 return;
 
             if (!profile!.IsDirty)
                 return;
 
-            characterDataPropagationUtility.CopyProfileToSceneEntity(profile, new SceneEcsExecutor(World), persistentEntities.Player);
+            characterDataPropagationUtility.CopyProfileToSceneEntity(profile, World, persistentEntities.Player);
         }
     }
 }

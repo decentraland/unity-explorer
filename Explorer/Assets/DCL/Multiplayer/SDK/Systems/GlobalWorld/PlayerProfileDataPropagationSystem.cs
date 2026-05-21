@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void PropagateProfileToScene(Profile profile, in PlayerCRDTEntity playerCRDTEntity)
         {
             if ((playerCRDTEntity.IsDirty || profile.IsDirty) && playerCRDTEntity.AssignedToScene)
-                characterDataPropagationUtility.CopyProfileToSceneEntity(profile, playerCRDTEntity.SceneFacade!.EcsExecutor, playerCRDTEntity.SceneWorldEntity);
+                characterDataPropagationUtility.CopyProfileToSceneEntity(profile, playerCRDTEntity.SceneFacade!.EcsExecutor.World, playerCRDTEntity.SceneWorldEntity);
         }
     }
 }
