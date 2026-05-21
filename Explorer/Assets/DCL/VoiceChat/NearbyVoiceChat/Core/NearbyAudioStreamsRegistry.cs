@@ -42,8 +42,7 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private readonly IRoom room;
 
-        // Frame-activity oracle seam: the LiveKit-side helper lives on an extension and AudioStream itself is
-        // FFI-bound + non-virtual, so a delegate is the only injectable shape for tests.
+        // delegate is the only injectable shape for tests.
         private readonly Func<StreamKey, Option<int>> getLastFrameReceivedAt;
 
         // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
