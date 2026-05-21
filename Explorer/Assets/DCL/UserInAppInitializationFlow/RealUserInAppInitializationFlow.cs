@@ -24,7 +24,6 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 using ChatMessage = DCL.Chat.History.ChatMessage;
@@ -247,7 +246,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[RealmController] Failed to extract world name from realm '{realmController.CurrentDomain.Value.ToString()}'.");
-                await GenesisFallback();
+                await GenesisFallbackAsync();
                 return;
             }
 
@@ -262,7 +261,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[StartUp] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                await GenesisFallback();
+                await GenesisFallbackAsync();
                 return;
             }
 
@@ -275,12 +274,12 @@ namespace DCL.UserInAppInitializationFlow
                 case WorldAccessCheckResult.PasswordRequired:
                     ReportHub.LogWarning(ReportCategory.REALM,
                         $"[StartUp] World '{worldName}' is not authorized for auto-entry, falling back to Genesis.");
-                    await GenesisFallback();
+                    await GenesisFallbackAsync();
                     return;
                 default: throw new ArgumentOutOfRangeException();
             }
 
-            async UniTask GenesisFallback()
+            async UniTask GenesisFallbackAsync()
             {
                 chatHistory.AddMessage(
                     ChatChannel.NEARBY_CHANNEL_ID,
