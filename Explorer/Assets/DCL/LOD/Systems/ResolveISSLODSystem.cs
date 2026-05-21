@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utility;
@@ -106,15 +107,22 @@ namespace DCL.LOD.Systems
         /// </summary>
         private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, bool fromBundle)
         {
+            AssetBundleManifestVersion? manifest = sceneDefinition.Definition.assetBundleManifestVersion;
+
             for (var i = 0; i < assets.Count; i++)
             {
                 ISSDescriptorAsset entry = assets[i];
 
-                if (gltfCache.TryGet(entry.hash, out var asset))
+                // The GLTF container cache is keyed by "hash@digest" (see AssetBundleManifestVersionExtensions.ComposeCacheKey).
+                // Looking up by bare hash misses any bridged entry the SDK runtime left behind, so the LOD spawns a
+                // second instance of an asset that's already resident — that's the visible "double" overlap.
+                string cacheKey = manifest.ComposeCacheKey(entry.hash);
+
+                if (gltfCache.TryGet(cacheKey, out var asset))
                 {
                     // We just consumed one bridged copy — free up its slot so a future SDK cleanup of the same hash can re-bridge.
                     sceneDefinition.ISSDescriptor.ReleaseBridgeSlot(entry.hash);
-                    PositionAsset(initialSceneStateLOD, entry, asset, initialSceneStateLOD.ParentContainer.transform);
+                    PositionAsset(initialSceneStateLOD, entry, cacheKey, asset, initialSceneStateLOD.ParentContainer.transform);
                     continue;
                 }
 
@@ -124,13 +132,20 @@ namespace DCL.LOD.Systems
                     ? GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id)
                     : $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
 
-                AssetBundlePromise promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(promiseHash,
-                        assetBundleManifestVersion: sceneDefinition.Definition.assetBundleManifestVersion,
-                        parentEntityID: sceneDefinition.Definition.id),
-                    PartitionComponent.TOP_PRIORITY);
+                var intent = GetAssetBundleIntention.FromHash(promiseHash,
+                    assetBundleManifestVersion: manifest,
+                    parentEntityID: sceneDefinition.Definition.id);
 
-                ISSAssetCreationHelper assetCreationHelper = new ISSAssetCreationHelper(initialSceneStateLOD, entry);
+                // Mirror the digest populated by PrepareGltfAssetLoadingSystem so this promise lands in the same
+                // AssetBundleCache slot as the SDK runtime would. Without it the (Hash, DepsDigest) key diverges
+                // and two parallel LoadAssetBundleSystem flows race for the same physical bundle, which Unity
+                // refuses with "asset bundle already loaded". The digest map is keyed by bare CID.
+                if (!fromBundle && manifest != null && manifest.TryGetDepsDigest(entry.hash, out string digest))
+                    intent.DepsDigest = digest;
+
+                AssetBundlePromise promise = AssetBundlePromise.Create(World, intent, PartitionComponent.TOP_PRIORITY);
+
+                ISSAssetCreationHelper assetCreationHelper = new ISSAssetCreationHelper(initialSceneStateLOD, entry, cacheKey);
 
                 World.Create(promise, assetCreationHelper);
             }
@@ -159,7 +174,7 @@ namespace DCL.LOD.Systems
                     {
                         if (isDebugScene)
                             UnityEngine.Debug.Log($"[Juani] ConvertFromAssetBundle OK {creationHelper.Entry.hash} (counted via AddResolvedAsset)");
-                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.Entry, asset,
+                        PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.Entry, creationHelper.CacheKey, asset,
                             creationHelper.InitialSceneStateLOD.ParentContainer.transform);
                     }
                     else
@@ -185,7 +200,7 @@ namespace DCL.LOD.Systems
         }
 
 
-        private static void PositionAsset(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry, GltfContainerAsset asset, Transform parent)
+        private static void PositionAsset(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry, string cacheKey, GltfContainerAsset asset, Transform parent)
         {
             asset.Root.SetActive(true);
             asset.Root.transform.SetParent(parent);
@@ -195,7 +210,10 @@ namespace DCL.LOD.Systems
 
             asset.ToggleAnimationState(false);
 
-            initialSceneStateLOD.AddResolvedAsset(entry.hash, asset);
+            // Store under the digest-aware cache key so the eventual Dereference in InitialSceneStateLOD.Clear
+            // matches what the SDK runtime would look up — that's what allows bridging round-trips between
+            // LOD and the real scene without spawning a second copy of the same asset.
+            initialSceneStateLOD.AddResolvedAsset(cacheKey, asset);
         }
 
         private static void MarkAssetBundleAsFailed(ref SceneLODInfo sceneLODInfo, string message)
@@ -210,7 +228,7 @@ namespace DCL.LOD.Systems
 
     public struct ISSAssetCreationHelper
     {
-        public ISSAssetCreationHelper(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry)
+        public ISSAssetCreationHelper(InitialSceneStateLOD initialSceneStateLOD, ISSDescriptorAsset entry, string cacheKey)
         {
             InitialSceneStateLOD = initialSceneStateLOD;
             Entry = entry;
@@ -218,12 +236,14 @@ namespace DCL.LOD.Systems
             // Descriptor mode: per-asset bundle has a single asset, so passing empty name to TryGetAsset returns it.
             // Both shared ISS bundles and per-asset bundles are baked with assets named by their content hash.
             AssetNameInBundle = entry.hash;
+            CacheKey = cacheKey;
             Generation = initialSceneStateLOD.Generation;
         }
 
         public InitialSceneStateLOD InitialSceneStateLOD { get; }
         public ISSDescriptorAsset Entry { get; }
         public string AssetNameInBundle { get; }
+        public string CacheKey { get; }
         public int Generation { get; }
     }
 }

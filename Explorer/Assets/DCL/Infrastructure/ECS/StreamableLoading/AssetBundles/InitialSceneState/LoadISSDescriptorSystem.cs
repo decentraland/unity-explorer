@@ -81,14 +81,12 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
         {
-            URLAddress url = DESCRIPTOR_BASE_URL.Append(URLPath.FromString($"{sceneId}_StaticSceneDescriptor.json"));
+            URLAddress url = DESCRIPTOR_BASE_URL.Append(URLPath.FromString($"{sceneId}_InitialSceneState.json"));
 
             try
             {
-                // Missing-descriptor is the expected case for non-ISS scenes — suppress the underlying 404
-                // log so it doesn't spam every realm load.
                 return await webRequestController
-                            .GetAsync(new CommonArguments(url), ct, GetReportData(), suppressErrors: true)
+                            .GetAsync(new CommonArguments(url), ct, GetReportData())
                             .CreateFromJson<ISSDescriptorMetadata>(WRJsonParser.Unity);
             }
             catch (OperationCanceledException) { throw; }
