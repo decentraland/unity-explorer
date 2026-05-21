@@ -320,30 +320,6 @@ namespace DCL.Diagnostics.Sentry
 
         public static Result CollectDumpInfoFile(string targetDmpPath)
         {
-            /*
-            // procdump.exe -accepteula -mt <PID> dump.dmp
-
-            const string NAME = "procdump/procdump.exe";
-            string exeFile = System.IO.Path.Combine(STREAMING_PATH, NAME);
-
-            int pid = Process.GetCurrentProcess().Id; // IL2CPP safe
-
-            string[] exeArgs = new []
-            {
-                "-accepteula",
-                "-mt",
-                pid.ToString(),
-                targetDmpPath,
-            };
-
-            int result = Plugins.DclNativeProcesses.DclProcesses.ExecuteBlocking(fileName: exeFile, args: exeArgs);
-            if (result != -2) // -2 is a code from procdump
-            {
-                return Result.ErrorResult($"Cannot collect, error process code: {result}");
-            }
-            */
-
-            // replace to internal minidump call
             Result result = MiniDumpNative.CollectSelfMiniDump(targetDmpPath);
             if (result.Success == false)
             {
