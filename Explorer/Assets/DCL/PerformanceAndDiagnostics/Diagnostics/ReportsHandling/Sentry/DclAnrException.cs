@@ -4,8 +4,15 @@ namespace DCL.Diagnostics.Sentry
 {
     public class DclApplicationNotRespondingException : Exception
     {
-        internal DclApplicationNotRespondingException() : base() { }
+#if UNITY_STANDALONE_WIN
+        public readonly string? DumpFilePath;
+
+        internal DclApplicationNotRespondingException(string message, string? dumpFilePath) : base(message)
+        {
+            this.DumpFilePath = dumpFilePath;
+        }
+#else
         internal DclApplicationNotRespondingException(string message) : base(message) { }
-        internal DclApplicationNotRespondingException(string message, Exception innerException) : base(message, innerException) { }
+#endif
     }
 }

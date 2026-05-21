@@ -47,7 +47,25 @@ namespace DCL.Diagnostics.Sentry
 #endif
                 }
             }
-            Watchdog.OnApplicationNotResponding += (_, e) => hub.CaptureException(e);
+
+            Watchdog.OnApplicationNotResponding += (_, e) =>
+            {
+                SentryEvent se = new SentryEvent(e);
+#if UNITY_STANDALONE_WIN
+                hub.CaptureEvent(se, scope =>
+                {
+                    string? filePath = e.DumpFilePath;
+                    if (filePath != null)
+                    {
+                        scope.AddAttachment(filePath: filePath, AttachmentType.Default);
+                    }
+                });
+#else
+                hub.CaptureEvent(se);
+#endif
+            };
+
+
         }
     }
 
@@ -79,18 +97,18 @@ namespace DCL.Diagnostics.Sentry
 
         internal abstract void Stop(bool wait = false);
 
-        private static string NewDumpMessage()
+        private static (string message, string? filePath) NewDumpAttachment()
         {
 #if UNITY_STANDALONE_WIN
-            Result<string> dumpResult = ThreadsDumpUtility.CollectDumpInfoBase64();
+            Result<(string filePath, string zipPath)> dumpResult = ThreadsDumpUtility.CollectAndArchiveDumpInfoToAppDir();
             if (dumpResult.Success == false)
             {
-                return $"Dump cannot be collected: {dumpResult.ErrorMessage}";
+                return ($"Dump cannot be collected: {dumpResult.ErrorMessage}", null);
             }
 
-            return $"Dump collected: {dumpResult.Value}";
+            return ("Dump collected", dumpResult.Value.zipPath);
 #else
-            return "Dump is not available on macOS yet";
+            return ("Dump is not available on macOS yet", null);
 #endif
         }
 
@@ -100,7 +118,7 @@ namespace DCL.Diagnostics.Sentry
             if (!Paused)
             {
                 UnityEngine.Debug.Log("Begin Report Sentry");
-                string dumpMessage = NewDumpMessage();
+                (string dumpMessage, string? filePath) = NewDumpAttachment();
 
                 System.Text.StringBuilder sb = new ();
                 sb.Append("DclApplication not responding for at least ");
@@ -112,7 +130,12 @@ namespace DCL.Diagnostics.Sentry
                 Logger?.LogInfo("Detected an DclAnr event: {0}", message);
                 UnityEngine.Debug.Log("Detected an DclAnr event");
 
+#if UNITY_STANDALONE_WIN
+                var exception = new DclApplicationNotRespondingException(message, filePath);
+#else
                 var exception = new DclApplicationNotRespondingException(message);
+#endif
+
                 exception.SetSentryMechanism(Mechanism, "Main thread unresponsive.", false);
                 OnApplicationNotResponding?.Invoke(this, exception);
                 UnityEngine.Debug.Log("Finish Report Sentry");
@@ -376,7 +399,7 @@ UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:366"); // SPECIAL_DEBUG_LINE_
 UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:368"); // SPECIAL_DEBUG_LINE_STATEMENT
             return filePath;
         }
-        
+
         // Returns zip path
         public static Result<string> ArchiveIntoZip(string filePath)
         {
