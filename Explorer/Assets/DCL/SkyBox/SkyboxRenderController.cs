@@ -85,8 +85,16 @@ public class SkyboxRenderController : MonoBehaviour
     [Header("Transition Settings")]
     [SerializeField] private float transitionDuration;
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
     {
+        // Pre-seed transition target so UpdateSkybox below short-circuits and skips the directional-light
+        // coroutine, whose first sync tick would Lerp from float.MinValue and clamp the gradient samplers.
+        if (freezeTime)
+        {
+            directionalLightTimeOfDay = initialTimeOfDay;
+            targetTimeOfDay = initialTimeOfDay;
+        }
+
         if (skyboxMat)
         {
 #if UNITY_EDITOR
