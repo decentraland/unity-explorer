@@ -8,10 +8,6 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
 
-concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   auto-review:
     if: |
@@ -20,6 +16,9 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-auto-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -134,7 +133,9 @@ jobs:
               owner, repo, issue_number: prNumber, per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -215,9 +216,14 @@ jobs:
             }
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner, repo, comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;
@@ -310,6 +316,9 @@ jobs:
     needs: check-member
     if: needs.check-member.outputs.is-member == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-on-demand-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -422,7 +431,9 @@ jobs:
               per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -433,11 +444,14 @@ jobs:
             const hasReviewResult = output.includes('REVIEW_RESULT:');
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;
