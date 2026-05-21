@@ -143,7 +143,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             bool isLocalPlayer = crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY;
 
-            if (sceneFacade.SceneStateProvider.State != SceneState.Running)
+            SceneState state = sceneFacade.SceneStateProvider.State.Value();
+
+            if (state != SceneState.Running && state != SceneState.Starting)
                 return;
 
             SceneEcsExecutor executor = sceneFacade.EcsExecutor;
