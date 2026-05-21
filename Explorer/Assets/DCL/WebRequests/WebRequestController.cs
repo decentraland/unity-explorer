@@ -79,7 +79,7 @@ namespace DCL.WebRequests
 
                         analyticsContainer.OnRequestStarted(in envelope, request);
 
-                        await request.SendRequest(envelope.Ct, expectedContentLength, progressReporter);
+                        await request.SendRequestAsync(envelope.Ct, expectedContentLength, progressReporter);
                         analyticsContainer.OnRequestFinished(request);
                     }
                     try

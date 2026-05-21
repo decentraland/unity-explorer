@@ -20,7 +20,7 @@ namespace DCL.WebRequests
 
     public static class TypedWebRequestExtensions
     {
-        public static async UniTask SendRequest<T>(this T typedWebRequest, CancellationToken token, long expectedContentLength = -1, IProgress<float>? progressReporter = null) where T: ITypedWebRequest
+        public static async UniTask SendRequestAsync<T>(this T typedWebRequest, CancellationToken token, long expectedContentLength = -1, IProgress<float>? progressReporter = null) where T: ITypedWebRequest
         {
             if (progressReporter == null)
             {
