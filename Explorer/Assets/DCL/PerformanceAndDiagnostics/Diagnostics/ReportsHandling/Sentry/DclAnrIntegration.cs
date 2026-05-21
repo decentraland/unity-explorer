@@ -10,7 +10,6 @@ using Sentry.Extensibility;
 using Sentry.Integrations;
 using Sentry.Unity;
 using Sentry.Unity.Integrations;
-using UnityEngine;
 using Debug = UnityEngine.Debug;
 using RichTypes;
 using System.IO;
@@ -100,6 +99,7 @@ namespace DCL.Diagnostics.Sentry
             // Don't report events while in the background.
             if (!Paused)
             {
+                UnityEngine.Debug.Log("Begin Report Sentry");
                 string dumpMessage = NewDumpMessage();
 
                 System.Text.StringBuilder sb = new ();
@@ -110,10 +110,12 @@ namespace DCL.Diagnostics.Sentry
                 string message = sb.ToString();
 
                 Logger?.LogInfo("Detected an DclAnr event: {0}", message);
+                UnityEngine.Debug.Log("Detected an DclAnr event");
 
                 var exception = new DclApplicationNotRespondingException(message);
                 exception.SetSentryMechanism(Mechanism, "Main thread unresponsive.", false);
                 OnApplicationNotResponding?.Invoke(this, exception);
+                UnityEngine.Debug.Log("Finish Report Sentry");
             }
         }
     }
@@ -151,7 +153,7 @@ namespace DCL.Diagnostics.Sentry
 
         private IEnumerator UpdateUiStatus()
         {
-            var waitForSeconds = new WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
+            var waitForSeconds = new UnityEngine.WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
 
             yield return waitForSeconds;
             while (!_stop)
@@ -204,7 +206,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly Stopwatch _watch = new();
         private bool _stop;
 
-        private Coroutine? _updateUiStatusCoroutine;
+        private UnityEngine.Coroutine? _updateUiStatusCoroutine;
 
         internal DclAnrWatchDogSingleThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
             : base(logger, monoBehaviour, detectionTimeout)
@@ -254,7 +256,7 @@ namespace DCL.Diagnostics.Sentry
         private IEnumerator UpdateUiStatus()
         {
             _watch.Start();
-            var waitForSeconds = new WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
+            var waitForSeconds = new UnityEngine.WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
             while (!_stop)
             {
                 if (_watch.ElapsedMilliseconds >= DetectionTimeoutMs)
@@ -272,14 +274,25 @@ namespace DCL.Diagnostics.Sentry
 
     public static class ThreadsDumpUtility
     {
+        private static string APP_PATH; // Cache, because Unity API is not available from none-main thread
+        private static string STREAMING_PATH; // Cache, because Unity API is not available from none-main thread
+
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Init()
+        {
+            APP_PATH = UnityEngine.Application.persistentDataPath; // Cache, because Unity API is not available from none-main thread
+            STREAMING_PATH = UnityEngine.Application.streamingAssetsPath; // Cache, because Unity API is not available from none-main thread
+        }
+
         // procdump.exe -accepteula -mt <PID> dump.dmp
         public static Result CollectDumpInfoFile(string targetDmpPath)
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:281"); // SPECIAL_DEBUG_LINE_STATEMENT
             const string NAME = "procdump/procdump.exe";
-            string dirPath = Application.streamingAssetsPath;
-            string exeFile = System.IO.Path.Combine(dirPath, NAME);
+            string exeFile = System.IO.Path.Combine(STREAMING_PATH, NAME);
 
             int pid = Process.GetCurrentProcess().Id; // IL2CPP safe
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:287"); // SPECIAL_DEBUG_LINE_STATEMENT
 
             string[] exeArgs = new []
             {
@@ -289,23 +302,29 @@ namespace DCL.Diagnostics.Sentry
                 targetDmpPath,
             };
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:297"); // SPECIAL_DEBUG_LINE_STATEMENT
             int result = Plugins.DclNativeProcesses.DclProcesses.ExecuteBlocking(fileName: exeFile, args: exeArgs);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:299"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (result != -2) // -2 is a code from procdump
             {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:302"); // SPECIAL_DEBUG_LINE_STATEMENT
                 return Result.ErrorResult($"Cannot collect, error process code: {result}");
             }
 
             Result waitResult = WaitUntilDumpReady(targetDmpPath);
             if (waitResult.Success == false)
             {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:309"); // SPECIAL_DEBUG_LINE_STATEMENT
                 return Result.ErrorResult($"Target file is not written: {waitResult.ErrorMessage}");
             }
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:313"); // SPECIAL_DEBUG_LINE_STATEMENT
             return Result.SuccessResult();
         }
 
         public static Result WaitUntilDumpReady(string targetDmpPath)
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:319"); // SPECIAL_DEBUG_LINE_STATEMENT
             const int TIMEOUT_MS = 5_000;
             const int POLL_MS = 100;
 
@@ -347,33 +366,46 @@ namespace DCL.Diagnostics.Sentry
 
         public static string NewDumpFilePath()
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:361"); // SPECIAL_DEBUG_LINE_STATEMENT
+            UnityEngine.Debug.Log("Begin NewDumpFilePath");
             string fileName = System.IO.Path.GetRandomFileName();
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:364"); // SPECIAL_DEBUG_LINE_STATEMENT
             fileName = System.IO.Path.ChangeExtension(fileName, ".dmp");
-            string filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:366"); // SPECIAL_DEBUG_LINE_STATEMENT
+            string filePath = System.IO.Path.Combine(APP_PATH, fileName);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:368"); // SPECIAL_DEBUG_LINE_STATEMENT
             return filePath;
         }
         
         // Returns zip path
         public static Result<string> ArchiveIntoZip(string filePath)
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:375"); // SPECIAL_DEBUG_LINE_STATEMENT
+            UnityEngine.Debug.Log("Begin ArchiveIntoZip");
             bool exists = System.IO.File.Exists(filePath);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:378"); // SPECIAL_DEBUG_LINE_STATEMENT
 
             if (exists == false)
             {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:382"); // SPECIAL_DEBUG_LINE_STATEMENT
                 return Result<string>.ErrorResult("Original file does not exist");
             }
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:386"); // SPECIAL_DEBUG_LINE_STATEMENT
             string zipPath = System.IO.Path.ChangeExtension(filePath, ".zip");
             string fileName = System.IO.Path.GetFileName(filePath);
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:390"); // SPECIAL_DEBUG_LINE_STATEMENT
             using ZipArchive zip = ZipFile.Open(zipPath, ZipArchiveMode.Create);
             zip.CreateEntryFromFile(filePath, fileName);
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:394"); // SPECIAL_DEBUG_LINE_STATEMENT
             return Result<string>.SuccessResult(zipPath);
         }
 
         public static Result<string> CollectDumpInfoBase64()
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:400"); // SPECIAL_DEBUG_LINE_STATEMENT
             Result<(string filePath, string zipPath)> result = CollectAndArchiveDumpInfoToAppDir();
             if (result.Success == false)
             {
@@ -408,20 +440,37 @@ namespace DCL.Diagnostics.Sentry
 
         public static Result<(string filePath, string zipPath)> CollectAndArchiveDumpInfoToAppDir()
         {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:435"); // SPECIAL_DEBUG_LINE_STATEMENT
+            UnityEngine.Debug.Log("Begin CollectAndArchiveDumpInfoToAppDir");
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:437"); // SPECIAL_DEBUG_LINE_STATEMENT
             string filePath = NewDumpFilePath();
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:439"); // SPECIAL_DEBUG_LINE_STATEMENT
+            UnityEngine.Debug.Log("Begin CollectDumpInfoFile");
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:441"); // SPECIAL_DEBUG_LINE_STATEMENT
             Result result = CollectDumpInfoFile(filePath);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:443"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (result.Success == false)
             {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:446"); // SPECIAL_DEBUG_LINE_STATEMENT
+                UnityEngine.Debug.LogError("CollectAndArchiveDumpInfoToAppDir");
                 return Result<(string filePath, string zipPath)>.ErrorResult($"Error on dumping: {result.ErrorMessage}");
             }
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:451"); // SPECIAL_DEBUG_LINE_STATEMENT
+            UnityEngine.Debug.Log("Begin ArchiveIntoZip");
             Result<string> zipPathResult = ArchiveIntoZip(filePath);
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:454"); // SPECIAL_DEBUG_LINE_STATEMENT
             if (zipPathResult.Success == false)
             {
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:457"); // SPECIAL_DEBUG_LINE_STATEMENT
+                UnityEngine.Debug.LogError("CollectAndArchiveDumpInfoToAppDir");
                 return Result<(string filePath, string zipPath)>.ErrorResult($"Error on archiving: {zipPathResult.ErrorMessage}");
             }
 
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:462"); // SPECIAL_DEBUG_LINE_STATEMENT
             string zipPath = zipPathResult.Value;
+            UnityEngine.Debug.Log("Finish CollectAndArchiveDumpInfoToAppDir");
+UnityEngine.Debug.Log("CALLED DclAnrIntegration.cs:465"); // SPECIAL_DEBUG_LINE_STATEMENT
 
             return Result<(string filePath, string zipPath)>.SuccessResult((filePath, zipPath));
         }
