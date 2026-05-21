@@ -359,10 +359,29 @@ namespace Global.Dynamic
             splashScreen.Hide();
         }
 
-        private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
+        private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_HUD))
+                DisableHudOnStartupAsync(mvcManager, ct).Forget();
+        }
+
+        internal static async UniTask DisableHudOnStartupAsync(IMVCManager mvcManager, CancellationToken ct)
+        {
+            try
+            {
+                // Wait a frame so lazily-mounted MVC views exist before toggling.
+                await UniTask.NextFrame(ct).SuppressCancellationThrow();
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                // Bypass ToggleUIRequest (used by U key) so scene SDK UIDocuments stay visible.
+                mvcManager.SetAllViewsCanvasActive(false);
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
         }
 
         private void InitializeDebugPanel(IDebugContainerBuilder debugContainerBuilder, UIDocument debugUiRoot)
