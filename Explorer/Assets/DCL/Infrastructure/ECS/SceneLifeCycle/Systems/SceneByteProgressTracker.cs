@@ -87,21 +87,22 @@ namespace ECS.SceneLifeCycle.Systems
                 inProgressWeightedBytes += (long)(entityProgress * contentLength);
         }
 
-        // Asymptotic smoothing. state.Progress per entity reports only the main AB's UWR progress (not its
-        // dependencies), so when each main AB finishes the aggregate steps up by (1 - last) * contentLength.
-        // Lerping toward target hides those spikes; conclude path still snaps to 1.0.
-        private const float SMOOTHING_FACTOR = 0.15f;
-
         /// <summary>
         ///     Returns this frame's progress value, guaranteed never to go down between frames.
         ///     Call once per frame: it also clears the per-frame in-progress accumulator.
         /// </summary>
-        public float ComputeAndClamp(int totalAssetsToResolve)
+        public float ComputeAndClamp(int totalAssetsToResolve, float deltaTime)
         {
+            // Frame-rate independent smoothing: τ ≈ 111ms matches 0.15-per-tick at 60fps.
+            const float SMOOTHING_TIME_CONSTANT = 0.111f;
+
             float target = Compute(totalAssetsToResolve);
             inProgressWeightedBytes = 0;
-            float smoothed = Mathf.Lerp(maxReportedProgress, target, SMOOTHING_FACTOR);
-            maxReportedProgress = Mathf.Max(maxReportedProgress, smoothed);
+            if (target > maxReportedProgress)
+            {
+                float alpha = Mathf.Clamp01(deltaTime / SMOOTHING_TIME_CONSTANT);
+                maxReportedProgress = Mathf.Lerp(maxReportedProgress, target, alpha);
+            }
             return maxReportedProgress;
         }
 

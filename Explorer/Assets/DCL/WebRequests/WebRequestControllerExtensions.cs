@@ -247,8 +247,14 @@ namespace DCL.WebRequests
                     cts.Token,
                     ReportCategory.ASSET_BUNDLES);
             }
-            catch (Exception)
+            catch (OperationCanceledException)
             {
+                return -1;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                    $"HEAD for decompressed content length failed for {url}: {e.Message}. Falling back to count-based progress.");
                 return -1;
             }
         }

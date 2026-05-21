@@ -135,7 +135,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = progressTracker!.ComputeAndClamp(totalAssetsToResolve);
+                float progress = progressTracker!.ComputeAndClamp(totalAssetsToResolve, t);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
