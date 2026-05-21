@@ -19,19 +19,23 @@ namespace DCL.Browser
         public void OpenUrl(string url)
         {
             var escaped = Uri.EscapeUriString(url);
-            Application.OpenURL(escaped);
 
 #if ALTTESTER
-            // Test-affordance: write the URL we just opened to a known path so
-            // AltTester-driven cross-stack tests (in
-            // `explorer-automation/web/tests/auth/specs/client-to-web-handoff.spec.ts`)
-            // can pick it up without scraping the system browser. Compile-time
-            // gated to ALTTESTER builds, so production binaries have zero
-            // information-leak surface (the `#if` strips the entire block).
+            // Test-affordance: write the URL to a known path AND skip the
+            // actual `Application.OpenURL` call. Cross-stack tests in
+            // `explorer-automation/web/tests/auth/specs/client-to-web-handoff.spec.ts`
+            // poll for the file, parse the URL, and drive a Playwright-
+            // controlled browser to the same destination. Letting the system
+            // browser open here would just pop a stale tab the test ignores
+            // (and confuse the human watching the test run).
             //
-            // Same pattern as `data-testid` annotations in DCL's dapp tests: a
-            // small, explicit test affordance owned by production code,
-            // active only in instrumented builds.
+            // Compile-time gated to ALTTESTER builds, so production binaries
+            // retain the full `Application.OpenURL` behaviour with zero
+            // information-leak surface — the entire block is stripped at
+            // compile time when ALTTESTER isn't defined. Same pattern as
+            // `data-testid` annotations in DCL's dapp tests: a small, explicit
+            // test affordance owned by production code, active only in
+            // instrumented builds.
             try
             {
                 var path = Path.Combine(
@@ -45,6 +49,8 @@ namespace DCL.Browser
             {
                 Debug.LogWarning($"UnityAppWebBrowser: failed to write auth-url.txt for tests: {e}");
             }
+#else
+            Application.OpenURL(escaped);
 #endif
         }
 
