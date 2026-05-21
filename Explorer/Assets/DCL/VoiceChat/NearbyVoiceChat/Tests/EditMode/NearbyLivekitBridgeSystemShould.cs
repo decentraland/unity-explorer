@@ -215,11 +215,10 @@ namespace DCL.VoiceChat.Nearby.Tests
         }
 
         [Test]
-        public void T8_AvatarLosesComponentWhenHasAudioStreamGoesFalseButNotDuringAllZerosWindow()
+        public void T8a_PreservesComponentDuringAllZerosWindow()
         {
-            // Test 8 from the spec — combined two-step assertion.
-            //   Step A — all-zeros window: HasAudioStream=true, GetActiveSid=null → wait, do NOT drop.
-            //   Step B — identity gone: HasAudioStream=false, GetActiveSid=null → drop with cascade.
+            // Test 8 (Step A) from the spec — all-zeros window: HasAudioStream=true, GetActiveSid=null.
+            // The bridge must wait it out; dropping here would thrash the component until the resolver self-heals.
             const string WALLET = "wallet-a";
             Entity e = CreateAvatarEntity(WALLET);
 
@@ -231,7 +230,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
             world.Add(e, new InAudibleRangeTag { IsSuspended = false });
 
-            // Step A — resolver enters all-zeros window (identity still indexed, no candidate emitting).
+            // Resolver enters the all-zeros window: identity still indexed, no candidate emitting.
             registry.GetActiveSid(WALLET).Returns((string?)null);
             registry.HasAudioStream(WALLET).Returns(true);
 
@@ -241,8 +240,25 @@ namespace DCL.VoiceChat.Nearby.Tests
                 "all-zeros window (HasAudioStream && active=null) must NOT drop the component");
             Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "speaking tag must persist through the all-zeros window");
             Assert.That(world.Has<InAudibleRangeTag>(e), Is.True, "audible-range tag must persist through the all-zeros window");
+        }
 
-            // Step B — identity disappears entirely.
+        [Test]
+        public void T8b_DropsComponentWhenIdentityFullyGone()
+        {
+            // Test 8 (Step B) from the spec — identity disappears entirely: HasAudioStream=false → drop with cascade.
+            const string WALLET = "wallet-a";
+            Entity e = CreateAvatarEntity(WALLET);
+
+            StubStreaming(WALLET, "sid-1");
+            registry.IsActiveSpeaker(WALLET).Returns(true);
+
+            system.Update(0);
+            Assert.That(world.Has<NearbyAudioStreamerComponent>(e), Is.True, "precondition: component attached");
+            Assert.That(world.Has<IsActivelySpeakingTag>(e), Is.True, "precondition: speaking tag set");
+            world.Add(e, new InAudibleRangeTag { IsSuspended = false });
+
+            // Identity disappears entirely.
+            registry.GetActiveSid(WALLET).Returns((string?)null);
             registry.HasAudioStream(WALLET).Returns(false);
 
             system.Update(0);

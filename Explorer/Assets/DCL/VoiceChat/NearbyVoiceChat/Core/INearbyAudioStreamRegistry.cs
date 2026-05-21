@@ -25,9 +25,10 @@ namespace DCL.VoiceChat.Nearby.Audio
         Weak<AudioStream> GetActiveStream(StreamKey key);
 
         /// <summary>
-        /// The single active sid for an identity (the candidate that most recently emitted a media frame across all
-        /// known sids), or <c>null</c> if the identity has no sids OR none of its candidates have ever emitted a frame.
-        /// The latter is a transient "not-yet-decided" window: the bridge will re-poll next tick and self-heal.
+        /// The single active sid for an identity. Returns <c>null</c> if the identity has no sids.
+        /// Single-candidate fast path: returned eagerly without consulting the frame oracle (a lone candidate is active by definition).
+        /// Multi-candidate: picks the sid that most recently emitted a media frame; returns <c>null</c> if none of the candidates has
+        /// ever emitted a frame — a transient "not-yet-decided" window that the bridge re-polls next tick and self-heals.
         /// </summary>
         string? GetActiveSid(string walletId);
 
