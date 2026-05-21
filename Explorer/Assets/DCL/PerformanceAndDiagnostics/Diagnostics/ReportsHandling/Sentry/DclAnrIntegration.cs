@@ -15,6 +15,10 @@ using RichTypes;
 using System.IO;
 using System.IO.Compression;
 
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+
 namespace DCL.Diagnostics.Sentry
 {
     internal class DclAnrIntegration : ISdkIntegration
@@ -304,9 +308,11 @@ namespace DCL.Diagnostics.Sentry
             STREAMING_PATH = UnityEngine.Application.streamingAssetsPath; // Cache, because Unity API is not available from none-main thread
         }
 
-        // procdump.exe -accepteula -mt <PID> dump.dmp
         public static Result CollectDumpInfoFile(string targetDmpPath)
         {
+            /*
+            // procdump.exe -accepteula -mt <PID> dump.dmp
+
             const string NAME = "procdump/procdump.exe";
             string exeFile = System.IO.Path.Combine(STREAMING_PATH, NAME);
 
@@ -324,6 +330,14 @@ namespace DCL.Diagnostics.Sentry
             if (result != -2) // -2 is a code from procdump
             {
                 return Result.ErrorResult($"Cannot collect, error process code: {result}");
+            }
+            */
+
+            // replace to internal minidump call
+            Result result = MiniDumpNative.CollectSelfMiniDump(targetDmpPath);
+            if (result.Success == false)
+            {
+                return Result.ErrorResult($"CollectSelfMiniDump error: {result.ErrorMessage}");
             }
 
             Result waitResult = WaitUntilDumpReady(targetDmpPath);
@@ -457,6 +471,136 @@ namespace DCL.Diagnostics.Sentry
             return Result<(string filePath, string zipPath)>.SuccessResult((filePath, zipPath));
         }
 
+    }
+
+    internal static class ProcessInfoNative
+    {
+        private const uint PROCESS_QUERY_INFORMATION = 0x0400;
+        private const uint PROCESS_VM_READ = 0x0010;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(
+                uint dwDesiredAccess,
+                bool bInheritHandle,
+                uint dwProcessId);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        public static ProcessHandle OpenSelf(UInt32 pid)
+        {
+            IntPtr handle = OpenProcess(
+                    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                    false,
+                    pid);
+
+            if (handle == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error()); // this is a really exceptional case
+            return new ProcessHandle(handle);
+        }
+
+        public static void Close(IntPtr handle)
+        {
+            if (handle != IntPtr.Zero)
+                CloseHandle(handle);
+        }
+
+    }
+
+    public readonly struct ProcessHandle
+    {
+        public readonly IntPtr handle;
+
+        public ProcessHandle(IntPtr handle)
+        {
+            this.handle = handle;
+        }
+
+        public void Dispose()
+        {
+            ProcessInfoNative.Close(handle);
+        }
+    }
+
+    internal static class MiniDumpNative
+    {
+        // from https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ne-minidumpapiset-minidump_type
+        [Flags]
+        private enum MINIDUMP_TYPE : uint {
+            MiniDumpNormal = 0x00000000,
+            MiniDumpWithDataSegs = 0x00000001,
+            MiniDumpWithFullMemory = 0x00000002,
+            MiniDumpWithHandleData = 0x00000004,
+            MiniDumpFilterMemory = 0x00000008,
+            MiniDumpScanMemory = 0x00000010,
+            MiniDumpWithUnloadedModules = 0x00000020,
+            MiniDumpWithIndirectlyReferencedMemory = 0x00000040,
+            MiniDumpFilterModulePaths = 0x00000080,
+            MiniDumpWithProcessThreadData = 0x00000100,
+            MiniDumpWithPrivateReadWriteMemory = 0x00000200,
+            MiniDumpWithoutOptionalData = 0x00000400,
+            MiniDumpWithFullMemoryInfo = 0x00000800,
+            MiniDumpWithThreadInfo = 0x00001000,
+            MiniDumpWithCodeSegs = 0x00002000,
+            MiniDumpWithoutAuxiliaryState = 0x00004000,
+            MiniDumpWithFullAuxiliaryState = 0x00008000,
+            MiniDumpWithPrivateWriteCopyMemory = 0x00010000,
+            MiniDumpIgnoreInaccessibleMemory = 0x00020000,
+            MiniDumpWithTokenInformation = 0x00040000,
+            MiniDumpWithModuleHeaders = 0x00080000,
+            MiniDumpFilterTriage = 0x00100000,
+            MiniDumpWithAvxXStateContext = 0x00200000,
+            MiniDumpWithIptTrace = 0x00400000,
+            MiniDumpScanInaccessiblePartialPages = 0x00800000,
+            MiniDumpFilterWriteCombinedMemory,
+            MiniDumpValidTypeFlags = 0x01ffffff,
+            // MiniDumpNoIgnoreInaccessibleMemory,
+            // MiniDumpValidTypeFlagsEx
+        }
+
+        [DllImport("Dbghelp.dll", SetLastError = true)]
+        private static extern bool MiniDumpWriteDump(
+                IntPtr hProcess,
+                UInt32 processId,
+                IntPtr hFile,
+                MINIDUMP_TYPE dumpType,
+                IntPtr exceptionParam,
+                IntPtr userStreamParam,
+                IntPtr callbackParam
+        );
+
+        // It's approx the -mt flag
+        private const MINIDUMP_TYPE dumpType = (
+                MINIDUMP_TYPE.MiniDumpNormal |
+                MINIDUMP_TYPE.MiniDumpWithThreadInfo |
+                MINIDUMP_TYPE.MiniDumpWithHandleData |
+                MINIDUMP_TYPE.MiniDumpWithUnloadedModules
+                );
+
+        public static Result CollectSelfMiniDump(string targetDmpPath)
+        {
+            using FileStream targetFile = File.Open(targetDmpPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            IntPtr hFile = targetFile.SafeFileHandle.GetDangerousHandle();
+
+            UInt32 pid = (UInt32) Process.GetCurrentProcess().Id; // IL2CPP safe
+            using ProcessHandle hProcess = ProcessInfoNative.OpenSelf(pid);
+
+            bool ok = MiniDumpWriteDump(
+                    hProcess.handle,
+                    pid,
+                    hFile,
+                    dumpType,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    IntPtr.Zero 
+                    );
+
+            if (ok == false)
+            {
+                return Result.ErrorResult(new Win32Exception(Marshal.GetLastWin32Error()).Message);
+            }
+
+            return Result.SuccessResult();
+        }
     }
 
 #endif
