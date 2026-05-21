@@ -296,10 +296,20 @@ namespace DCL.Diagnostics.Sentry
 // Not supported on macOS yet
 #if UNITY_STANDALONE_WIN
 
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoad]
+#endif
     public static class ThreadsDumpUtility
     {
         private static string APP_PATH; // Cache, because Unity API is not available from none-main thread
         private static string STREAMING_PATH; // Cache, because Unity API is not available from none-main thread
+
+#if UNITY_EDITOR
+        static ThreadsDumpUtility()
+        {
+            Init();
+        }
+#endif
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Init()
