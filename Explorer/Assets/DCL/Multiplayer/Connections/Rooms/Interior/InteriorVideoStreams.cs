@@ -74,9 +74,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             assigned.AssignRoom(room);
         }
 
-        public int GetLastFrameReceivedAt(StreamKey streamKey) =>
-            assigned.GetLastFrameReceivedAt(streamKey);
-
         public void Assign(IAudioStreams value, out IAudioStreams? previous)
         {
             previous = assigned;

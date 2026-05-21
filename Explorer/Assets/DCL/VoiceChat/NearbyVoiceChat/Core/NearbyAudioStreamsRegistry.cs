@@ -42,6 +42,10 @@ namespace DCL.VoiceChat.Nearby.Audio
     {
         private readonly IRoom room;
 
+        // Frame-activity oracle seam: the LiveKit-side helper lives on an extension and AudioStream itself is
+        // FFI-bound + non-virtual, so a delegate is the only injectable shape for tests.
+        private readonly Func<StreamKey, Option<int>> getLastFrameReceivedAt;
+
         // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         // concurrencyLevel: 1 — FFI dispatch is serial, only one writer ever; saves the per-instance lock array (default = Environment.ProcessorCount).
         private DCLConcurrentDictionary<string, string[]> streamsByIdentity = NewSnapshot();
@@ -53,8 +57,12 @@ namespace DCL.VoiceChat.Nearby.Audio
         public int RebuildEpoch => DCLVolatile.Read(ref rebuildEpoch);
 
         public NearbyAudioStreamsRegistry(IRoom room)
+            : this(room, key => room.AudioStreams.GetLastFrameReceivedAt(key)) { }
+
+        internal NearbyAudioStreamsRegistry(IRoom room, Func<StreamKey, Option<int>> getLastFrameReceivedAt)
         {
             this.room = room;
+            this.getLastFrameReceivedAt = getLastFrameReceivedAt;
 
             room.ConnectionUpdated += OnConnectionUpdated;
 
@@ -135,10 +143,12 @@ namespace DCL.VoiceChat.Nearby.Audio
 
             foreach (string sid in sids)
             {
-                int t = room.AudioStreams.GetLastFrameReceivedAt(new StreamKey(walletId, sid));
+                Option<int> lastFrame = getLastFrameReceivedAt(new StreamKey(walletId, sid));
 
-                // -1 sentinel: AudioStream missing or never decoded a frame.
-                if (t == -1) continue;
+                // Option.None: AudioStream missing or never decoded a frame.
+                if (!lastFrame.Has) continue;
+
+                int t = lastFrame.Value;
 
                 if (bestSid is null || unchecked(t - bestTick) > 0)
                 {

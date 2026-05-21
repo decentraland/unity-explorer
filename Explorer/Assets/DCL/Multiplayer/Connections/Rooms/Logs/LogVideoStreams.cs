@@ -71,12 +71,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
         {
             this.origin = origin;
         }
-
-        public int GetLastFrameReceivedAt(StreamKey streamKey)
-        {
-            int tick = origin.GetLastFrameReceivedAt(streamKey);
-            ReportHub.Log(ReportCategory.LIVEKIT, $"{nameof(LogAudioStreams)}: {nameof(GetLastFrameReceivedAt)}: {streamKey.identity}, {streamKey.sid} -> {tick};");
-            return tick;
-        }
     }
 }

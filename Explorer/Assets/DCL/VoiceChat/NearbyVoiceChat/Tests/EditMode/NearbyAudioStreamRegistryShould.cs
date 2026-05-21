@@ -10,6 +10,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
 using NUnit.Framework;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -31,6 +32,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private IParticipantsHub participantsHub = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
         private IAudioStreams audioStreams = null!;
+        private FrameOracleStub frameOracle = null!;
         private NearbyAudioStreamsRegistry registry = null!;
 
         [SetUp]
@@ -42,11 +44,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             activeSpeakers = new FakeActiveSpeakers();
             room.ActiveSpeakers.Returns(activeSpeakers);
             audioStreams = Substitute.For<IAudioStreams>();
-            // -1 sentinel matches production: missing stream / never decoded a frame.
-            audioStreams.GetLastFrameReceivedAt(default).ReturnsForAnyArgs(-1);
-            audioStreams.ClearReceivedCalls(); // stub-setup call counts as received; clear so DidNotReceive assertions are clean.
             room.AudioStreams.Returns(audioStreams);
-            registry = new NearbyAudioStreamsRegistry(room);
+            frameOracle = new FrameOracleStub();
+            registry = new NearbyAudioStreamsRegistry(room, frameOracle.Get);
         }
 
         [TearDown]
@@ -438,7 +438,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
 
             Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_1));
-            audioStreams.DidNotReceiveWithAnyArgs().GetLastFrameReceivedAt(default);
+            Assert.That(frameOracle.Calls, Is.Zero, "single-sid hot path must not consult the frame oracle");
         }
 
         [Test]
@@ -446,7 +446,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
-            // Both stay at the default -1 sentinel — none have ever decoded a frame.
+            // Both stay at the default Option.None — none have ever decoded a frame.
 
             Assert.That(registry.GetActiveSid(WALLET_A), Is.Null);
         }
@@ -457,8 +457,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
 
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(100);
-            // SID_1 keeps the default -1 sentinel (ghost).
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 100);
+            // SID_1 keeps the default Option.None (ghost).
 
             Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
         }
@@ -469,8 +469,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
 
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_1)).Returns(100);
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(200);
+            frameOracle.Set(new StreamKey(WALLET_A, SID_1), 100);
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 200);
 
             Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
         }
@@ -482,9 +482,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
 
             // Pre-wrap (older), positive end of the range.
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_1)).Returns(int.MaxValue - 50);
+            frameOracle.Set(new StreamKey(WALLET_A, SID_1), int.MaxValue - 50);
             // Post-wrap (newer in unchecked arithmetic), negative end of the range.
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(int.MinValue + 50);
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), int.MinValue + 50);
 
             Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2),
                 "unchecked(SID_2_tick - SID_1_tick) == 101 > 0 — resolver must prefer the post-wrap candidate");
@@ -496,8 +496,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
             RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
 
-            audioStreams.GetLastFrameReceivedAt(new StreamKey(WALLET_A, SID_2)).Returns(500);
-            // SID_1 keeps -1 (ghost).
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 500);
+            // SID_1 keeps Option.None (ghost).
 
             Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_2)), Is.True);
             Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_1)), Is.False);
@@ -624,6 +624,24 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
                                     .SetValue(publication, info);
             return publication;
+        }
+
+        // Replaces NSubstitute stubs for the frame-activity oracle: the production seam is a
+        // Func<StreamKey, Option<int>> because the LiveKit helper is an extension method (not on the
+        // interface) and AudioStream itself is FFI-bound and non-virtual.
+        private sealed class FrameOracleStub
+        {
+            private readonly Dictionary<StreamKey, int> values = new ();
+            public int Calls { get; private set; }
+
+            public void Set(StreamKey key, int tick) =>
+                values[key] = tick;
+
+            public Option<int> Get(StreamKey key)
+            {
+                Calls++;
+                return values.TryGetValue(key, out int v) ? Option<int>.Some(v) : Option<int>.None;
+            }
         }
 
         private sealed class FakeActiveSpeakers : IActiveSpeakers

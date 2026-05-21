@@ -43,8 +43,5 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
     public class NullAudioStreams : NullStreams<AudioStream, AudioStreamInfo>, IAudioStreams
     {
         public static readonly NullAudioStreams INSTANCE = new ();
-
-        // -1 is the resolver's sentinel for "stream missing / never decoded a frame"
-        public int GetLastFrameReceivedAt(StreamKey streamKey) => -1;
     }
 }
