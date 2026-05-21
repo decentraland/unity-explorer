@@ -52,11 +52,9 @@ namespace Plugins.DclNativeProcesses
             return Result<int>.SuccessResult(pid);
         }
 
-        public static Result ExecuteBlocking(string fileName, string[] args)
+        public static int ExecuteBlocking(string fileName, string[] args)
         {
-            int resultCode = DclProcessesNativeMethods.dcl_start_process_blocking(fileName, args, args.Length);
-            if (resultCode != 0) return Result.ErrorResult($"Error executing process: {resultCode}");
-            return Result.SuccessResult();
+            return DclProcessesNativeMethods.dcl_start_process_blocking(fileName, args, args.Length);
         }
     }
 

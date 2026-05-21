@@ -289,10 +289,10 @@ namespace DCL.Diagnostics.Sentry
                 targetDmpPath,
             };
 
-            Result<int> result = Plugins.DclNativeProcesses.DclProcesses.ExecuteBlocking(fileName: exeFile, args: exeArgs);
-            if (result.Success == false)
+            int result = Plugins.DclNativeProcesses.DclProcesses.ExecuteBlocking(fileName: exeFile, args: exeArgs);
+            if (result != -2) // -2 is a code from procdump
             {
-                return Result.ErrorResult($"Cannot collect: {result.ErrorMessage}");
+                return Result.ErrorResult($"Cannot collect, error process code: {result}");
             }
 
             Result waitResult = WaitUntilDumpReady(targetDmpPath);
