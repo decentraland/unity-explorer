@@ -4,9 +4,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterMotion.Components;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Utilities;
@@ -16,7 +16,6 @@ using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
 
@@ -69,10 +68,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void FinalizeComponents(ref CharacterMaskedEmoteComponent masked)
         {
             if (masked.CurrentEmoteReference != null)
-            {
                 TryStopMaskedEmote(ref masked);
-                messageBus.SendStop();
-            }
 
             masked.Reset();
         }
@@ -185,7 +181,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             else
             {
                 uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-                World.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = emoteIntent.Mask });
+                globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = emoteIntent.Mask });
             }
 
             World.Remove<CharacterEmoteIntent>(entity);
@@ -209,10 +205,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (shouldPlay && masked.CurrentEmoteReference == null)
                 ReplayMaskedEmote(ref masked, ec);
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
-            {
                 TryStopMaskedEmote(ref masked);
-                messageBus.SendStop();
-            }
         }
 
         private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked, CharacterEmoteComponent emoteComponent)
@@ -248,7 +241,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             masked.SetAnimationTag(0);
 
             uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
-            World.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = masked.EmoteUrn, DurationMs = durationMs, Mask = masked.Mask });
+            globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = masked.EmoteUrn, DurationMs = durationMs, Mask = masked.Mask });
         }
 
         /// <summary>
@@ -285,6 +278,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// </summary>
         private void TryStopMaskedEmote(ref CharacterMaskedEmoteComponent masked, bool permanent = false)
         {
+            messageBus.SendStop();
+
             if (masked.CurrentEmoteReference == null)
             {
                 if (permanent)
