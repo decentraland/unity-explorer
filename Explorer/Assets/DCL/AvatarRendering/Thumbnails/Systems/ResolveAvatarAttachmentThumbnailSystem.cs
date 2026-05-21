@@ -35,7 +35,12 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
             if (promise.IsCancellationRequested(World))
             {
                 // Mark as Cancelled so the next GetAsync call clears the slot and retries.
-                wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.CancelledResult();
+                // Mark as Cancelled so the next GetAsync call clears the slot and retries.
+                // Don't overwrite a sticky Failed (e.g. from a consumer timeout); only reset to
+                // Cancelled when the slot is clear, successful, or already Cancelled.
+                if (wearable.ThumbnailAssetResult is not { IsInitialized: true } existing
+                    || existing.Succeeded || existing.Cancelled)
+                    wearable.ThumbnailAssetResult = StreamableLoadingResult<SpriteData>.WithFallback.CancelledResult();
                 World.Destroy(entity);
                 return;
             }
