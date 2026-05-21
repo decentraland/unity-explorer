@@ -175,6 +175,7 @@ namespace DCL.Diagnostics.Sentry
         {
             ScriptableSentryUnityOptions asset = AssetDatabase.LoadAssetAtPath<ScriptableSentryUnityOptions>(path);
             if (asset == null) return;
+            asset.Enabled = options.Enabled;
             asset.ReleaseOverride = options.Release;
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
