@@ -47,6 +47,7 @@ namespace DCL.UI
         private NativeArray<float3> tempPositionCache;
 
         private RectTransform viewRectTransform;
+        private float4 backgroundWorldRect;
         private UniTaskCompletionSource internalCloseTask;
         private bool isNativeArrayInitialized;
 
@@ -99,6 +100,7 @@ namespace DCL.UI
 
         protected override void OnBeforeViewShow()
         {
+            backgroundWorldRect = GetWorldRect(viewRectTransform);
             internalCloseTask = new UniTaskCompletionSource();
             ConfigureContextMenu(viewInstance!.ControlsContainer, inputData.Config, inputData.AnchorPosition, inputData.OverlapRect);
         }
@@ -143,7 +145,7 @@ namespace DCL.UI
                 ConfigureContextMenu(deferredConfig.ParentComponent.container, deferredConfig.Config, Vector2.zero, deferredConfig.OverlapRect);
 
                 // Moves the submenu in case it is crossing any of the borders of the screen
-                float4 boundaryRect = deferredConfig.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(deferredConfig.OverlapRect.Value) : new float4(0, 0, Screen.width, Screen.height);
+                float4 boundaryRect = deferredConfig.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(deferredConfig.OverlapRect.Value) : backgroundWorldRect;
                 deferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(deferredConfig.ParentComponent.container, boundaryRect);
             }
             catch (OperationCanceledException) { }
@@ -235,7 +237,7 @@ namespace DCL.UI
                     ConfigureContextMenu(queuedDeferredConfig.ParentComponent.container, queuedDeferredConfig.Config, Vector2.zero, queuedDeferredConfig.OverlapRect);
 
                     // Moves the submenu in case it is crossing any of the borders of the screen
-                    float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : new float4(0, 0, Screen.width, Screen.height);
+                    float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
                     queuedDeferredConfig.ParentComponent.container.transform.position = AdjustSubmenuPositionToFitBounds(queuedDeferredConfig.ParentComponent.container, boundaryRect);
                 }
             }
@@ -336,7 +338,7 @@ namespace DCL.UI
 
             float3 adjustedInitialPosition = tempPos;
 
-            float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : new float4(0, 0, Screen.width, Screen.height);
+            float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
 
             float menuWidth = container.controlsContainer.rect.width;
             float menuHeight = container.controlsContainer.rect.height;
@@ -523,7 +525,7 @@ namespace DCL.UI
 
             Vector2 anchorPosition = inputData.AnchorPosition;
 
-            float4 boundaryRect = inputData.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) : new float4(0, 0, Screen.width, Screen.height);
+            float4 boundaryRect = inputData.OverlapRect.HasValue ? BurstRectUtils.RectToFloat4(inputData.OverlapRect.Value) : backgroundWorldRect;
 
             var transformedPosition = new float3(
                 viewRectTransform.InverseTransformPoint(anchorPosition).x,
