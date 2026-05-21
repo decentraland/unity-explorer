@@ -102,10 +102,18 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
         private static async UniTaskVoid SampleLoopAsync(int token)
         {
-            while (sampling && token == sampleLoopToken)
+            try
             {
-                WriteSample();
-                await UniTask.Yield();
+                while (sampling && token == sampleLoopToken)
+                {
+                    WriteSample();
+                    await UniTask.Yield();
+                }
+            }
+            catch (Exception e)
+            {
+                DCL.Diagnostics.ReportHub.LogException(e, DCL.Diagnostics.ReportCategory.ALWAYS);
+                sampling = false;
             }
         }
 
