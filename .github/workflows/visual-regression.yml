@@ -31,9 +31,11 @@ name: Visual Regression
 #   - secrets.DEV_EXPLORER_TEAM_AWS_ACCESS_KEY_ID
 #   - secrets.DEV_EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
 
+# TEMPORARY: triggered on push instead of /visual-tests comment for workflow debugging.
+# Revert the `on:` block, the gate step, and the PR-resolution step (use issue.number again)
+# before merging.
 on:
-  issue_comment:
-    types: [created]
+  push:
 
 permissions:
   contents: write
@@ -46,9 +48,6 @@ concurrency:
 jobs:
   resolve:
     name: Resolve trigger
-    if: |
-      github.event.issue.pull_request &&
-      startsWith(github.event.comment.body, '/visual-tests')
     runs-on: ubuntu-latest
     outputs:
       authorized: ${{ steps.gate.outputs.authorized }}
@@ -60,43 +59,28 @@ jobs:
       head_ref: ${{ steps.pr.outputs.head_ref }}
 
     steps:
-      - name: Gate by author association
+      - name: Gate (push trigger — always authorized)
         id: gate
-        env:
-          ASSOC: ${{ github.event.comment.author_association }}
-        run: |
-          set -euo pipefail
-          case "$ASSOC" in
-            OWNER|MEMBER|COLLABORATOR)
-              echo "authorized=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "::notice::Ignoring /visual-tests from $ASSOC ${{ github.event.comment.user.login }} — write access required."
-              echo "authorized=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
-      - name: React to the trigger comment
-        if: steps.gate.outputs.authorized == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api -X POST \
-            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
-            -f content=eyes >/dev/null
+        run: echo "authorized=true" >> "$GITHUB_OUTPUT"
 
       - name: Resolve PR head + build URL
         id: pr
         if: steps.gate.outputs.authorized == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.issue.number }}
+          PUSHED_REF: ${{ github.ref_name }}
+          PUSHED_SHA: ${{ github.sha }}
           PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
-          # 1. Fetch PR head — issue_comment events don't carry it in the payload.
-          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+          # Find an open PR whose head matches the pushed branch.
+          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${PUSHED_REF}&state=open&per_page=1" --jq '.[0]')
+          if [ -z "$PR_JSON" ] || [ "$PR_JSON" = "null" ]; then
+            echo "::error::No open PR found for branch '${PUSHED_REF}'. Push trigger requires an open PR to derive the build URL."
+            exit 1
+          fi
+          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.head.sha')
           HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
           SHORT_SHA="${HEAD_SHA:0:7}"
