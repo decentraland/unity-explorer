@@ -152,9 +152,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             if (isMainPlayer)
             {
-                // Local player: PersistentEntities.Player has PlayerSceneCRDTEntity removed, not destroyed
+                // Local player: PlayerSceneCRDTEntity persists so scene data remains available
                 Assert.IsFalse(scene1World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
-                Assert.IsFalse(scene1World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
+                Assert.IsTrue(scene1World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
             }
             else
             {
@@ -197,9 +197,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             if (isMainPlayer)
             {
-                // Local player: old scene's persistent player loses PlayerSceneCRDTEntity (not destroyed)
+                // Local player: persistent entity retains PlayerSceneCRDTEntity (not destroyed)
                 Assert.IsFalse(scene1Facade.EcsExecutor.World.Has<DeleteEntityIntention>(scene1Entity));
-                Assert.IsFalse(scene1Facade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(scene1Entity));
+                Assert.IsTrue(scene1Facade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(scene1Entity));
 
                 // New scene uses its persistent player entity
                 Assert.AreEqual(scene2Facade.PersistentEntities.Player, playerCRDTEntity.SceneWorldEntity);
