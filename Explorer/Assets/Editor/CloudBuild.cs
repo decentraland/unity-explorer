@@ -70,7 +70,50 @@ namespace Editor
                 AltBuilder.RemoveAltTesterFromScriptingDefineSymbols(BuildTargetGroup.Standalone);
             }
 
+            // CI-only escape hatch for hosts with a broken audio HAL.
+            //
+            // On GH-hosted macos-14 paravirt VMs (Apple Virtualization Framework
+            // nested under their cloud hypervisor) the AppleVirtualSoundDevice
+            // never replies in AudioDeviceCreateIOProcID / AudioObjectHasProperty
+            // mach_msg calls. rust_audio_input_device_names → cpal::supports_input
+            // iterates every HAL device and wedges on the very first one, blocking
+            // the Unity main thread for the entire bootstrap (we observed the
+            // freeze in three back-to-back sample(1) thread dumps on the
+            // explorer-automation runner-validation workflow, all parked in
+            // semaphore_wait_trap under HALC_ProxyIOContext::TellServerAboutStreamUsage).
+            //
+            // NO_LIVEKIT_MODE short-circuits both RustAudioClient.Init() and the
+            // LiveKit branches of MultiplayerPlugin. We therefore enable it ONLY
+            // for CI smoke builds via DCL_CI_NO_LIVEKIT=1 — production builds
+            // (where this env var is unset) keep multiplayer comms / scene chat /
+            // presence fully functional. CI smoke runs solo (no other players,
+            // alfa-voice-chat feature flag off) so losing the LiveKit transport
+            // there has no observable test impact.
+            //
+            // Remove this block once a runtime gate lands upstream in
+            // decentraland/client-sdk-unity RustAudioClient.Init that can disable
+            // only the rust_audio bring-up without touching LiveKit transport.
+            if (Parameters.TryGetValue("DCL_CI_NO_LIVEKIT", out object noLivekit)
+                && (noLivekit as string) == "1")
+            {
+                Debug.Log("[CI]: DCL_CI_NO_LIVEKIT=1 — adding NO_LIVEKIT_MODE to Standalone scripting defines");
+                AddScriptingDefine(BuildTargetGroup.Standalone, "NO_LIVEKIT_MODE");
+            }
+
             DesktopStandaloneSettings.CopyPDBFiles = true;
+        }
+
+        private static void AddScriptingDefine(BuildTargetGroup group, string define)
+        {
+            PlayerSettings.GetScriptingDefineSymbolsForGroup(group, out string[] defines);
+            if (defines.Contains(define))
+            {
+                Debug.Log($"[CI]: {define} already present in {group} defines — no-op");
+                return;
+            }
+            var newDefines = string.Join(";", defines.Append(define));
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(group, newDefines);
+            Debug.Log($"[CI]: {group} scripting defines now: {newDefines}");
         }
 
         // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
