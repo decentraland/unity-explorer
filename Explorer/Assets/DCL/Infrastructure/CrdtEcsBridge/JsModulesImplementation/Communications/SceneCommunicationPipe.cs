@@ -88,7 +88,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             SubscriberKey key = new (sceneId, msgType);
 
             lock (sceneMessageHandlers)
-                sceneMessageHandlers.Add(key, onSceneMessage);
+            {
+                // See: https://github.com/decentraland/unity-explorer/issues/8183
+                sceneMessageHandlers[key] = onSceneMessage;
+            }
         }
 
         public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
@@ -96,7 +99,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             SubscriberKey key = new (sceneId, msgType);
 
             lock (sceneMessageHandlers)
-                sceneMessageHandlers.Remove(key);
+            {
+                // Since message handlers might be replaced, we need to check that the removal of the key belongs to the handler
+                if (sceneMessageHandlers.TryGetValue(key, out var current) && current == onSceneMessage)
+                    sceneMessageHandlers.Remove(key);
+            }
         }
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)

@@ -156,6 +156,7 @@ namespace Global.Dynamic
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
 
         public IMVCManager MvcManager { get; }
 
@@ -200,7 +201,8 @@ namespace Global.Dynamic
             ISystemClipboard systemClipboard,
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -221,6 +223,7 @@ namespace Global.Dynamic
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.multiplayerContainer = multiplayerContainer;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
         }
 
         public override void Dispose()
@@ -233,6 +236,7 @@ namespace Global.Dynamic
             selfProfile.Dispose();
             profileRepositoryWrapper.Dispose();
             multiplayerContainer.Dispose();
+            joinedCommunitiesVoiceLiveTracker.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -725,6 +729,10 @@ namespace Global.Dynamic
                 communitiesDataProvider,
                 identityCache);
 
+            var joinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(
+                voiceChatContainer.VoiceChatOrchestrator,
+                communitiesDataService);
+
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
             {
@@ -909,7 +917,8 @@ namespace Global.Dynamic
                     chatEventBus,
                     eventsApiService,
                     staticContainer.SmartWearableCache,
-                    supportRequestService),
+                    supportRequestService,
+                    joinedCommunitiesVoiceLiveTracker),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(
                     mvcManager,
@@ -1046,7 +1055,8 @@ namespace Global.Dynamic
                     staticContainer.PublishIpfsEntityCommand,
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
-                    springBoneSimulationSettings
+                    springBoneSimulationSettings,
+                    joinedCommunitiesVoiceLiveTracker
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1418,7 +1428,8 @@ namespace Global.Dynamic
                 clipboard,
                 bannedNotificationHandler,
                 multiplayerContainer,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                joinedCommunitiesVoiceLiveTracker
             );
 
             // Init itself
