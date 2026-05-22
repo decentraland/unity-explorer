@@ -168,14 +168,33 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.install_source }}
+  # Only cancel an in-flight build when the new event will actually produce a new useful build.
+  # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
+  # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
+  # Build Gate falsely green.
   cancel-in-progress: >-
     ${{
-      github.event_name != 'pull_request' ||
-      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
-      github.event.label.name == 'force-build' ||
-      github.event.label.name == 'clean-build' ||
-      github.event.label.name == 'windows-only' ||
-      github.event.label.name == 'macos-only'
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'merge_group' ||
+      (
+        github.event_name == 'pull_request' &&
+        (
+          github.event.action == 'opened' ||
+          github.event.action == 'reopened' ||
+          github.event.action == 'synchronize' ||
+          github.event.action == 'ready_for_review' ||
+          (
+            (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+            (
+              github.event.label.name == 'force-build' ||
+              github.event.label.name == 'clean-build' ||
+              github.event.label.name == 'windows-only' ||
+              github.event.label.name == 'macos-only'
+            )
+          )
+        )
+      )
     }}
 
 jobs:
@@ -935,10 +954,19 @@ jobs:
           should_build='${{ needs.prebuild.outputs.should_build }}'
           prebuild_result='${{ needs.prebuild.result }}'
 
-          # No Explorer/ changes, draft without override, or perf_test path — gate is not applicable.
-          if [ "$prebuild_result" != "success" ] || [ "$should_build" != "true" ]; then
-            echo "Gate not applicable (prebuild=$prebuild_result, should_build='$should_build'). Passing."
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
+          # The Prebuild job's "Skip build and test checks" step already posts per-target success
+          # statuses for this case, so the gate can safely pass.
+          if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
+            echo "Gate not applicable (prebuild ran, no Explorer/ changes). Passing."
             exit 0
+          fi
+
+          # Any other prebuild outcome (skipped/cancelled/failure) means no real build happened.
+          # Fail closed so an incidental PR event can't silently produce a green Build Gate.
+          if [ "$prebuild_result" != "success" ]; then
+            echo "::error::Prebuild did not succeed (result: $prebuild_result). No build produced for this commit; re-trigger the workflow (e.g. push a new commit or add the 'force-build' label)."
+            exit 1
           fi
 
           targets='${{ needs.prebuild.outputs.targets }}'
