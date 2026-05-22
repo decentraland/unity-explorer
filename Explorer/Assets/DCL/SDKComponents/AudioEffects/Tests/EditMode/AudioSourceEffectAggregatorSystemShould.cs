@@ -1,11 +1,9 @@
 using Arch.Core;
-using CRDT;
 using DCL.ECSComponents;
 using DCL.SDKComponents.AudioEffects.Systems;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.SDKComponents.AudioEffects.Tests
@@ -23,83 +21,63 @@ namespace DCL.SDKComponents.AudioEffects.Tests
         }
 
         [Test]
-        public void WriteOneSetSourcesForOneSourceTargetingOneAvatar()
+        public void UpsertNewDirtySource()
         {
             var pb = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            world.Create(new CRDTEntity(512), pb);
+            world.Create(pb);
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.SetCalls[0].Address, Is.EqualTo("0xABC").IgnoreCase);
-            Assert.That(registry.SetCalls[0].Sources, Is.EqualTo(new[] { pb }));
-            Assert.That(registry.SetCalls[0].Silenced, Is.False);
+            Assert.That(registry.Upserts, Has.Count.EqualTo(1));
+            Assert.That(registry.Upserts[0].Target, Is.EqualTo("0xABC"));
+            Assert.That(registry.Upserts[0].Pb, Is.SameAs(pb));
+            Assert.That(registry.Removes, Is.Empty);
         }
 
         [Test]
-        public void EmitOneSetSourcesPerDistinctTarget()
+        public void IgnoreNonDirtySources()
         {
-            var pbA = new PBAudioSourceEffect { TargetAvatarId = "0xAAA", IsDirty = true };
-            var pbB = new PBAudioSourceEffect { TargetAvatarId = "0xBBB", IsDirty = true };
-            world.Create(new CRDTEntity(1), pbA);
-            world.Create(new CRDTEntity(2), pbB);
+            var pb = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = false };
+            world.Create(pb);
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(2));
-            Assert.That(registry.SetCalls.Exists(c => c.Address.Equals("0xAAA", StringComparison.OrdinalIgnoreCase) && c.Sources.Length == 1 && c.Sources[0] == pbA && !c.Silenced));
-            Assert.That(registry.SetCalls.Exists(c => c.Address.Equals("0xBBB", StringComparison.OrdinalIgnoreCase) && c.Sources.Length == 1 && c.Sources[0] == pbB && !c.Silenced));
+            Assert.That(registry.Upserts, Is.Empty);
+            Assert.That(registry.Removes, Is.Empty);
         }
 
         [Test]
-        public void StackSameTargetSortedByCrdtIdAscendingRegardlessOfInsertionOrder()
+        public void OnlyUpsertChangedSourcesAcrossManyEntities()
         {
-            var pbHigh = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            var pbLow = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            world.Create(new CRDTEntity(999), pbHigh);
-            world.Create(new CRDTEntity(100), pbLow);
+            var dirty = new PBAudioSourceEffect { TargetAvatarId = "0xAAA", IsDirty = true };
+            var clean = new PBAudioSourceEffect { TargetAvatarId = "0xBBB", IsDirty = false };
+            world.Create(dirty);
+            world.Create(clean);
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.SetCalls[0].Sources, Is.EqualTo(new[] { pbLow, pbHigh }));
-            Assert.That(registry.SetCalls[0].Silenced, Is.False);
+            Assert.That(registry.Upserts, Has.Count.EqualTo(1));
+            Assert.That(registry.Upserts[0].Pb, Is.SameAs(dirty));
         }
 
         [Test]
-        public void SetSilencedTrueIfAnySourceInChainHasSilence()
+        public void RemoveDirtySourceWithEmptyTarget()
         {
-            var pbA = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            var pbB = new PBAudioSourceEffect { TargetAvatarId = "0xABC", Silence = true, IsDirty = true };
-            world.Create(new CRDTEntity(1), pbA);
-            world.Create(new CRDTEntity(2), pbB);
+            var pb = new PBAudioSourceEffect { TargetAvatarId = "", IsDirty = true };
+            world.Create(pb);
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.SetCalls[0].Silenced, Is.True);
+            Assert.That(registry.Upserts, Is.Empty);
+            Assert.That(registry.Removes, Has.Count.EqualTo(1));
+            Assert.That(registry.Removes[0], Is.SameAs(pb));
         }
 
         [Test]
-        public void SkipSourcesWithEmptyTargetAvatarId()
-        {
-            var inert = new PBAudioSourceEffect { TargetAvatarId = "", IsDirty = true };
-            var live = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            world.Create(new CRDTEntity(1), inert);
-            world.Create(new CRDTEntity(2), live);
-
-            system!.Update(0f);
-
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.SetCalls[0].Address, Is.EqualTo("0xABC").IgnoreCase);
-            Assert.That(registry.SetCalls[0].Sources, Is.EqualTo(new[] { live }));
-        }
-
-        [Test]
-        public void RemoveSourcesForAddressWhoseLastSourceIsBeingDestroyed()
+        public void RemoveSourceOnDestroy()
         {
             var pb = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            Entity e = world.Create(new CRDTEntity(1), pb);
+            Entity e = world.Create(pb);
 
             system!.Update(0f);
             registry.Reset();
@@ -108,16 +86,29 @@ namespace DCL.SDKComponents.AudioEffects.Tests
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Is.Empty);
-            Assert.That(registry.RemoveCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.RemoveCalls[0], Is.EqualTo("0xABC").IgnoreCase);
+            Assert.That(registry.Upserts, Is.Empty);
+            Assert.That(registry.Removes, Has.Count.EqualTo(1));
+            Assert.That(registry.Removes[0], Is.SameAs(pb));
         }
 
         [Test]
-        public void EmitZeroRegistryCallsOnQuiescentTick()
+        public void DoNotUpsertEntitiesPendingDeletionEvenIfDirty()
         {
             var pb = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            world.Create(new CRDTEntity(1), pb);
+            Entity e = world.Create(pb);
+            world.Add(e, new DeleteEntityIntention());
+
+            system!.Update(0f);
+
+            Assert.That(registry.Upserts, Is.Empty);
+            Assert.That(registry.Removes, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void EmitZeroCallsOnQuiescentTick()
+        {
+            var pb = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
+            world.Create(pb);
 
             system!.Update(0f);
             pb.IsDirty = false;
@@ -125,24 +116,9 @@ namespace DCL.SDKComponents.AudioEffects.Tests
 
             system!.Update(0f);
 
-            Assert.That(registry.SetCalls, Is.Empty);
-            Assert.That(registry.RemoveCalls, Is.Empty);
+            Assert.That(registry.Upserts, Is.Empty);
+            Assert.That(registry.Removes, Is.Empty);
             Assert.That(registry.ClearCalls, Is.EqualTo(0));
-        }
-
-        [Test]
-        public void GroupDifferentlyCasedAddressesIntoSingleChain()
-        {
-            var pbA = new PBAudioSourceEffect { TargetAvatarId = "0xABC", IsDirty = true };
-            var pbB = new PBAudioSourceEffect { TargetAvatarId = "0xabc", IsDirty = true };
-            world.Create(new CRDTEntity(1), pbA);
-            world.Create(new CRDTEntity(2), pbB);
-
-            system!.Update(0f);
-
-            Assert.That(registry.SetCalls, Has.Count.EqualTo(1));
-            Assert.That(registry.SetCalls[0].Sources, Is.EqualTo(new[] { pbA, pbB }));
-            Assert.That(registry.SetCalls[0].Silenced, Is.False);
         }
 
         [Test]
@@ -158,49 +134,41 @@ namespace DCL.SDKComponents.AudioEffects.Tests
 
         private sealed class RecordingRegistry : ISceneAudioEffectsRegistry
         {
-            public readonly List<SetCall> SetCalls = new ();
-            public readonly List<string> RemoveCalls = new ();
+            public readonly List<UpsertCall> Upserts = new ();
+            public readonly List<PBAudioSourceEffect> Removes = new ();
             public int ClearCalls;
-
-            public void SetSources(string ethAddress, IReadOnlyList<PBAudioSourceEffect> sortedSources, bool silenced)
-            {
-                var copy = new PBAudioSourceEffect[sortedSources.Count];
-                for (var i = 0; i < sortedSources.Count; i++)
-                    copy[i] = sortedSources[i];
-
-                SetCalls.Add(new SetCall(ethAddress, copy, silenced));
-            }
-
-            public void RemoveSources(string ethAddress) =>
-                RemoveCalls.Add(ethAddress);
-
-            public bool TryGetSources(string ethAddress, out AudioEffectSourcesSnapshot snapshot)
-            {
-                snapshot = default;
-                return false;
-            }
 
             public void Clear() =>
                 ClearCalls++;
 
+            public void Upsert(string targetAvatarId, PBAudioSourceEffect pbEffect) =>
+                Upserts.Add(new UpsertCall(targetAvatarId, pbEffect));
+
+            public void Remove(PBAudioSourceEffect pbEffect) =>
+                Removes.Add(pbEffect);
+
+            public bool TryGetEffects(string ethAddress, out List<PBAudioSourceEffect> effects)
+            {
+                effects = null;
+                return false;
+            }
+
             public void Reset()
             {
-                SetCalls.Clear();
-                RemoveCalls.Clear();
+                Upserts.Clear();
+                Removes.Clear();
                 ClearCalls = 0;
             }
 
-            public readonly struct SetCall
+            public readonly struct UpsertCall
             {
-                public readonly string Address;
-                public readonly PBAudioSourceEffect[] Sources;
-                public readonly bool Silenced;
+                public readonly string Target;
+                public readonly PBAudioSourceEffect Pb;
 
-                public SetCall(string address, PBAudioSourceEffect[] sources, bool silenced)
+                public UpsertCall(string target, PBAudioSourceEffect pb)
                 {
-                    Address = address;
-                    Sources = sources;
-                    Silenced = silenced;
+                    Target = target;
+                    Pb = pb;
                 }
             }
         }
