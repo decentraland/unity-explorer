@@ -8,6 +8,7 @@ on:
       - synchronize
       - ready_for_review
       - labeled
+      - unlabeled
   merge_group: {}
   push:
     branches:
@@ -52,6 +53,11 @@ on:
         required: false
         type: boolean
         default: false
+      script_debugging:
+        description: 'Enable Script Debugging (forces Development build)'
+        required: false
+        type: boolean
+        default: false
       delta_threshold_macos_mb:
         description: 'Warn if macOS growth > this MB (0 = off)'
         required: false
@@ -77,6 +83,15 @@ on:
         required: false
         default: false
         type: boolean
+      platforms:
+        description: 'Which platforms to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - windows-only
+          - macos-only
   workflow_call:
     inputs:
       profile:
@@ -99,6 +114,10 @@ on:
         required: true
         type: string
       sentry_enabled:
+        required: false
+        type: boolean
+        default: false
+      script_debugging:
         required: false
         type: boolean
         default: false
@@ -152,9 +171,11 @@ concurrency:
   cancel-in-progress: >-
     ${{
       github.event_name != 'pull_request' ||
-      github.event.action != 'labeled' ||
+      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
       github.event.label.name == 'force-build' ||
-      github.event.label.name == 'clean-build'
+      github.event.label.name == 'clean-build' ||
+      github.event.label.name == 'windows-only' ||
+      github.event.label.name == 'macos-only'
     }}
 
 jobs:
@@ -183,8 +204,13 @@ jobs:
             ) ||
             github.event.action == 'ready_for_review' ||
             (
-              github.event.action == 'labeled' &&
-              (github.event.label.name == 'force-build' || github.event.label.name == 'clean-build')
+              (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+              (
+                github.event.label.name == 'force-build' ||
+                github.event.label.name == 'clean-build' ||
+                github.event.label.name == 'windows-only' ||
+                github.event.label.name == 'macos-only'
+              )
             )
           )
         )
@@ -200,6 +226,7 @@ jobs:
       clean_build: ${{ steps.set_defaults.outputs.clean_build }}
       cache_strategy: ${{ steps.set_defaults.outputs.cache_strategy }}
       install_source: ${{ steps.set_defaults.outputs.install_source }}
+      targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -409,21 +436,87 @@ jobs:
             options+=("EnableDeepProfilingSupport")
           fi
 
+          # Script Debugging: input toggle (workflow_dispatch / workflow_call) or 'script-debugging' PR label.
+          # AllowDebugging requires a Development build to be honored by Unity.
+          script_debugging="${{ github.event.inputs.script_debugging || inputs.script_debugging }}"
+
+          if [[ "$script_debugging" != "true" && "${{ github.event_name }}" == "pull_request" ]]; then
+            script_debugging=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'script-debugging' && echo true || echo false)
+          fi
+
+          if [[ "$script_debugging" == "true" ]]; then
+            # Add Development only if not already added by profile mode
+            if [[ ! " ${options[*]} " =~ " Development " ]]; then
+              options+=("Development")
+            fi
+            options+=("AllowDebugging")
+          fi
+
           # Write the array as a comma-separated string
           # Set the Internal Field Separator to comma
           IFS=,
           echo "options=${options[*]}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Determine build targets
+        if: steps.decide.outputs.should_build == 'true'
+        id: get_targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # platform_build_mode: windows | macos | both
+          platform_build_mode=both
+
+          dispatch_platforms="${{ github.event.inputs.platforms }}"
+          echo "Dispatch platforms: '$dispatch_platforms'"
+
+          if [ "$dispatch_platforms" = "windows-only" ]; then
+            platform_build_mode=windows
+          elif [ "$dispatch_platforms" = "macos-only" ]; then
+            platform_build_mode=macos
+          else
+            labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+            echo "Labels: '$labels'"
+
+            label_match_count=0
+            if echo "$labels" | grep -qw 'windows-only'; then
+              platform_build_mode=windows
+              label_match_count=$((label_match_count + 1))
+            fi
+            if echo "$labels" | grep -qw 'macos-only'; then
+              platform_build_mode=macos
+              label_match_count=$((label_match_count + 1))
+            fi
+
+            if [ "$label_match_count" -gt 1 ]; then
+              echo "::error::Both 'windows-only' and 'macos-only' labels are applied. Remove one — they are mutually exclusive."
+              exit 1
+            fi
+          fi
+
+          echo "Platform build mode: $platform_build_mode"
+
+          case "$platform_build_mode" in
+            windows) targets='["windows64"]' ;;
+            macos)   targets='["macos"]' ;;
+            both)    targets='["windows64","macos"]' ;;
+            *) echo "::error::Unknown platform_build_mode '$platform_build_mode'"; exit 1 ;;
+          esac
+
+          echo "Targets: $targets"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: prebuild
     if: needs.prebuild.outputs.should_build == 'true'
-    timeout-minutes: 360
+    # Safety ceiling around the 450m retry budget + surrounding steps.
+    timeout-minutes: 510
     strategy:
       fail-fast: false
       matrix:
-        target: ['windows64', 'macos']
+        target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -444,12 +537,13 @@ jobs:
       - name: Execute Unity Cloud build
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 180  # matches your GLOBAL_TIMEOUT = 10800s
+          # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
+          timeout_minutes: 450
           max_attempts: 2
           retry_on_exit_code: 99
           retry_wait_seconds: 30
           on_retry_command: |
-            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S'). The next attempt will reattach to the persisted build if it is still in flight."
           command: |
             echo "🔧 Starting Unity Cloud Build attempt at $(date '+%Y-%m-%d %H:%M:%S')"
             python -u scripts/cloudbuild/build.py
@@ -457,8 +551,11 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60  # Set the polling time in seconds
-          GLOBAL_TIMEOUT: 10800  # Set the global timeout in seconds (e.g., 3 hours)
+          POLL_TIME: 60
+          QUEUE_POLL_TIME: 120
+          STALE_POLL_THRESHOLD: 600
+          QUEUE_TIMEOUT: 14400
+          BUILD_TIMEOUT: 10800
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
@@ -731,20 +828,35 @@ jobs:
             *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
           esac
 
+      - name: Compute S3 destination path
+        env:
+          RESOLVED_DESTINATION_PATH: "${{
+            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
+            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
+          }}"
+        run: |
+          echo "DESTINATION_PATH=${RESOLVED_DESTINATION_PATH}" >> $GITHUB_ENV
+
       - name: Upload artifact to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
-          DESTINATION_PATH: "${{
-            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
-            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
-          }}"
         run: |
           npx @dcl/cdn-uploader@next \
             --bucket $EXPLORER_TEAM_S3_BUCKET \
             --local-folder upload_to_s3 \
             --bucket-folder $DESTINATION_PATH
+
+      - name: Print S3 upload URL
+        run: |
+          ARTIFACT_URL="https://explorer-artifacts.decentraland.org/${DESTINATION_PATH}/${{ env.artifact_name }}.zip"
+          echo "::notice::Artifact uploaded to: ${ARTIFACT_URL}"
+          {
+            echo "### Artifact upload URL (${{ matrix.target }})"
+            echo
+            echo "[${ARTIFACT_URL}](${ARTIFACT_URL})"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug symbols
         uses: actions/upload-artifact@v4
@@ -800,12 +912,51 @@ jobs:
           path: shader_compilation_report.log
           if-no-files-found: warn
 
-      # Will run on cancel or timeout only
+      # Also runs on failure() so an outer-step timeout doesn't leave a Unity-side build holding a slot.
       - name: Cancel Unity Cloud build
-        if: ${{ cancelled() }}
+        if: ${{ cancelled() || failure() }}
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel
+        run: python -u scripts/cloudbuild/build.py --cancel || true
+
+  build-gate:
+    name: Build Gate (Windows + macOS)
+    runs-on: ubuntu-latest
+    needs: [prebuild, build]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Verify both targets built and passed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          should_build='${{ needs.prebuild.outputs.should_build }}'
+          prebuild_result='${{ needs.prebuild.result }}'
+
+          # No Explorer/ changes, draft without override, or perf_test path — gate is not applicable.
+          if [ "$prebuild_result" != "success" ] || [ "$should_build" != "true" ]; then
+            echo "Gate not applicable (prebuild=$prebuild_result, should_build='$should_build'). Passing."
+            exit 0
+          fi
+
+          targets='${{ needs.prebuild.outputs.targets }}'
+          echo "Targets that ran: $targets"
+
+          has_windows=$(echo "$targets" | jq 'any(. == "windows64")')
+          has_macos=$(echo "$targets" | jq 'any(. == "macos")')
+          if [ "$has_windows" != "true" ] || [ "$has_macos" != "true" ]; then
+            echo "::error::Build Gate requires both Windows and macOS builds. This run was filtered to: $targets"
+            echo "::error::Remove the 'windows-only' or 'macos-only' label so both targets build, then push or re-trigger."
+            exit 1
+          fi
+
+          build_result='${{ needs.build.result }}'
+          if [ "$build_result" != "success" ]; then
+            echo "::error::Build matrix did not succeed (result: $build_result)"
+            exit 1
+          fi
+
+          echo "Both Windows and macOS builds passed."
 # Test change
