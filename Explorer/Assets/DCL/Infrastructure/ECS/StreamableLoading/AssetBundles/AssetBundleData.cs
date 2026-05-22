@@ -35,8 +35,8 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleName = Asset?.name;
 
             //We cannot unload an AB if its an ISS (Initial Scene State AB). It may be a dependency for dynamically isntanced AB
-            if (!isISS)
-                UnloadAB();
+            //if (!isISS)
+            UnloadAB();
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
