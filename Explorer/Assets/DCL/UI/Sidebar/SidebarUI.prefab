@@ -80,6 +80,7 @@ MonoBehaviour:
   <eventsButton>k__BackingField: {fileID: 8640363549488957318}
   <liveEventsCounterText>k__BackingField: {fileID: 6115100311075669880}
   <liveEventsCounterContainer>k__BackingField: {fileID: 6155536193344034618}
+  <communitiesLiveBadge>k__BackingField: {fileID: 1070069918622478095}
   <PersistentFriendsPanelOpener>k__BackingField: {fileID: 6452909264407924360}
   <FriendRequestNotificationIndicator>k__BackingField: {fileID: 138840389733440639}
   <friendsButton>k__BackingField: {fileID: 920916011785825721}
@@ -668,6 +669,11 @@ MonoBehaviour:
 --- !u!1 &617051157247145518 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 544297384457663125, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+  m_PrefabInstance: {fileID: 1089184277027898555}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1070069918622478095 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 127272592731188148, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
   m_PrefabInstance: {fileID: 1089184277027898555}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &2307622500487672837 stripped
@@ -1488,6 +1494,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6317250368957008360, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6662316132345099307, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7100297525093135695, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}

@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -34,15 +35,17 @@ namespace DCL.VoiceChat.Nearby.Systems
         private readonly IUserBlockingCache userBlockingCache;
         private readonly NearbyVoiceChatStateModel stateModel;
         private readonly INearbyAudioSourceFactory sourceFactory;
+        private readonly RoomMetadataCurrentScene roomMetadataCurrentScene;
 
 
-        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory) : base(world)
+        internal NearbyAudioBindingSystem(World world, INearbyAudioStreamRegistry registry, HashSet<StreamKey> bindings, IUserBlockingCache userBlockingCache, NearbyVoiceChatStateModel stateModel, INearbyAudioSourceFactory sourceFactory, RoomMetadataCurrentScene roomMetadataCurrentScene) : base(world)
         {
             this.registry = registry;
             this.bindings = bindings;
             this.userBlockingCache = userBlockingCache;
             this.stateModel = stateModel;
             this.sourceFactory = sourceFactory;
+            this.roomMetadataCurrentScene = roomMetadataCurrentScene;
         }
 
         protected override void OnDispose()
@@ -92,8 +95,8 @@ namespace DCL.VoiceChat.Nearby.Systems
             string walletId = profile.UserId;
             if (string.IsNullOrEmpty(walletId)) return;
 
-            // Skip blocked identities. Cleanup system handles already-bound entities; this filter prevents creation in the first place.
-            if (userBlockingCache.UserIsBlocked(walletId)) return;
+            // Skip blocked / scene-banned identities. Cleanup system handles already-bound entities; this filter prevents creation in the first place.
+            if (userBlockingCache.UserIsBlocked(walletId) || roomMetadataCurrentScene.IsUserBanned(walletId)) return;
 
             // Sids ride on the entity itself — no registry call on the per-avatar hot path.
             // Bridge system guarantees SidsSnapshot is non-null for any entity that has the component.

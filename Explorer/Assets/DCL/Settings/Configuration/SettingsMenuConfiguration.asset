@@ -73,6 +73,11 @@ MonoBehaviour:
       <FeatureId>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 7533463652475600993
+    - <GroupTitle>k__BackingField: Physics
+      <FeatureFlagName>k__BackingField: 0
+      <FeatureId>k__BackingField: 0
+      <Modules>k__BackingField:
+      - rid: 7000000000000000001
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -816,9 +821,9 @@ MonoBehaviour:
         <FeatureId>k__BackingField: 0
         <View>k__BackingField:
           m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
           m_EditorAssetChanged: 0
         <Config>k__BackingField:
           <ModuleName>k__BackingField: Play current scene streams only
@@ -827,3 +832,20 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 0
         <Feature>k__BackingField: 12
+    - rid: 7000000000000000001
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <FeatureId>k__BackingField: 0
+        <View>k__BackingField:
+          m_AssetGUID: 39458b71e0ed84549b1b280c4fb1f105
+          m_SubObjectName:
+          m_SubObjectType:
+          m_SubObjectGUID:
+          m_EditorAssetChanged: 0
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Jiggle Bones
+          <Description>k__BackingField: Enables physics-based secondary motion on
+            avatar accessories (hair, cloth).
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 15

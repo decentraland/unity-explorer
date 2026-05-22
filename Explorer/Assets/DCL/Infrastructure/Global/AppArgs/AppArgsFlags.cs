@@ -21,6 +21,7 @@ namespace Global.AppArgs
         public const string SKIP_VERSION_CHECK = "skip-version-check";
         public const string SIMULATE_VERSION = "simulateVersion";
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
+        public const string SKIP_MINIMUM_SPECS_SCREEN = "skip-minimum-specs-screen";
 
         public const string SCENE_CONSOLE = "scene-console";
 
@@ -70,9 +71,11 @@ namespace Global.AppArgs
         public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string GRAPHICS = "graphics";
         public const string WINDOWED_MODE = "windowed-mode";
         public const string RESOLUTION = "resolution";
         public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
+        public const string DISABLE_HUD = "disable-hud";
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 

@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Utility;
 using ECS;
 using ECS.Abstract;
 using Newtonsoft.Json.Linq;
@@ -32,7 +33,7 @@ namespace DCL.Analytics.Systems
         {
             base.Initialize();
 
-            Application.quitting += Dispose;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(TimeSpentInWorldAnalyticsSystem), Dispose));
             AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
         }
 

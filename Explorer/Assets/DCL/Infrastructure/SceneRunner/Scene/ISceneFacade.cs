@@ -21,9 +21,6 @@ namespace SceneRunner.Scene
 
         void Initialize();
 
-        /// <summary>
-        ///     Start an update loop with a given FPS
-        /// </summary>
         UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct);
 
         /// <summary>

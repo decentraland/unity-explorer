@@ -52,9 +52,15 @@ namespace DCL.AvatarRendering.AvatarShape
         private readonly bool pointAtFeatureEnabled;
         private readonly bool headSyncFeatureEnabled;
 
-        public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
-            IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
+        public AvatarInstantiatorSystem(World world,
+            IPerformanceBudget instantiationFrameTimeBudget,
+            IPerformanceBudget memoryBudget,
+            IComponentPool<AvatarBase> avatarPoolRegistry,
+            IAvatarMaterialPoolHandler avatarMaterialPoolHandler,
+            IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            IAttachmentsAssetsCache wearableAssetsCache,
+            CustomSkinning skinningStrategy,
+            FixedComputeBufferHandler vertOutBuffer,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IWearableStorage wearableStorage,
             AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob,
@@ -136,10 +142,12 @@ namespace DCL.AvatarRendering.AvatarShape
 
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return false;
 
-            var boneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArray);
+            var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
 
-            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            (AvatarCustomSkinningComponent skinningComponent, BoneArray finalBoneArray) =
+                InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(finalBoneArray);
 
             EnableRigsByFeatureFlags(avatarBase);
 
@@ -202,13 +210,18 @@ namespace DCL.AvatarRendering.AvatarShape
                 computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent,
                 ref avatarTransformMatrixComponent, avatarTransformMatrixBatchJob);
 
-            // Override by ref
-            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
+            // Re-derive base bone array and extend with spring bones from new wearables
+            var baseBoneArray = BoneArray.FromOrDefault(avatarBase.AvatarSkinnedMeshRenderer.bones!, GetReportCategory());
+
+            BoneArray finalBoneArray;
+            (skinningComponent, finalBoneArray) = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase, baseBoneArray);
+
+            avatarTransformMatrixComponent.bones = finalBoneArray;
         }
 
-        private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
+        private (AvatarCustomSkinningComponent skinning, BoneArray finalBones) InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
             in WearablesLoadResult wearablesResult,
-            AvatarBase avatarBase)
+            AvatarBase avatarBase, BoneArray baseBoneArray)
         {
             GetWearablesByPointersIntention wearableIntention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
@@ -256,8 +269,18 @@ namespace DCL.AvatarRendering.AvatarShape
             WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
+            // Count spring bones so that the skinning buffers can be sized accordingly (base bones + spring bones)
+            int springBoneCount = 0;
+            foreach (CachedAttachment attachment in avatarShapeComponent.InstantiatedWearables) springBoneCount += attachment.SpringBones.Length;
+
+            int totalBoneCount = baseBoneArray.Count + springBoneCount;
+
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
-                computeShaderSkinningPool.Get(), avatarMaterialPoolHandler, avatarShapeComponent, facialFeatureTextures);
+                computeShaderSkinningPool.Get(),
+                avatarMaterialPoolHandler,
+                avatarShapeComponent,
+                facialFeatureTextures,
+                totalBoneCount);
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
@@ -274,12 +297,14 @@ namespace DCL.AvatarRendering.AvatarShape
             if (wearablesResult.Succeeded)
                 wearablesResult.Asset.Dispose();
 
+            avatarShapeComponent.InstantiationVersion++;
             avatarShapeComponent.IsDirty = false;
 
-            return skinningComponent;
+            return (skinningComponent, baseBoneArray);
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
+
     }
 }

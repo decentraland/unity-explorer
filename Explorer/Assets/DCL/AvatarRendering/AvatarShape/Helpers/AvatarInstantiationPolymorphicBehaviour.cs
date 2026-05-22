@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
@@ -50,8 +51,10 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 {
                     var regularAsset = (AttachmentRegularAsset)mainAsset;
 
+                    IReadOnlyDictionary<string, SpringBoneParamsDto>? boneParams = ResolveSpringBoneParams(resultWearable, avatarShapeComponent.BodyShape);
+
                     var instantiatedWearable =
-                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible());
+                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible(), boneParams);
 
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
@@ -60,6 +63,24 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     return instantiatedWearable;
                 }
             }
+        }
+
+        private static IReadOnlyDictionary<string, SpringBoneParamsDto>? ResolveSpringBoneParams(IWearable wearable, BodyShape bodyShape)
+        {
+            WearableDTO? wearableDto = wearable.Model.Asset;
+            if (wearableDto == null) return null;
+
+            SpringBonesDto? springBones = wearableDto.metadata.data.springBones;
+            if (springBones?.models == null) return null;
+
+            if (springBones.version != SpringBonesDto.SUPPORTED_VERSION)
+                ReportHub.LogWarning(ReportCategory.AVATAR,
+                    $"Spring bones DTO version {springBones.version} does not match supported version {SpringBonesDto.SUPPORTED_VERSION}; parsing may misinterpret fields. Wearable: {wearable.GetUrn()}");
+
+            if (!wearable.TryGetMainFileHash(bodyShape, out string? mainFileHash) || mainFileHash == null)
+                return null;
+
+            return springBones.models.GetValueOrDefault(mainFileHash);
         }
 
         public static void Dereference(this in AvatarShapeComponent avatarShapeComponent)

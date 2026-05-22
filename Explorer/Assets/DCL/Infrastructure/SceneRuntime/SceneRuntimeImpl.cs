@@ -138,6 +138,14 @@ namespace SceneRuntime
             isDisposingTokenSource.Dispose();
         }
 
+        public void Interrupt()
+        {
+            // V8ScriptEngine.Interrupt is thread-safe; causes ScriptInterruptedException
+            // to be thrown from any active JS execution on this engine.
+            try { engine.Interrupt(); }
+            catch (ObjectDisposedException) { /* engine already disposed — nothing to do */ }
+        }
+
         public UniTask StartScene()
         {
             resetableSource.Reset();

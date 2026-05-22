@@ -21,6 +21,7 @@ using DCL.Chat.MessageBus;
 using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
@@ -57,6 +58,8 @@ using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.RemoteAnnouncements;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Navmap;
@@ -143,6 +146,7 @@ namespace Global.Dynamic
         private readonly ISelfProfile selfProfile;
         private readonly BannedNotificationHandler bannedNotificationHandler;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
 
         public IMVCManager MvcManager { get; }
 
@@ -186,7 +190,8 @@ namespace Global.Dynamic
             ISelfProfile selfProfile,
             ISystemClipboard systemClipboard,
             BannedNotificationHandler bannedNotificationHandler,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -206,6 +211,7 @@ namespace Global.Dynamic
             this.selfProfile = selfProfile;
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
         }
 
         public override void Dispose()
@@ -217,6 +223,7 @@ namespace Global.Dynamic
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
             profileRepositoryWrapper.Dispose();
+            joinedCommunitiesVoiceLiveTracker.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -438,6 +445,11 @@ namespace Global.Dynamic
 
             var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), memoryPool, islandThroughputBunch, sceneThroughputBunch, chatThroughputBunch);
 
+            var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
+
+            var remoteAnnouncements = new RemoteAnnouncements(messagePipesHub);
+            var remoteProfiles = new RemoteProfiles(profilesRepository, remoteMetadata);
+
             var roomsStatus = new RoomsStatus(
                 roomHub,
 
@@ -466,7 +478,7 @@ namespace Global.Dynamic
 
             var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen, placesAPIService, worldAccessGate);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, remoteAnnouncements, remoteProfiles, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen, placesAPIService, worldAccessGate);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails()
@@ -644,8 +656,6 @@ namespace Global.Dynamic
             // Configure proxies for scene-side masked emote system
             staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
 
-            var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
-
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var upscaleController = new UpscalingController(mvcManager);
 
@@ -689,6 +699,10 @@ namespace Global.Dynamic
                 communitiesEventBus,
                 communitiesDataProvider,
                 identityCache);
+
+            var joinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(
+                voiceChatContainer.VoiceChatOrchestrator,
+                communitiesDataService);
 
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE) == false)
@@ -750,6 +764,8 @@ namespace Global.Dynamic
 
             var bannedSceneController = new ECSBannedScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
+            var springBoneSimulationSettings = new SpringBoneSimulationSettings();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
@@ -769,6 +785,8 @@ namespace Global.Dynamic
                     entityParticipantTable,
                     messagePipesHub,
                     remoteMetadata,
+                    remoteAnnouncements,
+                    remoteProfiles,
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.RealmData,
                     remoteEntities,
@@ -868,7 +886,8 @@ namespace Global.Dynamic
                     chatEventBus,
                     eventsApiService,
                     staticContainer.SmartWearableCache,
-                    supportRequestService),
+                    supportRequestService,
+                    joinedCommunitiesVoiceLiveTracker),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 new PrivateWorldsPlugin(
                     mvcManager,
@@ -1004,7 +1023,9 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     staticContainer.PublishIpfsEntityCommand,
                     worldPermissionsService,
-                    staticContainer.QualityContainer.RendererFeaturesCache
+                    staticContainer.QualityContainer.RendererFeaturesCache,
+                    springBoneSimulationSettings,
+                    joinedCommunitiesVoiceLiveTracker
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1119,7 +1140,9 @@ namespace Global.Dynamic
                     thumbnailProvider,
                     identityCache),
                 new AvatarLocomotionOverridesGlobalPlugin(),
-                new JumpIndicatorPlugin(assetsProvisioner)
+                new JumpIndicatorPlugin(assetsProvisioner),
+                new SpringBonesPlugin(springBoneSimulationSettings),
+                new EnsureClockSyncPlugin(realmNavigator, mvcManager, bootstrapContainer.RealmClock, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
             };
 
             if (donationsService.DonationFeatureEnabled)
@@ -1369,7 +1392,8 @@ namespace Global.Dynamic
                 selfProfile,
                 clipboard,
                 bannedNotificationHandler,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                joinedCommunitiesVoiceLiveTracker
             );
 
             // Init itself

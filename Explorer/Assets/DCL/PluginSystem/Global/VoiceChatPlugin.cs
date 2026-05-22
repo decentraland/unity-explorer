@@ -33,6 +33,7 @@ using UnityEngine.AddressableAssets;
 using DCL.FeatureFlags;
 using DCL.Prefs;
 using DCL.RealmNavigation;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.UI;
 using Utility;
 using Utility.Multithreading;
@@ -80,7 +81,9 @@ namespace DCL.PluginSystem.Global
         private NearbyAudioStreamsRegistry? nearbyAudioStreamRegistry;
         private HashSet<StreamKey>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
-        private NearbyVoiceChatManager? nearbyVoiceChatManager;
+        private NearbyVoiceChatSuppressor? nearbyVoiceChatSuppressor;
+        private NearbyMicrophoneHandler? nearbyMicrophoneHandler;
+        private NearbyMicrophoneAudioToggleHandler? nearbyMicrophoneAudioToggleHandler;
         private NearbyVoiceChatButtonController? nearbyButtonController;
         private NearbyVoiceWidgetController? nearbyWidgetController;
         private CancellationTokenSource? nearbyTipCts;
@@ -321,7 +324,7 @@ namespace DCL.PluginSystem.Global
                 if (stopAfter == 2) return;
 
                 // Stage 3: NearbyAudioBindingSystem
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 if (stopAfter == 3) return;
 
                 // Stage 4: NearbyAudioPositionSystem
@@ -329,7 +332,7 @@ namespace DCL.PluginSystem.Global
                 if (stopAfter == 4) return;
 
                 // Stage 5: NearbyAudioCleanupSystem
-                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!);
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 if (stopAfter == 5) return;
 
                 // Stage 6: NearbyVoiceChatNametagSystem
@@ -400,7 +403,7 @@ namespace DCL.PluginSystem.Global
             VoiceChatParticipantEntryView playerEntry = pluginSettings.PlayerEntryView;
             AudioClipConfig muteMicrophoneAudio = pluginSettings.MuteMicrophoneAudio;
             AudioClipConfig unmuteMicrophoneAudio = pluginSettings.UnmuteMicrophoneAudio;
-            microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler, muteMicrophoneAudio, unmuteMicrophoneAudio);
+            microphoneAudioToggleHandler = new MicrophoneAudioToggleHandler(voiceChatHandler.IsMicrophoneEnabled, muteMicrophoneAudio, unmuteMicrophoneAudio);
             pluginScope.Add(microphoneAudioToggleHandler);
             if (stopAfter == 6) return;
 
@@ -438,10 +441,19 @@ namespace DCL.PluginSystem.Global
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, stateModel);
                 pluginScope.Add(sceneRestrictionWatcher);
 
+                var bannedPlayerWatcher = new NearbyVoiceBannedPlayerWatcher(roomHub, sceneRestrictionBusController, stateModel);
+                pluginScope.Add(bannedPlayerWatcher);
+
                 nearbyMuteService!.LoadAsync(ct).Forget();
 
-                nearbyVoiceChatManager = new NearbyVoiceChatManager(stateModel, islandRoom, voiceChatConfiguration, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
-                pluginScope.Add(nearbyVoiceChatManager);
+                nearbyVoiceChatSuppressor = new NearbyVoiceChatSuppressor(stateModel, voiceChatOrchestrator.CurrentCallStatus, loadingStatus);
+                pluginScope.Add(nearbyVoiceChatSuppressor);
+
+                nearbyMicrophoneHandler = new NearbyMicrophoneHandler(stateModel, islandRoom, voiceChatConfiguration);
+                pluginScope.Add(nearbyMicrophoneHandler);
+
+                nearbyMicrophoneAudioToggleHandler = new NearbyMicrophoneAudioToggleHandler(stateModel, voiceChatConfiguration, muteMicrophoneAudio, unmuteMicrophoneAudio);
+                pluginScope.Add(nearbyMicrophoneAudioToggleHandler);
 
                 // UI
                 nearbyButtonController = new NearbyVoiceChatButtonController(nearbyVoiceChatButtonView, stateModel);
