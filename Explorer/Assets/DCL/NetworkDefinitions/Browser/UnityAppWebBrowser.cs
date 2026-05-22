@@ -22,8 +22,7 @@ namespace DCL.Browser
             var escaped = Uri.EscapeUriString(url);
 
 #if ALTTESTER
-            // ALTTESTER builds redirect the auth URL to disk and suppress the system browser
-            // so cross-stack Playwright tests can drive their own browser to the same target.
+            // ALTTESTER builds write auth URL to disk and suppress the system browser so Playwright tests can drive their own browser to it.
             try
             {
                 var path = Path.Combine(Application.persistentDataPath, "auth-url.txt");
