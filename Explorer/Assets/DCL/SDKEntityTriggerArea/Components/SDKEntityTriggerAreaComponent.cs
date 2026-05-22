@@ -92,8 +92,13 @@ namespace DCL.SDKEntityTriggerArea.Components
                     break;
             }
 
-            // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
-            monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
+            // Route to SDK_AVATAR_TRIGGER_AREA when the mask has CL_PLAYER or CL_MAIN_PLAYER; otherwise
+            // fall back to SDK_ENTITY_TRIGGER_AREA. Handler-side filter narrows from there.
+            const ColliderLayer PLAYER_TOUCHING_BITS = ColliderLayer.ClPlayer | ColliderLayer.ClMainPlayer;
+            bool touchesPlayer = LayerMask != ColliderLayer.ClNone && (LayerMask & PLAYER_TOUCHING_BITS) != 0;
+            monoBehaviour!.gameObject.layer = touchesPlayer
+                ? PhysicsLayers.SDK_AVATAR_TRIGGER_AREA
+                : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
         }
 
         public void UpdateAreaSize(Vector3 size)

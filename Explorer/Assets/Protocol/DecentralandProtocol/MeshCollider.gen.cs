@@ -37,14 +37,14 @@ namespace DCL.ECSComponents {
             "YWRpdXNfdG9wGAEgASgCSACIAQESGgoNcmFkaXVzX2JvdHRvbRgCIAEoAkgB",
             "iAEBQg0KC19yYWRpdXNfdG9wQhAKDl9yYWRpdXNfYm90dG9tGgsKCVBsYW5l",
             "TWVzaBoMCgpTcGhlcmVNZXNoQgYKBG1lc2hCEQoPX2NvbGxpc2lvbl9tYXNr",
-            "KrACCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
-            "EAESDgoKQ0xfUEhZU0lDUxACEg0KCUNMX1BMQVlFUhAEEhAKDENMX1JFU0VS",
-            "VkVEMhAIEhAKDENMX1JFU0VSVkVEMxAQEhAKDENMX1JFU0VSVkVENBAgEhAK",
-            "DENMX1JFU0VSVkVENRBAEhEKDENMX1JFU0VSVkVENhCAARIPCgpDTF9DVVNU",
-            "T00xEIACEg8KCkNMX0NVU1RPTTIQgAQSDwoKQ0xfQ1VTVE9NMxCACBIPCgpD",
-            "TF9DVVNUT000EIAQEg8KCkNMX0NVU1RPTTUQgCASDwoKQ0xfQ1VTVE9NNhCA",
-            "QBIQCgpDTF9DVVNUT003EICAARIQCgpDTF9DVVNUT004EICAAkIUqgIRRENM",
-            "LkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "KrICCg1Db2xsaWRlckxheWVyEgsKB0NMX05PTkUQABIOCgpDTF9QT0lOVEVS",
+            "EAESDgoKQ0xfUEhZU0lDUxACEg0KCUNMX1BMQVlFUhAEEhIKDkNMX01BSU5f",
+            "UExBWUVSEAgSEAoMQ0xfUkVTRVJWRUQzEBASEAoMQ0xfUkVTRVJWRUQ0ECAS",
+            "EAoMQ0xfUkVTRVJWRUQ1EEASEQoMQ0xfUkVTRVJWRUQ2EIABEg8KCkNMX0NV",
+            "U1RPTTEQgAISDwoKQ0xfQ1VTVE9NMhCABBIPCgpDTF9DVVNUT00zEIAIEg8K",
+            "CkNMX0NVU1RPTTQQgBASDwoKQ0xfQ1VTVE9NNRCAIBIPCgpDTF9DVVNUT002",
+            "EIBAEhAKCkNMX0NVU1RPTTcQgIABEhAKCkNMX0NVU1RPTTgQgIACQhSqAhFE",
+            "Q0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.ColliderLayer), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -75,10 +75,13 @@ namespace DCL.ECSComponents {
     /// </summary>
     [pbr::OriginalName("CL_PHYSICS")] ClPhysics = 2,
     /// <summary>
-    /// layer corresponding to any player avatar
+    /// layer corresponding to any player avatar (main + remote)
     /// </summary>
     [pbr::OriginalName("CL_PLAYER")] ClPlayer = 4,
-    [pbr::OriginalName("CL_RESERVED2")] ClReserved2 = 8,
+    /// <summary>
+    /// layer corresponding to the local (main) player avatar
+    /// </summary>
+    [pbr::OriginalName("CL_MAIN_PLAYER")] ClMainPlayer = 8,
     [pbr::OriginalName("CL_RESERVED3")] ClReserved3 = 16,
     [pbr::OriginalName("CL_RESERVED4")] ClReserved4 = 32,
     [pbr::OriginalName("CL_RESERVED5")] ClReserved5 = 64,

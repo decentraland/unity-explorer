@@ -97,13 +97,19 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
+            ColliderLayer mask = pbTriggerArea.GetColliderLayer();
+
+            // Fast-path: mask is EXACTLY CL_MAIN_PLAYER — SDKEntityTriggerArea.OnTriggerEnter
+            // early-outs on any collider that isn't the local player.
+            bool targetOnlyMainPlayer = mask == ColliderLayer.ClMainPlayer;
+
             World.Add(
                 entity,
                 new SDKEntityTriggerAreaComponent(
                     areaSize: Vector3.zero,
-                    targetOnlyMainPlayer: false,
+                    targetOnlyMainPlayer: targetOnlyMainPlayer,
                     meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType(),
-                    layerMask: pbTriggerArea.GetColliderLayer()),
+                    layerMask: mask),
                 new TriggerAreaComponent()
             );
         }
@@ -151,10 +157,16 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
-            if (triggerEntityCollider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
-                || triggerEntityCollider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            int colliderLayer = triggerEntityCollider.gameObject.layer;
+            bool isMainAvatar = colliderLayer == PhysicsLayers.CHARACTER_LAYER;
+            bool isRemoteAvatar = colliderLayer == PhysicsLayers.OTHER_AVATARS_LAYER;
+            if (isMainAvatar || isRemoteAvatar)
             {
-                if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, ColliderLayer.ClPlayer)
+                // Additive: main player matches (CL_PLAYER | CL_MAIN_PLAYER); remote avatars match CL_PLAYER only.
+                ColliderLayer expected = isMainAvatar
+                    ? (ColliderLayer.ClPlayer | ColliderLayer.ClMainPlayer)
+                    : ColliderLayer.ClPlayer;
+                if ((areaLayerMask & expected) == 0
                     || !TryGetAvatarEntity(triggerEntityCollider.transform, out avatarEntity))
                     return;
             }
@@ -182,7 +194,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 triggerEntityScale = characterTransform.Transform.localScale.ToProtoVector();
             }
 
-            uint triggerLayers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
+            // Report the intersection of the area mask with the bits the avatar carries.
+            uint triggerLayers;
+            if (avatarEntity == Entity.Null)
+                triggerLayers = (uint)entityInfo.SDKLayer;
+            else if (isMainAvatar)
+                triggerLayers = (uint)((ColliderLayer.ClPlayer | ColliderLayer.ClMainPlayer) & areaLayerMask);
+            else
+                triggerLayers = (uint)(ColliderLayer.ClPlayer & areaLayerMask);
 
             uint triggerEntity;
             if (avatarEntity != Entity.Null)
