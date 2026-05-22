@@ -24,6 +24,7 @@ using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.HelpMenu;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
+using DCL.VoiceChat;
 using DCL.VoiceChat.UI;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly HttpEventsApiService eventsApiService;
         private readonly SupportRequestService supportRequestService;
+        private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
 
         private SidebarController? sidebarController;
         private NotificationsPanelController? notificationsPanelController;
@@ -106,7 +108,8 @@ namespace DCL.PluginSystem.Global
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
             SmartWearableCache smartWearableCache,
-            SupportRequestService supportRequestService)
+            SupportRequestService supportRequestService,
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -133,6 +136,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
             this.supportRequestService = supportRequestService;
+            this.communitiesLiveTracker = communitiesLiveTracker;
         }
 
         public void Dispose()
@@ -192,7 +196,8 @@ namespace DCL.PluginSystem.Global
                 globalWorld,
                 chatEventBus,
                 eventsApiService,
-                helpMenuController
+                helpMenuController,
+                communitiesLiveTracker
                 );
 
             mvcManager.RegisterController(controlsPanelController);

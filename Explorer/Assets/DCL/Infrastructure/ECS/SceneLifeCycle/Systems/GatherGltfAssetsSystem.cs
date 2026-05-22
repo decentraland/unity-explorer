@@ -10,6 +10,7 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,9 @@ using UnityEngine.Pool;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+
+    // SyncGlobalTransformSystem must run after to reconcile the player entity position after Conclude() was called
+    [UpdateBefore(typeof(SyncGlobalTransformSystem))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);

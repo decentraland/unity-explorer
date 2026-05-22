@@ -16,6 +16,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Settings;
+using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -101,7 +102,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 debugBuilder,
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -115,7 +116,6 @@ namespace Global.Tests.PlayMode
                 enableAnalytics: false,
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                DecentralandEnvironment.Org,
                 ct,
                 appArgs,
                 enableGPUInstancing: false
