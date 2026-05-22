@@ -26,10 +26,10 @@ name: Visual Regression
 # on this repo even though the dispatcher itself doesn't reference them:
 #   - secrets.ALTTESTER_LICENSE
 #   - secrets.REPOS_READ_ONLY_TOKEN
-#   - secrets.DEV_EXPLORER_TEAM_S3_BUCKET
-#   - secrets.DEV_EXPLORER_TEAM_AWS_DEFAULT_REGION
-#   - secrets.DEV_EXPLORER_TEAM_AWS_ACCESS_KEY_ID
-#   - secrets.DEV_EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
+#   - secrets.EXPLORER_TEAM_S3_BUCKET
+#   - secrets.EXPLORER_TEAM_AWS_DEFAULT_REGION
+#   - secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID
+#   - secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
 
 # TEMPORARY: triggered on push instead of /visual-tests comment for workflow debugging.
 # Revert the `on:` block, the gate step, and the PR-resolution step (use issue.number again)
