@@ -281,7 +281,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
             SceneLoadingState sceneState)
         {
-            // HandleNotCreatedScenes filters banned scenes, so a promise issued here would never be consumed and leak its SceneFacade.
+            // Promises for banned-scene entities are not consumed downstream; issuing one here would leak its SceneFacade.
             if (World.Has<BannedSceneComponent>(entity))
                 return;
 
