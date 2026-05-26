@@ -20,7 +20,7 @@ name: Visual Regression
 # Required secrets / vars (configure once on the repo):
 #
 # Used directly by this dispatcher:
-#   - vars.DEV_EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Constructs the Explorer build download URL
+#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Constructs the Explorer build download URL
 #
 # Inherited by the reusable workflow via `secrets: inherit` — must exist
 # on this repo even though the dispatcher itself doesn't reference them:
@@ -36,7 +36,7 @@ on:
     types: [created]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 concurrency:
@@ -91,7 +91,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          PUBLIC_URL_PREFIX: ${{ vars.DEV_EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
         run: |
           set -euo pipefail
 
