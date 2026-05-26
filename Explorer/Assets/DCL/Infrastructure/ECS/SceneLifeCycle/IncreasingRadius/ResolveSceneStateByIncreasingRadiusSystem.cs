@@ -281,6 +281,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
             SceneLoadingState sceneState)
         {
+            // HandleNotCreatedScenes filters banned scenes, so a promise issued here would never be consumed and leak its SceneFacade.
+            if (World.Has<BannedSceneComponent>(entity))
+                return;
+
             VisualSceneState candidateBy
                 = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
 
