@@ -20,9 +20,12 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
     ///     Resolves <see cref="ISSDescriptor"/> for a scene: fetches the static scene descriptor JSON from
-    ///     the LOD manifest bucket and HEAD-probes the legacy ISS bundle URL to decide between Bundle and
-    ///     Descriptor modes. Returns <see cref="ISSDescriptor.NONE"/> when no descriptor JSON exists for
-    ///     the scene.
+    ///     the LOD manifest bucket and always returns Descriptor mode. Returns <see cref="ISSDescriptor.NONE"/>
+    ///     when no descriptor JSON exists for the scene.
+    ///     <para>
+    ///     The HEAD probe that chooses between Bundle and Descriptor modes is temporarily disabled — see
+    ///     <see cref="IsBundleReachableAsync"/>. A later PR will re-enable Bundle mode.
+    ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
@@ -57,11 +60,12 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             if (!metadata.HasValue)
                 return new StreamableLoadingResult<ISSDescriptor>(ISSDescriptor.NONE);
 
-            bool bundleReachable = await IsBundleReachableAsync(intention.SceneId, intention.ManifestVersion!, ct);
+            // Bundle-mode HEAD probe is temporarily disabled — every ISS-capable scene goes through
+            // Descriptor mode for now. Kept the IsBundleReachableAsync helper below so re-enabling is
+            // a one-line restore in a later PR; see PR description for rationale.
+            // bool bundleReachable = await IsBundleReachableAsync(intention.SceneId, intention.ManifestVersion!, ct);
 
-            var descriptor = new ISSDescriptor(
-                bundleReachable ? IISSDescriptor.State.Bundle : IISSDescriptor.State.Descriptor,
-                metadata.Value);
+            var descriptor = new ISSDescriptor(IISSDescriptor.State.Descriptor, metadata.Value);
 
             return new StreamableLoadingResult<ISSDescriptor>(descriptor);
         }
@@ -95,6 +99,8 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             }
         }
 
+        // Currently unused: FlowInternalAsync forces Descriptor mode. Kept for the follow-up PR that
+        // re-enables Bundle-mode selection.
         private async UniTask<bool> IsBundleReachableAsync(string sceneId, AssetBundleManifestVersion manifestVersion, CancellationToken ct)
         {
             if (manifestVersion == null || manifestVersion.assetBundleManifestRequestFailed) return false;
