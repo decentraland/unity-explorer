@@ -154,15 +154,12 @@ namespace DCL.LOD.Systems
         [Query]
         private void ConvertFromAssetBundle(Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
         {
-            const string DEBUG_SCENE_ID = "bafkreift34mmemx7fvrf6mpoaab7qy2dceq5vwpwehq3wunv5dwulbjveu";
-
             if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
             if (!assetBundleResult.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
                 return;
 
-            bool isDebugScene = creationHelper.InitialSceneStateLOD.SceneID == DEBUG_SCENE_ID;
             bool stillRelevant = creationHelper.Generation == creationHelper.InitialSceneStateLOD.Generation
                                  && creationHelper.InitialSceneStateLOD.ParentContainer != null;
 
@@ -172,8 +169,6 @@ namespace DCL.LOD.Systems
                 {
                     if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetNameInBundle, out GltfContainerAsset asset))
                     {
-                        if (isDebugScene)
-                            UnityEngine.Debug.Log($"[Juani] ConvertFromAssetBundle OK {creationHelper.Entry.hash} (counted via AddResolvedAsset)");
                         PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.Entry, creationHelper.CacheKey, asset,
                             creationHelper.InitialSceneStateLOD.ParentContainer.transform);
                     }

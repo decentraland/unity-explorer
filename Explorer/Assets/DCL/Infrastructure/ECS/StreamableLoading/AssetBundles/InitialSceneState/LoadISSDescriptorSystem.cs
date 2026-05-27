@@ -63,8 +63,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 bundleReachable ? IISSDescriptor.State.Bundle : IISSDescriptor.State.Descriptor,
                 metadata.Value);
 
-            UnityEngine.Debug.Log($"[JUANI] ISS resolved for {intention.SceneId}: {descriptor.CurrentState} ({descriptor.Assets.Count} assets)");
-
             return new StreamableLoadingResult<ISSDescriptor>(descriptor);
         }
 
