@@ -31,10 +31,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadISSDescriptorSystem : LoadSystemBase<ISSDescriptor, GetISSDescriptor>
     {
-        // ISS is only baked starting from AB manifest version 49. Anything older cannot have ISS, so
-        // we short-circuit to NONE without touching the network.
-        private const int MIN_ISS_AB_VERSION = 49;
-
         // Hardcoded for this iteration — wire to DI once the dev/prod bucket split lands.
         private static readonly URLDomain DESCRIPTOR_BASE_URL =
             URLDomain.FromString("https://lod-unity-bucket-dev-0871c25.s3.us-east-1.amazonaws.com/lods-unity/manifests/");
@@ -53,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         protected override async UniTask<StreamableLoadingResult<ISSDescriptor>> FlowInternalAsync(GetISSDescriptor intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             // Skip network roundtrips entirely for AB versions that pre-date ISS support.
-            if (!IsManifestVersionISSCapable(intention.ManifestVersion))
+            if (!intention.ManifestVersion.SupportsISS())
                 return new StreamableLoadingResult<ISSDescriptor>(ISSDescriptor.NONE);
 
             ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(intention.SceneId, ct);
@@ -68,17 +64,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             var descriptor = new ISSDescriptor(IISSDescriptor.State.Descriptor, metadata.Value);
 
             return new StreamableLoadingResult<ISSDescriptor>(descriptor);
-        }
-
-        private static bool IsManifestVersionISSCapable(AssetBundleManifestVersion? manifestVersion)
-        {
-            if (manifestVersion == null || manifestVersion.assetBundleManifestRequestFailed) return false;
-
-            string? version = manifestVersion.GetAssetBundleManifestVersion();
-            if (string.IsNullOrEmpty(version) || version.Length < 2) return false;
-
-            // Versions look like "v41" — strip the leading 'v' and compare numerically.
-            return int.TryParse(version.AsSpan().Slice(1), out int versionNum) && versionNum >= MIN_ISS_AB_VERSION;
         }
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)

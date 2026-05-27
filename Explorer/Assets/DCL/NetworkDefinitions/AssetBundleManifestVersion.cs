@@ -15,6 +15,10 @@ public class AssetBundleManifestVersion
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST = 49;
 
+        //ISS (Initial Scene State) descriptors are only baked starting from v49 — older
+        //manifests can't have an ISS, so the descriptor lookup is short-circuited.
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 49;
+
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
@@ -29,6 +33,7 @@ public class AssetBundleManifestVersion
         private bool? HasHashInPathValue;
 
         private bool? SupportsDepsDigestsValue;
+        private bool? SupportsISSValue;
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
@@ -52,6 +57,18 @@ public class AssetBundleManifestVersion
             if (!DepsDigestKeyingEnabled) return false;
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
+        }
+
+        /// <summary>
+        ///     True when the manifest's version is new enough to potentially have an ISS (Initial Scene State)
+        ///     descriptor baked for the scene. Older manifests pre-date the feature and can be short-circuited
+        ///     without touching the network.
+        /// </summary>
+        public bool SupportsISS()
+        {
+            if (assetBundleManifestRequestFailed) return false;
+            SupportsISSValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+            return SupportsISSValue.Value;
         }
 
         //Try parse is required to avoid throwing exceptions when the version is not in the expected format, which can happen for LODs in example

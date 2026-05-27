@@ -18,9 +18,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public readonly string SceneId;
-        public readonly AssetBundleManifestVersion? ManifestVersion;
+        public readonly AssetBundleManifestVersion ManifestVersion;
 
-        public GetISSDescriptor(string sceneId, AssetBundleManifestVersion? manifestVersion)
+        public GetISSDescriptor(string sceneId, AssetBundleManifestVersion manifestVersion)
         {
             SceneId = sceneId;
             ManifestVersion = manifestVersion;
@@ -28,8 +28,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             CommonArguments = new CommonLoadingArguments(sceneId);
         }
 
+        // Manifest is required: callers reach this only after the scene definition (and therefore its manifest)
+        // has been loaded. A missing manifest at this point means the scene's load chain has already failed
+        // upstream — surfacing it as a null-ref here is the right behavior.
         public static GetISSDescriptor For(SceneEntityDefinition definition) =>
-            new (definition.id, definition.assetBundleManifestVersion);
+            new (definition.id, definition.assetBundleManifestVersion!);
 
         public bool Equals(GetISSDescriptor other) =>
             SceneId == other.SceneId;
