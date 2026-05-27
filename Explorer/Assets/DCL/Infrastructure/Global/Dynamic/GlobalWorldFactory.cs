@@ -42,7 +42,6 @@ using System.Threading;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Roads.Systems;
-using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -227,8 +226,6 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
-
-            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData, urlsSource);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);
