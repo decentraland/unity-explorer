@@ -27,9 +27,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly IISSDescriptor? issDescriptor;
+        private readonly IISSDescriptor issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, IISSDescriptor? issDescriptor) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, IISSDescriptor issDescriptor) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
@@ -71,7 +71,6 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // (capped to the exact number of times it appears in the descriptor — no duplicates).
                 // Null descriptor means no ISS for this scene → no bridging.
                 bool putInBridge = partitionAllowsBridge
-                                   && issDescriptor != null
                                    && issDescriptor.TryReserveBridgeSlot(component.Hash);
                 cache.Dereference(component.CacheKey, result.Asset, putInBridge);
             }

@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.SceneRunner.Scene;
 using DCL.Utility;
 using System;
@@ -78,7 +79,15 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public void ReleaseBridgeSlot(string hash)
         {
             if (bridgedCount.TryGetValue(hash, out int n) && n > 0)
+            {
                 bridgedCount[hash] = n - 1;
+                return;
+            }
+
+            // Surface paired-release mismatches the first time they happen instead of waiting for "the
+            // bridge never admits new copies" to come up as a bug report. Over-release silently clamps at 0
+            // and looks correct, but leaves the count drifted upward against reservations that did happen.
+            ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"ISSDescriptor.ReleaseBridgeSlot called for hash '{hash}' with no outstanding reservation — paired Reserve/Release mismatch.");
         }
 
         public bool SupportsDescriptor() =>
