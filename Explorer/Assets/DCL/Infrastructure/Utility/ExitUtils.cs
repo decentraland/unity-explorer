@@ -180,7 +180,7 @@ namespace DCL.Utility
         private static string NewTargetPath()
         {
             string dir = UnityEngine.Application.persistentDataPath;
-            long unixTime = System.DateTime.UtcNow.ToUnixTimeSeconds();
+            long unixTime = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             string name = $"exit_stopwatch_{unixTime}.log";
             string path = System.IO.Path.Combine(dir, name);
             return path;
