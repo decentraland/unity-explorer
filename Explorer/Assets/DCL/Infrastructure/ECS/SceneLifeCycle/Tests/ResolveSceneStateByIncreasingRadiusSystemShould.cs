@@ -7,6 +7,8 @@ using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.SceneRunner.Scene;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -151,7 +153,7 @@ namespace ECS.SceneLifeCycle.Tests
                     new IpfsPath()), new PartitionComponent
                 {
                     Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i,
-                });
+                }, new ISSDescriptor(IISSDescriptor.State.None, default));
             }
 
             system.Update(0f);
@@ -194,7 +196,7 @@ namespace ECS.SceneLifeCycle.Tests
                 {
                     Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f, OutOfRange = i < 4,
                 }, Substitute.For<ISceneFacade>(),
-                    SceneLoadingState.CreateBuiltScene());
+                    SceneLoadingState.CreateBuiltScene(), new ISSDescriptor(IISSDescriptor.State.None, default));
             }
 
             system.Update(0f);
@@ -247,7 +249,7 @@ namespace ECS.SceneLifeCycle.Tests
                 new IpfsPath()), new PartitionComponent
             {
                 Bucket = 0, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * distanceToPlayer,
-            });
+            }, new ISSDescriptor(IISSDescriptor.State.None, default));
         }
 
         private void CreateLOD(int parcelAmount, int distanceToPlayer)
@@ -264,7 +266,7 @@ namespace ECS.SceneLifeCycle.Tests
                 new IpfsPath()), new PartitionComponent
             {
                 Bucket = (byte)(SDK7LODThreshold + 1), RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * distanceToPlayer,
-            });
+            }, new ISSDescriptor(IISSDescriptor.State.None, default));
         }
     }
 }

@@ -2,6 +2,8 @@
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
 using Org.BouncyCastle.Utilities.Collections;
 using System;
 using System.Collections.Generic;
@@ -26,7 +28,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public bool IsPortableExperience { get; }
 
         public int InternalJobIndex { get; set; }
-
 
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;
@@ -79,8 +80,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
         public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
-            isPortableExperience ?
-                CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
+            isPortableExperience
+                ? CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath)
+                : CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
 
         private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
             new (

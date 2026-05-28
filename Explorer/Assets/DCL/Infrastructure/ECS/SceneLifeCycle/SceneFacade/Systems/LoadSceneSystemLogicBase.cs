@@ -1,24 +1,19 @@
-﻿using Arch.Core;
+using Arch.Core;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.SceneRunner.Scene;
-using DCL.Utility;
 using DCL.Utility.Exceptions;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.InitialSceneState;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using SceneRunner;
 using SceneRunner.Scene;
 using SceneRuntime.ScenePermissions;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using DCL.SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -46,16 +41,21 @@ namespace ECS.SceneLifeCycle.Systems
             // Fixes possible race conditions with the setup of the scene definition, especially on Hybrid mode (LSD+remote ABs)
             await OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             await UniTask.SwitchToMainThread(ct);
-            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
-            var ISSContainedAssetsPromise = LoadISSAsync(world, definition, ct);
 
-            (ReadOnlyMemory<byte> mainCrdt, IInitialSceneState? ISSAssets) = await UniTask.WhenAll(loadMainCrdt, ISSContainedAssetsPromise);
+            UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
+            ReadOnlyMemory<byte> mainCrdt = await loadMainCrdt;
+
+            // Pass null for State.None so SDK-side consumers can keep their existing "is ISS active" check
+            // (sceneData.ISSDescriptor != null) without learning about the None sentinel state.
+            IISSDescriptor? sceneDataDescriptor = intention.ISSDescriptor.CurrentState == IISSDescriptor.State.None
+                ? null
+                : intention.ISSDescriptor;
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt),
-                ISSAssets);
+                sceneDataDescriptor);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -67,32 +67,6 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.Initialize();
             ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' (sdk version: '{sceneData.GetSDKVersion()}') ended");
             return sceneFacade;
-        }
-
-        private async UniTask<IInitialSceneState> LoadISSAsync(World world, SceneEntityDefinition sceneDefinitionComponent, CancellationToken ct)
-        {
-            if (sceneDefinitionComponent.SupportInitialSceneState())
-            {
-                var promise = AssetBundlePromise.Create(world,
-                    GetAssetBundleIntention.FromHash(GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.id),
-                        assetBundleManifestVersion: sceneDefinitionComponent.assetBundleManifestVersion,
-                        parentEntityID: sceneDefinitionComponent.id),
-                        PartitionComponent.TOP_PRIORITY);
-
-                promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-
-                if (promise.Result.Value.Succeeded)
-                {
-                    var result = new HashSet<string>();
-
-                    foreach (string s in promise.Result.Value.Asset.InitialSceneStateMetadata.Value.assetHash)
-                        result.Add($"{s}{PlatformUtils.GetCurrentPlatform()}");
-
-                    return InitialSceneStateInfo.CreateISS(promise.Result.Value.Asset, result);
-                }
-            }
-
-            return InitialSceneStateInfo.CreateEmpty();
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

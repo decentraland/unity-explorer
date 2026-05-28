@@ -1,9 +1,11 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using DCL.Roads.Components;
+using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -24,12 +26,21 @@ namespace ECS.SceneLifeCycle.Systems
             this.realmData = realmData;
         }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false, ISSDescriptor? initialISSDescriptor = null)
         {
-            if (IsRoad(definition))
-                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), RoadInfo.Create(), SceneLoadingState.CreateRoad());
+            // Scene types that structurally cannot have ISS (PX content, static-pointer / LSD scenes,
+            // smart-wearable previews) start with a State.None descriptor so the radius resolver gate
+            // never fires for them. PX defaults to None automatically; non-PX defaults to Uninitialized
+            // and resolves on first LOD/Scene transition. Callers can override with `initialISSDescriptor`.
+            ISSDescriptor descriptor = initialISSDescriptor
+                                       ?? (isPortableExperience
+                                           ? new ISSDescriptor(IISSDescriptor.State.None, default)
+                                           : new ISSDescriptor());
 
-            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience));
+            if (IsRoad(definition))
+                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), descriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad());
+
+            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), descriptor);
         }
 
         private bool IsRoad(SceneEntityDefinition definition) =>

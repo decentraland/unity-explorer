@@ -12,7 +12,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.InitialSceneState;
 using Runtime.Wearables;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -81,8 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneDefinition.metadata.scene.DecodedBase,
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
-                new StaticSceneMessages(crdt),
-                InitialSceneStateInfo.CreateEmpty());
+                new StaticSceneMessages(crdt));
 
             // Set the flag is we are using the special DTO for builder collection preview
             sceneData.IsWearableBuilderCollectionPreview = wearable.DTO is BuilderWearableDTO;

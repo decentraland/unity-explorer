@@ -32,7 +32,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -40,7 +42,6 @@ using System.Threading;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Roads.Systems;
-using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -165,6 +166,18 @@ namespace Global.Dynamic
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
+            // ISS descriptor loader. NoCache with ongoing-request dedup is enough — the descriptor is held
+            // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
+            // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
+                new NoCache<ISSDescriptor, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
+                new DiskCacheOptions<ISSDescriptor, GetISSDescriptor>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptor.DiskHashCompute.INSTANCE, "iss"));
+
+            // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
+            // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in
+            // OrderedDataManaged + downstream queries see the resolved state without a refetch.
+            ResolveISSDescriptorSystem.InjectToWorld(ref builder);
+
             if (hybridSceneParams.EnableHybridScene)
             {
                 URLDomain worldContentServerBaseUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldServer));
@@ -214,8 +227,6 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
-
-            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData, urlsSource);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);

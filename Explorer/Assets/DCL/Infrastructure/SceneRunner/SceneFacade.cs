@@ -79,12 +79,14 @@ namespace SceneRunner
 
             SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
-
 #if ALTTESTER
             AlttesterSceneReadinessProbe.ClearIfCurrent(this);
 #endif
-
             DisposeInternal();
+
+            // TODO: DisposeAsync dereferences SceneData.ISSDescriptor here; the sync path skips it.
+            // If this method is ever exercised on a scene that had ISS, the descriptor ref leaks.
+            // Confirm whether sync Dispose is ever hit in prod and unify if so.
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
@@ -116,7 +118,8 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            SceneData.InitialSceneStateInfo.Dispose();
+            // Release the shared ISS bundle (if any). Null when no ISS was active for this scene.
+            SceneData.ISSDescriptor?.Dereference();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

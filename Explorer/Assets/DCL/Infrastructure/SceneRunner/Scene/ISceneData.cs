@@ -14,7 +14,15 @@ namespace SceneRunner.Scene
         ///     SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
         /// </summary>
         bool SceneLoadingConcluded { get; set; }
-        IInitialSceneState InitialSceneStateInfo { get; }
+
+        /// <summary>
+        ///     The resolved Initial Scene State descriptor for this scene, or null when no ISS is in play
+        ///     (pre-v49 manifest, descriptor JSON missing, or wearable / portable-experience scenes that
+        ///     don't go through the ISS loader). The concrete type lives in the ECS layer; consumers here
+        ///     use the <see cref="IISSDescriptor"/> interface to read state, run bridge bookkeeping, and
+        ///     release the shared bundle on scene unload.
+        /// </summary>
+        IISSDescriptor? ISSDescriptor { get; }
 
         SceneShortInfo SceneShortInfo { get; }
 
@@ -111,7 +119,7 @@ namespace SceneRunner.Scene
                 set { }
             }
 
-            public IInitialSceneState InitialSceneStateInfo { get; } = new FakeInitialSceneState();
+            public IISSDescriptor? ISSDescriptor => null;
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 
@@ -170,15 +178,6 @@ namespace SceneRunner.Scene
 
             public bool IsSDKVersion(string version) =>
                 false;
-        }
-
-        public class FakeInitialSceneState : IInitialSceneState
-        {
-            public void Dispose()
-            {
-            }
-
-            public HashSet<string> ISSAssets { get; } = new HashSet<string>();
         }
     }
 

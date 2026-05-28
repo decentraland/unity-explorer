@@ -6,7 +6,9 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using DCL.SceneRunner.Scene;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
@@ -57,7 +59,10 @@ namespace ECS.SceneLifeCycle.Systems
                     {
                         SceneEntityDefinition definition = result.Asset.Value[i];
                         var path = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
-                        CreateSceneEntity(definition, path);
+                        // Static pointer scenes (LSD + hardcoded debug positions) aren't deployed through
+                        // the AB pipeline, so no ISS descriptor exists for them. Initialize in State.None so
+                        // the resolver gate skips them entirely.
+                        CreateSceneEntity(definition, path, initialISSDescriptor: new ISSDescriptor(IISSDescriptor.State.None, default));
                     }
                 }
 
