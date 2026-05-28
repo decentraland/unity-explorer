@@ -45,17 +45,11 @@ namespace ECS.SceneLifeCycle.Systems
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
             ReadOnlyMemory<byte> mainCrdt = await loadMainCrdt;
 
-            // Pass null for State.None so SDK-side consumers can keep their existing "is ISS active" check
-            // (sceneData.ISSDescriptor != null) without learning about the None sentinel state.
-            IISSDescriptor? sceneDataDescriptor = intention.ISSDescriptor.CurrentState == IISSDescriptor.State.None
-                ? null
-                : intention.ISSDescriptor;
-
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt),
-                sceneDataDescriptor);
+                intention.ISSDescriptor);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);

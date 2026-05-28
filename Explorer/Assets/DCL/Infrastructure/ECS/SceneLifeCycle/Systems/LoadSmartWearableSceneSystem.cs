@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -80,7 +81,8 @@ namespace ECS.SceneLifeCycle.Systems
                 sceneDefinition.metadata.scene.DecodedBase,
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
-                new StaticSceneMessages(crdt));
+                new StaticSceneMessages(crdt),
+                ISSDescriptor.NONE);
 
             // Set the flag is we are using the special DTO for builder collection preview
             sceneData.IsWearableBuilderCollectionPreview = wearable.DTO is BuilderWearableDTO;

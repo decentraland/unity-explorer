@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
                         // Static pointer scenes (LSD + hardcoded debug positions) aren't deployed through
                         // the AB pipeline, so no ISS descriptor exists for them. Initialize in State.None so
                         // the resolver gate skips them entirely.
-                        CreateSceneEntity(definition, path, initialISSDescriptor: new ISSDescriptor(IISSDescriptor.State.None, default));
+                        CreateSceneEntity(definition, path, ISSDescriptor.NONE);
                     }
                 }
 

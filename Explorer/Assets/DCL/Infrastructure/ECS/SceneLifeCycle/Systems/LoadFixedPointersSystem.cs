@@ -4,9 +4,11 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.SceneRunner.Scene;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
@@ -67,7 +69,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result.Succeeded)
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, new ISSDescriptor());
                         IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
                         //We are gonna load into the first loaded scene as startup
@@ -107,7 +109,7 @@ namespace ECS.SceneLifeCycle.Systems
                     SceneEntityDefinition definition = definitions[i];
                     fixedScenePointers.SceneResults.Add(definition);
                     var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
-                    CreateSceneEntity(definition, ipfsPath);
+                    CreateSceneEntity(definition, ipfsPath, new ISSDescriptor());
                     IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
 
                     for (var j = 0; j < parcels.Count; j++)

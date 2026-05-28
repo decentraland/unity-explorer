@@ -72,8 +72,11 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
             try
             {
+                // Missing-descriptor is the expected case for non-ISS scenes — suppress the underlying
+                // 403/404 log so it doesn't spam every realm load. The catch below still treats the
+                // failure as "no ISS for this scene."
                 return await webRequestController
-                            .GetAsync(new CommonArguments(url), ct, GetReportData())
+                            .GetAsync(new CommonArguments(url), ct, GetReportData(), suppressErrors: true)
                             .CreateFromJson<ISSDescriptorMetadata>(WRJsonParser.Unity);
             }
             catch (OperationCanceledException) { throw; }

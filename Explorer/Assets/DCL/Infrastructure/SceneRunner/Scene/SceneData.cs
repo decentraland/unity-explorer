@@ -27,7 +27,7 @@ namespace SceneRunner.Scene
         public SceneEntityDefinition SceneEntityDefinition { get; }
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
-        public IISSDescriptor? ISSDescriptor { get; }
+        public IISSDescriptor ISSDescriptor { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
@@ -40,7 +40,7 @@ namespace SceneRunner.Scene
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
             StaticSceneMessages staticSceneMessages,
-            IISSDescriptor? issDescriptor = null)
+            IISSDescriptor issDescriptor)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;

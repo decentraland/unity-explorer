@@ -33,11 +33,6 @@ namespace ECS.StreamableLoading.AssetBundles
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
-            // Eagerly unload Unity's AB tracker now that we've extracted the assets. Leaving the AB
-            // registered triggers "AssetBundle ... can't be loaded because another AssetBundle with the
-            // same files is already loaded" when the same URL is re-fetched (e.g. LOD path then SDK runtime
-            // for the same asset). The loaded Object[] is kept; the underlying file handle is not.
-            // TODO: gate this on isISS-style flag when Bundle-mode ISS is revived — shared ISS bundles
             // are still in use by dynamically-instantiated assets and must NOT be unloaded eagerly.
             UnloadAB();
         }

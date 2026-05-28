@@ -26,21 +26,12 @@ namespace ECS.SceneLifeCycle.Systems
             this.realmData = realmData;
         }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false, ISSDescriptor? initialISSDescriptor = null)
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, ISSDescriptor issDescriptor, bool isPortableExperience = false)
         {
-            // Scene types that structurally cannot have ISS (PX content, static-pointer / LSD scenes,
-            // smart-wearable previews) start with a State.None descriptor so the radius resolver gate
-            // never fires for them. PX defaults to None automatically; non-PX defaults to Uninitialized
-            // and resolves on first LOD/Scene transition. Callers can override with `initialISSDescriptor`.
-            ISSDescriptor descriptor = initialISSDescriptor
-                                       ?? (isPortableExperience
-                                           ? new ISSDescriptor(IISSDescriptor.State.None, default)
-                                           : new ISSDescriptor());
-
             if (IsRoad(definition))
-                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), descriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad());
+                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), issDescriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad());
 
-            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), descriptor);
+            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), issDescriptor);
         }
 
         private bool IsRoad(SceneEntityDefinition definition) =>
@@ -64,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                CreateSceneEntity(definition, ipfsPath);
+                CreateSceneEntity(definition, ipfsPath, new ISSDescriptor());
             }
         }
     }
