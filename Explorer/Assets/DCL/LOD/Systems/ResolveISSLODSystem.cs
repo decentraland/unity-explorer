@@ -63,7 +63,7 @@ namespace DCL.LOD.Systems
             initialSceneStateLOD.InitializeFromDescriptor(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition,
                 gltfCache, assets.Count);
 
-            SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, issDescriptor, fromBundle: false);
+            SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, issDescriptor);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace DCL.LOD.Systems
         ///     a new <see cref="AssetBundlePromise"/> for it. Used by both the bundle and the descriptor paths;
         ///     <paramref name="fromBundle"/> picks the per-asset bundle URL and the asset name to extract.
         /// </summary>
-        private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor, bool fromBundle)
+        private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor)
         {
             AssetBundleManifestVersion? manifest = sceneDefinition.Definition.assetBundleManifestVersion;
 
@@ -92,11 +92,8 @@ namespace DCL.LOD.Systems
                     continue;
                 }
 
-                // Bundle mode: refetch the shared ISS bundle (cached) so ref counting is correct.
                 // Descriptor mode: fetch each asset's own bundle — must include the platform suffix to match the deployed AB filename.
-                string promiseHash = fromBundle
-                    ? GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinition.Definition.id)
-                    : $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
+                string promiseHash = $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
 
                 var intent = GetAssetBundleIntention.FromHash(promiseHash,
                     assetBundleManifestVersion: manifest,
@@ -106,7 +103,7 @@ namespace DCL.LOD.Systems
                 // AssetBundleCache slot as the SDK runtime would. Without it the (Hash, DepsDigest) key diverges
                 // and two parallel LoadAssetBundleSystem flows race for the same physical bundle, which Unity
                 // refuses with "asset bundle already loaded". The digest map is keyed by bare CID.
-                if (!fromBundle && manifest != null && manifest.TryGetDepsDigest(entry.hash, out string digest))
+                if (manifest != null && manifest.TryGetDepsDigest(entry.hash, out string digest))
                     intent.DepsDigest = digest;
 
                 AssetBundlePromise promise = AssetBundlePromise.Create(World, intent, PartitionComponent.TOP_PRIORITY);
