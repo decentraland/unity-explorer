@@ -23,11 +23,40 @@ namespace ECS.StreamableLoading.Common.Components
             /// </summary>
             private readonly bool initialized;
 
+            /// <summary>
+            ///     True when the request reached a terminal successful (or fallback-acceptable) state.
+            ///     False when the request failed or was cancelled; check <see cref="Cancelled"/>
+            ///     to distinguish a transient cancellation from a sticky failure.
+            /// </summary>
+            public readonly bool Succeeded;
+
+            /// <summary>
+            ///     True when the request was cancelled mid-flight (transient state — consumers can
+            ///     clear the slot and retry). False for both genuine successes and sticky failures.
+            /// </summary>
+            public readonly bool Cancelled;
+
             public WithFallback(T asset)
             {
                 Asset = asset;
                 initialized = true;
+                Succeeded = true;
+                Cancelled = false;
             }
+
+            private WithFallback(T asset, bool initialized, bool succeeded, bool cancelled)
+            {
+                Asset = asset;
+                this.initialized = initialized;
+                Succeeded = succeeded;
+                Cancelled = cancelled;
+            }
+
+            public static WithFallback Failed() =>
+                new (default!, initialized: true, succeeded: false, cancelled: false);
+
+            public static WithFallback CancelledResult() =>
+                new (default!, initialized: true, succeeded: false, cancelled: true);
 
             /// <summary>
             ///     Can be uninitialized if structure was created with default constructor
@@ -35,7 +64,7 @@ namespace ECS.StreamableLoading.Common.Components
             public bool IsInitialized => initialized;
 
             public static implicit operator StreamableLoadingResult<T>(WithFallback withFallback) =>
-                withFallback.IsInitialized ? new StreamableLoadingResult<T>(withFallback.Asset) : new StreamableLoadingResult<T>();
+                withFallback.IsInitialized && withFallback.Succeeded ? new StreamableLoadingResult<T>(withFallback.Asset) : new StreamableLoadingResult<T>();
         }
 
         private readonly (ReportData reportData, Exception exception)? exceptionData;
