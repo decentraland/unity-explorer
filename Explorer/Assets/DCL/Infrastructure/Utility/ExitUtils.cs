@@ -7,6 +7,7 @@ using System.Reflection;
 using DCL.Diagnostics;
 using UnityEngine;
 using Utility.Multithreading;
+using RichTypes;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
