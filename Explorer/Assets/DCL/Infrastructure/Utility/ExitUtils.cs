@@ -127,6 +127,10 @@ namespace DCL.Utility
 
             isExiting.Set(true);
 
+#if UNITY_STANDALONE_WIN
+            StartExitStopwatch();
+#endif
+
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
                 foreach (OnQuittingCleanUpCandidate candidate in scope.Value)
@@ -144,6 +148,51 @@ namespace DCL.Utility
 #endif
             ReportHub.LogProductionInfo($"[ExitUtils] Quit call dispatched at {stopwatch.ElapsedMilliseconds}ms");
         }
+
+#if UNITY_STANDALONE_WIN
+        // Expected to be called from main thread only.
+        private static void StartExitStopwatch()
+        {
+            string targetPath = NewTargetPath();
+            string exePath = StopwatchExePath();
+
+            int pid = Process.GetCurrentProcess().Id; // IL2CPP safe
+
+            // --target-pid <pid> -o <file>
+            string[] args = new []
+            {
+                "--target-pid",
+                pid.ToString(),
+                "-o",
+                targetPath 
+            };
+
+            ReportHub.LogProductionInfo($"[ExitUtils] Start measuring native exit delay");
+
+            Result<int> result = Plugins.DclNativeProcesses.DclProcesses.Start(exePath, args);
+            
+            if (result.Success == false)
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils] Cannot start measuring native exit delay: {result.ErrorMessage}");
+            }
+        }
+
+        private static string NewTargetPath()
+        {
+            string dir = UnityEngine.Application.persistentDataPath;
+            long unixTime = System.DateTime.UtcNow.ToUnixTimeSeconds();
+            string name = $"exit_stopwatch_{unixTime}.log";
+            string path = System.IO.Path.Combine(dir, name);
+            return path;
+        }
+
+        private static string StopwatchExePath()
+        {
+            string dir = UnityEngine.Application.streamingAssetsPath;
+            string path = System.IO.Path.Combine(dir, "dcl_exit_stopwatch.exe");
+            return path;
+        }
+#endif
 
         private static class Patch
         {
