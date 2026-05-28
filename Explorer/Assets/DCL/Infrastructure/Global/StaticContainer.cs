@@ -135,7 +135,7 @@ namespace Global
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
         public AssetPreLoadCache AssetPreLoadCache { get; private set; }
-        public IDiskCache<ISSDescriptor> ISSDescriptorDiskCache { get; private set; }
+        public IDiskCache<ISSDescriptorResolution> ISSDescriptorDiskCache { get; private set; }
 
         public void Dispose()
         {
@@ -253,7 +253,7 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
             container.ISSDescriptorDiskCache = new ISSDescriptorDiskCache(
-                new DiskCache<ISSDescriptor, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer()));
+                new DiskCache<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer()));
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

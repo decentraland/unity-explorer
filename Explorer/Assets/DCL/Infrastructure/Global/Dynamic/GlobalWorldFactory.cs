@@ -170,8 +170,8 @@ namespace Global.Dynamic
             // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
             // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
-                new NoCache<ISSDescriptor, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
-                new DiskCacheOptions<ISSDescriptor, GetISSDescriptor>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptor.DiskHashCompute.INSTANCE, "iss"));
+                new NoCache<ISSDescriptorResolution, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
+                new DiskCacheOptions<ISSDescriptorResolution, GetISSDescriptor>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptor.DiskHashCompute.INSTANCE, "iss"));
 
             // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
             // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in

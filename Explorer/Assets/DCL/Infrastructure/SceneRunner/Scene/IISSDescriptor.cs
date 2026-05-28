@@ -24,12 +24,6 @@ namespace DCL.SceneRunner.Scene
 
         void ReleaseBridgeSlot(string hash);
 
-
-        /// <summary>
-        ///     Releases the shared ISS bundle reference (if any) held by the descriptor. No-op when no
-        ///     bundle was attached (Descriptor / no-ISS scenes, or the singleton NONE).
-        /// </summary>
-
         enum State
         {
             /// <summary>

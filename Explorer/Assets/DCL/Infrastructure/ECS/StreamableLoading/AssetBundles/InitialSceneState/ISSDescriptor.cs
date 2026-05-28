@@ -7,28 +7,29 @@ using System.Collections.Generic;
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     The Initial Scene State for a single scene. Attached as its own ECS component on the scene
-    ///     entity (class semantics — same reference for the scene's lifetime, internal state mutates).
-    ///     Built by <see cref="LoadISSDescriptorSystem"/> from the descriptor JSON; held on
+    ///     Per-entity Initial Scene State component for a single scene. Class semantics — the same
+    ///     reference lives on the entity for the scene's lifetime, with internal state mutating in place
+    ///     when the resolver promise completes (see <see cref="MarkResolved"/>). Held on
     ///     <see cref="DCL.SceneRunner.Scene.ISceneData.ISSDescriptor"/> via the <see cref="IISSDescriptor"/>
     ///     interface so the SceneRunner layer doesn't need to reference the ECS asmdef where this class lives.
     ///     <para>
     ///     Lifecycle: constructed in <see cref="IISSDescriptor.State.Uninitialized"/> for scenes that may have
     ///     ISS, or in <see cref="IISSDescriptor.State.None"/> for opt-outs (PX / static-pointer / smart-wearable
-    ///     previews). The resolver mutates state in place via <see cref="MarkResolved"/> so cached references
-    ///     elsewhere (e.g. <c>OrderedDataManaged</c> in the radius system) see updates without re-fetching.
+    ///     previews). The resolver hands a transient <see cref="ISSDescriptorResolution"/> (cacheable pure data)
+    ///     to <see cref="MarkResolved"/>, which mutates the component in place so cached references elsewhere
+    ///     (e.g. <c>OrderedDataManaged</c> in the radius system) see the update without re-fetching.
     ///     </para>
     /// </summary>
     public class ISSDescriptor : IISSDescriptor
     {
         /// <summary>
-        ///     Shared sentinel used by the resolver as the result for "this scene has no ISS." Safe to share
-        ///     because <see cref="IISSDescriptor.State.None"/> descriptors have no per-scene mutable state
-        ///     (bridge slots, asset bundle, etc. are all short-circuited). Per-scene component instances on
-        ///     the entity should NOT be this singleton — they're constructed fresh so MarkResolved can mutate
+        ///     Shared sentinel used by opt-out paths (PX / static-pointer / smart-wearable preview) so they
+        ///     don't have to construct a fresh descriptor just to express "no ISS." Safe to share because
+        ///     <see cref="IISSDescriptor.State.None"/> descriptors have no per-scene mutable state. Scenes
+        ///     that may have ISS construct their own fresh instance so <see cref="MarkResolved"/> can mutate
         ///     them in place without affecting other scenes.
         /// </summary>
-        public static readonly ISSDescriptor NONE = new (IISSDescriptor.State.None, default);
+        public static readonly ISSDescriptor NONE = new (ISSDescriptorResolution.NONE);
 
         public IISSDescriptor.State CurrentState { get; private set; }
         public IReadOnlyList<ISSDescriptorAsset> Assets { get; private set; }
@@ -40,14 +41,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private readonly Dictionary<string, int> bridgedCount = new ();
 
         /// <summary>Constructs a fresh descriptor in <see cref="IISSDescriptor.State.Uninitialized"/>.</summary>
-        public ISSDescriptor() : this(IISSDescriptor.State.Uninitialized, default) { }
+        public ISSDescriptor() : this(new ISSDescriptorResolution(IISSDescriptor.State.Uninitialized, null)) { }
 
-        public ISSDescriptor(IISSDescriptor.State state, ISSDescriptorMetadata metadata)
+        public ISSDescriptor(ISSDescriptorResolution resolution)
         {
-            CurrentState = state;
-            // JsonUtility leaves the list null when the JSON field is missing — fall back to empty
-            // so consumers can iterate Assets without a null guard.
-            Assets = metadata.assets ?? new List<ISSDescriptorAsset>();
+            CurrentState = resolution.State;
+            // JsonUtility / opt-out construction leave the list null — fall back to empty so consumers
+            // can iterate Assets without a null guard.
+            Assets = resolution.Assets ?? Array.Empty<ISSDescriptorAsset>();
             hashCapacity = BuildHashCapacity(Assets);
         }
 
@@ -57,10 +58,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         ///     update without a refetch. Called by <c>ResolveISSDescriptorSystem</c> when the resolver promise
         ///     completes.
         /// </summary>
-        public void MarkResolved(IISSDescriptor.State state, ISSDescriptorMetadata metadata)
+        public void MarkResolved(ISSDescriptorResolution resolution)
         {
-            CurrentState = state;
-            Assets = metadata.assets ?? new List<ISSDescriptorAsset>();
+            CurrentState = resolution.State;
+            Assets = resolution.Assets ?? Array.Empty<ISSDescriptorAsset>();
             hashCapacity = BuildHashCapacity(Assets);
         }
 

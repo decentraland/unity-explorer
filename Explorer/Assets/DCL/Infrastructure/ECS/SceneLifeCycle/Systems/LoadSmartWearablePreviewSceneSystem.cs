@@ -105,7 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Smart-wearable preview content is creator-tooling, never deployed through the AB pipeline — no ISS
             // descriptor exists for it. Attach a State.None descriptor so the resolver gate skips it entirely.
             SceneDefinitionComponent definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath);
-            var issDescriptor = new ISSDescriptor(IISSDescriptor.State.None, default);
+            var issDescriptor = ISSDescriptor.NONE;
 
             await UniTask.SwitchToMainThread();
 

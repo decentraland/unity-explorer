@@ -10,19 +10,21 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     Serializes a resolved <see cref="ISSDescriptor"/> as a single JSON document carrying both the
-    ///     resolution state (Bundle/Descriptor/None) and the descriptor metadata, so the cache files can be
-    ///     opened in a text editor for debugging.
+    ///     Serializes a resolved <see cref="ISSDescriptorResolution"/> as a single JSON document carrying
+    ///     both the resolution state (Bundle/Descriptor/None) and the descriptor metadata, so the cache
+    ///     files can be opened in a text editor for debugging.
     /// </summary>
-    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptor, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
+    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
     {
-        public SerializeMemoryIterator<State> Serialize(ISSDescriptor data)
+        public SerializeMemoryIterator<State> Serialize(ISSDescriptorResolution data)
         {
             // Copy into a List<> because that's what JsonUtility serializes.
-            var assets = new List<ISSDescriptorAsset>(data.Assets.Count);
-            for (var i = 0; i < data.Assets.Count; i++) assets.Add(data.Assets[i]);
+            IReadOnlyList<ISSDescriptorAsset>? source = data.Assets;
+            var assets = new List<ISSDescriptorAsset>(source?.Count ?? 0);
+            if (source != null)
+                for (var i = 0; i < source.Count; i++) assets.Add(source[i]);
 
-            string json = JsonUtility.ToJson(new DiskRecord { state = data.CurrentState, assets = assets });
+            string json = JsonUtility.ToJson(new DiskRecord { state = data.State, assets = assets });
             byte[] payload = Encoding.UTF8.GetBytes(json);
 
             var state = new State(payload);
@@ -33,14 +35,14 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 static (source, index, bufferLength) => SerializeMemoryIterator.CanReadNextData(index, source.Bytes.Length, bufferLength));
         }
 
-        public UniTask<ISSDescriptor> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<ISSDescriptorResolution> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             try
             {
                 string json = Encoding.UTF8.GetString(data.Memory.Span);
                 DiskRecord record = JsonUtility.FromJson<DiskRecord>(json);
 
-                return UniTask.FromResult(new ISSDescriptor(record.state, new ISSDescriptorMetadata { assets = record.assets }));
+                return UniTask.FromResult(new ISSDescriptorResolution(record.state, record.assets));
             }
             finally
             {

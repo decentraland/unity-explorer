@@ -76,7 +76,7 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(), new ISSDescriptor(IISSDescriptor.State.None, default));
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(), ISSDescriptor.NONE);
 
             //Act
             system.Update(0);

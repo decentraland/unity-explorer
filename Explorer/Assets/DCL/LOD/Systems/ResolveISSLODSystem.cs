@@ -28,11 +28,11 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class ResolveISSLODSystem : BaseUnityLoopSystem
     {
-        private IGltfContainerAssetsCache gltfCache;
+        private readonly IGltfContainerAssetsCache gltfCache;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public ResolveISSLODSystem(World world, IGltfContainerAssetsCache gltfCache, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        internal ResolveISSLODSystem(World world, IGltfContainerAssetsCache gltfCache, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.gltfCache = gltfCache;
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
@@ -68,8 +68,7 @@ namespace DCL.LOD.Systems
 
         /// <summary>
         ///     For each entry in the descriptor either positions a cached asset immediately or spawns
-        ///     a new <see cref="AssetBundlePromise"/> for it. Used by both the bundle and the descriptor paths;
-        ///     <paramref name="fromBundle"/> picks the per-asset bundle URL and the asset name to extract.
+        ///     a new <see cref="AssetBundlePromise"/> for it.
         /// </summary>
         private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor)
         {
@@ -172,14 +171,6 @@ namespace DCL.LOD.Systems
             // matches what the SDK runtime would look up — that's what allows bridging round-trips between
             // LOD and the real scene without spawning a second copy of the same asset.
             initialSceneStateLOD.AddResolvedAsset(cacheKey, asset);
-        }
-
-        private static void MarkAssetBundleAsFailed(ref SceneLODInfo sceneLODInfo, string message)
-        {
-            ReportHub.Log(ReportCategory.LOD, message);
-            sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.FAILED;
-            //We need to re-evaluate the LOD to see if we can get the old method
-            sceneLODInfo.CurrentLODLevelPromise = byte.MaxValue;
         }
 
     }

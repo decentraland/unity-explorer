@@ -33,33 +33,17 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumePromise(in Entity entity, ISSDescriptor descriptor, ref AssetPromise<ISSDescriptor, GetISSDescriptor> promise)
+        private void ConsumePromise(in Entity entity, ISSDescriptor descriptor, ref AssetPromise<ISSDescriptorResolution, GetISSDescriptor> promise)
         {
-            if (!promise.TryConsume(World, out StreamableLoadingResult<ISSDescriptor> result))
+            if (!promise.TryConsume(World, out StreamableLoadingResult<ISSDescriptorResolution> result))
                 return;
 
-            if (result is { Succeeded: true, Asset: { } resolved })
-            {
-                // Copy the resolved data into the entity's stable descriptor instance so cached references
-                // pick up the new state. We can't take Assets/CurrentState directly off `resolved` because
-                // its metadata is internal; mirror the public-facing fields instead.
-                descriptor.MarkResolved(resolved.CurrentState, new ISSDescriptorMetadata { assets = ResolvedAssetsList(resolved) });
-            }
+            if (result.Succeeded && result.Asset is { } resolved)
+                descriptor.MarkResolved(resolved);
             else
-            {
-                descriptor.MarkResolved(IISSDescriptor.State.None, default);
-            }
+                descriptor.MarkResolved(ISSDescriptorResolution.NONE);
 
-            World.Remove<AssetPromise<ISSDescriptor, GetISSDescriptor>>(entity);
-        }
-
-        private static System.Collections.Generic.List<ISSDescriptorAsset> ResolvedAssetsList(ISSDescriptor resolved)
-        {
-            // ISSDescriptor.Assets is IReadOnlyList; copy into a concrete List<> for the metadata struct.
-            var list = new System.Collections.Generic.List<ISSDescriptorAsset>(resolved.Assets.Count);
-            for (var i = 0; i < resolved.Assets.Count; i++)
-                list.Add(resolved.Assets[i]);
-            return list;
+            World.Remove<AssetPromise<ISSDescriptorResolution, GetISSDescriptor>>(entity);
         }
     }
 }
