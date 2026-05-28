@@ -41,40 +41,8 @@ namespace DCL.LOD.Systems
 
         protected override void Update(float t)
         {
-            ResolveInitialSceneStateLODBundleQuery(World);
             ResolveInitialSceneStateLODDescriptorQuery(World);
             ConvertFromAssetBundleQuery(World);
-        }
-
-        [Query]
-        private void ResolveInitialSceneStateLODBundle(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor)
-        {
-            InitialSceneStateLOD initialSceneStateLOD = sceneLODInfo.InitialSceneStateLOD;
-
-            if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
-
-            // Only the bundle-mode path is owned by this query.
-            if (issDescriptor.CurrentState != IISSDescriptor.State.Bundle) return;
-
-            // Skip if promise hasn't been created yet or is already consumed
-            if (initialSceneStateLOD.AssetBundlePromise == AssetBundlePromise.NULL || initialSceneStateLOD.AssetBundlePromise.IsConsumed) return;
-
-            if (!initialSceneStateLOD.AssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> Result))
-                return;
-
-            if (!Result.Succeeded)
-            {
-                MarkAssetBundleAsFailed(ref sceneLODInfo,
-                    $"Failed to get ISS LOD for  {sceneLODInfo.id}, will try to do the old LOD");
-                return;
-            }
-
-            IReadOnlyList<ISSDescriptorAsset> assets = issDescriptor.Assets;
-
-            initialSceneStateLOD.Initialize(sceneLODInfo.id, sceneDefinition.SceneGeometry.BaseParcelPosition, Result.Asset!,
-                gltfCache, assets.Count);
-
-            SpawnAssetPromises(initialSceneStateLOD, assets, sceneDefinition, issDescriptor, fromBundle: true);
         }
 
         [Query]

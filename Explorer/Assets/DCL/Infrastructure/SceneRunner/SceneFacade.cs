@@ -118,8 +118,6 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            // Release the shared ISS bundle (if any). Null when no ISS was active for this scene.
-            SceneData.ISSDescriptor?.Dereference();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
