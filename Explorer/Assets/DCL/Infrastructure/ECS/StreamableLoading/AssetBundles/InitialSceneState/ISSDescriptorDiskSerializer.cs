@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.SceneRunner.Scene;
 using ECS.StreamableLoading.Cache.Disk;
-using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -10,9 +9,18 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     Serializes a resolved <see cref="ISSDescriptorResolution"/> as a single JSON document carrying
-    ///     both the resolution state (Bundle/Descriptor/None) and the descriptor metadata, so the cache
-    ///     files can be opened in a text editor for debugging.
+    ///     Persists only the descriptor's asset list — the resolution mode (Bundle vs Descriptor) is a live
+    ///     decision (HEAD probe + manifest gate) and must not be cached: a scene that resolved to Descriptor
+    ///     today could legitimately resolve to Bundle tomorrow once the AB converter publishes one, and a
+    ///     cached State field would freeze the wrong answer forever. So we cache the *expensive* part (the
+    ///     JSON contents) and re-derive the mode on every load. On cache hit we hand back Descriptor mode —
+    ///     that's the only mode the loader currently emits; when Bundle mode is re-enabled, the loader will
+    ///     short-circuit the JSON fetch on a hit and still run the HEAD probe before returning.
+    ///     <para>
+    ///     The on-disk shape is intentionally identical to the server's descriptor JSON
+    ///     (<see cref="ISSDescriptorMetadata"/>), so cache files are interchangeable with raw server payloads
+    ///     and open in a text editor for debugging.
+    ///     </para>
     /// </summary>
     public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
     {
@@ -24,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             if (source != null)
                 for (var i = 0; i < source.Count; i++) assets.Add(source[i]);
 
-            string json = JsonUtility.ToJson(new DiskRecord { state = data.State, assets = assets });
+            string json = JsonUtility.ToJson(new ISSDescriptorMetadata { assets = assets });
             byte[] payload = Encoding.UTF8.GetBytes(json);
 
             var state = new State(payload);
@@ -40,9 +48,12 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             try
             {
                 string json = Encoding.UTF8.GetString(data.Memory.Span);
-                DiskRecord record = JsonUtility.FromJson<DiskRecord>(json);
+                ISSDescriptorMetadata metadata = JsonUtility.FromJson<ISSDescriptorMetadata>(json);
 
-                return UniTask.FromResult(new ISSDescriptorResolution(record.state, record.assets));
+                // Cache hit means "this scene's descriptor JSON existed at some point" — Descriptor is the
+                // only mode the loader currently emits. When Bundle mode is re-enabled, replace this with a
+                // HEAD probe (and bump GetISSDescriptor.DiskHashCompute.ITERATION_NUMBER to be safe).
+                return UniTask.FromResult(new ISSDescriptorResolution(IISSDescriptor.State.Descriptor, metadata.assets));
             }
             finally
             {
@@ -58,17 +69,6 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             {
                 Bytes = bytes;
             }
-        }
-
-        /// <summary>
-        ///     Wire format on disk. Distinct from <see cref="ISSDescriptorMetadata"/> (the server-side JSON
-        ///     shape) because the resolution state isn't in the server payload — we compute it from a HEAD probe.
-        /// </summary>
-        [Serializable]
-        private struct DiskRecord
-        {
-            public IISSDescriptor.State state;
-            public List<ISSDescriptorAsset> assets;
         }
     }
 }
