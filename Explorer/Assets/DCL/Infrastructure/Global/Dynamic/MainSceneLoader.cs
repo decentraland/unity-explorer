@@ -96,6 +96,8 @@ namespace Global.Dynamic
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
+        private bool canShutdown;
+
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
@@ -103,6 +105,19 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            Shutdown();
+        }
+
+        private void Shutdown()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                return;
+
+            if (canShutdown == false)
+                return;
+
+            canShutdown = false;
+
             DisableAllSelectableTransitions();
 
             if (dynamicWorldContainer != null)
@@ -154,6 +169,9 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            canShutdown = true;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters

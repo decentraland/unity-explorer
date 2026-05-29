@@ -117,6 +117,12 @@ namespace DCL.Utility
 
         public static void Exit()
         {
+            if (Cysharp.Threading.Tasks.PlayerLoopHelper.IsMainThread == false)
+            {
+                ReportHub.LogProductionInfo("[ExitUtils] Exit() cannot be called from not a main thread");
+                return;
+            }
+
             Stopwatch stopwatch = Stopwatch.StartNew();
             ReportHub.LogProductionInfo($"[ExitUtils] Exit requested at {DateTime.UtcNow:O}");
 
@@ -142,6 +148,8 @@ namespace DCL.Utility
 
             // Reflection may drop the values. resubscribe to be sure. 
             Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
+
+            ReportHub.LogProductionInfo($"[ExitUtils] Begin Quit call {stopwatch.ElapsedMilliseconds}ms");
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
