@@ -86,8 +86,10 @@ namespace DCL.LOD.Systems
 
                 if (gltfCache.TryGet(cacheKey, out var asset))
                 {
-                    // We just consumed one bridged copy — free up its slot so a future SDK cleanup of the same hash can re-bridge.
-                    issDescriptor.ReleaseBridgeSlot(entry.hash);
+                    // Best-effort release: if this hit came from a prior SDK→LOD bridge handoff there's
+                    // a slot to free; on the first-ever LOD load of a scene the cache may have the asset
+                    // from an unrelated context with no reservation, in which case this is a no-op.
+                    issDescriptor.TryReleaseBridgeSlot(entry.hash);
                     PositionAsset(initialSceneStateLOD, entry, cacheKey, asset, initialSceneStateLOD.ParentContainer.transform);
                     continue;
                 }
