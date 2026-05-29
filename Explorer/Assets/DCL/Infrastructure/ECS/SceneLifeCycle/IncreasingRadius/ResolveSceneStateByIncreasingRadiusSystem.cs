@@ -329,11 +329,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // promise, mutates the same ISSDescriptor instance in place via MarkResolved, and removes
             // the promise component. Because issDescriptor is a class reference cached in
             // OrderedDataManaged, the gate sees the resolved state on the next tick without a refetch.
-            if (issDescriptor.CurrentState == IISSDescriptor.State.Uninitialized)
+            if (issDescriptor.CurrentState == ISSDescriptorState.Uninitialized)
             {
-                if (!World.Has<AssetPromise<ISSDescriptorResolution, GetISSDescriptor>>(entity))
-                    World.Add(entity, AssetPromise<ISSDescriptorResolution, GetISSDescriptor>.Create(
-                        World, GetISSDescriptor.For(sceneDefinitionComponent.Definition), partitionComponent));
+                if (!World.Has<AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention>>(entity))
+                    World.Add(entity, AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention>.Create(
+                        World, GetISSDescriptorIntention.For(sceneDefinitionComponent.Definition), partitionComponent));
                 return;
             }
 

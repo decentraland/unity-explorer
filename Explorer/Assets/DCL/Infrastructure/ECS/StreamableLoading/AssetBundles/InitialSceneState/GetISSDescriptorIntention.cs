@@ -1,4 +1,5 @@
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -11,8 +12,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     ///     streamable cache dedupes concurrent requests across the LOD path and the SDK runtime path.
     ///     The v49 manifest gate lives inside <see cref="LoadISSDescriptorSystem"/> — pre-v49 scenes get
     ///     a cached <see cref="ISSDescriptor.NONE"/> result without any HTTP work.
+    ///     For more info regarding versioning, please take a look at the Asset bundle converter
+    ///     project (https://github.com/decentraland/asset-bundle-converter)
     /// </summary>
-    public struct GetISSDescriptor : ILoadingIntention, IEquatable<GetISSDescriptor>
+    public struct GetISSDescriptorIntention : ILoadingIntention, IEquatable<GetISSDescriptorIntention>
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
@@ -20,7 +23,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         public readonly string SceneId;
         public readonly AssetBundleManifestVersion ManifestVersion;
 
-        public GetISSDescriptor(string sceneId, AssetBundleManifestVersion manifestVersion)
+        public GetISSDescriptorIntention(string sceneId, AssetBundleManifestVersion manifestVersion)
         {
             SceneId = sceneId;
             ManifestVersion = manifestVersion;
@@ -31,22 +34,22 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         // Manifest is required: callers reach this only after the scene definition (and therefore its manifest)
         // has been loaded. A missing manifest at this point means the scene's load chain has already failed
         // upstream — surfacing it as a null-ref here is the right behavior.
-        public static GetISSDescriptor For(SceneEntityDefinition definition) =>
+        public static GetISSDescriptorIntention For(SceneEntityDefinition definition) =>
             new (definition.id, definition.assetBundleManifestVersion!);
 
-        public bool Equals(GetISSDescriptor other) =>
+        public bool Equals(GetISSDescriptorIntention other) =>
             SceneId == other.SceneId;
 
         public override bool Equals(object obj) =>
-            obj is GetISSDescriptor other && Equals(other);
+            obj is GetISSDescriptorIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            SceneId?.GetHashCode() ?? 0;
+            SceneId.GetHashCode();
 
         public override string ToString() =>
             $"Get ISS Descriptor: {SceneId}";
 
-        public class DiskHashCompute : AbstractDiskHashCompute<GetISSDescriptor>
+        public class DiskHashCompute : AbstractDiskHashCompute<GetISSDescriptorIntention>
         {
             // Bump if the on-disk format changes incompatibly. v2: switched from "state byte + raw JSON"
             // to a single JSON document with state field, so files open in text editors.
@@ -56,7 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
             private DiskHashCompute() { }
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, in GetISSDescriptor asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetISSDescriptorIntention asset)
             {
                 // Entity hash uniquely identifies the deploy — when the scene re-deploys, sceneId changes
                 // and the old cache entry becomes inert (LRU evicts it). No need to mix in the manifest version.

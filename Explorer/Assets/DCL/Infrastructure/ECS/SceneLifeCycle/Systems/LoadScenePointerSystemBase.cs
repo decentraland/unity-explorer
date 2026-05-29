@@ -55,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                CreateSceneEntity(definition, ipfsPath, new ISSDescriptor());
+                CreateSceneEntity(definition, ipfsPath, ISSDescriptor.CreateUninitialized());
             }
         }
     }

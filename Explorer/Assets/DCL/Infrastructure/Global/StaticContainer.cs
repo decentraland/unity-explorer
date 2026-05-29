@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -252,8 +253,7 @@ namespace Global
             var textureDiskCache = new DiskCache<TextureData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode, container.ProfilesContainer.Repository);
 
-            container.ISSDescriptorDiskCache = new ISSDescriptorDiskCache(
-                new DiskCache<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer()));
+            container.ISSDescriptorDiskCache = new DiskCache<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>(diskCache, new ISSDescriptorDiskSerializer());
 
             diagnosticsContainer.AddSentryScopeConfigurator(scope =>
             {

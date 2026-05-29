@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
@@ -170,8 +171,8 @@ namespace Global.Dynamic
             // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
             // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
-                new NoCache<ISSDescriptorResolution, GetISSDescriptor>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
-                new DiskCacheOptions<ISSDescriptorResolution, GetISSDescriptor>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptor.DiskHashCompute.INSTANCE, "iss"));
+                new NoCache<ISSDescriptorResolution, GetISSDescriptorIntention>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
+                new DiskCacheOptions<ISSDescriptorResolution, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
 
             // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
             // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in

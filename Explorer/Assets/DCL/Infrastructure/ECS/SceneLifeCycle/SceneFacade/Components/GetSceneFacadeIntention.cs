@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;

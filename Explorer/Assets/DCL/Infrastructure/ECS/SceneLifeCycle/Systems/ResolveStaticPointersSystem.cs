@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;

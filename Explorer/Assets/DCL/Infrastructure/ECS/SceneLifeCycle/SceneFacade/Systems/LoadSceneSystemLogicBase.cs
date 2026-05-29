@@ -42,8 +42,7 @@ namespace ECS.SceneLifeCycle.Systems
             await OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             await UniTask.SwitchToMainThread(ct);
 
-            UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
-            ReadOnlyMemory<byte> mainCrdt = await loadMainCrdt;
+            ReadOnlyMemory<byte> mainCrdt = await LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;

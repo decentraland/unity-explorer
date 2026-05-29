@@ -27,9 +27,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly IISSDescriptor issDescriptor;
+        private readonly ISSDescriptor issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, IISSDescriptor issDescriptor) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor issDescriptor) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;

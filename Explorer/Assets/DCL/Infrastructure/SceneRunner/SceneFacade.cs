@@ -84,10 +84,6 @@ namespace SceneRunner
 #endif
             DisposeInternal();
 
-            // TODO: DisposeAsync dereferences SceneData.ISSDescriptor here; the sync path skips it.
-            // If this method is ever exercised on a scene that had ISS, the descriptor ref leaks.
-            // Confirm whether sync Dispose is ever hit in prod and unify if so.
-
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 

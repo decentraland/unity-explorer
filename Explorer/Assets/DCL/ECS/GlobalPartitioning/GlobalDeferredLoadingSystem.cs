@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes;
@@ -43,7 +44,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
-                CreateQuery<GetISSDescriptor, ISSDescriptorResolution>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorResolution>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetTrimmedWearableByParamIntention, IWearable[]>(),
@@ -62,7 +63,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
-                CreateQuery<GetISSDescriptor, ISSDescriptorResolution>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorResolution>(),
             };
         }
 

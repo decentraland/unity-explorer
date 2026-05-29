@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using DCL.SceneRunner.Scene;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;

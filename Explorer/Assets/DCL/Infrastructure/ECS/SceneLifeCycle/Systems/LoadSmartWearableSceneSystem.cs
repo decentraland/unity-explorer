@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.SceneRunner.Scene;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;

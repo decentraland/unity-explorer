@@ -53,7 +53,7 @@ namespace DCL.LOD.Systems
             if (initialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.PROCESSING) return;
 
             // Only the descriptor-mode path is owned by this query.
-            if (issDescriptor.CurrentState != IISSDescriptor.State.Descriptor) return;
+            if (issDescriptor.CurrentState != ISSDescriptorState.Descriptor) return;
 
             // First-time entry: nothing to do once promises have been spawned.
             if (initialSceneStateLOD.ParentContainer != null) return;

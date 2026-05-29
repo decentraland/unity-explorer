@@ -69,7 +69,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result.Succeeded)
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, new ISSDescriptor());
+                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, ISSDescriptor.CreateUninitialized());
                         IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
                         //We are gonna load into the first loaded scene as startup
@@ -109,7 +109,7 @@ namespace ECS.SceneLifeCycle.Systems
                     SceneEntityDefinition definition = definitions[i];
                     fixedScenePointers.SceneResults.Add(definition);
                     var ipfsPath = new IpfsPath(definition.id, URLDomain.FromString(urlsSource.Url(DecentralandUrl.WorldContentServer)));
-                    CreateSceneEntity(definition, ipfsPath, new ISSDescriptor());
+                    CreateSceneEntity(definition, ipfsPath, ISSDescriptor.CreateUninitialized());
                     IReadOnlyList<Vector2Int> parcels = definition.metadata.scene.DecodedParcels;
 
                     for (var j = 0; j < parcels.Count; j++)

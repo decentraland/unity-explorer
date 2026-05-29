@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 // Cache hit means "this scene's descriptor JSON existed at some point" — Descriptor is the
                 // only mode the loader currently emits. When Bundle mode is re-enabled, replace this with a
                 // HEAD probe (and bump GetISSDescriptor.DiskHashCompute.ITERATION_NUMBER to be safe).
-                return UniTask.FromResult(new ISSDescriptorResolution(IISSDescriptor.State.Descriptor, metadata.assets));
+                return UniTask.FromResult(new ISSDescriptorResolution(ISSDescriptorState.Descriptor, metadata.assets));
             }
             finally
             {

@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
+using DCL.SceneRunner.Scene;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;

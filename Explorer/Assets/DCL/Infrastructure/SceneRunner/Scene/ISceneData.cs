@@ -18,11 +18,9 @@ namespace SceneRunner.Scene
         /// <summary>
         ///     The resolved Initial Scene State descriptor for this scene, or null when no ISS is in play
         ///     (pre-v49 manifest, descriptor JSON missing, or wearable / portable-experience scenes that
-        ///     don't go through the ISS loader). The concrete type lives in the ECS layer; consumers here
-        ///     use the <see cref="IISSDescriptor"/> interface to read state, run bridge bookkeeping, and
-        ///     release the shared bundle on scene unload.
+        ///     don't go through the ISS loader).
         /// </summary>
-        IISSDescriptor? ISSDescriptor { get; }
+        ISSDescriptor? ISSDescriptor { get; }
 
         SceneShortInfo SceneShortInfo { get; }
 
@@ -119,7 +117,7 @@ namespace SceneRunner.Scene
                 set { }
             }
 
-            public IISSDescriptor? ISSDescriptor => null;
+            public ISSDescriptor? ISSDescriptor => null;
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 

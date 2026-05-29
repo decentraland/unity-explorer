@@ -20,8 +20,10 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
     ///     Resolves the <see cref="ISSDescriptorResolution"/> for a scene: fetches the static scene descriptor
-    ///     JSON from the LOD manifest bucket and always returns Descriptor mode. Returns
-    ///     <see cref="ISSDescriptorResolution.NONE"/> when no descriptor JSON exists for the scene.
+    ///     JSON from the LOD manifest bucket and always returns Descriptor mode. Scenes without ISS data
+    ///     (pre-v49 manifest or missing descriptor JSON) yield a *failed* result — that way the framework
+    ///     never persists the "no ISS" outcome to disk (PutAsync is gated on success), and the consumer
+    ///     in <c>ResolveISSDescriptorSystem</c> falls through to <see cref="ISSDescriptorResolution.NONE"/>.
     ///     <para>
     ///     The HEAD probe that chooses between Bundle and Descriptor modes is temporarily disabled — see
     ///     <see cref="IsBundleReachableAsync"/>. A later PR will re-enable Bundle mode.
@@ -29,9 +31,9 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     /// </summary>
     [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
     [LogCategory(ReportCategory.SCENE_LOADING)]
-    public partial class LoadISSDescriptorSystem : LoadSystemBase<ISSDescriptorResolution, GetISSDescriptor>
+    public partial class LoadISSDescriptorSystem : LoadSystemBase<ISSDescriptorResolution, GetISSDescriptorIntention>
     {
-        // Hardcoded for this iteration — wire to DI once the dev/prod bucket split lands.
+        // TODO (Juani): Hardcoded for this iteration — wire to DI once the dev/prod bucket split lands.
         private static readonly URLDomain DESCRIPTOR_BASE_URL =
             URLDomain.FromString("https://lod-unity-bucket-dev-0871c25.s3.us-east-1.amazonaws.com/lods-unity/manifests/");
 
@@ -39,22 +41,24 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         private readonly URLDomain assetBundleURL;
 
         internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController, URLDomain assetBundleURL,
-            IStreamableCache<ISSDescriptorResolution, GetISSDescriptor> cache, DiskCacheOptions<ISSDescriptorResolution, GetISSDescriptor>? diskCacheOptions = null)
+            IStreamableCache<ISSDescriptorResolution, GetISSDescriptorIntention> cache, DiskCacheOptions<ISSDescriptorResolution, GetISSDescriptorIntention>? diskCacheOptions = null)
             : base(world, cache, diskCacheOptions)
         {
             this.webRequestController = webRequestController;
             this.assetBundleURL = assetBundleURL;
         }
 
-        protected override async UniTask<StreamableLoadingResult<ISSDescriptorResolution>> FlowInternalAsync(GetISSDescriptor intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<ISSDescriptorResolution>> FlowInternalAsync(GetISSDescriptorIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            // Skip network roundtrips entirely for AB versions that pre-date ISS support.
+            // Skip network roundtrips entirely for AB versions that pre-date ISS support. Returning a
+            // failed result (plain Exception, not StreamableLoadingException) keeps the disk cache clean
+            // — LoadSystemBase only persists on success — and doesn't spam logs from the result ctor.
             if (!intention.ManifestVersion.SupportsISS())
-                return new StreamableLoadingResult<ISSDescriptorResolution>(ISSDescriptorResolution.NONE);
+                return new StreamableLoadingResult<ISSDescriptorResolution>(GetReportData(), new Exception("ISS unsupported for this manifest version"));
 
             ISSDescriptorMetadata? metadata = await TryLoadDescriptorAsync(intention.SceneId, ct);
             if (!metadata.HasValue)
-                return new StreamableLoadingResult<ISSDescriptorResolution>(ISSDescriptorResolution.NONE);
+                return new StreamableLoadingResult<ISSDescriptorResolution>(GetReportData(), new Exception("No ISS descriptor JSON for this scene"));
 
             // Bundle-mode HEAD probe is temporarily disabled — every ISS-capable scene goes through
             // Descriptor mode for now. Kept the IsBundleReachableAsync helper below so re-enabling is
@@ -62,7 +66,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             // bool bundleReachable = await IsBundleReachableAsync(intention.SceneId, intention.ManifestVersion!, ct);
 
             return new StreamableLoadingResult<ISSDescriptorResolution>(
-                new ISSDescriptorResolution(IISSDescriptor.State.Descriptor, metadata.Value.assets));
+                new ISSDescriptorResolution(ISSDescriptorState.Descriptor, metadata.Value.assets));
         }
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
@@ -86,7 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
             }
         }
 
-        // Currently unused: FlowInternalAsync forces Descriptor mode. Kept for the follow-up PR that
+        // TODO (Juani): Currently unused: FlowInternalAsync forces Descriptor mode. Kept for the follow-up PR that
         // re-enables Bundle-mode selection.
         private async UniTask<bool> IsBundleReachableAsync(string sceneId, AssetBundleManifestVersion manifestVersion, CancellationToken ct)
         {
