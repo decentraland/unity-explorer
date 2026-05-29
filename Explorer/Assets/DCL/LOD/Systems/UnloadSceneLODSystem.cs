@@ -125,7 +125,8 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void AbortISSHelperEntities(in Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
+        [All(typeof(ISSAssetCreationHelper))]
+        private void AbortISSHelperEntities(in Entity entity, ref AssetBundlePromise assetBundleResult)
         {
             assetBundleResult.ForgetLoading(World);
             World.Destroy(entity);

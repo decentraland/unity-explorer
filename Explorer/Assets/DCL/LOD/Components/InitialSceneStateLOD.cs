@@ -46,6 +46,14 @@ namespace DCL.LOD.Components
             {
                 Generation++;
                 Clear();
+
+                // Destroy the container too, otherwise ResolveISSLODSystem's "promises already spawned"
+                // guard (ParentContainer != null) misreads a stale container from this aborted run as
+                // "current run is already in progress" and never re-spawns promises on re-entry —
+                // leaving AllAssetsInstantiated() permanently false (Assets.Count == 0 ≠ Total).
+                // Unity's overloaded == treats a destroyed GameObject as null, so EnsureParentContainer
+                // and the guard both behave correctly after the destroy.
+                UnityObjectUtils.SafeDestroy(ParentContainer);
             }
 
             CurrentState = State.UNINITIALIZED;
