@@ -32,8 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         }
 
         // Manifest is required: callers reach this only after the scene definition (and therefore its manifest)
-        // has been loaded. A missing manifest at this point means the scene's load chain has already failed
-        // upstream — surfacing it as a null-ref here is the right behavior.
+        // has been loaded. A valid manifest should be available at this point
         public static GetISSDescriptorIntention For(SceneEntityDefinition definition) =>
             new (definition.id, definition.assetBundleManifestVersion!);
 

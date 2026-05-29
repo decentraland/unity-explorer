@@ -137,7 +137,7 @@ public struct AssetInfo
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = $"AB:{Asset?.name}_{version}_{source}_NoISS";
+        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
     }
 }
 
