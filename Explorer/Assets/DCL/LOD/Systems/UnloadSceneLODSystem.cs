@@ -20,6 +20,8 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -57,6 +59,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public void FinalizeComponents(in Query query)
         {
+            AbortISSHelperEntitiesQuery(World);
             AbortSucceededLODPromisesQuery(World);
             DestroySceneLODQuery(World);
         }
@@ -119,6 +122,13 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
                 defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+        }
+
+        [Query]
+        private void AbortISSHelperEntities(in Entity entity, ISSAssetCreationHelper creationHelper, ref AssetBundlePromise assetBundleResult)
+        {
+            assetBundleResult.ForgetLoading(World);
+            World.Destroy(entity);
         }
     }
 }

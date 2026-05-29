@@ -12,8 +12,8 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using DCL.SceneRunner.Scene;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -25,6 +25,7 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateBefore(typeof(InstantiateSceneLODInfoSystem))]
+    [UpdateBefore(typeof(UnloadSceneLODSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class ResolveISSLODSystem : BaseUnityLoopSystem
     {

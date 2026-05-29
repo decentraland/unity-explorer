@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
         // Manifest is required: callers reach this only after the scene definition (and therefore its manifest)
         // has been loaded. A valid manifest should be available at this point
         public static GetISSDescriptorIntention For(SceneEntityDefinition definition) =>
-            new (definition.id, definition.assetBundleManifestVersion!);
+            new (definition.id, definition.assetBundleManifestVersion ?? AssetBundleManifestVersion.CreateFailed());
 
         public bool Equals(GetISSDescriptorIntention other) =>
             SceneId == other.SceneId;
