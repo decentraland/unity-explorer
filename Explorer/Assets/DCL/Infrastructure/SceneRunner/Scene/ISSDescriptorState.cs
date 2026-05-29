@@ -5,7 +5,7 @@ namespace DCL.SceneRunner.Scene
 {
     /// <summary>
     ///     Resolution outcome for a scene's Initial Scene State. Carried on
-    ///     <see cref="ISSDescriptor.CurrentState"/> and in <see cref="ISSDescriptorResolution.State"/>.
+    ///     <see cref="ISSDescriptor.CurrentState"/>.
     /// </summary>
     public enum ISSDescriptorState
     {

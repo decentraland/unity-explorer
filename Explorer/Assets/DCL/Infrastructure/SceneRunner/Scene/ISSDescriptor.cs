@@ -7,14 +7,15 @@ namespace DCL.SceneRunner.Scene
     /// <summary>
     ///     Per-entity Initial Scene State component for a single scene. Class semantics — the same
     ///     reference lives on the entity for the scene's lifetime, with internal state mutating in place
-    ///     when the resolver promise completes (see <see cref="MarkResolved"/>). Held on
-    ///     <see cref="ISceneData.ISSDescriptor"/>.
+    ///     when the resolver promise completes (see <see cref="MarkResolved"/> / <see cref="MarkAsNone"/>).
+    ///     Held on <see cref="ISceneData.ISSDescriptor"/>.
     ///     <para>
     ///     Lifecycle: constructed in <see cref="ISSDescriptorState.Uninitialized"/> for scenes that may have
     ///     ISS, or in <see cref="ISSDescriptorState.None"/> for opt-outs (PX / static-pointer / smart-wearable
-    ///     previews). The resolver hands a transient <see cref="ISSDescriptorResolution"/> (cacheable pure data)
-    ///     to <see cref="MarkResolved"/>, which mutates the component in place so cached references elsewhere
-    ///     (e.g. <c>OrderedDataManaged</c> in the radius system) see the update without re-fetching.
+    ///     previews). On promise completion the resolver calls <see cref="MarkResolved"/> with the descriptor's
+    ///     asset list (success) or <see cref="MarkAsNone"/> (failure / no ISS). Mutating in place lets cached
+    ///     references elsewhere (e.g. <c>OrderedDataManaged</c> in the radius system) see the update without
+    ///     a refetch.
     ///     </para>
     /// </summary>
     public class ISSDescriptor
@@ -22,47 +23,53 @@ namespace DCL.SceneRunner.Scene
         /// <summary>
         ///     Shared sentinel used by opt-out paths (PX / static-pointer / smart-wearable preview) so they
         ///     don't have to construct a fresh descriptor just to express "no ISS." Safe to share because
-        ///     <see cref="ISSDescriptorState.None"/> descriptors have no per-scene mutable state. Scenes
-        ///     that may have ISS construct their own fresh instance so <see cref="MarkResolved"/> can mutate
-        ///     them in place without affecting other scenes.
+        ///     <see cref="ISSDescriptorState.None"/> descriptors have no per-scene mutable state.
         /// </summary>
-        public static readonly ISSDescriptor NONE = new (ISSDescriptorResolution.NONE);
+        public static readonly ISSDescriptor NONE = new (ISSDescriptorState.None);
 
         public static ISSDescriptor CreateUninitialized() =>
-            new (new ISSDescriptorResolution(ISSDescriptorState.Uninitialized, null));
-
+            new (ISSDescriptorState.Uninitialized);
 
         public ISSDescriptorState CurrentState { get; private set; }
         public IReadOnlyList<ISSDescriptorAsset> Assets { get; private set; }
 
         // hash -> how many times that hash appears in the descriptor (the cap for bridge slots)
-        private readonly Dictionary<string, int> hashCapacity;
+        private readonly Dictionary<string, int> hashCapacity = new ();
 
         // hash -> how many copies are currently parked in the bridge
         private readonly Dictionary<string, int> bridgedCount = new ();
 
-        private ISSDescriptor(ISSDescriptorResolution resolution)
+        private ISSDescriptor(ISSDescriptorState state)
         {
-            CurrentState = resolution.State;
-            Assets = resolution.Assets ?? Array.Empty<ISSDescriptorAsset>();
-            hashCapacity = new Dictionary<string, int>();
+            CurrentState = state;
+            Assets = Array.Empty<ISSDescriptorAsset>();
         }
 
         /// <summary>
-        ///     Transitions the descriptor from <see cref="ISSDescriptorState.Uninitialized"/> to a resolved
-        ///     state (Bundle / Descriptor / None). Mutates the instance in place — cached references see the
-        ///     update without a refetch. Called by <c>ResolveISSDescriptorSystem</c> when the resolver promise
-        ///     completes.
+        ///     Transitions the descriptor to <see cref="ISSDescriptorState.Descriptor"/> with the given
+        ///     asset list. Called by <c>ResolveISSDescriptorSystem</c> when the loader promise succeeds.
         /// </summary>
-        public void MarkResolved(ISSDescriptorResolution resolution)
+        public void MarkResolved(IReadOnlyList<ISSDescriptorAsset>? assets)
         {
-            CurrentState = resolution.State;
-            Assets = resolution.Assets ?? Array.Empty<ISSDescriptorAsset>();
+            CurrentState = ISSDescriptorState.Descriptor;
+            Assets = assets ?? Array.Empty<ISSDescriptorAsset>();
+            hashCapacity.Clear();
             for (var i = 0; i < Assets.Count; i++)
             {
                 string hash = Assets[i].hash;
                 hashCapacity[hash] = hashCapacity.TryGetValue(hash, out int n) ? n + 1 : 1;
             }
+        }
+
+        /// <summary>
+        ///     Transitions the descriptor to <see cref="ISSDescriptorState.None"/>. Called by
+        ///     <c>ResolveISSDescriptorSystem</c> when the loader promise fails (scene has no ISS).
+        /// </summary>
+        public void MarkAsNone()
+        {
+            CurrentState = ISSDescriptorState.None;
+            Assets = Array.Empty<ISSDescriptorAsset>();
+            hashCapacity.Clear();
         }
 
         public bool TryReserveBridgeSlot(string hash)

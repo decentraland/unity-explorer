@@ -331,8 +331,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // OrderedDataManaged, the gate sees the resolved state on the next tick without a refetch.
             if (issDescriptor.CurrentState == ISSDescriptorState.Uninitialized)
             {
-                if (!World.Has<AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention>>(entity))
-                    World.Add(entity, AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention>.Create(
+                if (!World.Has<AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>>(entity))
+                    World.Add(entity, AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>.Create(
                         World, GetISSDescriptorIntention.For(sceneDefinitionComponent.Definition), partitionComponent));
                 return;
             }

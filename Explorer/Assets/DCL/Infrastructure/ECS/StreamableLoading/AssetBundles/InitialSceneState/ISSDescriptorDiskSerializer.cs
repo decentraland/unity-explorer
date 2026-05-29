@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.SceneRunner.Scene;
 using ECS.StreamableLoading.Cache.Disk;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -9,30 +7,17 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 {
     /// <summary>
-    ///     Persists only the descriptor's asset list — the resolution mode (Bundle vs Descriptor) is a live
-    ///     decision (HEAD probe + manifest gate) and must not be cached: a scene that resolved to Descriptor
-    ///     today could legitimately resolve to Bundle tomorrow once the AB converter publishes one, and a
-    ///     cached State field would freeze the wrong answer forever. So we cache the *expensive* part (the
-    ///     JSON contents) and re-derive the mode on every load. On cache hit we hand back Descriptor mode —
-    ///     that's the only mode the loader currently emits; when Bundle mode is re-enabled, the loader will
-    ///     short-circuit the JSON fetch on a hit and still run the HEAD probe before returning.
-    ///     <para>
-    ///     The on-disk shape is intentionally identical to the server's descriptor JSON
-    ///     (<see cref="ISSDescriptorMetadata"/>), so cache files are interchangeable with raw server payloads
-    ///     and open in a text editor for debugging.
-    ///     </para>
+    ///     Thin JsonUtility wrapper: the on-disk shape IS <see cref="ISSDescriptorMetadata"/>, identical to
+    ///     the server's descriptor JSON. The loader's resolution mode (Bundle vs Descriptor) is a live
+    ///     decision (HEAD probe + manifest gate) and is intentionally not cached — a scene that resolved
+    ///     to Descriptor today could legitimately resolve to Bundle tomorrow once the AB converter
+    ///     publishes one. Caching only the JSON contents lets the mode be re-derived on every load.
     /// </summary>
-    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorResolution, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
+    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorMetadata, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
     {
-        public SerializeMemoryIterator<State> Serialize(ISSDescriptorResolution data)
+        public SerializeMemoryIterator<State> Serialize(ISSDescriptorMetadata data)
         {
-            // Copy into a List<> because that's what JsonUtility serializes.
-            IReadOnlyList<ISSDescriptorAsset>? source = data.Assets;
-            var assets = new List<ISSDescriptorAsset>(source?.Count ?? 0);
-            if (source != null)
-                for (var i = 0; i < source.Count; i++) assets.Add(source[i]);
-
-            string json = JsonUtility.ToJson(new ISSDescriptorMetadata { assets = assets });
+            string json = JsonUtility.ToJson(data);
             byte[] payload = Encoding.UTF8.GetBytes(json);
 
             var state = new State(payload);
@@ -43,17 +28,12 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
                 static (source, index, bufferLength) => SerializeMemoryIterator.CanReadNextData(index, source.Bytes.Length, bufferLength));
         }
 
-        public UniTask<ISSDescriptorResolution> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<ISSDescriptorMetadata> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             try
             {
                 string json = Encoding.UTF8.GetString(data.Memory.Span);
-                ISSDescriptorMetadata metadata = JsonUtility.FromJson<ISSDescriptorMetadata>(json);
-
-                // Cache hit means "this scene's descriptor JSON existed at some point" — Descriptor is the
-                // only mode the loader currently emits. When Bundle mode is re-enabled, replace this with a
-                // HEAD probe (and bump GetISSDescriptor.DiskHashCompute.ITERATION_NUMBER to be safe).
-                return UniTask.FromResult(new ISSDescriptorResolution(ISSDescriptorState.Descriptor, metadata.assets));
+                return UniTask.FromResult(JsonUtility.FromJson<ISSDescriptorMetadata>(json));
             }
             finally
             {

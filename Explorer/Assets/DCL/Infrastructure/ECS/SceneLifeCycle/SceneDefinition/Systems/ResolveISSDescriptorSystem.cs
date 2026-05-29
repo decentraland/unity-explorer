@@ -33,22 +33,22 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumePromise(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor descriptor, ref AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention> promise)
+        private void ConsumePromise(in Entity entity, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor descriptor, ref AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention> promise)
         {
-            if (!promise.TryConsume(World, out StreamableLoadingResult<ISSDescriptorResolution> result))
+            if (!promise.TryConsume(World, out StreamableLoadingResult<ISSDescriptorMetadata> result))
                 return;
 
             // The loader returns a failed result for both "no descriptor JSON" and "manifest predates ISS",
             // so any failure here means this scene has no ISS and we fall back to the legacy LOD path.
             if (result is { Succeeded: true, Asset: { } resolved })
-                descriptor.MarkResolved(resolved);
+                descriptor.MarkResolved(resolved.assets);
             else
             {
                 ReportHub.Log(GetReportCategory(), $"ISSDescriptor is unavailable for scene {sceneDefinitionComponent.Definition.id} ({result.Exception?.Message ?? "unknown reason"}), fallback LOD will be used");
-                descriptor.MarkResolved(ISSDescriptorResolution.NONE);
+                descriptor.MarkAsNone();
             }
 
-            World.Remove<AssetPromise<ISSDescriptorResolution, GetISSDescriptorIntention>>(entity);
+            World.Remove<AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>>(entity);
         }
     }
 }

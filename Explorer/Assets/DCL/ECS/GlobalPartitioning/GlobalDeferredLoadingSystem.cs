@@ -44,7 +44,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
-                CreateQuery<GetISSDescriptorIntention, ISSDescriptorResolution>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetTrimmedWearableByParamIntention, IWearable[]>(),
@@ -63,7 +63,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
-                CreateQuery<GetISSDescriptorIntention, ISSDescriptorResolution>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
             };
         }
 
