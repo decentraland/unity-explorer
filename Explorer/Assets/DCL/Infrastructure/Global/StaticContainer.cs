@@ -136,7 +136,7 @@ namespace Global
 
         public IGltfContainerAssetsCache GltfContainerAssetsCache { get; private set; }
         public AssetPreLoadCache AssetPreLoadCache { get; private set; }
-        public IDiskCache<ISSDescriptorMetadata> ISSDescriptorDiskCache { get; private set; }
+        public DiskCache<ISSDescriptorMetadata, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>> ISSDescriptorDiskCache { get; private set; }
 
         public void Dispose()
         {

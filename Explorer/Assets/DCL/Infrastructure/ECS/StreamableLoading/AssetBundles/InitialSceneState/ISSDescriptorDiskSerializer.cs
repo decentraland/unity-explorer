@@ -15,6 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     /// </summary>
     public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorMetadata, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
     {
+        //TODO (opti): We could serialize as blobs and not jsons
         public SerializeMemoryIterator<State> Serialize(ISSDescriptorMetadata data)
         {
             string json = JsonUtility.ToJson(data);

@@ -167,11 +167,8 @@ namespace Global.Dynamic
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
 
-            // ISS descriptor loader. NoCache with ongoing-request dedup is enough — the descriptor is held
-            // on the resolved scene (via SceneData.ISSDescriptor) and on SceneDefinitionComponent for ECS
-            // queries, so the cache only needs to serialize concurrent loaders for the same scene id.
             LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
-                new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(useOngoingRequestCache: true, useIrrecoverableFailureCache: false),
+                new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
                 new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
 
             // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver

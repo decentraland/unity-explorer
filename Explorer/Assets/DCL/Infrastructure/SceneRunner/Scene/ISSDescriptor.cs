@@ -53,7 +53,6 @@ namespace DCL.SceneRunner.Scene
         {
             CurrentState = ISSDescriptorState.Descriptor;
             Assets = assets ?? Array.Empty<ISSDescriptorAsset>();
-            hashCapacity.Clear();
             for (var i = 0; i < Assets.Count; i++)
             {
                 string hash = Assets[i].hash;
@@ -69,7 +68,6 @@ namespace DCL.SceneRunner.Scene
         {
             CurrentState = ISSDescriptorState.None;
             Assets = Array.Empty<ISSDescriptorAsset>();
-            hashCapacity.Clear();
         }
 
         public bool TryReserveBridgeSlot(string hash)
