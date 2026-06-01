@@ -13,43 +13,23 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     ///     to Descriptor today could legitimately resolve to Bundle tomorrow once the AB converter
     ///     publishes one. Caching only the JSON contents lets the mode be re-derived on every load.
     /// </summary>
-    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorMetadata, SerializeMemoryIterator<ISSDescriptorDiskSerializer.State>>
+    public class ISSDescriptorDiskSerializer : IDiskSerializer<ISSDescriptorMetadata, SerializeMemoryIterator<StringDiskSerializer.State>>
     {
+        private readonly StringDiskSerializer sds = new ();
+
         //TODO (opti): We could serialize as blobs and not jsons
-        public SerializeMemoryIterator<State> Serialize(ISSDescriptorMetadata data)
+        public SerializeMemoryIterator<StringDiskSerializer.State> Serialize(ISSDescriptorMetadata data)
         {
             string json = JsonUtility.ToJson(data);
-            byte[] payload = Encoding.UTF8.GetBytes(json);
-
-            var state = new State(payload);
-
-            return SerializeMemoryIterator<State>.New(
-                state,
-                static (source, index, buffer) => SerializeMemoryIterator.ReadNextData(index, source.Bytes, buffer),
-                static (source, index, bufferLength) => SerializeMemoryIterator.CanReadNextData(index, source.Bytes.Length, bufferLength));
+            SerializeMemoryIterator<StringDiskSerializer.State> iterator = sds.Serialize(json);
+            return iterator;
         }
 
-        public UniTask<ISSDescriptorMetadata> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<ISSDescriptorMetadata> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
-            try
-            {
-                string json = Encoding.UTF8.GetString(data.Memory.Span);
-                return UniTask.FromResult(JsonUtility.FromJson<ISSDescriptorMetadata>(json));
-            }
-            finally
-            {
-                data.Dispose();
-            }
-        }
-
-        public readonly struct State
-        {
-            public readonly byte[] Bytes;
-
-            public State(byte[] bytes)
-            {
-                Bytes = bytes;
-            }
+            string json = await sds.DeserializeAsync(data, token);
+            ISSDescriptorMetadata metadata = JsonUtility.FromJson<ISSDescriptorMetadata>(json);
+            return metadata;
         }
     }
 }
