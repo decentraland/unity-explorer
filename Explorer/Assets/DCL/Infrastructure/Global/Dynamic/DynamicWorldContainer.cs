@@ -596,6 +596,10 @@ namespace Global.Dynamic
                 new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
+                new AnrSimulateChatCommand(),
+#if UNITY_STANDALONE_WIN
+                new AnrDumpChatCommand(),
+#endif
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
