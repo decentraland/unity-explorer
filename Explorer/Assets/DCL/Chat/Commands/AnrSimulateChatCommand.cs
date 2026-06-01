@@ -22,7 +22,9 @@ namespace DCL.Chat.Commands
             if (parameters.Length == 1)
                 int.TryParse(parameters[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out freezeMs);
 
-            Thread.Sleep(freezeMs);
+#if !UNITY_WEBGL
+            Thread.Sleep(freezeMs); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             return UniTask.FromResult($"Main thread was frozen for {freezeMs} ms.");
         }
