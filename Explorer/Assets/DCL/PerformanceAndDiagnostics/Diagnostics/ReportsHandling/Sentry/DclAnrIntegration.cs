@@ -1,4 +1,6 @@
 // Based on AnrIntegration
+// TRUST_WEBGL_THREAD_SAFETY_FLAG 
+#if !UNITY_WEBGL
 
 using System;
 using System.Collections;
@@ -14,6 +16,7 @@ using Debug = UnityEngine.Debug;
 using RichTypes;
 using System.IO;
 using System.IO.Compression;
+using DCL.Utility;
 
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -96,7 +99,13 @@ namespace DCL.Diagnostics.Sentry
             MonoBehaviour.ApplicationResuming += () => Paused = false;
 
             // Stop when the app is being shut down. (Orignally it used IApplication from Sentry but it's internal)
-            UnityEngine.Application.quitting += () => Stop();
+            OnQuittingCleanUpCandidate oqcuc = new (nameof(DclAnrWatchDog), StopNoWait);
+            ExitUtils.RegisterCleanUpCandidate(oqcuc);
+        }
+
+        internal void StopNoWait()
+        {
+            this.Stop(wait: false);
         }
 
         internal abstract void Stop(bool wait = false);
@@ -592,3 +601,5 @@ namespace DCL.Diagnostics.Sentry
 #endif
 
 }
+
+#endif
