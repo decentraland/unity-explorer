@@ -11,13 +11,4 @@ namespace DCL.AvatarRendering.Loading
     {
         bool ShouldExclude(URN fullUrn);
     }
-
-    public sealed class NoOpOwnedNftFilter : IOwnedNftFilter
-    {
-        public static readonly NoOpOwnedNftFilter Instance = new ();
-
-        private NoOpOwnedNftFilter() { }
-
-        public bool ShouldExclude(URN fullUrn) => false;
-    }
 }
