@@ -232,7 +232,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                     // Suppress NFTs the runtime knows are no longer owned (e.g. locally pending gift transfers)
                     if (ownedNftFilter.ShouldExclude(individualData.id))
                     {
-                        ReportHub.Log(ReportCategory.OUTFITS, $"<color=orange>[WEARABLE_STORAGE_SKIPPED]</color> Key: '{elementDTO.Metadata.id}' excluded entry: '{individualData.id}' (filter)");
+                        ReportHub.Log(GetReportData(), $"<color=orange>[WEARABLE_STORAGE_SKIPPED]</color> Key: '{elementDTO.Metadata.id}' excluded entry: '{individualData.id}' (filter)");
                         continue;
                     }
 

@@ -7,7 +7,6 @@ using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Services;
 using DCL.Backpack.Gifting.Services.GiftingInventory;
 using DCL.Backpack.Gifting.Services.PendingTransfers;
-using DCL.Backpack.Gifting.Utils;
 using DCL.Backpack.Gifting.Views;
 using DCL.Diagnostics;
 using DCL.Web3.Authenticators;
@@ -109,10 +108,12 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
         private void EvictOwnedNftFromRegistry(string instanceUrn, string itemType)
         {
             if (string.IsNullOrEmpty(instanceUrn)) return;
-            if (!GiftingUrnParsingHelper.TryGetBaseUrn(instanceUrn, out string baseUrnString)) return;
 
-            var baseUrn = new URN(baseUrnString);
             var fullUrn = new URN(instanceUrn);
+            URN baseUrn = fullUrn.Shorten();
+
+            // Off-chain or already-short URN: no token tail to evict
+            if (baseUrn.Equals(fullUrn)) return;
 
             switch (itemType?.ToLowerInvariant())
             {
