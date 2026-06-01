@@ -248,7 +248,7 @@ jobs:
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -312,7 +312,7 @@ jobs:
 
       - name: Skip build and test checks
         if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const sha = context.payload.pull_request.head.sha;
@@ -538,13 +538,13 @@ jobs:
         target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12.3
 
@@ -654,7 +654,7 @@ jobs:
       - name: Upload artifact for macOS
         id: upload-macos-artifact
         if: matrix.target == 'macos'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}
           path: build.tar
@@ -663,7 +663,7 @@ jobs:
       - name: Upload artifact for Windows
         id: upload-windows-artifact
         if: matrix.target == 'windows64'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}
           path: |
@@ -824,7 +824,7 @@ jobs:
 
       - name: Upload size report
         if: always() && steps.size_check.outputs.result != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: size_report/
@@ -878,7 +878,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.artifact_name }}_debug_symbols
           path: |
@@ -902,7 +902,7 @@ jobs:
       # Will run always (even if failing)
       - name: Upload cloud logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
@@ -925,7 +925,7 @@ jobs:
           ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
 
       - name: Upload Shader Compilation Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
