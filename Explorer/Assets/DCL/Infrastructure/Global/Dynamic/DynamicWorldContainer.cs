@@ -363,11 +363,12 @@ namespace Global.Dynamic
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
-            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
-
             IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
-            IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+            PendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+
+            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,
+                pendingTransferService);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
             var communityMembershipChecker = new CommunityMembershipCheckerAdapter(communitiesDataProvider);
@@ -813,7 +814,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     trimmedWearableCatalog,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
-                    (IOwnedNftFilter)pendingTransferService,
+                    pendingTransferService,
                     builderContentURL.Value),
                 new EmotePlugin(
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -838,7 +839,7 @@ namespace Global.Dynamic
                     emotesEventBus,
                     trimmedEmoteCatalog,
                     staticContainer.EmotesContainer.EmotePlayer,
-                    (IOwnedNftFilter)pendingTransferService),
+                    pendingTransferService),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -1028,7 +1029,8 @@ namespace Global.Dynamic
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
-                    joinedCommunitiesVoiceLiveTracker
+                    joinedCommunitiesVoiceLiveTracker,
+                    pendingTransferService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,

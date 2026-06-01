@@ -7,6 +7,7 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -147,6 +148,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
+        private readonly IOwnedNftFilter ownedNftFilter;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -246,7 +248,8 @@ namespace DCL.PluginSystem.Global
             IWorldPermissionsService worldPermissionsService,
             IRendererFeaturesCache rendererFeaturesCache,
             SpringBoneSimulationSettings springBoneSimulationSettings,
-            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
+            IOwnedNftFilter ownedNftFilter
             )
         {
             this.eventBus = eventBus;
@@ -317,6 +320,7 @@ namespace DCL.PluginSystem.Global
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.springBoneSimulationSettings = springBoneSimulationSettings;
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
+            this.ownedNftFilter = ownedNftFilter;
         }
 
         public void Dispose()
@@ -395,7 +399,8 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 smartWearableCache,
                 mvcManager,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                ownedNftFilter
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

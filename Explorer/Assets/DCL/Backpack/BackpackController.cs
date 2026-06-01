@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -58,6 +59,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? profileLoadingCts;
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
+        private readonly OutfitsGiftSanitizer outfitsGiftSanitizer;
 
         public BackpackController(
             BackpackView view,
@@ -86,7 +88,8 @@ namespace DCL.Backpack
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             Sprite deleteIcon,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -109,6 +112,7 @@ namespace DCL.Backpack
             var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
             var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
             var outfitsCollection = new OutfitsCollection();
+            outfitsGiftSanitizer = new OutfitsGiftSanitizer(outfitsCollection, eventBus);
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
@@ -118,14 +122,16 @@ namespace DCL.Backpack
                 outfitsRepository,
                 wearableStorage,
                 eventBus,
-                outfitsLogger);
+                outfitsLogger,
+                ownedNftFilter);
             var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
                 equippedWearables,
                 selfProfile,
                 wearableStorage,
-                outfitsLogger);
+                outfitsLogger,
+                ownedNftFilter);
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
@@ -217,6 +223,7 @@ namespace DCL.Backpack
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
             emoteInfoPanelController.Dispose();
+            outfitsGiftSanitizer.Dispose();
         }
 
         private void ToggleTipsContent()

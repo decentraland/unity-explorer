@@ -69,20 +69,21 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
             string senderAddress = identity.Address.ToString();
 
             eventBus.Publish(new GiftingEvents.OnSentGift(data.giftUrn,
+                data.instanceUrn,
                 senderAddress,
                 data.recipientAddress,
                 data.itemType));
-            
+
             var result = await giftTransferService
                 .RequestTransferAsync(senderAddress,
                     data.giftUrn,
                     data.tokenId,
                     data.recipientAddress, ct);
-            
+
             if (ct.IsCancellationRequested)
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, MsgCancelUser));
-                eventBus.Publish(new GiftingEvents.OnCanceledGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+                eventBus.Publish(new GiftingEvents.OnCanceledGift(data.giftUrn, data.instanceUrn, senderAddress, data.recipientAddress, data.itemType));
                 return GiftTransferResult.Fail(MsgCancelShort);
             }
 
@@ -92,12 +93,12 @@ namespace DCL.Backpack.Gifting.Presenters.GiftTransfer.Commands
                 EvictOwnedNftFromRegistry(data.instanceUrn, data.itemType);
 
                 eventBus.Publish(new GiftingEvents.GiftTransferSucceeded(data.giftUrn));
-                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+                eventBus.Publish(new GiftingEvents.OnSuccessfulGift(data.giftUrn, data.instanceUrn, senderAddress, data.recipientAddress, data.itemType));
             }
             else
             {
                 eventBus.Publish(new GiftingEvents.GiftTransferFailed(data.giftUrn, result.ErrorMessage));
-                eventBus.Publish(new GiftingEvents.OnFailedGift(data.giftUrn, senderAddress, data.recipientAddress, data.itemType));
+                eventBus.Publish(new GiftingEvents.OnFailedGift(data.giftUrn, data.instanceUrn, senderAddress, data.recipientAddress, data.itemType));
             }
 
             return result;

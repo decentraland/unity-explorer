@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -68,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -105,7 +107,8 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
             IMVCManager mvcManager,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -138,6 +141,7 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.ownedNftFilter = ownedNftFilter;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -258,7 +262,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 appArgs,
                 inWorldWarningNotificationView,
-                profileChangesBus
+                profileChangesBus,
+                ownedNftFilter
             );
 
             backpackController = new BackpackController(
@@ -289,7 +294,8 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 eventBus,
                 deleteIcon,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                ownedNftFilter
             );
         }
 
