@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Load;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -73,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private IDisposable? requestOpenEmoteWheelSubscription;
 
         private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
+        private readonly IOwnedNftFilter ownedNftFilter;
         private TimeSpan batchHeartbeat;
 
 
@@ -97,7 +99,8 @@ namespace DCL.PluginSystem.Global
             EntitiesAnalytics entitiesAnalytics,
             IEventBus emotesEventBus,
             ITrimmedEmoteStorage trimmedEmoteStorage,
-            EmotePlayer emotePlayer)
+            EmotePlayer emotePlayer,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.emotePlayer = emotePlayer;
             this.messageBus = messageBus;
@@ -121,6 +124,7 @@ namespace DCL.PluginSystem.Global
             this.emotesEventBus = emotesEventBus;
             this.trimmedEmoteStorage = trimmedEmoteStorage;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.ownedNftFilter = ownedNftFilter;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -145,7 +149,7 @@ namespace DCL.PluginSystem.Global
             LoadTrimmedEmotesByParamSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<TrimmedEmotesResponse, GetTrimmedEmotesByParamIntention>(false, false),
                 emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
-                decentralandUrlsSource, builderContentURL);
+                decentralandUrlsSource, ownedNftFilter, builderContentURL);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, emotePlayer, debugBuilder, localSceneDevelopment, scenesCache);
 

@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
-    public class PendingTransferService : IPendingTransferService
+    public class PendingTransferService : IPendingTransferService, IOwnedNftFilter
     {
         private readonly IGiftingPersistence persistence;
         private readonly HashSet<string> pendingFullUrns;
@@ -35,10 +36,11 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             }
         }
 
-        public bool IsPending(string fullUrn)
-        {
-            return pendingFullUrns.Contains(fullUrn);
-        }
+        public bool IsPending(string fullUrn) =>
+            pendingFullUrns.Contains(fullUrn);
+
+        public bool ShouldExclude(URN fullUrn) =>
+            IsPending(fullUrn.ToString());
 
         public int GetPendingCount(string baseUrn)
         {
@@ -56,7 +58,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             return count;
         }
 
-        
+
         public void Prune(
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
@@ -92,7 +94,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 }
 
                 // Validates pending transfers against the latest inventory data.
-                // If an item is no longer in the registry, it means the Indexer has caught up 
+                // If an item is no longer in the registry, it means the Indexer has caught up
                 // and the item has left the user's wallet. We can safely stop tracking it locally.
                 if (!stillOwned)
                     toRemove.Add(pendingUrn);

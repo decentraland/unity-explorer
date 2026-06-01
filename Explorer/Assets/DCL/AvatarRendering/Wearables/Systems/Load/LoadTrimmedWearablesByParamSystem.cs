@@ -29,9 +29,10 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IDecentralandUrlsSource urlsSource,
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
+            IOwnedNftFilter ownedNftFilter,
             string? builderContentURL = null
         ) : base(world, cache, trimmedWearableStorage, wearableStorage, realmData, wearablesSubdirectory,
-            webRequestController,"wearable", urlsSource, builderContentURL: builderContentURL)
+            webRequestController,"wearable", urlsSource, ownedNftFilter, builderContentURL: builderContentURL)
         {
         }
 

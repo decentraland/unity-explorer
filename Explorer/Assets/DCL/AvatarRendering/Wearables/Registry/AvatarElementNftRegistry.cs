@@ -32,6 +32,20 @@ namespace  DCL.AvatarRendering.Wearables.Registry
             }
         }
 
+        public void RemoveOwnedNft(URN nftUrn, URN fullUrn)
+        {
+            lock (lockObject)
+            {
+                if (!ownedNftRegistry.TryGetValue(nftUrn, out var registry))
+                    return;
+
+                registry.Remove(fullUrn);
+
+                if (registry.Count == 0)
+                    ownedNftRegistry.Remove(nftUrn);
+            }
+        }
+
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
             lock (lockObject)

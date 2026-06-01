@@ -143,7 +143,9 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 giftTransferService,
                 pendingTransferService,
-                web3Provider);
+                web3Provider,
+                wearableStorage,
+                emoteStorage);
 
             var loadThumbnailCommand = new LoadGiftableItemThumbnailCommand(thumbnailProvider,
                 eventBus);

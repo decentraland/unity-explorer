@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Tests;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -38,7 +39,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             realmData.Configured.Returns(true);
 
             return new LoadTrimmedWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(), trimmedWearableStorage);
+                URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(),
+                trimmedWearableStorage, Substitute.For<IOwnedNftFilter>());
         }
 
         protected override void AssertSuccess(TrimmedWearablesResponse asset)

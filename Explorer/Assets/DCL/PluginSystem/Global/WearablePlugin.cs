@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -38,6 +39,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearableStorage wearableStorage;
         private readonly ITrimmedWearableStorage trimmedWearableStorage;
         private readonly EntitiesAnalytics entitiesAnalytics;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         private TimeSpan batchHeartbeat;
 
@@ -48,6 +50,7 @@ namespace DCL.AvatarRendering.Wearables
             IWearableStorage wearableStorage,
             ITrimmedWearableStorage trimmedWearableStorage,
             EntitiesAnalytics entitiesAnalytics,
+            IOwnedNftFilter ownedNftFilter,
             string builderContentURL)
         {
             this.wearableStorage = wearableStorage;
@@ -58,6 +61,7 @@ namespace DCL.AvatarRendering.Wearables
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
+            this.ownedNftFilter = ownedNftFilter;
 
             cacheCleaner.Register(this.wearableStorage);
             cacheCleaner.Register(this.trimmedWearableStorage);
@@ -70,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadTrimmedWearablesByParamSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<TrimmedWearablesResponse, GetTrimmedWearableByParamIntention>(false, false),
                 realmData, WEARABLES_COMPLEMENT_URL, urlsSource, wearableStorage,
-                trimmedWearableStorage, builderContentURL);
+                trimmedWearableStorage, ownedNftFilter, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), entitiesAnalytics);
             BatchWearablesDTOSystem.InjectToWorld(ref builder, urlsSource, batchHeartbeat);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, wearableStorage);

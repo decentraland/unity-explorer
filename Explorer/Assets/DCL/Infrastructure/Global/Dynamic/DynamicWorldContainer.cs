@@ -6,6 +6,7 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -812,6 +813,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     trimmedWearableCatalog,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
+                    (IOwnedNftFilter)pendingTransferService,
                     builderContentURL.Value),
                 new EmotePlugin(
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -835,7 +837,8 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
                     trimmedEmoteCatalog,
-                staticContainer.EmotesContainer.EmotePlayer),
+                    staticContainer.EmotesContainer.EmotePlayer,
+                    (IOwnedNftFilter)pendingTransferService),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,

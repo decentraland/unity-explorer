@@ -146,6 +146,11 @@ namespace DCL.Multiplayer.SDK.Tests
                 throw new NotImplementedException();
             }
 
+            public void RemoveOwnedNft(URN urn, URN fullUrn)
+            {
+                throw new NotImplementedException();
+            }
+
             public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 
