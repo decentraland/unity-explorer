@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Tests;
-using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
