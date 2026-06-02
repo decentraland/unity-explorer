@@ -73,6 +73,7 @@ namespace DCL.PluginSystem.Global
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
+        private EmotesGiftSanitizer? emotesGiftSanitizer;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -154,6 +155,8 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
+            emotesGiftSanitizer = new EmotesGiftSanitizer(equippedEmotes, emoteStorage, ownedNftFilter, backpackCommandBus, eventBus);
+
             busController = new BackpackBusController(wearableStorage,
                 backpackEventBus,
                 backpackCommandBus,
@@ -162,7 +165,8 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 wearablesProvider,
                 emoteProvider,
-                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
+                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage),
+                emotesGiftSanitizer);
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -304,6 +308,7 @@ namespace DCL.PluginSystem.Global
             busController?.Dispose();
             backpackController?.Dispose();
             backpackEquipStatusController?.Dispose();
+            emotesGiftSanitizer?.Dispose();
         }
     }
 }

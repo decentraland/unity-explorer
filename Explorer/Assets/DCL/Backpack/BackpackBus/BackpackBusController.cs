@@ -12,6 +12,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.EmotesSection;
 using UnityEngine.Pool;
 using Utility;
 
@@ -28,6 +29,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEmoteProvider emotesProvider;
         private readonly CacheOutfitWearablesCommand  cacheOutfitWearablesCommand;
+        private readonly EmotesGiftSanitizer emotesGiftSanitizer;
 
         private readonly CancellationTokenSource fetchWearableCts = new ();
         private readonly CancellationTokenSource fetchEmoteCts = new ();
@@ -47,7 +49,8 @@ namespace DCL.Backpack.BackpackBus
             IEmoteStorage emoteStorage,
             IWearablesProvider wearablesProvider,
             IEmoteProvider emotesProvider,
-            CacheOutfitWearablesCommand cacheOutfitWearablesCommand)
+            CacheOutfitWearablesCommand cacheOutfitWearablesCommand,
+            EmotesGiftSanitizer emotesGiftSanitizer)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -58,6 +61,7 @@ namespace DCL.Backpack.BackpackBus
             this.wearablesProvider = wearablesProvider;
             this.emotesProvider = emotesProvider;
             this.cacheOutfitWearablesCommand = cacheOutfitWearablesCommand;
+            this.emotesGiftSanitizer = emotesGiftSanitizer;
 
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
             this.backpackCommandBus.UnEquipWearableMessageReceived += HandleUnEquipWearableCommand;
@@ -194,6 +198,13 @@ namespace DCL.Backpack.BackpackBus
             if (slot is < 0 or >= 10)
             {
                 ReportHub.LogError(new ReportData(ReportCategory.EMOTE), $"Cannot equip emote, slot out of bounds: {command.Id} - {command.Slot}");
+                return;
+            }
+
+            if (emotesGiftSanitizer.IsEquipBlocked(emote))
+            {
+                ReportHub.Log(ReportCategory.EMOTE, $"Cannot equip emote {emote.GetUrn()}: its only owned copy is being gifted away.");
+                command.EndAction?.Invoke();
                 return;
             }
 
