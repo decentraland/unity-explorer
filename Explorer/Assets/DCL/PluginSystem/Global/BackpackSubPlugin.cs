@@ -74,6 +74,7 @@ namespace DCL.PluginSystem.Global
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
         private EmotesGiftSanitizer? emotesGiftSanitizer;
+        private WearablesGiftSanitizer? wearablesGiftSanitizer;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -156,6 +157,7 @@ namespace DCL.PluginSystem.Global
             var sortController = new BackpackSortController(view.BackpackSortView);
 
             emotesGiftSanitizer = new EmotesGiftSanitizer(equippedEmotes, emoteStorage, ownedNftFilter, backpackCommandBus, eventBus);
+            wearablesGiftSanitizer = new WearablesGiftSanitizer(equippedWearables, wearableStorage, ownedNftFilter, backpackCommandBus, eventBus);
 
             busController = new BackpackBusController(wearableStorage,
                 backpackEventBus,
@@ -165,8 +167,7 @@ namespace DCL.PluginSystem.Global
                 emoteStorage,
                 wearablesProvider,
                 emoteProvider,
-                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage),
-                emotesGiftSanitizer);
+                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -241,11 +242,12 @@ namespace DCL.PluginSystem.Global
                 bodyshapeColors,
                 wearableStorage,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                ownedNftFilter
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage, ownedNftFilter);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping, thumbnailProvider), emoteGridController);
@@ -309,6 +311,7 @@ namespace DCL.PluginSystem.Global
             backpackController?.Dispose();
             backpackEquipStatusController?.Dispose();
             emotesGiftSanitizer?.Dispose();
+            wearablesGiftSanitizer?.Dispose();
         }
     }
 }

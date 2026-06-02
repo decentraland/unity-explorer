@@ -818,7 +818,6 @@ namespace Global.Dynamic
                     wearableCatalog,
                     trimmedWearableCatalog,
                     bootstrapContainer.Analytics.EntitiesAnalytics,
-                    pendingTransferService,
                     builderContentURL.Value),
                 new EmotePlugin(
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -842,8 +841,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
                     trimmedEmoteCatalog,
-                    staticContainer.EmotesContainer.EmotePlayer,
-                    pendingTransferService),
+                    staticContainer.EmotesContainer.EmotePlayer),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,

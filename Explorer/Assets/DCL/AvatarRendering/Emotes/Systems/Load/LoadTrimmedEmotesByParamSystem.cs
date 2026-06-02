@@ -31,10 +31,9 @@ namespace DCL.AvatarRendering.Emotes.Load
             ITrimmedEmoteStorage trimmedEmoteStorage,
             URLSubdirectory emotesSubdirectory,
             IDecentralandUrlsSource urlsSource,
-            IOwnedNftFilter ownedNftFilter,
             string? builderContentURL = null
         ) : base(world, cache, trimmedEmoteStorage, emoteStorage, realmData, emotesSubdirectory,
-            webRequestController,"emote", urlsSource, ownedNftFilter, builderContentURL: builderContentURL)
+            webRequestController,"emote", urlsSource, builderContentURL: builderContentURL)
         {
             this.emoteStorage = emoteStorage;
         }

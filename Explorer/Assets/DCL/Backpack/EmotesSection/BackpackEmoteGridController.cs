@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
@@ -47,6 +48,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -69,7 +71,8 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IEmoteStorage emoteStorage)
+            IEmoteStorage emoteStorage,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -84,6 +87,7 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
+            this.ownedNftFilter = ownedNftFilter;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
@@ -312,6 +316,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsPending = IsFullyPending(emotes[i].GetUrn());
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
@@ -320,6 +325,13 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        // An owned on-chain emote is "pending" when every owned instance is awaiting a gift transfer.
+        // Off-chain/base emotes have no owned-NFT registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            emoteStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+            && registry.Count > 0
+            && !ownedNftFilter.HasAvailableInstance(registry);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));

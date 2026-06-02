@@ -14,17 +14,14 @@ namespace DCL.Backpack.EmotesSection
 {
     /// <summary>
     ///     Keeps the equipped emotes (the emote wheel) consistent with the user's actual ownership during the
-    ///     optimistic window of a local gift transfer, and prevents equipping an emote whose only owned copy has
-    ///     been gifted away.
+    ///     optimistic window of a local gift transfer.
     ///     <para>
     ///         On gift send, if no usable copy of the gifted emote remains, it is removed from every wheel slot
-    ///         that holds it and its base URN is marked as blocked. On success the change is committed; on
-    ///         cancel/failure the affected slots are restored and the block is lifted.
+    ///         that holds it. On success the change is committed; on cancel/failure the affected slots are restored.
     ///     </para>
     ///     <para>
-    ///         The block is consulted by <see cref="BackpackBusController" /> to reject equip commands, covering
-    ///         both the optimistic window (gifted instance not yet in the pending set) and re-equip attempts that
-    ///         come from re-loading a stale profile.
+    ///         Re-equipping a fully-pending emote is prevented at the backpack grid (items flagged
+    ///         <see cref="BackpackItemView.IsPending" />), so no equip-time guard is needed here.
     ///     </para>
     /// </summary>
     public sealed class EmotesGiftSanitizer : IDisposable
@@ -34,11 +31,8 @@ namespace DCL.Backpack.EmotesSection
         private readonly IOwnedNftFilter ownedNftFilter;
         private readonly BackpackCommandBus commandBus;
 
-        // Base URNs whose only owned copy is currently being/has been gifted away: equip must stay blocked.
-        private readonly HashSet<URN> blockedBaseUrns = new ();
-
         // Per gifted instance URN: the slots we optimistically unequipped, so we can restore them on cancel/failure.
-        private readonly Dictionary<string, GiftSnapshot> snapshotsByInstanceUrn = new ();
+        private readonly Dictionary<string, List<(int slot, IEmote emote)>> unequippedByInstanceUrn = new ();
 
         private readonly IDisposable sentSubscription;
         private readonly IDisposable successSubscription;
@@ -71,24 +65,6 @@ namespace DCL.Backpack.EmotesSection
             canceledSubscription.Dispose();
         }
 
-        /// <summary>
-        ///     Returns true when the emote cannot be equipped because its only owned copy has been gifted away.
-        /// </summary>
-        public bool IsEquipBlocked(IEmote emote)
-        {
-            URN baseUrn = emote.GetUrn();
-
-            if (blockedBaseUrns.Contains(baseUrn))
-                return true;
-
-            // On-chain item: block when no owned instance is still usable (every copy pending a gift).
-            // Off-chain/base emotes have no owned-NFT registry and are always equippable.
-            if (emoteStorage.TryGetOwnedNftRegistry(baseUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry) && registry.Count > 0)
-                return !ownedNftFilter.HasAvailableInstance(registry);
-
-            return false;
-        }
-
         private void OnSent(GiftingEvents.OnSentGift evt)
         {
             if (string.IsNullOrEmpty(evt.InstanceUrn)) return;
@@ -113,17 +89,18 @@ namespace DCL.Backpack.EmotesSection
                 commandBus.SendCommand(new BackpackUnEquipEmoteCommand(slot: slot));
             }
 
-            blockedBaseUrns.Add(baseUrn);
-            snapshotsByInstanceUrn[evt.InstanceUrn] = new GiftSnapshot(baseUrn, unequipped);
+            if (unequipped == null) return;
 
-            ReportHub.Log(ReportCategory.GIFTING, $"[EmotesGiftSanitizer] Blocked emote {baseUrn} after gifting {evt.InstanceUrn}.");
+            unequippedByInstanceUrn[evt.InstanceUrn] = unequipped;
+
+            ReportHub.Log(ReportCategory.GIFTING, $"[EmotesGiftSanitizer] Unequipped emote {baseUrn} after gifting {evt.InstanceUrn}.");
         }
 
         private void OnSuccess(GiftingEvents.OnSuccessfulGift evt)
         {
-            // The gift is confirmed: keep the base URN blocked and drop the restore snapshot.
+            // The gift is confirmed: drop the restore snapshot so the unequip becomes permanent.
             if (!string.IsNullOrEmpty(evt.InstanceUrn))
-                snapshotsByInstanceUrn.Remove(evt.InstanceUrn);
+                unequippedByInstanceUrn.Remove(evt.InstanceUrn);
         }
 
         private void OnFailed(GiftingEvents.OnFailedGift evt) =>
@@ -135,29 +112,13 @@ namespace DCL.Backpack.EmotesSection
         private void Restore(string instanceUrn)
         {
             if (string.IsNullOrEmpty(instanceUrn)) return;
-            if (!snapshotsByInstanceUrn.Remove(instanceUrn, out GiftSnapshot snapshot)) return;
+            if (!unequippedByInstanceUrn.Remove(instanceUrn, out List<(int slot, IEmote emote)>? unequipped)) return;
 
-            blockedBaseUrns.Remove(snapshot.BaseUrn);
-
-            if (snapshot.Unequipped == null) return;
-
-            foreach ((int slot, IEmote emote) in snapshot.Unequipped)
+            foreach ((int slot, IEmote emote) in unequipped)
             {
                 // Don't clobber an emote the user equipped into the slot during the optimistic window.
                 if (equippedEmotes.EmoteInSlot(slot) == null)
                     commandBus.SendCommand(new BackpackEquipEmoteCommand(emote.GetUrn().ToString(), slot, false));
-            }
-        }
-
-        private readonly struct GiftSnapshot
-        {
-            public readonly URN BaseUrn;
-            public readonly List<(int slot, IEmote emote)>? Unequipped;
-
-            public GiftSnapshot(URN baseUrn, List<(int slot, IEmote emote)>? unequipped)
-            {
-                BaseUrn = baseUrn;
-                Unequipped = unequipped;
             }
         }
     }

@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
@@ -45,6 +46,7 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
@@ -81,7 +83,8 @@ namespace DCL.Backpack
             ColorPresetsSO bodyshapeColors,
             IWearableStorage wearableStorage,
             SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -98,6 +101,7 @@ namespace DCL.Backpack
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
+            this.ownedNftFilter = ownedNftFilter;
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
@@ -256,6 +260,7 @@ namespace DCL.Backpack
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 backpackItemView.EquippedIcon.SetActive(equippedWearables.IsEquipped(wearable));
                 backpackItemView.IsEquipped = equippedWearables.IsEquipped(wearable);
+                backpackItemView.IsPending = IsFullyPending(wearable.GetUrn());
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && wearable.IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
@@ -272,6 +277,13 @@ namespace DCL.Backpack
                 InitializeItemViewAsync(wearable, backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
+
+        // An owned on-chain item is "pending" when every owned instance is awaiting a gift transfer.
+        // Off-chain/base items have no owned-NFT registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            wearableStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+            && registry.Count > 0
+            && !ownedNftFilter.HasAvailableInstance(registry);
 
         private void EquipItem(int slot, string itemId)
         {

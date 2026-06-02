@@ -43,7 +43,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         private readonly string? builderContentURL;
         private readonly string expectedBuilderItemType;
         private readonly IDecentralandUrlsSource urlsSource;
-        private readonly IOwnedNftFilter ownedNftFilter;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
@@ -57,7 +56,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             IWebRequestController webRequestController,
             string expectedBuilderItemType,
             IDecentralandUrlsSource urlsSource,
-            IOwnedNftFilter ownedNftFilter,
             DiskCacheOptions<TAsset, TIntention>? diskCacheOptions = null,
             string? builderContentURL = null
         ) : base(world, cache, diskCacheOptions)
@@ -70,7 +68,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             this.builderContentURL = builderContentURL;
             this.expectedBuilderItemType = expectedBuilderItemType;
             this.urlsSource = urlsSource;
-            this.ownedNftFilter = ownedNftFilter;
         }
 
         private URLAddress BuildUrlFromIntention(in TIntention intention)
@@ -228,13 +225,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                 {
                     // Probably a base wearable, wrongly return individual data. Skip it
                     if (elementDTO.Metadata.id == individualData.id) continue;
-
-                    // Suppress NFTs the runtime knows are no longer owned (e.g. locally pending gift transfers)
-                    if (ownedNftFilter.ShouldExclude(individualData.id))
-                    {
-                        ReportHub.Log(GetReportData(), $"<color=orange>[WEARABLE_STORAGE_SKIPPED]</color> Key: '{elementDTO.Metadata.id}' excluded entry: '{individualData.id}' (filter)");
-                        continue;
-                    }
 
                     long.TryParse(individualData.transferredAt, out long transferredAt);
                     decimal.TryParse(individualData.price, out decimal price);

@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             return new LoadTrimmedWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
                 URLSubdirectory.FromString("Wearables"), DecentralandUrlsSource.CreateForTest(), new WearableStorage(),
-                trimmedWearableStorage, Substitute.For<IOwnedNftFilter>());
+                trimmedWearableStorage);
         }
 
         protected override void AssertSuccess(TrimmedWearablesResponse asset)

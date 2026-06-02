@@ -72,6 +72,12 @@ namespace DCL.Backpack
 
         public bool IsUnequippable { get; set; }
 
+        /// <summary>
+        ///     True when every owned instance of this item is pending a gift transfer, so it cannot be equipped.
+        ///     Rendering is handled by the view owner.
+        /// </summary>
+        public bool IsPending { get; set; }
+
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
