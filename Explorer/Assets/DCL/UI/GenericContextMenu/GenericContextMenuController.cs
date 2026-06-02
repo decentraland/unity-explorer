@@ -100,7 +100,7 @@ namespace DCL.UI
 
         protected override void OnBeforeViewShow()
         {
-            Canvas.ForceUpdateCanvases();
+            viewInstance!.gameObject.SetActive(true);
             backgroundWorldRect = GetWorldRect(viewRectTransform);
             internalCloseTask = new UniTaskCompletionSource();
             ConfigureContextMenu(viewInstance!.ControlsContainer, inputData.Config, inputData.AnchorPosition, inputData.OverlapRect);
