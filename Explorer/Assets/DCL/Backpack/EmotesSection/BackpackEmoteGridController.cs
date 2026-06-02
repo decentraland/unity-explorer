@@ -316,7 +316,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
-                backpackItemView.IsPending = IsFullyPending(emotes[i].GetUrn());
+                backpackItemView.SetIsPending(IsFullyPending(emotes[i].GetUrn()));
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();

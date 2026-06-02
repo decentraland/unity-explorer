@@ -72,17 +72,17 @@ namespace DCL.Backpack
 
         public bool IsUnequippable { get; set; }
 
-        /// <summary>
-        ///     True when every owned instance of this item is pending a gift transfer, so it cannot be equipped.
-        ///     Rendering is handled by the view owner.
-        /// </summary>
-        public bool IsPending { get; set; }
-
         [SerializeField] private GameObject incompatibleWithBodyShapeContainer;
         [SerializeField] private GameObject incompatibleWithBodyShapeHoverContainer;
 
         [field: SerializeField]
         public GameObject SmartWearableBadgeContainer { get; private set; }
+
+        [field: SerializeField]
+        public Color ThumbnailPendingColor { get; private set; }
+
+        [field: SerializeField]
+        public GameObject PendingBadge { get; private set; }
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -141,6 +141,13 @@ namespace DCL.Backpack
                 OnUnequip?.Invoke(Slot, ItemId);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipWearableAudio);
             });
+        }
+
+        public void SetIsPending(bool isPending)
+        {
+            CanHover = !isPending;
+            WearableThumbnail.color = isPending ? ThumbnailPendingColor : Color.white;
+            PendingBadge.SetActive(isPending);
         }
 
         public void SetEquipButtonsState()

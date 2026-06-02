@@ -21,7 +21,7 @@ namespace DCL.Backpack.EmotesSection
     ///     </para>
     ///     <para>
     ///         Re-equipping a fully-pending emote is prevented at the backpack grid (items flagged
-    ///         <see cref="BackpackItemView.IsPending" />), so no equip-time guard is needed here.
+    ///         <see cref="BackpackItemView.SetIsPending" />), so no equip-time guard is needed here.
     ///     </para>
     /// </summary>
     public sealed class EmotesGiftSanitizer : IDisposable
