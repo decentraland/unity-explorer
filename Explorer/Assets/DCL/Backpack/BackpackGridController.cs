@@ -260,7 +260,7 @@ namespace DCL.Backpack
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 backpackItemView.EquippedIcon.SetActive(equippedWearables.IsEquipped(wearable));
                 backpackItemView.IsEquipped = equippedWearables.IsEquipped(wearable);
-                backpackItemView.SetIsPending(IsFullyPending(wearable.GetUrn()));
+                backpackItemView.IsPending = IsFullyPending(wearable.GetUrn());
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && wearable.IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))

@@ -39,8 +39,6 @@ namespace DCL.AvatarRendering.Loading
 
         void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation);
 
-        void RemoveOwnedNft(URN urn, URN fullUrn);
-
         bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
 
         int GetOwnedNftCount(URN nftUrn);

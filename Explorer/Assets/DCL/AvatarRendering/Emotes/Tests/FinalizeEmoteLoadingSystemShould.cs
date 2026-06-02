@@ -564,9 +564,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public void SetOwnedNft(URN urn, NftBlockchainOperationEntry nft) =>
                 throw new NotImplementedException();
 
-            public void RemoveOwnedNft(URN urn, URN fullUrn) =>
-                throw new NotImplementedException();
-
             public bool TryGetOwnedNftRegistry(URN urn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
 

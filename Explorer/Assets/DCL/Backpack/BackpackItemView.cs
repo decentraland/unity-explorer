@@ -123,6 +123,21 @@ namespace DCL.Backpack
         }
         private bool isLoading;
 
+        public bool IsPending
+        {
+            get => isPending;
+
+            set
+            {
+                isPending = value;
+                CanHover = !isPending;
+                WearableThumbnail.color = isPending ? ThumbnailPendingColor : Color.white;
+                PendingBadge.SetActive(isPending);
+            }
+        }
+
+        private bool isPending;
+
         private CancellationTokenSource cts;
         private bool isCompatibleWithBodyShape;
 
@@ -141,13 +156,6 @@ namespace DCL.Backpack
                 OnUnequip?.Invoke(Slot, ItemId);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(UnEquipWearableAudio);
             });
-        }
-
-        public void SetIsPending(bool isPending)
-        {
-            CanHover = !isPending;
-            WearableThumbnail.color = isPending ? ThumbnailPendingColor : Color.white;
-            PendingBadge.SetActive(isPending);
         }
 
         public void SetEquipButtonsState()
@@ -188,6 +196,7 @@ namespace DCL.Backpack
         {
             if (string.IsNullOrEmpty(ItemId)) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;
+            if (isPending) return;
 
             if (!CanHover && eventData.clickCount != 2) return;
 
