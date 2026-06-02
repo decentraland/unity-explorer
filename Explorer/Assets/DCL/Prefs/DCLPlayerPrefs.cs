@@ -15,6 +15,33 @@ namespace DCL.Prefs
     /// </summary>
     public static class DCLPlayerPrefs
     {
+        /// <summary>
+        /// A stub to ensure graceful shutdown
+        /// </summary>
+        private sealed class DisposedDCLPlayerPrefs : IDCLPrefs
+        {
+            public void SetString(string key, string value) => Warn();
+            public void SetInt(string key, int value) => Warn();
+            public void SetFloat(string key, float value) => Warn();
+            public void SetBool(string key, bool value) => Warn();
+            public string GetString(string key, string def) { Warn(); return def; }
+            public int GetInt(string key, int def) { Warn(); return def; }
+            public float GetFloat(string key, float def) { Warn(); return def; }
+            public bool GetBool(string key, bool def) { Warn(); return def; }
+            public bool HasKey(string key) { Warn(); return false; }
+            public void DeleteKey(string key) => Warn();
+            public void DeleteAll() => Warn();
+            public void Save() => Warn();
+            public void SaveSync() => Warn();
+
+            [System.Diagnostics.Conditional("UNITY_EDITOR")]
+            private static void Warn([System.Runtime.CompilerServices.CallerMemberName] string caller = "")
+            {
+                // TODO: Use ReportHub when it properly lives in its own dependency.
+                Debug.LogWarning( $"[DCLPlayerPrefs] {caller} called after shutdown — ignored.");
+            }
+        }
+
         private const string VECTOR2_KEY_FORMAT = "{0}_{1}";
 
         private static IDCLPrefs dclPrefs;
@@ -135,7 +162,8 @@ namespace DCL.Prefs
 
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             (dclPrefs as IDisposable)?.Dispose();
-            dclPrefs = null;
+            // Avoid any shutdown exceptions, just throw warnings.
+            dclPrefs = new DisposedDCLPlayerPrefs();
             Debug.Log($"[ExitUtils] [DCLPlayerPrefs] cleanup took {stopwatch.ElapsedMilliseconds}ms");
         }
 
