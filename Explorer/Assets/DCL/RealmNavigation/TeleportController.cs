@@ -5,8 +5,11 @@ using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SceneDefinition;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -14,6 +17,9 @@ namespace DCL.RealmNavigation
 {
     public class TeleportController : ITeleportController
     {
+        private static readonly QueryDescription BANNED_SCENES_QUERY =
+            new QueryDescription().WithAll<SceneDefinitionComponent, BannedSceneComponent>();
+
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private IRetrieveScene? retrieveScene;
@@ -88,7 +94,37 @@ namespace DCL.RealmNavigation
                 return null;
             }
 
+            // Banned destination: the scene has been disposed and won't be reloaded, so no system will ever
+            // dequeue the readiness report. Complete it now so the loading screen closes and the avatar lands
+            // at the requested position with the scene unloaded (same UX as cross-realm entry into a banned world).
+            if (IsSceneBanned(sceneDef.id))
+            {
+                loadReport.SetProgress(1f);
+                return null;
+            }
+
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
+        }
+
+        private bool IsSceneBanned(string? sceneId)
+        {
+            if (world == null || string.IsNullOrEmpty(sceneId)) return false;
+
+            // Chunk iteration to avoid the delegate/closure allocation of World.Query(ForEach).
+            // The matched archetype is empty in the common case (no current bans), so iteration is effectively free.
+            foreach (ref Chunk chunk in world.Query(in BANNED_SCENES_QUERY).GetChunkIterator())
+            {
+                ref SceneDefinitionComponent first = ref chunk.GetFirst<SceneDefinitionComponent>();
+
+                foreach (int i in chunk)
+                {
+                    ref SceneDefinitionComponent definition = ref Unsafe.Add(ref first, i);
+                    if (definition.Definition.id == sceneId)
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }
