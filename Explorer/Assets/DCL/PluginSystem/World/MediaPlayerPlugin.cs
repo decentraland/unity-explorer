@@ -10,7 +10,6 @@ using DCL.ResourcesUnloading;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.WebRequests;
 using ECS.LifeCycle;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;
