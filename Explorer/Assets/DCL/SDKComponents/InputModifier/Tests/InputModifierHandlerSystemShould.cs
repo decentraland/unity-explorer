@@ -409,8 +409,6 @@ namespace DCL.SDKComponents.InputModifier.Tests
         [Test]
         public void FinalizeComponents_NoOp_WhenSceneNeverApplied()
         {
-            // Issue #8807: in multi-scene worlds, a scene that never applied a modifier
-            // must not reset the shared global on its own teardown, or it would clobber
             // In multi-scene worlds, a scene that never applied a modifier
             // must not reset the shared global on its own teardown, or it would clobber
             // a modifier set by a different (still-running) scene.
@@ -427,7 +425,6 @@ namespace DCL.SDKComponents.InputModifier.Tests
         [Test]
         public void OnSceneIsCurrentChanged_False_NoOp_WhenSceneNeverApplied()
         {
-            // Issue #8807: a scene that never applied a modifier must not reset the
             // A scene that never applied a modifier must not reset the
             // shared global when it simply transitions to non-current.
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
