@@ -59,7 +59,6 @@ namespace DCL.Backpack
         private CancellationTokenSource? profileLoadingCts;
         private bool isAvatarLoaded;
         private bool instantSectionToggle;
-        private readonly OutfitsGiftSanitizer outfitsGiftSanitizer;
 
         public BackpackController(
             BackpackView view,
@@ -112,7 +111,6 @@ namespace DCL.Backpack
             var outfitsLogger = new OutfitsLogger(wearableStorage, realmData);
             var outfitSlotFactory = new OutfitSlotPresenterFactory(screenshotService);
             var outfitsCollection = new OutfitsCollection();
-            outfitsGiftSanitizer = new OutfitsGiftSanitizer(outfitsCollection, eventBus);
             var outfitApplier = new OutfitApplier(backpackCommandBus);
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
@@ -147,7 +145,8 @@ namespace DCL.Backpack
                 previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
-                outfitSlotFactory);
+                outfitSlotFactory,
+                ownedNftFilter);
 
             avatarController = new AvatarController(
                 avatarView,
@@ -223,7 +222,6 @@ namespace DCL.Backpack
             profileLoadingCts.SafeCancelAndDispose();
             backpackCharacterPreviewController.Dispose();
             emoteInfoPanelController.Dispose();
-            outfitsGiftSanitizer.Dispose();
         }
 
         private void ToggleTipsContent()
