@@ -256,7 +256,8 @@ namespace DCL.UserInAppInitializationFlow
             {
                 context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
             }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.REALM,
                     $"[StartUp] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
