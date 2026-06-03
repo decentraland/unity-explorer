@@ -10,7 +10,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -30,7 +29,6 @@ using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
-using DCL.PrivateWorlds;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
 
@@ -195,25 +193,6 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
-
-        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
-        {
-            worldName = string.Empty;
-
-            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
-                return false;
-
-            string path = uri.AbsolutePath.Trim('/');
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (segments.Length == 0)
-                return false;
-
-            worldName = segments[^1];
-            return !string.IsNullOrEmpty(worldName);
-        }
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
