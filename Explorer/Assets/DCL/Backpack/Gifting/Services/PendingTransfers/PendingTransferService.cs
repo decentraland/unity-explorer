@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
@@ -10,18 +12,27 @@ using System;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
-    public class PendingTransferService : IPendingTransferService, IOwnedNftFilter, IDisposable
+    public class PendingTransferService : IPendingTransferService, IDisposable
     {
         private readonly IGiftingPersistence persistence;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IEmoteStorage emoteStorage;
 
-        private HashSet<string> pendingFullUrns;
+        // Maps a pending full URN (token instance) to its gift-time baseline and kind. The baseline lets Prune
+        // distinguish "indexer hasn't caught up yet" from "the item left the wallet and was transferred back"
+        // (a newer transfer-in timestamp); the kind keeps pruning scoped to the registry that was just fetched.
+        private Dictionary<string, PendingTransfer> pendingTransfers = new ();
 
         public PendingTransferService(IGiftingPersistence persistence,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            IWearableStorage wearableStorage,
+            IEmoteStorage emoteStorage)
         {
             this.persistence = persistence;
             this.identityCache = identityCache;
+            this.wearableStorage = wearableStorage;
+            this.emoteStorage = emoteStorage;
 
             LoadPendingUrns();
 
@@ -33,33 +44,33 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 
         private void LoadPendingUrns()
         {
-            pendingFullUrns = persistence.LoadPendingUrns();
+            pendingTransfers = persistence.LoadPendingUrns();
 
-            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingFullUrns.Count} items from disk.");
-            foreach (string? urn in pendingFullUrns)
+            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingTransfers.Count} items from disk.");
+            foreach (string? urn in pendingTransfers.Keys)
                 ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
         }
 
-        public void AddPending(string fullUrn)
+        public void AddPending(string fullUrn, DateTime baselineTransferredAt, GiftableType kind)
         {
-            lock (pendingFullUrns)
+            lock (pendingTransfers)
             {
-                if (pendingFullUrns.Add(fullUrn))
-                {
-                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Adding new pending item: {fullUrn}");
-                    persistence.SavePendingUrns(pendingFullUrns);
-                }
-                else
+                if (pendingTransfers.ContainsKey(fullUrn))
                 {
                     ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Item already exists in pending: {fullUrn}");
+                    return;
                 }
+
+                pendingTransfers[fullUrn] = new PendingTransfer(baselineTransferredAt, kind);
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Adding new pending {kind}: {fullUrn} (baseline: {baselineTransferredAt:o})");
+                persistence.SavePendingUrns(pendingTransfers);
             }
         }
 
         public bool IsPending(string fullUrn)
         {
-            lock (pendingFullUrns)
-                return pendingFullUrns.Contains(fullUrn);
+            lock (pendingTransfers)
+                return pendingTransfers.ContainsKey(fullUrn);
         }
 
         // Reentrant lock keeps the read consistent with concurrent mutation from the main thread.
@@ -69,9 +80,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         public int GetPendingCount(string baseUrn)
         {
             int count = 0;
-            lock (pendingFullUrns)
+            lock (pendingTransfers)
             {
-                foreach (string pending in pendingFullUrns)
+                foreach (string pending in pendingTransfers.Keys)
                 {
                     if (GiftingUrnParsingHelper.TryGetBaseUrn(pending, out string extractedBase) &&
                         extractedBase == baseUrn)
@@ -85,22 +96,31 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             return count;
         }
 
-
-        public void Prune(
-            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
-            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry)
+        public void Prune(GiftableType kind)
         {
-            lock (pendingFullUrns)
-            {
-                if (pendingFullUrns.Count == 0) return;
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry = wearableStorage.AllOwnedNftRegistry;
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry = emoteStorage.AllOwnedNftRegistry;
+            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> scopedRegistry =
+                kind == GiftableType.Emote ? emoteRegistry : wearableRegistry;
 
-                if (wearableRegistry.Count == 0 &&
-                    emoteRegistry.Count == 0) return;
+            lock (pendingTransfers)
+            {
+                if (pendingTransfers.Count == 0) return;
 
                 var toRemove = new List<string>();
 
-                foreach (string pendingUrn in pendingFullUrns)
+                foreach (KeyValuePair<string, PendingTransfer> pending in pendingTransfers)
                 {
+                    GiftableType? entryKind = pending.Value.Kind;
+
+                    // A typed entry is only evaluated by its own kind's Prune call, against the registry that was
+                    // just fetched (the other kind's registry may not be loaded yet, so its absence is not
+                    // conclusive). Legacy entries have no kind, so they fall through and are checked against both.
+                    if (entryKind.HasValue && entryKind.Value != kind) continue;
+
+                    string pendingUrn = pending.Key;
+                    DateTime baseline = pending.Value.BaselineTransferredAt;
+
                     if (!GiftingUrnParsingHelper.TryGetBaseUrn(pendingUrn, out string baseUrnString))
                     {
                         toRemove.Add(pendingUrn);
@@ -110,32 +130,35 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                     var baseUrn = new URN(baseUrnString);
                     var fullUrnKey = new URN(pendingUrn);
 
-                    bool stillOwned = false;
+                    NftBlockchainOperationEntry entry = default;
+                    bool found = entryKind.HasValue
+                        ? scopedRegistry.TryGetValue(baseUrn, out var instances) && instances.TryGetValue(fullUrnKey, out entry)
+                        : (wearableRegistry.TryGetValue(baseUrn, out var wInstances) && wInstances.TryGetValue(fullUrnKey, out entry)) ||
+                          (emoteRegistry.TryGetValue(baseUrn, out var eInstances) && eInstances.TryGetValue(fullUrnKey, out entry));
 
-                    // O(1) Lookups
-                    if (wearableRegistry.TryGetValue(baseUrn, out var wInstances) && wInstances.ContainsKey(fullUrnKey))
+                    // Not owned anymore: the Indexer caught up and the item left the wallet. Stop tracking it.
+                    if (!found)
                     {
-                        stillOwned = true;
-                    }
-                    else if (emoteRegistry.TryGetValue(baseUrn, out var eInstances) && eInstances.ContainsKey(fullUrnKey))
-                    {
-                        stillOwned = true;
+                        toRemove.Add(pendingUrn);
+                        continue;
                     }
 
-                    // Validates pending transfers against the latest inventory data.
-                    // If an item is no longer in the registry, it means the Indexer has caught up
-                    // and the item has left the user's wallet. We can safely stop tracking it locally.
-                    if (!stillOwned)
+                    // Still owned, but with a newer transfer-in timestamp than the one captured at gift time:
+                    // the item left the wallet and was transferred back (e.g. gifted back). The original gift
+                    // completed, so stop tracking it; otherwise the copy would stay hidden forever.
+                    // A MinValue baseline means the timestamp was unknown at gift time (always the case for
+                    // legacy entries), so we don't risk a false positive against it and only prune on absence.
+                    if (baseline >= DateTime.MinValue && entry.TransferredAt > baseline)
                         toRemove.Add(pendingUrn);
                 }
 
                 if (toRemove.Count > 0)
                 {
                     foreach (string item in toRemove)
-                        pendingFullUrns.Remove(item);
+                        pendingTransfers.Remove(item);
 
-                    persistence.SavePendingUrns(pendingFullUrns);
-                    ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed gifts.");
+                    persistence.SavePendingUrns(pendingTransfers);
+                    ReportHub.Log(ReportCategory.GIFTING, $"Pruned {toRemove.Count} confirmed {kind} gifts.");
                 }
             }
         }
@@ -144,9 +167,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         {
             var sb = new StringBuilder();
             sb.AppendLine("Pending Transfers:");
-            lock (pendingFullUrns)
+            lock (pendingTransfers)
             {
-                foreach (string? urn in pendingFullUrns) sb.AppendLine(urn);
+                foreach (string? urn in pendingTransfers.Keys) sb.AppendLine(urn);
             }
             ReportHub.Log(ReportCategory.GIFTING, sb.ToString());
         }

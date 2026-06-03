@@ -9,6 +9,8 @@ using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -48,7 +50,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -72,7 +74,7 @@ namespace DCL.Backpack.EmotesSection
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
-            IOwnedNftFilter ownedNftFilter)
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -170,6 +172,10 @@ namespace DCL.Backpack.EmotesSection
                         ct,
                         customOwnedEmotes
                     );
+
+                    // The fetch above repopulated the emote owned-NFT registry, so it is a reliable moment to
+                    // drop pending emote gifts that have left the wallet (or been transferred back in).
+                    ownedNftFilter.Prune(GiftableType.Emote);
 
                     int totalAmount = result.totalAmount;
                     IReadOnlyList<ITrimmedEmote> emotes;

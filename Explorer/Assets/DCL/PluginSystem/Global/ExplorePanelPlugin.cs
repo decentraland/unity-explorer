@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
@@ -148,7 +149,7 @@ namespace DCL.PluginSystem.Global
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
-        private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly IPendingTransferService ownedNftFilter;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -249,7 +250,7 @@ namespace DCL.PluginSystem.Global
             IRendererFeaturesCache rendererFeaturesCache,
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
-            IOwnedNftFilter ownedNftFilter
+            IPendingTransferService ownedNftFilter
             )
         {
             this.eventBus = eventBus;

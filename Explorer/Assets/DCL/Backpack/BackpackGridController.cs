@@ -8,6 +8,8 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -46,7 +48,7 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
-        private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
@@ -84,7 +86,7 @@ namespace DCL.Backpack
             IWearableStorage wearableStorage,
             SmartWearableCache smartWearableCache,
             IMVCManager mvcManager,
-            IOwnedNftFilter ownedNftFilter)
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -392,6 +394,10 @@ namespace DCL.Backpack
                     },
                     ct,
                     results);
+
+                // The fetch above repopulated the wearable owned-NFT registry, so it is a reliable moment to
+                // drop pending wearable gifts that have left the wallet (or been transferred back in).
+                ownedNftFilter.Prune(GiftableType.Wearable);
 
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);

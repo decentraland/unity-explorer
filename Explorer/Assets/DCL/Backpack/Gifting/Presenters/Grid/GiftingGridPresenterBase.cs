@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Events;
 using DCL.Backpack.Gifting.Models;
@@ -30,8 +28,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         protected readonly LoadGiftableItemThumbnailCommand loadThumbnailCommand;
         protected readonly IAvatarEquippedStatusProvider equippedStatusProvider;
         protected readonly IPendingTransferService pendingTransferService;
-        protected readonly IWearableStorage wearableStorage;
-        protected readonly IEmoteStorage emoteStorage;
 
         // State
         protected readonly Dictionary<string, TViewModel> viewModelsByUrn = new();
@@ -64,9 +60,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IEventBus eventBus,
             LoadGiftableItemThumbnailCommand loadThumbnailCommand,
             IAvatarEquippedStatusProvider equippedStatusProvider,
-            IPendingTransferService pendingTransferService,
-            IWearableStorage wearableStorage,
-            IEmoteStorage emoteStorage)
+            IPendingTransferService pendingTransferService)
         {
             this.view = view;
             this.adapter = adapter;
@@ -74,8 +68,6 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             this.loadThumbnailCommand = loadThumbnailCommand;
             this.equippedStatusProvider = equippedStatusProvider;
             this.pendingTransferService = pendingTransferService;
-            this.wearableStorage = wearableStorage;
-            this.emoteStorage = emoteStorage;
 
             adapter.SetDataProvider(this);
         }
@@ -163,9 +155,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 (var items, int total) =
                     await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
 
-                pendingTransferService.Prune(wearableStorage.AllOwnedNftRegistry,
-                    emoteStorage.AllOwnedNftRegistry);
-                
+                pendingTransferService.Prune(giftableKind);
+
                 totalCount = total;
 
                 foreach (var item in items)
@@ -314,6 +305,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Abstract Requirements
+        protected abstract GiftableType giftableKind { get; }
         protected abstract UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
         protected abstract TViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable);
         protected abstract int GetItemAmount(GiftableAvatarAttachment item);

@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -69,7 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IOwnedNftFilter ownedNftFilter;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -108,7 +109,7 @@ namespace DCL.PluginSystem.Global
             SmartWearableCache smartWearableCache,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IOwnedNftFilter ownedNftFilter)
+            IPendingTransferService ownedNftFilter)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
