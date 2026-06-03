@@ -428,6 +428,7 @@ namespace DCL.SDKComponents.InputModifier.Tests
         public void OnSceneIsCurrentChanged_False_NoOp_WhenSceneNeverApplied()
         {
             // Issue #8807: a scene that never applied a modifier must not reset the
+            // A scene that never applied a modifier must not reset the
             // shared global when it simply transitions to non-current.
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = true;
