@@ -363,8 +363,8 @@ namespace Global.Dynamic
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
-            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
-            PendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence(identityCache);
+            PendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence, identityCache);
 
             var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
                 emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,

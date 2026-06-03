@@ -5,17 +5,34 @@ using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.Gifting.Utils;
 using DCL.Diagnostics;
+using DCL.Web3.Identities;
+using System;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
-    public class PendingTransferService : IPendingTransferService, IOwnedNftFilter
+    public class PendingTransferService : IPendingTransferService, IOwnedNftFilter, IDisposable
     {
         private readonly IGiftingPersistence persistence;
-        private readonly HashSet<string> pendingFullUrns;
+        private readonly IWeb3IdentityCache identityCache;
 
-        public PendingTransferService(IGiftingPersistence persistence)
+        private HashSet<string> pendingFullUrns;
+
+        public PendingTransferService(IGiftingPersistence persistence,
+            IWeb3IdentityCache identityCache)
         {
             this.persistence = persistence;
+            this.identityCache = identityCache;
+
+            LoadPendingUrns();
+
+            identityCache.OnIdentityChanged += LoadPendingUrns;
+        }
+
+        public void Dispose() =>
+            identityCache.OnIdentityChanged -= LoadPendingUrns;
+
+        private void LoadPendingUrns()
+        {
             pendingFullUrns = persistence.LoadPendingUrns();
 
             ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingFullUrns.Count} items from disk.");
