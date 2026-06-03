@@ -130,13 +130,16 @@ namespace Global.AppArgs
             var sb = new StringBuilder(COUNT_PER_LINE * appParameters.Count);
             var count = 1;
 
+            sb.AppendLine("==================");
             sb.AppendLine("Application arguments:");
+            sb.AppendLine("==================\n");
 
             foreach ((string? key, string? value) in appParameters)
             {
                 sb.Append("Arg ").Append(count).Append(": ").Append(key).Append(" = ").Append(value).Append("\n");
                 count++;
             }
+            sb.AppendLine("==================\n");
 
             ReportHub.LogProductionInfo(sb.ToString());
         }
