@@ -411,6 +411,8 @@ namespace DCL.SDKComponents.InputModifier.Tests
         {
             // Issue #8807: in multi-scene worlds, a scene that never applied a modifier
             // must not reset the shared global on its own teardown, or it would clobber
+            // In multi-scene worlds, a scene that never applied a modifier
+            // must not reset the shared global on its own teardown, or it would clobber
             // a modifier set by a different (still-running) scene.
             ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
             inputModifier.DisableAll = true;
