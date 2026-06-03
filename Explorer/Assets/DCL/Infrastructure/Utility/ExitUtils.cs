@@ -138,7 +138,10 @@ namespace DCL.Utility
             StartExitStopwatch();
 #endif
 
+            // Not required in Editor
+#if !UNITY_EDITOR
             DestroyAllGameObjectsWithOnDestroyMonoBehaviours();
+#endif
 
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
