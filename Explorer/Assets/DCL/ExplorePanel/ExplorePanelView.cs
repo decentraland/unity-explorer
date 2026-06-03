@@ -44,6 +44,9 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public TMP_Text LiveEventsCounterText { get; private set; } = null!;
 
+        [field: SerializeField]
+        public GameObject CommunitiesLiveBadge { get; private set; } = null!;
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig? BackgroundMusic { get; private set; }
