@@ -138,6 +138,8 @@ namespace DCL.Utility
             StartExitStopwatch();
 #endif
 
+            DestroyAllGameObjectsWithOnDestroyMonoBehaviours();
+
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
                 foreach (OnQuittingCleanUpCandidate candidate in scope.Value)
@@ -157,6 +159,80 @@ namespace DCL.Utility
 #endif
             ReportHub.LogProductionInfo($"[ExitUtils] Quit call dispatched at {stopwatch.ElapsedMilliseconds}ms");
         }
+
+        private static readonly Dictionary<Type, bool> declaresOnDestroyCache = new ();
+
+        private static void DestroyAllGameObjectsWithOnDestroyMonoBehaviours()
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            MonoBehaviour[] behaviours = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            // Collect the distinct GameObjects that own at least one MonoBehaviour declaring OnDestroy.
+            var gameObjects = new HashSet<GameObject>();
+
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour == null) continue;
+                if (DeclaresOnDestroy(behaviour.GetType()) == false) continue;
+
+                gameObjects.Add(behaviour.gameObject);
+            }
+
+            ReportHub.LogProductionInfo($"[ExitUtils] Found {gameObjects.Count} GameObjects with OnDestroy MonoBehaviours out of {behaviours.Length} MonoBehaviours ({stopwatch.ElapsedMilliseconds}ms to scan)");
+
+            foreach (GameObject gameObject in gameObjects)
+            {
+                // Another GameObject's destruction may have already destroyed this one (e.g. it was a child).
+                if (gameObject == null) continue;
+
+                string name = gameObject.name;
+                long startedAtMs = stopwatch.ElapsedMilliseconds;
+
+                try
+                {
+                    UnityEngine.Object.DestroyImmediate(gameObject);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                }
+
+                long elapsedMs = stopwatch.ElapsedMilliseconds - startedAtMs;
+                ReportHub.LogProductionInfo($"[ExitUtils] Destroyed '{name}' in {elapsedMs}ms (total {stopwatch.ElapsedMilliseconds}ms)");
+            }
+
+            ReportHub.LogProductionInfo($"[ExitUtils] DestroyAllGameObjectsWithOnDestroyMonoBehaviours finished at {stopwatch.ElapsedMilliseconds}ms");
+        }
+
+        // Returns true if the type, or any of its base types above MonoBehaviour, declares an OnDestroy method.
+        private static bool DeclaresOnDestroy(Type type)
+        {
+            if (declaresOnDestroyCache.TryGetValue(type, out bool cached))
+                return cached;
+
+            var result = false;
+
+            for (Type? current = type; current != null && current != typeof(MonoBehaviour); current = current.BaseType)
+            {
+                MethodInfo? method = current.GetMethod(
+                    "OnDestroy",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly,
+                    null,
+                    Type.EmptyTypes,
+                    null);
+
+                if (method != null)
+                {
+                    result = true;
+                    break;
+                }
+            }
+
+            declaresOnDestroyCache[type] = result;
+            return result;
+        }
+
 
 #if UNITY_STANDALONE_WIN
         // Expected to be called from main thread only.
