@@ -103,6 +103,8 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
 
+        public const string NO_LIVEKIT_MODE = "no-livekit-mode";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
