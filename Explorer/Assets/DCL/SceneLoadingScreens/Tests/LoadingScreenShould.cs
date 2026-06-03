@@ -62,7 +62,12 @@ namespace DCL.SceneLoadingScreens.Tests
             Assert.AreEqual(result, finalRes);
 
             // Report must be modified by the loading screen
-            Assert.That(outerReport!.GetStatus().TaskStatus, result.Success ? Is.EqualTo(UniTaskStatus.Succeeded) : Is.EqualTo(UniTaskStatus.Faulted));
+            UniTaskStatus expectedStatus =
+                result.Success ? UniTaskStatus.Succeeded
+                : result.Error?.State == TaskError.Cancelled ? UniTaskStatus.Canceled
+                : UniTaskStatus.Faulted;
+
+            Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(expectedStatus));
         }
 
         [Test]
@@ -129,7 +134,7 @@ namespace DCL.SceneLoadingScreens.Tests
             Assert.IsTrue(opCancellation.IsCancellationRequested);
 
             Assert.That(result.Error!.Value.State, Is.EqualTo(TaskError.Timeout));
-            Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Faulted));
+            Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Canceled));
         }
 
         [Test]
