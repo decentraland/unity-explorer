@@ -78,7 +78,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             {
                 // Cancellation here means the deploy-window wait was aborted before any
                 // network call — the server still has the slot, so the slot is correctly
-                // reported as Cancelled and the presenter restores the prior UI.
+                // reported as Canceled and the presenter restores the prior UI.
                 return DeleteOutfitOutcome.Cancelled;
             }
             catch (Exception e)
@@ -88,13 +88,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             }
         }
 
-        private ConfirmationDialogParameter BuildDialogParams()
-        {
-            return new ConfirmationDialogParameter(OUTFIT_POPUP_DELETE_TEXT,
+        private ConfirmationDialogParameter BuildDialogParams() =>
+            new (OUTFIT_POPUP_DELETE_TEXT,
                 OUTFIT_POPUP_DELETE_CANCEL_TEXT,
                 OUTFIT_POPUP_DELETE_CONFIRM_TEXT, deleteIcon,
                 false,
                 false);
-        }
     }
 }
