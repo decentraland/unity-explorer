@@ -276,13 +276,11 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             var lodManifest = AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate");
 
             Assert.That(lodManifest.HasHashInPath(), Is.False);
-            Assert.That(lodManifest.SupportsInitialSceneState(), Is.False);
             Assert.That(lodManifest.SupportsDepsDigests(), Is.False);
 
             var manualManifest = AssetBundleManifestVersion.CreateManualManifest();
 
             Assert.That(manualManifest.HasHashInPath(), Is.False);
-            Assert.That(manualManifest.SupportsInitialSceneState(), Is.False);
             Assert.That(manualManifest.SupportsDepsDigests(), Is.False);
 
             var wrongString = AssetBundleManifestVersion.CreateFromFallback("v", "dummyDate");
