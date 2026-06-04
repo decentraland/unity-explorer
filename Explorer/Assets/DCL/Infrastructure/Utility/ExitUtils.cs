@@ -53,6 +53,7 @@ namespace DCL.Utility
         private static readonly Atomic<bool> isExiting = new (false);
 
         private static bool useSoftShutdown;
+        private static bool useNativeShutdownStopwatch;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
@@ -118,10 +119,11 @@ namespace DCL.Utility
             }
         }
 
-        public static void ConfigureSoftShutdown(bool enabled)
+        public static void Configure(bool softShutdown, bool nativeShutdownStopwatch)
         {
-            useSoftShutdown = enabled;
-            ReportHub.LogProductionInfo($"[ExitUtils] Soft shutdown mode configured: {useSoftShutdown}");
+            useSoftShutdown = softShutdown;
+            useNativeShutdownStopwatch = nativeShutdownStopwatch;
+            ReportHub.LogProductionInfo($"[ExitUtils] Configured: softShutdown - {useSoftShutdown}, nativeShutdownStopwatch - {useNativeShutdownStopwatch}");
         }
 
         // Safe to call multiple times
@@ -145,7 +147,10 @@ namespace DCL.Utility
             isExiting.Set(true);
 
 #if UNITY_STANDALONE_WIN
-            StartExitStopwatch();
+            if (useNativeShutdownStopwatch)
+            {
+                StartExitStopwatch();
+            }
 #endif
 
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG

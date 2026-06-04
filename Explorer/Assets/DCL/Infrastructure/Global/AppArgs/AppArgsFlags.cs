@@ -108,6 +108,8 @@ namespace Global.AppArgs
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
+        public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
+
         /// <summary>
         /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
         /// </summary>

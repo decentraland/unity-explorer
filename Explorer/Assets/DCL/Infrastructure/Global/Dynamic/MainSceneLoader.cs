@@ -160,7 +160,10 @@ namespace Global.Dynamic
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
 
-            ExitUtils.ConfigureSoftShutdown(applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN));
+            ExitUtils.Configure(
+                    softShutdown: applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN),
+                    nativeShutdownStopwatch: applicationParametersParser.HasFlag(AppArgsFlags.NATIVE_SHUTDOWN_STOPWATCH)
+                    );
         }
 
         private void ParseEnvironment(string environment)
