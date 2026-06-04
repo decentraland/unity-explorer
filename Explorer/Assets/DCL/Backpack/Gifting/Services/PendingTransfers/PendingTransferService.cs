@@ -22,6 +22,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         // Maps a pending full URN (token instance) to its gift-time baseline and kind. The baseline lets Prune
         // distinguish "indexer hasn't caught up yet" from "the item left the wallet and was transferred back"
         // (a newer transfer-in timestamp); the kind keeps pruning scoped to the registry that was just fetched.
+        // Reassigned wholesale on identity change, so all access is guarded by the dedicated lock below rather
+        // than by locking the dictionary instance itself (which would change out from under a held lock).
+        private readonly object sync = new ();
         private Dictionary<string, PendingTransfer> pendingTransfers = new ();
 
         public PendingTransferService(IGiftingPersistence persistence,
@@ -44,16 +47,19 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 
         private void LoadPendingUrns()
         {
-            pendingTransfers = persistence.LoadPendingUrns();
+            lock (sync)
+            {
+                pendingTransfers = persistence.LoadPendingUrns();
 
-            ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingTransfers.Count} items from disk.");
-            foreach (string? urn in pendingTransfers.Keys)
-                ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
+                ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingTransfers.Count} items from disk.");
+                foreach (string? urn in pendingTransfers.Keys)
+                    ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
+            }
         }
 
         public void AddPending(string fullUrn, DateTime baselineTransferredAt, GiftableType kind)
         {
-            lock (pendingTransfers)
+            lock (sync)
             {
                 if (pendingTransfers.ContainsKey(fullUrn))
                 {
@@ -69,18 +75,18 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 
         public bool IsPending(string fullUrn)
         {
-            lock (pendingTransfers)
+            lock (sync)
                 return pendingTransfers.ContainsKey(fullUrn);
         }
 
-        // Reentrant lock keeps the read consistent with concurrent mutation from the main thread.
+        // IsPending takes the lock, keeping this read consistent with concurrent mutation from the main thread.
         public bool ShouldExclude(URN fullUrn) =>
             IsPending(fullUrn.ToString());
 
         public int GetPendingCount(string baseUrn)
         {
             int count = 0;
-            lock (pendingTransfers)
+            lock (sync)
             {
                 foreach (string pending in pendingTransfers.Keys)
                 {
@@ -103,7 +109,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
             IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> scopedRegistry =
                 kind == GiftableType.Emote ? emoteRegistry : wearableRegistry;
 
-            lock (pendingTransfers)
+            lock (sync)
             {
                 if (pendingTransfers.Count == 0) return;
 
@@ -146,9 +152,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                     // Still owned, but with a newer transfer-in timestamp than the one captured at gift time:
                     // the item left the wallet and was transferred back (e.g. gifted back). The original gift
                     // completed, so stop tracking it; otherwise the copy would stay hidden forever.
-                    // A MinValue baseline means the timestamp was unknown at gift time (always the case for
-                    // legacy entries), so we don't risk a false positive against it and only prune on absence.
-                    if (baseline >= DateTime.MinValue && entry.TransferredAt > baseline)
+                    // Every persisted entry carries a real baseline (baseline-less legacy entries are dropped on
+                    // load), so this comparison is always meaningful here.
+                    if (entry.TransferredAt > baseline)
                         toRemove.Add(pendingUrn);
                 }
 
@@ -167,7 +173,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         {
             var sb = new StringBuilder();
             sb.AppendLine("Pending Transfers:");
-            lock (pendingTransfers)
+            lock (sync)
             {
                 foreach (string? urn in pendingTransfers.Keys) sb.AppendLine(urn);
             }

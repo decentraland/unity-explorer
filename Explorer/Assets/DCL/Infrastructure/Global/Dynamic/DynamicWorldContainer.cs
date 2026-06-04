@@ -148,6 +148,7 @@ namespace Global.Dynamic
         private readonly BannedNotificationHandler bannedNotificationHandler;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
+        private readonly PendingTransferService pendingTransferService;
 
         public IMVCManager MvcManager { get; }
 
@@ -192,7 +193,8 @@ namespace Global.Dynamic
             ISystemClipboard systemClipboard,
             BannedNotificationHandler bannedNotificationHandler,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
+            PendingTransferService pendingTransferService)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -213,6 +215,7 @@ namespace Global.Dynamic
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
+            this.pendingTransferService = pendingTransferService;
         }
 
         public override void Dispose()
@@ -225,6 +228,7 @@ namespace Global.Dynamic
             selfProfile.Dispose();
             profileRepositoryWrapper.Dispose();
             joinedCommunitiesVoiceLiveTracker.Dispose();
+            pendingTransferService.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -1400,7 +1404,8 @@ namespace Global.Dynamic
                 clipboard,
                 bannedNotificationHandler,
                 profileRepositoryWrapper,
-                joinedCommunitiesVoiceLiveTracker
+                joinedCommunitiesVoiceLiveTracker,
+                pendingTransferService
             );
 
             // Init itself
