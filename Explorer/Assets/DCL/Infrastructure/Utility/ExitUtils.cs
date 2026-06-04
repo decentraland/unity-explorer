@@ -55,7 +55,15 @@ namespace DCL.Utility
         private static bool useSoftShutdown;
         private static bool useNativeShutdownStopwatch;
 
+        /// <summary>
+        ///     In the Editor always false so the full dispose path runs on Play Mode exit —
+        ///     leaked native resources would accumulate in the Editor process until restart.
+        /// </summary>
+#if UNITY_EDITOR
+        public static bool IsAboutToQuit => false;
+#else
         public static bool IsAboutToQuit => isExiting.Value();
+#endif
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
