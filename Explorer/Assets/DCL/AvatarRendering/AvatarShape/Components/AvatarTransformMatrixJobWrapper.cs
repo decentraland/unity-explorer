@@ -88,8 +88,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
-            remoteAvatars.Complete();
-
             remoteAvatars.Dispose();
             mainPlayerAvatar.Dispose();
 
