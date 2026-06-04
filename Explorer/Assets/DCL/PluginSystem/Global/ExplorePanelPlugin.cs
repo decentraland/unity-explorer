@@ -362,7 +362,7 @@ namespace DCL.PluginSystem.Global
 
             explorePanelNavmapBus.SetObject(navmapBus);
 
-            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider);
+            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider, selfProfile);
 
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,

@@ -178,61 +178,97 @@ namespace DCL.Backpack
         {
             if (!TryGetSlot(slotIndex, out var presenter)) return;
 
+            // Snapshot the slot's prior state so we can revert it on failure or cancellation
+            // (this is the slot's last server-confirmed outfit, if any).
+            var originalOutfitData = presenter.GetOutfitData();
+
+            BeginOperationBusy();
             presenter.SetSaving();
 
+            CapturedScreenshot? capture = null;
             try
             {
-                var savedItem = await saveOutfitCommand.ExecuteAsync(slotIndex,
-                    equippedWearables,
-                    outfitsCollection.GetAll(),
-                    CancellationToken.None);
+                capture = await screenshotService.CaptureAsync(characterPreviewController, ct);
+                if (capture == null || ct.IsCancellationRequested)
+                {
+                    RevertSlot(presenter, originalOutfitData);
+                    return;
+                }
+
+                // Optimistic display: show the thumbnail immediately so the user gets feedback
+                // during the ~15s deploy window. PNG is only persisted to disk after the
+                // backend save succeeds (PersistPngAsync below).
+                presenter.SetThumbnail(capture.Value.Thumbnail);
+
+                var savedItem = await saveOutfitCommand.ExecuteAsync(slotIndex, equippedWearables, ct);
 
                 if (savedItem == null)
                 {
-                    presenter.SetEmpty();
+                    RevertSlot(presenter, originalOutfitData);
                     return;
                 }
 
                 outfitsCollection.AddOrReplace(savedItem);
 
-                await TakeScreenshotAndDisplayAsync(slotIndex, ct);
-
-                if (cts.Token.IsCancellationRequested) return;
+                // Save succeeded — the server has the data. From here we use CancellationToken.None
+                // so the thumbnail is persisted even if the user just closed the panel; otherwise
+                // we'd land in the "outfit on server, no local thumbnail" state on next session.
+                try
+                {
+                    await screenshotService.PersistPngAsync(slotIndex, capture.Value.PngBytes, CancellationToken.None);
+                }
+                catch (Exception persistEx)
+                {
+                    ReportHub.LogException(persistEx, ReportCategory.OUTFITS);
+                }
 
                 presenter.SetData(savedItem, loadThumbnail: false);
                 presenter.PlaySaveOutfitSound();
-
                 UpdateFirstEmptySlotPrompt();
             }
             catch (OperationCanceledException)
             {
                 ReportHub.Log(ReportCategory.OUTFITS, "Save outfit operation was cancelled.");
-                presenter.SetEmpty();
+                RevertSlot(presenter, originalOutfitData);
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
-                presenter.SetEmpty();
+                RevertSlot(presenter, originalOutfitData);
+            }
+            finally
+            {
+                EndOperationBusy();
             }
         }
 
-        private async UniTask TakeScreenshotAndDisplayAsync(int slotIndex, CancellationToken ct)
+        private void RevertSlot(OutfitSlotPresenter presenter, OutfitItem? originalOutfitData)
         {
-            var thumbnail = await screenshotService
-                .CaptureAndSavePngAsync(characterPreviewController, slotIndex, ct);
+            // SetData/SetEmpty both call SetThumbnail internally, destroying any optimistic
+            // texture we set earlier — no extra cleanup needed here.
+            if (originalOutfitData != null)
+                presenter.SetData(originalOutfitData);
+            else
+                presenter.SetEmpty();
+        }
 
-            if (ct.IsCancellationRequested || thumbnail == null) return;
+        private async UniTask TakeScreenshotAndPersistAsync(int slotIndex, CancellationToken ct)
+        {
+            var capture = await screenshotService.CaptureAsync(characterPreviewController, ct);
+            if (ct.IsCancellationRequested || capture == null) return;
 
             if (TryGetSlot(slotIndex, out var presenter))
-                presenter.SetThumbnail(thumbnail);
+                presenter.SetThumbnail(capture.Value.Thumbnail);
+
+            await screenshotService.PersistPngAsync(slotIndex, capture.Value.PngBytes, ct);
         }
 
         private void OnDeleteOutfitRequested(int slotIndex)
         {
-            OnDeleteOutfitRequestedAsync(slotIndex).Forget();
+            OnDeleteOutfitRequestedAsync(slotIndex, cts.Token).Forget();
         }
 
-        private async UniTaskVoid OnDeleteOutfitRequestedAsync(int slotIndex)
+        private async UniTaskVoid OnDeleteOutfitRequestedAsync(int slotIndex, CancellationToken ct)
         {
             if (!TryGetSlot(slotIndex, out var presenter)) return;
 
@@ -245,15 +281,14 @@ namespace DCL.Backpack
                 return;
             }
 
+            BeginOperationBusy();
             presenter.SetSaving();
 
             try
             {
-                var outcome = await deleteOutfitCommand.ExecuteAsync(slotIndex,
-                    outfitsCollection.GetAll(),
-                    CancellationToken.None);
+                var outcome = await deleteOutfitCommand.ExecuteAsync(slotIndex, ct);
 
-                if (cts.Token.IsCancellationRequested)
+                if (ct.IsCancellationRequested)
                 {
                     presenter.SetData(originalOutfitData);
                     return;
@@ -272,10 +307,18 @@ namespace DCL.Backpack
                     presenter.SetData(originalOutfitData);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                presenter.SetData(originalOutfitData);
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
                 presenter.SetData(originalOutfitData);
+            }
+            finally
+            {
+                EndOperationBusy();
             }
         }
 
@@ -314,6 +357,22 @@ namespace DCL.Backpack
             for (int i = 0; i < slotPresenters.Count; i++)
                 slotPresenters[i].SetHoverEnabled(true);
             loadingSlot = null;
+        }
+
+        /// <summary>
+        ///     Locks every slot's save and delete buttons while a save or delete is in flight.
+        ///     Mirrors the equip-busy lockdown pattern but applies to save/delete actions.
+        /// </summary>
+        private void BeginOperationBusy()
+        {
+            for (int i = 0; i < slotPresenters.Count; i++)
+                slotPresenters[i].SetOperationBusy(true);
+        }
+
+        private void EndOperationBusy()
+        {
+            for (int i = 0; i < slotPresenters.Count; i++)
+                slotPresenters[i].SetOperationBusy(false);
         }
 
         private bool TryGetSlot(int slotIndex, out OutfitSlotPresenter slot)
@@ -361,7 +420,7 @@ namespace DCL.Backpack
 
             try
             {
-                await TakeScreenshotAndDisplayAsync(slotIndex, ct);
+                await TakeScreenshotAndPersistAsync(slotIndex, ct);
             }
             catch (OperationCanceledException)
             {

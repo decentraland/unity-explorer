@@ -122,6 +122,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void ShowLoadingState()
         {
             ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             fullContainer.SetActive(false);
@@ -133,6 +134,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void ShowStateSaving()
         {
             ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             loadingContainer.SetActive(false);
@@ -140,7 +142,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             savingContainer.SetActive(true);
         }
 
-        public void ShowFullState(Texture2D thumbnail, bool isHovered)
+        /// <summary>
+        ///     Forces the per-slot action buttons hidden regardless of where they sit in the
+        ///     prefab hierarchy. Some prefabs place equip/delete outside <see cref="fullContainer"/>,
+        ///     so toggling the container alone isn't enough — these buttons would otherwise
+        ///     remain visible from their previous hovered state during Save/Loading transitions.
+        /// </summary>
+        private void HideActionButtons()
+        {
+            deleteButton?.gameObject.SetActive(false);
+            equipButton?.gameObject.SetActive(false);
+            unEquipButton?.gameObject.SetActive(false);
+        }
+
+        public void ShowFullState(Texture2D thumbnail, bool isHovered, bool isOperationBusy)
         {
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
@@ -162,16 +177,12 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             outfitHoverOutline?.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
 
-            if (isHovered)
-            {
-                deleteButton?.gameObject.SetActive(true);
-                equipButton?.gameObject.SetActive(true);
-            }
-            else
-            {
-                deleteButton?.gameObject.SetActive(false);
-                equipButton?.gameObject.SetActive(false);
-            }
+            // Equip stays available on hover even during a save/delete: it's safe because
+            // SaveOutfitCommand snapshots equippedWearables before its await, and delete
+            // doesn't touch equipped state at all. Delete is hidden during operations to
+            // keep destructive actions serialized.
+            equipButton?.gameObject.SetActive(isHovered);
+            deleteButton?.gameObject.SetActive(isHovered && !isOperationBusy);
         }
 
         public void AnimateHover()
@@ -224,6 +235,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
                 AnimateExit();
 
             hoverHandler.enabled = isEnabled;
+        }
+
+        public void SetSaveInteractable(bool interactable)
+        {
+            if (saveButton != null) saveButton.interactable = interactable;
+        }
+
+        public void SetDeleteInteractable(bool interactable)
+        {
+            if (deleteButton != null) deleteButton.interactable = interactable;
         }
 
         public void ResetHoverState()
