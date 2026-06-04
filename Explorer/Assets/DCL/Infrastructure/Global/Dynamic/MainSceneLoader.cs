@@ -118,32 +118,49 @@ namespace Global.Dynamic
 
             canShutdown = false;
 
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MainSceneLoader));
+
             DisableAllSelectableTransitions();
+            stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
 
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                {
                     plugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
 
                 if (globalWorld != null)
+                {
                     dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    stopwatch.LogStep("DisposeGlobalWorld");
+                }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("dynamicWorldContainer.SafeDispose");
             }
 
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
                 foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                {
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"ECSWorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
             bootstrapContainer?.Dispose();
-            splashScreen.Dispose();
+            stopwatch.LogStep("bootstrapContainer.Dispose");
 
-            ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
+            splashScreen.Dispose();
+            stopwatch.LogStep("splashScreen.Dispose");
+
+            ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private void OnApplicationQuit()
