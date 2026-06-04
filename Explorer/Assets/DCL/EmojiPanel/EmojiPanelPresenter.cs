@@ -66,8 +66,7 @@ namespace DCL.Emoji
 
             if (isVisible)
                 EnsureInitialized();
-
-            if (!isVisible)
+            else
             {
                 HideTooltip();
                 view.BlurSearchInput();
