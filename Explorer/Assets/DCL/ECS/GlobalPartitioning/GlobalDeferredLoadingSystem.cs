@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes;
@@ -14,6 +15,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
@@ -42,6 +44,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetTrimmedWearableByParamIntention, IWearable[]>(),
@@ -59,7 +62,8 @@ namespace DCL.GlobalPartitioning
             COMPONENT_HANDLERS_SCENES = new[]
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
-                CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
+                CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
             };
         }
 

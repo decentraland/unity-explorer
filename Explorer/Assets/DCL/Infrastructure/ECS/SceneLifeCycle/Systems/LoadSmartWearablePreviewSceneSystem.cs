@@ -6,11 +6,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.SceneRunner.Scene;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -99,13 +101,16 @@ namespace ECS.SceneLifeCycle.Systems
             };
             var ipfsPath = new IpfsPath(definition.id!, URLDomain.FromString(urlsSource.Url(DecentralandUrl.Content)));
 
-            // NOTICE that when creating the scene we do NOT mark it as a PX because we are running it as a normal scene
+            // NOTICE that when creating the scene we do NOT mark it as a PX because we are running it as a normal scene.
+            // Smart-wearable preview content is creator-tooling, never deployed through the AB pipeline — no ISS
+            // descriptor exists for it. Attach a State.None descriptor so the resolver gate skips it entirely.
             SceneDefinitionComponent definitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath);
+            var issDescriptor = ISSDescriptor.NONE;
 
             await UniTask.SwitchToMainThread();
 
-            Entity scene = World.Create(definitionComponent, PartitionComponent.TOP_PRIORITY);
-            CreateSceneFacadePromise.Execute(World, scene, definitionComponent, PartitionComponent.TOP_PRIORITY);
+            Entity scene = World.Create(definitionComponent, issDescriptor, PartitionComponent.TOP_PRIORITY);
+            CreateSceneFacadePromise.Execute(World, scene, definitionComponent, issDescriptor, PartitionComponent.TOP_PRIORITY);
 
             World.Set(realm, new SmartWearablePreviewScene { Value = scene });
         }

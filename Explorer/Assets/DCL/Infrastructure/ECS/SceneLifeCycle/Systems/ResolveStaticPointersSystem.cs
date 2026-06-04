@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
@@ -9,6 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
@@ -53,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(SceneLODInfo))]
         private void StartSceneLoading([Data] IIpfsRealm realm, [Data] in StaticScenePointers staticScenePointers,
-            in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
+            in Entity entity, ref SceneDefinitionComponent definition, ISSDescriptor issDescriptor, ref PartitionComponent partitionComponent)
         {
             for (var i = 0; i < definition.Parcels.Count; i++)
             {
@@ -61,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    CreateSceneFacadePromise.Execute(World, entity, in definition, partitionComponent);
+                    CreateSceneFacadePromise.Execute(World, entity, in definition, issDescriptor, partitionComponent);
                     return;
                 }
             }
