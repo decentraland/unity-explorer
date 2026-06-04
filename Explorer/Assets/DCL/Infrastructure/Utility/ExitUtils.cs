@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using DCL.Diagnostics;
 using DCL.Prefs;
 using UnityEngine;
@@ -51,22 +52,23 @@ namespace DCL.Utility
         private static readonly Mutex<List<OnQuittingCleanUpCandidate>> candidates = new (new ()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         private static readonly Atomic<bool> isExiting = new (false);
 
+        private static bool useSoftShutdown;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
         {
 #if UNITY_EDITOR
             Patch.Reset();
-#endif
-            // Dirty reflection hack because there is no other way to view the subs of Application.quitting
-            Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
 
-#if UNITY_EDITOR
             // ensure isExiting is false on reopening
             isExiting.Set(false);
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 scope.Value.Clear();
 #endif
             Application.quitting += OnApplicationQuitting;
+
+            // Dirty reflection hack because there is no other way to view the subs of Application.quitting
+            Patch.Apply();
         }
 
         private static void OnApplicationQuitting()
@@ -116,6 +118,13 @@ namespace DCL.Utility
             }
         }
 
+        public static void ConfigureSoftShutdown(bool enabled)
+        {
+            useSoftShutdown = enabled;
+            ReportHub.LogProductionInfo($"[ExitUtils] Soft shutdown mode configured: {useSoftShutdown}");
+        }
+
+        // Safe to call multiple times
         public static void Exit()
         {
             if (Cysharp.Threading.Tasks.PlayerLoopHelper.IsMainThread == false)
@@ -139,11 +148,6 @@ namespace DCL.Utility
             StartExitStopwatch();
 #endif
 
-            // Not required in Editor
-#if !UNITY_EDITOR
-            DestroyAllGameObjectsWithOnDestroyMonoBehaviours();
-#endif
-
             using (var scope = candidates.Lock()) // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             {
                 foreach (OnQuittingCleanUpCandidate candidate in scope.Value)
@@ -156,8 +160,9 @@ namespace DCL.Utility
             DCLPlayerPrefs.SaveSync();
             ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
 
-            // Reflection may drop the values. resubscribe to be sure.
-            Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
+            // Reflection may drop the values. Reapply to be sure, and to move TryTerminateSelf back to the
+            // last position in case anything subscribed to Application.quitting after the previous Apply().
+            Patch.Apply();
 
             ReportHub.LogProductionInfo($"[ExitUtils] Begin Quit call {stopwatch.ElapsedMilliseconds}ms");
 #if UNITY_EDITOR
@@ -167,80 +172,6 @@ namespace DCL.Utility
 #endif
             ReportHub.LogProductionInfo($"[ExitUtils] Quit call dispatched at {stopwatch.ElapsedMilliseconds}ms");
         }
-
-        private static readonly Dictionary<Type, bool> declaresOnDestroyCache = new ();
-
-        private static void DestroyAllGameObjectsWithOnDestroyMonoBehaviours()
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            MonoBehaviour[] behaviours = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-            // Collect the distinct GameObjects that own at least one MonoBehaviour declaring OnDestroy.
-            var gameObjects = new HashSet<GameObject>();
-
-            foreach (MonoBehaviour behaviour in behaviours)
-            {
-                if (behaviour == null) continue;
-                if (DeclaresOnDestroy(behaviour.GetType()) == false) continue;
-
-                gameObjects.Add(behaviour.gameObject);
-            }
-
-            ReportHub.LogProductionInfo($"[ExitUtils] Found {gameObjects.Count} GameObjects with OnDestroy MonoBehaviours out of {behaviours.Length} MonoBehaviours ({stopwatch.ElapsedMilliseconds}ms to scan)");
-
-            foreach (GameObject gameObject in gameObjects)
-            {
-                // Another GameObject's destruction may have already destroyed this one (e.g. it was a child).
-                if (gameObject == null) continue;
-
-                string name = gameObject.name;
-                long startedAtMs = stopwatch.ElapsedMilliseconds;
-
-                try
-                {
-                    UnityEngine.Object.DestroyImmediate(gameObject);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
-                }
-
-                long elapsedMs = stopwatch.ElapsedMilliseconds - startedAtMs;
-                ReportHub.LogProductionInfo($"[ExitUtils] Destroyed '{name}' in {elapsedMs}ms (total {stopwatch.ElapsedMilliseconds}ms)");
-            }
-
-            ReportHub.LogProductionInfo($"[ExitUtils] DestroyAllGameObjectsWithOnDestroyMonoBehaviours finished at {stopwatch.ElapsedMilliseconds}ms");
-        }
-
-        // Returns true if the type, or any of its base types above MonoBehaviour, declares an OnDestroy method.
-        private static bool DeclaresOnDestroy(Type type)
-        {
-            if (declaresOnDestroyCache.TryGetValue(type, out bool cached))
-                return cached;
-
-            var result = false;
-
-            for (Type? current = type; current != null && current != typeof(MonoBehaviour); current = current.BaseType)
-            {
-                MethodInfo? method = current.GetMethod(
-                    "OnDestroy",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly,
-                    null,
-                    Type.EmptyTypes,
-                    null);
-
-                if (method != null)
-                {
-                    result = true;
-                    break;
-                }
-            }
-
-            declaresOnDestroyCache[type] = result;
-            return result;
-        }
-
 
 #if UNITY_STANDALONE_WIN
         // Expected to be called from main thread only.
@@ -287,23 +218,143 @@ namespace DCL.Utility
         }
 #endif
 
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
+        private static void TryTerminateSelf()
+        {
+            int pid = Process.GetCurrentProcess().Id; // IL2CPP safe
+            ReportHub.LogProductionInfo($"[ExitUtils] Terminating process pid={pid}");
+
+            if (useSoftShutdown)
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils] Terminating process aborted due useSoftShutdown mode");
+                return;
+            }
+
+#if UNITY_STANDALONE_WIN
+            IntPtr handle = OpenProcess(PROCESS_TERMINATE, false, (uint)pid);
+
+            if (handle == IntPtr.Zero)
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils] OpenProcess failed (err {Marshal.GetLastWin32Error()})");
+                return;
+            }
+
+            if (TerminateProcess(handle, 0) == false)
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils] TerminateProcess failed (err {Marshal.GetLastWin32Error()})");
+                CloseHandle(handle);
+            }
+#elif UNITY_STANDALONE_OSX
+            if (kill(pid, SIGKILL) != 0)
+            {
+                ReportHub.LogProductionInfo($"[ExitUtils] kill(SIGKILL) failed (errno {Marshal.GetLastWin32Error()})");
+            }
+#endif
+        }
+
+#if UNITY_STANDALONE_WIN
+
+        private const uint PROCESS_TERMINATE = 0x0001;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
+        
+#elif UNITY_STANDALONE_OSX
+
+        private const int SIGKILL = 9;
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int kill(int pid, int sig);
+
+#endif
+
+#endif
+
         private static class Patch
         {
             private static readonly HashSet<Action> wrapped = new ();
             private static FieldInfo quittingField;
+            
+            // Safe to call multiple times.
+            public static void Apply()
+            {
+                ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
+                RegisterTerminateSelf();
+            }
+
+            public static void Reset()
+            {
+                wrapped.Clear();
+            }
+
+            private static FieldInfo? QuitFieldInfo()
+            {
+                quittingField ??= typeof(Application).GetField("quitting", BindingFlags.NonPublic | BindingFlags.Static);
+
+                if (quittingField == null)
+                {
+                    ReportHub.LogProductionInfo("[ExitUtils.Patch] Cannot find Application.quitting backing field");
+                }
+
+                return quittingField;
+            }
+
+            // Keeps TryTerminateSelf as the very LAST Application.quitting subscriber.
+            // Safe to call multiple times.
+            private static void RegisterTerminateSelf()
+            {
+#if (UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX) && !UNITY_EDITOR
+                try
+                {
+                    var quittingField = QuitFieldInfo();
+                    if (quittingField == null)
+                    {
+                        return;
+                    }
+
+                    Action terminateSelf = TryTerminateSelf;
+
+                    wrapped.Add(terminateSelf);
+
+                    Action? current = quittingField.GetValue(null) as Action;
+                    Delegate[] handlers = current?.GetInvocationList() ?? Array.Empty<Delegate>();
+
+                    Action? rebuilt = null;
+
+                    // Delete if exists
+                    foreach (Delegate handler in handlers)
+                    {
+                        if (handler is not Action action) continue;
+                        if (action == terminateSelf) continue;
+
+                        rebuilt += action;
+                    }
+
+                    // Append at the very end
+                    rebuilt += terminateSelf;
+
+                    quittingField.SetValue(null, rebuilt);
+                }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
+#endif
+            }
 
             // Method is safe to be called multiple times. Idempotency
-            public static void ApplicationQuittingFirstSubscriberSelfPatchWithTimers()
+            private static void ApplicationQuittingFirstSubscriberSelfPatchWithTimers()
             {
                 ReportHub.LogProductionInfo($"[ExitUtils.Patch] Invoke ApplicationQuittingFirstSubscriberSelfPatchWithTimers, actions wrapped {wrapped.Count}"); 
 
                 try
                 {
-                    quittingField ??= typeof(Application).GetField("quitting", BindingFlags.NonPublic | BindingFlags.Static);
-
+                    var quittingField = QuitFieldInfo();
                     if (quittingField == null)
                     {
-                        ReportHub.LogProductionInfo("[ExitUtils.Patch] Cannot find Application.quitting backing field, per-subscriber timing disabled");
                         return;
                     }
 
@@ -333,11 +384,6 @@ namespace DCL.Utility
                     quittingField.SetValue(null, rebuilt);
                 }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.UNSPECIFIED); }
-            }
-
-            public static void Reset()
-            {
-                wrapped.Clear();
             }
 
             private static Action WrapWithTimer(Action original)

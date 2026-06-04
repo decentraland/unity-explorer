@@ -159,6 +159,8 @@ namespace Global.Dynamic
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
+
+            ExitUtils.ConfigureSoftShutdown(applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN));
         }
 
         private void ParseEnvironment(string environment)
