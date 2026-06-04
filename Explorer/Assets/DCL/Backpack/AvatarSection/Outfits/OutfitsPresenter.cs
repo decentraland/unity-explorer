@@ -188,6 +188,13 @@ namespace DCL.Backpack
             CapturedScreenshot? capture = null;
             try
             {
+                await StopAnimationsForCaptureAsync(ct);
+                if (ct.IsCancellationRequested)
+                {
+                    RevertSlot(presenter, originalOutfitData);
+                    return;
+                }
+
                 capture = await screenshotService.CaptureAsync(characterPreviewController, ct);
                 if (capture == null || ct.IsCancellationRequested)
                 {
@@ -501,6 +508,20 @@ namespace DCL.Backpack
 
             if (characterPreviewController is BackpackCharacterPreviewController backpackController)
                 backpackController.PlayRandomEmote();
+        }
+
+        private async UniTask StopAnimationsForCaptureAsync(CancellationToken ct)
+        {
+            const int MAX_WAIT_FRAMES = 30;
+
+            characterPreviewController.StopEmotes();
+
+            int waited = 0;
+            while (characterPreviewController.IsPlayingEmote() && waited < MAX_WAIT_FRAMES)
+            {
+                await UniTask.DelayFrame(1, PlayerLoopTiming.PostLateUpdate, ct);
+                waited++;
+            }
         }
 
         public void Dispose()
