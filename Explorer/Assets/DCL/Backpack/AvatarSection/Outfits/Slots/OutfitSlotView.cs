@@ -163,10 +163,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
             outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
             if (hasRealThumbnail)
-            {
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
-                outfitThumbnail.color = new Color(1, 1, 1, 1);
-            }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
