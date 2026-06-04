@@ -166,8 +166,9 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
 
-            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl,
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl, lodGeneratorCdnUrl,
                 new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
                 new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
 

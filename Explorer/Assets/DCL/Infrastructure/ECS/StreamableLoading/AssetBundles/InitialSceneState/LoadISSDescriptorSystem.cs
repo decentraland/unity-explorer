@@ -32,19 +32,20 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadISSDescriptorSystem : LoadSystemBase<ISSDescriptorMetadata, GetISSDescriptorIntention>
     {
-        // TODO (Juani): Hardcoded for this iteration — wire to DI once the dev/prod bucket split lands.
-        private static readonly URLDomain DESCRIPTOR_BASE_URL =
-            URLDomain.FromString("https://lod-unity-bucket-dev-0871c25.s3.us-east-1.amazonaws.com/lods-unity/manifests/");
+        private const string DESCRIPTOR_PATH_PREFIX = "lods-unity/manifests/";
 
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain assetBundleURL;
+        private readonly URLDomain descriptorBaseUrl;
 
         internal LoadISSDescriptorSystem(World world, IWebRequestController webRequestController, URLDomain assetBundleURL,
+            URLDomain descriptorBaseUrl,
             IStreamableCache<ISSDescriptorMetadata, GetISSDescriptorIntention> cache, DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>? diskCacheOptions = null)
             : base(world, cache, diskCacheOptions)
         {
             this.webRequestController = webRequestController;
             this.assetBundleURL = assetBundleURL;
+            this.descriptorBaseUrl = descriptorBaseUrl;
         }
 
         protected override async UniTask<StreamableLoadingResult<ISSDescriptorMetadata>> FlowInternalAsync(GetISSDescriptorIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -69,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         private async UniTask<ISSDescriptorMetadata?> TryLoadDescriptorAsync(string sceneId, CancellationToken ct)
         {
-            URLAddress url = DESCRIPTOR_BASE_URL.Append(URLPath.FromString($"{sceneId}_InitialSceneState.json"));
+            URLAddress url = descriptorBaseUrl.Append(URLPath.FromString($"{DESCRIPTOR_PATH_PREFIX}{sceneId}_InitialSceneState.json"));
 
             try
             {
