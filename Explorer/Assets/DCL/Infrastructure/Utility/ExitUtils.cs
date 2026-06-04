@@ -55,6 +55,8 @@ namespace DCL.Utility
         private static bool useSoftShutdown;
         private static bool useNativeShutdownStopwatch;
 
+        public static bool IsAboutToQuit => isExiting.Value();
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SubscribeToApplicationQuitting()
         {
