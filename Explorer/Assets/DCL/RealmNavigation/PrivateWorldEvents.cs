@@ -12,7 +12,12 @@ namespace DCL.PrivateWorlds
     }
 
     public interface IWorldAccessGate
-    { 
+    {
         UniTask<WorldAccessResult> CheckAccessAsync(string worldName, string? ownerAddress, CancellationToken ct);
+    }
+
+    public interface ICommunityMembershipChecker
+    {
+        UniTask<bool> IsMemberOfCommunityAsync(string communityId, CancellationToken ct);
     }
 }
