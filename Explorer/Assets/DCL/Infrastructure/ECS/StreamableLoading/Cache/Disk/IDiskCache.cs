@@ -7,9 +7,11 @@ using DCL.Utility.Types;
 using System;
 using System.Buffers;
 using System.Threading;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Utility.Ownership;
+using CommunityToolkit.HighPerformance;
 
 namespace ECS.StreamableLoading.Cache.Disk
 {
@@ -65,6 +67,44 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
         UniTask<T> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
+    }
+
+    /// <summary>
+    ///     Generic serializer for string representation
+    /// </summary>
+    public class StringDiskSerializer : IDiskSerializer<string, SerializeMemoryIterator<StringDiskSerializer.State>>
+    {
+        public readonly struct State
+        {
+            public readonly ReadOnlyMemory<byte> StringBytes;
+
+            public State(ReadOnlyMemory<byte> stringBytes)
+            {
+                StringBytes = stringBytes;
+            }
+        }
+
+        public SerializeMemoryIterator<State> Serialize(string data)
+        {
+            ReadOnlyMemory<char> memory = data.AsMemory();
+            ReadOnlyMemory<byte> bytes = memory.AsBytes();
+            var state = new State(bytes);
+
+            return SerializeMemoryIterator<State>.New(
+                state,
+                static (source, index, buffer) => SerializeMemoryIterator.ReadNextData(index, source.StringBytes.Span, buffer),
+                static (source, index, bufferLength) => SerializeMemoryIterator.CanReadNextData(index, source.StringBytes.Length, bufferLength)
+            );
+        }
+
+        public UniTask<string> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        {
+            Span<char> charSpan = MemoryMarshal.Cast<byte, char>(data.Memory.Span);
+            var output = new string(charSpan);
+            data.Dispose();
+
+            return UniTask.FromResult(output);
+        }
     }
 
     public readonly struct SlicedOwnedMemory<T> : IDisposable where T: unmanaged
