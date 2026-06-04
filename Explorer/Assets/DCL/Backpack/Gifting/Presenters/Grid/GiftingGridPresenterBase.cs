@@ -76,7 +76,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         {
             lifeCts = new CancellationTokenSource();
             thumbnailLoadedSubscription = eventBus.Subscribe<GiftingEvents.ThumbnailLoadedEvent>(OnThumbnailLoaded);
-            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful); 
+            giftSuccessfulSubscription = eventBus.Subscribe<GiftingEvents.OnSuccessfulGift>(OnGiftSuccessful);
             adapter.OnNearEndOfScroll += OnNearEndOfScroll;
             adapter.OnItemSelected += OnItemSelected;
 
@@ -145,7 +145,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             // It is linked to 'lifeCts' so it cancels if the view closes,
             // but can also be canceled independently if a new search starts.
             fetchCts = fetchCts.SafeRestartLinked(ct);
-            
+
             var localCt = fetchCts.Token;
 
             try
@@ -155,7 +155,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                 (var items, int total) =
                     await FetchDataAsync(CURRENT_PAGE_SIZE, currentPage, currentSearch, localCt);
 
-                pendingTransferService.Prune(giftableKind);
+                pendingTransferService.Prune(GiftableKind);
 
                 totalCount = total;
 
@@ -176,7 +176,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
                     viewModelUrnOrder.Add(urn);
                     viewModelsByUrn[urn] = CreateViewModel(item, displayAmount, isEquipped, isGiftable);
                 }
-                
+
                 UpdateEmptyState(currentPage == 1 && viewModelUrnOrder.Count == 0);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, localCt);
@@ -216,7 +216,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             if (vm.ThumbnailState != ThumbnailState.NotLoaded) return;
 
             pendingThumbnailLoads++;
-            
+
             viewModelsByUrn[urn] = UpdateViewModelState(vm, ThumbnailState.Loading, null);
 
             loadThumbnailCommand
@@ -305,7 +305,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         }
 
         // Abstract Requirements
-        protected abstract GiftableType giftableKind { get; }
+        protected abstract GiftableType GiftableKind { get; }
         protected abstract UniTask<(IEnumerable<GiftableAvatarAttachment> items, int total)> FetchDataAsync(int pageItems, int page, string search, CancellationToken ct);
         protected abstract TViewModel CreateViewModel(GiftableAvatarAttachment item, int amount, bool isEquipped, bool isGiftable);
         protected abstract int GetItemAmount(GiftableAvatarAttachment item);

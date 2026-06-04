@@ -25,7 +25,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly List<ITrimmedWearable> resultsBuffer = new();
         private readonly BackpackGridSort currentSort = new(NftOrderByOperation.Date, false);
 
-        protected override GiftableType giftableKind => GiftableType.Wearable;
+        protected override GiftableType GiftableKind => GiftableType.Wearable;
 
         public WearableGridPresenter(
             GiftingGridView view,

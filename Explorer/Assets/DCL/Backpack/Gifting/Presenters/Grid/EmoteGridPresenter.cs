@@ -22,7 +22,7 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         private readonly IWearableStylingCatalog stylingCatalog;
         private readonly IEmoteProvider.OrderOperation currentOrder = new("date", isAscending: false);
 
-        protected override GiftableType giftableKind => GiftableType.Emote;
+        protected override GiftableType GiftableKind => GiftableType.Emote;
 
         public EmoteGridPresenter(
             GiftingGridView view,
