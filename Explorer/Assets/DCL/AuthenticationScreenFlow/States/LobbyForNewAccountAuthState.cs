@@ -319,14 +319,40 @@ namespace DCL.AuthenticationScreenFlow
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
         }
 
+        /// <summary>
+        ///     Wearable categories that are cosmetic accessories and should appear only ~50% of the
+        ///     time when randomizing, so avatars are not always generated with a beard, hat, etc.
+        /// </summary>
+        private static readonly HashSet<string> OPTIONAL_CATEGORIES = new (StringComparer.OrdinalIgnoreCase)
+        {
+            WearableCategories.Categories.FACIAL_HAIR,
+            WearableCategories.Categories.HAT,
+            WearableCategories.Categories.MASK,
+            WearableCategories.Categories.TIARA,
+            WearableCategories.Categories.HELMET,
+            WearableCategories.Categories.EARRING,
+            WearableCategories.Categories.EYEWEAR,
+            WearableCategories.Categories.TOP_HEAD,
+            WearableCategories.Categories.HANDS_WEAR,
+        };
+
+        private const float OPTIONAL_CATEGORY_SKIP_PROBABILITY = 0.5f;
+
         private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
         {
             var result = new HashSet<URN>();
 
-            foreach (List<URN>? categoryWearables in wearablesByCategory.Values)
+            foreach (KeyValuePair<string, List<URN>> kvp in wearablesByCategory)
             {
-                if (categoryWearables.Count > 0)
-                    result.Add(categoryWearables[Random.Range(0, categoryWearables.Count)]);
+                if (kvp.Value.Count == 0)
+                    continue;
+
+                // Skip optional accessory categories ~50% of the time so randomized avatars
+                // are not always generated with facial hair, hats, earrings, etc.
+                if (OPTIONAL_CATEGORIES.Contains(kvp.Key) && Random.value < OPTIONAL_CATEGORY_SKIP_PROBABILITY)
+                    continue;
+
+                result.Add(kvp.Value[Random.Range(0, kvp.Value.Count)]);
             }
 
             return result;
