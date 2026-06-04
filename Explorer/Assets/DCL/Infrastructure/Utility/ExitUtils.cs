@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using DCL.Diagnostics;
+using DCL.Prefs;
 using UnityEngine;
 using Utility.Multithreading;
 using RichTypes;
@@ -151,7 +152,11 @@ namespace DCL.Utility
 
             ReportHub.LogProductionInfo($"[ExitUtils] CleanUpCandidates finished at {stopwatch.ElapsedMilliseconds}ms");
 
-            // Reflection may drop the values. resubscribe to be sure. 
+            // Flush save file only AFTER the candidates
+            DCLPlayerPrefs.SaveSync();
+            ReportHub.LogProductionInfo($"[ExitUtils] DCLPlayerPrefs flushed at {stopwatch.ElapsedMilliseconds}ms");
+
+            // Reflection may drop the values. resubscribe to be sure.
             Patch.ApplicationQuittingFirstSubscriberSelfPatchWithTimers();
 
             ReportHub.LogProductionInfo($"[ExitUtils] Begin Quit call {stopwatch.ElapsedMilliseconds}ms");
