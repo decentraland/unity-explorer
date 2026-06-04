@@ -95,14 +95,13 @@ namespace DCL.UI
             isNativeArrayInitialized = false;
         }
 
-        protected override void OnViewInstantiated()
-        {
+        protected override void OnViewInstantiated() =>
             viewRectTransform = viewInstance!.GetComponent<RectTransform>();
-            backgroundWorldRect = GetWorldRect(viewInstance!.BackgroundCloseButton.GetComponent<RectTransform>());
-        }
 
         protected override void OnBeforeViewShow()
         {
+            viewInstance!.gameObject.SetActive(true);
+            backgroundWorldRect = GetWorldRect(viewRectTransform);
             internalCloseTask = new UniTaskCompletionSource();
             ConfigureContextMenu(viewInstance!.ControlsContainer, inputData.Config, inputData.AnchorPosition, inputData.OverlapRect);
         }
@@ -889,7 +888,7 @@ namespace DCL.UI
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
-            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.Button.OnClickAsync(ct));
+            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask);
         }
 
         [BurstCompile]

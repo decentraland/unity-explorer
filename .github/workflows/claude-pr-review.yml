@@ -8,10 +8,6 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
 
-concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   auto-review:
     if: |
@@ -20,6 +16,9 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-auto-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -29,7 +28,7 @@ jobs:
     steps:
       - name: Check PR type
         id: check-type
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = context.payload.pull_request.title || '';
@@ -57,7 +56,7 @@ jobs:
 
       - name: Set status to pending
         if: steps.check-type.outputs.is-auto-review == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -71,7 +70,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.check-type.outputs.is-auto-review == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
@@ -113,7 +112,7 @@ jobs:
             
       - name: Upload Claude execution output
         if: steps.check-type.outputs.is-auto-review == 'true' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: claude-execution-output-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
           path: /home/runner/work/_temp/claude-execution-output.json
@@ -122,7 +121,7 @@ jobs:
 
       - name: Set status and approve if eligible
         if: steps.check-type.outputs.is-auto-review == 'true' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ github.event.pull_request.number }};
@@ -134,7 +133,9 @@ jobs:
               owner, repo, issue_number: prNumber, per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -215,9 +216,14 @@ jobs:
             }
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner, repo, comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;
@@ -310,6 +316,9 @@ jobs:
     needs: check-member
     if: needs.check-member.outputs.is-member == 'true'
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-on-demand-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -319,7 +328,7 @@ jobs:
     steps:
       - name: Resolve PR head (rejects post-comment pushes)
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const pr = await github.rest.pulls.get({
@@ -348,7 +357,7 @@ jobs:
             core.setOutput('is_draft', pr.data.draft);
 
       - name: Set status to pending
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -361,7 +370,7 @@ jobs:
             });
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 1
@@ -403,7 +412,7 @@ jobs:
 
       - name: Upload Claude execution output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: claude-execution-output-${{ github.event.issue.number }}-${{ github.run_attempt }}
           path: /home/runner/work/_temp/claude-execution-output.json
@@ -412,7 +421,7 @@ jobs:
 
       - name: Set final commit status
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const comments = await github.rest.issues.listComments({
@@ -422,7 +431,9 @@ jobs:
               per_page: 100
             });
 
-            const claudeComments = comments.data.filter(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
             const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
@@ -433,11 +444,14 @@ jobs:
             const hasReviewResult = output.includes('REVIEW_RESULT:');
 
             for (const c of claudeComments.slice(0, -1)) {
-              await github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: c.id
-              }).catch(e => console.log(`deleteComment ${c.id}: ${e.message}`));
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
             }
 
             let description;

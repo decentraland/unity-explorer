@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.SceneRunner.Scene;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -9,10 +10,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.InitialSceneState;
 using Runtime.Wearables;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -82,7 +83,7 @@ namespace ECS.SceneLifeCycle.Systems
                 definitionComponent.SceneGeometry,
                 definitionComponent.Parcels,
                 new StaticSceneMessages(crdt),
-                InitialSceneStateInfo.CreateEmpty());
+                ISSDescriptor.NONE);
 
             // Set the flag is we are using the special DTO for builder collection preview
             sceneData.IsWearableBuilderCollectionPreview = wearable.DTO is BuilderWearableDTO;

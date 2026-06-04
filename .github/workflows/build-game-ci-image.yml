@@ -45,7 +45,7 @@ jobs:
     runs-on: Ubuntu-Big
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Clone game-ci/docker
         run: git clone https://github.com/game-ci/docker.git

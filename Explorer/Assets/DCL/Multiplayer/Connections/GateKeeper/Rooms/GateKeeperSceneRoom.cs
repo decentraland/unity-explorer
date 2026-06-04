@@ -155,11 +155,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 }
                 else
                 {
-                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                     {
                         string connectionString = await ConnectionStringAsync(meta, token);
 
-                        if (Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
+                        if (Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                             currentMetaData = null;
 
                         // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
