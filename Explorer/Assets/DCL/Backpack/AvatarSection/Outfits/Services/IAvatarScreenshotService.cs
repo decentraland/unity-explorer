@@ -30,15 +30,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Services
         ///     Does NOT write to disk — call <see cref="PersistPngAsync"/> after the backend save
         ///     is confirmed.
         /// </summary>
-        UniTask<CapturedScreenshot?> CaptureAsync(CharacterPreviewControllerBase controller, CancellationToken ct);
+        public UniTask<CapturedScreenshot?> CaptureAsync(CharacterPreviewControllerBase controller, CancellationToken ct);
 
         /// <summary>
         ///     Writes a previously captured PNG to disk for the given slot.
         /// </summary>
-        UniTask PersistPngAsync(int slotIndex, byte[] pngBytes, CancellationToken ct);
+        public UniTask PersistPngAsync(int slotIndex, byte[] pngBytes, CancellationToken ct);
 
-        UniTask<Texture2D> LoadScreenshotAsync(int slotIndex, CancellationToken ct);
+        public UniTask<Texture2D> LoadScreenshotAsync(int slotIndex, CancellationToken ct);
 
-        UniTask DeleteScreenshotAsync(int slotIndex, CancellationToken ct);
+        public UniTask DeleteScreenshotAsync(int slotIndex, CancellationToken ct);
     }
 }

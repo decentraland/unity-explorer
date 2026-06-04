@@ -65,7 +65,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                // First, deploy the metadata change. This is the most likely to fail.
                 await outfitsRepository.DeleteSlotAsync(slotIndex, ct);
 
                 // Once DeleteSlotAsync returns we know the publish completed (it's

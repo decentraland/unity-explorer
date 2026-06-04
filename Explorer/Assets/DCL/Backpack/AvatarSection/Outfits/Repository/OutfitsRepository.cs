@@ -19,25 +19,26 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
     /// <summary>
     ///     Owns the user's authoritative outfits state and publishes it to the Catalyst network.
-    ///     Per-call, naive: each Save/Delete builds a fresh snapshot from <see cref="committed"/>
-    ///     plus its own delta, waits the deploy window, publishes, and on success commits the delta
-    ///     locally. Serialization across operations is enforced at the UI layer
-    ///     (<see cref="DCL.Backpack.OutfitsPresenter"/> disables save/delete buttons while one
-    ///     operation is in flight), so this class assumes no concurrent callers.
     /// </summary>
     public class OutfitsRepository
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new ()
             { Converters = new List<JsonConverter> { new ColorJsonConverter() } };
 
-        private const int DEFAULT_DEPLOY_WINDOW_IN_SECONDS = 15;
+        /// <summary>
+        ///     Minimum number of seconds we wait between successive publishes to the
+        ///     Catalyst content endpoint. This matches the backend's per-pointer rate limit on
+        ///     <c>:outfits</c> entity submissions — publishing inside the cooldown gets rejected.
+        ///     Configurable in production via the <c>OUTFITS_DEPLOY_WINDOW</c> feature flag.
+        /// </summary>
+        private const int DEFAULT_DEPLOY_COOLDOWN_SECONDS = 15;
 
         private readonly PublishIpfsEntityCommand publishIpfsEntityCommand;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISelfProfile selfProfile;
 
         private readonly Dictionary<int, OutfitItem> committed = new ();
-        private ulong lastDeployTimestampInSeconds;
+        private ulong lastPublishTimestampInSeconds;
 
         public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider,
@@ -48,23 +49,25 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             this.selfProfile = selfProfile;
         }
 
-        private static int deployWindowInSeconds
+        private static int deployCooldownSeconds
         {
             get
             {
+                // Note: the feature flag key and JSON payload keys are owned by the backend
+                // team and intentionally still use the original "deploy_window" vocabulary.
                 if (FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.OUTFITS_DEPLOY_WINDOW,
                         "deploy_window_in_seconds",
-                        out OutfitsDeployWindowConfig? config) && config.HasValue && config.Value.DeployWindowInSeconds > 0)
-                    return config.Value.DeployWindowInSeconds;
+                        out OutfitsDeployCooldownConfig? config) && config.HasValue && config.Value.CooldownSeconds > 0)
+                    return config.Value.CooldownSeconds;
 
-                return DEFAULT_DEPLOY_WINDOW_IN_SECONDS;
+                return DEFAULT_DEPLOY_COOLDOWN_SECONDS;
             }
         }
 
         [Serializable]
-        private struct OutfitsDeployWindowConfig
+        private struct OutfitsDeployCooldownConfig
         {
-            [JsonProperty("deploy_window_in_seconds")] public int DeployWindowInSeconds;
+            [JsonProperty("deploy_window_in_seconds")] public int CooldownSeconds;
         }
 
         /// <summary>
@@ -80,16 +83,16 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         public async UniTask SaveSlotAsync(int slot, OutfitItem item, CancellationToken ct)
         {
-            // Cancellation is only honored during the deploy-window wait. Once we get past
+            // Cancellation is only honored during the publish cooldown. Once we get past
             // this line we commit to publishing — the publish itself is non-cancellable
             // (see PublishAsync) so the server-side and local-side state stay in sync.
-            await WaitRemainingDeployWindowAsync(ct);
+            await WaitForPublishCooldownAsync(ct);
 
             var snapshot = new Dictionary<int, OutfitItem>(committed) { [slot] = item };
             await PublishAsync(snapshot, ct);
 
             committed[slot] = item;
-            lastDeployTimestampInSeconds = NowSeconds();
+            lastPublishTimestampInSeconds = NowSeconds();
         }
 
         public async UniTask DeleteSlotAsync(int slot, CancellationToken ct)
@@ -97,24 +100,29 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             if (!committed.ContainsKey(slot))
                 return;
 
-            await WaitRemainingDeployWindowAsync(ct);
+            await WaitForPublishCooldownAsync(ct);
 
             var snapshot = new Dictionary<int, OutfitItem>(committed);
             snapshot.Remove(slot);
             await PublishAsync(snapshot, ct);
 
             committed.Remove(slot);
-            lastDeployTimestampInSeconds = NowSeconds();
+            lastPublishTimestampInSeconds = NowSeconds();
         }
 
-        private async UniTask WaitRemainingDeployWindowAsync(CancellationToken ct)
+        /// <summary>
+        ///     Throttles consecutive publishes to respect the Catalyst-enforced cooldown between
+        ///     <c>:outfits</c> entity deployments. Returns immediately if enough time has already
+        ///     passed since the last successful publish; otherwise waits the remainder.
+        /// </summary>
+        private async UniTask WaitForPublishCooldownAsync(CancellationToken ct)
         {
-            int deployWindow = deployWindowInSeconds;
-            ulong elapsed = Math.Clamp(NowSeconds() - lastDeployTimestampInSeconds, 0UL, (ulong)deployWindow);
-            double remaining = deployWindow - (double)elapsed;
-            if (remaining <= 0) return;
+            int cooldownSeconds = deployCooldownSeconds;
+            ulong elapsed = Math.Clamp(NowSeconds() - lastPublishTimestampInSeconds, 0UL, (ulong)cooldownSeconds);
+            double remainingSeconds = cooldownSeconds - (double)elapsed;
+            if (remainingSeconds <= 0) return;
 
-            await UniTask.Delay(TimeSpan.FromSeconds(remaining), cancellationToken: ct);
+            await UniTask.Delay(TimeSpan.FromSeconds(remainingSeconds), cancellationToken: ct);
         }
 
         private async UniTask PublishAsync(Dictionary<int, OutfitItem> snapshot, CancellationToken ct)
@@ -147,10 +155,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             };
 
             // The publish itself is intentionally non-cancellable: once we've decided to send
-            // the request, we let it complete. Cancelling the HTTP call mid-flight just creates
-            // ambiguity ("did the server receive it?") and produces noisy error logs from
-            // PublishIpfsEntityCommand for what is really an expected panel-close scenario.
-            // Cancellation during the deploy-window wait above is still honored cleanly.
             await publishIpfsEntityCommand.ExecuteAsync(outfitsEntity, CancellationToken.None, SERIALIZER_SETTINGS);
         }
 

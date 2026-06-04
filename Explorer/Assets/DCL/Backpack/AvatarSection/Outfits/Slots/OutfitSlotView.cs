@@ -155,7 +155,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             unEquipButton?.gameObject.SetActive(false);
         }
 
-        public void ShowFullState(Texture2D thumbnail, bool isHovered, bool isOperationBusy)
+        public void ShowFullState(Texture2D? thumbnail, bool isHovered, bool isOperationBusy)
         {
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
@@ -168,7 +168,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
             outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
             outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
-            if (hasRealThumbnail)
+            if (thumbnail != null)
             {
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
                 outfitThumbnail.color = new Color(1, 1, 1, 1);
