@@ -1,9 +1,10 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.LOD.Systems;
+using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -26,12 +27,14 @@ namespace ECS.Unity.GLTFContainer.Systems
         private IPartitionComponent scenePartition;
         private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly ISSDescriptor issDescriptor;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, IPartitionComponent scenePartition, ISSDescriptor issDescriptor) : base(world)
         {
             this.scenePartition = scenePartition;
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.issDescriptor = issDescriptor;
         }
 
         protected override void Update(float t)
@@ -58,12 +61,18 @@ namespace ECS.Unity.GLTFContainer.Systems
             DestroyWithScenePartitionQuery(World);
         }
 
-        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool putInBridge)
+        private void DestroyGLTFContainer(ref GltfContainerComponent component, bool partitionAllowsBridge)
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
                 entityCollidersSceneCache.Remove(result.Asset);
-                cache.Dereference(component.CacheKey, result.Asset, putInBridge && result.Asset.IsISS);
+
+                // Bridge only if the scene's partition allows it AND the descriptor still has a slot for this hash
+                // (capped to the exact number of times it appears in the descriptor — no duplicates).
+                // Null descriptor means no ISS for this scene → no bridging.
+                bool putInBridge = partitionAllowsBridge
+                                   && issDescriptor.TryReserveBridgeSlot(component.Hash);
+                cache.Dereference(component.CacheKey, result.Asset, putInBridge);
             }
 
             component.RootGameObject = null;

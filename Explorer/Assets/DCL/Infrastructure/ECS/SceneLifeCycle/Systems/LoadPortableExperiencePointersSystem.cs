@@ -2,10 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
@@ -63,7 +65,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result is {Asset: not null, Succeeded: true })
                     {
-                        var entity = CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, true);
+                        var entity = CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, ISSDescriptor.NONE, true);
                         World.Add(entity, portableExperienceComponent);
                     }
                 }
