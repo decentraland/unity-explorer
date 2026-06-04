@@ -209,6 +209,11 @@ namespace DCL.AuthenticationScreenFlow
             return null;
         }
 
+        private static readonly HashSet<string> FEMALE_EXCLUDED_CATEGORIES = new ()
+        {
+            WearableCategories.Categories.FACIAL_HAIR,
+        };
+
         private void PopulateWearablesCatalogs(IReadOnlyList<ITrimmedWearable> wearables)
         {
             maleWearablesByCategory = new Dictionary<string, List<URN>>();
@@ -218,11 +223,9 @@ namespace DCL.AuthenticationScreenFlow
             {
                 string category = wearable.GetCategory();
 
-                // Skip body shapes
                 if (category == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
-                // Add to male dictionary if compatible
                 if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
                 {
                     if (!maleWearablesByCategory.ContainsKey(category))
@@ -231,8 +234,8 @@ namespace DCL.AuthenticationScreenFlow
                     maleWearablesByCategory[category].Add(wearable.GetUrn());
                 }
 
-                // Add to female dictionary if compatible
-                if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
+                if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE)
+                    && !FEMALE_EXCLUDED_CATEGORIES.Contains(category))
                 {
                     if (!femaleWearablesByCategory.ContainsKey(category))
                         femaleWearablesByCategory[category] = new List<URN>();
@@ -319,14 +322,34 @@ namespace DCL.AuthenticationScreenFlow
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
         }
 
+        private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
+        {
+            WearableCategories.Categories.FACIAL_HAIR,
+            WearableCategories.Categories.HAT,
+            WearableCategories.Categories.MASK,
+            WearableCategories.Categories.TIARA,
+            WearableCategories.Categories.HELMET,
+            WearableCategories.Categories.EARRING,
+            WearableCategories.Categories.EYEWEAR,
+            WearableCategories.Categories.TOP_HEAD,
+            WearableCategories.Categories.HANDS_WEAR,
+        };
+
+        private const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.5f;
+
         private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
         {
             var result = new HashSet<URN>();
 
-            foreach (List<URN>? categoryWearables in wearablesByCategory.Values)
+            foreach (KeyValuePair<string, List<URN>> kvp in wearablesByCategory)
             {
-                if (categoryWearables.Count > 0)
-                    result.Add(categoryWearables[Random.Range(0, categoryWearables.Count)]);
+                if (kvp.Value.Count == 0)
+                    continue;
+
+                if (OPTIONAL_CATEGORIES.Contains(kvp.Key) && Random.value > OPTIONAL_CATEGORY_INCLUDE_CHANCE)
+                    continue;
+
+                result.Add(kvp.Value[Random.Range(0, kvp.Value.Count)]);
             }
 
             return result;
