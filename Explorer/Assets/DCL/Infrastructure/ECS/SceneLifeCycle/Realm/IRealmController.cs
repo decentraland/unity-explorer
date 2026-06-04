@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm
@@ -14,8 +13,6 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
-
-        UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct);
 
         /// <summary>
         ///     Dispose everything on application quit
@@ -34,9 +31,6 @@ namespace ECS.SceneLifeCycle.Realm
                 UniTask.CompletedTask;
 
             public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
-                false;
-
-            public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct) =>
                 false;
 
             public void DisposeGlobalWorld()
