@@ -97,6 +97,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             var stopwatch = ShutdownStopwatch.StartNew(nameof(AvatarTransformMatrixJobWrapper));
 
+            remoteAvatars.Complete();
+            stopwatch.LogStep("remoteAvatars.Complete");
+
             remoteAvatars.Dispose();
             stopwatch.LogStep("remoteAvatars.Dispose");
 
