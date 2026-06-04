@@ -29,7 +29,6 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
         private const string METADATA_FILENAME = "metadata.json";
-        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -93,13 +92,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 // get metrics
 
                 string? metadataJSON;
-                string? sceneDescriptoJSON;
-
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
-                    sceneDescriptoJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
@@ -109,10 +105,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
-                InitialSceneStateMetadata? initialSceneState = null;
-
-                if (!string.IsNullOrEmpty(sceneDescriptoJSON))
-                    initialSceneState = JsonUtility.FromJson<InitialSceneStateMetadata>(sceneDescriptoJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -131,7 +123,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
                     source, intention.IsDependency, intention.LookForDependencies, ct);
                 return result;
@@ -151,7 +143,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             ReportData reportCategory,
@@ -175,7 +167,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, initialSceneState, asset, expectedObjType, dependencies,
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
