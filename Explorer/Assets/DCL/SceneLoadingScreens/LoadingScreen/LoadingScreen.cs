@@ -46,7 +46,12 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             async UniTask<EnumResult<TaskError>> ExecuteOperationAsync()
             {
                 EnumResult<TaskError> result = await operation(loadReport, timeOut.Token);
-                loadReport.SetResult(result.AsResult());
+
+                if (result.Error?.State is TaskError.Cancelled)
+                    loadReport.SetCancelled();
+                else
+                    loadReport.SetResult(result.AsResult());
+
                 return result;
             }
 

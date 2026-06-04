@@ -387,7 +387,6 @@ namespace Global.Dynamic
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
-                identityCache,
                 dynamicWorldParams.StaticLoadPositions,
                 debugBuilder,
                 loadingScreenTimeout,
@@ -396,8 +395,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment,
-                worldPermissionsService);
+                bootstrapContainer.Environment);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -525,7 +523,9 @@ namespace Global.Dynamic
                 roomHub,
                 localSceneDevelopment,
                 staticContainer.CharacterContainer,
-                moderationDataProvider);
+                moderationDataProvider,
+                worldPermissionsService,
+                chatHistory);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -594,6 +594,10 @@ namespace Global.Dynamic
                 new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
+                new AnrSimulateChatCommand(),
+#if UNITY_STANDALONE_WIN
+                new AnrDumpChatCommand(),
+#endif
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));

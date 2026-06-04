@@ -10,7 +10,6 @@ using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.EarlyAsset;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
@@ -82,8 +81,6 @@ namespace DCL.PluginSystem.World
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache, byteWeightedProgress);
-
-            EarlyAssetBundleRequestSystem.InjectToWorld(ref builder);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
