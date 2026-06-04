@@ -252,7 +252,7 @@ namespace DCL.Utility
 #elif UNITY_STANDALONE_OSX
             if (kill(pid, SIGKILL) != 0)
             {
-                ReportHub.LogProductionInfo($"[ExitUtils] kill(SIGKILL) failed (errno {Marshal.GetLastWin32Error()})");
+                ReportHub.LogProductionInfo($"[ExitUtils] kill(SIGKILL) failed (errno {Marshal.GetLastPInvokeError()})");
             }
 #endif
         }
