@@ -60,11 +60,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
         public IStreamableRefCountData AssetData { get; private set; }
-        public bool IsISS;
 
         private GltfContainerAsset(GameObject root, IStreamableRefCountData assetData, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
-            List<Animator> animators, IReadOnlyList<string>? hierarchyPaths = null, bool isISS = false)
+            List<Animator> animators, IReadOnlyList<string>? hierarchyPaths = null)
         {
             this.AssetData = assetData;
 
@@ -75,7 +74,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             Animations = animations;
             Animators = animators;
             HierarchyPaths = hierarchyPaths;
-            IsISS = isISS;
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 
@@ -117,7 +115,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
-        public static GltfContainerAsset Create(GameObject root, IStreamableRefCountData assetData, bool isPartOfInitialSceneState = false, IReadOnlyList<string>? hierarchyPaths = null) =>
-            new (root, assetData, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get(), hierarchyPaths, isISS: isPartOfInitialSceneState);
+        public static GltfContainerAsset Create(GameObject root, IStreamableRefCountData assetData, IReadOnlyList<string>? hierarchyPaths = null) =>
+            new (root, assetData, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get(), hierarchyPaths);
     }
 }
