@@ -167,8 +167,7 @@ namespace DCL.Backpack.Slots
         }
 
         /// <summary>
-        ///     Marks the outfit as pending when it contains a wearable currently awaiting a gift transfer.
-        ///     A pending outfit cannot be hovered, so its equip/preview buttons stay hidden.
+        ///     Marks the outfit pending; a pending outfit can't be hovered, so equip/preview buttons stay hidden.
         /// </summary>
         public void SetPending(bool pending) =>
             view.SetIsPending(pending);
@@ -191,7 +190,7 @@ namespace DCL.Backpack.Slots
             currentState = newState;
             currentOutfitData = item;
 
-            // Pending only applies to a populated outfit; clear it on every other state so a recycled slot doesn't stay gated.
+            // Pending applies only to a Full slot; clear it otherwise so a recycled slot isn't left gated.
             if (newState != OutfitSlotState.Full)
                 view.SetIsPending(false);
 

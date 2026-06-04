@@ -71,15 +71,12 @@ namespace DCL.Backpack.Gifting.Services
                 string fullUrn = fields[0];
                 if (string.IsNullOrEmpty(fullUrn)) continue;
 
-                // Drop baseline-less legacy entries (the original URN-only format). Without a transfer-in
-                // baseline, Prune can't tell "indexer hasn't caught up yet" from "gifted back", so such an
-                // entry could never be pruned reliably. Discarding it is safe: the per-user pref key change
-                // (PendingGifts -> PendingGifts_{address}) already orphaned pre-baseline data, so no live
-                // entry depends on this format.
+                // Drop baseline-less legacy (URN-only) entries: without a baseline Prune can't tell "indexer
+                // behind" from "gifted back". Safe — the per-user pref key change already orphaned them.
                 if (fields.Length < 2 || !long.TryParse(fields[1], out long ticks) || ticks <= DateTime.MinValue.Ticks)
                     continue;
 
-                // The interim format had URN + baseline but no kind; kind stays null for those.
+                // Interim format had no kind; it stays null for those.
                 var baseline = new DateTime(ticks);
                 GiftableType? kind = fields.Length > 2 && int.TryParse(fields[2], out int kindValue) ? (GiftableType)kindValue : null;
 

@@ -9,15 +9,14 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
     public readonly struct PendingTransfer
     {
         /// <summary>
-        ///     The gifted copy's last transfer-in timestamp at the moment of gifting. Lets pruning tell an
-        ///     indexer that has not caught up yet (same timestamp) apart from an item that left the wallet and
-        ///     was later transferred back (a newer timestamp). <see cref="DateTime.MinValue" /> means unknown.
+        ///     The gifted copy's transfer-in timestamp at gift time. Lets pruning tell an indexer that hasn't
+        ///     caught up (same timestamp) from one that left and came back (newer). <see cref="DateTime.MinValue" /> = unknown.
         /// </summary>
         public readonly DateTime BaselineTransferredAt;
 
         /// <summary>
-        ///     Whether the gifted item is a wearable or an emote, so pruning only consults the matching registry.
-        ///     Null for legacy entries persisted before the type was tracked; those are not scope-pruned.
+        ///     Wearable or emote, so pruning only consults the matching registry.
+        ///     Null for legacy entries from before the type was tracked; those aren't scope-pruned.
         /// </summary>
         public readonly GiftableType? Kind;
 

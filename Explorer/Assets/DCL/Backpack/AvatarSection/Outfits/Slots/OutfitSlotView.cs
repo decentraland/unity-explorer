@@ -228,8 +228,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         }
 
         /// <summary>
-        ///     Marks the outfit as pending (it references a wearable currently awaiting a gift transfer).
-        ///     Hover is disabled so the equip/preview buttons can't be revealed; visual styling is the view owner's to add.
+        ///     Marks the outfit pending; disables hover so equip/preview can't be revealed.
         /// </summary>
         public void SetIsPending(bool pending)
         {

@@ -93,8 +93,8 @@ namespace DCL.Profiles
                     URN? picked = PickRegistryUrn(registry, ownedNftFilter);
                     if (picked.HasValue)
                         potentialItemUrn = picked.Value;
-                    // If every registry entry is excluded, fall through with the base URN —
-                    // the catalyst will return a coherent "not owned" rather than us deploying a known-bad tokenId.
+                    // Every entry excluded: fall through with the base URN so the catalyst returns a coherent
+                    // "not owned" instead of deploying a known-bad tokenId.
                 }
                 else if (profile?.Avatar?.Wearables != null)
                 {

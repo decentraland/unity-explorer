@@ -7,11 +7,9 @@ namespace DCL.AvatarRendering.Loading
     public static class OwnedNftFilterExtensions
     {
         /// <summary>
-        ///     Returns true when the user still holds at least one usable owned instance of an item, i.e. a
-        ///     registry entry that the filter does not exclude (for example, not pending a gift transfer).
-        ///     <paramref name="excludeInstance" />, when provided, is treated as unavailable even if the filter
-        ///     does not know about it yet — this is the gifted instance during the optimistic transfer window,
-        ///     before it has been added to the pending set.
+        ///     True when at least one owned instance isn't excluded by the filter (e.g. not pending a gift).
+        ///     <paramref name="excludeInstance" />, if set, counts as unavailable even when the filter doesn't yet
+        ///     know it — the gifted instance during the optimistic window before it's added to the pending set.
         /// </summary>
         public static bool HasAvailableInstance(this IOwnedNftFilter? filter,
             IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry,

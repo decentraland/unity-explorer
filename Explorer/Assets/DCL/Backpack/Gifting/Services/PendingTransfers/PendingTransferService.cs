@@ -19,11 +19,9 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
 
-        // Maps a pending full URN (token instance) to its gift-time baseline and kind. The baseline lets Prune
-        // distinguish "indexer hasn't caught up yet" from "the item left the wallet and was transferred back"
-        // (a newer transfer-in timestamp); the kind keeps pruning scoped to the registry that was just fetched.
-        // Reassigned wholesale on identity change, so all access is guarded by the dedicated lock below rather
-        // than by locking the dictionary instance itself (which would change out from under a held lock).
+        // Maps a pending full URN to its gift-time baseline and kind. The baseline lets Prune tell "indexer
+        // behind" from "left and came back" (newer timestamp); the kind scopes pruning to the fetched registry.
+        // Guarded by a dedicated lock, not the dictionary itself, which is reassigned on identity change.
         private readonly object sync = new ();
         private Dictionary<string, PendingTransfer> pendingTransfers = new ();
 
@@ -79,7 +77,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 return pendingTransfers.ContainsKey(fullUrn);
         }
 
-        // IsPending takes the lock, keeping this read consistent with concurrent mutation from the main thread.
+        // IsPending locks, keeping this consistent with concurrent main-thread mutation.
         public bool ShouldExclude(URN fullUrn) =>
             IsPending(fullUrn.ToString());
 
@@ -119,9 +117,8 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                 {
                     GiftableType? entryKind = pending.Value.Kind;
 
-                    // A typed entry is only evaluated by its own kind's Prune call, against the registry that was
-                    // just fetched (the other kind's registry may not be loaded yet, so its absence is not
-                    // conclusive). Legacy entries have no kind, so they fall through and are checked against both.
+                    // A typed entry is pruned only by its own kind's call (the other registry may not be loaded,
+                    // so its absence isn't conclusive). No-kind interim entries fall through and check both.
                     if (entryKind.HasValue && entryKind.Value != kind) continue;
 
                     string pendingUrn = pending.Key;
@@ -142,18 +139,16 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
                         : (wearableRegistry.TryGetValue(baseUrn, out var wInstances) && wInstances.TryGetValue(fullUrnKey, out entry)) ||
                           (emoteRegistry.TryGetValue(baseUrn, out var eInstances) && eInstances.TryGetValue(fullUrnKey, out entry));
 
-                    // Not owned anymore: the Indexer caught up and the item left the wallet. Stop tracking it.
+                    // Not owned anymore: indexer caught up, item left the wallet. Stop tracking.
                     if (!found)
                     {
                         toRemove.Add(pendingUrn);
                         continue;
                     }
 
-                    // Still owned, but with a newer transfer-in timestamp than the one captured at gift time:
-                    // the item left the wallet and was transferred back (e.g. gifted back). The original gift
-                    // completed, so stop tracking it; otherwise the copy would stay hidden forever.
-                    // Every persisted entry carries a real baseline (baseline-less legacy entries are dropped on
-                    // load), so this comparison is always meaningful here.
+                    // Still owned but with a newer transfer-in than gift time: it left and came back (e.g. gifted
+                    // back). The original gift completed, so stop tracking; else the copy stays hidden forever.
+                    // Baseline-less legacy entries are dropped on load, so this comparison is always valid here.
                     if (entry.TransferredAt > baseline)
                         toRemove.Add(pendingUrn);
                 }

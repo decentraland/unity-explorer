@@ -394,7 +394,7 @@ namespace DCL.Backpack
             UpdateFirstEmptySlotPrompt();
         }
 
-        // An outfit is pending when it references a wearable whose instance is currently awaiting a gift transfer.
+        // Pending when it references a wearable instance awaiting a gift transfer.
         private bool IsOutfitPending(OutfitItem? outfitItem)
         {
             var wearables = outfitItem?.outfit?.wearables;

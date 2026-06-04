@@ -173,8 +173,8 @@ namespace DCL.Backpack.EmotesSection
                         customOwnedEmotes
                     );
 
-                    // The fetch above repopulated the emote owned-NFT registry, so it is a reliable moment to
-                    // drop pending emote gifts that have left the wallet (or been transferred back in).
+                    // The fetch repopulated the registry — a reliable point to prune pending emote gifts that
+                    // left the wallet (or came back).
                     ownedNftFilter.Prune(GiftableType.Emote);
 
                     int totalAmount = result.totalAmount;
@@ -332,8 +332,8 @@ namespace DCL.Backpack.EmotesSection
             }
         }
 
-        // An owned on-chain emote is "pending" when every owned instance is awaiting a gift transfer.
-        // Off-chain/base emotes have no owned-NFT registry and are never pending.
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base emotes have no
+        // registry and are never pending.
         private bool IsFullyPending(URN itemUrn) =>
             emoteStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
             && registry.Count > 0

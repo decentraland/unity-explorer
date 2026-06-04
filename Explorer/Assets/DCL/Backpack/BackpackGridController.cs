@@ -280,8 +280,8 @@ namespace DCL.Backpack
             }
         }
 
-        // An owned on-chain item is "pending" when every owned instance is awaiting a gift transfer.
-        // Off-chain/base items have no owned-NFT registry and are never pending.
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base items have no
+        // registry and are never pending.
         private bool IsFullyPending(URN itemUrn) =>
             wearableStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
             && registry.Count > 0
@@ -395,8 +395,8 @@ namespace DCL.Backpack
                     ct,
                     results);
 
-                // The fetch above repopulated the wearable owned-NFT registry, so it is a reliable moment to
-                // drop pending wearable gifts that have left the wallet (or been transferred back in).
+                // The fetch repopulated the registry — a reliable point to prune pending wearable gifts that
+                // left the wallet (or came back).
                 ownedNftFilter.Prune(GiftableType.Wearable);
 
                 if (refreshPageSelector)

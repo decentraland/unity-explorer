@@ -17,7 +17,7 @@ namespace DCL.Backpack.Gifting.Views
         public readonly string instanceUrn;
         public readonly string userNameColorHex;
 
-        // The gifted copy's last transfer-in timestamp at gift time; used as the pending-prune baseline.
+        // Gift-time transfer-in timestamp of the gifted copy; the pending-prune baseline.
         public readonly DateTime transferredAt;
 
         public GiftTransferParams(string recipientAddress,

@@ -85,7 +85,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 missingUrns.Add(urn);
         }
 
-        // Returns baseUrn + tokenId for any on-chain wearable whose URN has a tokenId tail (collections-v2 on Polygon, collections-v1 on Ethereum, third-party)
+        // Splits any on-chain URN with a tokenId tail (collections-v2 on Polygon, collections-v1 on Ethereum,
+        // third-party) into its base URN and tokenId. Returns false when the URN has no tokenId to strip.
         private static bool TrySplitBaseAndToken(URN fullUrn, out URN baseUrn, out string tokenId)
         {
             baseUrn = default;
