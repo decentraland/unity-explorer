@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Time;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
@@ -16,10 +17,13 @@ namespace DCL.WebRequests
 {
     public class WebRequestController : IWebRequestController
     {
+        private const string DATE_HEADER = "Date";
+
         private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
+        private readonly RealmClock realmClock;
 
         private readonly WebRequestBudget budget;
 
@@ -29,12 +33,14 @@ namespace DCL.WebRequests
             IWebRequestsAnalyticsContainer analyticsContainer,
             IWeb3IdentityCache web3IdentityCache,
             IRequestHub requestHub,
-            WebRequestBudget budget)
+            WebRequestBudget budget,
+            RealmClock realmClock)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
             this.requestHub = requestHub;
             this.budget = budget;
+            this.realmClock = realmClock;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -77,6 +83,10 @@ namespace DCL.WebRequests
                         await request.SendRequest(envelope.Ct);
                         analyticsContainer.OnRequestFinished(request);
                     }
+
+                    if (!realmClock.HasSample)
+                        realmClock.TryRecordHttpDate(wr.GetResponseHeader(DATE_HEADER));
+
                     try
                     {
                         // if no exception is thrown Request is successful and the continuation op can be executed
@@ -95,6 +105,7 @@ namespace DCL.WebRequests
                         return default(TResult);
 
                     if (!envelope.SuppressErrors)
+
                         // Print verbose
                         ReportHub.LogError(
                             envelope.ReportData,
@@ -124,4 +135,3 @@ namespace DCL.WebRequests
         }
     }
 }
-

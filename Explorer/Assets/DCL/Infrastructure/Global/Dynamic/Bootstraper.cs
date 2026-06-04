@@ -2,7 +2,6 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -129,7 +128,6 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 diskCache,
                 partialsDiskCache,
-                bootstrapContainer.Environment,
                 ct,
                 appArgs
             );
@@ -288,27 +286,6 @@ namespace Global.Dynamic
             if (startingRealm.HasValue == false)
                 throw new InvalidOperationException("Starting realm is not set");
 
-            if (realmLaunchSettings.initialRealm is InitialRealm.World)
-            {
-                bool isAuthorized = await dynamicWorldContainer.RealmController
-                    .IsUserAuthorisedToAccessWorldAsync(startingRealm.Value, ct);
-
-                if (!isAuthorized)
-                {
-                    ReportHub.LogWarning(ReportCategory.REALM,
-                        $"[Bootstrap] Startup world '{realmLaunchSettings.TargetWorld}' is not authorized for auto-entry, falling back to Genesis.");
-
-                    dynamicWorldContainer.ChatHistory.AddMessage(
-                        ChatChannel.NEARBY_CHANNEL_ID,
-                        ChatChannel.ChatChannelType.NEARBY,
-                        ChatMessage.NewFromSystem($"Could not auto-enter '{realmLaunchSettings.TargetWorld}' due to world permissions. You were sent to Genesis Plaza."));
-
-                    await dynamicWorldContainer.RealmController
-                        .SetRealmAsync(URLDomain.FromString(realmUrls.GenesisRealm()), ct);
-                    return;
-                }
-            }
-
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
@@ -360,10 +337,29 @@ namespace Global.Dynamic
             splashScreen.Hide();
         }
 
-        private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
+        private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_HUD))
+                DisableHudOnStartupAsync(mvcManager, ct).Forget();
+        }
+
+        internal static async UniTask DisableHudOnStartupAsync(IMVCManager mvcManager, CancellationToken ct)
+        {
+            try
+            {
+                // Wait a frame so lazily-mounted MVC views exist before toggling.
+                await UniTask.NextFrame(ct).SuppressCancellationThrow();
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                // Bypass ToggleUIRequest (used by U key) so scene SDK UIDocuments stay visible.
+                mvcManager.SetAllViewsCanvasActive(false);
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
         }
 
         private void InitializeDebugPanel(IDebugContainerBuilder debugContainerBuilder, UIDocument debugUiRoot)

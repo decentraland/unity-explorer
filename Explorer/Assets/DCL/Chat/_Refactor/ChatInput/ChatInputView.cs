@@ -19,8 +19,6 @@ namespace DCL.Chat.ChatInput
         public class EmojiContainer
         {
             [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; }
-            [field: SerializeField] internal EmojiButton emojiButtonPrefab { get; private set; }
-            [field: SerializeField] internal EmojiSectionView emojiSectionViewPrefab { get; private set; }
             [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; }
             [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
             [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; }

@@ -25,5 +25,10 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
 
         public Bunch<RemoteAnnouncement> Bunch() =>
             new (list);
+
+        public void Reset()
+        {
+            list.Clear();
+        }
     }
 }

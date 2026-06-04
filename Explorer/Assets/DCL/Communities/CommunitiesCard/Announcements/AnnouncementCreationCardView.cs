@@ -29,8 +29,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] internal EmojiButtonView emojiButton = null!;
         [SerializeField] internal EmojiPanelView emojiPanel = null!;
         [SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration = null!;
-        [SerializeField] internal EmojiSectionView emojiSectionViewPrefab = null!;
-        [SerializeField] internal EmojiButton emojiButtonPrefab = null!;
         [SerializeField] internal AudioClipConfig addEmojiAudio = null!;
         [SerializeField] internal AudioClipConfig openEmojiPanelAudio = null!;
         [SerializeField] internal InputSuggestionPanelView suggestionPanel = null!;
@@ -82,8 +80,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 emojiButton,
                 emojiPanel,
                 emojiPanelConfiguration,
-                emojiSectionViewPrefab,
-                emojiButtonPrefab,
                 addEmojiAudio,
                 openEmojiPanelAudio,
                 suggestionPanel,

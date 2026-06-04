@@ -2,6 +2,7 @@ using System;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Views
 {
@@ -47,6 +48,10 @@ namespace DCL.Chat.ChatReactions.Views
             addButton.onClick.RemoveListener(HandleAddClicked);
         }
 
-        private void HandleAddClicked() => AddClicked?.Invoke();
+        private void HandleAddClicked()
+        {
+            AddClicked?.Invoke();
+            addButton.gameObject.DeselectIfSelected();
+        }
     }
 }

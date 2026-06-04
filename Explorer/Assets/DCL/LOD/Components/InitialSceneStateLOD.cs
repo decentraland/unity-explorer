@@ -13,6 +13,7 @@ namespace DCL.LOD.Components
     public class InitialSceneStateLOD
     {
         private readonly List<ISSStoredAsset> Assets = new ();
+        public string SceneID { get; private set; } = string.Empty;
         public GameObject ParentContainer { get; private set; }
         public IGltfContainerAssetsCache gltfCache { get; private set; }
         public int TotalAssetsToInstantiate { get; private set; }
@@ -45,6 +46,14 @@ namespace DCL.LOD.Components
             {
                 Generation++;
                 Clear();
+
+                // Destroy the container too, otherwise ResolveISSLODSystem's "promises already spawned"
+                // guard (ParentContainer != null) misreads a stale container from this aborted run as
+                // "current run is already in progress" and never re-spawns promises on re-entry —
+                // leaving AllAssetsInstantiated() permanently false (Assets.Count == 0 ≠ Total).
+                // Unity's overloaded == treats a destroyed GameObject as null, so EnsureParentContainer
+                // and the guard both behave correctly after the destroy.
+                UnityObjectUtils.SafeDestroy(ParentContainer);
             }
 
             CurrentState = State.UNINITIALIZED;
@@ -80,7 +89,7 @@ namespace DCL.LOD.Components
             });
 
         public bool AllAssetsInstantiated() =>
-            AssetBundleData != null && Assets.Count == TotalAssetsToInstantiate;
+            ParentContainer != null && Assets.Count == TotalAssetsToInstantiate;
 
         public bool IsProcessing() =>
             CurrentState is State.PROCESSING;
@@ -88,12 +97,29 @@ namespace DCL.LOD.Components
 
         public void Initialize(string sceneID, Vector3 sceneGeometryBaseParcelPosition, AssetBundleData resultAsset, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
         {
-            if (ParentContainer == null)
-                ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
-            ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
+            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
             AssetBundleData = resultAsset;
             gltfCache = gltfContainerAssetsCache;
             TotalAssetsToInstantiate = assetHashCount;
+        }
+
+        /// <summary>
+        ///     Descriptor-only initialization: no shared ISS bundle to hold; each asset will arrive via its own promise.
+        /// </summary>
+        public void InitializeFromDescriptor(string sceneID, Vector3 sceneGeometryBaseParcelPosition, IGltfContainerAssetsCache gltfContainerAssetsCache, int assetHashCount)
+        {
+            EnsureParentContainer(sceneID, sceneGeometryBaseParcelPosition);
+            AssetBundleData = null;
+            gltfCache = gltfContainerAssetsCache;
+            TotalAssetsToInstantiate = assetHashCount;
+        }
+
+        private void EnsureParentContainer(string sceneID, Vector3 sceneGeometryBaseParcelPosition)
+        {
+            SceneID = sceneID;
+            if (ParentContainer == null)
+                ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
+            ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
         }
 
         public void AddFailedAsset(string creationHelperAssetHash)

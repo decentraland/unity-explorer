@@ -42,8 +42,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             EmojiButtonView emojiButton,
             EmojiPanelView emojiPanel,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
-            EmojiSectionView emojiSectionViewPrefab,
-            EmojiButton emojiButtonPrefab,
             AudioClipConfig addEmojiAudio,
             AudioClipConfig openEmojiPanelAudio,
             InputSuggestionPanelView suggestionPanel,
@@ -65,9 +63,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             emojiPanelPresenter = new EmojiPanelPresenter(
                 emojiPanel,
                 emojiPanelConfiguration,
-                emojiMapping,
-                emojiSectionViewPrefab,
-                emojiButtonPrefab
+                emojiMapping
             );
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);

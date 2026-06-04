@@ -1,3 +1,4 @@
+using AltTester.AltTesterUnitySDK.Commands;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
@@ -25,10 +26,10 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
-using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Quality.Runtime;
-using DCL.Settings.Utils;
-using DCL.UI;
+using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Time;
+using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -36,30 +37,25 @@ using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
+using DG.Tweening;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Newtonsoft.Json.Linq;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
-using Global.Dynamic.RealmUrl;
-using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using MVC;
+using Newtonsoft.Json.Linq;
+using Plugins.NativeWindowManager;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
-using DCL.UI.ErrorPopup;
-using DG.Tweening;
-using ECS;
-using System.IO;
-using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -89,6 +85,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
@@ -97,6 +94,7 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
         private FileStream? singleInstanceLock;
+        private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
         private void Awake()
         {
@@ -253,8 +251,15 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, ct);
 
                 bootstrap.InitializeFeaturesRegistry();
-
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                // Need to ensure clock sync ASAP due to some requests may fail due this problem.
+                // Checking for clock desync after feature flags (or any other process that performs an http request)
+                // potentially saves one extra HEAD request
+                var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
+                    ShowClockDesyncPopupAsync, bootstrapContainer.DecentralandUrlsSource);
+
+                await ensureClockSyncAction.ExecuteAsync(ct);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
@@ -296,7 +301,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -423,12 +428,11 @@ namespace Global.Dynamic
                 new PlatformDriveInfoProvider());
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
-            if (!hasMinimumSpecs)
-            {
+            if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPreset();
-            }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
@@ -454,7 +458,7 @@ namespace Global.Dynamic
 
             analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
-            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+            bool shouldShowScreen = forceShow || (!skipScreen && !userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
                 return minimumSpecsGuard.Results;
@@ -742,6 +746,7 @@ namespace Global.Dynamic
         private void InstantiateAltTester(IAppArgs appArgs)
         {
 #if ALTTESTER
+
             // Temporary parent needed because AltTester's Awake method relies on the name being
             // AltTesterPrefab (and not AltTesterPrefab(Clone))
             var tempParent = new GameObject("AltTesterParent");
@@ -753,7 +758,7 @@ namespace Global.Dynamic
 
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {
-                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+                var runner = instance.GetComponent<AltRunner>();
 
                 var split = endpoint.Split(':');
 
@@ -812,6 +817,41 @@ namespace Global.Dynamic
             }
         }
 
+        private async UniTask<EnsureClockSync.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
+        {
+            if (clockDesyncPopupPrefab == null)
+                clockDesyncPopupPrefab = (await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
+
+            ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
+                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(clockDesyncPopupPrefab, null, out ErrorPopupWithRetryView viewInstance);
+
+            using var controller = new ErrorPopupWithRetryController(viewFactory);
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Time sync needed",
+                description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
+                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+
+            var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
+
+            // Cant use the MVC here, it doesn't exist at this point
+            await controller.LaunchViewLifeCycleAsync(ordering, input, ct);
+            await controller.HideViewAsync(ct);
+
+            Destroy(viewInstance.gameObject);
+
+            switch (input.SelectedOption)
+            {
+                case ErrorPopupWithRetryController.Result.EXIT:
+                    // The error popup will automatically request application exit
+                    return EnsureClockSync.Result.CONTINUE;
+                case ErrorPopupWithRetryController.Result.RESTART:
+                    return EnsureClockSync.Result.RESTART;
+            }
+
+            return EnsureClockSync.Result.CONTINUE;
+        }
+
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
         {
             if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
@@ -831,6 +871,12 @@ namespace Global.Dynamic
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
             public SplashScreenRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ErrorPopupWithRetryRef : ComponentReference<ErrorPopupWithRetryView>
+        {
+            public ErrorPopupWithRetryRef(string guid) : base(guid) { }
         }
     }
 }

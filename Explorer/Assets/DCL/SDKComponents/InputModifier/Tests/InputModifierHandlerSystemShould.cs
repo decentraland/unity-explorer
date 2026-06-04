@@ -405,6 +405,37 @@ namespace DCL.SDKComponents.InputModifier.Tests
             // Assert - Should not remove the component since it's not a player entity
             Assert.IsTrue(world.Has<InputModifierComponent>(entity));
         }
+
+        [Test]
+        public void FinalizeComponents_NoOp_WhenSceneNeverApplied()
+        {
+            // In multi-scene worlds, a scene that never applied a modifier
+            // must not reset the shared global on its own teardown, or it would clobber
+            // a modifier set by a different (still-running) scene.
+            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableAll = true;
+            sceneRestrictionBusController.ClearReceivedCalls();
+
+            system.FinalizeComponents(default);
+
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableAll);
+            sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
+        }
+
+        [Test]
+        public void OnSceneIsCurrentChanged_False_NoOp_WhenSceneNeverApplied()
+        {
+            // A scene that never applied a modifier must not reset the
+            // shared global when it simply transitions to non-current.
+            ref InputModifierComponent inputModifier = ref globalWorld.Get<InputModifierComponent>(playerEntity);
+            inputModifier.DisableAll = true;
+            sceneRestrictionBusController.ClearReceivedCalls();
+
+            system.OnSceneIsCurrentChanged(false);
+
+            Assert.IsTrue(globalWorld.Get<InputModifierComponent>(playerEntity).DisableAll);
+            sceneRestrictionBusController.DidNotReceiveWithAnyArgs().PushSceneRestriction(default);
+        }
     }
 }
 
