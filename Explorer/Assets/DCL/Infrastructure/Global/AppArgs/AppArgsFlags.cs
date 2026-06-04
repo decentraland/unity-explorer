@@ -108,6 +108,11 @@ namespace Global.AppArgs
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
+        /// <summary>
+        /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
+        /// </summary>
+        public const string SOFT_SHUTDOWN = "soft-shutdown";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
