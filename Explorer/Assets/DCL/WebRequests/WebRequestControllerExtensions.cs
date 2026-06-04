@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.Dumper;
@@ -235,28 +237,31 @@ namespace DCL.WebRequests
             if (url.Value.StartsWith("file://"))
                 return -1;
 
-            try
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(timeoutMs);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(timeoutMs);
 
-                return await controller.HeadAsync<GetDecompressedContentLengthOp, long>(
-                    new CommonArguments(url, RetryPolicy.NONE),
-                    new GetDecompressedContentLengthOp(),
-                    default,
-                    cts.Token,
-                    ReportCategory.ASSET_BUNDLES);
-            }
-            catch (OperationCanceledException)
-            {
-                return -1;
-            }
-            catch (Exception e)
-            {
+            // No try/catch here on purpose. IL2CPP/MSVC emitted a miscompiled catch funclet for this
+            // method (merged OCE+Exception dispatcher with a broken entry point that dereferences an
+            // uninitialized register), crashing deterministically on the first HEAD timeout.
+            // SuppressToResultAsync keeps the exception handling in shared generic code instead.
+            Result<long> result = await controller.HeadAsync<GetDecompressedContentLengthOp, long>(
+                                                       new CommonArguments(url, RetryPolicy.NONE),
+                                                       new GetDecompressedContentLengthOp(),
+                                                       default(GenericHeadArguments),
+                                                       cts.Token,
+                                                       ReportCategory.ASSET_BUNDLES)
+                                                  .SuppressToResultAsync();
+
+            if (result.Success)
+                return result.Value;
+
+            // Timeouts (cancellation) are expected for slow first connections and stay silent;
+            // anything else is worth a warning before falling back.
+            if (result.ErrorMessage != nameof(OperationCanceledException))
                 ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
-                    $"HEAD for decompressed content length failed for {url}: {e.Message}. Falling back to count-based progress.");
-                return -1;
-            }
+                    $"HEAD for decompressed content length failed for {url}: {result.ErrorMessage}. Falling back to count-based progress.");
+
+            return -1;
         }
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
