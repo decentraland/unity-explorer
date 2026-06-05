@@ -85,13 +85,6 @@ namespace DCL.Browser.DecentralandUrls
                 decentralandDomain = nameof(DecentralandEnvironment.Org).ToLower();
             }
 
-            // TODO address it later, direct cache injection as a behaviour looks unelegant
-            if (!string.IsNullOrEmpty(gatekeeperBaseOverride))
-            {
-                cache[DecentralandUrl.Gatekeeper] = new UrlData(CacheBehaviour.STATIC, gatekeeperBaseOverride);
-                cache[DecentralandUrl.LocalGateKeeperSceneAdapter] = new UrlData(CacheBehaviour.STATIC, $"{gatekeeperBaseOverride}/get-scene-adapter");
-            }
-
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
 
