@@ -1,6 +1,8 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
+using DCL.SceneRunner.Scene;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System;
@@ -19,9 +21,17 @@ namespace ECS.SceneLifeCycle.Components
 
         public readonly SceneDefinitionComponent DefinitionComponent;
 
-        public GetSceneFacadeIntention(SceneDefinitionComponent definitionComponent)
+        /// <summary>
+        ///     ISSDescriptor for this scene, captured by reference at intention-creation time. The radius
+        ///     system gates SHOWING_SCENE transitions on descriptor resolution, so by the time this intention
+        ///     is constructed the descriptor is guaranteed to be in a resolved state.
+        /// </summary>
+        public readonly ISSDescriptor ISSDescriptor;
+
+        public GetSceneFacadeIntention(SceneDefinitionComponent definitionComponent, ISSDescriptor issDescriptor)
         {
             DefinitionComponent = definitionComponent;
+            ISSDescriptor = issDescriptor;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
             CommonArguments = new CommonLoadingArguments(definitionComponent.IpfsPath.EntityId);

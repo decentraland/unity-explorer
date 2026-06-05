@@ -226,6 +226,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             hoverHandler.enabled = isEnabled;
         }
 
+        public void ResetHoverState()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = null;
+
+            transform.localScale = Vector3.one;
+
+            if (outfitHoverOutline != null)
+            {
+                outfitHoverOutline.transform.localScale = Vector3.zero;
+                outfitHoverOutline.gameObject.SetActive(false);
+            }
+        }
+
         private void ResetEquipButtonContent()
         {
             isEquipLoading = false;

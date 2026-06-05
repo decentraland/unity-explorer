@@ -139,8 +139,6 @@ namespace DCL.Chat
                 view.EmojiPanelView,
                 emojiContainer.emojiPanelConfiguration,
                 emojiMapping,
-                emojiContainer.emojiSectionViewPrefab,
-                emojiContainer.emojiButtonPrefab,
                 inputBlock);
 
             reactionsConfig.Atlas.Initialize();

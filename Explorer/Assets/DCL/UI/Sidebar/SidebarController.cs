@@ -31,8 +31,10 @@ using DCL.EventsApi;
 using DCL.InWorldCamera;
 using DCL.UI.Buttons;
 using DCL.UI.Sidebar.HelpMenu;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
+using DCL.VoiceChat;
 using DCL.VoiceChat.UI;
 using ECS.Abstract;
 using System.Collections.Generic;
@@ -58,11 +60,14 @@ namespace DCL.UI.Sidebar
         private readonly ChatEventBus chatEventBus;
         private readonly IDisposable chatEventBusSubscription;
         private readonly HelpMenuController helpMenuController;
+        private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private readonly bool isCameraReelFeatureEnabled;
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isDiscoverFeatureEnabled;
         private readonly bool isNearbyVoiceChatEnabled;
         private readonly HttpEventsApiService eventsApiService;
+
+        private ReactivePropertyExtensions.DisposableSubscription<bool> communitiesLiveBadgeSubscription;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForLiveEventsCts = new ();
@@ -92,7 +97,8 @@ namespace DCL.UI.Sidebar
             World globalWorld,
             ChatEventBus chatEventBus,
             HttpEventsApiService eventsApiService,
-            HelpMenuController helpMenuController)
+            HelpMenuController helpMenuController,
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -107,6 +113,7 @@ namespace DCL.UI.Sidebar
             this.chatEventBus = chatEventBus;
             this.eventsApiService = eventsApiService;
             this.helpMenuController = helpMenuController;
+            this.communitiesLiveTracker = communitiesLiveTracker;
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
             isMarketplaceCreditsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
@@ -166,6 +173,8 @@ namespace DCL.UI.Sidebar
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
             openPanelCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
+
+            communitiesLiveBadgeSubscription.Dispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
@@ -193,6 +202,15 @@ namespace DCL.UI.Sidebar
             OnChatViewFoldingChanged(true);
 
             viewInstance.SetLiveEventsCounter(0);
+
+            viewInstance.communitiesLiveBadge.SetActive(communitiesLiveTracker.HasAnyJoinedCommunityLive.Value);
+            communitiesLiveBadgeSubscription = communitiesLiveTracker.HasAnyJoinedCommunityLive.Subscribe(OnCommunitiesLiveStateChanged);
+        }
+
+        private void OnCommunitiesLiveStateChanged(bool hasAnyLive)
+        {
+            if (viewInstance != null)
+                viewInstance.communitiesLiveBadge.SetActive(hasAnyLive);
         }
 
         private void SubscribeToEvents()

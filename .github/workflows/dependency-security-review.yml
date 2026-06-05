@@ -16,6 +16,10 @@ on:
       - '.github/workflows/**'
       - '.github/prompts/**'
 
+concurrency:
+  group: dependency-security-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   detect-and-review:
     if: github.event.pull_request.draft == false
@@ -28,7 +32,7 @@ jobs:
       statuses: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -95,7 +99,7 @@ jobs:
 
       - name: Add label
         if: steps.detect.outputs.has-changes == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.issues.addLabels({
@@ -107,7 +111,7 @@ jobs:
 
       - name: Set status to pending
         if: steps.detect.outputs.has-changes == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -161,7 +165,7 @@ jobs:
 
       - name: Set final status
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const hasChanges = '${{ steps.detect.outputs.has-changes }}' === 'true';
@@ -182,9 +186,21 @@ jobs:
                 issue_number: ${{ github.event.pull_request.number }},
               });
 
-              const claudeComment = comments
-                .reverse()
-                .find(c => c.user?.login === 'claude[bot]');
+              const claudeComments = comments.filter(c =>
+                c.user?.login === 'claude[bot]' && c.body?.includes('DEPENDENCY_REVIEW:')
+              );
+              const claudeComment = claudeComments[claudeComments.length - 1];
+
+              for (const c of claudeComments.slice(0, -1)) {
+                await github.graphql(
+                  `mutation($id: ID!) {
+                    minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                      minimizedComment { isMinimized }
+                    }
+                  }`,
+                  { id: c.node_id }
+                ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
+              }
 
               const output = claudeComment?.body ?? '';
               const errored = '${{ steps.claude.outcome }}' === 'failure';
