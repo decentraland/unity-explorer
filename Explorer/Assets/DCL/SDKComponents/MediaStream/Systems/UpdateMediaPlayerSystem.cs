@@ -353,7 +353,12 @@ namespace DCL.SDKComponents.MediaStream
                 attempts = existing.Attempts + 1;
             }
 
-            if (attempts > MAX_RETRY_ATTEMPTS) return;
+            if (attempts > MAX_RETRY_ATTEMPTS)
+            {
+                // Otherwise the elapsed state keeps passing TryReInitializeOnFailedMedia's guard and retries fire every frame forever.
+                World.Set(entity, new MediaPlayerRetryState { Attempts = MAX_RETRY_ATTEMPTS + 1, NextRetryAt = float.MaxValue });
+                return;
+            }
 
             float delay = 2f * (1 << (attempts - 1)); // 2, 4, 8, 16, 32
 
