@@ -225,13 +225,37 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
-            bonesCombined.Dispose();
-            matrixFromAllAvatars.Dispose();
-            updateAvatar.Dispose();
-            Job.Dispose();
+            // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
+            if (DCL.Utility.ExitUtils.IsAboutToQuit)
+            {
+                return;
+            }
 
-            if (bonesTransformAccessArray.isCreated) bonesTransformAccessArray.Dispose();
-            if (rootsTransformAccessArray.isCreated) rootsTransformAccessArray.Dispose();
+            var stopwatch = DCL.Utility.ShutdownStopwatch.StartNew(nameof(RemoteAvatarPipeline));
+
+            bonesCombined.Dispose();
+            stopwatch.LogStep("bonesCombined.Dispose");
+
+            matrixFromAllAvatars.Dispose();
+            stopwatch.LogStep("matrixFromAllAvatars.Dispose");
+
+            updateAvatar.Dispose();
+            stopwatch.LogStep("updateAvatar.Dispose");
+
+            Job.Dispose();
+            stopwatch.LogStep("job.Dispose");
+
+            if (bonesTransformAccessArray.isCreated) 
+            {
+                bonesTransformAccessArray.Dispose();
+                stopwatch.LogStep("bonesTransformAccessArray.Dispose");
+            }
+
+            if (rootsTransformAccessArray.isCreated)
+            {
+                rootsTransformAccessArray.Dispose();
+                stopwatch.LogStep("rootsTransformAccessArray.Dispose");
+            }
         }
 
         /// <summary>

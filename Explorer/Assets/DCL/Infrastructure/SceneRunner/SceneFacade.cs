@@ -79,11 +79,9 @@ namespace SceneRunner
 
             SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
-
 #if ALTTESTER
             AlttesterSceneReadinessProbe.ClearIfCurrent(this);
 #endif
-
             DisposeInternal();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
@@ -116,7 +114,6 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            SceneData.InitialSceneStateInfo.Dispose();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

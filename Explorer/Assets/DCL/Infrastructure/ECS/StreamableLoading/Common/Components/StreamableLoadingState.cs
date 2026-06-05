@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.Common.Components
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public class StreamableLoadingState
+    public class StreamableLoadingState : IProgress<float>
     {
         public enum Status : byte
         {
@@ -46,6 +46,8 @@ namespace ECS.StreamableLoading.Common.Components
             {
                 state.disposed = false;
                 state.Value = Status.NotStarted;
+                state.Progress = 0f;
+                state.ContentLength = -1;
             },
             actionOnRelease: state =>
             {
@@ -75,6 +77,11 @@ namespace ECS.StreamableLoading.Common.Components
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
+
+        public float Progress { get; private set; }
+        public long ContentLength { get; internal set; }
+
+        public void Report(float value) => Progress = value;
 
         public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
