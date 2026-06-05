@@ -126,11 +126,13 @@ namespace DCL.SDKComponents.MediaStream
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
             {
                 ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+                component.UpdateState();
+
+                // Keep last: may trigger an archetype move that invalidates component's ref.
                 UpdateRetryState(entity, ref component);
             }
-
-            // Need to re-update state in case an update was needed from the sdk component or promise
-            component.UpdateState();
+            else
+                component.UpdateState();
         }
 
         [Query]
@@ -185,11 +187,13 @@ namespace DCL.SDKComponents.MediaStream
                 if (ConsumePromise(ref component, false))
                     component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
 
+                component.UpdateState();
+
+                // Keep last: may trigger an archetype move that invalidates component's ref.
                 UpdateRetryState(entity, ref component);
             }
-
-            // Need to re-update state in case an update was needed from the sdk component or promise
-            component.UpdateState();
+            else
+                component.UpdateState();
         }
 
         /// <summary>
@@ -359,13 +363,16 @@ namespace DCL.SDKComponents.MediaStream
                 NextRetryAt = now + delay,
             };
 
+            // World.Add below invalidates component's ref, so read the address first.
+            MediaAddress mediaAddressForLog = component.MediaAddress;
+
             if (hasState)
                 World.Set(entity, newState);
             else
                 World.Add(entity, newState);
 
             ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
-                $"[MediaRetry] {component.MediaAddress} unreachable; scheduled retry {attempts}/{MAX_RETRY_ATTEMPTS} in {delay:F0}s");
+                $"[MediaRetry] {mediaAddressForLog} unreachable; scheduled retry {attempts}/{MAX_RETRY_ATTEMPTS} in {delay:F0}s");
         }
 
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
@@ -378,15 +385,16 @@ namespace DCL.SDKComponents.MediaStream
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
 
-                ClearRetryStateOnSourceChange(entity);
+                // Dispose while the ref is valid; clearing retry state is a structural change that would invalidate it.
                 RemoveAndForceReInitialization(ref component, entity);
+                ClearRetryStateOnSourceChange(entity);
                 return true;
             }
 
             if (component.MediaAddress == address) return false;
 
-            ClearRetryStateOnSourceChange(entity);
             RemoveAndForceReInitialization(ref component, entity);
+            ClearRetryStateOnSourceChange(entity);
             return true;
         }
 
