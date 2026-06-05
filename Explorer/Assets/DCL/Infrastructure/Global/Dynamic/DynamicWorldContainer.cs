@@ -429,12 +429,21 @@ namespace Global.Dynamic
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
-            IRoomHub roomHub = new RoomHub(
-                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                gateKeeperSceneRoom,
-                chatRoom,
-                voiceChatRoom
-            );
+            IRoomHub roomHub;
+
+            if (appArgs.HasFlag(AppArgsFlags.NO_LIVEKIT_MODE))
+            {
+                roomHub = NullRoomHub.INSTANCE;
+            }
+            else
+            {
+                roomHub = new RoomHub(
+                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                        gateKeeperSceneRoom,
+                        chatRoom,
+                        voiceChatRoom
+                        );
+            }
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());

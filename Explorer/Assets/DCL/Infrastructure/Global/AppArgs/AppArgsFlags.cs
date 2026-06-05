@@ -108,6 +108,15 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
 
+        public const string NO_LIVEKIT_MODE = "no-livekit-mode";
+
+        public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
+
+        /// <summary>
+        /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
+        /// </summary>
+        public const string SOFT_SHUTDOWN = "soft-shutdown";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
