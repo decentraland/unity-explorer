@@ -22,6 +22,7 @@ using DCL.Diagnostics;
 using DCL.UI;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Backpack
 {
@@ -196,7 +197,17 @@ namespace DCL.Backpack
                 }
 
                 capture = await screenshotService.CaptureAsync(characterPreviewController, ct);
-                if (capture == null || ct.IsCancellationRequested)
+
+                // Cancellation has to be checked before capture-is-null so we don't leak the
+                // Texture2D when ct flips between the await completing and this check.
+                // CaptureAsync transfers ownership of the texture to us; nobody else will destroy it.
+                if (ct.IsCancellationRequested)
+                {
+                    if (capture != null) Object.Destroy(capture.Value.Thumbnail);
+                    RevertSlot(presenter, originalOutfitData);
+                    return;
+                }
+                if (capture == null)
                 {
                     RevertSlot(presenter, originalOutfitData);
                     return;
@@ -262,7 +273,15 @@ namespace DCL.Backpack
         private async UniTask TakeScreenshotAndPersistAsync(int slotIndex, CancellationToken ct)
         {
             var capture = await screenshotService.CaptureAsync(characterPreviewController, ct);
-            if (ct.IsCancellationRequested || capture == null) return;
+            if (capture == null) return;
+
+            // Same ownership story as the save flow: CaptureAsync hands us the Texture2D,
+            // and if we don't pass it to a presenter via SetThumbnail it's our job to free it.
+            if (ct.IsCancellationRequested)
+            {
+                Object.Destroy(capture.Value.Thumbnail);
+                return;
+            }
 
             if (TryGetSlot(slotIndex, out var presenter))
                 presenter.SetThumbnail(capture.Value.Thumbnail);
