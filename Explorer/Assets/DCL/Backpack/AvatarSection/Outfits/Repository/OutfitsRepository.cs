@@ -83,9 +83,6 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         public async UniTask SaveSlotAsync(int slot, OutfitItem item, CancellationToken ct)
         {
-            // Cancellation is only honored during the publish cooldown. Once we get past
-            // this line we commit to publishing, the publish itself is non-cancellable
-            // (see PublishAsync) so the server-side and local-side state stay in sync.
             await WaitForPublishCooldownAsync(ct);
 
             var snapshot = new Dictionary<int, OutfitItem>(committed) { [slot] = item };
