@@ -186,8 +186,8 @@ namespace DCL.Browser.DecentralandUrls
                 cache.Remove(url);
         }
 
-        private string ResolveGatekeeperUrl(string defaultUrl, string overrideSuffix = "") =>
-            gatekeeperBaseOverride != null ? $"{gatekeeperBaseOverride}{overrideSuffix}" : defaultUrl;
+        private string ResolveGatekeeperBaseUrl(string defaultBaseUrl) =>
+            gatekeeperBaseOverride ?? defaultBaseUrl;
 
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -215,9 +215,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.Gatekeeper => ResolveGatekeeperUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
+                DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
                 DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/get-scene-adapter",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => ResolveGatekeeperUrl("https://comms-gatekeeper-local.decentraland.org/get-scene-adapter", "/get-scene-adapter"),
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}/get-scene-adapter",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",
