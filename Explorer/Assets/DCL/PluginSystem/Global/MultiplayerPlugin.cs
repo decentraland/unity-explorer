@@ -28,6 +28,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
@@ -124,11 +125,17 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MultiplayerPlugin));
+
             archipelagoIslandRoom.Dispose();
+            stopwatch.LogStep("archipelagoIslandRoom.Dispose");
+
             gateKeeperSceneRoom.Dispose();
+            stopwatch.LogStep("gateKeeperSceneRoom.Dispose");
 
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.Dispose();
+            stopwatch.LogStep("IFFIClient.Default.Dispose");
 #endif
         }
 

@@ -1,13 +1,13 @@
 using DCL.Prefs;
+using DCL.Utility;
 using Newtonsoft.Json.Linq;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     /// <summary>
     /// Detects non-graceful application exits and reports them to the analytics service
     /// </summary>
-    public class CrashDetector : MonoBehaviour
+    public static class CrashDetector
     {
         public static void Initialize(IAnalyticsController analyticsController)
         {
@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
                 analyticsController.Track(AnalyticsEvents.General.CRASH, new JObject
                 {
-                    { "previous_session_id", previousSessionID }
+                    { "previous_session_id", previousSessionID },
                 });
             }
 
@@ -26,16 +26,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             DCLPlayerPrefs.SetString(DCLPrefKeys.CRASH_DETECTOR_SESSION_ID, analyticsController.SessionID);
             DCLPlayerPrefs.Save();
 
-            var go = new GameObject("CrashDetector");
-            go.AddComponent<CrashDetector>();
-            DontDestroyOnLoad(go);
+            ExitUtils.UnregisterCleanUpCandidate(nameof(CrashDetector));
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(CrashDetector), ClearCrashFlag));
         }
 
-        private void OnApplicationQuit()
+        private static void ClearCrashFlag()
         {
-            // NOTE: If you remove this, make sure to call DCLPlayerPrefs.SaveSync() in another OnApplicationQuit method
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CRASH_DETECTOR_FLAG);
-            DCLPlayerPrefs.SaveSync();
         }
     }
 }
