@@ -32,6 +32,7 @@ namespace DCL.Browser.DecentralandUrls
         }
 
         protected const string ENV = "{ENV}";
+        private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
         private readonly DecentralandEnvironment environment;
@@ -209,8 +210,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.Gatekeeper => ResolveGatekeeperBaseUrl($"https://comms-gatekeeper.decentraland.{ENV}"),
-                DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/get-scene-adapter",
-                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}/get-scene-adapter",
+                DecentralandUrl.GateKeeperSceneAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}{SCENE_ADAPTER_PATH}",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => $"{ResolveGatekeeperBaseUrl("https://comms-gatekeeper-local.decentraland.org")}{SCENE_ADAPTER_PATH}",
                 DecentralandUrl.ChatAdapter => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/private-messages/token",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.WhatsOnNewEventLink => $"https://decentraland.{ENV}/whats-on/new-event",
