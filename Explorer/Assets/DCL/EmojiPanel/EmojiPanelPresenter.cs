@@ -1,32 +1,44 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Input.Component;
+using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
 {
     public class EmojiPanelPresenter : IDisposable
     {
+        private const int HEADER_ROW_PREFAB_INDEX = 0;
+        private const int EMOJI_ROW_PREFAB_INDEX = 1;
+        private const string SEARCH_RESULTS_HEADER = "SEARCH RESULTS";
+
         public event Action<string>? EmojiSelected;
         public event Action<bool>? PanelVisibilityChanged;
 
         private readonly EmojiMapping emojiMapping;
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
-        private readonly EmojiButton emojiButtonPrefab;
-        private readonly EmojiSectionView emojiSectionPrefab;
-        private readonly EmojiSearchController emojiSearchController;
+        private readonly IInputBlock? inputBlock;
 
-        private readonly List<EmojiSectionView> emojiSectionViews = new ();
-        private readonly List<EmojiData> foundEmojis = new ();
+        private readonly List<EmojiData> allEmojis = new ();
+        private readonly List<EmojiData> searchResults = new ();
+        private readonly List<EmojiPanelRowData> allRows = new ();
+        private readonly List<EmojiPanelRowData> searchRows = new ();
 
-        private CancellationTokenSource cts = new ();
+        private IReadOnlyList<EmojiData> activeEmojis;
+        private IReadOnlyList<EmojiPanelRowData> activeRows;
+
+        private int[] sectionHeaderRowIndices = { };
+        private CancellationTokenSource? searchCts = new ();
+
+        private bool isSearchActive;
+        private bool shortcutsBlocked;
+        private bool isInitialized;
 
         public Transform PanelTransform => view.transform;
 
@@ -34,130 +46,235 @@ namespace DCL.Emoji
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             EmojiMapping emojiMapping,
-            EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab,
             IInputBlock? inputBlock = null)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
-            this.emojiSectionPrefab = emojiSectionPrefab;
-            this.emojiButtonPrefab = emojiButtonPrefab;
             this.emojiMapping = emojiMapping;
-            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab, inputBlock);
-            emojiSearchController.SearchTextChanged += OnSearchTextChanged;
-            emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
+            this.inputBlock = inputBlock;
 
-            view.EmojiFirstOpen += ConfigureEmojiSectionSizes;
-            ConfigureEmojiSections();
-            view.SectionSelected += OnSectionSelected;
+            activeEmojis = allEmojis;
+            activeRows = allRows;
 
             view.SetVisible(false);
         }
 
-        private void OnSearchTextChanged(string searchText)
-        {
-            view.EmojiContainerScrollView.gameObject.SetActive(string.IsNullOrEmpty(searchText));
-            view.EmojiSearchResults.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-            if (string.IsNullOrEmpty(searchText))
-                return;
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
-            OnSearchTextChangedAsync(searchText, cts.Token).Forget();
-        }
-
-        private async UniTaskVoid OnSearchTextChangedAsync(string searchText, CancellationToken ct)
-        {
-            // Uses the new EmojiMapping class, as per the July 17th refactor
-            await DictionaryUtils.GetKeysContainingTextAsync(emojiMapping.NameMapping, searchText, foundEmojis, ct);
-            emojiSearchController.SetValues(foundEmojis);
-        }
-
-        private void OnSectionSelected(float sectionPosition, bool isOn)
-        {
-            if (!isOn)
-                return;
-
-            view.ScrollView.normalizedPosition = new Vector2(0, sectionPosition);
-        }
-
         public void SetPanelVisibility(bool isVisible)
         {
-            TMP_InputField searchInput = view.SearchPanelView.inputField;
+            if (isVisible == view.IsVisible)
+                return;
 
-            if (!isVisible)
+            if (isVisible)
+                EnsureInitialized();
+            else
             {
-                if (searchInput.isFocused)
-                    searchInput.DeactivateInputField();
-
-                if (!string.IsNullOrEmpty(searchInput.text))
-                    searchInput.text = string.Empty;
+                HideTooltip();
+                view.BlurSearchInput();
+                view.ClearSearchText();
             }
 
             view.SetVisible(isVisible);
 
             if (isVisible)
-            {
-                searchInput.Select();
-                searchInput.ActivateInputField();
-            }
+                view.FocusSearchInput();
 
             PanelVisibilityChanged?.Invoke(isVisible);
         }
 
-        private void ConfigureEmojiSectionSizes()
+        public void Dispose()
         {
-            foreach (EmojiSectionView emojiSectionView in emojiSectionViews)
-                SetUiSizes(emojiSectionView);
+            searchCts.SafeCancelAndDispose();
+            searchCts = null;
+            RestoreShortcuts();
+
+            if (isInitialized)
+            {
+                view.SectionSelected -= OnSectionSelected;
+                view.SearchTextChanged -= OnSearchTextChanged;
+                view.SearchInputFocused -= BlockShortcuts;
+                view.SearchInputBlurred -= RestoreShortcuts;
+            }
+
+            allEmojis.Clear();
+            searchResults.Clear();
+            allRows.Clear();
+            searchRows.Clear();
         }
 
-        private void ConfigureEmojiSections()
+        private void EnsureInitialized()
         {
-            foreach (EmojiSection emojiSection in emojiPanelConfiguration.EmojiSections)
-            {
-                EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.EmojiContainer);
-                sectionView.SectionTitle.text = emojiSection.title;
-                GenerateEmojis(emojiSection.emojis, sectionView);
+            if (isInitialized)
+                return;
 
-                emojiSectionViews.Add(sectionView);
+            isInitialized = true;
+
+            BuildNormalRows(emojiPanelConfiguration);
+
+            view.EmojiLoopList.InitListView(activeRows.Count, OnGetItemByIndex);
+            view.SectionSelected += OnSectionSelected;
+            view.SearchTextChanged += OnSearchTextChanged;
+            view.SearchInputFocused += BlockShortcuts;
+            view.SearchInputBlurred += RestoreShortcuts;
+        }
+
+        private void BuildNormalRows(EmojiPanelConfigurationSO emojiPanelConfiguration)
+        {
+            sectionHeaderRowIndices = new int[emojiPanelConfiguration.EmojiSections.Count];
+
+            for (int sectionIndex = 0; sectionIndex < emojiPanelConfiguration.EmojiSections.Count; sectionIndex++)
+            {
+                EmojiSection emojiSection = emojiPanelConfiguration.EmojiSections[sectionIndex];
+
+                sectionHeaderRowIndices[sectionIndex] = allRows.Count;
+                allRows.Add(EmojiPanelRowData.Header(emojiSection.title));
+
+                int sectionEmojiStartIndex = allEmojis.Count;
+
+                for (int i = 0; i < emojiSection.emojis.Count; i++)
+                {
+                    SerializableKeyValuePair<string, int> kvp = emojiSection.emojis[i];
+                    allEmojis.Add(new EmojiData(char.ConvertFromUtf32(kvp.value), kvp.key));
+                }
+
+                AddEmojiRows(allRows, sectionEmojiStartIndex, emojiSection.emojis.Count);
             }
         }
 
-        private void SetUiSizes(EmojiSectionView sectionView)
+        private static void AddEmojiRows(List<EmojiPanelRowData> rows, int startIndex, int emojiCount)
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
-            sectionView.EmojiContainer.sizeDelta = new Vector2(sectionView.EmojiContainer.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.EmojiContainer));
-            LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.SectionRectTransform);
-            sectionView.SectionRectTransform.sizeDelta = new Vector2(sectionView.SectionRectTransform.sizeDelta.x, LayoutUtility.GetPreferredHeight(sectionView.SectionRectTransform));
+            int remainingEmojis = emojiCount;
+            int rowStartIndex = startIndex;
+
+            while (remainingEmojis > 0)
+            {
+                int rowEmojiCount = Math.Min(EmojiRowView.EMOJIS_PER_ROW, remainingEmojis);
+                rows.Add(EmojiPanelRowData.EmojiRow(rowStartIndex, rowEmojiCount));
+
+                rowStartIndex += rowEmojiCount;
+                remainingEmojis -= rowEmojiCount;
+            }
         }
 
-        private void GenerateEmojis(List<SerializableKeyValuePair<string, int>> emojis, EmojiSectionView sectionView)
+        private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            foreach (var kvp in emojis)
+            if (index < 0 || index >= activeRows.Count)
+                return null;
+
+            EmojiPanelRowData rowData = activeRows[index];
+
+            switch (rowData.Type)
             {
-                EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
-                emojiButton.EmojiImage.text = char.ConvertFromUtf32(kvp.value);
-                emojiButton.TooltipText.text = kvp.key;
-                emojiButton.EmojiSelected += OnEmojiSelected;
+                case EmojiPanelRowType.Header:
+                {
+                    LoopListViewItem2 item = listView.NewListViewItem(listView.ItemPrefabDataList[HEADER_ROW_PREFAB_INDEX].mItemPrefab.name);
+                    EmojiSectionHeaderView headerView = item.GetComponent<EmojiSectionHeaderView>();
+                    headerView.SetTitle(rowData.HeaderTitle);
+                    return item;
+                }
+                case EmojiPanelRowType.Emoji:
+                {
+                    LoopListViewItem2 item = listView.NewListViewItem(listView.ItemPrefabDataList[EMOJI_ROW_PREFAB_INDEX].mItemPrefab.name);
+                    EmojiRowView rowView = item.GetComponent<EmojiRowView>();
+                    rowView.Bind(activeEmojis, rowData.EmojiStartIndex, rowData.EmojiCount, OnEmojiSelected, OnEmojiHovered, OnEmojiUnhovered);
+                    return item;
+                }
+                default:
+                    return null;
             }
+        }
+
+        private void OnSectionSelected(int sectionIndex, bool isOn)
+        {
+            if (!isOn)
+                return;
+
+            if (sectionIndex < 0 || sectionIndex >= sectionHeaderRowIndices.Length)
+                return;
+
+            if (isSearchActive)
+                view.ClearSearchText();
+
+            HideTooltip();
+            view.EmojiLoopList.MovePanelToItemIndex(sectionHeaderRowIndices[sectionIndex], 0f);
+        }
+
+        private void OnSearchTextChanged(string searchText)
+        {
+            HideTooltip();
+
+            isSearchActive = !string.IsNullOrEmpty(searchText);
+
+            searchCts = searchCts.SafeRestart();
+
+            if (!isSearchActive)
+            {
+                activeEmojis = allEmojis;
+                activeRows = allRows;
+                RefreshList(resetPosition: true);
+                return;
+            }
+
+            SearchTextChangedAsync(searchText, searchCts.Token).Forget();
+        }
+
+        private async UniTaskVoid SearchTextChangedAsync(string searchText, CancellationToken ct)
+        {
+            try
+            {
+                searchResults.Clear();
+                await DictionaryUtils.GetKeysContainingTextAsync(emojiMapping.NameMapping, searchText, searchResults, ct);
+
+                if (ct.IsCancellationRequested)
+                    return;
+
+                searchRows.Clear();
+                searchRows.Add(EmojiPanelRowData.Header(SEARCH_RESULTS_HEADER));
+                AddEmojiRows(searchRows, 0, searchResults.Count);
+
+                activeEmojis = searchResults;
+                activeRows = searchRows;
+                RefreshList(resetPosition: true);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+        }
+
+        private void RefreshList(bool resetPosition)
+        {
+            HideTooltip();
+            view.EmojiLoopList.SetListItemCount(activeRows.Count, resetPosition);
+            view.EmojiLoopList.RefreshAllShownItem();
+        }
+
+        private void BlockShortcuts()
+        {
+            if (inputBlock == null || shortcutsBlocked) return;
+
+            shortcutsBlocked = true;
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+        }
+
+        private void RestoreShortcuts()
+        {
+            if (inputBlock == null || !shortcutsBlocked) return;
+
+            shortcutsBlocked = false;
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
         private void OnEmojiSelected(string code)
         {
+            HideTooltip();
             EmojiSelected?.Invoke(code);
         }
 
-        public void Dispose()
-        {
-            emojiSearchController.SearchTextChanged -= OnSearchTextChanged;
-            view.EmojiFirstOpen -= ConfigureEmojiSectionSizes;
-            view.SectionSelected -= OnSectionSelected;
-            emojiSearchController.Dispose();
+        private void OnEmojiHovered(EmojiButton emojiButton) =>
+            view.TooltipView.Show(emojiButton);
 
-            foreach (EmojiSectionView sectionView in emojiSectionViews)
-                UnityObjectUtils.SafeDestroyGameObject(sectionView);
+        private void OnEmojiUnhovered(EmojiButton emojiButton) =>
+            view.TooltipView.Hide(emojiButton);
 
-            emojiSectionViews.Clear();
-            foundEmojis.Clear();
-        }
+        private void HideTooltip() =>
+            view.TooltipView.ForceHide();
     }
 }
