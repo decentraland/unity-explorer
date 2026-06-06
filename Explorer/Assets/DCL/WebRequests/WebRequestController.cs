@@ -43,7 +43,11 @@ namespace DCL.WebRequests
             this.realmClock = realmClock;
         }
 
-        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
+            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
+            TWebRequestOp op,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
@@ -80,7 +84,8 @@ namespace DCL.WebRequests
                         attemptNumber++;
 
                         analyticsContainer.OnRequestStarted(in envelope, request);
-                        await request.SendRequest(envelope.Ct);
+
+                        await request.SendRequestAsync(envelope.Ct, expectedContentLength, progressReporter);
                         analyticsContainer.OnRequestFinished(request);
                     }
 

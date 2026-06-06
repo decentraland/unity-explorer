@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             HandleOriginalComponentRemovalQuery(World);
+            HandleOrphanedRetryStateQuery(World);
             RemoveVideoPriorityQuery(World);
 
             TryReleaseConsumerQuery(World);
@@ -38,6 +39,17 @@ namespace DCL.SDKComponents.MediaStream
         {
             CleanUpMediaPlayer(e, ref mediaPlayer);
         }
+
+        /// <summary>
+        ///     Drops the retry-backoff bookkeeping once the SDK component that owned the media is gone.
+        ///     Without this, an entity that previously failed and then had its PBVideoPlayer/PBAudioStream
+        ///     removed would carry stale retry state, biasing any future media component attached to it.
+        /// </summary>
+        [Query]
+        [All(typeof(MediaPlayerRetryState))]
+        [None(typeof(PBAudioStream), typeof(CustomMediaStream), typeof(PBVideoPlayer))]
+        private void HandleOrphanedRetryState(Entity e) =>
+            World.Remove<MediaPlayerRetryState>(e);
 
         /// <summary>
         ///     Removes <see cref="VideoStateByPriorityComponent" /> component when the attached Media Player is removed
