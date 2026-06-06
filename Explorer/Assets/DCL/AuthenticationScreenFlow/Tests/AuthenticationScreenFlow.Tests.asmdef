@@ -1,0 +1,24 @@
+{
+    "name": "AuthenticationScreenFlow.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:28964ef7dc9441b6b8671b61a8106690",
+        "GUID:543b8f091a5947a3880b7f2bca2358bd",
+        "GUID:e25ef972de004615a22937e739de2def"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
