@@ -226,25 +226,40 @@ namespace DCL.AuthenticationScreenFlow
                 if (category == WearableCategories.Categories.BODY_SHAPE)
                     continue;
 
-                if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
+                URN urn = wearable.GetUrn();
+
+                if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE)
+                    && !HasBodyTypePrefix(urn, "f_"))
                 {
                     if (!maleWearablesByCategory.ContainsKey(category))
                         maleWearablesByCategory[category] = new List<URN>();
 
-                    maleWearablesByCategory[category].Add(wearable.GetUrn());
+                    maleWearablesByCategory[category].Add(urn);
                 }
 
                 if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE)
-                    && !FEMALE_EXCLUDED_CATEGORIES.Contains(category))
+                    && !FEMALE_EXCLUDED_CATEGORIES.Contains(category)
+                    && !HasBodyTypePrefix(urn, "m_"))
                 {
                     if (!femaleWearablesByCategory.ContainsKey(category))
                         femaleWearablesByCategory[category] = new List<URN>();
 
-                    femaleWearablesByCategory[category].Add(wearable.GetUrn());
+                    femaleWearablesByCategory[category].Add(urn);
                 }
             }
 
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalogs populated: male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
+        }
+
+        private static bool HasBodyTypePrefix(URN urn, string prefix)
+        {
+            string urnStr = urn.ToString();
+            int lastColon = urnStr.LastIndexOf(':');
+
+            if (lastColon < 0 || lastColon >= urnStr.Length - 1)
+                return false;
+
+            return urnStr.AsSpan(lastColon + 1).StartsWith(prefix.AsSpan(), StringComparison.OrdinalIgnoreCase);
         }
 
         private void OnBackButtonClicked()
@@ -335,7 +350,7 @@ namespace DCL.AuthenticationScreenFlow
             WearableCategories.Categories.HANDS_WEAR,
         };
 
-        private const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.5f;
+        private const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.75f;
 
         private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
         {
