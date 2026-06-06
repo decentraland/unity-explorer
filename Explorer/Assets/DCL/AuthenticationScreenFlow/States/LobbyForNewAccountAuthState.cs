@@ -53,6 +53,26 @@ namespace DCL.AuthenticationScreenFlow
         private readonly Vector3 characterPreviewOrigPosition;
         private IReadOnlyList<ITrimmedWearable>? loadedWearables;
 
+        private static readonly HashSet<string> FEMALE_EXCLUDED_CATEGORIES = new ()
+        {
+            WearableCategories.Categories.FACIAL_HAIR,
+        };
+
+        private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
+        {
+            WearableCategories.Categories.FACIAL_HAIR,
+            WearableCategories.Categories.HAT,
+            WearableCategories.Categories.MASK,
+            WearableCategories.Categories.TIARA,
+            WearableCategories.Categories.HELMET,
+            WearableCategories.Categories.EARRING,
+            WearableCategories.Categories.EYEWEAR,
+            WearableCategories.Categories.TOP_HEAD,
+            WearableCategories.Categories.HANDS_WEAR,
+        };
+
+        private const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.75f;
+
         public LobbyForNewAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -209,11 +229,6 @@ namespace DCL.AuthenticationScreenFlow
             return null;
         }
 
-        private static readonly HashSet<string> FEMALE_EXCLUDED_CATEGORIES = new ()
-        {
-            WearableCategories.Categories.FACIAL_HAIR,
-        };
-
         private void PopulateWearablesCatalogs(IReadOnlyList<ITrimmedWearable> wearables)
         {
             maleWearablesByCategory = new Dictionary<string, List<URN>>();
@@ -336,21 +351,6 @@ namespace DCL.AuthenticationScreenFlow
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
         }
-
-        private static readonly HashSet<string> OPTIONAL_CATEGORIES = new ()
-        {
-            WearableCategories.Categories.FACIAL_HAIR,
-            WearableCategories.Categories.HAT,
-            WearableCategories.Categories.MASK,
-            WearableCategories.Categories.TIARA,
-            WearableCategories.Categories.HELMET,
-            WearableCategories.Categories.EARRING,
-            WearableCategories.Categories.EYEWEAR,
-            WearableCategories.Categories.TOP_HEAD,
-            WearableCategories.Categories.HANDS_WEAR,
-        };
-
-        private const float OPTIONAL_CATEGORY_INCLUDE_CHANCE = 0.75f;
 
         private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
         {
