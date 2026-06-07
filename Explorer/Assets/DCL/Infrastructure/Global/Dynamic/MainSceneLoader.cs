@@ -228,7 +228,9 @@ namespace Global.Dynamic
             var realmData = new RealmData();
             string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
+            applicationParametersParser.TryGetValue(AppArgsFlags.ASSET_BUNDLES_URL, out string? assetBundlesUrlOverride);
+            ReportHub.Log(ReportCategory.STARTUP, $"Asset bundles URL override: {assetBundlesUrlOverride ?? "(default)"}");
+            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride, assetBundlesUrlOverride);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();

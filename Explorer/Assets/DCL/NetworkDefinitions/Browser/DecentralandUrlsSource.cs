@@ -38,7 +38,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null, string? assetBundlesUrlOverride = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
             this.environment = environment;
@@ -75,6 +75,11 @@ namespace DCL.Browser.DecentralandUrls
                 cache[DecentralandUrl.Gatekeeper] = new UrlData(CacheBehaviour.STATIC, gatekeeperBaseOverride);
                 cache[DecentralandUrl.LocalGateKeeperSceneAdapter] = new UrlData(CacheBehaviour.STATIC, $"{gatekeeperBaseOverride}/get-scene-adapter");
             }
+
+            // TEST-ONLY: --asset-bundles-url points manifest + bundle requests at a custom host
+            // (e.g. a staging bucket of encoder-produced bundles). Mirrors the gatekeeper override above.
+            if (!string.IsNullOrEmpty(assetBundlesUrlOverride))
+                cache[DecentralandUrl.AssetBundlesCDN] = new UrlData(CacheBehaviour.STATIC, assetBundlesUrlOverride);
 
             realmData.RealmType.OnUpdate += ResetRealmDependentUrls;
         }
