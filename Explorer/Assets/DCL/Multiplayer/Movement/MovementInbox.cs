@@ -1,8 +1,8 @@
 using Arch.Core;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Profiles.Tables;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Movement
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World globalWorld;
-        private readonly ConcurrentQueue<(string wallet, NetworkMovementMessage message)> incomingQueue = new ();
+        private readonly DCLConcurrentQueue<(string wallet, NetworkMovementMessage message)> incomingQueue = new ();
         private readonly Dictionary<string, NetworkMovementMessage> pendingMessages = new ();
 
         public MovementInbox(IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)

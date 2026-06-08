@@ -1,14 +1,13 @@
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Profiles.Announcements
 {
     public class PulseIncomingProfileAnnouncements : IRemoteAnnouncements
     {
-        private readonly ConcurrentQueue<RemoteAnnouncement> queue = new ();
+        private readonly DCLConcurrentQueue<RemoteAnnouncement> queue = new ();
 
         public void Enqueue(string userId, int version) =>
             queue.Enqueue(new RemoteAnnouncement(version, userId, RoomSource.PULSE));
