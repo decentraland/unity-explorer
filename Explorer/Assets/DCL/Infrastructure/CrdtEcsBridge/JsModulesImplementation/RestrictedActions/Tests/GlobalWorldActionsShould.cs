@@ -202,17 +202,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void DoNothingWhenAvatarNotVisible()
-        {
-            world.Add(playerEntity, new AvatarShapeComponent { IsVisible = false });
-            var emoteUrn = new URN("urn:emote:id");
-
-            globalWorldActions.TriggerEmote(emoteUrn, false, AvatarEmoteMask.AemFullBody);
-
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
-        }
-
-        [Test]
         public void CreatePromiseForLocalSceneSceneEmote()
         {
             globalWorldActions = new GlobalWorldActions(world, playerEntity, true, false, false);

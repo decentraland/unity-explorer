@@ -101,21 +101,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void NotTriggerEmoteWhenAvatarIsNotVisible()
-        {
-            // Arrange
-            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:dance");
-            var entity = CreatePlayerEntity(profile, isVisible: false);
-            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(entity));
-        }
-
-        [Test]
         public void NotTriggerEmoteWhenInputModifierDisablesEmote()
         {
             // Arrange

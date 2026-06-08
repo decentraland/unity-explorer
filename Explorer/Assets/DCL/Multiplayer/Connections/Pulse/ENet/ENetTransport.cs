@@ -7,6 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Pulse.ENet
 {
@@ -186,7 +187,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             Volatile.Write(ref listenLoopIsActive, true);
 
             // ENet must be driven on a single dedicated thread
-            return UniTask.RunOnThreadPool(async () =>
+            return DCLTask.RunOnThreadPool(async () =>
             {
                 while (!ct.IsCancellationRequested)
                 {

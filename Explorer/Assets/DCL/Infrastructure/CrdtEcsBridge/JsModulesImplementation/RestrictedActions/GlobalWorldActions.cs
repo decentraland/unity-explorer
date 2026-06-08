@@ -101,8 +101,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask)
         {
-            // if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
-
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE, Mask = mask });
         }
@@ -150,8 +148,6 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
-
-            // if (!avatarShape.IsVisible) return null;
 
             var promise = SceneEmotePromise.Create(world,
                 new GetSceneEmoteFromRealmIntention(sceneId, sceneAssetBundleManifestVersion, emoteHash, loop, avatarShape.BodyShape),

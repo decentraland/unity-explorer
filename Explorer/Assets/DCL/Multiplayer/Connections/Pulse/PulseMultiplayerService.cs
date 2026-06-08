@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Pulse
 {
@@ -174,7 +175,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             // UniTask.Delay is NOT used here because it schedules on the Unity player loop
             // and would resume on the main thread; Task.Delay respects the null
             // SynchronizationContext of thread pool threads.
-            UniTask.RunOnThreadPool(async () =>
+            DCLTask.RunOnThreadPool(async () =>
                     {
                         try
                         {
@@ -197,7 +198,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                                         finally
                                         {
                                             if (PlayerLoopHelper.IsMainThread)
-                                                await UniTask.SwitchToThreadPool();
+                                                await DCLTask.SwitchToThreadPool();
                                         }
                                     }
 
