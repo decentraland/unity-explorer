@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -67,25 +66,39 @@ namespace DCL.Utility
         }
 
         /// <summary>
-        /// Retrieves a list of all local, fixed drives with their storage information.
-        /// Uses native P/Invoke calls for high performance and reliability.
+        /// Retrieves storage information for the single drive/volume that hosts the given path.
+        /// Performs one native query for the relevant volume only, avoiding the cost of
+        /// enumerating every mounted drive (which can be very slow when network drives are present).
         /// </summary>
-        /// <returns>A list of DriveData objects. Returns an empty list on failure or unsupported platforms.</returns>
-        public static List<DriveData> GetAllDrivesInfo()
+        /// <returns>The drive data, or null on failure or unsupported platforms.</returns>
+        public static DriveData? GetDriveInfoForPath(string path)
         {
+            if (string.IsNullOrEmpty(path))
+                return null;
+
             try
             {
 #if UNITY_STANDALONE_WIN
-                return GetWindowsDrivesInfo();
+                if (GetDiskFreeSpaceEx(path, out ulong freeBytes, out ulong totalBytes, out _))
+                {
+                    return new DriveData
+                    {
+                        Name = path,
+                        AvailableFreeSpace = freeBytes,
+                        TotalSize = totalBytes
+                    };
+                }
+
+                return null;
 #elif UNITY_STANDALONE_OSX
-                return GetMacDrivesInfo();
+                return GetMacDriveInfoForPath(path);
 #else
-                return new List<DriveData>();
+                return null;
 #endif
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                return new List<DriveData>();
+                return null;
             }
         }
 
@@ -122,43 +135,6 @@ namespace DCL.Utility
 
 
 #if UNITY_STANDALONE_WIN
-
-        private static List<DriveData> GetWindowsDrivesInfo()
-        {
-            var allDrivesData = new List<DriveData>();
-            var driveLetters = GetDrivesByBitmask();
-            foreach (string driveLetter in driveLetters)
-            {
-                if (GetDiskFreeSpaceEx(driveLetter, out ulong freeBytes, out ulong totalBytes, out _))
-                {
-                    allDrivesData.Add(new DriveData
-                    {
-                        Name = driveLetter,
-                        AvailableFreeSpace = freeBytes,
-                        TotalSize = totalBytes
-                    });
-                }
-            }
-            return allDrivesData;
-        }
-
-        // Kernel32.dll exports GetLogicalDrives, no parameters:
-        [DllImport("kernel32.dll")]
-        private static extern uint GetLogicalDrives();
-        /// <summary>
-        /// Returns all existing drive letters (e.g. ["C:\\", "D:\\", ...]).
-        /// </summary>
-        private static List<string> GetDrivesByBitmask()
-        {
-            uint bitmask = GetLogicalDrives();
-            var drives = new List<string>();
-            for (int i = 0; i < 26; i++)
-            {
-                if ((bitmask & (1u << i)) != 0)
-                    drives.Add($"{(char)('A' + i)}:\\");
-            }
-            return drives;
-        }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -203,38 +179,6 @@ namespace DCL.Utility
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)] public byte[] f_mntfromname;
         }
 
-         // This struct mirrors the native `statfs` structure on macOS.
-         // It's used to receive file system statistics from the getfsstat call.
-         // NOT USED ANYMORE, but kept for reference.
-         [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-         private struct Statfs
-         {
-             public uint f_bsize;            // fundamental file system block size
-             public int f_iosize;            // optimal transfer block size
-             public ulong f_blocks;          // total data blocks in file system
-             public ulong f_bfree;           // free blocks in fs
-             public ulong f_bavail;          // free blocks avail to non-superuser
-             public ulong f_files;           // total file nodes in file system
-             public ulong f_ffree;           // free file nodes in fs
-             public long f_fsid_val1;        // file system id
-             public long f_fsid_val2;
-             public uint f_owner;            // user that mounted the filesystem
-             public uint f_type;             // type of filesystem
-             public uint f_flags;            // copy of mount exported flags
-             public uint f_fssubtype;        // fs sub-type (flavor)
-             // The mount point path (e.g., "/" or "/Volumes/MyDisk")
-             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)] // MNAMELEN = 1024 on modern macOS
-             public string f_mntonname;
-             // The underlying device path (e.g., "/dev/disk1s1")
-             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-             public string f_mntfromname;
-         }
-
-         // P/Invoke declaration for getfsstat, which retrieves info for all mounted file systems.
-         // We use EntryPoint "getfsstat" which is correct for 64-bit systems.
-         [DllImport("libc", SetLastError = true)]
-         private static extern int getfsstat(IntPtr buf, int bufsize, int flags);
-
         private static string Utf8Z(byte[] arr)
         {
             int len = Array.IndexOf(arr, (byte)0);
@@ -242,52 +186,32 @@ namespace DCL.Utility
             return Encoding.UTF8.GetString(arr, 0, len);
         }
 
-         private static List<DriveData> GetMacDrivesInfo()
+        [DllImport("libc", SetLastError = true)]
+        private static extern int statfs(string path, IntPtr buf);
+
+        private static DriveData? GetMacDriveInfoForPath(string path)
         {
-            var allDrivesData = new List<DriveData>();
-            const int MNT_NOWAIT = 2;
-
-            int count = getfsstat(IntPtr.Zero, 0, MNT_NOWAIT);
-            if (count <= 0) return allDrivesData;
-
             int structSize = Marshal.SizeOf<StatfsRaw>();
-            int bufferSize = count * structSize;
-            IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
+            IntPtr buffer = Marshal.AllocHGlobal(structSize);
 
             try
             {
-                count = getfsstat(buffer, bufferSize, MNT_NOWAIT);
-                if (count <= 0) return allDrivesData;
+                if (statfs(path, buffer) != 0)
+                    return null;
 
-                for (int i = 0; i < count; i++)
+                StatfsRaw raw = Marshal.PtrToStructure<StatfsRaw>(buffer);
+
+                return new DriveData
                 {
-                    try
-                    {
-                        IntPtr currentPtr = new IntPtr(buffer.ToInt64() + (i * structSize));
-                        StatfsRaw raw = Marshal.PtrToStructure<StatfsRaw>(currentPtr);
-
-                        string mntOn = Utf8Z(raw.f_mntonname);
-                        if (mntOn.StartsWith("/System/Volumes/")) continue;
-
-                        allDrivesData.Add(new DriveData
-                        {
-                            Name = mntOn,
-                            AvailableFreeSpace = raw.f_bavail * raw.f_bsize,
-                            TotalSize = raw.f_blocks * raw.f_bsize
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        continue;
-                    }
-                }
+                    Name = Utf8Z(raw.f_mntonname),
+                    AvailableFreeSpace = raw.f_bavail * raw.f_bsize,
+                    TotalSize = raw.f_blocks * raw.f_bsize
+                };
             }
             finally
             {
                 if (buffer != IntPtr.Zero) Marshal.FreeHGlobal(buffer);
             }
-
-            return allDrivesData;
         }
 
         [DllImport("libc", EntryPoint = "system")]

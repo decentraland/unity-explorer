@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using DCL.Diagnostics;
 using UnityEngine;
 using Application = UnityEngine.Device.Application;
@@ -126,13 +125,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 const float BYTES_TO_MB = 1f / (1024f * 1024f);
                 const float BYTES_TO_GB = 1f / (1024f * 1024f * 1024f);
 
-                // 1) Prefer the direct probe of the volume we actually use
-                var primary = Utility.PlatformUtils.GetPrimaryStorageInfoUsingPersistentPath();
+                // Query only the volume that hosts the persistent path — never enumerate all
+                // drives, that can be very slow when network drives are mounted. The injected
+                // provider does a single native query; fall back to the managed DriveInfo probe
+                // if the native query is unavailable on this platform.
+                var driveInfo = driveInfoProvider.GetPersistentDataDriveInfo()
+                                ?? Utility.PlatformUtils.GetPrimaryStorageInfoUsingPersistentPath();
 
-                if (primary != null)
+                if (driveInfo != null)
                 {
-                    float availableMB = primary.AvailableFreeSpace * BYTES_TO_MB;
-                    float availableGB = primary.AvailableFreeSpace * BYTES_TO_GB;
+                    float availableMB = driveInfo.AvailableFreeSpace * BYTES_TO_MB;
+                    float availableGB = driveInfo.AvailableFreeSpace * BYTES_TO_GB;
 
                     results.Add(new SpecResult(
                         SpecCategory.Storage,
@@ -142,49 +145,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                     ));
                 }
                 else
-                {
-                    var allDrives = driveInfoProvider.GetDrivesInfo();
-
-                    if (allDrives.Count > 0)
-                    {
-                        string persistentPath = driveInfoProvider.GetPersistentDataPath();
-                        persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
-                        Utility.PlatformUtils.DriveData targetDrive = null;
-                        int longestMatchLength = -1;
-
-                        // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
-                        // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
-                        foreach (var drive in allDrives)
-                        {
-                            if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
-                            {
-                                targetDrive = drive;
-                                longestMatchLength = drive.Name.Length;
-                            }
-                        }
-
-                        if (targetDrive != null)
-                        {
-                            float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
-                            float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
-
-                            results.Add(new SpecResult(
-                                SpecCategory.Storage,
-                                actualAvailableStorageMB >= profile.MinStorageMB,
-                                profile.StorageRequirement,
-                                $"{availableStorageGB:F1} GB"
-                            ));
-                        }
-                        else
-                        {
-                            throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
-                        }
-                    }
-                    else
-                    {
-                        results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
-                    }
-                }
+                    results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "Could not determine storage for persistent path"));
             }
             catch (Exception e)
             {

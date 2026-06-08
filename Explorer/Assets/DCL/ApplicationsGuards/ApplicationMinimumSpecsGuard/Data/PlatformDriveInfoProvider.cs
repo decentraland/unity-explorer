@@ -1,39 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
     public interface IDriveInfoProvider
     {
-        List<Utility.PlatformUtils.DriveData> GetDrivesInfo();
-        string GetPersistentDataPath();
+        /// <summary>
+        ///     Returns storage information for the drive/volume that hosts the persistent data path.
+        ///     Only the relevant volume is queried, avoiding the cost of enumerating every mounted
+        ///     drive (which can be very slow when network drives are present).
+        /// </summary>
+        Utility.PlatformUtils.DriveData? GetPersistentDataDriveInfo();
     }
 
     public class PlatformDriveInfoProvider : IDriveInfoProvider
     {
-        public List<Utility.PlatformUtils.DriveData> GetDrivesInfo()
-        {
-            // Get the original list from your native utility
-            var sourceDrives = Utility.PlatformUtils.GetAllDrivesInfo();
-
-            // Manually create and populate the new list
-            var resultList = new List<Utility.PlatformUtils.DriveData>(sourceDrives.Count);
-
-            foreach (var sourceDrive in sourceDrives)
-            {
-                resultList.Add(new Utility.PlatformUtils.DriveData
-                {
-                    Name = sourceDrive.Name, AvailableFreeSpace = sourceDrive.AvailableFreeSpace
-                });
-            }
-
-            return resultList;
-        }
-
-        public string GetPersistentDataPath()
-        {
-            return Application.persistentDataPath;
-        }
+        public Utility.PlatformUtils.DriveData? GetPersistentDataDriveInfo() =>
+            Utility.PlatformUtils.GetDriveInfoForPath(Application.persistentDataPath);
     }
 }
