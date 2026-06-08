@@ -26,15 +26,17 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjdkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdWlfY2FudmFzX2luZm9y",
             "bWF0aW9uLnByb3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaJWRl",
-            "Y2VudHJhbGFuZC9jb21tb24vYm9yZGVyX3JlY3QucHJvdG8ijgEKFVBCVWlD",
+            "Y2VudHJhbGFuZC9jb21tb24vYm9yZGVyX3JlY3QucHJvdG8i5QEKFVBCVWlD",
             "YW52YXNJbmZvcm1hdGlvbhIaChJkZXZpY2VfcGl4ZWxfcmF0aW8YASABKAIS",
             "DQoFd2lkdGgYAiABKAUSDgoGaGVpZ2h0GAMgASgFEjoKEWludGVyYWN0YWJs",
             "ZV9hcmVhGAQgASgLMh8uZGVjZW50cmFsYW5kLmNvbW1vbi5Cb3JkZXJSZWN0",
-            "QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "Ej8KEXNjcmVlbl9pbnNldF9hcmVhGAUgASgLMh8uZGVjZW50cmFsYW5kLmNv",
+            "bW1vbi5Cb3JkZXJSZWN0SACIAQFCFAoSX3NjcmVlbl9pbnNldF9hcmVhQhSq",
+            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.BorderRectReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiCanvasInformation), global::DCL.ECSComponents.PBUiCanvasInformation.Parser, new[]{ "DevicePixelRatio", "Width", "Height", "InteractableArea" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiCanvasInformation), global::DCL.ECSComponents.PBUiCanvasInformation.Parser, new[]{ "DevicePixelRatio", "Width", "Height", "InteractableArea", "ScreenInsetArea" }, new[]{ "ScreenInsetArea" }, null, null, null)
           }));
     }
     #endregion
@@ -82,6 +84,7 @@ namespace DCL.ECSComponents {
       width_ = other.width_;
       height_ = other.height_;
       interactableArea_ = other.interactableArea_ != null ? other.interactableArea_.Clone() : null;
+      screenInsetArea_ = other.screenInsetArea_ != null ? other.screenInsetArea_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -155,6 +158,25 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "screen_inset_area" field.</summary>
+    public const int ScreenInsetAreaFieldNumber = 5;
+    private global::Decentraland.Common.BorderRect screenInsetArea_;
+    /// <summary>
+    /// informs the sdk about the screen inset area (safe margins). these are the
+    /// insets from each edge of the screen that are reserved by the device or
+    /// platform UI (for example: the notch, status bar, home indicator, or rounded
+    /// corners on mobile). scenes should avoid placing critical UI within these
+    /// insets to ensure it is not occluded. on desktop this is typically (0, 0, 0, 0).
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.BorderRect ScreenInsetArea {
+      get { return screenInsetArea_; }
+      set {
+        screenInsetArea_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -174,6 +196,7 @@ namespace DCL.ECSComponents {
       if (Width != other.Width) return false;
       if (Height != other.Height) return false;
       if (!object.Equals(InteractableArea, other.InteractableArea)) return false;
+      if (!object.Equals(ScreenInsetArea, other.ScreenInsetArea)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -185,6 +208,7 @@ namespace DCL.ECSComponents {
       if (Width != 0) hash ^= Width.GetHashCode();
       if (Height != 0) hash ^= Height.GetHashCode();
       if (interactableArea_ != null) hash ^= InteractableArea.GetHashCode();
+      if (screenInsetArea_ != null) hash ^= ScreenInsetArea.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -219,6 +243,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(34);
         output.WriteMessage(InteractableArea);
       }
+      if (screenInsetArea_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(ScreenInsetArea);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -245,6 +273,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(34);
         output.WriteMessage(InteractableArea);
       }
+      if (screenInsetArea_ != null) {
+        output.WriteRawTag(42);
+        output.WriteMessage(ScreenInsetArea);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -266,6 +298,9 @@ namespace DCL.ECSComponents {
       }
       if (interactableArea_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(InteractableArea);
+      }
+      if (screenInsetArea_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScreenInsetArea);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -293,6 +328,12 @@ namespace DCL.ECSComponents {
           InteractableArea = new global::Decentraland.Common.BorderRect();
         }
         InteractableArea.MergeFrom(other.InteractableArea);
+      }
+      if (other.screenInsetArea_ != null) {
+        if (screenInsetArea_ == null) {
+          ScreenInsetArea = new global::Decentraland.Common.BorderRect();
+        }
+        ScreenInsetArea.MergeFrom(other.ScreenInsetArea);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -328,6 +369,13 @@ namespace DCL.ECSComponents {
             input.ReadMessage(InteractableArea);
             break;
           }
+          case 42: {
+            if (screenInsetArea_ == null) {
+              ScreenInsetArea = new global::Decentraland.Common.BorderRect();
+            }
+            input.ReadMessage(ScreenInsetArea);
+            break;
+          }
         }
       }
     #endif
@@ -360,6 +408,13 @@ namespace DCL.ECSComponents {
               InteractableArea = new global::Decentraland.Common.BorderRect();
             }
             input.ReadMessage(InteractableArea);
+            break;
+          }
+          case 42: {
+            if (screenInsetArea_ == null) {
+              ScreenInsetArea = new global::Decentraland.Common.BorderRect();
+            }
+            input.ReadMessage(ScreenInsetArea);
             break;
           }
         }
