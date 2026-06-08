@@ -25,6 +25,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
+using DCL.SpringBones;
 using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -145,6 +146,7 @@ namespace DCL.PluginSystem.Global
         private readonly UpscalingController upscalingController;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
+        private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -176,6 +178,7 @@ namespace DCL.PluginSystem.Global
         private PlaceDetailPanelController? placeDetailPanelController;
         private EventsController? eventsController;
         private EventDetailPanelController? eventDetailPanelController;
+        private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
 
         public ExplorePanelPlugin(IEventBus eventBus,
             IAssetsProvisioner assetsProvisioner,
@@ -241,7 +244,9 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
-            IRendererFeaturesCache rendererFeaturesCache
+            IRendererFeaturesCache rendererFeaturesCache,
+            SpringBoneSimulationSettings springBoneSimulationSettings,
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker
             )
         {
             this.eventBus = eventBus;
@@ -310,6 +315,8 @@ namespace DCL.PluginSystem.Global
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
+            this.springBoneSimulationSettings = springBoneSimulationSettings;
+            this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
         }
 
         public void Dispose()
@@ -459,7 +466,8 @@ namespace DCL.PluginSystem.Global
                 landscapeData.Value,
                 rendererFeaturesCache,
                 appArgs,
-                analytics);
+                analytics,
+                springBoneSimulationSettings);
 
             settingsController = new SettingsController(
                 explorePanelView.GetComponentInChildren<SettingsView>(),
@@ -594,7 +602,8 @@ namespace DCL.PluginSystem.Global
                     eventsController,
                     inputBlock,
                     eventsApiService,
-                    mvcManager);
+                    mvcManager,
+                    joinedCommunitiesVoiceLiveTracker);
 
             mvcManager.RegisterController(explorePanelController);
 

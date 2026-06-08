@@ -138,8 +138,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             //Creating a fake SMR
             SkinnedMeshRenderer skinnedMeshRenderer = avatarGameObject.AddComponent<SkinnedMeshRenderer>();
             skinnedMeshRenderer.sharedMesh = avatarMesh;
-            skinnedMeshRenderer.bones = new Transform[ComputeShaderConstants.BONE_COUNT];
-            skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BONE_COUNT];
+            skinnedMeshRenderer.bones = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
+            skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BASE_BONE_COUNT];
 
             //Creating a fake standard material
             var fakeABMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"))

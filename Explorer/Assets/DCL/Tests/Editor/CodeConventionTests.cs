@@ -11,6 +11,7 @@ using UnityEditor;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UnityEngine;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
@@ -169,6 +170,20 @@ namespace DCL.Tests
         }
 
         [Test]
+        public void VerifyShouldNotUseApplicationQuitting()
+        {
+            const string pattern = @"Application\.quitting";
+            string[] ignorePaths = new []
+            {
+                // ExitUtils is the infrastructural wrapper that funnels Unity's quit event into the cleanup pipeline
+                "Assets/DCL/Infrastructure/Utility/ExitUtils.cs",
+                // DCL.Prefs cannot reference the Utility asmdef (cycle via PersistentSetting)
+                "Assets/DCL/Prefs/DCLPlayerPrefs.cs",
+            };
+            ValidateNoForbiddenApiUsed(pattern, "Use ExitUtils.RegisterCleanUpCandidate instead of subscribing to Unity's quit event directly.", ignorePaths);
+        }
+
+        [Test]
         public void VerifyShouldNotUseConcurrentCollection()
         {
             const string pattern = @"System\.Collections\.Concurrent";
@@ -230,7 +245,7 @@ namespace DCL.Tests
             {
                 string message = $"ripgrep (rg) not found on PATH. Install it to run this convention check (e.g. `brew install ripgrep`). which-output: '{output}', err: '{p.StandardError.ReadToEnd()}'.";
 
-                if (UnityEngine.Application.isBatchMode)
+                if (Application.isBatchMode)
                     Assert.Fail(message);
                 else
                     Assert.Ignore(message);
@@ -472,6 +487,10 @@ namespace DCL.Tests
 
                 // Ignore namespace keyword
                 if (line.StartsWith("namespace"))
+                    continue;
+
+                // Ignore comment-only lines (//, ///, ////, etc.)
+                if (line.AsSpan().TrimStart().StartsWith("//"))
                     continue;
 
                 foreach ((Regex regex, string pattern) in patternList)

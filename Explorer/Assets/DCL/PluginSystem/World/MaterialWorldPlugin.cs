@@ -8,7 +8,6 @@ using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
-using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
 using System.Threading;

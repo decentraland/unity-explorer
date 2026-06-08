@@ -28,6 +28,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
@@ -57,6 +58,8 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly RemoteAnnouncements remoteAnnouncements;
+        private readonly RemoteProfiles remoteProfiles;
         private readonly IRoomHub roomHub;
         private readonly RoomsStatus roomsStatus;
         private readonly IScenesCache scenesCache;
@@ -81,6 +84,8 @@ namespace DCL.PluginSystem.Global
             IEntityParticipantTable entityParticipantTable,
             IMessagePipesHub messagePipesHub,
             IRemoteMetadata remoteMetadata,
+            RemoteAnnouncements remoteAnnouncements,
+            RemoteProfiles remoteProfiles,
             ICharacterObject characterObject,
             IRealmData realmData,
             IRemoteEntities remoteEntities,
@@ -104,6 +109,8 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
+            this.remoteAnnouncements = remoteAnnouncements;
+            this.remoteProfiles = remoteProfiles;
             this.characterObject = characterObject;
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
@@ -118,11 +125,17 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MultiplayerPlugin));
+
             archipelagoIslandRoom.Dispose();
+            stopwatch.LogStep("archipelagoIslandRoom.Dispose");
+
             gateKeeperSceneRoom.Dispose();
+            stopwatch.LogStep("gateKeeperSceneRoom.Dispose");
 
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.Dispose();
+            stopwatch.LogStep("IFFIClient.Default.Dispose");
 #endif
         }
 
@@ -141,11 +154,11 @@ namespace DCL.PluginSystem.Global
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
-                new RemoteAnnouncements(messagePipesHub),
+                remoteAnnouncements,
                 new LogRemoveIntentions(
                     new ThreadSafeRemoveIntentions(roomHub)
                 ),
-                new RemoteProfiles(profileRepository, remoteMetadata),
+                remoteProfiles,
                 profileBroadcast,
                 remoteEntities,
                 remoteMetadata,

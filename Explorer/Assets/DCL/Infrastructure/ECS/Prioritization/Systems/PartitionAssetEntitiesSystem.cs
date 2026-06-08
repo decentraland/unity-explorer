@@ -165,6 +165,7 @@ namespace ECS.Unity.Systems
             // Is behind is a dot product
             // mind that taking cosines is not cheap
             partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
+            partitionComponent.RawSqrDistance = sqrDistance;
         }
 
     }

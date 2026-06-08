@@ -67,7 +67,7 @@ namespace DCL.SkyBox
                     if (settingsJson.DayCycleDurationInSeconds != null)
                         skyboxSettings.FullDayCycleInSeconds =  settingsJson.DayCycleDurationInSeconds.Value;
 
-                SetInitialTime(settingsJson, skyboxSettings);
+                SetInitialTime(settingsJson, skyboxSettings, skyboxTimeEnabled);
 
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -83,7 +83,8 @@ namespace DCL.SkyBox
                     directionalLight,
                     skyboxAnimation,
                     skyboxSettings.TimeOfDayNormalized,
-                    lensFlareEnabled
+                    lensFlareEnabled,
+                    freezeTime: !skyboxTimeEnabled
                 );
 
                 if (!skyboxTimeEnabled)
@@ -101,8 +102,21 @@ namespace DCL.SkyBox
 
             return;
 
-            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings)
+            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings, bool timeEnabled)
             {
+                // When skybox time is disabled, pin the initial time to noon so it's independent of host
+                // clock / PlayerPrefs / FF — the update system that would honor those isn't injected here.
+                if (!timeEnabled)
+                {
+                    const float NOON = 0.5f;
+                    skyboxSettings.TimeOfDayNormalized = NOON;
+                    skyboxSettings.TargetTimeOfDayNormalized = NOON;
+                    skyboxSettings.UIOverrideTimeOfDayNormalized = NOON;
+                    skyboxSettings.IsUIControlled = true;
+                    skyboxSettings.IsDayCycleEnabled = false;
+                    return;
+                }
+
                 if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SKYBOX_FIXED_TIME))
                 {
                     float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);

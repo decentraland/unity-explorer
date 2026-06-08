@@ -17,12 +17,9 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
-
-      - name: Create artifacts directory
-        run: mkdir -p artifacts
 
       - name: AI label analysis
         uses: anthropics/claude-code-action@v1
@@ -88,22 +85,4 @@ jobs:
             - Apply all labels that clearly match (type, component, platform). Be comprehensive.
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(cat:*)"
-
-      - name: Copy Claude execution output to artifacts
-        if: always()
-        run: |
-          if [ -f /home/runner/work/_temp/claude-execution-output.json ]; then
-            cp /home/runner/work/_temp/claude-execution-output.json artifacts/claude-execution-output_${{ github.event.issue.number || github.event.inputs.issue_number }}.json
-            echo "✓ Claude execution output captured"
-          else
-            echo "⚠ Claude execution output not found"
-          fi
-
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: label-analysis-${{ github.event.issue.number || github.event.inputs.issue_number }}
-          path: artifacts/
-          retention-days: 90
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh label list:*),Bash(gh issue view ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue comment ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(cat docs/incident-response.md),Bash(cat docs/issue-triage-categories.md)"

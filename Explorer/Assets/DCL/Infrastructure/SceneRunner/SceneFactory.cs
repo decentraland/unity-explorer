@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
+using DCL.SceneRunner.Scene;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
@@ -20,6 +21,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -135,7 +137,7 @@ namespace SceneRunner
             );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, ISSDescriptor.NONE);
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -156,7 +158,7 @@ namespace SceneRunner
             var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, ISSDescriptor.NONE);
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -226,7 +228,8 @@ namespace SceneRunner
                     realmData,
                     portableExperiencesController,
                     remoteMetadata,
-                    messagePipesHub
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
             else
@@ -255,7 +258,8 @@ namespace SceneRunner
                     realmData,
                     portableExperiencesController,
                     remoteMetadata,
-                    messagePipesHub
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
 

@@ -8,6 +8,17 @@ using Plugins.NativeAudioAnalysis;
 
 namespace DCL.SDKComponents.MediaStream
 {
+    /// <summary>
+    /// Tracks generic-URL retry state across MediaPlayerComponent re-creation. Lives on the entity
+    /// so backoff doesn't reset when UpdateMediaPlayerSystem destroys+recreates the player.
+    /// YouTube has its own re-resolve path (ResolvedUrlExpiresAt); this covers everything else.
+    /// </summary>
+    public struct MediaPlayerRetryState
+    {
+        public int Attempts;
+        public float NextRetryAt;
+    }
+
     public struct MediaPlayerComponent : IComponentWithAudioFrameBuffer
     {
         public const float DEFAULT_VOLUME = 1f;

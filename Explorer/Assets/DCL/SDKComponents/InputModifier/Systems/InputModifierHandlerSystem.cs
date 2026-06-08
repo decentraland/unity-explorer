@@ -107,13 +107,17 @@ namespace DCL.SDKComponents.PlayerInputMovement.Systems
         {
             if (value)
                 ApplyModifiersQuery(World, true);
-            else
+
+            // Only reset the shared global modifier if this scene was the one actively asserting it.
+            else if (lastBusMessageAction == SceneRestrictionsAction.APPLIED)
                 ResetModifiers();
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ResetModifiers();
+            // Only reset the shared global modifier if this scene was the one actively asserting it.
+            if (lastBusMessageAction == SceneRestrictionsAction.APPLIED)
+                ResetModifiers();
         }
     }
 }
