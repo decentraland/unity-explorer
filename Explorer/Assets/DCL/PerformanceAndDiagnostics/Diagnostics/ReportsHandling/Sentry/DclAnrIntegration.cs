@@ -21,6 +21,7 @@ using DCL.Utility;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using Utility.Multithreading;
 
 namespace DCL.Diagnostics.Sentry
 {
@@ -137,6 +138,8 @@ namespace DCL.Diagnostics.Sentry
                 sb.Append(DetectionTimeoutMs);
                 sb.Append(" ms. ");
                 sb.Append(dumpMessage);
+                sb.Append(" | ");
+                MultiThreadSync.AppendOwnershipTable(sb);
                 string message = sb.ToString();
 
                 Logger?.LogInfo("Detected an DclAnr event: {0}", message);

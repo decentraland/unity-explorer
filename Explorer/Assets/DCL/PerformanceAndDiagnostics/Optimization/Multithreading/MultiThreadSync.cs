@@ -6,6 +6,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using Unity.Profiling;
 using UnityEngine.Profiling;
 
@@ -190,6 +191,22 @@ namespace Utility.Multithreading
             }
 
             return scope;
+        }
+
+        public static void AppendOwnershipTable(StringBuilder sb)
+        {
+            sb.Append("MultiThreadSync ownership [syncId => owning native thread]: ");
+
+            var any = false;
+
+            foreach (KeyValuePair<int, int> entry in SYNC_OWNERSHIP)
+            {
+                sb.Append('[').Append(entry.Key).Append(" => ").Append(entry.Value).Append("] ");
+                any = true;
+            }
+
+            if (!any)
+                sb.Append("(none owned)");
         }
 
         public class OwnerMismatchException : Exception
