@@ -113,7 +113,7 @@ namespace Utility.Multithreading
                         AcquisitionInfo current = currentAcquisitionInfo!.Value;
                         TimeSpan difference = time - current.AcquiredAt;
 
-                        int requestingThreadId = Environment.CurrentManagedThreadId;
+                        int requestingThreadId = NativeThread.CurrentId;
                         int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
 
                         syncLogsBuffer.Print();
@@ -125,7 +125,7 @@ namespace Utility.Multithreading
             lock (monitor)
             {
                 currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
-                SYNC_OWNERSHIP[syncId] = Environment.CurrentManagedThreadId;
+                SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Acquire finished for:", owner.Name);
@@ -273,7 +273,7 @@ namespace Utility.Multithreading
                 multiThreadSync.Release(source);
 
                 if (DateTime.Now - start > TIMEOUT)
-                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {Environment.CurrentManagedThreadId}");
+                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {NativeThread.CurrentId}");
             }
         }
 
