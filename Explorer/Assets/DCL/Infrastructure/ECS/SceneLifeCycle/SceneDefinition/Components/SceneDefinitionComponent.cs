@@ -2,6 +2,8 @@
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
+using ECS.StreamableLoading.Common;
 using Org.BouncyCastle.Utilities.Collections;
 using System;
 using System.Collections.Generic;
@@ -26,7 +28,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public bool IsPortableExperience { get; }
 
         public int InternalJobIndex { get; set; }
-
 
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;

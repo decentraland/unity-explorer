@@ -55,7 +55,13 @@ namespace DCL.Roads.Systems
         {
             if (partitionComponent.OutOfRange) return;
 
-            if (sceneLoadingState.PromiseCreated) return;
+            if (sceneLoadingState.PromiseCreated)
+            {
+                // Road already instantiated: release any readiness report a later teleport enqueued for this
+                // parcel (only this system resolves it), otherwise the loading screen times out (#8880).
+                SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
+                return;
+            }
 
             if (partitionComponent.IsBehind) return;
 

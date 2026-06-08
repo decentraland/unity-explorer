@@ -16,30 +16,25 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly string AssetBundleName;
 
-        public readonly InitialSceneStateMetadata? InitialSceneStateMetadata;
-
         private bool AssetBundleUnloaded;
         private Dictionary<string, AssetInfo>? Assets;
         private readonly AssetBundleData[] Dependencies;
 
-        public AssetBundleData(AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle , Object[] loadedAssets, Type? assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
-            InitialSceneStateMetadata = initialSceneState;
-
             Assets = new Dictionary<string, AssetInfo>();
 
             for (var i = 0; i < loadedAssets.Length; i++)
-                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source, InitialSceneStateMetadata.HasValue);
+                Assets[loadedAssets[i].name] = new AssetInfo(loadedAssets[i], assetType ?? loadedAssets[i].GetType(), version, source);
 
             Dependencies = dependencies;
 
             //Debugging purposes. Test cases may bring a null AB, therefore we need this check
             AssetBundleName = Asset?.name;
 
-            //We cannot unload an AB if its an ISS (Initial Scene State AB). It may be a dependency for dynamically isntanced AB
-            if (!InitialSceneStateMetadata.HasValue)
-                UnloadAB();
+            // are still in use by dynamically-instantiated assets and must NOT be unloaded eagerly.
+            UnloadAB();
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -138,11 +133,11 @@ public struct AssetInfo
     public Object Asset { get; }
     public Type AssetType { get; }
 
-    public AssetInfo(Object asset, Type assetType, string version, string source, bool isISS)
+    public AssetInfo(Object asset, Type assetType, string version, string source)
     {
         Asset = asset;
         AssetType = assetType;
-        Asset.name = isISS ? $"AB:{Asset?.name}_{version}_{source}_ISS" : $"AB:{Asset?.name}_{version}_{source}_NoISS";
+        Asset.name = $"AB:{Asset?.name}_{version}_{source}";
     }
 }
 
@@ -157,10 +152,3 @@ public static class DictionaryExtensions
     }
 }
 
-public struct InitialSceneStateMetadata
-{
-    public List<string> assetHash;
-    public List<Vector3> positions;
-    public List<Quaternion> rotations;
-    public List<Vector3> scales;
-}

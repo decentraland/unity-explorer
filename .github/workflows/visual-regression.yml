@@ -1,0 +1,170 @@
+name: Visual Regression
+
+# Slash-command-driven visual regression runner. The actual mechanics live in
+# decentraland/explorer-automation's `run-visual-suite.yml` reusable workflow;
+# this file only handles trigger validation, branch matching, and dispatching
+# to that workflow.
+#
+# Trigger:
+#   Comment "/visual-tests" on a PR. Restricted to OWNER / MEMBER /
+#   COLLABORATOR author associations — anyone else's comment is silently
+#   ignored to keep this from becoming a free-CPU buffet for drive-by PRs.
+#
+# Branch matching:
+#   We look up the PR's head branch in explorer-automation. If that branch
+#   exists, we pass it as `tests_ref` so visual baselines and test fixtures
+#   from the matching feature branch are used. Otherwise we fall back to
+#   explorer-automation's default branch (metaforge handles the empty case
+#   internally).
+#
+# Required secrets / vars (configure once on the repo):
+#
+# Used directly by this dispatcher:
+#   - vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL  Constructs the Explorer build download URL
+#
+# Inherited by the reusable workflow via `secrets: inherit` — must exist
+# on this repo even though the dispatcher itself doesn't reference them:
+#   - secrets.ALTTESTER_LICENSE
+#   - secrets.REPOS_READ_ONLY_TOKEN
+#   - secrets.DEV_EXPLORER_TEAM_S3_BUCKET
+#   - secrets.DEV_EXPLORER_TEAM_AWS_DEFAULT_REGION
+#   - secrets.DEV_EXPLORER_TEAM_AWS_ACCESS_KEY_ID
+#   - secrets.DEV_EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: visual-regression-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    name: Resolve trigger
+    if: |
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/visual-tests')
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.gate.outputs.authorized }}
+      pr_number: ${{ steps.pr.outputs.number }}
+      build_url: ${{ steps.pr.outputs.build_url }}
+      tests_ref: ${{ steps.match.outputs.tests_ref }}
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      head_short_sha: ${{ steps.pr.outputs.head_short_sha }}
+      head_ref: ${{ steps.pr.outputs.head_ref }}
+
+    steps:
+      - name: Gate by author association
+        id: gate
+        env:
+          ASSOC: ${{ github.event.comment.author_association }}
+        run: |
+          set -euo pipefail
+          case "$ASSOC" in
+            OWNER|MEMBER|COLLABORATOR)
+              echo "authorized=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::notice::Ignoring /visual-tests from $ASSOC ${{ github.event.comment.user.login }} — write access required."
+              echo "authorized=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: React to the trigger comment
+        if: steps.gate.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes >/dev/null
+
+      - name: Resolve PR head + build URL
+        id: pr
+        if: steps.gate.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+
+          # 1. Fetch PR head — issue_comment events don't carry it in the payload.
+          PR_JSON=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r '.head.sha')
+          HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
+          SHORT_SHA="${HEAD_SHA:0:7}"
+
+          # 2. Find the most recent successful Unity Cloud Build run for this SHA.
+          RUN_JSON=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
+            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build")] | .[0]')
+          if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
+            echo "::error::No successful Unity Cloud Build run found for SHA ${SHORT_SHA}. Is the build still in progress, or did it fail?"
+            exit 1
+          fi
+          RUN_NUMBER=$(echo "$RUN_JSON" | jq -r '.run_number')
+          ORIGINAL_EVENT=$(echo "$RUN_JSON" | jq -r '.event')
+
+          # /visual-tests is only meaningful against a PR build. If the
+          # latest successful Unity Cloud Build for this SHA was triggered
+          # by something else (push to dev, scheduled run, manual dispatch),
+          # the artifact path uses a different prefix and our URL would
+          # 404. Fail loudly so the user knows to wait for a PR build
+          # rather than chasing a phantom 404 inside metaforge.
+          if [ "$ORIGINAL_EVENT" != "pull_request" ]; then
+            echo "::error::Latest successful Unity Cloud Build for ${SHORT_SHA} was triggered by '${ORIGINAL_EVENT}', not 'pull_request'. Visual tests can only run against PR builds."
+            exit 1
+          fi
+
+          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${HEAD_REF}/pr-${RUN_NUMBER}-${SHORT_SHA}"
+          BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
+
+          {
+            echo "number=${PR_NUMBER}"
+            echo "head_sha=${HEAD_SHA}"
+            echo "head_short_sha=${SHORT_SHA}"
+            echo "head_ref=${HEAD_REF}"
+            echo "build_url=${BUILD_URL}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Look up matching explorer-automation branch
+        id: match
+        if: steps.gate.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+        run: |
+          set -euo pipefail
+          # 200 = branch exists on explorer-automation, use it as tests_ref.
+          # 404 = no matching branch, fall back to default (empty string =>
+          # metaforge resolves to main).
+          if gh api "repos/decentraland/explorer-automation/branches/${HEAD_REF}" --silent >/dev/null 2>&1; then
+            echo "tests_ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+            echo "::notice::Using matching explorer-automation branch '${HEAD_REF}'."
+          else
+            echo "tests_ref=" >> "$GITHUB_OUTPUT"
+            echo "::notice::No matching explorer-automation branch '${HEAD_REF}' — using default."
+          fi
+
+  run-suite:
+    name: Run visual suite
+    needs: resolve
+    if: needs.resolve.outputs.authorized == 'true'
+    # @main pins us to the merged version of the reusable workflow so PRs to
+    # explorer-automation that touch run-visual-suite.yml don't accidentally
+    # affect every unity-explorer PR's visual run.
+    uses: decentraland/explorer-automation/.github/workflows/run-visual-suite.yml@main
+    with:
+      mode: test
+      pr_number: ${{ needs.resolve.outputs.pr_number }}
+      build_url: ${{ needs.resolve.outputs.build_url }}
+      tests_ref: ${{ needs.resolve.outputs.tests_ref }}
+      commit_sha: ${{ needs.resolve.outputs.head_short_sha }}
+      branch_label: ${{ needs.resolve.outputs.head_ref }}
+    secrets: inherit

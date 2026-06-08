@@ -32,7 +32,6 @@ namespace DCL.RealmNavigation
 
         public static RealmContainer Create(
             StaticContainer staticContainer,
-            IWeb3IdentityCache identityCache,
             IReadOnlyList<int2> staticLoadPositions,
             IDebugContainerBuilder debugContainerBuilder,
             LoadingScreenTimeout loadingScreenTimeout,
@@ -41,8 +40,7 @@ namespace DCL.RealmNavigation
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
             TeleportController teleportController,
-            DecentralandEnvironment dclEnvironment,
-            IWorldPermissionsService worldPermissionsService)
+            DecentralandEnvironment dclEnvironment)
         {
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
@@ -50,7 +48,6 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var realmController = new RealmController(
-                identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 teleportController,
                 retrieveSceneFromFixedRealm,
@@ -66,8 +63,7 @@ namespace DCL.RealmNavigation
                 appArgs,
                 urlsSource,
                 dclEnvironment,
-                staticContainer.WorldManifestProvider,
-                worldPermissionsService
+                staticContainer.WorldManifestProvider
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

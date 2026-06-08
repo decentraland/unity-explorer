@@ -1,13 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.Character.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Roads.Components;
+using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
@@ -16,6 +15,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -108,20 +108,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
-            in SceneDefinitionComponent sceneDefinitionComponent)
+            in SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor)
         {
             if (sceneDefinitionComponent.IsPortableExperience)
             {
                 //Portable experiences shouldnt be analyzed. Create straight away
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent), SceneLoadingState.CreatePortableExperience());
+                    new GetSceneFacadeIntention(sceneDefinitionComponent, issDescriptor), partitionComponent), SceneLoadingState.CreatePortableExperience());
             }
             else
             {
                 var sceneLoadingState = new SceneLoadingState();
 
                 //Sizes should always be the same
-                orderedDataManaged.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState));
+                orderedDataManaged.Add(new OrderedDataManaged(entity, sceneDefinitionComponent, partitionComponent, sceneLoadingState, issDescriptor));
                 orderedDataNative.Add(new OrderedDataNative());
                 arraysInSync = false;
                 World.Add(entity, sceneLoadingState);
@@ -242,7 +242,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     //The parcel we are teleporting to should be the first one
                     OrderedDataManaged data = orderedDataManaged[dataPtr[0].ReferenceListIndex];
-                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
+                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState, data.ISSDescriptor);
                     return;
                 }
 
@@ -253,7 +253,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     if (dataPtr[i].RawSqrDistance < 0 || dataPtr[i].OutOfRange) continue;
 
                     OrderedDataManaged data = orderedDataManaged[dataPtr[i].ReferenceListIndex];
-                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState);
+                    UpdateLoadingState(ipfsRealm, data.Entity, data.SceneDefinitionComponent, data.PartitionComponent, data.SceneLoadingState, data.ISSDescriptor);
                 }
             }
 
@@ -279,10 +279,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         private void UpdateLoadingState(IIpfsRealm ipfsRealm, in Entity entity, in SceneDefinitionComponent sceneDefinitionComponent, in PartitionComponent partitionComponent,
-            SceneLoadingState sceneState)
+            SceneLoadingState sceneState, ISSDescriptor issDescriptor)
         {
+            // Promises for banned-scene entities are not consumed downstream; issuing one here would leak its SceneFacade.
+            if (World.Has<BannedSceneComponent>(entity))
+                return;
+
             VisualSceneState candidateBy
-                = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0);
+                = visualSceneStateResolver.ResolveVisualSceneState(partitionComponent, sceneDefinitionComponent, sceneState.VisualSceneState, ipfsRealm.SceneUrns.Count > 0, issDescriptor);
 
             //If we are over the amount of scenes that can be loaded, we downgrade quality to LOD
             if (candidateBy == VisualSceneState.SHOWING_SCENE && !sceneLoadingLimit.CanLoadScene(sceneDefinitionComponent))
@@ -322,6 +326,21 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 || sceneState.VisualSceneState == candidateBy)
                 return;
 
+            // ISS descriptor gate: SHOWING_LOD / SHOWING_SCENE both need the descriptor to be resolved
+            // before consumers downstream (UpdateSceneLODInfoSystem reads it, GetSceneFacadeIntention
+            // captures it). If still in Uninitialized state, attach the resolver promise to the entity
+            // and bail; the next tick re-enters and re-checks. ResolveISSDescriptorSystem consumes the
+            // promise, mutates the same ISSDescriptor instance in place via MarkResolved, and removes
+            // the promise component. Because issDescriptor is a class reference cached in
+            // OrderedDataManaged, the gate sees the resolved state on the next tick without a refetch.
+            if (issDescriptor.CurrentState == ISSDescriptorState.Uninitialized)
+            {
+                if (!World.Has<AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>>(entity))
+                    World.Add(entity, AssetPromise<ISSDescriptorMetadata, GetISSDescriptorIntention>.Create(
+                        World, GetISSDescriptorIntention.For(sceneDefinitionComponent.Definition), partitionComponent));
+                return;
+            }
+
             promisesCreated++;
             sceneState.PromiseCreated = true;
             sceneState.VisualSceneState = candidateBy;
@@ -339,7 +358,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     //Therefore, we need to make this check because we dont want to break the entity mutual exclusive state
                     if (!World.Has<ISceneFacade>(entity))
                         World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(sceneDefinitionComponent), partitionComponent));
+                            new GetSceneFacadeIntention(sceneDefinitionComponent, issDescriptor), partitionComponent));
                     break;
             }
         }
@@ -392,16 +411,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             public readonly SceneDefinitionComponent SceneDefinitionComponent;
             public readonly SceneLoadingState SceneLoadingState;
             public readonly PartitionComponent PartitionComponent;
+            // Class-typed component: same reference is mutated in place by ResolveISSDescriptorSystem,
+            // so the gate below sees live state without a World.Get refresh.
+            public readonly ISSDescriptor ISSDescriptor;
 
             public int XCoordinate;
 
 
-            public OrderedDataManaged(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState)
+            public OrderedDataManaged(Entity entity, SceneDefinitionComponent sceneDefinitionComponent, PartitionComponent partitionComponent, SceneLoadingState sceneLoadingState, ISSDescriptor issDescriptor)
             {
                 Entity = entity;
                 SceneDefinitionComponent = sceneDefinitionComponent;
                 SceneLoadingState = sceneLoadingState;
                 PartitionComponent = partitionComponent;
+                ISSDescriptor = issDescriptor;
                 XCoordinate = sceneDefinitionComponent.Definition.metadata.scene.DecodedBase.x;
             }
 

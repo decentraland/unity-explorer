@@ -119,6 +119,9 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
+            foreach (var presenter in slotPresenters)
+                presenter.ResetHoverState();
+
             EndSlotBusy();
             characterPreviewController.StopEmotes();
             previewOutfitCommand.Restore();

@@ -12,11 +12,12 @@ public class AssetBundleManifestVersion
         //This was done to solve cache issues
         private const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
 
-        //v2000 marks that it has ISS enabled
-        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 2000;
-
         //From v49 the manifest exposes a per-file deps digest we can key the cache by
         private const int ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST = 49;
+
+        //ISS (Initial Scene State) descriptors are only baked starting from v49 — older
+        //manifests can't have an ISS, so the descriptor lookup is short-circuited.
+        private const int ASSET_BUNDLE_VERSION_SUPPORTS_ISS = 49;
 
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
@@ -30,10 +31,9 @@ public class AssetBundleManifestVersion
         public static bool DepsDigestKeyingEnabled;
 
         private bool? HasHashInPathValue;
-        private bool? SupportsISS;
+
         private bool? SupportsDepsDigestsValue;
-
-
+        private bool? SupportsISSValue;
         public bool assetBundleManifestRequestFailed;
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
@@ -47,12 +47,6 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
-        public bool SupportsInitialSceneState()
-        {
-            SupportsISS ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
-            return SupportsISS.Value;
-        }
-
         /// <summary>
         ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
         ///     in use for cache keying. This is purely a version check; an individual asset may still have an
@@ -63,6 +57,18 @@ public class AssetBundleManifestVersion
             if (!DepsDigestKeyingEnabled) return false;
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
+        }
+
+        /// <summary>
+        ///     True when the manifest's version is new enough to potentially have an ISS (Initial Scene State)
+        ///     descriptor baked for the scene. Older manifests pre-date the feature and can be short-circuited
+        ///     without touching the network.
+        /// </summary>
+        public bool SupportsISS()
+        {
+            if (assetBundleManifestRequestFailed) return false;
+            SupportsISSValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_ISS;
+            return SupportsISSValue.Value;
         }
 
         //Try parse is required to avoid throwing exceptions when the version is not in the expected format, which can happen for LODs in example

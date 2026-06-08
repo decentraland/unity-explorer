@@ -208,3 +208,69 @@ Modular architecture for settings UI:
 ## Subordinate Controllers
 
 No strict architecture. Nested views are referenced by the main view. Sub-controllers are created by main controllers. Keep subordinate logic simple — complex subordinates should become standalone controllers.
+
+## Presenter vs. ECS system — where does logic live?
+
+A recurring mistake is putting per-frame update logic inside a presenter (`Tick(float dt)`, polling, raycasting against the camera). **Per-frame work belongs in an ECS system, not a presenter.**
+
+| Task | Correct home |
+|------|--------------|
+| Read player/camera/time/input every frame | ECS system with `world.CacheCamera()` / `world.CachePlayer()`, `TryGet` singletons |
+| Drive a pool of on-screen elements from world state | `ControllerECSBridgeSystem` + `BridgeSystemBinding` (see "ECS-Controller Bridge" above) |
+| Respond to a single UI event (click, submit) | Presenter — one-shot, event-driven |
+| Update a single view once when data changes | Presenter — subscribe, render, done |
+
+### Why
+
+- Systems get profiler markers for free (`Profiler.BeginSample(systemName)` is automatic).
+- ECS singletons (camera, time, inputs, player) are already cached and faster to read via `TryGet` than to fetch per-frame in a presenter.
+- Systems are easier to test with `UnitySystemTestBase<T>` than presenters that own a frame loop.
+- Keeps presenters lean and event-driven, which is how the rest of the codebase is shaped.
+
+### Signs you're in the wrong place
+
+- Your presenter holds a `MainCamera` reference.
+- Your presenter has a `Tick(float dt)` or `Update()` method that isn't a Unity `MonoBehaviour` callback on the view.
+- You're manually adding `Profiler.BeginSample` calls around UI update code.
+
+When any of those appear, stop and move the work into a `ControllerECSBridgeSystem`. The controller holds the query definition; the system runs it in the correct `SystemGroup` and hands results back through the binding.
+
+## Wiring pooled / virtualized list items
+
+Views that recycle items (chat feed, friend list, marketplace grid) call `SetItemData(item, data)` every time an item is rebound. **Wire callbacks once at creation, not per rebind.**
+
+```csharp
+// WRONG — adds and removes on every rebind, creates delegate allocations per scroll
+void SetItemData(ChatEntryView item, ChatMessage msg)
+{
+    item.onReactionClicked -= HandleReaction;  // <-- per-rebind churn
+    item.onReactionClicked += HandleReaction;
+    item.SetText(msg.Text);
+}
+
+// RIGHT — wire once when the item enters the pool, store the current key on the item
+void OnCreateItem(ChatEntryView item) => item.OnReactionClicked = HandleReaction;
+
+void SetItemData(ChatEntryView item, ChatMessage msg)
+{
+    item.CurrentMessageId = msg.Id;   // callback reads this when fired
+    item.SetText(msg.Text);
+}
+```
+
+For single-subscriber callbacks on a pooled item, prefer a public `Action` field (`public Action<string>? OnClicked;`) over a C# `event`. `Action` supports direct assignment (`item.OnClicked = Handle`); `event` forces `+=`/`-=` bookkeeping on every rebind.
+
+## ViewEventBus — cross-presenter communication
+
+When events need to cross presenter boundaries, use `ViewEventBus` (`Explorer/Assets/DCL/Infrastructure/MVC/ViewEventBus.cs`) or a feature-specific event bus like `ChatEvents`, instead of bubbling callbacks up through constructor parameters.
+
+```csharp
+// WRONG — event pops through three presenter layers via constructor delegates
+new ReactionItemPresenter(msg,
+    onClicked: reactionId => parentPresenter.HandleReaction(msg.Id, reactionId));
+
+// RIGHT — publish on the bus, whoever cares subscribes
+viewEventBus.Publish(new ReactionClicked(msg.Id, reactionId));
+```
+
+The bus is a `MonoBehaviour` sibling in the view hierarchy; inject `IEventBus` into presenters that need to publish/subscribe. `Subscribe<T>` returns an `IDisposable` — dispose it in the controller's `Dispose()`.

@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Exceptions;
 using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -55,7 +56,12 @@ namespace DCL.AvatarRendering.Loading.Components
             do await UniTask.Delay(checkInterval, cancellationToken: ct);
             while (ThumbnailAssetResult is not { IsInitialized: true });
 
-            return ThumbnailAssetResult!.Value.Asset;
+            StreamableLoadingResult<SpriteData>.WithFallback result = ThumbnailAssetResult!.Value;
+
+            if (!result.Succeeded)
+                throw new ThumbnailLoadFailedException();
+
+            return result.Asset;
         }
     }
 }
