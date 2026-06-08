@@ -2,6 +2,7 @@ using System;
 using DCL.Chat.ChatReactions.Configs;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Chat.ChatReactions.Views
 {
@@ -56,6 +57,10 @@ namespace DCL.Chat.ChatReactions.Views
             listenersAttached = false;
         }
 
-        private void HandleClicked() => Clicked?.Invoke(AtlasIndex);
+        private void HandleClicked()
+        {
+            Clicked?.Invoke(AtlasIndex);
+            selectButton.gameObject.DeselectIfSelected();
+        }
     }
 }

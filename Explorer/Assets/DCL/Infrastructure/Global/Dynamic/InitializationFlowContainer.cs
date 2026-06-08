@@ -1,11 +1,13 @@
 ﻿using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.Character.Plugin;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
@@ -41,7 +43,9 @@ namespace DCL.UserInAppInitializationFlow
             CharacterContainer characterContainer,
             ModerationDataProvider moderationDataProvider,
             IPulseMultiplayerService pulseMultiplayerService,
-            IProfilePropagation profilePropagation)
+            IProfilePropagation profilePropagation,
+            IWorldPermissionsService worldPermissionsService,
+            IChatHistory chatHistory)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -107,7 +111,9 @@ namespace DCL.UserInAppInitializationFlow
                     characterContainer.Transform,
                     dynamicWorldParams.StartParcel,
                     pulseMultiplayerService,
-                    localSceneDevelopment),
+                    localSceneDevelopment,
+                    worldPermissionsService,
+                    chatHistory),
             };
         }
     }

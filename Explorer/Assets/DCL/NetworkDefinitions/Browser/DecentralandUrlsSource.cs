@@ -198,6 +198,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
+                DecentralandUrl.LodGeneratorCDN => $"https://lod-generator-unity-cdn.decentraland.{ENV}",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{Url(DecentralandUrl.Gatekeeper)}/status",

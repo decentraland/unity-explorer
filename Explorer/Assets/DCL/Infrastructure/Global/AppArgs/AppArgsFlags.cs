@@ -104,9 +104,20 @@ namespace Global.AppArgs
 
         public const string PULSE_MULTIPLAYER = "pulse";
 
+        public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
+
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+
+        public const string NO_LIVEKIT_MODE = "no-livekit-mode";
+
+        public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
+
+        /// <summary>
+        /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
+        /// </summary>
+        public const string SOFT_SHUTDOWN = "soft-shutdown";
 
         public static class Multiplayer
         {

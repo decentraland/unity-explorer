@@ -355,11 +355,10 @@ namespace Global.Dynamic
             IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
-            var communityMembershipChecker = new CommunityMembershipCheckerAdapter(communitiesDataProvider);
             IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,
                 identityCache,
-                communityMembershipChecker);
+                communitiesDataProvider);
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, identityCache), builderDTOsURL.Value);
 
@@ -373,7 +372,6 @@ namespace Global.Dynamic
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
-                identityCache,
                 dynamicWorldParams.StaticLoadPositions,
                 debugBuilder,
                 loadingScreenTimeout,
@@ -382,8 +380,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 teleportController,
-                bootstrapContainer.Environment,
-                worldPermissionsService);
+                bootstrapContainer.Environment);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -420,12 +417,21 @@ namespace Global.Dynamic
 
             // LiveKit and Pulse can coexist - there is no harm
             // We can control the messages flow selectively
-            IRoomHub roomHub = new RoomHub(
-                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                gateKeeperSceneRoom,
-                chatRoom,
-                voiceChatRoom
-            );
+            IRoomHub roomHub;
+
+            if (appArgs.HasFlag(AppArgsFlags.NO_LIVEKIT_MODE))
+            {
+                roomHub = NullRoomHub.INSTANCE;
+            }
+            else
+            {
+                roomHub = new RoomHub(
+                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                        gateKeeperSceneRoom,
+                        chatRoom,
+                        voiceChatRoom
+                        );
+            }
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -566,7 +572,9 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer,
                 moderationDataProvider,
                 multiplayerContainer.PulseMultiplayerService,
-                multiplayerContainer.ProfilePropagation);
+                multiplayerContainer.ProfilePropagation,
+                worldPermissionsService,
+                chatHistory);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
             HomePlaceEventBus homePlaceEventBus = new HomePlaceEventBus();
@@ -628,6 +636,10 @@ namespace Global.Dynamic
                 new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
+                new AnrSimulateChatCommand(),
+#if UNITY_STANDALONE_WIN
+                new AnrDumpChatCommand(),
+#endif
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
