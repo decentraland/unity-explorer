@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using RichTypes;
 
 namespace DCL.Diagnostics.Sentry
 {
     public class DclApplicationNotRespondingException : Exception
     {
 #if UNITY_STANDALONE_WIN
-        public readonly IReadOnlyList<string> DumpFilePaths;
+        public readonly IReadOnlyList<Result<DumpEntry>> DumpFilePaths;
 
-        internal DclApplicationNotRespondingException(string message, IReadOnlyList<string> dumpFilePaths) : base(message)
+        internal DclApplicationNotRespondingException(string message, IReadOnlyList<Result<DumpEntry>> dumpFilePaths) : base(message)
         {
             this.DumpFilePaths = dumpFilePaths;
         }

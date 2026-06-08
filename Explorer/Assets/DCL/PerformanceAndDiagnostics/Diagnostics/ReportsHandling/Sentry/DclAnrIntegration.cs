@@ -25,6 +25,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using Utility.Multithreading;
+using Utility;
 
 using REnum;
 
@@ -48,9 +49,7 @@ namespace DCL.Diagnostics.Sentry
             {
                 if (Watchdog is null)
                 {
-                    Watchdog = new DclAnrWatchDogMultiThreaded(options.DiagnosticLogger,
-                            _monoBehaviour,
-                            options.AnrTimeout);
+                    Watchdog = new DclAnrWatchDogMultiThreaded(options.DiagnosticLogger, _monoBehaviour);
                 }
             }
 
@@ -60,9 +59,12 @@ namespace DCL.Diagnostics.Sentry
 #if UNITY_STANDALONE_WIN
                 hub.CaptureEvent(se, scope =>
                 {
-                    foreach (string filePath in e.DumpFilePaths)
+                    foreach (Result<DumpEntry> filePath in e.DumpFilePaths)
                     {
-                        scope.AddAttachment(filePath: filePath, AttachmentType.Default);
+                        if (filePath.Success)
+                        {
+                            scope.AddAttachment(filePath: filePath.Value.path, AttachmentType.Default);
+                        }
                     }
                 });
 #else
@@ -78,20 +80,17 @@ namespace DCL.Diagnostics.Sentry
     {
         public const string Mechanism = "MainThreadWatchdog";
 
-        protected readonly int DetectionTimeoutMs;
         // Note: we don't sleep for the whole detection timeout or we wouldn't capture if the ANR started later.
-        protected readonly int SleepIntervalMs;
+        protected const int SleepIntervalMs = 250;
         protected readonly IDiagnosticLogger? Logger;
         protected readonly SentryMonoBehaviour MonoBehaviour;
         internal event EventHandler<DclApplicationNotRespondingException> OnApplicationNotResponding = delegate { };
         protected bool Paused { get; private set; } = false;
 
-        internal DclAnrWatchDog(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
+        internal DclAnrWatchDog(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour)
         {
             MonoBehaviour = monoBehaviour;
             Logger = logger;
-            DetectionTimeoutMs = (int)detectionTimeout.TotalMilliseconds;
-            SleepIntervalMs = Math.Max(1, DetectionTimeoutMs / 5);
 
             MonoBehaviour.ApplicationPausing += () => Paused = true;
             MonoBehaviour.ApplicationResuming += () => Paused = false;
@@ -108,37 +107,31 @@ namespace DCL.Diagnostics.Sentry
 
         internal abstract void Stop(bool wait = false);
 
-        /* TODO remove
-        private static (string message, string? filePath) NewDumpAttachment_OBSOLETE()
-        {
-#if UNITY_STANDALONE_WIN
-            Result<(string filePath, string zipPath)> dumpResult = ThreadsDumpUtility.CollectAndArchiveDumpInfoToAppDir();
-            if (dumpResult.Success == false)
-            {
-                return ($"Dump cannot be collected: {dumpResult.ErrorMessage}", null);
-            }
-
-            return ("Dump collected", dumpResult.Value.zipPath);
-#else
-            return ("Dump is not available on macOS yet", null);
-#endif
-        }
-        */
-
         // Is never supposed to be called during the pause
-        protected void Report(IReadOnlyList<string> collectedDumpPaths)
+        protected void Report(IReadOnlyList<Result<DumpEntry>> collectedDumpPaths)
         {
-            // (string dumpMessage, string? filePath) = NewDumpAttachment(); // TODO
-
             System.Text.StringBuilder sb = new ();
             sb.Append("DclApplication not responding: ");
-            /* TODO
-            sb.Append(DetectionTimeoutMs);
-            sb.Append(" ms. ");
-            sb.Append(dumpMessage);
+            
+            for (int i = 0; i < collectedDumpPaths.Count; i++)
+            {
+                sb.Append("Report ");
+
+                Result<DumpEntry> result = collectedDumpPaths[i];
+                if (result.Success)
+                {
+                    DumpEntry e = result.Value;
+                    sb.Append(e.tresholdMs).Append("ms - ").Append(e.path);
+                }
+                else
+                {
+                    sb.Append("Error( ").Append(result.ErrorMessage).Append(" )");
+                }
+                sb.Append(";");
+            }
             sb.Append(" | ");
+
             MultiThreadSync.AppendOwnershipTable(sb);
-            */
             string message = sb.ToString();
 
             Logger?.LogInfo("Detected an DclAnr event: {0}", message);
@@ -154,13 +147,28 @@ namespace DCL.Diagnostics.Sentry
         }
     }
 
+    public readonly struct DumpEntry
+    {
+        public readonly string path;
+        public readonly int tresholdMs;
+
+        public DumpEntry(
+            string path,
+            int tresholdMs
+        )
+        {
+            this.path = path;
+            this.tresholdMs = tresholdMs;
+        }
+    }
+
 #region watchdog fsm
 
 
     [REnum]
     [REnumFieldEmpty("UIHeartBeat")]
     [REnumField(typeof(int), "WatcherHeartBeatMs")]
-    [REnumField(typeof(string), "NextDumpFileCollectedPath")]
+    [REnumField(typeof(Result<DumpEntry>), "NextDumpFileCollectedPath")]
     [REnumFieldEmpty("AppPaused")]
     public partial struct WatchDogMessage {}
 
@@ -168,12 +176,12 @@ namespace DCL.Diagnostics.Sentry
     {
         public readonly int mainThreadIsNotRespondingForMs;
         // if list is not null thats guaranteed it has values
-        public readonly List<string>? collectedDumpPaths;
+        public readonly List<Result<DumpEntry>>? collectedDumpPaths;
         public readonly int requestedDumpCount;
 
         public WatchDogCollectingState(
             int mainThreadIsNotRespondingForMs,
-            List<string>? collectedDumpPaths,
+            List<Result<DumpEntry>>? collectedDumpPaths,
             int requestedDumpCount)
         {
             this.mainThreadIsNotRespondingForMs = mainThreadIsNotRespondingForMs;
@@ -190,16 +198,16 @@ namespace DCL.Diagnostics.Sentry
 
     public readonly struct WatchDogSendTotalReportCommand
     {
-        public readonly List<string> collectedDumpPaths;
+        public readonly List<Result<DumpEntry>> collectedDumpPaths;
 
-        public WatchDogSendTotalReportCommand(List<string> collectedDumpPaths)
+        public WatchDogSendTotalReportCommand(List<Result<DumpEntry>> collectedDumpPaths)
         {
             this.collectedDumpPaths = collectedDumpPaths;
         }
     }
 
     [REnum]
-    [REnumFieldEmpty("CollectNextDumpFile")]
+    [REnumField(typeof(int), "CollectNextDumpFileForTresholdMs")]
     [REnumField(typeof(WatchDogSendTotalReportCommand), "SendTotalReport")]
     [REnumField(typeof(string), "RemoveDumpFileByPath")]
     public partial struct WatchDogCommand {}
@@ -217,16 +225,13 @@ namespace DCL.Diagnostics.Sentry
             5000, // 5 s
         };
 
-        private int _ticksSinceUiUpdate; // how many _sleepIntervalMs have elapsed since the UI updated last time
-
-        private bool _reported = false; // TODO REMOVE
-        private bool _stop;
+        private readonly CancellationTokenSource cts = new ();
 
         private readonly Thread _thread;
         private readonly ConcurrentQueue<WatchDogMessage> messageQueue = new ();
 
-        internal DclAnrWatchDogMultiThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
-            : base(logger, monoBehaviour, detectionTimeout)
+        internal DclAnrWatchDogMultiThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour)
+            : base(logger, monoBehaviour)
             {
                 _thread = new Thread(Run)
                 {
@@ -242,7 +247,7 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void Stop(bool wait = false)
         {
-            _stop = true;
+            cts.SafeCancelAndDispose();
             if (wait)
             {
                 _thread.Join();
@@ -254,10 +259,9 @@ namespace DCL.Diagnostics.Sentry
             var waitForSeconds = new UnityEngine.WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
 
             yield return waitForSeconds;
-            while (!_stop)
+            while (cts.Token.IsCancellationRequested == false)
             {
-                Interlocked.Exchange(ref _ticksSinceUiUpdate, 0);
-                _reported = false;
+                messageQueue.Enqueue(WatchDogMessage.UIHeartBeat());
                 yield return waitForSeconds;
             }
         }
@@ -315,7 +319,7 @@ namespace DCL.Diagnostics.Sentry
                                 if (newPassedIntervalMs >= currentTresholdMs)
                                 {
                                     currentRequested++;
-                                    newCommand = Option<WatchDogCommand>.Some(WatchDogCommand.CollectNextDumpFile());
+                                    newCommand = Option<WatchDogCommand>.Some(WatchDogCommand.FromCollectNextDumpFileForTresholdMs(currentTresholdMs));
                                     break;
                                 }
                             }
@@ -341,24 +345,27 @@ namespace DCL.Diagnostics.Sentry
                         onReported: static () => (WatchDogState.Reported(), Option<WatchDogCommand>.None)
                     );
                 },
-                onNextDumpFileCollectedPath: static (s, dmpPath) => {
+                onNextDumpFileCollectedPath: static (s, dmpPathResult) => {
                     return s.Match(
-                        dmpPath,
+                        dmpPathResult,
                         // Continue on Idle and drop the file
-                        onIdle: static dmpPath => (WatchDogState.Idle(), Option<WatchDogCommand>.Some(WatchDogCommand.FromRemoveDumpFileByPath(dmpPath))),
-                        // TODO
+                        onIdle: static dmpPath => (
+                            WatchDogState.Idle(),
+                            dmpPath.Success
+                                ? Option<WatchDogCommand>.Some(WatchDogCommand.FromRemoveDumpFileByPath(dmpPath.Value.path))
+                                : Option<WatchDogCommand>.None
+                        ),
                         // Add to the list and fire if filled
                         onCollecting: static (dmpPath, collectingState) => {
                             if (collectingState.collectedDumpPaths == null)
                             {
                                 collectingState = new WatchDogCollectingState(
                                     collectingState.mainThreadIsNotRespondingForMs,
-                                    new List<string>(),
+                                    new List<Result<DumpEntry>>(),
                                     collectingState.requestedDumpCount
                                 );
                             }
 
-                            // TODO move it to result type and then later process in reports
                             collectingState.collectedDumpPaths.Add(dmpPath);
 
                             if (collectingState.collectedDumpPaths.Count >= TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Count)
@@ -370,7 +377,12 @@ namespace DCL.Diagnostics.Sentry
                             return (WatchDogState.FromCollecting(collectingState), Option<WatchDogCommand>.None);
                         },
                         // Continue on Reported and drop the file
-                        onReported: static dmpPath => (WatchDogState.Reported(), Option<WatchDogCommand>.Some(WatchDogCommand.FromRemoveDumpFileByPath(dmpPath)))
+                        onReported: static dmpPath => (
+                            WatchDogState.Reported(),
+                            dmpPath.Success
+                                ? Option<WatchDogCommand>.Some(WatchDogCommand.FromRemoveDumpFileByPath(dmpPath.Value.path))
+                                : Option<WatchDogCommand>.None
+                        )
                     );
                 }
             );
@@ -381,7 +393,7 @@ namespace DCL.Diagnostics.Sentry
         {
             command.Match(
                 this,
-                onCollectNextDumpFile: static self => {
+                onCollectNextDumpFileForTresholdMs: static (self, forMs) => {
 #if UNITY_STANDALONE_WIN
                     Result<(string filePath, string zipPath)> dumpResult = ThreadsDumpUtility.CollectAndArchiveDumpInfoToAppDir();
 #else
@@ -389,29 +401,27 @@ namespace DCL.Diagnostics.Sentry
                     Result<(string filePath, string zipPath)> dumpResult = Result<(string filePath, string zipPath)>.ErrorMessage("MacOS doesn't support dumps");
 #endif
 
-                    string path = string.Empty; // TODO migrate on Result
+                    Result<DumpEntry> path = default;
                     if (dumpResult.Success)
                     {
-                        path = dumpResult.Value.zipPath;
+                        DumpEntry e = new DumpEntry(dumpResult.Value.zipPath, forMs);
+                        path = Result<DumpEntry>.SuccessResult(e);
+                    }
+                    else
+                    {
+                        path = Result<DumpEntry>.ErrorResult(dumpResult.ErrorMessage);
                     }
 
                     WatchDogMessage msg = WatchDogMessage.FromNextDumpFileCollectedPath(path);
                     self.messageQueue.Enqueue(msg);
                 },
-                onSendTotalReport: static (self, totalReport) => {
-                    self.Report(totalReport.collectedDumpPaths);
-                    // TODO
-                },
+                onSendTotalReport: static (self, totalReport) => self.Report(totalReport.collectedDumpPaths),
                 onRemoveDumpFileByPath: static (self, removePath) => {
-#if UNITY_STANDALONE_WIN
-                    // MacOS doesn't collect dumps, nothing to remove
                     if (File.Exists(removePath))
                     {
                         File.Delete(removePath);
                     }
-#endif
                 }
-
             );
         }
 
@@ -421,15 +431,10 @@ namespace DCL.Diagnostics.Sentry
             {
                 WatchDogState currentState = WatchDogState.Idle();
 
-                var reportThreshold = DetectionTimeoutMs / SleepIntervalMs;
+                Logger?.Log(SentryLevel.Info, "Starting an DclAnr WatchDog - check every {1} ms", null, SleepIntervalMs);
 
-                Logger?.Log(SentryLevel.Info,
-                        "Starting an DclAnr WatchDog - detection timeout: {0} ms, check every {1} ms => report after {2} failed checks",
-                        null, DetectionTimeoutMs, SleepIntervalMs, reportThreshold);
-
-                while (!_stop)
+                while (cts.Token.IsCancellationRequested == false)
                 {
-                    Interlocked.Increment(ref _ticksSinceUiUpdate);
                     Thread.Sleep(SleepIntervalMs);
 
                     WatchDogMessage enqueueMsg;
