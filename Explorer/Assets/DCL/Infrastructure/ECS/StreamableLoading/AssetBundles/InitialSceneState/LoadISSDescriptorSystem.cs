@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Utility;
 using DCL.WebRequests;
@@ -50,6 +51,13 @@ namespace ECS.StreamableLoading.AssetBundles.InitialSceneState
 
         protected override async UniTask<StreamableLoadingResult<ISSDescriptorMetadata>> FlowInternalAsync(GetISSDescriptorIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
+            // Feature-flag gate: when disabled, short-circuit with a failed result so the consumer
+            // in ResolveISSDescriptorSystem treats every scene as "no ISS" and falls back to the
+            // pre-ISS code path. Same shape as the SupportsISS check below — failed result is not
+            // persisted to disk by LoadSystemBase.
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.NEW_LODS))
+                return new StreamableLoadingResult<ISSDescriptorMetadata>(GetReportData(), new Exception("new-lods feature flag disabled"));
+
             // Skip network roundtrips entirely for AB versions that pre-date ISS support. Returning a
             // failed result (plain Exception, not StreamableLoadingException) keeps the disk cache clean
             // — LoadSystemBase only persists on success — and doesn't spam logs from the result ctor.
