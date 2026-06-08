@@ -615,7 +615,7 @@ jobs:
       - name: Sign Windows executable
         if: matrix.target == 'windows64' && (inputs.is_release_build == true || github.event.inputs.force_sign == 'true')
         continue-on-error: true
-        uses: sslcom/esigner-codesign@develop
+        uses: sslcom/esigner-codesign@b7f8ff36fc0de8690fbbab8e5b4421d29802f747 # develop @ 2025-06-23, pinned for supply-chain safety
         with:
           command: sign
           username: ${{ secrets.ES_USERNAME }}
