@@ -132,8 +132,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public Task DisconnectAsync(DisconnectReason reason) =>
-            DisconnectAsync(reason, false);
+        public UniTask DisconnectAsync(DisconnectReason reason) =>
+            DisconnectAsync(reason, false).AsUniTask();
 
         /// <param name="spinThread">If true: Wait on the same thread; if false - async Yield</param>
         private async Task DisconnectAsync(DisconnectReason reason, bool spinThread)

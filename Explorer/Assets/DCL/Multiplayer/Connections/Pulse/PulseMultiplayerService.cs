@@ -7,7 +7,6 @@ using Pulse.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Utility;
 using Utility.Multithreading;
 
@@ -83,7 +82,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             connectionLifeCycleCts.SafeCancelAndDispose();
             disconnectHandler?.Invoke(DisconnectReason.GRACEFUL);
-            return transport.DisconnectAsync(DisconnectReason.GRACEFUL).AsUniTask();
+            return transport.DisconnectAsync(DisconnectReason.GRACEFUL);
         }
 
         /// <summary>
@@ -127,7 +126,8 @@ namespace DCL.Multiplayer.Connections.Pulse
                         ReportHub.Log(ReportCategory.MULTIPLAYER, $"Pulse connection attempt {attempt} timed out, retrying in {retryDelay}");
 
                         // Task instead of UniTask is used to respect the original thread / synchronization context to avoid continuation on the main thread
-                        await Task.Delay(retryDelay, ct);
+
+                        await DCLTask.Delay(retryDelay, ct);
                     }
                     else
                     {
@@ -191,7 +191,7 @@ namespace DCL.Multiplayer.Connections.Pulse
 
                                         ReportHub.Log(ReportCategory.MULTIPLAYER, "Attempting reconnection...");
 
-                                        await Task.Delay(reconnectionDelay, parentCt);
+                                        await DCLTask.Delay(reconnectionDelay, parentCt);
 
                                         try { await ConnectAsync(parentCt); }
                                         catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
