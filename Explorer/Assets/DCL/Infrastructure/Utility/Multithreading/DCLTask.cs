@@ -4,7 +4,6 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using System.Threading.Tasks;
 
 namespace Utility.Multithreading
 {
@@ -64,15 +63,15 @@ namespace Utility.Multithreading
                 CancellationToken cancellationToken = default) =>
             UniTask.Delay(delay, cancellationToken: cancellationToken);
 #else
-        public static Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+        public static System.Threading.Tasks.Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
                 int sleepMS,
                 CancellationToken cancellationToken = default) =>
-            Task.Delay(sleepMS, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+            System.Threading.Tasks.Task.Delay(sleepMS, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 
-        public static Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+        public static System.Threading.Tasks.Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
             TimeSpan delay,
             CancellationToken cancellationToken = default) =>
-            Task.Delay(delay, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+            System.Threading.Tasks.Task.Delay(delay, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #endif
 
 #if UNITY_WEBGL
