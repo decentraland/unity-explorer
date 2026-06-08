@@ -256,10 +256,11 @@ namespace DCL.Diagnostics.Sentry
 
         private IEnumerator UpdateUiStatus()
         {
+            CancellationToken token = cts.Token;
             var waitForSeconds = new UnityEngine.WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
 
             yield return waitForSeconds;
-            while (cts.Token.IsCancellationRequested == false)
+            while (token.IsCancellationRequested == false)
             {
                 messageQueue.Enqueue(WatchDogMessage.UIHeartBeat());
                 yield return waitForSeconds;
@@ -404,6 +405,12 @@ namespace DCL.Diagnostics.Sentry
                     Result<DumpEntry> path = default;
                     if (dumpResult.Success)
                     {
+                        string rawDumpPath = dumpResult.Value.filePath;
+                        if (File.Exists(rawDumpPath))
+                        {
+                            File.Delete(rawDumpPath);
+                        }
+
                         DumpEntry e = new DumpEntry(dumpResult.Value.zipPath, forMs);
                         path = Result<DumpEntry>.SuccessResult(e);
                     }
@@ -431,9 +438,11 @@ namespace DCL.Diagnostics.Sentry
             {
                 WatchDogState currentState = WatchDogState.Idle();
 
-                Logger?.Log(SentryLevel.Info, "Starting an DclAnr WatchDog - check every {1} ms", null, SleepIntervalMs);
+                CancellationToken token = cts.Token;
 
-                while (cts.Token.IsCancellationRequested == false)
+                Logger?.Log(SentryLevel.Info, "Starting an DclAnr WatchDog - check every {0} ms", null, SleepIntervalMs);
+
+                while (token.IsCancellationRequested == false)
                 {
                     Thread.Sleep(SleepIntervalMs);
 
