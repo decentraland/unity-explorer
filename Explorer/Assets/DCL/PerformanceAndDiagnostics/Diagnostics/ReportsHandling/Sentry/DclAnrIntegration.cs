@@ -47,16 +47,9 @@ namespace DCL.Diagnostics.Sentry
             {
                 if (Watchdog is null)
                 {
-                    // Use multithreaded version for Desktop
-#if !UNITY_WEBGL
                     Watchdog = new DclAnrWatchDogMultiThreaded(options.DiagnosticLogger,
                             _monoBehaviour,
                             options.AnrTimeout);
-#else
-                    Watchdog = new DclAnrWatchDogSingleThreaded(options.DiagnosticLogger,
-                            _monoBehaviour,
-                            options.AnrTimeout);
-#endif
                 }
             }
 
@@ -359,74 +352,6 @@ namespace DCL.Diagnostics.Sentry
             catch (Exception e)
             {
                 Logger?.Log(SentryLevel.Error, "Exception in the DclAnr watchdog.", e);
-            }
-        }
-    }
-
-    internal class DclAnrWatchDogSingleThreaded : DclAnrWatchDog
-    {
-        private readonly Stopwatch _watch = new();
-        private bool _stop;
-
-        private UnityEngine.Coroutine? _updateUiStatusCoroutine;
-
-        internal DclAnrWatchDogSingleThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
-            : base(logger, monoBehaviour, detectionTimeout)
-            {
-                Logger?.LogInfo("Starting an DclAnr Watchdog - Detection timeout: {0} ms, check every {1} ms", DetectionTimeoutMs, SleepIntervalMs);
-
-                // Check the UI status periodically by running a coroutine on the UI thread and checking the elapsed time
-                _watch.Start();
-                _updateUiStatusCoroutine = MonoBehaviour.StartCoroutine(UpdateUiStatus());
-
-                // We're stuck on the main thread, and we're using timestamps: We have to reset the coroutine when the app
-                // loses and regains focus to avoid reporting false positives.
-                MonoBehaviour.ApplicationPausing += () =>
-                {
-                    logger?.LogDebug("Stopping DclAnr detection coroutine.");
-                    _watch.Stop();
-
-                    MonoBehaviour.StopCoroutine(_updateUiStatusCoroutine);
-                    _updateUiStatusCoroutine = null;
-                };
-                MonoBehaviour.ApplicationResuming += () =>
-                {
-                    logger?.LogDebug("Restarting DclAnr detection coroutine.");
-
-                    _watch.Restart();
-                    if (_updateUiStatusCoroutine is null)
-                    {
-                        _updateUiStatusCoroutine = MonoBehaviour.StartCoroutine(UpdateUiStatus());
-                    }
-                    else
-                    {
-                        logger?.LogError("Attempted to restart the DclAnr detection but it was not stopped.");
-                    }
-                };
-            }
-
-        internal override void Stop(bool wait = false)
-        {
-            _stop = true;
-            if (_updateUiStatusCoroutine != null)
-            {
-                MonoBehaviour.StopCoroutine(_updateUiStatusCoroutine);
-                _updateUiStatusCoroutine = null;
-            }
-        }
-
-        private IEnumerator UpdateUiStatus()
-        {
-            _watch.Start();
-            var waitForSeconds = new UnityEngine.WaitForSecondsRealtime((float)SleepIntervalMs / 1000);
-            while (!_stop)
-            {
-                if (_watch.ElapsedMilliseconds >= DetectionTimeoutMs)
-                {
-                    Report();
-                }
-                _watch.Restart();
-                yield return waitForSeconds;
             }
         }
     }
