@@ -60,8 +60,7 @@ namespace DCL.Diagnostics.Sentry
 #if UNITY_STANDALONE_WIN
                 hub.CaptureEvent(se, scope =>
                 {
-                    string? filePath = e.DumpFilePath;
-                    if (filePath != null)
+                    foreach (string filePath in e.DumpFilePaths)
                     {
                         scope.AddAttachment(filePath: filePath, AttachmentType.Default);
                     }
@@ -109,6 +108,7 @@ namespace DCL.Diagnostics.Sentry
 
         internal abstract void Stop(bool wait = false);
 
+        /* TODO remove
         private static (string message, string? filePath) NewDumpAttachment_OBSOLETE()
         {
 #if UNITY_STANDALONE_WIN
@@ -123,25 +123,28 @@ namespace DCL.Diagnostics.Sentry
             return ("Dump is not available on macOS yet", null);
 #endif
         }
+        */
 
         // Is never supposed to be called during the pause
-        protected void Report(IReadonlyList<string> collectedDumpPaths)
+        protected void Report(IReadOnlyList<string> collectedDumpPaths)
         {
-            (string dumpMessage, string? filePath) = NewDumpAttachment();
+            // (string dumpMessage, string? filePath) = NewDumpAttachment(); // TODO
 
             System.Text.StringBuilder sb = new ();
-            sb.Append("DclApplication not responding for at least ");
+            sb.Append("DclApplication not responding: ");
+            /* TODO
             sb.Append(DetectionTimeoutMs);
             sb.Append(" ms. ");
             sb.Append(dumpMessage);
             sb.Append(" | ");
             MultiThreadSync.AppendOwnershipTable(sb);
+            */
             string message = sb.ToString();
 
             Logger?.LogInfo("Detected an DclAnr event: {0}", message);
 
 #if UNITY_STANDALONE_WIN
-            var exception = new DclApplicationNotRespondingException(message, filePath);
+            var exception = new DclApplicationNotRespondingException(message, collectedDumpPaths);
 #else
             var exception = new DclApplicationNotRespondingException(message);
 #endif
@@ -207,7 +210,7 @@ namespace DCL.Diagnostics.Sentry
 
     internal class DclAnrWatchDogMultiThreaded : DclAnrWatchDog
     {
-        private static readonly IReadonlyList<int> TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS = new int[]
+        private static readonly IReadOnlyList<int> TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS = new int[]
         {
             2500, // 2.5 s
             3750, // 3.75 s
@@ -220,7 +223,7 @@ namespace DCL.Diagnostics.Sentry
         private bool _stop;
 
         private readonly Thread _thread;
-        private readonly ConcurrentQueue messageQueue = new ();
+        private readonly ConcurrentQueue<WatchDogMessage> messageQueue = new ();
 
         internal DclAnrWatchDogMultiThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
             : base(logger, monoBehaviour, detectionTimeout)
@@ -263,16 +266,11 @@ namespace DCL.Diagnostics.Sentry
         // State argument gets consumed and cannot be used after the call. Ownership is passed.
         private static (WatchDogState newState, Option<WatchDogCommand> cmd) Update(WatchDogState state, WatchDogMessage message)
         {
-            static void (WatchDogState newState, Option<WatchDogCommand> cmd) FlushCollectingState(WatchDogCollectingState collectingState)
+            static (WatchDogState newState, Option<WatchDogCommand> cmd) FlushCollectingState(WatchDogCollectingState collectingState)
             {
                 // Nothing to report, just get back to normal
                 if (collectingState.collectedDumpPaths == null || collectingState.collectedDumpPaths.Count == 0)
                 {
-                    if (collectingState.collectedDumpPaths != null)
-                    {
-                        ThreadSafeListPool<string>.SHARED.Release(collectingState.collectedDumpPaths);
-                    }
-
                     return (WatchDogState.Idle(), Option<WatchDogCommand>.None);
                 }
                 // Mark as reported and fire the command
@@ -301,7 +299,7 @@ namespace DCL.Diagnostics.Sentry
                         ms,
                         // begin listening for heartbeats of watcher, main thread is not reporting yet
                         onIdle: static ms => {
-                            WatchDogCollectingState wdcs = new WatchDogCollectingState(ms, null);
+                            WatchDogCollectingState wdcs = new WatchDogCollectingState(ms, null, requestedDumpCount: 0);
                             return (WatchDogState.FromCollecting(wdcs), Option<WatchDogCommand>.None);
                         },
                         // if the code passes next treshold -> request new dump file
@@ -311,13 +309,13 @@ namespace DCL.Diagnostics.Sentry
                             Option<WatchDogCommand> newCommand = Option<WatchDogCommand>.None;
                             int currentRequested = collectingState.requestedDumpCount;
 
-                            for (int i = currentRequested; i < TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Length; i++)
+                            for (int i = currentRequested; i < TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Count; i++)
                             {
                                 int currentTresholdMs = TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS[i];
                                 if (newPassedIntervalMs >= currentTresholdMs)
                                 {
                                     currentRequested++;
-                                    newCommand = WatchDogCommand.CollectNextDumpFile();
+                                    newCommand = Option<WatchDogCommand>.Some(WatchDogCommand.CollectNextDumpFile());
                                     break;
                                 }
                             }
@@ -327,7 +325,7 @@ namespace DCL.Diagnostics.Sentry
                                 collectingState.collectedDumpPaths,
                                 currentRequested
                             );
-                            return (WatchDogState.FromCollecting(newState), Option<WatchDogCommand>.Some(newCommand));
+                            return (WatchDogState.FromCollecting(newState), newCommand);
                         },
                         // Already reported, do nothing
                         onReported: static ms => (WatchDogState.Reported(), Option<WatchDogCommand>.None)
@@ -353,19 +351,19 @@ namespace DCL.Diagnostics.Sentry
                         onCollecting: static (dmpPath, collectingState) => {
                             if (collectingState.collectedDumpPaths == null)
                             {
-                                List<string> newPathsList = ThreadSafeListPool.SHARED.Get();
                                 collectingState = new WatchDogCollectingState(
                                     collectingState.mainThreadIsNotRespondingForMs,
-                                    newPathsList
+                                    new List<string>(),
+                                    collectingState.requestedDumpCount
                                 );
                             }
 
                             // TODO move it to result type and then later process in reports
                             collectingState.collectedDumpPaths.Add(dmpPath);
 
-                            if (collectingState.collectedDumpPaths.Count >= TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Length)
+                            if (collectingState.collectedDumpPaths.Count >= TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Count)
                             {
-                                return FlushCollectingState(collectingState):
+                                return FlushCollectingState(collectingState);
                             }
 
                             // if the treshold is not reached yet then continue as is
@@ -401,7 +399,7 @@ namespace DCL.Diagnostics.Sentry
                     self.messageQueue.Enqueue(msg);
                 },
                 onSendTotalReport: static (self, totalReport) => {
-                    self.Report(totalReport);
+                    self.Report(totalReport.collectedDumpPaths);
                     // TODO
                 },
                 onRemoveDumpFileByPath: static (self, removePath) => {
@@ -450,7 +448,7 @@ namespace DCL.Diagnostics.Sentry
                         (WatchDogState newState, Option<WatchDogCommand> cmd) = Update(currentState, msg);
                         currentState = newState;
 
-                        if (cmd.HasValue)
+                        if (cmd.Has)
                         {
                             ProcessCommand(cmd.Value);
                         }
