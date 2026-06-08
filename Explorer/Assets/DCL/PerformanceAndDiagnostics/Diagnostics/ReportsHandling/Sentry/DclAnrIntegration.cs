@@ -1,9 +1,11 @@
 // Based on AnrIntegration
-// TRUST_WEBGL_THREAD_SAFETY_FLAG 
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
 #if !UNITY_WEBGL
 
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
@@ -22,6 +24,8 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using Utility.Multithreading;
+
+using REnum;
 
 namespace DCL.Diagnostics.Sentry
 {
@@ -156,12 +160,64 @@ namespace DCL.Diagnostics.Sentry
         }
     }
 
+#region watchdog fsm
+
+
+    [REnum]
+    [REnumFieldEmpty("UIHeartBeat")]
+    [REnumField(typeof(int), "WatcherHeartBeatMs")]
+    [REnumFieldEmpty("AppPaused")]
+    public partial struct WatchDogMessage {}
+
+    public readonly struct WatchDogCollectingState
+    {
+        public readonly int mainThreadIsNotRespondingForMs;
+        // if list is not null thats guaranteed it has values
+        public readonly List<string>? collectedDumpPaths;
+
+        public WatchDogCollectingState(
+                int mainThreadIsNotRespondingForMs,
+                List<string>? collectedDumpPaths
+                )
+        {
+            this.mainThreadIsNotRespondingForMs = mainThreadIsNotRespondingForMs;
+            this.collectedDumpPaths = collectedDumpPaths;
+        }
+    }
+
+    [REnum]
+    [REnumFieldEmpty("Idle")]
+    [REnumField(typeof(WatchDogCollectingState), "Collecting")]
+    [REnumFieldEmpty("Reported")] // don't report the same ANR instance multiple times
+    public partial struct WatchDogState {}
+
+    public readonly struct WatchDogSendTotalReportCommand
+    {
+        public readonly List<string> collectedDumpPaths;
+
+        public WatchDogSendTotalReportCommand(List<string> collectedDumpPaths)
+        {
+            this.collectedDumpPaths = collectedDumpPaths;
+        }
+    }
+
+    [REnum]
+    [REnumFieldEmpty("CollectNextDumpFile")]
+    [REnumField(typeof(WatchDogSendTotalReportCommand), "SendTotalReport")]
+    public partial struct WatchDogCommand {}
+
+
+#endregion
+
+
     internal class DclAnrWatchDogMultiThreaded : DclAnrWatchDog
     {
         private int _ticksSinceUiUpdate; // how many _sleepIntervalMs have elapsed since the UI updated last time
-        private bool _reported; // don't report the same ANR instance multiple times
+
+                private bool _reported = false; // TODO REMOVE
         private bool _stop;
-        private readonly Thread _thread = null!;
+
+        private readonly Thread _thread;
 
         internal DclAnrWatchDogMultiThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour, TimeSpan detectionTimeout)
             : base(logger, monoBehaviour, detectionTimeout)
@@ -198,6 +254,76 @@ namespace DCL.Diagnostics.Sentry
                 _reported = false;
                 yield return waitForSeconds;
             }
+        }
+
+        // Pure function. Verbose, but explicit. Shows every legal transation.
+        // State argument gets consumed and cannot be used after the call. Ownership is passed.
+        private static (WatchDogState newState, Option<WatchDogCommand> cmd) Update(WatchDogState state, WatchDogMessage message)
+        {
+            static void (WatchDogState newState, Option<WatchDogCommand> cmd) FlushCollectingState(WatchDogCollectingState collectingState)
+            {
+                // Nothing to report, just get back to normal
+                if (collectingState.collectedDumpPaths == null || collectingState.collectedDumpPaths.Count == 0)
+                {
+                    if (collectingState.collectedDumpPaths != null)
+                    {
+                        ThreadSafeListPool<string>.SHARED.Release(collectingState.collectedDumpPaths);
+                    }
+
+                    return (WatchDogState.Idle(), Option<WatchDogCommand>.None);
+                }
+                // Mark as reported and fire the command
+                else
+                {
+                    WatchDogSendTotalReportCommand inner = new WatchDogSendTotalReportCommand(collectingState.collectedDumpPaths);
+                    WatchDogCommand cmd = WatchDogCommand.FromSendTotalReport(inner);
+                    return (WatchDogState.Reported(), Option<WatchDogCommand>.Some(cmd));
+                }
+            }
+
+            return message.Match(
+                state,
+                onUIHeartBeat: static s => {
+                    return s.Match(
+                        // Idle is normal operation, just do nothing
+                        onIdle: static () => (WatchDogState.Idle(), Option<WatchDogCommand>.None),
+                        // UI is alive again
+                        onCollecting: static collectingState => FlushCollectingState(collectingState),
+                        // Resetting after the current report to idle state and is ready to detect next ANR
+                        onReported: static () => (WatchDogState.Idle(), Option<WatchDogCommand>.None)
+                    );
+                },
+                onWatcherHeartBeatMs: static (s, ms) => {
+                    return s.Match(
+                        ms,
+                        // begin listening for heartbeats of watcher, main thread is not reporting yet
+                        onIdle: static ms => {
+                            WatchDogCollectingState wdcs = new WatchDogCollectingState(ms, null);
+                            return (WatchDogState.FromCollecting(wdcs), Option<WatchDogCommand>.None);
+                        },
+                        //TODO
+                        onCollecting: static (ms, collectingState) => {
+                            int newPassedIntervalMs = collectingState.mainThreadIsNotRespondingForMs + ms;
+
+                            // TODO
+                            // If all 3 reports collected -> flush
+
+                        },
+                        // Already reported, do nothing
+                        onReported: static ms => (WatchDogState.Reported(), Option<WatchDogCommand>.None)
+                    );
+                },
+                onAppPaused: static s => {
+                    return s.Match(
+                        // Continue on Idle, just do nothing
+                        onIdle: static () => (WatchDogState.Idle(), Option<WatchDogCommand>.None),
+                        // Apps got paused from MainThread, it means the UI is alive again
+                        onCollecting: static collectingState => FlushCollectingState(collectingState),
+                        // Continue on Reported, just do nothing
+                        onReported: static () => (WatchDogState.Reported(), Option<WatchDogCommand>.None)
+                    );
+                }
+            );
         }
 
         private void Run()
@@ -589,7 +715,7 @@ namespace DCL.Diagnostics.Sentry
                     dumpType,
                     IntPtr.Zero,
                     IntPtr.Zero,
-                    IntPtr.Zero 
+                    IntPtr.Zero
                     );
 
             if (ok == false)
