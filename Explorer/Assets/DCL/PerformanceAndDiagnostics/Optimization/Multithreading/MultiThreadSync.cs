@@ -195,13 +195,13 @@ namespace Utility.Multithreading
 
         public static void AppendOwnershipTable(StringBuilder sb)
         {
-            sb.Append("MultiThreadSync ownership [syncId => owning native thread]: ");
+            sb.Append("MultiThreadSync: ");
 
             var any = false;
 
             foreach (KeyValuePair<int, int> entry in SYNC_OWNERSHIP)
             {
-                sb.Append('[').Append(entry.Key).Append(" => ").Append(entry.Value).Append("] ");
+                sb.Append(entry.Key).Append("=").Append(entry.Value).Append("|");
                 any = true;
             }
 
