@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using MVC;
 using SuperScrollView;
 using TMPro;
@@ -30,6 +31,9 @@ namespace DCL.Notifications.NotificationsMenu
         }
 
         // Swallow the click event so it's not processed by the main sidebar button: retriggers -> cancel previous token -> panel stuck
-        public void OnPointerClick(PointerEventData eventData) { }
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            ReportHub.Log(ReportCategory.UI, "Swallowed click on view level");
+        }
     }
 }
