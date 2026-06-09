@@ -90,11 +90,11 @@ namespace Decentraland.Pulse
         }
 
         private float? _headPitch;
-        /// <summary>Float accessor for <see cref="HeadPitch"/>. Range [0.0f, 180.0f], 6 bits, step ≈ 2.85714.</summary>
+        /// <summary>Float accessor for <see cref="HeadPitch"/>. Range [0.0f, 360.0f], 7 bits, step ≈ 2.83465.</summary>
         public float HeadPitchQuantized
         {
-            get => _headPitch ??= Quantize.Decode(HeadPitch, 0.0f, 180.0f, 6);
-            set { _headPitch = value; HeadPitch = Quantize.Encode(value, 0.0f, 180.0f, 6); }
+            get => _headPitch ??= Quantize.Decode(HeadPitch, 0.0f, 360.0f, 7);
+            set { _headPitch = value; HeadPitch = Quantize.Encode(value, 0.0f, 360.0f, 7); }
         }
 
         private float? _pointAtX;
