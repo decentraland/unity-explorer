@@ -2,10 +2,11 @@ using MVC;
 using SuperScrollView;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuView : ViewBaseWithAnimationElement, IView
+    public class NotificationsMenuView : ViewBaseWithAnimationElement, IView, IPointerClickHandler
     {
         [field: SerializeField]
         public LoopListView2 LoopList { get; private set; }
@@ -27,5 +28,8 @@ namespace DCL.Notifications.NotificationsMenu
             LoadingSpinner.SetActive(isLoading);
             ContentContainer.SetActive(!isLoading);
         }
+
+        // Swallow the click event so it's not processed by the main sidebar button: retriggers -> cancel previous token -> panel stuck
+        public void OnPointerClick(PointerEventData eventData) { }
     }
 }
