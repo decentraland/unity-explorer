@@ -14,6 +14,7 @@ using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Utility;
 using ECS;
 using System;
 using System.Collections.Generic;
@@ -130,9 +131,16 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(AvatarPlugin));
+
             attachmentsAssetsCache.Dispose();
+            stopwatch.LogStep("attachmentsAssetsCache.Dispose");
+
             avatarTransformMatrixJobWrapper.Dispose();
+            stopwatch.LogStep("avatarTransformMatrixJobWrapper.Dispose");
+
             UnityObjectUtils.SafeDestroyGameObject(poolParent);
+            stopwatch.LogStep("SafeDestroyGameObject(poolParent)");
         }
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
