@@ -13,7 +13,6 @@ namespace DCL.Utility
     {
         public class DriveData
         {
-            public string Name { get; set; }
             public ulong AvailableFreeSpace { get; set; }
             public ulong TotalSize { get; set; }
 
@@ -21,7 +20,7 @@ namespace DCL.Utility
             {
                 double freeGB = (double)AvailableFreeSpace / (1024 * 1024 * 1024);
                 double totalGB = (double)TotalSize / (1024 * 1024 * 1024);
-                return $"{Name} - Free Space: {freeGB:F2} GB, Total Size: {totalGB:F2} GB";
+                return $"Free Space: {freeGB:F2} GB, Total Size: {totalGB:F2} GB";
             }
         }
 
@@ -54,7 +53,6 @@ namespace DCL.Utility
                 var drive = new DriveInfo(root);
                 return new DriveData
                 {
-                    Name = path,
                     AvailableFreeSpace = (ulong)drive.AvailableFreeSpace,
                     TotalSize = (ulong)drive.TotalSize
                 };
@@ -83,7 +81,6 @@ namespace DCL.Utility
                 {
                     return new DriveData
                     {
-                        Name = path,
                         AvailableFreeSpace = freeBytes,
                         TotalSize = totalBytes
                     };
@@ -157,8 +154,13 @@ namespace DCL.Utility
 
 #elif UNITY_STANDALONE_OSX
 
+        // Mirrors the native 64-bit-inode `struct statfs` on macOS. Only the block-count fields
+        // are read, but every field (including the trailing name/reserved buffers) must be present
+        // so the struct matches the native size — statfs writes the whole struct, and a short
+        // buffer would corrupt adjacent stack memory. Uses fixed buffers so the struct is blittable
+        // and can be stack-allocated and passed by pointer with no heap marshalling.
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct StatfsRaw
+        private unsafe struct StatfsRaw
         {
             public uint  f_bsize;
             public int   f_iosize;
@@ -173,45 +175,25 @@ namespace DCL.Utility
             public uint  f_type;
             public uint  f_flags;
             public uint  f_fssubtype;
-
-            // NUL-terminated UTF-8 byte arrays (no ANSI marshalling)
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)] public byte[] f_mntonname;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)] public byte[] f_mntfromname;
-        }
-
-        private static string Utf8Z(byte[] arr)
-        {
-            int len = Array.IndexOf(arr, (byte)0);
-            if (len < 0) len = arr.Length;
-            return Encoding.UTF8.GetString(arr, 0, len);
+            public fixed byte f_fstypename[16];
+            public fixed byte f_mntonname[1024];
+            public fixed byte f_mntfromname[1024];
+            public fixed byte f_reserved[32];
         }
 
         [DllImport("libc", SetLastError = true)]
-        private static extern int statfs(string path, IntPtr buf);
+        private static extern int statfs(string path, out StatfsRaw buf);
 
         private static DriveData? GetMacDriveInfoForPath(string path)
         {
-            int structSize = Marshal.SizeOf<StatfsRaw>();
-            IntPtr buffer = Marshal.AllocHGlobal(structSize);
+            if (statfs(path, out StatfsRaw raw) != 0)
+                return null;
 
-            try
+            return new DriveData
             {
-                if (statfs(path, buffer) != 0)
-                    return null;
-
-                StatfsRaw raw = Marshal.PtrToStructure<StatfsRaw>(buffer);
-
-                return new DriveData
-                {
-                    Name = Utf8Z(raw.f_mntonname),
-                    AvailableFreeSpace = raw.f_bavail * raw.f_bsize,
-                    TotalSize = raw.f_blocks * raw.f_bsize
-                };
-            }
-            finally
-            {
-                if (buffer != IntPtr.Zero) Marshal.FreeHGlobal(buffer);
-            }
+                AvailableFreeSpace = raw.f_bavail * raw.f_bsize,
+                TotalSize = raw.f_blocks * raw.f_bsize
+            };
         }
 
         [DllImport("libc", EntryPoint = "system")]

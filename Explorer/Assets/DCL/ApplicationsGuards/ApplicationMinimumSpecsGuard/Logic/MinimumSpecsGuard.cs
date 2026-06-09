@@ -34,16 +34,13 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private readonly ISpecProfileProvider profileProvider;
         private readonly ISystemInfoProvider systemInfoProvider;
-        private readonly IDriveInfoProvider driveInfoProvider;
         private List<SpecResult> cachedResults = new();
 
         public MinimumSpecsGuard(ISpecProfileProvider profileProvider,
-            ISystemInfoProvider systemInfoProvider,
-            IDriveInfoProvider driveInfoProvider)
+            ISystemInfoProvider systemInfoProvider)
         {
             this.profileProvider = profileProvider;
             this.systemInfoProvider = systemInfoProvider;
-            this.driveInfoProvider = driveInfoProvider;
         }
 
         public bool HasMinimumSpecs()
@@ -129,7 +126,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 // drives, that can be very slow when network drives are mounted. The injected
                 // provider does a single native query; fall back to the managed DriveInfo probe
                 // if the native query is unavailable on this platform.
-                var driveInfo = driveInfoProvider.GetPersistentDataDriveInfo()
+                var driveInfo = Utility.PlatformUtils.GetDriveInfoForPath(Application.persistentDataPath)
                                 ?? Utility.PlatformUtils.GetPrimaryStorageInfoUsingPersistentPath();
 
                 if (driveInfo != null)
