@@ -203,6 +203,11 @@ namespace DCL.RealmNavigation
                 teleportParams.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
             if (lastOpResult.Success == false)
+            {
+                // On failure, move LoadingStatus to Completed so it doesn't stay stuck at PlayerTeleporting,
+                // which would make CommandsHandleChatMessageBus.Send silently drop further chat commands (#8880).
+                loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+
                 analyticsController.Track(
                     AnalyticsEvents.General.LOADING_ERROR,
                     new JObject
@@ -211,6 +216,7 @@ namespace DCL.RealmNavigation
                         ["message"] = lastOpResult.AsResult().ErrorMessage,
                     }
                 );
+            }
             else
                 NavigationExecuted?.Invoke(teleportParams.CurrentDestinationParcel);
 

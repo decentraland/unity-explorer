@@ -79,7 +79,9 @@ namespace SceneRunner
 
             SceneStateProvider.State.Set(SceneState.Disposing);
             runtimeInstance.SetIsDisposing();
-
+#if ALTTESTER
+            AlttesterSceneReadinessProbe.ClearIfCurrent(this);
+#endif
             DisposeInternal();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
@@ -99,6 +101,10 @@ namespace SceneRunner
 
             runtimeInstance.SetIsDisposing();
 
+#if ALTTESTER
+            AlttesterSceneReadinessProbe.ClearIfCurrent(this);
+#endif
+
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
             // Let the scene loop finish gracefully to prevent synchronous exceptions:
@@ -108,7 +114,6 @@ namespace SceneRunner
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             DisposeInternal();
-            SceneData.InitialSceneStateInfo.Dispose();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
@@ -139,6 +144,13 @@ namespace SceneRunner
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
             deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+
+#if ALTTESTER
+            if (isCurrent)
+                AlttesterSceneReadinessProbe.SetCurrent(this);
+            else
+                AlttesterSceneReadinessProbe.ClearIfCurrent(this);
+#endif
         }
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
