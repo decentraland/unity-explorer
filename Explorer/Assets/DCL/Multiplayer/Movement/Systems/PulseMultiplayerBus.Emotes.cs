@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
 
             // Capture the local emote regardless of session state so a reconnect handshake can
             // backdate this emote via PlayerInitialState.EmoteStartOffsetMs.
-            StoreLastEmoteStart(urn, durationMs, playerState);
+            StoreLastEmoteStart(urn, durationMs, playerState, mask);
 
             var outgoing = OutgoingMessage.Create(
                 PacketMode.RELIABLE,
