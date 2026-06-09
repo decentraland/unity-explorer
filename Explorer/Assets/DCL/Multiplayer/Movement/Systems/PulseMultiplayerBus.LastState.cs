@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using Decentraland.Pulse;
 using System.Diagnostics;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace DCL.Multiplayer.Movement
         private string? lastLocalEmoteId;
         private uint lastLocalEmoteDurationMs;
         private long lastLocalEmoteStartTicks;
+        private AvatarEmoteMask lastLocalEmoteMask;
 
         private void StoreLastMovement(in NetworkMovementMessage message)
         {
@@ -30,13 +32,14 @@ namespace DCL.Multiplayer.Movement
             }
         }
 
-        private void StoreLastEmoteStart(URN emoteId, uint durationMs, NetworkMovementMessage? playerState)
+        private void StoreLastEmoteStart(URN emoteId, uint durationMs, NetworkMovementMessage? playerState, AvatarEmoteMask mask)
         {
             lock (initialStateSync)
             {
                 lastLocalEmoteId = emoteId;
                 lastLocalEmoteDurationMs = durationMs;
                 lastLocalEmoteStartTicks = Stopwatch.GetTimestamp();
+                lastLocalEmoteMask = mask;
 
                 if (playerState.HasValue)
                     lastLocalMovement = playerState.Value;
@@ -59,6 +62,7 @@ namespace DCL.Multiplayer.Movement
             string? capturedEmoteId;
             uint capturedDurationMs;
             long capturedStartTicks;
+            AvatarEmoteMask? capturedEmoteMask;
 
             lock (initialStateSync)
             {
@@ -72,6 +76,7 @@ namespace DCL.Multiplayer.Movement
                 capturedEmoteId = lastLocalEmoteId;
                 capturedDurationMs = lastLocalEmoteDurationMs;
                 capturedStartTicks = lastLocalEmoteStartTicks;
+                capturedEmoteMask = lastLocalEmoteMask;
             }
 
             // Subsequent reconnection messages will reuse the allocated state
@@ -83,6 +88,9 @@ namespace DCL.Multiplayer.Movement
             if (!string.IsNullOrEmpty(capturedEmoteId))
             {
                 initialState.EmoteId = capturedEmoteId;
+
+                if (capturedEmoteMask != AvatarEmoteMask.AemFullBody)
+                    initialState.EmoteMask = (int)capturedEmoteMask;
 
                 if (capturedDurationMs > 0)
                     initialState.EmoteDurationMs = capturedDurationMs;

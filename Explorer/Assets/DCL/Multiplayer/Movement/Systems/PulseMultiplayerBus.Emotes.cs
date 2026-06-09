@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
 
             // Capture the local emote regardless of session state so a reconnect handshake can
             // backdate this emote via PlayerInitialState.EmoteStartOffsetMs.
-            StoreLastEmoteStart(urn, durationMs, playerState);
+            StoreLastEmoteStart(urn, durationMs, playerState, mask);
 
             var outgoing = OutgoingMessage.Create(
                 PacketMode.RELIABLE,
@@ -40,6 +40,9 @@ namespace DCL.Multiplayer.Movement
 
             if (durationMs > 0)
                 outgoing.Message.EmoteStart.DurationMs = durationMs;
+
+            if (mask != AvatarEmoteMask.AemFullBody)
+                outgoing.Message.EmoteStart.Mask = (int)mask;
 
             if (playerState.HasValue)
             {
@@ -123,7 +126,9 @@ namespace DCL.Multiplayer.Movement
             Inbox(movementMessage, walletId);
 
             double timestamp = emoteStarted.ServerTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP;
-            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp, AvatarEmoteMask.AemFullBody));
+
+            EnqueueEmoteIntention(new RemoteEmoteIntention(new URN(emoteStarted.EmoteId), walletId, timestamp,
+                emoteStarted.HasMask ? (AvatarEmoteMask)emoteStarted.Mask : AvatarEmoteMask.AemFullBody));
         }
 
         private void HandleEmoteStopped(IncomingMessage message)
