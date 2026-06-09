@@ -1,9 +1,11 @@
-﻿using CrdtEcsBridge.PoolsProviders;
+﻿using CrdtEcsBridge.JsModulesImplementation.Communications;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.Profiling;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -45,6 +47,13 @@ namespace SceneRuntime
 
         void ApplyStaticMessages(ReadOnlyMemory<byte> data);
 
+        /// <summary>
+        ///     Forcibly interrupts a running JS execution by causing a <see cref="Microsoft.ClearScript.ScriptInterruptedException"/>
+        ///     to be thrown from inside the engine. Safe to call from another thread.
+        ///     After interrupt the engine state may be inconsistent — treat as terminal and dispose the scene.
+        /// </summary>
+        void Interrupt();
+
         void SetIsDisposing();
 
         void OnSceneIsCurrentChanged(bool isCurrent);
@@ -75,13 +84,15 @@ namespace SceneRuntime
             ISceneData sceneData,
             IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
-            IRemoteMetadata remoteMetadata
+            IRemoteMetadata remoteMetadata,
+            ISceneCommunicationPipe sceneCommunicationPipe,
+            SceneRuntimeMetrics runtimeMetrics
         )
         {
-            sceneRuntime.RegisterEngineAPI(sceneData, engineApi, instancePoolsProvider, exceptionsHandler);
+            sceneRuntime.RegisterEngineAPI(sceneData, engineApi, instancePoolsProvider, exceptionsHandler, runtimeMetrics);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
-            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+            sceneRuntime.RegisterCommsApi(roomHub, sceneCommunicationPipe, sceneData, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -114,13 +125,15 @@ namespace SceneRuntime
             ISceneData sceneData,
             IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
-            IRemoteMetadata remoteMetadata
+            IRemoteMetadata remoteMetadata,
+            ISceneCommunicationPipe sceneCommunicationPipe,
+            SceneRuntimeMetrics runtimeMetrics
         )
         {
-            sceneRuntime.RegisterEngineAPI( sceneData, engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
+            sceneRuntime.RegisterEngineAPI( sceneData, engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler, runtimeMetrics);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository, remoteMetadata);
             sceneRuntime.RegisterSceneApi(sceneApi);
-            sceneRuntime.RegisterCommsApi(roomHub, exceptionsHandler);
+            sceneRuntime.RegisterCommsApi(roomHub, sceneCommunicationPipe, sceneData, exceptionsHandler);
             sceneRuntime.RegisterSignedFetch(webRequestController, dclEnvironment, sceneData, realmData, web3IdentityCache);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
@@ -133,16 +146,16 @@ namespace SceneRuntime
             sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
 
-        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
+        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, SceneRuntimeMetrics runtimeMetrics)
         {
-            var newWrapper = new EngineApiWrapper(engineApi, sceneData, instancePoolsProvider, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource);
+            var newWrapper = new EngineApiWrapper(engineApi, sceneData, instancePoolsProvider, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
             sceneRuntime.Register("UnityEngineApi", newWrapper);
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
-        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData,  ISDKObservableEventsEngineApi engineApi, ISDKMessageBusCommsControllerAPI commsApiImplementation, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
+        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData,  ISDKObservableEventsEngineApi engineApi, ISDKMessageBusCommsControllerAPI commsApiImplementation, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, SceneRuntimeMetrics runtimeMetrics)
         {
-            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, sceneData, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource);
+            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, sceneData, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
             sceneRuntime.Register("UnityEngineApi", newWrapper);
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
@@ -157,9 +170,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api, sceneRuntime.isDisposingTokenSource));
         }
 
-        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneExceptionsHandler sceneExceptionsHandler)
+        private static void RegisterCommsApi(this ISceneRuntime sceneRuntime, IRoomHub roomHub, ISceneCommunicationPipe sceneCommunicationPipe, ISceneData sceneData, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource));
+            sceneRuntime.Register("CommsApi", new CommsApiWrap(roomHub, sceneCommunicationPipe, sceneData, sceneExceptionsHandler, sceneRuntime.isDisposingTokenSource));
         }
 
         private static void RegisterSignedFetch(

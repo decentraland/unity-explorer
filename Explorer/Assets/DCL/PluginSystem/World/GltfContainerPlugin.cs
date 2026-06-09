@@ -1,5 +1,7 @@
 using Arch.SystemGroups;
+using DCL.SceneRunner.Scene;
 using Cysharp.Threading.Tasks;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
@@ -23,6 +25,7 @@ using ECS.StreamableLoading.GLTF.DownloadProvider;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using Global.AppArgs;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -41,6 +44,12 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IAppArgs appArgs;
+        private readonly Transform poolsRoot;
+
+        // Process-wide raw-GLTF cache. Combined with per-consumer Root cloning in
+        // CreateGltfAssetFromRawGltfSystem, multiple entities referencing the same hash share
+        // a single GltfImport and its underlying Mesh / Material / Texture allocations.
+        private readonly GltfLoadCache gltfLoadCache = new ();
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps,
             CacheCleaner cacheCleaner,
@@ -50,7 +59,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IGltfContainerAssetsCache assetsCache,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            Transform poolsRoot)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -60,13 +70,16 @@ namespace DCL.PluginSystem.World
             this.loadingStatus = loadingStatus;
             this.assetsCache = (GltfContainerAssetsCache)assetsCache;
             this.appArgs = appArgs;
+            this.poolsRoot = poolsRoot;
 
             cacheCleaner.Register(assetsCache);
+            cacheCleaner.Register(gltfLoadCache);
         }
 
         public void Dispose()
         {
             assetsCache.Dispose();
+            gltfLoadCache.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -77,21 +90,23 @@ namespace DCL.PluginSystem.World
 
             LoadGLTFSystem.InjectToWorld(
                 ref builder,
-                NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
+                gltfLoadCache,
                 webRequestController,
                 false,
                 false,
                 localSceneDevelopment,
-                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
+                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData),
+                poolsRoot);
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(
                 ref builder,
                 assetsCache,
+                sharedDependencies.SceneData,
                 new PrepareGltfAssetLoadingSystem.Options
                 {
                     LocalSceneDevelopment = localSceneDevelopment,
-                    UseRemoveAssetBundles = useRemoteAssetBundles,
+                    UseRemoteAssetBundles = useRemoteAssetBundles,
                     PreviewingBuilderCollection = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                 });
 
@@ -104,14 +119,18 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder, buffer));
 
             // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
+            // Bridge GLTF cache keying to the AB layer without leaking AB symbols into LoadGltfContainerSystem:
+            // when the scene's manifest has a deps digest for the hash, the key becomes "hash@digest", else the bare hash.
+            var sceneData = sharedDependencies.SceneData;
+            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
+                hash => sceneData.SceneEntityDefinition.assetBundleManifestVersion.ComposeCacheKey(hash));
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
-            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.ScenePartition));
+            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.ScenePartition, sharedDependencies.SceneData.ISSDescriptor));
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,

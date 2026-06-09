@@ -8,6 +8,7 @@ namespace Global.AppArgs
         public const string SKIP_VERSION_CHECK = "skip-version-check";
         public const string SIMULATE_VERSION = "simulateVersion";
         public const string FORCE_MINIMUM_SPECS_SCREEN = "forceMinimumSpecsScreen";
+        public const string SKIP_MINIMUM_SPECS_SCREEN = "skip-minimum-specs-screen";
 
         public const string SCENE_CONSOLE = "scene-console";
 
@@ -23,6 +24,7 @@ namespace Global.AppArgs
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
+        public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
 
         /// <summary>
         /// The community received here (by its ID) will be shown through a notification inviting the user to click on it and open that community card.
@@ -56,8 +58,11 @@ namespace Global.AppArgs
         public const string CREATOR_HUB_BIN_PATH = "creator-hub-bin-path";
 
         public const string USE_LOG_MATRIX = "use-log-matrix";
+        public const string GRAPHICS = "graphics";
         public const string WINDOWED_MODE = "windowed-mode";
+        public const string RESOLUTION = "resolution";
         public const string DISABLE_WINDOW_RESTRICTIONS = "disable-window-restrictions";
+        public const string DISABLE_HUD = "disable-hud";
 
         public const string BANNED_USERS_FROM_SCENE = "include-banned-users-from-scene";
 
@@ -97,6 +102,21 @@ namespace Global.AppArgs
         public const string AVATAR_CONTEXT_MENU = "avatar-context-menu";
         public const string DOUBLE_CLICK_WALK = "double-click-walk";
 
+        public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
+
+        public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
+        public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
+        public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+
+        public const string NO_LIVEKIT_MODE = "no-livekit-mode";
+
+        public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";
+
+        /// <summary>
+        /// Use Unity's Application.Quit() (full native teardown) on exit instead of the default hard process termination. For native debugging only.
+        /// </summary>
+        public const string SOFT_SHUTDOWN = "soft-shutdown";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";
@@ -112,6 +132,7 @@ namespace Global.AppArgs
         {
             public const string SESSION_ID = "session_id";
             public const string LAUNCHER_ID = "launcher_anonymous_id";
+            public const string CAMPAIGN_ANON_USER_ID = "campaign_anon_user_id";
         }
     }
 }

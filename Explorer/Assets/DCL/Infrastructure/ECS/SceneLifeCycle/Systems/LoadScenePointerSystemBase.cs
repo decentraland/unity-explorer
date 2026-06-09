@@ -1,9 +1,11 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using DCL.Roads.Components;
+using DCL.SceneRunner.Scene;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -24,12 +26,12 @@ namespace ECS.SceneLifeCycle.Systems
             this.realmData = realmData;
         }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, ISSDescriptor issDescriptor, bool isPortableExperience = false)
         {
             if (IsRoad(definition))
-                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), RoadInfo.Create(), SceneLoadingState.CreateRoad());
+                return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), issDescriptor, RoadInfo.Create(), SceneLoadingState.CreateRoad());
 
-            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience));
+            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath, isPortableExperience), issDescriptor);
         }
 
         private bool IsRoad(SceneEntityDefinition definition) =>
@@ -53,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                CreateSceneEntity(definition, ipfsPath);
+                CreateSceneEntity(definition, ipfsPath, ISSDescriptor.CreateUninitialized());
             }
         }
     }

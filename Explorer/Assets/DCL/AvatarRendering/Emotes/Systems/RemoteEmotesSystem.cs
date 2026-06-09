@@ -52,11 +52,11 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
-                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref readonly RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+                    ref readonly InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
-                    if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                    if (interpolationExists && IsInPresentOrPast(intComp.Time, replicaMovement.PastMessage.timestamp, remoteEmoteIntention.Timestamp, t))
                     {
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
@@ -69,11 +69,6 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (RemoteEmoteIntention savedIntention in savedIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
-
-            return;
-
-            bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
-                intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
 
         private void ProcessRemoteStopIntentions(float t)
@@ -128,10 +123,10 @@ namespace DCL.AvatarRendering.Emotes
                     // cancel the emote once the play is eventually consumed.
                     // However, if interpolation has already passed the stop's timestamp, the
                     // corresponding play was either never received or already consumed — discard.
-                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
-                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+                    ref readonly InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref readonly RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
 
-                    if (!interpolationExists || StopIsInPresentOrPast(replicaMovement, stopIntention, intComp))
+                    if (!interpolationExists || IsInPresentOrPast(intComp.Time, replicaMovement.PastMessage.timestamp, stopIntention.Timestamp, t))
                         continue;
 
                     savedStopIntentions!.Add(stopIntention);
@@ -140,11 +135,9 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (RemoteEmoteStopIntention savedStopIntention in savedStopIntentions!)
                 emotesMessageBus.SaveForRetry(savedStopIntention);
-
-            return;
-
-            bool StopIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteStopIntention stopIntention, InterpolationComponent intComp) =>
-                intComp.Time + t >= stopIntention.Timestamp || replicaMovement.PastMessage.timestamp >= stopIntention.Timestamp;
         }
+
+        private static bool IsInPresentOrPast(float interpolationTime, float pastMessageTimestamp, float intentionTimestamp, float deltaTime) =>
+            interpolationTime + deltaTime >= intentionTimestamp || pastMessageTimestamp >= intentionTimestamp;
     }
 }

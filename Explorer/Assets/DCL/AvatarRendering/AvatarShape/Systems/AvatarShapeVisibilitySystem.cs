@@ -154,7 +154,7 @@ namespace DCL.AvatarRendering.AvatarShape
         {
             if (!includeBannedUsersFromScene) return;
 
-            bool isBanned = BannedUsersFromCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
+            bool isBanned = RoomMetadataCurrentScene.Instance.IsUserBanned(avatarShapeComponent.ID);
 
             SetHiddenComponent(entity, isBanned, HiddenPlayerComponent.HiddenReason.BANNED);
         }
@@ -252,7 +252,7 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarCachedVisibility.IsVisible = shouldBeHidden;
 
-            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX;
+            avatarView.AvatarAnimator.enabled = shouldPlayFootstepFX && !avatarView.IsLegacyAnimationPlaying;
             avatarView.AvatarAnimator.fireEvents = shouldPlayFootstepFX;
         }
 

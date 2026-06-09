@@ -19,6 +19,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [Serializable]
             public class DataDto : DataBase
             {
+                public SpringBonesDto? springBones;
             }
         }
 

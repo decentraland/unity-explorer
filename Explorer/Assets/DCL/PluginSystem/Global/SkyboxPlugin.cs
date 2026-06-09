@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.SkyBox.Components;
 using ECS;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json;
@@ -25,6 +26,7 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IRealmData realmData;
+        private readonly bool skyboxTimeEnabled;
 
         private SkyboxSettings settingsJson;
 
@@ -35,20 +37,23 @@ namespace DCL.SkyBox
             Light directionalLight,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
-            IRealmData realmData)
+            IRealmData realmData,
+            bool skyboxTimeEnabled = true)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
             this.realmData = realmData;
+            this.skyboxTimeEnabled = skyboxTimeEnabled;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
+            if (skyboxTimeEnabled)
+                SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController, realmData, arguments.SkyboxEntity);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
@@ -62,7 +67,7 @@ namespace DCL.SkyBox
                     if (settingsJson.DayCycleDurationInSeconds != null)
                         skyboxSettings.FullDayCycleInSeconds =  settingsJson.DayCycleDurationInSeconds.Value;
 
-                SetInitialTime(settingsJson, skyboxSettings);
+                SetInitialTime(settingsJson, skyboxSettings, skyboxTimeEnabled);
 
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -78,8 +83,12 @@ namespace DCL.SkyBox
                     directionalLight,
                     skyboxAnimation,
                     skyboxSettings.TimeOfDayNormalized,
-                    lensFlareEnabled
+                    lensFlareEnabled,
+                    freezeTime: !skyboxTimeEnabled
                 );
+
+                if (!skyboxTimeEnabled)
+                    skyboxRenderController.DisableSkyboxTime();
             }
             catch (OperationCanceledException)
             {
@@ -93,8 +102,21 @@ namespace DCL.SkyBox
 
             return;
 
-            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings)
+            void SetInitialTime(SkyboxSettings jsonConfig, SkyboxSettingsAsset skyboxSettings, bool timeEnabled)
             {
+                // When skybox time is disabled, pin the initial time to noon so it's independent of host
+                // clock / PlayerPrefs / FF — the update system that would honor those isn't injected here.
+                if (!timeEnabled)
+                {
+                    const float NOON = 0.5f;
+                    skyboxSettings.TimeOfDayNormalized = NOON;
+                    skyboxSettings.TargetTimeOfDayNormalized = NOON;
+                    skyboxSettings.UIOverrideTimeOfDayNormalized = NOON;
+                    skyboxSettings.IsUIControlled = true;
+                    skyboxSettings.IsDayCycleEnabled = false;
+                    return;
+                }
+
                 if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SKYBOX_FIXED_TIME))
                 {
                     float fixedTime = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SKYBOX_FIXED_TIME);

@@ -12,7 +12,6 @@ using DCL.ECSComponents;
 using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
-using DCL.SceneRunner.Scene;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
@@ -330,13 +329,14 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         {
             public bool SceneLoadingConcluded { get; set; } = true;
 
-            public IInitialSceneState InitialSceneStateInfo { get; } = new ISceneData.FakeInitialSceneState();
+            public DCL.SceneRunner.Scene.ISSDescriptor? ISSDescriptor => DCL.SceneRunner.Scene.ISSDescriptor.NONE;
             public SceneShortInfo SceneShortInfo { get; set; } = new (Vector2Int.zero, "mockScene");
             public IReadOnlyList<Vector2Int> Parcels { get; set; } = new List<Vector2Int>();
             public ISceneContent SceneContent => new SceneNonHashedContent(URLDomain.FromString("file://mock/"));
             public SceneEntityDefinition SceneEntityDefinition { get; set; } = new ("sceneId", new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
+            public bool IsWearableBuilderCollectionPreview { get; set; }
 
             public bool HasRequiredPermission(string permission) => true;
 

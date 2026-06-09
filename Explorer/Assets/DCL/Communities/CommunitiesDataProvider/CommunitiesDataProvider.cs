@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PrivateWorlds;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -15,7 +16,7 @@ using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
-    public class CommunitiesDataProvider
+    public class CommunitiesDataProvider : ICommunityMembershipChecker
     {
         public event Action<CreateOrUpdateCommunityResponse.CommunityData> CommunityCreated;
         public event Action<string> CommunityUpdated;
@@ -60,6 +61,12 @@ namespace DCL.Communities.CommunitiesDataProvider
             response.data.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), response.data.id);
 
             return response;
+        }
+
+        public async UniTask<bool> IsMemberOfCommunityAsync(string communityId, CancellationToken ct)
+        {
+            GetCommunityResponse response = await GetCommunityAsync(communityId, ct);
+            return response.data.role != CommunityMemberRole.none;
         }
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)

@@ -168,6 +168,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 return;
             }
 
+            // Tear down only when the legacy Animation component has stopped on its own (non-looping).
+            if (emoteReference.legacy)
+            {
+                if (!avatarView.IsLegacyAnimationPlaying)
+                    StopEmote(ref emoteComponent, avatarView);
+                return;
+            }
+
             if (!emoteComponent.IsPlayingEmote)
             {
                 avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
@@ -218,6 +226,9 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
 
+            // Legacy emotes keep the Mecanim animator disabled while playing
+            avatarView.StopLegacyAnimation();
+
             // Create a clean slate for the animator before setting the stop trigger
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
             avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
@@ -262,7 +273,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
                 //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
                 if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
-                    (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) || avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
+                    (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
+                     !avatarView.GetAnimatorBool(AnimationHashes.GROUNDED) ||
+                     avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
                     return;
 
                 if (emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote))
@@ -351,7 +364,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 }
                 else
                     // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
-                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape);
+                    CreateEmotePromise(emoteId, avatarShapeComponent.BodyShape, emoteIntent.Mask);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -385,7 +398,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 messageBus.OnPlayerRemoved(profile.UserId);
         }
 
-        private void CreateEmotePromise(URN urn, BodyShape bodyShape)
+        private void CreateEmotePromise(URN urn, BodyShape bodyShape, AvatarEmoteMask mask)
         {
             loadEmoteBuffer[0] = urn;
 
@@ -398,7 +411,7 @@ namespace DCL.AvatarRendering.Emotes.Play
                 if (localSceneDevelopment && TryResolveLocalSceneEmotePath(scene, emoteHash, out string emotePath))
                 {
                     SceneEmoteFromLocalPromise.Create(World,
-                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop),
+                        new GetSceneEmoteFromLocalSceneIntention(scene.SceneData, emotePath, emoteHash, bodyShape, loop, mask),
                         PartitionComponent.TOP_PRIORITY);
 
                     return;

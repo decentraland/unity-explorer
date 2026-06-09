@@ -17,7 +17,9 @@ namespace DCL.WebRequests
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
-            TWebRequestOp op
+            TWebRequestOp op,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
         )
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestArgs: struct
@@ -28,7 +30,7 @@ namespace DCL.WebRequests
             if (useDelay)
                 await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
 
-            return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
+            return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op, expectedContentLength, progressReporter);
         }
 
         IRequestHub IWebRequestController.RequestHub => origin.RequestHub;

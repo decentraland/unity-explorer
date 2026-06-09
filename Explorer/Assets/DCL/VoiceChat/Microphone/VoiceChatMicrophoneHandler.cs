@@ -1,14 +1,11 @@
 using DCL.Diagnostics;
-using DCL.Settings.Settings;
 using System;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using LiveKit.Audio;
-using LiveKit.Runtime.Scripts.Audio;
 using RichTypes;
 using UnityEngine;
-using Result = RichTypes.Result;
 
 namespace DCL.VoiceChat
 {
@@ -32,7 +29,6 @@ namespace DCL.VoiceChat
 
             DCLInput.Instance.VoiceChat.Talk!.performed += OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled += OnTalkHotkeyReleased;
-            VoiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
         }
 
         public void Dispose()
@@ -40,7 +36,6 @@ namespace DCL.VoiceChat
             isMicrophoneEnabledProperty.ClearSubscriptionsList();
             DCLInput.Instance.VoiceChat.Talk!.performed -= OnTalkHotkeyPressed;
             DCLInput.Instance.VoiceChat.Talk.canceled -= OnTalkHotkeyReleased;
-            VoiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
         }
 
         /// <summary>
@@ -131,43 +126,6 @@ namespace DCL.VoiceChat
                 isMicrophoneEnabledProperty.Value = false;
                 NotifyMicrophoneStateChange(false);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
-            }
-        }
-
-        private void OnMicrophoneChanged(MicrophoneSelection microphoneName)
-        {
-            if (!PlayerLoopHelper.IsMainThread)
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change dispatching to main thread (async)");
-                OnMicrophoneChangedAsync().Forget();
-                return;
-            }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
-            TryHandleMicrophoneChange();
-            return;
-
-            async UniTaskVoid OnMicrophoneChangedAsync()
-            {
-                await UniTask.SwitchToMainThread();
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
-                TryHandleMicrophoneChange();
-            }
-
-            void TryHandleMicrophoneChange()
-            {
-                Option<MicrophoneRtcAudioSource> weakMicrophoneSource = microphoneSource.Resource;
-
-                if (weakMicrophoneSource.Has == false)
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Microphone source is already disposed: {microphoneName.name}");
-                    return;
-                }
-
-                Result result = weakMicrophoneSource.Value.SwitchMicrophone(microphoneName);
-
-                if (result.Success == false)
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Cannot select microphone: {result.ErrorMessage}");
             }
         }
 

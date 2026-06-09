@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
-using DCL.Utilities;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -11,6 +10,7 @@ using LiveKit.Rooms.TrackPublications;
 using RichTypes;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -31,7 +31,7 @@ namespace DCL.VoiceChat
         private bool isDisposed;
 
         /// <param name="userBlockingCache">
-        /// When supplied, streams from blocked users are skipped in <see cref="TryAddStream"/>.
+        /// When supplied, streams from blocked users are skipped in <see cref="TryAddAudioStream"/>.
         /// Pass <c>null</c> for rooms that should hear everyone (Community, private call).
         /// </param>
         public RemoteTrackListener(IRoom voiceChatRoom, VoiceChatConfiguration configuration, PlaybackSourcesHub playbackSourcesHub,
@@ -41,12 +41,16 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.playbackSourcesHub = playbackSourcesHub;
             this.userBlockingCache = userBlockingCache;
+
+            AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         }
 
         public void Dispose()
         {
             if (isDisposed) return;
             isDisposed = true;
+
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
 
             StopListeningAsync().Forget();
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
@@ -63,7 +67,7 @@ namespace DCL.VoiceChat
 
                 foreach (KeyValuePair<string, LKParticipant> remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 foreach ((string sid, TrackPublication value) in remoteParticipantIdentity.Value.Tracks)
-                    if (TryAddStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
+                    if (TryAddAudioStream(value.Kind, new StreamKey(remoteParticipantIdentity.Key!, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Added existing remote track from {remoteParticipantIdentity.Key}");
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
@@ -98,7 +102,7 @@ namespace DCL.VoiceChat
 
             try
             {
-                if (TryAddStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
+                if (TryAddAudioStream(publication.Kind, new StreamKey(participant.Identity, publication.Sid)))
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track subscribed from {participant.Identity}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}");
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}{(isLocalLoopback ? " (local loopback)" : " (new remote)")}"); }
@@ -126,7 +130,7 @@ namespace DCL.VoiceChat
         /// <summary>
         /// Re-adds playback streams for an identity that was previously removed (e.g. after unblock).
         /// LiveKit keeps the track subscribed, so <see cref="IRoom.TrackSubscribed"/> does not fire again —
-        /// we need to look up the participant and re-invoke <see cref="TryAddStream"/> explicitly.
+        /// we need to look up the participant and re-invoke <see cref="TryAddAudioStream"/> explicitly.
         /// </summary>
         internal async UniTaskVoid AddStreamsForIdentityAsync(string identity)
         {
@@ -139,7 +143,7 @@ namespace DCL.VoiceChat
                     return;
 
                 foreach ((string sid, TrackPublication publication) in participant.Tracks)
-                    if (TryAddStream(publication.Kind, new StreamKey(identity, sid)))
+                    if (TryAddAudioStream(publication.Kind, new StreamKey(identity, sid)))
                         ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Re-added stream for {identity}");
             }
             catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Failed to re-add streams for {identity}", ex), ReportCategory.VOICE_CHAT); }
@@ -148,7 +152,7 @@ namespace DCL.VoiceChat
         internal void SetMuteForIdentity(string identity, bool mute) =>
             playbackSourcesHub.SetMuteForIdentity(identity, mute);
 
-        private bool TryAddStream(TrackKind kind, StreamKey key)
+        private bool TryAddAudioStream(TrackKind kind, StreamKey key)
         {
             if (kind != TrackKind.KindAudio) return false;
             if (userBlockingCache?.UserIsBlocked(key.identity) == true) return false;
@@ -158,6 +162,44 @@ namespace DCL.VoiceChat
 
             playbackSourcesHub.AddOrReplaceStream(key, stream);
             return true;
+        }
+
+        // Unity binds AudioSource instances to the output device at creation time; rebuild them on device change so reconnected Bluetooth headphones are heard.
+        private void OnAudioConfigurationChanged(bool deviceWasChanged)
+        {
+            if (!deviceWasChanged || isDisposed) return;
+            if (playbackSourcesHub.Streams.Count == 0) return;
+
+            RebuildRemoteSourcesAsync().Forget();
+        }
+
+        private async UniTaskVoid RebuildRemoteSourcesAsync()
+        {
+            if (!PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToMainThread();
+
+            if (isDisposed) return;
+
+            try
+            {
+                var keysToRebuild = new List<StreamKey>(playbackSourcesHub.Streams.Count);
+                foreach (KeyValuePair<StreamKey, (Weak<AudioStream> stream, LivekitAudioSource source)> pair in playbackSourcesHub.Streams)
+                    keysToRebuild.Add(pair.Key);
+
+                var rebuilt = 0;
+
+                foreach (StreamKey key in keysToRebuild)
+                {
+                    if (!playbackSourcesHub.Streams.TryGetValue(key, out (Weak<AudioStream> stream, LivekitAudioSource source) entry))
+                        continue;
+
+                    playbackSourcesHub.AddOrReplaceStream(key, entry.stream);
+                    rebuilt++;
+                }
+
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Audio output device changed — rebuilt {rebuilt} remote audio source(s)");
+            }
+            catch (Exception ex) { ReportHub.LogException(new Exception($"{TAG} Failed to rebuild audio sources after device change", ex), ReportCategory.VOICE_CHAT); }
         }
     }
 }

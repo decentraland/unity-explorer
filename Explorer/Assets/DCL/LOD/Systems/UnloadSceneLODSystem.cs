@@ -20,6 +20,8 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -50,13 +52,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            UnloadSceneLODForISSQuery(World);
+            UnloadLODForISSQuery(World);
             UnloadLODQuery(World);
             UnloadLODWhenSceneReadyQuery(World);
         }
 
         public void FinalizeComponents(in Query query)
         {
+            AbortISSHelperEntitiesQuery(World);
             AbortSucceededLODPromisesQuery(World);
             DestroySceneLODQuery(World);
         }
@@ -64,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void UnloadSceneLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
+        private void UnloadLODForISS(in Entity entity, ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent,
             ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneLoadingState)
         {
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_SCENE)
@@ -119,6 +122,14 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneLODInfo.DisposeSceneLODAndReleaseToCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World,
                 defaultFOV, defaultLodBias,  realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
+        }
+
+        [Query]
+        [All(typeof(ISSAssetCreationHelper))]
+        private void AbortISSHelperEntities(in Entity entity, ref AssetBundlePromise assetBundleResult)
+        {
+            assetBundleResult.ForgetLoading(World);
+            World.Destroy(entity);
         }
     }
 }

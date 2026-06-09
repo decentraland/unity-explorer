@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -20,6 +20,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -28,7 +29,6 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
         private const string METADATA_FILENAME = "metadata.json";
-        private const string STATIC_SCENE_DESCRIPTOR_FILENAME = "StaticSceneDescriptor.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -36,16 +36,19 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly AssetBundleLoadingMutex loadingMutex;
         private readonly IWebRequestController webRequestController;
+        private readonly bool byteWeightedProgress;
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
             AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache)
+            IDiskCache<PartialLoadingState> partialDiskCache,
+            bool byteWeightedProgress) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
+            this.byteWeightedProgress = byteWeightedProgress;
         }
 
         private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
@@ -61,44 +64,65 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
-                    suppressErrors: true); // Suppress errors because here we have our own error handling
+            AssetBundle? assetBundle = null;
+            AssetBundleLoadingResult? assetBundleResult = null;
 
-            AssetBundle? assetBundle = assetBundleResult.AssetBundle;
+#if UNITY_WEBGL
+            if (ShaderBundlePreloader.TryGetPreloadedBundle(intention.Hash ?? "", out AssetBundle? preloaded))
+                assetBundle = preloaded;
+#endif
+
+            if (assetBundle == null)
+            {
+                long contentLength = -1;
+
+                // When byte-weighted progress is off, skip the HEAD round-trip and leave state.ContentLength=-1
+                // so GatherGltfAssetsSystem falls back to count-based progress (no per-entity byte weighting).
+                if (byteWeightedProgress)
+                {
+                    contentLength = await webRequestController.GetDecompressedContentLengthAsync(intention.CommonArguments.URL, ct);
+                    state.ContentLength = contentLength;
+                }
+
+                assetBundleResult = await webRequestController.GetAssetBundleAsync(
+                    intention.CommonArguments,
+                    new GetAssetBundleArguments(loadingMutex, intention.cacheHash),
+                    ct,
+                    GetReportCategory(),
+                    expectedContentLength: contentLength,
+                    progressReporter: byteWeightedProgress ? state : null,
+                    suppressErrors: true); // Suppress errors because here we have our own error handling
+                assetBundle = assetBundleResult.Value.AssetBundle;
+            }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
+            {
+                string error = assetBundleResult?.DataProcessingError ?? "unknown";
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {error}");
+            }
 
             try
             {
                 // get metrics
 
                 string? metadataJSON;
-                string? sceneDescriptoJSON;
-
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 {
                     metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
-                    sceneDescriptoJSON = assetBundle.LoadAsset<TextAsset>(STATIC_SCENE_DESCRIPTOR_FILENAME)?.text;
                 }
 
                 // Switch to thread pool to parse JSONs
 
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
                 AssetBundleData[] dependencies;
                 var mainAsset = "";
-                InitialSceneStateMetadata? initialSceneState = null;
-
-                if (!string.IsNullOrEmpty(sceneDescriptoJSON))
-                    initialSceneState = JsonUtility.FromJson<InitialSceneStateMetadata>(sceneDescriptoJSON);
 
                 if (!string.IsNullOrEmpty(metadataJSON))
                 {
@@ -117,11 +141,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, initialSceneState, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(),
                     intention.AssetBundleManifestVersion == null ? "" : intention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
                     source, intention.IsDependency, intention.LookForDependencies, ct);
+                return result;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
@@ -136,7 +161,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, InitialSceneStateMetadata? initialSceneState, Type? expectedObjType, string? mainAsset,
+            AssetBundle assetBundle, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             ReportData reportCategory,
@@ -160,7 +185,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Object[]? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, initialSceneState, asset, expectedObjType, dependencies,
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, asset, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }

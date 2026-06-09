@@ -31,18 +31,26 @@
       "dependencies": {},
       "hash": "bd58275fb169d5076f0e7b12a4ee5b455c3fee56"
     },
+    "com.atteneder.draco": {
+      "version": "4.0.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.4.11"
+      },
+      "url": "https://package.openupm.com"
+    },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/atteneder/glTFast.git",
+      "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.mathematics": "1.2.6",
-        "com.unity.burst": "1.8.24",
-        "com.unity.collections": "1.2.4"
+        "com.unity.burst": "1.6.6"
       },
-      "hash": "faa0bde05e4f0d9cc8bb7a3c85f6a292183952ea"
+      "hash": "b9f9f75c3a0093c95a5b49420e7781c4f5d968b9"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
@@ -72,7 +80,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "2488227ce1013f3bf65408447d0fbc6531e54ed5"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -90,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "ecf91956ccf788abc2dd748f105cd336d771b8d8"
+      "hash": "dc6e479148106b1f8a68f0fbdba475bf7b96693e"
     },
     "com.decentraland.renum": {
       "version": "https://github.com/NickKhalow/REnum.git?path=REnum",
@@ -118,7 +126,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0132f23fb5d1bfa1634a872ef28e131067df7a69"
+      "hash": "f040030e82c51bdddce67ae18149e22b5b4c4c0d"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -129,7 +137,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "d8112ca7ebc0c660d7850d72850d46a3e376dc08"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
@@ -138,7 +146,7 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -223,25 +231,13 @@
       },
       "url": "https://packages.unity.com"
     },
-    "com.unity.cloud.draco": {
-      "version": "5.4.3",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.burst": "1.8.24",
-        "com.unity.collections": "1.2.4",
-        "com.unity.mathematics": "1.2.6"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.cloud.ktx": {
-      "version": "3.6.3",
+      "version": "file:com.unity.cloud.ktx",
       "depth": 0,
-      "source": "registry",
+      "source": "embedded",
       "dependencies": {
         "com.unity.modules.unitywebrequest": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.code-analysis": {
       "version": "0.1.2-preview",
@@ -539,13 +535,13 @@
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "org.decentraland.clearscript": {
-      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#v2",
+      "version": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#7.5.1.a",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "ae0c51ae4a6f2325f9757e9a0253ddbef8713a9b"
+      "hash": "5f385df93c2d1e4a9aed3dd0aad62c247c684a4b"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

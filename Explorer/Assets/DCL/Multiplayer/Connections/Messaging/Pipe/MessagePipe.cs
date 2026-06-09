@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
-            }),
+            }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
@@ -79,6 +79,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
+            }
+            catch (InvalidProtocolBufferException)
+            {
+                // Defensive fallback for non-DCL participants that publish non-protobuf data
+                // on the shared IDataPipe. DCL clients (including cast2) speak protobuf, and
+                // CommsApi traffic routes via MsgType.CommsData — neither reaches here.
             }
             catch (Exception e)
             {
@@ -198,6 +204,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.MovementCompressed => (packet.MovementCompressed as T).EnsureNotNull(),
                 Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.Reaction => (packet.Reaction as T).EnsureNotNull(),
+                Packet.MessageOneofCase.ChatReaction => (packet.ChatReaction as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => null,
                 _ => null,
             };

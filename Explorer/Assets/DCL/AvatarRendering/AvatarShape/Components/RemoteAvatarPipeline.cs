@@ -90,10 +90,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             // Write into flat backing arrays
             int offset = validIndex * bonesArrayLength;
-            Transform[] bones = transformMatrixComponent.bones.Inner;
+            BoneArray bones = transformMatrixComponent.bones;
 
-            for (int b = 0; b < bonesArrayLength; b++)
+            // bonesArrayLength is the per-avatar slot capacity (MAX_BONE_COUNT = 256).
+            // bones.Count is BASE_BONE_COUNT (62) plus appended spring bones, so it is
+            // typically smaller than bonesArrayLength — the trailing slots get padded with
+            // dummyTransform. Mathf.Min guards against a hypothetical out-of-range BoneArray.
+            int actualCount = Mathf.Min(bones.Count, bonesArrayLength);
+
+            for (int b = 0; b < actualCount; b++)
                 flatBones[offset + b] = bones[b];
+
+            for (int b = actualCount; b < bonesArrayLength; b++)
+                flatBones[offset + b] = dummyTransform;
 
             flatRoots[validIndex] = avatarBase.transform;
             updateAvatar[validIndex] = true;
@@ -101,8 +110,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             // Update TAA in-place if index is within current TAA bounds
             if (bonesTransformAccessArray.isCreated && validIndex < taaSlotCount)
             {
-                for (int b = 0; b < bonesArrayLength; b++)
+                for (int b = 0; b < actualCount; b++)
                     bonesTransformAccessArray[offset + b] = bones[b];
+
+                for (int b = actualCount; b < bonesArrayLength; b++)
+                    bonesTransformAccessArray[offset + b] = dummyTransform;
 
                 rootsTransformAccessArray[validIndex] = avatarBase.transform;
             }
@@ -213,13 +225,37 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
-            bonesCombined.Dispose();
-            matrixFromAllAvatars.Dispose();
-            updateAvatar.Dispose();
-            Job.Dispose();
+            // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
+            if (DCL.Utility.ExitUtils.IsAboutToQuit)
+            {
+                return;
+            }
 
-            if (bonesTransformAccessArray.isCreated) bonesTransformAccessArray.Dispose();
-            if (rootsTransformAccessArray.isCreated) rootsTransformAccessArray.Dispose();
+            var stopwatch = DCL.Utility.ShutdownStopwatch.StartNew(nameof(RemoteAvatarPipeline));
+
+            bonesCombined.Dispose();
+            stopwatch.LogStep("bonesCombined.Dispose");
+
+            matrixFromAllAvatars.Dispose();
+            stopwatch.LogStep("matrixFromAllAvatars.Dispose");
+
+            updateAvatar.Dispose();
+            stopwatch.LogStep("updateAvatar.Dispose");
+
+            Job.Dispose();
+            stopwatch.LogStep("job.Dispose");
+
+            if (bonesTransformAccessArray.isCreated) 
+            {
+                bonesTransformAccessArray.Dispose();
+                stopwatch.LogStep("bonesTransformAccessArray.Dispose");
+            }
+
+            if (rootsTransformAccessArray.isCreated)
+            {
+                rootsTransformAccessArray.Dispose();
+                stopwatch.LogStep("rootsTransformAccessArray.Dispose");
+            }
         }
 
         /// <summary>

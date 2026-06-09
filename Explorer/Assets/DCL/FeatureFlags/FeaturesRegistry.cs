@@ -64,7 +64,9 @@ namespace DCL.FeatureFlags
                 [FeatureId.REPORT_USER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.REPORT_USER, featureFlags.IsEnabled(FeatureFlagsStrings.REPORT_USER) || Application.isEditor),
                 [FeatureId.POINT_AT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 [FeatureId.AVATAR_CONTEXT_MENU] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
-                [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK) || Application.isEditor),
+                [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
+                [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
+                [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -195,5 +197,7 @@ namespace DCL.FeatureFlags
         AVATAR_CONTEXT_MENU = 60,
         DOUBLE_CLICK_WALK = 61,
         NEARBY_VOICE_CHAT = 62,
+        AB_DEPS_DIGEST_CACHE_KEY = 63,
+        BYTE_WEIGHTED_LOADING_PROGRESS = 64,
     }
 }

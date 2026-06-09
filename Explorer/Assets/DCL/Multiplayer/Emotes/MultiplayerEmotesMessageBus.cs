@@ -52,11 +52,8 @@ namespace DCL.Multiplayer.Emotes
             this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
         }
 
-        public void Dispose()
-        {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
-        }
+        public void Dispose() =>
+            cancellationTokenSource.SafeCancelAndDispose();
 
         public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
             new (sync, emoteIntentions);
@@ -67,7 +64,7 @@ namespace DCL.Multiplayer.Emotes
         public void Send(URN emote, bool loopCyclePassed, AvatarEmoteMask mask)
         {
             if (cancellationTokenSource.IsCancellationRequested)
-                throw new Exception("EmoteMessagesBus is disposed");
+                return;
 
             float timestamp = Time.unscaledTime;
 
@@ -96,14 +93,15 @@ namespace DCL.Multiplayer.Emotes
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp, AvatarEmoteMask mask)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
+            bool cancelled = await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token).SuppressCancellationThrow();
+            if (cancelled) return;
             Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp, mask);
         }
 
         public void SendStop()
         {
             if (cancellationTokenSource.IsCancellationRequested)
-                throw new Exception("EmoteMessagesBus is disposed");
+                return;
 
             float timestamp = Time.unscaledTime;
 
@@ -123,7 +121,8 @@ namespace DCL.Multiplayer.Emotes
         }
         private async UniTaskVoid SelfSendStopWithDelayAsync(float timestamp)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
+            bool cancelled = await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token).SuppressCancellationThrow();
+            if (cancelled) return;
             InboxStop(RemotePlayerMovementComponent.TEST_ID, timestamp);
         }
 

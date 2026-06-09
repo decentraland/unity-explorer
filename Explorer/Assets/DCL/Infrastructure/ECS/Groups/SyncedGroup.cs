@@ -58,7 +58,8 @@ namespace ECS.Groups
 
         public override void BeforeUpdate(in float t, bool throttle)
         {
-            if (sceneStateProvider.State != SceneState.Running)
+            if (sceneStateProvider.State != SceneState.Running
+                && sceneStateProvider.State != SceneState.Starting)
                 return;
 
             BeforeUpdateInternal(in t, throttle);
@@ -66,7 +67,8 @@ namespace ECS.Groups
 
         public override void Update(in float t, bool throttle)
         {
-            if (sceneStateProvider.State != SceneState.Running)
+            if (sceneStateProvider.State != SceneState.Running
+                && sceneStateProvider.State != SceneState.Starting)
                 return;
 
             UpdateInternal(in t, throttle);
@@ -74,7 +76,8 @@ namespace ECS.Groups
 
         public override void AfterUpdate(in float t, bool throttle)
         {
-            if (sceneStateProvider.State != SceneState.Running)
+            if (sceneStateProvider.State != SceneState.Running
+                && sceneStateProvider.State != SceneState.Starting)
                 return;
 
             AfterUpdateInternal(in t, throttle);

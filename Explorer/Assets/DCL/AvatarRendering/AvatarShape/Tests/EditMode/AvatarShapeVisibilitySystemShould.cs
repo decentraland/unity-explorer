@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Assets;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
@@ -9,9 +10,11 @@ using DCL.Quality;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
@@ -112,7 +115,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             var renderer = wearableGO.AddComponent<MeshRenderer>();
 
             // CachedAttachment requires proper initialization - we use reflection to create one with Renderers list
-            var attachment = new Loading.Assets.CachedAttachment(null, wearableGO, false);
+            var attachment = new Loading.Assets.CachedAttachment(null, wearableGO, false, Array.Empty<SpringBoneData>());
             // The Renderers list is created but empty, we need to add a renderer to it
             attachment.Renderers.Add(renderer);
 
@@ -461,6 +464,41 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             ref var updatedHiddenComponent = ref world.Get<HiddenPlayerComponent>(avatarEntity);
             Assert.IsFalse(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BLOCKED));
             Assert.IsTrue(updatedHiddenComponent.Reason.HasFlag(HiddenPlayerComponent.HiddenReason.BANNED));
+        }
+
+        [Test]
+        public void KeepAnimatorDisabledWhileLegacyAnimationIsPlaying()
+        {
+            // Arrange — a non-player avatar that starts hidden so the first update caches IsVisible=true.
+            var avatarShape = CreateAvatarShapeComponent();
+            avatarShape.HiddenByModifierArea = true;
+            Entity avatarEntity = world.Create(avatarShape, avatarBase, new CharacterEmoteComponent());
+
+            // Prime the cached state — marks the avatar as hidden so the next update's visible-transition is NOT early-returned.
+            system.Update(0);
+
+            // Start a legacy Animation on the avatar — LSD/Builder-preview FullBody emotes run through this component.
+            Animation legacyAnimation = avatarBase.AddOrGetLegacyAnimation();
+            var clip = new AnimationClip { name = "TestLegacyClip", legacy = true };
+            clip.SetCurve(string.Empty, typeof(Transform), "localPosition.x", AnimationCurve.Linear(0, 0, 1, 1));
+            legacyAnimation.AddClip(clip, clip.name);
+            legacyAnimation.Play(clip.name);
+
+            Assume.That(avatarBase.IsLegacyAnimationPlaying, Is.True,
+                "Sanity check: legacy clip should report as playing right after Play() in EditMode.");
+
+            // Unhide so the system must transition to "visible" — this is the code path that sets AvatarAnimator.enabled.
+            ref var shapeRef = ref world.Get<AvatarShapeComponent>(avatarEntity);
+            shapeRef.HiddenByModifierArea = false;
+
+            // Act
+            system.Update(0);
+
+            // Assert — legacy playback must keep the Mecanim animator disabled so motion systems don't stomp the legacy pose every frame.
+            Assert.IsFalse(avatarBase.AvatarAnimator.enabled,
+                "AvatarShapeVisibilitySystem must not re-enable the Animator while a legacy Animation is playing.");
+
+            Object.DestroyImmediate(clip);
         }
 
         [Test]

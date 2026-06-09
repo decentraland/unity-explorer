@@ -2,10 +2,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Time;
 using DCL.Utility;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.WebRequests
@@ -16,7 +18,11 @@ namespace DCL.WebRequests
 
         public IRequestHub RequestHub { get; }
 
-        public UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        public UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
+            RequestEnvelope<TWebRequest, TWebRequestArgs> envelope,
+            TWebRequestOp op,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
@@ -30,7 +36,8 @@ namespace DCL.WebRequests
                 DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
             ),
             new WebRequestBudget(TOTAL_BUDGET,
-                new ElementBinding<ulong>((ulong)TOTAL_BUDGET))
+                new ElementBinding<ulong>((ulong)TOTAL_BUDGET)),
+            new RealmClock()
         );
 #endif
     }

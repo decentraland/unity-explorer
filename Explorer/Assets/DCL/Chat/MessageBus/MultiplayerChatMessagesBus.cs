@@ -126,7 +126,7 @@ namespace DCL.Chat.MessageBus
                     : receivedMessage.FromWalletId;
 
                 // If the user that sends the message is banned from the current scene, we ignore it
-                if (BannedUsersFromCurrentScene.Instance.IsUserBanned(walletId)) return;
+                if (RoomMetadataCurrentScene.Instance.IsUserBanned(walletId)) return;
 
                 // If the message was already received through the scene or island pipe, we ignore it
                 if (messageDeduplication.TryPass(walletId, receivedMessage.Payload.Timestamp) == false) return;
@@ -191,6 +191,9 @@ namespace DCL.Chat.MessageBus
             if (isChatMessageRateLimiterEnabled && !messageRateLimiter!.TryAllow(walletId)) return false;
 
             newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
+
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] RECEIVED message: protoTimestamp={receivedMessage.Payload.Timestamp} messageId={newMessage.MessageId} from={walletId}");
+
             return true;
         }
 
@@ -242,6 +245,10 @@ namespace DCL.Chat.MessageBus
             chat.Payload.ClearForwardedFrom(); // It has to be reset in every use. To be filled by the server.
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
+            
+            string msgId = ChatUtils.GetId(identityCache.Identity?.Address ?? "", timestamp);
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"[ChatMessageBus] SENT message: timestamp={timestamp} messageId={msgId}");
+
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, LKDataPacketKind.KindReliable).Forget();
         }
     }

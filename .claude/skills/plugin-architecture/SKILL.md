@@ -47,6 +47,37 @@ Created once for the application lifetime. Injects systems into the global world
 
 ## Container Architecture
 
+### Dependency flow direction (critical)
+
+Dependencies flow **top-down from the composition root into containers, and then from containers into plugins**. The direction is one-way.
+
+```
+Composition root (MainSceneLoader / Bootstrap)
+       │ constructs, injects deps into
+       ▼
+   Containers (StaticContainer, DynamicWorldContainer, feature-scoped containers)
+       │ provide deps to
+       ▼
+   Plugins (IDCLWorldPlugin, IDCLGlobalPlugin)
+       │ register systems via
+       ▼
+   ECS Systems
+```
+
+**Rules:**
+
+- **Plugins read from containers. Plugins never construct, initialize, or mutate a container.** If you find yourself writing `container.SomeField = new Thing()` inside `InitializeAsync`, the graph is inverted — stop and restructure.
+- Containers are constructed from a single place (the composition root or a parent container). The constructor takes pre-built dependencies; the container exposes them.
+- If a plugin needs a dependency that doesn't exist yet, **create a scoped container** for the feature and construct it from the composition root. You can have as many small scoped containers as you want — they are cheap, and they keep the dependency graph honest.
+- Do not reach for `ObjectProxy` to paper over a missing dependency. `ObjectProxy` is an anti-pattern documented in CLAUDE.md; it exists only to unbreak legacy circular deps. For new code, the right answer is a scoped container.
+
+**Symptoms of inverted flow:**
+
+- Plugin code that assigns to fields on a container
+- A plugin constructor that calls `new SomeContainer(...)`
+- Chat commands or services that read "the current debug command list" via a static or mutable container field populated from a plugin
+- Calls to a container's `Initialize()` from anywhere other than the composition root
+
 ### StaticContainer
 
 Created first. Produces common dependencies and world plugins.

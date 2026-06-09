@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
 using DCL.Backpack.AvatarSection.Outfits.Banner;
@@ -12,6 +13,7 @@ using DCL.Backpack.AvatarSection.Outfits.Events;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Backpack.AvatarSection.Outfits.Slots;
+using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.Slots;
 using DCL.Browser;
@@ -27,6 +29,7 @@ namespace DCL.Backpack
     {
         private readonly OutfitsView view;
         private readonly IEventBus eventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
         private readonly IWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
@@ -41,14 +44,15 @@ namespace DCL.Backpack
         private readonly SaveOutfitCommand saveOutfitCommand;
         private readonly DeleteOutfitCommand deleteOutfitCommand;
         private readonly CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand;
-        private readonly PrewarmWearablesCacheCommand prewarmWearablesCacheCommand;
         private readonly PreviewOutfitCommand previewOutfitCommand;
 
         private readonly List<OutfitSlotPresenter> slotPresenters = new ();
         private CancellationTokenSource cts = new ();
-        
+        private OutfitSlotPresenter? loadingSlot;
+
         public OutfitsPresenter(OutfitsView view,
             IEventBus eventBus,
+            IBackpackEventBus backpackEventBus,
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
             IWebBrowser webBrowser,
@@ -57,7 +61,6 @@ namespace DCL.Backpack
             SaveOutfitCommand saveOutfitCommand,
             DeleteOutfitCommand deleteOutfitCommand,
             CheckOutfitsBannerVisibilityCommand bannerVisibilityCommand,
-            PrewarmWearablesCacheCommand prewarmWearablesCacheCommand,
             PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
@@ -65,6 +68,7 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.eventBus = eventBus;
+            this.backpackEventBus = backpackEventBus;
             this.outfitApplier = outfitApplier;
             this.outfitsCollection = outfitsCollection;
             this.equippedWearables = equippedWearables;
@@ -73,7 +77,6 @@ namespace DCL.Backpack
             this.saveOutfitCommand = saveOutfitCommand;
             this.deleteOutfitCommand = deleteOutfitCommand;
             this.bannerVisibilityCommand = bannerVisibilityCommand;
-            this.prewarmWearablesCacheCommand = prewarmWearablesCacheCommand;
             this.previewOutfitCommand = previewOutfitCommand;
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
@@ -81,6 +84,8 @@ namespace DCL.Backpack
 
             outfitBannerPresenter = new OutfitBannerPresenter(view.OutfitsBanner,
                 OnGetANameClicked, OnLinkClicked);
+
+            backpackEventBus.EquipOutfitCompletedEvent += EndSlotBusy;
 
             CreateOutfitSlots();
         }
@@ -114,6 +119,10 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
+            foreach (var presenter in slotPresenters)
+                presenter.ResetHoverState();
+
+            EndSlotBusy();
             characterPreviewController.StopEmotes();
             previewOutfitCommand.Restore();
             cts.SafeCancelAndDispose();
@@ -128,9 +137,6 @@ namespace DCL.Backpack
 
                 var outfits = await LoadAndCacheOutfitsAsync(ct);
                 if (ct.IsCancellationRequested) return;
-
-                // Precache wearables in the background.
-                PrewarmWearablesCacheAsync(outfits.Values, ct).Forget();
 
                 // Update the UI with the primary data.
                 PopulateAllSlots(outfits);
@@ -159,23 +165,10 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return new Dictionary<int, OutfitItem>();
 
             outfitsCollection.Update(outfits.Values);
-    
+
             return outfits;
         }
 
-        private async UniTaskVoid PrewarmWearablesCacheAsync(IEnumerable<OutfitItem> outfits, CancellationToken ct)
-        {
-            var uniqueUrnsToPrewarm = new HashSet<URN>();
-            foreach (var outfitItem in outfits)
-            {
-                if (outfitItem.outfit?.wearables == null) continue;
-                foreach (string urnString in outfitItem.outfit.wearables)
-                    uniqueUrnsToPrewarm.Add(new URN(urnString));
-            }
-
-            await prewarmWearablesCacheCommand.ExecuteAsync(uniqueUrnsToPrewarm, ct);
-        }
-        
         private void OnSaveOutfitRequested(int slotIndex)
         {
             OnSaveOutfitRequestedAsync(slotIndex, cts.Token).Forget();
@@ -183,8 +176,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid OnSaveOutfitRequestedAsync(int slotIndex, CancellationToken ct)
         {
-            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            if (presenter == null) return;
+            if (!TryGetSlot(slotIndex, out var presenter)) return;
 
             presenter.SetSaving();
 
@@ -231,8 +223,8 @@ namespace DCL.Backpack
 
             if (ct.IsCancellationRequested || thumbnail == null) return;
 
-            var presenter = slotPresenters.FirstOrDefault(p => p.slotIndex == slotIndex);
-            presenter?.SetThumbnail(thumbnail);
+            if (TryGetSlot(slotIndex, out var presenter))
+                presenter.SetThumbnail(thumbnail);
         }
 
         private void OnDeleteOutfitRequested(int slotIndex)
@@ -242,8 +234,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid OnDeleteOutfitRequestedAsync(int slotIndex)
         {
-            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
-            if (presenter == null) return;
+            if (!TryGetSlot(slotIndex, out var presenter)) return;
 
             var originalOutfitData = presenter.GetOutfitData();
             if (originalOutfitData == null)
@@ -253,7 +244,7 @@ namespace DCL.Backpack
                 ReportHub.LogWarning(ReportCategory.OUTFITS, "Attempted to delete an outfit from an empty slot.");
                 return;
             }
-            
+
             presenter.SetSaving();
 
             try
@@ -292,6 +283,8 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
+            BeginSlotBusy(outfitItem.slot);
+
             GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
 
             previewOutfitCommand.Commit();
@@ -303,6 +296,40 @@ namespace DCL.Backpack
             PlayRandomEmote();
         }
 
+        private void BeginSlotBusy(int slotIndex)
+        {
+            EndSlotBusy();
+
+            if (!TryGetSlot(slotIndex, out var slot)) return;
+
+            loadingSlot = slot;
+            slot.SetEquipLoading(true);
+            for (int i = 0; i < slotPresenters.Count; i++)
+                slotPresenters[i].SetHoverEnabled(slotPresenters[i] == slot);
+        }
+
+        private void EndSlotBusy()
+        {
+            loadingSlot?.SetEquipLoading(false);
+            for (int i = 0; i < slotPresenters.Count; i++)
+                slotPresenters[i].SetHoverEnabled(true);
+            loadingSlot = null;
+        }
+
+        private bool TryGetSlot(int slotIndex, out OutfitSlotPresenter slot)
+        {
+            slot = null!;
+
+            foreach (var presenter in slotPresenters)
+                if (presenter.slotIndex == slotIndex)
+                {
+                    slot = presenter;
+                    return true;
+                }
+
+            return false;
+        }
+
         private void OnPreviewOutfitRequested(OutfitItem outfitItem)
         {
             OnPreviewOutfitRequestedAsync(outfitItem).Forget();
@@ -312,31 +339,33 @@ namespace DCL.Backpack
         {
             if (outfitItem?.outfit == null) return;
 
+            BeginSlotBusy(outfitItem.slot);
+
             try
             {
                 await previewOutfitCommand.ExecuteAsync(outfitItem, cts.Token);
                 GenerateThumbnailIfMissingAsync(outfitItem.slot, cts.Token).Forget();
             }
+            catch (OperationCanceledException) { EndSlotBusy(); }
             catch (Exception ex)
             {
+                EndSlotBusy();
                 ReportHub.LogException(ex, ReportCategory.OUTFITS);
             }
         }
 
         private async UniTaskVoid GenerateThumbnailIfMissingAsync(int slotIndex, CancellationToken ct)
         {
-            var presenter = slotPresenters.Find(p => p.slotIndex == slotIndex);
+            if (!TryGetSlot(slotIndex, out var presenter) || presenter.HasThumbnail())
+                return;
 
-            if (presenter != null && !presenter.HasThumbnail())
+            try
             {
-                try
-                {
-                    await TakeScreenshotAndDisplayAsync(slotIndex, ct);
-                }
-                catch (OperationCanceledException)
-                {
-                    ReportHub.Log(ReportCategory.OUTFITS, $"On-demand thumbnail generation for slot {slotIndex} was cancelled.");
-                }
+                await TakeScreenshotAndDisplayAsync(slotIndex, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                ReportHub.Log(ReportCategory.OUTFITS, $"On-demand thumbnail generation for slot {slotIndex} was cancelled.");
             }
         }
 
@@ -417,6 +446,7 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
+            backpackEventBus.EquipOutfitCompletedEvent -= EndSlotBusy;
             outfitBannerPresenter.Dispose();
             foreach (var presenter in slotPresenters)
             {
