@@ -399,7 +399,7 @@ namespace DCL.Diagnostics.Sentry
                     Result<(string filePath, string zipPath)> dumpResult = ThreadsDumpUtility.CollectAndArchiveDumpInfoToAppDir();
 #else
                     // MacOS is always error
-                    Result<(string filePath, string zipPath)> dumpResult = Result<(string filePath, string zipPath)>.ErrorMessage("MacOS doesn't support dumps");
+                    Result<(string filePath, string zipPath)> dumpResult = Result<(string filePath, string zipPath)>.ErrorResult("MacOS doesn't support dumps");
 #endif
 
                     Result<DumpEntry> path = default;
