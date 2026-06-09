@@ -38,6 +38,11 @@ namespace DCL.UI
         public string Text => inputField.text;
         public bool IsValidName => inputField.text.Length > 0 && inputField.text.Length <= maxNameLength;
 
+        public void SetValue(string inputNameValue)
+        {
+            inputField.text = inputNameValue;
+        }
+
         private void Awake()
         {
             inputErrorMessage.text = characterLimitReachedMessage;
