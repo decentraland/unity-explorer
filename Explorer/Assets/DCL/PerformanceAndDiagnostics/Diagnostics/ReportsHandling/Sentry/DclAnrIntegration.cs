@@ -488,7 +488,7 @@ namespace DCL.Diagnostics.Sentry
 #endif
     public static class ThreadsDumpUtility
     {
-        private static string APP_PATH; // Cache, because Unity API is not available from none-main thread
+        private static string DUMP_APP_PATH; // Cache, because Unity API is not available from none-main thread
         private static string STREAMING_PATH; // Cache, because Unity API is not available from none-main thread
 
 #if UNITY_EDITOR
@@ -501,7 +501,16 @@ namespace DCL.Diagnostics.Sentry
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Init()
         {
-            APP_PATH = UnityEngine.Application.persistentDataPath; // Cache, because Unity API is not available from none-main thread
+            string baseAddress = UnityEngine.Application.persistentDataPath;
+            DUMP_APP_PATH = Path.Combine(UnityEngine.Application.persistentDataPath, "dumps"); // Cache, because Unity API is not available from none-main thread
+            
+            // Clear and init
+            if (Directory.Exists(DUMP_APP_PATH))
+            {
+                Directory.Delete(DUMP_APP_PATH, recursive: true);
+            }
+            Directory.CreateDirectory(DUMP_APP_PATH); // Ensure the dir is created
+
             STREAMING_PATH = UnityEngine.Application.streamingAssetsPath; // Cache, because Unity API is not available from none-main thread
         }
 
@@ -567,7 +576,7 @@ namespace DCL.Diagnostics.Sentry
         {
             string fileName = System.IO.Path.GetRandomFileName();
             fileName = System.IO.Path.ChangeExtension(fileName, ".dmp");
-            string filePath = System.IO.Path.Combine(APP_PATH, fileName);
+            string filePath = System.IO.Path.Combine(DUMP_APP_PATH, fileName);
             return filePath;
         }
 
