@@ -17,9 +17,6 @@ namespace ECS.SceneLifeCycle.Systems
         public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
             : base(webRequestController, assetBundleURL) { }
 
-        protected override string GetAssetBundleSceneId(string ipfsPathEntityId) =>
-            ipfsPathEntityId;
-
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct)
         {
             var hashedContent = new SceneHashedContent(definition.content!, contentBaseUrl);

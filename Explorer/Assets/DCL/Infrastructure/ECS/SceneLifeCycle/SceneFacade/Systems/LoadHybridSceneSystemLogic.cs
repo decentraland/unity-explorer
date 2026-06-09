@@ -43,9 +43,6 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
-        protected override string GetAssetBundleSceneId(string _) =>
-            hybridSceneHashedContent!.remoteSceneID;
-
         protected override async UniTask<bool> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
         {
             bool success = await base.OverrideSceneMetadataAsync(sceneContent, intention, reportCategory, sceneID, ct);

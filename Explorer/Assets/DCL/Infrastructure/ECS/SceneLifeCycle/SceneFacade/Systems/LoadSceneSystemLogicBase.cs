@@ -62,8 +62,6 @@ namespace ECS.SceneLifeCycle.Systems
             return sceneFacade;
         }
 
-        protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
-
         protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
