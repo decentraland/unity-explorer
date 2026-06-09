@@ -41,6 +41,7 @@ namespace DCL.UI
         public void SetValue(string inputNameValue)
         {
             inputField.text = inputNameValue;
+            characterCountLabel.text = $"{inputNameValue.Length}/{maxNameLength}";
         }
 
         private void Awake()
@@ -57,7 +58,6 @@ namespace DCL.UI
 
         private void OnEnable()
         {
-            inputField.text = string.Empty;
             characterCountLabel.text = $"{0}/{maxNameLength}";
 
             outline.enabled = false;
