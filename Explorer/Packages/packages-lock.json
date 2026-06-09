@@ -80,7 +80,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e68a493d0dfd76232103b71c9af6233131048950"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
@@ -137,7 +137,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "e68a493d0dfd76232103b71c9af6233131048950"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
@@ -146,7 +146,7 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "e68a493d0dfd76232103b71c9af6233131048950"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
