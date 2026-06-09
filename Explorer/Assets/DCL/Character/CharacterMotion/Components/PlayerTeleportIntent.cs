@@ -30,6 +30,12 @@ namespace DCL.CharacterMotion.Components
         public Vector3 Position;
 
         /// <summary>
+        ///     When true, land at <see cref="Parcel" /> itself instead of the scene's spawn point
+        ///     (e.g. jumping into an event located at a specific parcel of a multi-parcel scene).
+        /// </summary>
+        public bool LandOnParcel;
+
+        /// <summary>
         ///     Strictly it's the same report added to "SceneReadinessReportQueue" <br />
         ///     Teleport operation will wait for this report to be resolved before finishing the teleport operation <br />
         ///     Otherwise the teleport operation will be executed immediately
@@ -38,7 +44,7 @@ namespace DCL.CharacterMotion.Components
 
         public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
-        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false)
+        public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false, bool landOnParcel = false)
         {
             Parcel = parcel;
             CancellationToken = cancellationToken;
@@ -47,6 +53,7 @@ namespace DCL.CharacterMotion.Components
             SceneDef = sceneDef;
             IsPositionSet = isPositionSet;
             Position = position;
+            LandOnParcel = landOnParcel;
         }
     }
 }

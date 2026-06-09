@@ -51,6 +51,17 @@ namespace DCL.Character.CharacterMotion.Systems
                 teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
             }
             else if (TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan())) { teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation(); }
+            else if (teleportIntent.LandOnParcel)
+            {
+                // Land at the requested parcel itself rather than the scene's spawn point
+                // (e.g. jumping into an event located at a specific parcel of a multi-parcel scene).
+                Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
+
+                // Keep the landing inside the scene's parcels; falls back to the parcel base if not.
+                ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef);
+
+                teleportIntent.Position = targetWorldPosition.WithTerrainOffset(landscape.GetHeight(targetWorldPosition.x, targetWorldPosition.z));
+            }
             else
             {
                 (Vector3 targetWorldPosition, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
