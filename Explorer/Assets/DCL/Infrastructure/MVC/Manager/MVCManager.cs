@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
@@ -151,9 +152,9 @@ namespace MVC
             }
             finally
             {
-                // Hide with None, never ct: a cancelled hide leaves the view stuck at ViewFocused and unreachable on reopen.
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
                 if (controller.State != ControllerState.ViewHidden)
-                    await controller.HideViewAsync(CancellationToken.None);
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
             }
         }
 
@@ -210,9 +211,9 @@ namespace MVC
             }
             finally
             {
-                // Hide with None, never ct: a cancelled hide leaves the view stuck at ViewFocused and unreachable on reopen.
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
                 if (controller.State != ControllerState.ViewHidden)
-                    await controller.HideViewAsync(CancellationToken.None);
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
 
                 windowsStackManager.PopFullscreen(controller);
             }
@@ -237,9 +238,9 @@ namespace MVC
             }
             finally
             {
-                // Hide with None, never ct: a cancelled hide leaves the view stuck at ViewFocused and unreachable on reopen.
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
                 if (controller.State != ControllerState.ViewHidden)
-                    await controller.HideViewAsync(CancellationToken.None);
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
 
                 // Pop the stack
                 PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller, windowsStackManager.GetControllerClosure(controller)?.Task.Status != UniTaskStatus.Succeeded);
