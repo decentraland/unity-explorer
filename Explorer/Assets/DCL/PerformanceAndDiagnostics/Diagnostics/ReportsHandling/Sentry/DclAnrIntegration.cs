@@ -6,7 +6,6 @@ using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
@@ -228,7 +227,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly CancellationTokenSource cts = new ();
 
         private readonly Thread _thread;
-        private readonly ConcurrentQueue<WatchDogMessage> messageQueue = new ();
+        private readonly DCLConcurrentQueue<WatchDogMessage> messageQueue = new ();
 
         internal DclAnrWatchDogMultiThreaded(IDiagnosticLogger? logger, SentryMonoBehaviour monoBehaviour)
             : base(logger, monoBehaviour)

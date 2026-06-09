@@ -3,11 +3,11 @@
 using DCL.Diagnostics;
 using System;
 using System.Threading;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using Unity.Profiling;
+using Utility.Multithreading;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
@@ -35,7 +35,7 @@ namespace Utility.Multithreading
         ///     Maps each <see cref="MultiThreadSync" /> instance (by its <see cref="syncId" />) to the managed thread id
         ///     that currently owns it. Used to surface ownership in timeout diagnostics. A missing key means unowned.
         /// </summary>
-        private static readonly ConcurrentDictionary<int, int> SYNC_OWNERSHIP = new ();
+        private static readonly DCLConcurrentDictionary<int, int> SYNC_OWNERSHIP = new ();
 
         private static int nextSyncId;
 
