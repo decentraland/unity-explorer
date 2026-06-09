@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
@@ -42,9 +42,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
 
-            //Fallback needed for when the asset-bundle-registry does not have the asset bundle manifest.
-            //Could be removed once the asset bundle manifest registry has been battle tested
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment);
+            //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception)
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment, skipException: true);
+
+            // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
+            // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
+            await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
 
             // switching back is handled by the base class
             return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);

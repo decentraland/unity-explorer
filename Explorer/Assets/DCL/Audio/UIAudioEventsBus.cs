@@ -6,17 +6,25 @@ namespace DCL.Audio
     [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
     public partial class UIAudioEventsBus : IDisposable
     {
-        public event Action<AudioClipConfig>? PlayUIAudioEvent;
+        public event Action<AudioClipConfig, float>? PlayUIAudioEvent;
         public event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
         public event Action<AudioClipConfig>? StopContinuousUIAudioEvent;
         public event Action<AudioClipConfig, bool>? MuteContinuousUIAudioEvent;
 
         public void Dispose() { }
 
-        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig)
+        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig) =>
+            SendPlayAudioEvent(audioClipConfig, 1f);
+
+        /// <summary>
+        ///     Plays a one-shot clip at <paramref name="volumeScale"/> × the asset's RelativeVolume.
+        ///     Use the overload without a scale for the default (1.0); pass a lower scale when a single shared
+        ///     AudioClipConfig is reused across contexts that need different loudness (e.g. nearby PTT).
+        /// </summary>
+        public void SendPlayAudioEvent(AudioClipConfig audioClipConfig, float volumeScale)
         {
             if (audioClipConfig != null)
-                PlayUIAudioEvent?.Invoke(audioClipConfig);
+                PlayUIAudioEvent?.Invoke(audioClipConfig, volumeScale);
         }
 
         public void SendPlayContinuousAudioEvent(AudioClipConfig audioClipConfig)

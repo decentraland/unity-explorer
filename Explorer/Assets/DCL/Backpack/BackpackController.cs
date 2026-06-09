@@ -16,7 +16,6 @@ using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -24,13 +23,10 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using ECS;
-using ECS.StreamableLoading.Common;
-using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
@@ -49,7 +45,6 @@ namespace DCL.Backpack
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly BackpackEmoteGridController backpackEmoteGridController;
-        private readonly BackpackGridController backpackGridController;
         private readonly EmotesController emotesController;
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
@@ -66,7 +61,6 @@ namespace DCL.Backpack
 
         public BackpackController(
             BackpackView view,
-            FeatureFlagsConfiguration featureFlags,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             AvatarView avatarView,
@@ -89,7 +83,6 @@ namespace DCL.Backpack
             IWebRequestController webController,
             IEquippedWearables equippedWearables,
             IWearableStorage wearableStorage,
-            IWearablesProvider wearablesProvider,
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             Sprite deleteIcon,
@@ -101,7 +94,6 @@ namespace DCL.Backpack
             this.world = world;
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
-            this.backpackGridController = backpackGridController;
             this.emotesController = emotesController;
             this.backpackEventBus = backpackEventBus;
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
@@ -129,7 +121,6 @@ namespace DCL.Backpack
                 outfitsLogger);
             var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
-            var prewarmWearablesCacheCommand = new PrewarmWearablesCacheCommand(wearablesProvider, wearableStorage);
             var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
                 equippedWearables,
                 selfProfile,
@@ -138,6 +129,7 @@ namespace DCL.Backpack
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
+                backpackEventBus,
                 outfitApplier,
                 outfitsCollection,
                 webBrowser,
@@ -146,7 +138,6 @@ namespace DCL.Backpack
                 saveOutfitCommand,
                 deleteOutfitCommand,
                 checkOutfitsBannerCommand,
-                prewarmWearablesCacheCommand,
                 previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
@@ -154,7 +145,6 @@ namespace DCL.Backpack
 
             avatarController = new AvatarController(
                 avatarView,
-                featureFlags,
                 webBrowser,
                 avatarSlotViews,
                 rarityInfoPanelBackgrounds,
@@ -265,7 +255,8 @@ namespace DCL.Backpack
                 avatar.EyesColor,
                 avatar.HairColor,
                 avatar.SkinColor,
-                avatar.ForceRender
+                avatar.ForceRender,
+                useFullUrns: true
             );
             backpackCommandBus.SendCommand(command);
 

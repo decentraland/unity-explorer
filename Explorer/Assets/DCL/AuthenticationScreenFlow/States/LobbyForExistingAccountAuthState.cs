@@ -67,11 +67,16 @@ namespace DCL.AuthenticationScreenFlow
             if (splashScreen != null)
                 splashScreen.FadeOutAndHide();
 
+            controller.IsCurrentlyNewAccount = false;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
 
             Profile? profile = payload.profile;
 
             view.Show(IsNewUser() ? profile.Name : "back " + profile.Name);
+
+            view.DiffAccountButton.gameObject.SetActive(true);
+            if (IsNewUser() && !payload.isCached)
+                view.DiffAccountButton.gameObject.SetActive(false);
 
             characterPreviewView.transform.SetParent(view.transform);
             characterPreviewView.transform.SetAsFirstSibling();

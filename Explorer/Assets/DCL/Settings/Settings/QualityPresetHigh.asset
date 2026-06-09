@@ -22,8 +22,10 @@ MonoBehaviour:
   sceneDistance: 100
   landscapeDistance: 7000
   sunShadows: 1
+  sunLensFlare: 1
   sceneLightsEnabled: 1
   sceneLightShadowsEnabled: 1
   maxSceneLights: 10
   shadowsQualityLevel: 2
   shadowDistance: 100
+  springBoneSimulation: 1

@@ -68,7 +68,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 ## Testing & Debugging
 - **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
-- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor
+- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
@@ -80,5 +80,5 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
 
 ## Operations
-- **[Incident Management & Hotfix Policy](incident-management-and-hotfix-policy.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
-- **[Primary & Secondary Categories (When to hotfix)](primary-and-secondary-categories-when-to-hotfix.md)** — Primary vs secondary feature categories used to decide SEV-2 hotfixes
+- **[Incident Response](incident-response.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
+- **[Issue Triage Categories](issue-triage-categories.md)** — Primary vs secondary feature categories used to assign severity labels and decide SEV-2 hotfixes

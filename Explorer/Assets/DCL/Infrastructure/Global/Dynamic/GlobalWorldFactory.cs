@@ -1,9 +1,11 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.GlobalPartitioning;
 using DCL.Interaction.Raycast;
 using DCL.Ipfs;
@@ -31,7 +33,9 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -39,7 +43,6 @@ using System.Threading;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Roads.Systems;
-using ECS.SceneLifeCycle.Systems.EarlyAsset;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -98,13 +101,11 @@ namespace Global.Dynamic
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            bool localSceneDevelopment,
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             StartParcel startParcel,
-            bool isBuilderCollectionPreview,
             EntitiesAnalytics entitiesAnalytics)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -126,7 +127,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;
@@ -136,7 +137,7 @@ namespace Global.Dynamic
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.startParcel = startParcel;
-            this.isBuilderCollectionPreview = isBuilderCollectionPreview;
+            this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -165,6 +166,16 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
+            var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
+
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl, lodGeneratorCdnUrl,
+                new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
+                new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
+
+            // Mutates the entity's ISSDescriptor component (class, ref-shared) in place when the resolver
+            // promise spawned by ResolveSceneStateByIncreasingRadiusSystem completes. Cached references in
+            // OrderedDataManaged + downstream queries see the resolved state without a refetch.
+            ResolveISSDescriptorSystem.InjectToWorld(ref builder);
 
             if (hybridSceneParams.EnableHybridScene)
             {
@@ -215,8 +226,6 @@ namespace Global.Dynamic
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
-
-            EarlySceneRequestSystem.InjectToWorld(ref builder, startParcel, realmData, urlsSource);
 
             LoadSmartWearableSceneSystem.InjectToWorld(ref builder, NoCache<GetSmartWearableSceneIntention.Result, GetSmartWearableSceneIntention>.INSTANCE, webRequestController, sceneFactory, staticContainer.SmartWearableCache, urlsSource);
             LoadSmartWearablePreviewSceneSystem.InjectToWorld(ref builder, webRequestController, urlsSource);

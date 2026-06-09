@@ -71,7 +71,7 @@ jobs:
           df -h
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           lfs: true
@@ -81,7 +81,7 @@ jobs:
         run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
 
       - name: Restore LFS cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: lfs-cache
         with:
           path: .git/lfs
@@ -106,10 +106,11 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Restore Library cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: Explorer/Library
-          key: Library-Explorer-Ubuntu
+          key: Library-Explorer-Ubuntu-${{ hashFiles('Explorer/Packages/packages-lock.json', 'Explorer/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Explorer-Ubuntu-
 
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
@@ -174,6 +175,22 @@ jobs:
           docker push $ghcr
           echo "Seeded GHCR: $ghcr"
 
+      - name: Install ripgrep for edit mode tests
+        if: matrix.testMode == 'editmode'
+        id: rg-img
+        run: |
+          base="${{ steps.img.outputs.ghcr }}"
+          derived="${base}-rg"
+          cat > /tmp/Dockerfile.rg <<EOF
+          FROM $base
+          RUN apt-get update \
+              && apt-get install -y --no-install-recommends ripgrep \
+              && rm -rf /var/lib/apt/lists/*
+          EOF
+          docker build -t "$derived" -f /tmp/Dockerfile.rg /tmp
+          echo "image=$derived" >> $GITHUB_OUTPUT
+          echo "Built derived image with ripgrep: $derived"
+
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
@@ -185,8 +202,8 @@ jobs:
           projectPath: Explorer
           testMode: ${{ matrix.testMode }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
-          customImage: ${{ steps.img.outputs.ghcr }}
-          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance"
+          customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
+          customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Report test results
@@ -201,7 +218,7 @@ jobs:
           use-actions-summary: true
 
       # Upload artifact
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: Test results (${{ matrix.testMode }})

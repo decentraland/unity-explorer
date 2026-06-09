@@ -8,6 +8,7 @@ using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -41,6 +42,7 @@ namespace DCL.ResourcesUnloading.Tests
         private TexturesCache<GetTextureIntention> texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
+        private GltfLoadCache gltfLoadCache;
         private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
         private IEmoteStorage emoteStorage;
@@ -64,6 +66,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
             gltfContainerAssetsCache = new GltfContainerAssetsCache(poolsRegistry);
+            gltfLoadCache = new GltfLoadCache();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
             wearableStorage = new WearableStorage();
             trimmedWearableStorage = new TrimmedWearableStorage();
@@ -81,6 +84,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
+            cacheCleaner.Register(gltfLoadCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(attachmentsAssetsCache);
             cacheCleaner.Register(wearableStorage);
@@ -102,6 +106,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.Dispose();
             assetBundleCache.Dispose();
             gltfContainerAssetsCache.Dispose();
+            gltfLoadCache.Dispose();
             attachmentsAssetsCache.Dispose();
             wearableStorage.Unload(releasablePerformanceBudget);
             lodAssets.Unload(releasablePerformanceBudget, 3);
@@ -159,7 +164,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
-            var assetBundleData = new AssetBundleData(null, null, Array.Empty<Object>(), typeof(GameObject), null);
+            var assetBundleData = new AssetBundleData(null, Array.Empty<Object>(), typeof(GameObject), null);
 
             var gltfAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
@@ -167,7 +172,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true, Array.Empty<SpringBoneData>());
             wearableAsset.AddReference();
 
             // Act
@@ -212,7 +217,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache.AddReference(in audioClipIntention, audioClip);
             audioClip.Dereference();
 
-            var assetBundleData = new AssetBundleData(null, null, new []{new GameObject()}, typeof(GameObject), Array.Empty<AssetBundleData>());
+            var assetBundleData = new AssetBundleData(null, new []{new GameObject()}, typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
@@ -224,7 +229,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
             wearableStorage.AddWearable(hashID, wearable, true); // add to cache
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true, Array.Empty<SpringBoneData>());
             wearableAsset.AddReference();
             attachmentsAssetsCache.Release(cachedWearable); // add to cache
 

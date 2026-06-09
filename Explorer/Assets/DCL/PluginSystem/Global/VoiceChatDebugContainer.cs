@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Settings.Settings;
 using DCL.VoiceChat;
 using LiveKit.Audio;
+using LiveKit.Rooms;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Runtime.Scripts.Audio;
@@ -29,7 +30,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly TimeSpan pollDelay = TimeSpan.FromMilliseconds(500);
 
-        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, VoiceChatTrackManager trackManager)
+        public VoiceChatDebugContainer(IDebugContainerBuilder debugContainer, MicrophoneTrackPublisher microphonePublisher, IRoom voiceChatRoom, PlaybackSourcesHub playbackSourcesHub)
         {
             var unityOutputSampleRate = new ElementBinding<ulong>(0);
 
@@ -111,7 +112,7 @@ namespace DCL.PluginSystem.Global
 
                         wavRemotesBuffer.Clear();
 
-                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in trackManager.RemoteStreams)
+                        foreach ((StreamKey key, (Weak<AudioStream> stream, LivekitAudioSource source) value) in playbackSourcesHub.Streams)
                             ProcessElement(key, value.stream, value.source);
 
                         wavRemotesStatusInfo.SetAndUpdate(wavRemotesBuffer);
@@ -126,7 +127,7 @@ namespace DCL.PluginSystem.Global
 
                 void ProcessMicrophone()
                 {
-                    Option<MicrophoneRtcAudioSource> currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
+                    Option<MicrophoneRtcAudioSource> currentMicrophoneOption = microphonePublisher.CurrentMicrophone.Resource;
 
                     if (currentMicrophoneOption.Has == false)
                     {
@@ -221,7 +222,7 @@ namespace DCL.PluginSystem.Global
                 availableMicrophones.Value = (ulong)MicrophoneSelection.Devices().Length;
                 currentMicrophone.Value = VoiceChatSettings.SelectedMicrophone?.name ?? string.Empty;
 
-                var currentMicrophoneOption = trackManager.CurrentMicrophone.Resource;
+                var currentMicrophoneOption = microphonePublisher.CurrentMicrophone.Resource;
 
                 MicrophoneInfo info = currentMicrophoneOption.Has
                     ? currentMicrophoneOption.Value.MicrophoneInfo
@@ -235,7 +236,7 @@ namespace DCL.PluginSystem.Global
                 permissionsStatus.Value = VoiceChatPermissions.CurrentState().ToString()!;
 #endif
 
-                trackManager.ActiveStreamsInfo(infoBuffer);
+                voiceChatRoom.AudioStreams.ListInfo(infoBuffer);
                 remoteSpeakers.Value = (ulong)infoBuffer.Count;
 
                 speakersBuffer.Clear();

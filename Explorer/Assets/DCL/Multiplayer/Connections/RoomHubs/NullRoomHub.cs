@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
 
@@ -23,6 +24,13 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
             VoiceChatActivatableConnectiveRoom.Null.INSTANCE;
+
+        public bool TryGetUser(string wallet, out LKParticipant? participant, out IRoom? room)
+        {
+            participant = null;
+            room = null;
+            return false;
+        }
 
         public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;

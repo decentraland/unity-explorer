@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Optimization.ThreadSafePool;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
@@ -24,6 +25,12 @@ namespace DCL.Profiles
         {
             get => compact.ProfilePicture;
             set => GetCompact().ProfilePicture = value;
+        }
+
+        public AssetPromise<TextureData, GetTextureIntention>? PicturePromise
+        {
+            get => compact.PicturePromise;
+            set => GetCompact().PicturePromise = value;
         }
 
         public bool HasConnectedWeb3 { get; set; }

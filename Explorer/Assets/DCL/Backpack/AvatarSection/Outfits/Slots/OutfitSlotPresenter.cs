@@ -37,18 +37,13 @@ namespace DCL.Backpack.Slots
         public event Action<OutfitItem>? OnEquipRequested;
         public event Action<OutfitItem>? OnPreviewRequested;
 
-        public bool HasThumbnail()
-        {
-            return currentThumbnail != null;
-        }
-
         public readonly int slotIndex;
 
         private readonly OutfitSlotView view;
         private readonly HoverHandler hoverHandler;
         private readonly IAvatarScreenshotService screenshotService;
         private CancellationTokenSource cts = new ();
-        
+
         private bool isHovered;
         private bool isForcedHover;
         private OutfitSlotState currentState;
@@ -67,16 +62,17 @@ namespace DCL.Backpack.Slots
             view.OnDeleteClicked += HandleDeleteClicked;
             view.OnEquipClicked += HandleEquipClicked;
             view.OnPreviewClicked += HandlePreviewClicked;
-            
+
             hoverHandler = view.hoverHandler;
             hoverHandler.OnHoverEntered += OnHoverEntered;
             hoverHandler.OnHoverExited += OnHoverExited;
         }
 
-        public OutfitItem? GetOutfitData()
-        {
-            return currentOutfitData;
-        }
+        public bool HasThumbnail() =>
+            currentThumbnail != null;
+
+        public OutfitItem? GetOutfitData() =>
+            currentOutfitData;
 
         private void HandleSaveClicked()
         {
@@ -170,6 +166,19 @@ namespace DCL.Backpack.Slots
             view.SetEquipped(equipped);
         }
 
+        public void SetEquipLoading(bool loading) =>
+            view.SetEquipLoading(loading);
+
+        public void SetHoverEnabled(bool isEnabled) =>
+            view.SetHoverEnabled(isEnabled);
+
+        public void ResetHoverState()
+        {
+            isHovered = false;
+            view.ResetHoverState();
+            UpdateView();
+        }
+
         private void SetState(OutfitSlotState newState, OutfitItem? item = null)
         {
             currentState = newState;
@@ -179,8 +188,8 @@ namespace DCL.Backpack.Slots
 
         private void UpdateView()
         {
-            bool effectiveHover = isHovered || isForcedHover; 
-            
+            bool effectiveHover = isHovered || isForcedHover;
+
             switch (currentState)
             {
                 case OutfitSlotState.Empty: view.ShowEmptyState(isHovered); break;

@@ -4,6 +4,7 @@ using System;
 using DCL.Prefs;
 using DCL.Rendering.RenderGraphs.RenderFeatures.AvatarOutline;
 using DCL.Settings.Utils;
+using DCL.SpringBones;
 using DCL.Utilities;
 using ECS.Prioritization;
 using Global.AppArgs;
@@ -28,11 +29,14 @@ namespace DCL.Quality.Runtime
         public int SceneDistance { get; private set; }
         public float LandscapeDistance { get; private set; }
         public bool SunShadows { get; private set; }
+        public bool SunLensFlare { get; private set; }
         public bool SceneLights { get; private set; }
         public bool SceneLightShadows { get; private set; }
         public int MaxSceneLights { get; private set; }
         public ShadowQualityLevel SceneShadowQuality { get; private set; }
         public int ShadowDistance { get; private set; }
+        public bool PlayCurrentSceneStreamsOnly { get; private set; }
+        public bool SpringBoneSimulation { get; private set; }
 
         private readonly QualityPresetsAsset presetsAsset;
         private readonly UpscalingController upscalingController;
@@ -41,6 +45,7 @@ namespace DCL.Quality.Runtime
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IAppArgs appArgs;
         private readonly IAnalyticsController analytics;
+        private readonly SpringBoneSimulationSettings springBoneSimulationSettings;
         private QualityPresetData? presetData;
 
         public QualitySettingsController(
@@ -50,7 +55,8 @@ namespace DCL.Quality.Runtime
             LandscapeData landscapeData,
             IRendererFeaturesCache rendererFeaturesCache,
             IAppArgs appArgs,
-            IAnalyticsController analytics)
+            IAnalyticsController analytics,
+            SpringBoneSimulationSettings springBoneSimulationSettings)
         {
             this.presetsAsset = presetsAsset;
             this.upscalingController = upscalingController;
@@ -59,6 +65,13 @@ namespace DCL.Quality.Runtime
             this.rendererFeaturesCache = rendererFeaturesCache;
             this.appArgs = appArgs;
             this.analytics = analytics;
+            this.springBoneSimulationSettings = springBoneSimulationSettings;
+
+            if (SavedQualitySettingsApplier.TryGetPresetOverride(appArgs, out QualityPresetLevel overridePreset))
+            {
+                ApplyPresetInternal(overridePreset, persist: false);
+                return;
+            }
 
             QualityPresetLevel savedPreset = SavedQualitySettingsApplier.ReadSavedPreset();
 
@@ -71,7 +84,10 @@ namespace DCL.Quality.Runtime
             else { SetPreset(savedPreset); }
         }
 
-        public void SetPreset(QualityPresetLevel level)
+        public void SetPreset(QualityPresetLevel level) =>
+            ApplyPresetInternal(level, persist: true);
+
+        private void ApplyPresetInternal(QualityPresetLevel level, bool persist)
         {
             if (level == QualityPresetLevel.Custom) { throw new ArgumentException("Cannot set custom preset from QualitySettingsController"); }
 
@@ -83,9 +99,11 @@ namespace DCL.Quality.Runtime
             CurrentPreset = level;
             presetData = preset;
 
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(level));
-
-            DeleteCustomSettings();
+            if (persist)
+            {
+                DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_QUALITY_PRESET, EnumUtils.ToInt(level));
+                DeleteCustomSettings();
+            }
 
             FpsLimit = preset.FpsLimit;
             VSync = preset.VSyncEnabled;
@@ -97,17 +115,23 @@ namespace DCL.Quality.Runtime
             SceneDistance = preset.SceneDistance;
             LandscapeDistance = preset.LandscapeDistance;
             SunShadows = preset.SunShadows;
+            SunLensFlare = preset.SunLensFlare;
             SceneLights = preset.SceneLightsEnabled;
             SceneLightShadows = preset.SceneLightShadowsEnabled;
             MaxSceneLights = preset.MaxSceneLights;
             SceneShadowQuality = preset.ShadowsQualityLevel;
             ShadowDistance = preset.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = preset.PlayCurrentSceneStreamsOnly;
+            SpringBoneSimulation = preset.SpringBoneSimulation;
 
-            ApplyAllSettings();
+            ApplyAllSettings(persist);
             OnPresetChanged?.Invoke(level);
         }
 
-        public void ApplyAllSettings()
+        public void ApplyAllSettings() =>
+            ApplyAllSettings(persist: true);
+
+        private void ApplyAllSettings(bool persist)
         {
             URPSettingsApplier.ApplyVSync(VSync, FpsLimit);
             upscalingController.UpdateUpscaling(ResolutionScale);
@@ -121,11 +145,14 @@ namespace DCL.Quality.Runtime
             landscapeData.DetailDistance = LandscapeDistance;
 
             URPSettingsApplier.ApplySunShadows(SunShadows);
+            if (persist) DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, SunLensFlare);
+            URPSettingsApplier.ApplySunLensFlare(SunLensFlare);
             URPSettingsApplier.ApplySceneLight(SceneLights);
             URPSettingsApplier.ApplyMaxObjectsPerLight(MaxSceneLights);
             URPSettingsApplier.ApplySceneLightsShadows(SceneLightShadows);
             URPSettingsApplier.ApplyShadowQuality(presetsAsset.GetShadowConfig(SceneShadowQuality));
             URPSettingsApplier.ApplyShadowDistance(ShadowDistance);
+            springBoneSimulationSettings.SimulationEnabled = SpringBoneSimulation;
             TrackQualitySettingsReport();
         }
 
@@ -219,6 +246,15 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetSunLensFlare(bool enabled)
+        {
+            SunLensFlare = enabled;
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, enabled);
+            SwitchToCustom();
+            URPSettingsApplier.ApplySunLensFlare(enabled);
+            TrackQualitySettingsReport();
+        }
+
         public void SetSceneLights(bool enabled)
         {
             SceneLights = enabled;
@@ -264,6 +300,23 @@ namespace DCL.Quality.Runtime
             TrackQualitySettingsReport();
         }
 
+        public void SetPlayCurrentSceneStreamsOnly(bool enabled)
+        {
+            PlayCurrentSceneStreamsOnly = enabled;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, enabled ? 1 : 0);
+            SwitchToCustom();
+            TrackQualitySettingsReport();
+        }
+
+        public void SetSpringBoneSimulation(bool enabled)
+        {
+            SpringBoneSimulation = enabled;
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.PS_SPRING_BONE_SIMULATION, enabled ? 1 : 0);
+            SwitchToCustom();
+            springBoneSimulationSettings.SimulationEnabled = enabled;
+            TrackQualitySettingsReport();
+        }
+
         private void SwitchToCustom()
         {
             if (CurrentPreset == QualityPresetLevel.Custom)
@@ -287,11 +340,14 @@ namespace DCL.Quality.Runtime
             SceneDistance = saved.SceneDistance;
             LandscapeDistance = saved.LandscapeDistance;
             SunShadows = saved.SunShadows;
+            SunLensFlare = saved.SunLensFlare;
             SceneLights = saved.SceneLights;
             SceneLightShadows = saved.SceneLightShadows;
             MaxSceneLights = saved.MaxSceneLights;
             SceneShadowQuality = saved.SceneShadowQuality;
             ShadowDistance = saved.ShadowDistance;
+            PlayCurrentSceneStreamsOnly = saved.PlayCurrentSceneStreamsOnly;
+            SpringBoneSimulation = saved.SpringBoneSimulation;
         }
 
         private static void DeleteCustomSettings()
@@ -323,11 +379,14 @@ namespace DCL.Quality.Runtime
                 if (SceneDistance != b.SceneDistance) properties["scene_distance"] = SceneDistance;
                 if (!Mathf.Approximately(LandscapeDistance, b.LandscapeDistance)) properties["landscape_distance"] = LandscapeDistance;
                 if (SunShadows != b.SunShadows) properties["sun_shadows"] = SunShadows;
+                if (SunLensFlare != b.SunLensFlare) properties["sun_lens_flare"] = SunLensFlare;
                 if (SceneLights != b.SceneLightsEnabled) properties["scene_lights"] = SceneLights;
                 if (SceneLightShadows != b.SceneLightShadowsEnabled) properties["scene_light_shadows"] = SceneLightShadows;
                 if (MaxSceneLights != b.MaxSceneLights) properties["max_scene_lights"] = MaxSceneLights;
                 if (SceneShadowQuality != b.ShadowsQualityLevel) properties["shadow_quality"] = SceneShadowQuality.ToString();
                 if (ShadowDistance != b.ShadowDistance) properties["shadow_distance"] = ShadowDistance;
+                if (PlayCurrentSceneStreamsOnly != b.PlayCurrentSceneStreamsOnly) properties["play_current_scene_streams_only"] = PlayCurrentSceneStreamsOnly;
+                if (SpringBoneSimulation != b.SpringBoneSimulation) properties["spring_bone_simulation"] = SpringBoneSimulation;
             }
 
             analytics.Track(AnalyticsEvents.Settings.QUALITY_SETTINGS_REPORT, properties);

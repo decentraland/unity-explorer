@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
+using DCL.SceneRunner.Scene;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
@@ -20,6 +21,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using Microsoft.ClearScript;
 using MVC;
 using PortableExperiences.Controller;
@@ -32,11 +34,12 @@ using SceneRuntime.Factory;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
+using RichTypes;
 
 namespace SceneRunner
 {
@@ -58,7 +61,7 @@ namespace SceneRunner
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IRealmData? realmData;
+        private readonly IRealmData realmData;
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneCommunicationPipe messagePipesHub;
@@ -84,7 +87,7 @@ namespace SceneRunner
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
-            IRealmData? realmData,
+            IRealmData realmData,
             IPortableExperiencesController portableExperiencesController,
             SkyboxSettingsAsset skyboxSettings,
             ISceneCommunicationPipe messagePipesHub,
@@ -93,6 +96,7 @@ namespace SceneRunner
             ISystemClipboard systemClipboard,
             string installSource)
         {
+            Assert.IsNotNull(realmData, $"{nameof(realmData)} must not be null");
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
             this.sharedPoolsProvider = sharedPoolsProvider;
@@ -133,7 +137,7 @@ namespace SceneRunner
             );
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, ISSDescriptor.NONE);
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -154,7 +158,7 @@ namespace SceneRunner
             var sceneDefinition = new SceneEntityDefinition(directoryName, sceneMetadata);
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, new ISceneData.FakeInitialSceneState());
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY, ISSDescriptor.NONE);
 
             return await CreateSceneAsync(sceneData, new AllowEverythingJsApiPermissionsProvider(), partitionProvider, ct);
         }
@@ -200,7 +204,7 @@ namespace SceneRunner
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime,
-                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub,
+                    sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub,
                     webRequestController, skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
@@ -221,15 +225,17 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
             else
             {
                 runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider,
-                    crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, webRequestController,
+                    crdtSerializer, mvcManager, globalWorldActions, realmData, messagePipesHub, webRequestController,
                     skyboxSettings, engineAPIMutexOwner, profileRepository, systemClipboard, roomHub, installSource);
 
                 sceneRuntime.RegisterAll(
@@ -249,9 +255,11 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!,
+                    realmData,
                     portableExperiencesController,
-                    remoteMetadata
+                    remoteMetadata,
+                    messagePipesHub,
+                    deps.RuntimeMetrics
                 );
             }
 
@@ -279,7 +287,7 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)

@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Chat;
 using DCL.Diagnostics;
@@ -42,8 +42,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             EmojiButtonView emojiButton,
             EmojiPanelView emojiPanel,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
-            EmojiSectionView emojiSectionViewPrefab,
-            EmojiButton emojiButtonPrefab,
             AudioClipConfig addEmojiAudio,
             AudioClipConfig openEmojiPanelAudio,
             InputSuggestionPanelView suggestionPanel,
@@ -65,9 +63,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             emojiPanelPresenter = new EmojiPanelPresenter(
                 emojiPanel,
                 emojiPanelConfiguration,
-                emojiMapping,
-                emojiSectionViewPrefab,
-                emojiButtonPrefab
+                emojiMapping
             );
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
@@ -143,7 +139,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void OnOpenEmojisPanel()
         {
-            if (emojiPanel.gameObject.activeSelf)
+            if (emojiPanel.IsVisible)
                 return;
 
             SetEmojiPanelVisibility(true);
@@ -198,7 +194,6 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private void SetEmojiPanelVisibility(bool isVisible)
         {
             emojiPanelPresenter.SetPanelVisibility(isVisible);
-            emojiPanel.EmojiContainer.gameObject.SetActive(isVisible);
             emojiButton.SetState(isVisible);
 
             if (isVisible)

@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.Utility;
 using Sentry;
 using Sentry.Extensibility;
 using Sentry.Unity;
@@ -13,6 +14,8 @@ namespace DCL.Diagnostics.Sentry
     public class SentryReportHandler : ReportHandlerBase
     {
         public delegate void ConfigureScope(Scope scope);
+
+        private static readonly TimeSpan SESSION_FLUSH_TIMEOUT = TimeSpan.FromSeconds(2);
 
         private readonly List<ConfigureScope> scopeConfigurators = new (10);
 
@@ -52,6 +55,14 @@ namespace DCL.Diagnostics.Sentry
             }
 
             SentrySdk.Init(options);
+
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(SentryReportHandler), EndSessionAndFlush));
+        }
+
+        private static void EndSessionAndFlush()
+        {
+            SentrySdk.EndSession();
+            SentrySdk.Flush(SESSION_FLUSH_TIMEOUT);
         }
 
         public void AddMeetMinimumRequirements(Scope scope, bool meets)

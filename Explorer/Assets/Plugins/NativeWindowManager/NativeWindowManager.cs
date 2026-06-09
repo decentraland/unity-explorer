@@ -88,21 +88,57 @@ namespace Plugins.NativeWindowManager
         /// </summary>
         /// <param name="disableConstraints">If constraints should be disabled in window mode.</param>
         /// <param name="windowedModeRequested">If window mode was specifically requested via app args.</param>
-        /// <param name="isLocalScene">If we're running a local scene.</param>
-        public static void Initialize(bool disableConstraints, bool windowedModeRequested, bool isLocalScene)
+        /// <param name="resolutionOverride">Optional resolution injected via app args, overrides PlayerPrefs and defaults.</param>
+        public static void Initialize(bool disableConstraints, bool windowedModeRequested, Vector2Int? resolutionOverride = null)
         {
             disableWindowConstraints = disableConstraints;
 
-            if (windowedModeRequested || isLocalScene)
-                EnableFullscreen(false, false);
-            else if (!FullScreenEnabled)
-                ApplyConstraints(true);
+            // --windowed-mode forces windowed; otherwise the saved pref decides; when neither is
+            // present we inherit Unity's persisted mode so we don't override what the user (or
+            // platform) last chose.
+            bool fullscreen;
+            if (windowedModeRequested)
+                fullscreen = false;
+            else if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FULLSCREEN))
+                fullscreen = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_FULLSCREEN);
+            else
+                fullscreen = Screen.fullScreenMode != FullScreenMode.Windowed;
+
+            // --resolution takes priority over the saved pref.
+            Vector2Int targetResolution = resolutionOverride
+                                          ?? DCLPlayerPrefs.GetVector2Int(DCLPrefKeys.PS_RESOLUTION, ResolutionUtils.GetDefaultResolution());
+
+            FullScreenMode targetMode = ResolveFullScreenMode(fullscreen, resolutionOverride.HasValue);
+
+            bool wasFullScreen = FullScreenEnabled;
+
+            Screen.SetResolution(targetResolution.x, targetResolution.y, targetMode);
+            ApplyConstraints(!fullscreen);
+
+            if (fullscreen != wasFullScreen)
+                FullScreenChanged?.Invoke(fullscreen);
 
             var resolutionListenerGO = new GameObject("ResolutionListener");
             resolutionListener = resolutionListenerGO.AddComponent<ResolutionListener>();
+        }
 
-            if (isLocalScene)
-                FullScreenResolution = ResolutionUtils.GetDefaultResolution();
+        private static FullScreenMode ResolveFullScreenMode(bool fullscreen, bool hasResolutionOverride)
+        {
+            if (!fullscreen)
+                return FullScreenMode.Windowed;
+
+            // When fullscreen is paired with an explicit resolution override, use ExclusiveFullScreen
+            // on Windows so the OS performs a real DXGI mode-switch (FullScreenWindow ignores
+            // SetResolution's WxH on Windows). Required by headless CI hosts so visual-regression
+            // captures get the framebuffer at the requested size.
+            if (hasResolutionOverride)
+#if UNITY_STANDALONE_WIN
+                return FullScreenMode.ExclusiveFullScreen;
+#else
+                return FullScreenMode.FullScreenWindow;
+#endif
+
+            return FullScreenMode.FullScreenWindow;
         }
 
         /// <summary>

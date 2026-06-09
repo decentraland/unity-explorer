@@ -113,7 +113,10 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void UpdateTriggerArea(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnEnterTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            ProcessOnStayInTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+
+            // TAET_STAY is intentionally not emitted on the wire. The SDK runtime synthesizes
+            // per-tick OnStay callbacks locally from ENTER/EXIT events to avoid flooding the
+            // GOVS-capped TriggerAreaResult buffer with redundant per-frame messages.
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
@@ -125,15 +128,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
-        }
-
-        private void ProcessOnStayInTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
-        {
-            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
-            {
-                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
-            }
         }
 
         private void ProcessOnExitTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)

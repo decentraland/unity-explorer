@@ -1,12 +1,12 @@
-﻿using DCL.Utilities;
-using System;
+﻿using System;
+using Unity.Burst;
 using UnityEngine;
 
 namespace DCL.UI.ProfileElements
 {
     public readonly struct ProfileThumbnailViewModel : IEquatable<ProfileThumbnailViewModel>
     {
-        public static readonly Color DEFAULT_PROFILE_COLOR = Color.white;
+        private static readonly Color DEFAULT_PROFILE_COLOR = Color.white;
 
         public enum State : byte
         {
@@ -49,12 +49,15 @@ namespace DCL.UI.ProfileElements
         public static ProfileThumbnailViewModel FromLoaded(Sprite sprite, bool fromCache, Color? color = null, bool fitAndCenter = false) =>
             new (fromCache ? State.LOADED_FROM_CACHE : State.LOADED_REMOTELY, sprite, color, fitAndCenter);
 
+        [BurstDiscard]
         public bool Equals(ProfileThumbnailViewModel other) =>
             ThumbnailState == other.ThumbnailState && Equals(Sprite, other.Sprite) && ProfileColor == other.ProfileColor;
 
+        [BurstDiscard]
         public override bool Equals(object? obj) =>
             obj is ProfileThumbnailViewModel other && Equals(other);
 
+        [BurstDiscard]
         public override int GetHashCode() =>
             HashCode.Combine((int)ThumbnailState, Sprite, ProfileColor);
     }

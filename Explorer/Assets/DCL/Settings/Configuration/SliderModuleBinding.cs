@@ -26,23 +26,24 @@ namespace DCL.Settings.Configuration
     [Serializable]
     public class SliderModuleBinding : SettingsModuleBinding<SettingsSliderModuleView, SettingsSliderModuleView.Config, SliderModuleBinding.SliderFeatures>
     {
+        // Values are persisted as ints in SettingsMenuConfiguration.asset.
+        // Never renumber or reuse a value; new entries must pick the next unused integer.
         public enum SliderFeatures
         {
-            SCENE_DISTANCE_FEATURE,
-            ENVIRONMENT_DISTANCE_FEATURE,
-            MOUSE_VERTICAL_SENSITIVITY_FEATURE,
-            MOUSE_HORIZONTAL_SENSITIVITY_FEATURE,
-            MASTER_VOLUME_FEATURE,
-            WORLD_SOUNDS_VOLUME_FEATURE,
-            MUSIC_VOLUME_FEATURE,
-            UI_SOUNDS_VOLUME_FEATURE,
-            AVATAR_SOUNDS_VOLUME_FEATURE,
-            VOICE_CHAT_VOLUME_FEATURE,
-            UPSCALER_FEATURE,
-            MUSIC_SFX_SOUND_VOLUME_FEATURE,
-            MAX_SCENE_LIGHTS_FEATURE,
-            SHADOW_DISTANCE_FEATURE,
-            // add other features...
+            SCENE_DISTANCE_FEATURE = 0,
+            ENVIRONMENT_DISTANCE_FEATURE = 1,
+            MOUSE_VERTICAL_SENSITIVITY_FEATURE = 2,
+            MOUSE_HORIZONTAL_SENSITIVITY_FEATURE = 3,
+            MASTER_VOLUME_FEATURE = 4,
+            WORLD_SOUNDS_VOLUME_FEATURE = 5,
+            MUSIC_VOLUME_FEATURE = 6,
+            UI_SOUNDS_VOLUME_FEATURE = 7,
+            AVATAR_SOUNDS_VOLUME_FEATURE = 8,
+            VOICE_CHAT_VOLUME_FEATURE = 9,
+            UPSCALER_FEATURE = 10,
+            MUSIC_SFX_SOUND_VOLUME_FEATURE = 11,
+            MAX_SCENE_LIGHTS_FEATURE = 12,
+            SHADOW_DISTANCE_FEATURE = 13,
         }
 
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
@@ -63,7 +64,6 @@ namespace DCL.Settings.Configuration
             UpscalingController upscalingController,
             IAssetsProvisioner  assetsProvisioner,
             VolumeBus volumeBus,
-            bool isTranslationChatEnabled,
             IEventBus eventBus,
             IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
@@ -83,7 +83,7 @@ namespace DCL.Settings.Configuration
                 SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                 SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
-                SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
+                SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer, volumeBus),
                 SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, qualitySettingsController),
                 SliderFeatures.MAX_SCENE_LIGHTS_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetMaxSceneLights((int)v), x => x.MaxSceneLights),
                 SliderFeatures.SHADOW_DISTANCE_FEATURE => CreateSimpleSlider(viewInstance, qualitySettingsController, v => qualitySettingsController.SetShadowDistance((int)v), x => x.ShadowDistance),

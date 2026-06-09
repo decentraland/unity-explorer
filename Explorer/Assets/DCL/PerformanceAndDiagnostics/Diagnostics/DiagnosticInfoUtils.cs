@@ -3,9 +3,9 @@ using Sentry;
 using Sentry.Unity;
 using System;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using UnityEngine.Device;
+using Utility.Networking;
 
 namespace DCL.Diagnostics
 {
@@ -60,6 +60,16 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Window Mode: {0}\n", Screen.fullScreenMode.ToString());
             AppendFooter(stringBuilder);
 
+            AppendHeader(stringBuilder, "SENTRY");
+            stringBuilder.AppendFormat("Enabled: {0}\n", SentrySdk.IsEnabled);
+            SentryUnityOptions? sentryOptions = ScriptableSentryUnityOptions.LoadSentryUnityOptions();
+            if (sentryOptions != null)
+            {
+                stringBuilder.AppendFormat("Environment: {0}\n", sentryOptions.Environment ?? "<unset>");
+                stringBuilder.AppendFormat("Release: {0}\n", sentryOptions.Release ?? "<unset>");
+                stringBuilder.AppendFormat("DSN: {0}\n", string.IsNullOrEmpty(sentryOptions.Dsn) ? "<unset>" : "<set>");
+            }
+            AppendFooter(stringBuilder);
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
         }

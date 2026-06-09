@@ -1,4 +1,7 @@
+using DCL.Diagnostics;
 using DCL.Prefs;
+using Global.AppArgs;
+using System;
 using Utility;
 
 namespace DCL.Quality.Runtime
@@ -8,6 +11,26 @@ namespace DCL.Quality.Runtime
     /// </summary>
     public static class SavedQualitySettingsApplier
     {
+        /// <summary>
+        ///     Reads a quality preset override from app arguments (e.g. --graphics high).
+        ///     Custom is rejected — only Low/Medium/High are valid.
+        /// </summary>
+        public static bool TryGetPresetOverride(IAppArgs appArgs, out QualityPresetLevel preset)
+        {
+            preset = default;
+
+            if (!appArgs.TryGetValue(AppArgsFlags.GRAPHICS, out string? value) || string.IsNullOrEmpty(value))
+                return false;
+
+            if (!Enum.TryParse(value, ignoreCase: true, out preset) || preset == QualityPresetLevel.Custom)
+            {
+                ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid value for --{AppArgsFlags.GRAPHICS}: '{value}'. Expected Low, Medium or High.");
+                return false;
+            }
+
+            return true;
+        }
+
         public struct SavedValues
         {
             public int FpsLimit;
@@ -20,11 +43,14 @@ namespace DCL.Quality.Runtime
             public int SceneDistance;
             public float LandscapeDistance;
             public bool SunShadows;
+            public bool SunLensFlare;
             public bool SceneLights;
             public bool SceneLightShadows;
             public int MaxSceneLights;
             public ShadowQualityLevel SceneShadowQuality;
             public int ShadowDistance;
+            public bool PlayCurrentSceneStreamsOnly;
+            public bool SpringBoneSimulation;
         }
 
         public static QualityPresetLevel ReadSavedPreset() =>
@@ -51,11 +77,14 @@ namespace DCL.Quality.Runtime
                 SceneDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_DISTANCE, basePresetData.SceneDistance),
                 LandscapeDistance = DCLPlayerPrefs.GetFloat(DCLPrefKeys.PS_LANDSCAPE_DISTANCE, basePresetData.LandscapeDistance),
                 SunShadows = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_SHADOWS, basePresetData.SunShadows),
+                SunLensFlare = DCLPlayerPrefs.GetBool(DCLPrefKeys.PS_SUN_LENS_FLARE, basePresetData.SunLensFlare),
                 SceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHTS, basePresetData.SceneLightsEnabled ? 1 : 0) == 1,
                 SceneLightShadows = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS, basePresetData.SceneLightShadowsEnabled ? 1 : 0) == 1,
                 MaxSceneLights = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_MAX_SCENE_LIGHTS, basePresetData.MaxSceneLights),
                 SceneShadowQuality = EnumUtils.FromInt<ShadowQualityLevel>(DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_QUALITY, EnumUtils.ToInt(basePresetData.ShadowsQualityLevel))),
                 ShadowDistance = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SHADOW_DISTANCE, basePresetData.ShadowDistance),
+                PlayCurrentSceneStreamsOnly = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY, basePresetData.PlayCurrentSceneStreamsOnly ? 1 : 0) == 1,
+                SpringBoneSimulation = DCLPlayerPrefs.GetInt(DCLPrefKeys.PS_SPRING_BONE_SIMULATION, basePresetData.SpringBoneSimulation ? 1 : 0) == 1,
             };
         }
 
@@ -76,11 +105,14 @@ namespace DCL.Quality.Runtime
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_LANDSCAPE_DISTANCE);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_GRASS_PRESET);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SUN_SHADOWS);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SUN_LENS_FLARE);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHTS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SCENE_LIGHT_SHADOWS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_MAX_SCENE_LIGHTS);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_QUALITY);
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SHADOW_DISTANCE);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_PLAY_CURRENT_SCENE_STREAMS_ONLY);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.PS_SPRING_BONE_SIMULATION);
         }
 
         /// <summary>

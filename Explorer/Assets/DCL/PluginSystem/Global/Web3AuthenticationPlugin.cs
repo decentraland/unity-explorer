@@ -9,6 +9,7 @@ using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -69,7 +71,8 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -91,6 +94,7 @@ namespace DCL.PluginSystem.Global
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
         }
 
         public void Dispose() { }
@@ -116,7 +120,8 @@ namespace DCL.PluginSystem.Global
                 backgroundMusic,
                 wearablesProvider,
                 webRequestController,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                profileChangesBus);
 
             mvcManager.RegisterController(authenticationScreenController);
 
@@ -127,7 +132,7 @@ namespace DCL.PluginSystem.Global
         private void InitializeTransactionConfirmationPopup(Web3ConfirmationPopupView popupPrefab)
         {
             transactionConfirmationView = Object.Instantiate(popupPrefab);
-            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
+            transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.POPUP, 500));
             transactionConfirmationView.gameObject.SetActive(false);
             web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
         }

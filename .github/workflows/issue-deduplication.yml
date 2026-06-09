@@ -17,7 +17,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
       - name: Check for duplicate issues
@@ -40,12 +40,13 @@ jobs:
             If you find duplicates:
             - Add a comment on the new issue linking to the original issue(s)
             - Apply a "duplicate" label to the new issue
-            - Close the new issue as "not planned" using: gh issue close <number> --repo ${{ github.repository }} --reason "not planned"
             - Be polite and explain why it's a duplicate
             - Suggest the user follow the original issue for updates
+            - IMPORTANT: Only close the new issue if it has the "SENTRY" label. Use: gh issue close <number> --repo ${{ github.repository }} --reason "not planned"
+            - If the issue does NOT have the "SENTRY" label, do NOT close it. Just leave the comment and the "duplicate" label so a maintainer can review.
             If it's NOT a duplicate:
             - Don't add any comments
             - You may apply appropriate topic labels based on the issue content
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh label list:*),Bash(gh label create:*),Bash(gh issue close:*)"
+          claude_args: --model claude-haiku-4-5-20251001 --allowedTools "Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh label list:*),Bash(gh issue comment ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue edit ${{ github.event.issue.number || github.event.inputs.issue_number }}:*),Bash(gh issue close ${{ github.event.issue.number || github.event.inputs.issue_number }}:*)"

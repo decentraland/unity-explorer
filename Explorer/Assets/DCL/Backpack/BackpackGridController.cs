@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -159,7 +160,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             IWearable? newBodyShape = null;
             foreach (var w in wearables)
@@ -409,13 +410,29 @@ namespace DCL.Backpack
 
         private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
-            if (ct.IsCancellationRequested) return;
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
 
-            itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
         }
 
         private void ClearPoolElements()

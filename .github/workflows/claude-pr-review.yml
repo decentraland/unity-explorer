@@ -16,6 +16,9 @@ jobs:
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
+    concurrency:
+      group: claude-auto-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -25,16 +28,35 @@ jobs:
     steps:
       - name: Check PR type
         id: check-type
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = context.payload.pull_request.title || '';
             const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
+
+            let touchesSensitive = false;
+            if (isAutoReview) {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+              });
+              touchesSensitive = files.some(f =>
+                f.filename.startsWith('.github/prompts/') ||
+                f.filename.startsWith('.github/workflows/') ||
+                f.filename === 'CODEOWNERS'
+              );
+              if (touchesSensitive) {
+                core.notice('Sensitive paths modified (.github/prompts, .github/workflows, or CODEOWNERS): Claude will review but not auto-approve. Human DEV review required; QA can still be waived if Claude reports QA_REQUIRED: NO.');
+              }
+            }
+
             core.setOutput('is-auto-review', isAutoReview.toString());
+            core.setOutput('touches-sensitive', touchesSensitive.toString());
 
       - name: Set status to pending
         if: steps.check-type.outputs.is-auto-review == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -48,10 +70,26 @@ jobs:
 
       - name: Checkout repository
         if: steps.check-type.outputs.is-auto-review == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
+
+      - name: Load review instructions
+        if: steps.check-type.outputs.is-auto-review == 'true'
+        id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          DELIM="PROMPT_EOF_$(uuidgen)"
+          {
+            echo "instructions<<$DELIM"
+            gh api "repos/${{ github.repository }}/contents/.github/prompts/review-instructions.md?ref=$BASE_SHA" \
+              --jq '.content' | base64 -d
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Claude Review
         if: steps.check-type.outputs.is-auto-review == 'true'
@@ -64,99 +102,41 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            This is an automatic review for a bug fix / chore PR. Review the full PR diff.
+            This is an automatic review for a fix / chore PR. Review the full PR diff.
 
-            Review Focus — report ONLY issues that require fixes:
-            1. Code quality violations per CLAUDE.md standards
-            2. Bugs or potential runtime errors
-            3. Security vulnerabilities
-            4. Performance issues
-            5. Missing error handling
-            6. Unclear or problematic logic
-
-            For each issue found:
-            - Location: File and line number
-            - Problem: What is wrong (be specific)
-            - Fix: Exact change needed
-            - Why: Brief explanation of the impact
-
-            Use mcp__github_inline_comment__create_inline_comment for specific line issues.
-            Use Bash(gh pr comment) for a top-level summary comment.
-            Do NOT include praise, style preferences, or nice-to-have suggestions.
-
-            --- COMPLEXITY ASSESSMENT ---
-            After reviewing the diff, classify the PR complexity as SIMPLE or COMPLEX.
-
-            A PR is SIMPLE when ALL of the following are true:
-            - Touches 3 or fewer files with under ~150 lines of meaningful changes
-            - Changes are straightforward: typo fixes, config tweaks, log/comment changes,
-              dependency bumps, small bug fixes with obvious cause and fix
-            - Does not modify ECS systems, components, queries, or system execution order
-            - Does not touch entity structural changes (Add/Remove component operations)
-            - Does not alter cross-world ECS access, propagation systems, or bridge components
-            - Does not modify async/UniTask patterns, cancellation flows, or Result types
-            - Does not change plugin registration, containers, dependency injection, or assembly definitions
-            - Does not touch the avatar rendering pipeline (GPU skinning, GVB, wearable loading, compute shaders)
-            - Does not modify scene runtime, CRDT synchronization, or JS module system
-            - Does not affect asset promise lifecycle, memory budgeting, pooling, or cache unloading
-            - Does not change networking, LiveKit rooms, movement encoding, or multiplayer sync
-            - Does not alter physics, player/camera singletons, or input handling
-            - Does not modify auth, web3 signing, or security-sensitive code paths
-
-            A PR is COMPLEX when ANY of the following are true:
-            - Touches core ECS infrastructure (systems, components, queries, world management)
-            - Modifies cross-world access patterns (global ↔ scene propagation, PersistentEntities)
-            - Changes component structural operations (ref invalidation risk from Add/Remove)
-            - Alters async flow (new UniTask/UniTaskVoid, cancellation, SuppressToResultAsync)
-            - Modifies plugin/container wiring, system registration, or assembly structure
-            - Touches avatar system, scene runtime, CRDT bridge, or asset loading pipeline
-            - Changes networking, multiplayer sync, or movement interpolation
-            - Affects memory management, object pooling, or resource cleanup paths
-            - Modifies shared interfaces, public APIs, or abstractions used across assemblies
-            - Introduces new dependencies or changes dependency injection
-            - Risk of silent data corruption or subtle regressions is non-trivial
-            - Large diff (4+ files or significant logic changes)
-
-            --- QA ASSESSMENT ---
-            Determine whether QA (manual testing) is needed for this PR.
-
-            QA_REQUIRED: NO when ALL of the following are true:
-            - Changes are limited to CI/CD workflows (.github/), scripts, documentation,
-              config files, or other non-runtime code
-            - No user-facing behavior is affected (UI, rendering, gameplay, input, audio, etc.)
-            - No changes to code that runs in the Unity player at runtime
-
-            QA_REQUIRED: YES when ANY of the following are true:
-            - Changes could affect what the user sees, hears, or interacts with
-            - Modifies runtime code (anything under Explorer/ that ships in the build)
-            - Touches UI, rendering, avatars, scenes, networking, or player-facing systems
-            - Changes asset loading, authentication, or navigation flows
-
-            IMPORTANT: At the very end of your output, emit exactly these three lines:
-            REVIEW_RESULT: PASS ✅  (or FAIL ❌)
-            COMPLEXITY: SIMPLE  (or COMPLEX)
-            QA_REQUIRED: YES  (or NO)
+            ${{ steps.prompt.outputs.instructions }}
           claude_args: |
+            --model claude-sonnet-4-6
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
             --max-turns 40
+            
+      - name: Upload Claude execution output
+        if: steps.check-type.outputs.is-auto-review == 'true' && always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: claude-execution-output-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: /home/runner/work/_temp/claude-execution-output.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Set status and approve if eligible
         if: steps.check-type.outputs.is-auto-review == 'true' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ github.event.pull_request.number }};
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const touchesSensitive = '${{ steps.check-type.outputs.touches-sensitive }}' === 'true';
 
             const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
+              owner, repo, issue_number: prNumber, per_page: 100
             });
 
-            const claudeComment = comments.data
-              .reverse()
-              .find(c => c.user?.login === 'claude[bot]');
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
+            const claudeComment = claudeComments[claudeComments.length - 1];
 
             const output = claudeComment?.body ?? '';
             console.log('Claude comment preview:', output.slice(0, 300));
@@ -165,52 +145,106 @@ jobs:
             const errored = '${{ steps.claude.outcome }}' === 'failure';
             const isSimple = output.includes('COMPLEXITY: SIMPLE');
             const qaRequired = !output.includes('QA_REQUIRED: NO');
+            const hasReviewResult = output.includes('REVIEW_RESULT:');
             const passed = !failed && !errored;
 
-            if (passed && isSimple) {
-              // Determine approval message based on QA need
-              const approvalBody = qaRequired
-                ? 'Auto-approved by Claude — simple fix/chore with no blocking issues. QA approval is still required.'
-                : 'Auto-approved by Claude — simple fix/chore with no blocking issues. No QA needed (non-runtime changes only).';
+            const reviews = await github.rest.pulls.listReviews({
+              owner, repo, pull_number: prNumber, per_page: 100
+            });
+            const ourApprovals = reviews.data.filter(r =>
+              r.user?.login === 'github-actions[bot]' && r.state === 'APPROVED'
+            );
+            const prLabels = (context.payload.pull_request.labels || []).map(l => l.name);
+            const COMPLEX_MARKER = '🔍 Claude reviewed this PR and found no blocking issues';
+            const SENSITIVE_MARKER = '🔒 Claude reviewed this PR — sensitive paths modified';
 
-              // Simple fix/chore with no issues — auto-approve
-              await github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                event: 'APPROVE',
-                body: approvalBody
-              });
+            const canAutoApprove = hasReviewResult && passed && isSimple && !touchesSensitive;
+            const canWaiveQa = hasReviewResult && passed && isSimple && !qaRequired;
 
-              // Add label so enforce-group-approvals knows to skip DEV requirement
-              const labels = ['claude-approved'];
-              if (!qaRequired) {
-                labels.push('no QA needed');
+            if (canAutoApprove) {
+              if (ourApprovals.length === 0) {
+                const approvalBody = qaRequired
+                  ? 'Auto-approved by Claude — simple fix/chore with no blocking issues. QA approval is still required.'
+                  : 'Auto-approved by Claude — simple fix/chore with no blocking issues. No QA needed (non-runtime changes only).';
+                await github.rest.pulls.createReview({
+                  owner, repo, pull_number: prNumber, event: 'APPROVE', body: approvalBody
+                });
               }
               await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                labels
+                owner, repo, issue_number: prNumber, labels: ['claude-approved']
               });
-            } else if (passed && !isSimple) {
-              // Complex but no issues — flag for human review
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: '🔍 Claude reviewed this PR and found no blocking issues, but assessed it as **complex** — human DEV review is still required before merging.'
-              });
+            } else if (hasReviewResult) {
+              for (const r of ourApprovals) {
+                await github.rest.pulls.dismissReview({
+                  owner, repo, pull_number: prNumber, review_id: r.id,
+                  message: 'Dismissed: latest Claude review no longer auto-approves this PR.'
+                }).catch(e => console.log(`dismissReview: ${e.message}`));
+              }
+              if (prLabels.includes('claude-approved')) {
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber, name: 'claude-approved'
+                }).catch(e => console.log(`removeLabel claude-approved: ${e.message}`));
+              }
+              if (touchesSensitive && passed && isSimple && !comments.data.some(c =>
+                  c.user?.login === 'github-actions[bot]' && c.body?.startsWith(SENSITIVE_MARKER))) {
+                const qaNote = qaRequired
+                  ? 'QA approval is still required.'
+                  : 'No QA needed (Claude reported `QA_REQUIRED: NO`).';
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: prNumber,
+                  body: `${SENSITIVE_MARKER} (\`.github/prompts\`, \`.github/workflows\`, or \`CODEOWNERS\`). Claude will not auto-approve these PRs — human DEV review is required. ${qaNote}`
+                });
+              } else if (!touchesSensitive && passed && !isSimple && !comments.data.some(c =>
+                  c.user?.login === 'github-actions[bot]' && c.body?.startsWith(COMPLEX_MARKER))) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: prNumber,
+                  body: COMPLEX_MARKER + ', but assessed it as **complex** — human DEV review is still required before merging.'
+                });
+              }
             }
 
+            if (canWaiveQa) {
+              if (!prLabels.includes('no QA needed')) {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: prNumber, labels: ['no QA needed']
+                });
+              }
+            } else if (hasReviewResult && prLabels.includes('no QA needed')) {
+              await github.rest.issues.removeLabel({
+                owner, repo, issue_number: prNumber, name: 'no QA needed'
+              }).catch(e => console.log(`removeLabel no QA needed: ${e.message}`));
+            }
+
+            for (const c of claudeComments.slice(0, -1)) {
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
+            }
+
+            let description;
+            if (errored && !output) {
+              description = 'Claude review failed — credit balance too low or API error';
+            } else if (errored && output && !hasReviewResult) {
+              description = 'Claude review failed — reached maximum number of turns';
+            } else if (errored) {
+              description = 'Claude review encountered an error';
+            } else if (failed) {
+              description = 'Claude found issues that must be resolved';
+            } else if (touchesSensitive && isSimple) {
+              description = canWaiveQa
+                ? 'No blocking issues — sensitive paths, DEV review required (no QA needed)'
+                : 'No blocking issues — sensitive paths, DEV review required';
+            } else if (isSimple) {
+              description = 'No blocking issues found — PR auto-approved';
+            } else {
+              description = 'No blocking issues — complex change, DEV review required';
+            }
             const state = (failed || errored) ? 'failure' : 'success';
-            const description = errored
-              ? 'Claude review encountered an error'
-              : failed
-              ? 'Claude found issues that must be resolved'
-              : isSimple
-              ? 'No blocking issues found — PR auto-approved'
-              : 'No blocking issues — complex change, DEV review required';
 
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
@@ -251,7 +285,7 @@ jobs:
           gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
           echo "Re-run triggered successfully."
 
-  review:
+  check-member:
     if: |
       github.event.issue.pull_request != null &&
       (
@@ -262,6 +296,29 @@ jobs:
       !contains(github.event.issue.labels.*.name, 'no review') &&
       !contains(github.event.issue.labels.*.name, 'auto-pr')
     runs-on: ubuntu-latest
+    outputs:
+      is-member: ${{ steps.check.outputs.is-member }}
+    steps:
+      - name: Verify commenter is a decentraland org member
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          USER: ${{ github.event.comment.user.login }}
+        run: |
+          if gh api "/orgs/decentraland/members/$USER" --silent 2>/dev/null; then
+            echo "is-member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::User $USER is not a member of decentraland org; @claude review skipped"
+            echo "is-member=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  review:
+    needs: check-member
+    if: needs.check-member.outputs.is-member == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: claude-on-demand-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
     permissions:
       id-token: write
       contents: read
@@ -269,9 +326,9 @@ jobs:
       issues: write
       statuses: write
     steps:
-      - name: Get PR head SHA
+      - name: Resolve PR head (rejects post-comment pushes)
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const pr = await github.rest.pulls.get({
@@ -279,11 +336,28 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
+
+            const commentAt = new Date(context.payload.comment.created_at);
+            const pushedAt  = new Date(pr.data.head.repo.pushed_at);
+
+            if (pushedAt > commentAt) {
+              const shortSha = pr.data.head.sha.substring(0, 7);
+              core.setFailed(
+                `@claude review skipped: this PR was updated after your comment.\n` +
+                `Head commit ${shortSha} was pushed at ${pushedAt.toISOString()}, ` +
+                `after your comment at ${commentAt.toISOString()}.\n` +
+                `Take a look at the latest changes, then comment @claude review ` +
+                `again if you still want a review.`
+              );
+              return;
+            }
+
             core.setOutput('sha', pr.data.head.sha);
+            core.setOutput('base_sha', pr.data.base.sha);
             core.setOutput('is_draft', pr.data.draft);
 
       - name: Set status to pending
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -296,10 +370,25 @@ jobs:
             });
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 1
+
+      - name: Load review instructions
+        id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+        run: |
+          DELIM="PROMPT_EOF_$(uuidgen)"
+          {
+            echo "instructions<<$DELIM"
+            gh api "repos/${{ github.repository }}/contents/.github/prompts/review-instructions.md?ref=$BASE_SHA" \
+              --jq '.content' | base64 -d
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Claude Review
         id: claude
@@ -310,69 +399,75 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.issue.number }}
-            TRIGGER: ${{ github.event.comment.body }}
 
             ${{ contains(github.event.comment.body, '@claude re-review') &&
                 'A re-review has been requested. Focus on whether previously raised issues have been addressed. Check prior review comments on this PR before assessing the diff.' ||
                 'A review has been requested. Review the full PR diff.' }}
 
-            Review Focus — report ONLY issues that require fixes:
-            1. Code quality violations per CLAUDE.md standards
-            2. Bugs or potential runtime errors
-            3. Security vulnerabilities
-            4. Performance issues
-            5. Missing error handling
-            6. Unclear or problematic logic
-
-            For each issue found:
-            - Location: File and line number
-            - Problem: What is wrong (be specific)
-            - Fix: Exact change needed
-            - Why: Brief explanation of the impact
-
-            Use mcp__github_inline_comment__create_inline_comment for specific line issues.
-            Use Bash(gh pr comment) for a top-level summary comment.
-            Do NOT include praise, style preferences, or nice-to-have suggestions.
-
-            IMPORTANT: At the very end, output a single line in this exact format:
-            REVIEW_RESULT: PASS ✅
-            or
-            REVIEW_RESULT: FAIL ❌
-            PASS means no blocking issues found. FAIL means there are issues that must be fixed before merging.
+            ${{ steps.prompt.outputs.instructions }}
           claude_args: |
+            --model claude-sonnet-4-6
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
             --max-turns 40
 
+      - name: Upload Claude execution output
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: claude-execution-output-${{ github.event.issue.number }}-${{ github.run_attempt }}
+          path: /home/runner/work/_temp/claude-execution-output.json
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Set final commit status
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
-            // Find Claude's comment on this PR
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ github.event.issue.number }},
               per_page: 100
             });
-      
-            // Find the most recent comment from claude[bot]
-            const claudeComment = comments.data
-              .reverse()
-              .find(c => c.user?.login === 'claude[bot]');
-      
+
+            const claudeComments = comments.data.filter(c =>
+              c.user?.login === 'claude[bot]' && c.body?.includes('REVIEW_RESULT:')
+            );
+            const claudeComment = claudeComments[claudeComments.length - 1];
+
             const output = claudeComment?.body ?? '';
             console.log('Claude comment preview:', output.slice(0, 200));
-      
+
             const failed = output.includes('REVIEW_RESULT: FAIL');
             const errored = '${{ steps.claude.outcome }}' === 'failure';
+            const hasReviewResult = output.includes('REVIEW_RESULT:');
+
+            for (const c of claudeComments.slice(0, -1)) {
+              await github.graphql(
+                `mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    minimizedComment { isMinimized }
+                  }
+                }`,
+                { id: c.node_id }
+              ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
+            }
+
+            let description;
+            if (errored && !output) {
+              description = 'Claude review failed — credit balance too low or API error';
+            } else if (errored && output && !hasReviewResult) {
+              description = 'Claude review failed — reached maximum number of turns';
+            } else if (errored) {
+              description = 'Claude review encountered an error';
+            } else if (failed) {
+              description = 'Claude found issues that must be resolved';
+            } else {
+              description = 'No blocking issues found';
+            }
             const state = (failed || errored) ? 'failure' : 'success';
-            const description = errored
-              ? 'Claude review encountered an error'
-              : failed
-              ? 'Claude found issues that must be resolved'
-              : 'No blocking issues found';
-      
+
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,

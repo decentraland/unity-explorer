@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
@@ -129,7 +130,7 @@ namespace DCL.Backpack.EmotesSection
             );
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             if (!string.IsNullOrEmpty(command.BodyShape))
                 currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);
@@ -360,12 +361,27 @@ namespace DCL.Backpack.EmotesSection
 
         private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
         }
 
         private void ClearPoolElements()

@@ -76,7 +76,6 @@ MonoBehaviour:
   <VoiceChatContainer>k__BackingField: {fileID: 7245032890507791707}
   <CommunityVoiceChatInCallView>k__BackingField: {fileID: 3886185350859594567}
   <CommunityVoiceChatSearchView>k__BackingField: {fileID: 604609896276587201}
-  <EndStreamAudio>k__BackingField: {fileID: 11400000, guid: 76661e0067a37477b8b782b7056f9a18, type: 2}
 --- !u!1001 &3557489126270227469
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -515,11 +514,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7992207961774364474, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
       propertyPath: m_Size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7992207961774364474, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8264162589306377616, guid: 33d439d46847e43ceb45144f854771c0, type: 3}
       propertyPath: m_AnchorMax.y

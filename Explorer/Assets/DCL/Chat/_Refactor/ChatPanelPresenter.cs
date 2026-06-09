@@ -3,10 +3,15 @@ using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatFriends;
 using DCL.Chat.ChatInput;
 using DCL.Chat.ChatMessages;
+using DCL.Chat.ChatReactions.Core;
+using DCL.Chat.ChatReactions.Debug;
+using DCL.Chat.ChatReactions.Networking;
+using DCL.Chat.ChatReactions.Presenters;
 using DCL.Chat.ChatServices;
+using DCL.FeatureFlags;
+using DCL.Input;
 using DCL.Chat.ChatServices.ChatContextService;
 using DCL.Chat.ChatStates;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.ChatArea;
 using DCL.Communities;
@@ -16,8 +21,14 @@ using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
 using System;
 using System.Threading;
+using DCL.Chat.ChatReactions.Configs;
+using DCL.Emoji;
+using DCL.Profiles;
+using DCL.Settings.Settings;
 using DCL.Translation;
 using DCL.Translation.Service;
+using DCL.Web3.Identities;
+using MVC;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -28,18 +39,17 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        private readonly ChatPanelView view;
         private readonly ChatSharedAreaEventBus chatSharedAreaEventBus;
         private readonly EventSubscriptionScope chatAreaEventBusScope = new ();
-
-        private readonly CommandRegistry commandRegistry;
+        private readonly ChatCommandRegistry chatCommandRegistry;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ChatStateMachine chatStateMachine;
         private readonly EventSubscriptionScope uiScope;
         private readonly CommunityVoiceChatSubTitleButtonPresenter communityVoiceChatSubTitleButtonPresenter;
+        private readonly ChatReactionsPresenter reactionsPresenter;
 
         private CancellationTokenSource initCts = new ();
-        private bool isVisibleInSharedSpace => chatStateMachine is { IsMinimized: false, IsHidden: false };
+        private bool isVisible => chatStateMachine is { IsMinimized: false, IsHidden: false };
 
         public ChatPanelPresenter(ChatPanelView view,
             ITextFormatter textFormatter,
@@ -47,30 +57,44 @@ namespace DCL.Chat
             CurrentChannelService currentChannelService,
             CommunitiesDataProvider communityDataProvider,
             ChatConfig.ChatConfig chatConfig,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CommunityDataService communityDataService,
             ChatMemberListService chatMemberListService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            CommandRegistry commandRegistry,
+            ChatCommandRegistry chatCommandRegistry,
             ChatInputBlockingService chatInputBlockingService,
-            IEventBus eventBus,
             ChatContextMenuService chatContextMenuService,
             ChatClickDetectionHandler chatClickDetectionHandler,
             ChatSharedAreaEventBus chatSharedAreaEventBus,
             ITranslationSettings translationSettings,
             ITranslationMemory translationMemory,
-            ITranslationCache translationCache)
+            ITranslationCache translationCache,
+            SituationalReactionFacade reactionFacade,
+            ISituationalReactionSimulation reactionSimulation,
+            ChatReactionsConfig reactionsConfig,
+            ChatReactionDebugState reactionDebugState,
+            SituationalReactionDebugController reactionDebugController,
+            ChatSettingsAsset chatSettingsAsset,
+            ChatMessageReactionService messageReactionService,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileCache profileCache,
+            IInputBlock inputBlock)
         {
-            this.view = view;
             this.chatSharedAreaEventBus = chatSharedAreaEventBus;
             this.chatMemberListService = chatMemberListService;
-            this.commandRegistry = commandRegistry;
+            this.chatCommandRegistry = chatCommandRegistry;
+
+            bool isChatReactionsEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_REACTIONS_ENABLED);
+
+            view.ChatReactionButton.gameObject.SetActive(isChatReactionsEnabled);
+            view.ConversationToolbarView2.SetBottomSpaceForReactionsButton(isChatReactionsEnabled);
+            view.MessageFeedView.SetReactionsEnabled(isChatReactionsEnabled);
 
             uiScope = new EventSubscriptionScope();
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
             DCLInput.Instance.UI.Close.performed += OnUIClose;
-            uiScope.Add(eventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
+            uiScope.Add(chatEventBus.Subscribe<ChatEvents.ChatStateChangedEvent>(OnChatStateChanged));
 
             communityVoiceChatSubTitleButtonPresenter = new CommunityVoiceChatSubTitleButtonPresenter(
                 view.JoinCommunityLiveStreamSubTitleButton,
@@ -82,34 +106,82 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(
                 view.TitlebarView,
                 chatConfig,
-                eventBus,
+                chatEventBus,
                 communityDataService,
                 currentChannelService,
                 chatMemberListService,
                 chatContextMenuService,
                 translationSettings,
-                commandRegistry.GetTitlebarViewModel,
-                commandRegistry.GetCommunityThumbnail,
-                commandRegistry.DeleteChatHistory,
+                chatCommandRegistry.GetTitlebarViewModel,
+                chatCommandRegistry.GetCommunityThumbnail,
+                chatCommandRegistry.DeleteChatHistory,
                 voiceChatOrchestrator,
                 chatEventBus,
-                commandRegistry.GetUserCallStatusCommand,
-                commandRegistry.ToggleAutoTranslateCommand);
+                chatCommandRegistry.GetUserCallStatusCommand,
+                chatCommandRegistry.ToggleAutoTranslateCommand);
 
 
             var channelListPresenter = new ChatChannelsPresenter(view.ConversationToolbarView2,
-                eventBus,
+                chatEventBus,
                 chatEventBus,
                 chatHistory,
                 currentChannelService,
                 communityDataService,
-                commandRegistry.SelectChannel,
-                commandRegistry.CloseChannel,
-                commandRegistry.OpenConversation,
-                commandRegistry.CreateChannelViewModel);
+                chatCommandRegistry.SelectChannel,
+                chatCommandRegistry.CloseChannel,
+                chatCommandRegistry.OpenConversation,
+                chatCommandRegistry.CreateChannelViewModel,
+                profileRepositoryWrapper);
+
+            var emojiContainer = view.InputView.emojiContainer;
+            var emojiMapping = new EmojiMapping(emojiContainer.emojiPanelConfiguration);
+            var emojiPanelPresenter = new EmojiPanelPresenter(
+                view.EmojiPanelView,
+                emojiContainer.emojiPanelConfiguration,
+                emojiMapping,
+                inputBlock);
+
+            reactionsConfig.Atlas.Initialize();
+
+            int[] fixedDefaults = reactionsConfig.Atlas.ResolveUnicodesToTileIndices(
+                reactionsConfig.MessageReactions.FixedDefaultEmojiUnicodes);
+            int maxRecent = reactionsConfig.MessageReactions.MaxRecentEmojis;
+            var recentsService = new ChatReactionRecentsService(fixedDefaults, maxRecent);
+
+            reactionsPresenter = new ChatReactionsPresenter(
+                view.ChatReactionButton,
+                view.ChatReactionsSelector,
+                view.MessageReactionsSelector,
+                reactionFacade,
+                reactionsConfig.Atlas,
+                recentsService,
+                fixedDefaults,
+                view.EmojiPanelView,
+                emojiPanelPresenter,
+                reactionsConfig.MessageReactions,
+                chatSettingsAsset,
+                chatEventBus,
+                inputBlock);
+
+            string ownWallet = web3IdentityCache.Identity?.Address ?? string.Empty;
+            view.MessageFeedView.SetReactionsConfig(reactionsConfig.Atlas, ownWallet,
+                reactionsConfig.MessageReactions);
+
+            ReactionTooltipPresenter? tooltipPresenter = null;
+            if (view.ReactionTooltipView != null)
+            {
+                tooltipPresenter = new ReactionTooltipPresenter(
+                    view.ReactionTooltipView,
+                    profileCache,
+                    profileRepositoryWrapper,
+                    reactionsConfig.Atlas,
+                    reactionsConfig.MessageReactions,
+                    emojiMapping,
+                    ownWallet);
+            }
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(view.MessageFeedView,
-                eventBus,
+                chatEventBus,
                 chatHistory,
                 chatConfig,
                 currentChannelService,
@@ -117,31 +189,49 @@ namespace DCL.Chat
                 translationMemory,
                 translationCache,
                 translationSettings,
-                commandRegistry.GetMessageHistory,
-                commandRegistry.CreateMessageViewModel,
-                commandRegistry.MarkMessagesAsRead,
-                commandRegistry.TranslateMessageCommand,
-                commandRegistry.RevertToOriginalCommand);
+                chatCommandRegistry.GetMessageHistory,
+                chatCommandRegistry.CreateMessageViewModel,
+                chatCommandRegistry.MarkMessagesAsRead,
+                chatCommandRegistry.TranslateMessageCommand,
+                chatCommandRegistry.RevertToOriginalCommand,
+                reactionsPresenter,
+                messageReactionService,
+                tooltipPresenter,
+                view.ReactionLimitToastView,
+                reactionsConfig.MessageReactions.ReactionLimitMessage);
 
             var inputPresenter = new ChatInputPresenter(
                 view.InputView,
                 chatConfig,
-                eventBus,
                 chatEventBus,
                 currentChannelService,
-                commandRegistry.ResolveInputStateCommand,
-                commandRegistry.GetParticipantProfilesCommand,
+                chatCommandRegistry.ResolveInputStateCommand,
+                chatCommandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
-                commandRegistry.SendMessage,
-                textFormatter);
+                chatCommandRegistry.SendMessage,
+                textFormatter,
+                emojiMapping,
+                emojiPanelPresenter,
+                view.EmojiPanelView);
 
             var memberListPresenter = new ChatMemberFeedPresenter(
                 view.MemberListView,
-                eventBus,
+                chatEventBus,
                 chatEventBus,
                 chatMemberListService,
                 chatContextMenuService,
-                commandRegistry.GetChannelMembersCommand);
+                chatCommandRegistry.GetChannelMembersCommand);
+
+            SituationalReactionPresenter? situationalReactionPresenter = null;
+            if (isChatReactionsEnabled)
+            {
+                situationalReactionPresenter = new SituationalReactionPresenter(
+                    reactionSimulation,
+                    reactionsConfig,
+                    reactionDebugState,
+                    reactionDebugController,
+                    view.ChatReactionButton.ReactionButton);
+            }
 
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
@@ -149,7 +239,11 @@ namespace DCL.Chat
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionHandler);
-
+            uiScope.Add(reactionsPresenter);
+            if (situationalReactionPresenter != null)
+                uiScope.Add(situationalReactionPresenter);
+            uiScope.Add(emojiPanelPresenter);
+            
             var mediator = new ChatUIMediator(
                 view,
                 chatConfig,
@@ -158,9 +252,10 @@ namespace DCL.Chat
                 messageFeedPresenter,
                 inputPresenter,
                 memberListPresenter,
-                communityVoiceChatSubTitleButtonPresenter);
+                communityVoiceChatSubTitleButtonPresenter,
+                reactionsPresenter);
 
-            chatStateMachine = new ChatStateMachine(eventBus,
+            chatStateMachine = new ChatStateMachine(chatEventBus,
                 mediator,
                 chatInputBlockingService,
                 chatClickDetectionHandler,
@@ -171,22 +266,22 @@ namespace DCL.Chat
             SubscribeToCoordinationEvents();
         }
 
-        private void HandlePointerEnter(ChatSharedAreaEvents.ChatPanelPointerEnterEvent chatPanelPointerEnterEvent) => PointerEntered?.Invoke();
+        private void HandlePointerEnter(ChatSharedAreaEvents.PointerEnterChatPanelEvent pointerEnterChatPanelEvent) => PointerEntered?.Invoke();
 
-        private void HandlePointerExit(ChatSharedAreaEvents.ChatPanelPointerExitEvent chatPanelPointerExitEvent) => PointerExited?.Invoke();
+        private void HandlePointerExit(ChatSharedAreaEvents.PointerExitChatPanelEvent pointerExitChatPanelEvent) => PointerExited?.Invoke();
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
-            if (!chatStateMachine.IsFocused && (isVisibleInSharedSpace || chatStateMachine.IsMinimized))
+            if (!chatStateMachine.IsFocused && (isVisible || chatStateMachine.IsMinimized))
             {
                 chatStateMachine.SetFocusState();
-                commandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
+                chatCommandRegistry.SelectChannel.SelectNearbyChannelAndInsertAsync("/", CancellationToken.None);
             }
         }
 
         private void OnUIClose(InputAction.CallbackContext obj)
         {
-            if (chatStateMachine.IsMinimized) return;
+            if (chatStateMachine.IsMinimized || chatStateMachine.IsHidden) return;
 
             chatStateMachine.SetVisibility(true);
         }
@@ -209,63 +304,60 @@ namespace DCL.Chat
         private void OnViewShow(ChatSharedAreaEvents.ChatPanelViewShowEvent evt)
         {
             initCts = new CancellationTokenSource();
-            commandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
+            chatCommandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
             chatStateMachine.OnViewShow();
         }
 
-        private void SetVisibility(ChatSharedAreaEvents.ChatPanelVisibilityEvent evt)
-        {
-            chatStateMachine.SetVisibility(evt.IsVisible);
-        }
-
-        private void SetFocusState(ChatSharedAreaEvents.ChatPanelFocusEvent evt)
+        private void SetFocusState(ChatSharedAreaEvents.FocusChatPanelEvent evt)
         {
             chatStateMachine.SetFocusState();
         }
 
-        private void ToggleState(ChatSharedAreaEvents.ChatPanelToggleEvent evt)
+        private void ToggleState(ChatSharedAreaEvents.ToggleChatPanelEvent evt)
         {
             chatStateMachine.SetToggleState();
         }
 
-        private void OnShownInSharedSpaceAsync(ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent evt)
+        private void OnMVCViewOpened(ChatSharedAreaEvents.MVCViewOpenEvent evt)
         {
-            chatStateMachine.SetInitialState(evt.Focus);
+            //We only need to hide the chat if a fullscreen view is shown
+            switch (evt.ViewSortingLayer)
+            {
+                case CanvasOrdering.SortingLayer.FULLSCREEN:
+                    chatStateMachine.SetVisibility(false);
+                    break;
+            }
         }
 
-        private void OnMvcViewShowed(ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent evt)
+        private void OnMVCViewClosed(ChatSharedAreaEvents.MVCViewClosedEvent evt)
         {
-            chatStateMachine.Minimize();
-        }
+            if (evt.ViewSortingLayer is not CanvasOrdering.SortingLayer.FULLSCREEN) return;
 
-        private void OnMvcViewClosed(ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent evt)
-        {
             if (!chatStateMachine.IsFocused)
                 chatStateMachine.PopState();
         }
 
-        private void OnHiddenInSharedSpace(ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent evt)
-        {
-            chatStateMachine.Minimize();
-        }
-
         private void SubscribeToCoordinationEvents()
         {
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerEnterEvent>(HandlePointerEnter));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelPointerExitEvent>(HandlePointerExit));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelFocusEvent>(SetFocusState));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelVisibilityEvent>(SetVisibility));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelToggleEvent>(ToggleState));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.PointerEnterChatPanelEvent>(HandlePointerEnter));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.PointerExitChatPanelEvent>(HandlePointerExit));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.FocusChatPanelEvent>(SetFocusState));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ToggleChatPanelEvent>(ToggleState));
             chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelViewShowEvent>(OnViewShow));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelShownInSharedSpaceEvent>(OnShownInSharedSpaceAsync));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelHiddenInSharedSpaceEvent>(OnHiddenInSharedSpace));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewShowedEvent>(OnMvcViewShowed));
-            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.ChatPanelMvcViewClosedEvent>(OnMvcViewClosed));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewOpenEvent>(OnMVCViewOpened));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.MVCViewClosedEvent>(OnMVCViewClosed));
+            chatAreaEventBusScope.Add(chatSharedAreaEventBus.Subscribe<ChatSharedAreaEvents.UISubmitPerformedEvent>(OnUISubmitPerformed));
+        }
+
+        private void OnUISubmitPerformed(ChatSharedAreaEvents.UISubmitPerformedEvent obj)
+        {
+            if (!chatStateMachine.IsFocused)
+                chatSharedAreaEventBus.RaiseFocusEvent();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent evt)
         {
-            chatSharedAreaEventBus.RaiseVisibilityStateChangedEvent(isVisibleInSharedSpace);
+            chatSharedAreaEventBus.RaiseVisibilityStateChangedEvent(isVisible);
         }
     }
 }

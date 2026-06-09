@@ -48,11 +48,14 @@ namespace DCL.Prefs
         public const string PS_LANDSCAPE_DISTANCE = "QS_LandscapeDistance";
         public const string PS_GRASS_PRESET = "QS_GrassPreset";
         public const string PS_SUN_SHADOWS = "QS_SunShadows";
+        public const string PS_SUN_LENS_FLARE = "QS_SunLensFlare";
         public const string PS_SCENE_LIGHTS = "QS_SceneLights";
         public const string PS_SCENE_LIGHT_SHADOWS = "QS_SceneLightShadows";
         public const string PS_MAX_SCENE_LIGHTS = "QS_MaxSceneLights";
         public const string PS_SHADOW_QUALITY = "QS_ShadowQuality";
         public const string PS_SHADOW_DISTANCE = "QS_ShadowDistance";
+        public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
+        public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
         public const string PS_RESOLUTION = "QS_Resolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
@@ -80,6 +83,8 @@ namespace DCL.Prefs
 
         public const string DEBUG_TELEPORT_COORDINATES = "teleportCoordinates";
         public const string DEBUG_WIDGET_FOLDOUT = "DebugWidget_Foldout_{0}";
+        public const string DEBUG_PANEL_MAXIMIZED = "DebugPanel_Maximized";
+        public const string DEBUG_PANEL_MAXIMIZED_WIDTH = "DebugPanel_MaximizedWidth";
         public const string SETTINGS_TRANSLATION_PREFERRED_LANGUAGE = "Settings_Translation.PreferredLanguage";
 
         public const string AUTHENTICATION_SCREEN_MUSIC_MUTED = "AuthenticationScreen_MusicMuted";
@@ -93,8 +98,17 @@ namespace DCL.Prefs
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 
+        public const string SETTINGS_DOUBLE_TAP_TO_MOVE = "Settings_DoubleTapToMove";
+
         public const string RECENTLY_VISITED_PLACES = "Recently_Visited_Places";
 
         public const string SKYBOX_FIXED_TIME = "Skybox_FixedTime";
+
+        public const string NEARBY_VOICE_TIP_DISMISSED = "NearbyVoice_TipDismissed";
+        public const string NEARBY_VOICE_CHAT_DISABLED = "NearbyVoice_Disabled";
+        public const string SETTINGS_MUTE_MIC_IN_BACKGROUND = "Settings_MuteMicInBackground";
+
+        public const string SETTINGS_CHAT_REACTIONS_ENABLED = "Settings_ChatReactionsEnabled";
+        public const string CHAT_REACTION_FAVORITES = "ChatReaction_Favorites";
     }
 }

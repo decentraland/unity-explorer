@@ -108,7 +108,7 @@ public partial class BillboardSystem : BaseUnityLoopSystem
 
 ## Memory & GC Rules
 
-- Minimize GC pressure — reuse objects, use object pooling (`Utility/Pool`, `Utility/ThreadSafePool`)
+- Minimize GC pressure — reuse objects, use object pooling (`Utility/Pool`, `Utility/ThreadSafePool`). When you rent from a pool, the matching release belongs in the same lifecycle scope (`using` / `Dispose` / `finally`). For pooled lists held as fields, mirror every `Pool.Get()` against a `Pool.Release()` in `Dispose()` — silently dropping a rented list is a quiet leak that GCs the list reference but inflates the pool with new allocations on the next `Get()`.
 - Prefer `IReadOnlyCollection<T>` / `IReadOnlyList<T>` over `List<T>` / arrays; avoid `ToList()` / `ToArray()`
 - Use `Span<T>`, `Memory<T>`, `ArraySegment<T>`, `stackalloc` for slices
 - Avoid boxing/unboxing — do not pass structs as interfaces, do not use `object`
@@ -197,6 +197,97 @@ public class AvatarLoaderSystemShould : UnitySystemTestBase<AvatarLoaderSystem>
     }
 }
 ```
+
+## Anti-Patterns (common in AI-authored code)
+
+Reviewers have flagged these patterns as AI-generated code smells. The underlying rule is: **don't add structure until it pays for itself**. Splits, interfaces, and indirections must buy polymorphism, reuse, or test isolation — not exist "for SRP" alone.
+
+### 1. Bridge / wrapper classes on the same abstraction layer
+
+If class `B` exists only to forward calls to class `A`, with one caller, no polymorphism, and no test seam, delete `B` and call `A` directly.
+
+```csharp
+// WRONG — RemoteReactionReceiver is a bridge that only exists to hand
+// results to SituationalRemoteTarget via a delegate.
+public class RemoteReactionReceiver
+{
+    private readonly Action<ReceivedReaction> onReceived;
+    public RemoteReactionReceiver(Action<ReceivedReaction> onReceived)
+        => this.onReceived = onReceived;
+
+    public void Tick(float dt) { /* ... */ onReceived(reaction); }
+}
+
+// RIGHT — return the value, let the parent process it.
+public class RemoteReactionReceiver
+{
+    public void Tick(float dt, List<ReceivedReaction> reusableBuffer) { /* ... */ }
+}
+```
+
+### 2. Delegate-wrapped properties
+
+Don't wrap every property of a config in its own `Func<T>`. Pass the object.
+
+```csharp
+// WRONG
+new SituationalRemoteTarget(
+    getMaxDistance: () => reactionsConfig.MaxDistance,
+    getSpawnRadius: () => reactionsConfig.SpawnRadius,
+    getLifetime:    () => reactionsConfig.Lifetime);
+
+// RIGHT
+new SituationalRemoteTarget(reactionsConfig);
+```
+
+If you only need to capture one changing value (e.g. `messageId`), store it as a field on the consumer, not as a closure threaded through constructors.
+
+### 3. Interfaces with one implementation and no test coverage
+
+Delete the interface. The concrete class is the contract.
+
+### 4. Defensive null-checks against non-null annotations
+
+```csharp
+// WRONG — field is declared as MessageReactionsView (non-null)
+private MessageReactionsView reactionsView;
+
+public void Refresh()
+{
+    if (reactionsView == null) return;   // can never fire
+    reactionsView.UpdateCount(5);
+}
+```
+
+If the declared type is `T` (not `T?`), don't null-check it. Every redundant check misleads the reader about what can actually happen at runtime.
+
+If a value *can* be null, change the type to `T?`. If it can't, delete the guard.
+
+### 5. Debug/mock code inside production paths
+
+```csharp
+// WRONG — runs on every reaction update in retail builds
+int displayCount = messageConfig.DebugRandomizeReactionCounts
+    ? Random.Range(1, 100)
+    : count;
+
+// RIGHT — editor-only, zero cost in production
+int displayCount = count;
+#if UNITY_EDITOR
+    if (messageConfig.DebugRandomizeReactionCounts)
+        displayCount = Random.Range(1, 100);
+#endif
+```
+
+Runtime bool flags do not count as "debug-only" — the branch still compiles and executes. Use `#if UNITY_EDITOR`, or extract debug logic to an editor-only companion system that doesn't run in player builds.
+
+### 6. Retry loops without a termination condition
+
+A loop that re-queues unresolved items will spin forever when the upstream source consistently returns nothing. Always have a "give up" predicate — max attempts, a known-bad sentinel, or a timeout.
+
+### 7. Extracting when you should merge
+
+If `X` does nothing useful without `Y`, and there is no second consumer of `X`, merge them. Splits must pay for themselves in polymorphism, reuse, or test isolation.
 
 ## PR Standards
 

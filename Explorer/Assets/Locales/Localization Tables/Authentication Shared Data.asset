@@ -105,6 +105,14 @@ MonoBehaviour:
     m_Key: EMAIL_OTP_ENTER
     m_Metadata:
       m_Items: []
+  - m_Id: 443316891551806206
+    m_Key: BODY_TYPE_A
+    m_Metadata:
+      m_Items: []
+  - m_Id: 674482998896883396
+    m_Key: BODY_TYPE_B
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -7,11 +7,9 @@ namespace DCL.UI.ErrorPopup
 {
     public class ErrorPopupWithRetryController : ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>
     {
-        public ErrorPopupWithRetryController(ViewFactoryMethod viewFactory) : base(viewFactory)
-        {
-        }
+        public ErrorPopupWithRetryController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         protected override void OnViewInstantiated()
         {
@@ -37,6 +35,7 @@ namespace DCL.UI.ErrorPopup
             viewInstance.InternetLostIcon.SetActive(inputData.IconType == IconType.CONNECTION_LOST);
             viewInstance.ErrorIcon.SetActive(inputData.IconType == IconType.ERROR);
             viewInstance.WarningIcon.SetActive(inputData.IconType == IconType.WARNING);
+            viewInstance.ClockIcon.SetActive(inputData.IconType == IconType.CLOCK);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -53,6 +52,7 @@ namespace DCL.UI.ErrorPopup
             WARNING,
             ERROR,
             CONNECTION_LOST,
+            CLOCK
         }
 
         public class Input

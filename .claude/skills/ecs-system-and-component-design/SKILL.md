@@ -95,6 +95,12 @@ public void FinalizeComponents(in Query query)
 
 Prefer `ReleasePoolableComponentSystem<T, TProvider>` for pooled disposals. For the full cleanup lifecycle code example with `IForEach<T>` struct pattern, see [reference.md](reference.md).
 
+### Pool hygiene in component disposal
+
+If a component or asset wrapper rents from a pool in its constructor or factory (e.g. `RENDERERS_POOL.Get()`, `COLLIDERS_POOL.Get()`), the matching `Pool.Release(...)` **must** run in its `Dispose()`. Missing pool releases do not leak Unity objects (those are owned by the GameObject hierarchy and destroyed via `SafeDestroy(Root)`) but they strand the C# `List<T>` containers — the pool's working set inflates by one list per disposed instance and `Get()` keeps allocating fresh lists instead of reusing.
+
+Audit pool hygiene by mirroring every `Pool.Get()` against a `Pool.Release(...)` on the disposal path. Scratch-only rentals inside `using (PoolExtensions.Scope<T>.AutoScope())` blocks return automatically — those don't need explicit release.
+
 ---
 
 ## Intention Components (Request-Response Pattern)

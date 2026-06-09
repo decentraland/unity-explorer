@@ -1,58 +1,43 @@
-using System.Collections.Generic;
-using UnityEngine.EventSystems;
+using MVC;
 
 namespace DCL.ChatArea
 {
     public static class ChatSharedAreaEvents
     {
-        public struct ChatPanelPointerEnterEvent { }
-        public struct ChatPanelPointerExitEvent { }
-        public struct ChatPanelFocusEvent { }
+        public struct PointerEnterChatPanelEvent { }
+        public struct PointerExitChatPanelEvent { }
+        public struct FocusChatPanelEvent { }
+        public struct ToggleChatPanelEvent { }
+        public struct ChatPanelViewShowEvent { }
 
-        public struct ChatPanelVisibilityEvent
+        public readonly struct MVCViewOpenEvent
+        {
+            public readonly CanvasOrdering.SortingLayer ViewSortingLayer;
+
+            public MVCViewOpenEvent(CanvasOrdering.SortingLayer viewSortingLayer)
+            {
+                ViewSortingLayer = viewSortingLayer;
+            }
+        }
+
+        public readonly struct MVCViewClosedEvent
+        {
+            public readonly CanvasOrdering.SortingLayer ViewSortingLayer;
+
+            public MVCViewClosedEvent(CanvasOrdering.SortingLayer viewSortingLayer)
+            {
+                ViewSortingLayer = viewSortingLayer;
+            }
+        }
+        public struct UISubmitPerformedEvent { }
+
+        public readonly struct ChatPanelVisibilityStateChangedEvent
         {
             public bool IsVisible { get; }
 
-            public ChatPanelVisibilityEvent(bool isVisible)
+            public ChatPanelVisibilityStateChangedEvent(bool isVisible)
             {
                 IsVisible = isVisible;
-            }
-        }
-
-        public struct ChatPanelToggleEvent { }
-        public struct ChatPanelViewShowEvent { }
-
-        public struct ChatPanelShownInSharedSpaceEvent
-        {
-            public bool Focus { get; }
-
-            public ChatPanelShownInSharedSpaceEvent(bool focus)
-            {
-                Focus = focus;
-            }
-        }
-
-        public struct ChatPanelHiddenInSharedSpaceEvent { }
-        public struct ChatPanelMvcViewShowedEvent { }
-        public struct ChatPanelMvcViewClosedEvent { }
-
-        public struct ChatPanelGlobalClickEvent
-        {
-            public IReadOnlyList<RaycastResult> RaycastResults { get; }
-
-            public ChatPanelGlobalClickEvent(IReadOnlyList<RaycastResult> raycastResults)
-            {
-                RaycastResults = raycastResults;
-            }
-        }
-
-        public struct ChatPanelVisibilityStateChangedEvent
-        {
-            public bool IsVisibleInSharedSpace { get; }
-
-            public ChatPanelVisibilityStateChangedEvent(bool isVisibleInSharedSpace)
-            {
-                IsVisibleInSharedSpace = isVisibleInSharedSpace;
             }
         }
     }
