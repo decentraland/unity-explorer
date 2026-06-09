@@ -7,8 +7,8 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Components;
 using Global.Dynamic;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
+using System;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -42,9 +42,6 @@ namespace ECS.SceneLifeCycle.Systems
                     break;
             }
         }
-
-        protected override string GetAssetBundleSceneId(string _) =>
-            hybridSceneHashedContent!.remoteSceneID;
 
         protected override async UniTask<bool> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, ReportData reportCategory, string sceneID, CancellationToken ct)
         {
