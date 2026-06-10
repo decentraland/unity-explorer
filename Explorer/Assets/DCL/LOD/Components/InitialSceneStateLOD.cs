@@ -118,8 +118,27 @@ namespace DCL.LOD.Components
         {
             SceneID = sceneID;
             if (ParentContainer == null)
+            {
                 ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
+
+                // Stay hidden while descriptor assets stream in one-by-one. Otherwise the half-assembled
+                // LOD_0 renders on top of the still-visible LOD_1, causing z-fighting and double-shaded
+                // geometry for the (potentially multi-second) interval. RevealAssembledAssets() flips this
+                // on in a single frame once every asset is in place.
+                ParentContainer.SetActive(false);
+            }
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
+        }
+
+        /// <summary>
+        ///     Atomically reveals the fully assembled LOD_0 once <see cref="AllAssetsInstantiated" /> is true.
+        ///     The caller hands the container to the LODGroup in the same frame, which then culls LOD_1 by
+        ///     distance, so the swap shows no overlap window and no empty frame.
+        /// </summary>
+        public void RevealAssembledAssets()
+        {
+            if (ParentContainer != null)
+                ParentContainer.SetActive(true);
         }
 
         public void AddFailedAsset(string creationHelperAssetHash)

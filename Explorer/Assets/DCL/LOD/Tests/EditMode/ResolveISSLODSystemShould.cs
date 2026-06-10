@@ -202,6 +202,40 @@ namespace DCL.LOD.Tests
         }
 
         [Test]
+        public void KeepContainerHiddenUntilFullyAssembled()
+        {
+            // Guards the LOD_1 -> LOD_0 atomic-swap fix: while descriptor assets stream in, the container
+            // must stay inactive so the half-assembled LOD_0 never renders on top of the still-visible
+            // LOD_1. The reveal is owned by InstantiateSceneLODInfoSystem at the swap, not by assembly.
+            const string HASH_A = "ITEM_A";
+            const string HASH_B = "ITEM_B";
+
+            cache.Stash(HASH_A, MakeFakeGltf(HASH_A));
+            cache.Stash(HASH_B, MakeFakeGltf(HASH_B));
+
+            var descriptor = ISSDescriptor.CreateUninitialized();
+
+            descriptor.MarkResolved(new[]
+            {
+                NewDescriptorEntry(HASH_A),
+                NewDescriptorEntry(HASH_B),
+            });
+
+            InitialSceneStateLOD lod = CreateLODEntity(descriptor);
+
+            system.Update(0);
+
+            Assert.That(lod.AllAssetsInstantiated(), Is.True);
+            Assert.That(lod.ParentContainer.activeSelf, Is.False,
+                "Container must stay hidden during assembly; only RevealAssembledAssets (called at the swap) activates it");
+
+            lod.RevealAssembledAssets();
+            Assert.That(lod.ParentContainer.activeSelf, Is.True, "RevealAssembledAssets must activate the container in one call");
+
+            lod.Dispose(world);
+        }
+
+        [Test]
         public void ReleaseBridgeSlotOnCacheHit()
         {
             const string HASH = "BRIDGE_HASH";
