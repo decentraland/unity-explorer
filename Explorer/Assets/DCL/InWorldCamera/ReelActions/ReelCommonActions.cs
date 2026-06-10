@@ -22,6 +22,7 @@ namespace DCL.InWorldCamera.ReelActions
         {
             string description = shareToXMessage;
             string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}";
+            description = description.Replace("\\n", "\n");
             string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
             systemClipboard.Set(xUrl);

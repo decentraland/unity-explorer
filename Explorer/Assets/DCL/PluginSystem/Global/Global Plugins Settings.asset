@@ -1141,8 +1141,8 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
-          right now and join me!
+        <ShareToXMessage>k__BackingField: "Happening right now in @decentraland.
+          \\n\\nCome hang out \U0001F44B \\n\\n"
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
         <PhotoSuccessfullySetAsPublicMessage>k__BackingField: Photo successfully
           updated
