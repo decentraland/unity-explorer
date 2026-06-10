@@ -32,6 +32,8 @@ namespace DCL.Diagnostics.Sentry
 {
     internal class DclAnrIntegration : ISdkIntegration
     {
+        private static readonly IReadOnlyList<string> FINGER_PRINT = new [] { "dcl-application-not-responding" };
+
         private static readonly object Lock = new();
         private static DclAnrWatchDog? Watchdog;
         private readonly SentryMonoBehaviour _monoBehaviour;
@@ -55,14 +57,16 @@ namespace DCL.Diagnostics.Sentry
             Watchdog.OnApplicationNotResponding += (_, e) =>
             {
                 SentryEvent se = new SentryEvent(e);
+                se.Fingerprint = FINGER_PRINT;
+
 #if UNITY_STANDALONE_WIN
                 hub.CaptureEvent(se, scope =>
                 {
-                    foreach (Result<DumpEntry> filePath in e.DumpFilePaths)
+                    foreach (Result<DumpEntry> entry in e.DumpFileEntries)
                     {
-                        if (filePath.Success)
+                        if (entry.Success)
                         {
-                            scope.AddAttachment(filePath: filePath.Value.path, AttachmentType.Default);
+                            scope.AddAttachment(filePath: entry.Value.path, AttachmentType.Default);
                         }
                     }
                 });
@@ -107,20 +111,20 @@ namespace DCL.Diagnostics.Sentry
         internal abstract void Stop(bool wait = false);
 
         // Is never supposed to be called during the pause
-        protected void Report(IReadOnlyList<Result<DumpEntry>> collectedDumpPaths)
+        protected void Report(IReadOnlyList<Result<DumpEntry>> collectedDumpEntries)
         {
             System.Text.StringBuilder sb = new ();
             sb.Append("DclApplication not responding: ");
-            
-            for (int i = 0; i < collectedDumpPaths.Count; i++)
+
+            for (int i = 0; i < collectedDumpEntries.Count; i++)
             {
                 sb.Append("Report ");
 
-                Result<DumpEntry> result = collectedDumpPaths[i];
+                Result<DumpEntry> result = collectedDumpEntries[i];
                 if (result.Success)
                 {
                     DumpEntry e = result.Value;
-                    sb.Append(e.tresholdMs).Append("ms - ").Append(e.path);
+                    sb.Append(e.tresholdMs).Append("ms - ").Append(e.name);
                 }
                 else
                 {
@@ -136,7 +140,7 @@ namespace DCL.Diagnostics.Sentry
             Logger?.LogInfo("Detected an DclAnr event: {0}", message);
 
 #if UNITY_STANDALONE_WIN
-            var exception = new DclApplicationNotRespondingException(message, collectedDumpPaths);
+            var exception = new DclApplicationNotRespondingException(message, collectedDumpEntries);
 #else
             var exception = new DclApplicationNotRespondingException(message);
 #endif
@@ -149,14 +153,17 @@ namespace DCL.Diagnostics.Sentry
     public readonly struct DumpEntry
     {
         public readonly string path;
+        public readonly string name;
         public readonly int tresholdMs;
 
         public DumpEntry(
             string path,
+            string name,
             int tresholdMs
         )
         {
             this.path = path;
+            this.name = name;
             this.tresholdMs = tresholdMs;
         }
     }
@@ -175,16 +182,16 @@ namespace DCL.Diagnostics.Sentry
     {
         public readonly int mainThreadIsNotRespondingForMs;
         // if list is not null thats guaranteed it has values
-        public readonly List<Result<DumpEntry>>? collectedDumpPaths;
+        public readonly List<Result<DumpEntry>>? collectedDumpEntries;
         public readonly int requestedDumpCount;
 
         public WatchDogCollectingState(
             int mainThreadIsNotRespondingForMs,
-            List<Result<DumpEntry>>? collectedDumpPaths,
+            List<Result<DumpEntry>>? collectedDumpEntries,
             int requestedDumpCount)
         {
             this.mainThreadIsNotRespondingForMs = mainThreadIsNotRespondingForMs;
-            this.collectedDumpPaths = collectedDumpPaths;
+            this.collectedDumpEntries = collectedDumpEntries;
             this.requestedDumpCount = requestedDumpCount;
         }
     }
@@ -197,11 +204,11 @@ namespace DCL.Diagnostics.Sentry
 
     public readonly struct WatchDogSendTotalReportCommand
     {
-        public readonly List<Result<DumpEntry>> collectedDumpPaths;
+        public readonly List<Result<DumpEntry>> collectedDumpEntries;
 
-        public WatchDogSendTotalReportCommand(List<Result<DumpEntry>> collectedDumpPaths)
+        public WatchDogSendTotalReportCommand(List<Result<DumpEntry>> collectedDumpEntries)
         {
-            this.collectedDumpPaths = collectedDumpPaths;
+            this.collectedDumpEntries = collectedDumpEntries;
         }
     }
 
@@ -273,14 +280,14 @@ namespace DCL.Diagnostics.Sentry
             static (WatchDogState newState, Option<WatchDogCommand> cmd) FlushCollectingState(WatchDogCollectingState collectingState)
             {
                 // Nothing to report, just get back to normal
-                if (collectingState.collectedDumpPaths == null || collectingState.collectedDumpPaths.Count == 0)
+                if (collectingState.collectedDumpEntries == null || collectingState.collectedDumpEntries.Count == 0)
                 {
                     return (WatchDogState.Idle(), Option<WatchDogCommand>.None);
                 }
                 // Mark as reported and fire the command
                 else
                 {
-                    WatchDogSendTotalReportCommand inner = new WatchDogSendTotalReportCommand(collectingState.collectedDumpPaths);
+                    WatchDogSendTotalReportCommand inner = new WatchDogSendTotalReportCommand(collectingState.collectedDumpEntries);
                     WatchDogCommand cmd = WatchDogCommand.FromSendTotalReport(inner);
                     return (WatchDogState.Reported(), Option<WatchDogCommand>.Some(cmd));
                 }
@@ -326,7 +333,7 @@ namespace DCL.Diagnostics.Sentry
 
                             WatchDogCollectingState newState = new WatchDogCollectingState(
                                 newPassedIntervalMs,
-                                collectingState.collectedDumpPaths,
+                                collectingState.collectedDumpEntries,
                                 currentRequested
                             );
                             return (WatchDogState.FromCollecting(newState), newCommand);
@@ -356,8 +363,8 @@ namespace DCL.Diagnostics.Sentry
                                 : Option<WatchDogCommand>.None
                         ),
                         // Add to the list and fire if filled
-                        onCollecting: static (dmpPath, collectingState) => {
-                            if (collectingState.collectedDumpPaths == null)
+                        onCollecting: static (dmpEntry, collectingState) => {
+                            if (collectingState.collectedDumpEntries == null)
                             {
                                 collectingState = new WatchDogCollectingState(
                                     collectingState.mainThreadIsNotRespondingForMs,
@@ -366,9 +373,9 @@ namespace DCL.Diagnostics.Sentry
                                 );
                             }
 
-                            collectingState.collectedDumpPaths.Add(dmpPath);
+                            collectingState.collectedDumpEntries.Add(dmpEntry);
 
-                            if (collectingState.collectedDumpPaths.Count >= TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Count)
+                            if (collectingState.collectedDumpEntries.Count >= TRESHOLD_TO_COLLECT_NEXT_DUMP_FILE_MS.Count)
                             {
                                 return FlushCollectingState(collectingState);
                             }
@@ -410,7 +417,9 @@ namespace DCL.Diagnostics.Sentry
                             File.Delete(rawDumpPath);
                         }
 
-                        DumpEntry e = new DumpEntry(dumpResult.Value.zipPath, forMs);
+                        string filePath = dumpResult.Value.zipPath;
+                        string fileName = Path.GetFileNameWithoutExtension(filePath);
+                        DumpEntry e = new DumpEntry(path: filePath, name: fileName, forMs);
                         path = Result<DumpEntry>.SuccessResult(e);
                     }
                     else
@@ -421,7 +430,7 @@ namespace DCL.Diagnostics.Sentry
                     WatchDogMessage msg = WatchDogMessage.FromNextDumpFileCollectedPath(path);
                     self.messageQueue.Enqueue(msg);
                 },
-                onSendTotalReport: static (self, totalReport) => self.Report(totalReport.collectedDumpPaths),
+                onSendTotalReport: static (self, totalReport) => self.Report(totalReport.collectedDumpEntries),
                 onRemoveDumpFileByPath: static (self, removePath) => {
                     if (File.Exists(removePath))
                     {
@@ -502,7 +511,7 @@ namespace DCL.Diagnostics.Sentry
         {
             string baseAddress = UnityEngine.Application.persistentDataPath;
             DUMP_APP_PATH = Path.Combine(UnityEngine.Application.persistentDataPath, "dumps"); // Cache, because Unity API is not available from none-main thread
-            
+
             // Clear and init
             if (Directory.Exists(DUMP_APP_PATH))
             {

@@ -7,11 +7,11 @@ namespace DCL.Diagnostics.Sentry
     public class DclApplicationNotRespondingException : Exception
     {
 #if UNITY_STANDALONE_WIN
-        public readonly IReadOnlyList<Result<DumpEntry>> DumpFilePaths;
+        public readonly IReadOnlyList<Result<DumpEntry>> DumpFileEntries;
 
-        internal DclApplicationNotRespondingException(string message, IReadOnlyList<Result<DumpEntry>> dumpFilePaths) : base(message)
+        internal DclApplicationNotRespondingException(string message, IReadOnlyList<Result<DumpEntry>> dumpFileEntries) : base(message)
         {
-            this.DumpFilePaths = dumpFilePaths;
+            this.DumpFileEntries = dumpFileEntries;
         }
 #else
         internal DclApplicationNotRespondingException(string message) : base(message) { }
