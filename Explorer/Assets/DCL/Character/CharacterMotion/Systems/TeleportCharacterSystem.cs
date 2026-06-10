@@ -187,6 +187,12 @@ namespace DCL.CharacterMotion.Systems
         /// </summary>
         private static Vector3 SnapToSceneFloor(Vector3 position)
         {
+            // The scene container is moved from its loading position (Mordor, ~-10000) to its real
+            // position on the same frame the readiness report resolves, and physics runs in manual mode
+            // with auto-sync off. On the teleport-resolution frame the per-frame sync may be skipped, so
+            // force one here to guarantee the raycast queries the colliders' current poses.
+            Physics.SyncTransforms();
+
             // TEMP diagnostic: dump the full vertical collider column at the landing point so we can
             // see where the real floor is relative to the anchor (and whether a ceiling/truss is in
             // the way). Remove before merge.
