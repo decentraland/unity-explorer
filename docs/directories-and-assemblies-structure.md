@@ -1,4 +1,4 @@
-# Directories & Assemblies Structure
+﻿# Directories & Assemblies Structure
 
 > **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 62. The rules below drove that consolidation and remain in force.
 
@@ -15,13 +15,13 @@ Every feature can contain an arbitrary range of `Assets` which can include but a
 The default place for a feature is a subdirectory at `Assets/DCL` path.
 
 In order to maintain a reasonable number of assemblies and a manageable number of dependencies between them consider the following rules:
-- **Strive for large assemblies instead of splitting into small ones.** Avoid creating new `.asmdef` or `.asmref` files unless necessary — the folder or a parent folder may already be covered by an existing assembly definition.
+- **Strive for large assemblies instead of splitting into small ones.** Avoid creating new `.asmdef` or `.asmref` files unless necessary â€” the folder or a parent folder may already be covered by an existing assembly definition.
 - When a new assembly reference **is** needed, prefer `.asmref` ([Assembly Definition References](https://docs.unity3d.com/Manual/class-AssemblyDefinitionReferenceImporter.html)) to fold code into an existing large assembly rather than introducing a new `.asmdef`.
 - Only create a dedicated `.asmdef` when the feature **must be referenced by other assemblies** or requires strict dependency isolation.
 - Control exposed members by `public` access level: if members should not be exposed make them `internal` instead. It makes the difference when we pursue the minimum number of assemblies.
 - ECS Systems **must always** use an `.asmref` pointing to `DCL.Plugins`.
 - Use different directories for **Unit Tests** but connect all of them to the single root test assemblies via `.asmref`: `DCL.EditMode.Tests` for edit-mode tests (the vast majority) and `DCL.PlayMode.Tests` for play-mode tests. We don't care about the number of dependencies in the case of Tests as any other assembly never references Tests. See [Testing Guide](testing-guide.md).
-- Editor-only tooling folds into the single `DCL.Editor` assembly via `.asmref` (the only exception is `Utility.Editor`, which must stay separate — `DCL.Plugins` references it, and `DCL.Editor` references `DCL.Plugins`).
+- Editor-only tooling folds into the single `DCL.Editor` assembly via `.asmref` (the only exception is `Utility.Editor`, which must stay separate â€” `DCL.Plugins` references it, and `DCL.Editor` references `DCL.Plugins`).
 
 ## Pure technical implementations
 
@@ -51,18 +51,18 @@ All containers and plugins belong to a "global" visibility level:
 
 - `<Feature>Plugin.cs` **must be placed in the `Systems/` folder** alongside the ECS systems it injects.
 - If the plugin has **no ECS systems**, do not create a `Systems/` folder. Place the plugin directly in:
-  - `Assets/DCL/PluginSystem/Global/` — for global plugins (`IDCLGlobalPlugin`)
-  - `Assets/DCL/PluginSystem/World/` — for world plugins (`IDCLWorldPlugin`)
+  - `Assets/DCL/PluginSystem/Global/` â€” for global plugins (`IDCLGlobalPlugin`)
+  - `Assets/DCL/PluginSystem/World/` â€” for world plugins (`IDCLWorldPlugin`)
 
 ## Current assembly layout
 
 There are **62 `.asmdef` files** under `Explorer/Assets`: 52 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (325 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
 
-Paths below are relative to `Explorer/Assets`. "Folds" lists notable folders connected to the assembly via `.asmref` — the folder names on disk did **not** change during consolidation, so a folder name frequently differs from the assembly it compiles into.
+Paths below are relative to `Explorer/Assets`. "Folds" lists notable folders connected to the assembly via `.asmref` â€” the folder names on disk did **not** change during consolidation, so a folder name frequently differs from the assembly it compiles into.
 
 ### Foundation leaves
 
-Lean, high fan-in assemblies. They are **intentionally kept small** and must never reference feature assemblies — merging them upward creates cycles for their many consumers.
+Lean, high fan-in assemblies. They are **intentionally kept small** and must never reference feature assemblies â€” merging them upward creates cycles for their many consumers.
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
@@ -70,7 +70,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.Prefs` | `DCL/Prefs` | Player preferences abstraction. Stays separate: `Utility` references it. |
 | `DCL.Network` | `DCL/NetworkDefinitions` | HTTP/networking stack. Folds `WebRequests`, `FeatureFlags`, `CommunicationData`, `Multiplayer/Connectivity`. |
 | `Web3` | `DCL/Web3` | Wallet identities and auth-chain primitives. Folds `Plugins/RustEthereum/SignServerWrap`. |
-| `DCL.Platform` | `DCL/Infrastructure/Platform` | App/platform identity. Folds `Global/AppArgs`, `Global/Versioning`, `Clipboard`, `Time`, `ScriptableObjectsConfigurations`. |
+| `DCL.Platform` | `DCL/Infrastructure/Global/AppArgs` | App/platform identity. Folds `Global/AppArgs`, `Global/Versioning`, `Clipboard`, `Time`, `ScriptableObjectsConfigurations`. |
 | `DCL.Input` | `DCL/Input` | Input abstraction over Unity InputSystem (systems fold to `DCL.Plugins`). |
 | `ECS` | `DCL/Infrastructure/ECS` | Core ECS plumbing: groups, lifecycle, throttling abstractions. |
 | `CRDT` | `DCL/Infrastructure/CRDT` | CRDT protocol implementation. |
@@ -89,7 +89,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
 | `ECS.Unity` | `DCL/Infrastructure/ECS/Unity` | The big Unity-facing ECS assembly. Folds `ECS/StreamableLoading`, `ECS/Prioritization`, most of `SDKComponents` (incl. `MediaStream`, `NFTShape`, `Billboard`, `SceneUI`, `TextShape`), `Audio`, `Character/CharacterCamera`, `SDKEntityTriggerArea`, `PerformanceAndDiagnostics/Gizmos`. |
-| `CRDT.ECS.Bridge` | `DCL/Infrastructure/CrdtEcsBridge` | CRDT ⇄ ECS bridge. Folds `WorldSynchronizer`, SDK observable events. |
+| `CRDT.ECS.Bridge` | `DCL/Infrastructure/CrdtEcsBridge` | CRDT â‡„ ECS bridge. Folds `WorldSynchronizer`, SDK observable events. |
 | `SceneRuntime` | `DCL/Infrastructure/SceneRuntime` | V8/ClearScript JS runtime and JS API modules. Folds `CrdtEcsBridge/JsModulesImplementation`, `SceneRunner/Debugging`, `SceneRunner/Mapping`. |
 | `SceneLifeCycle` | `DCL/Infrastructure/ECS/SceneLifeCycle` | Scene loading lifecycle and definition handling (systems fold to `DCL.Plugins`). |
 | `DCL.GlobalWorld` | `DCL/Infrastructure/Global/Dynamic/GlobalWorld` | Global world factory/accessor. Folds `Global/Dynamic/PortableExperiences`. |
@@ -137,7 +137,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
-| `DCL.Plugins` | `DCL/PluginSystem` | The composition root: all plugins, containers, bootstrap, and **every ECS `Systems/` folder in the project** (84 `.asmref`s) — avatar, character, SDK components, scene lifecycle, interaction, rendering, diagnostics, etc. References almost everything; referenced only by Tests, `DCL.Editor` and `DCL.Playgrounds`. |
+| `DCL.Plugins` | `DCL/PluginSystem` | The composition root: all plugins, containers, bootstrap, and **every ECS `Systems/` folder in the project** (84 `.asmref`s) â€” avatar, character, SDK components, scene lifecycle, interaction, rendering, diagnostics, etc. References almost everything; referenced only by Tests, `DCL.Editor` and `DCL.Playgrounds`. |
 
 ### Tests & Editor
 
@@ -147,30 +147,30 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.PlayMode.Tests` | `DCL/Tests/PlayMode` | Single root for all play-mode and performance tests (~17 folded folders). |
 | `ECS.TestSuite` | `DCL/Infrastructure/ECS/TestSuite` | Test helpers (`UnitySystemTestBase<T>`); referenced by both test roots. |
 | `DCL.Editor` | `DCL/Editor` | Single root for editor-only tooling (~17 folded `Editor/` folders). |
-| `Utility.Editor` | `DCL/Infrastructure/Utility/Editor` | Editor utilities referenced by `DCL.Plugins` — cannot fold into `DCL.Editor` (cycle). |
+| `Utility.Editor` | `DCL/Infrastructure/Utility/Editor` | Editor utilities referenced by `DCL.Plugins` â€” cannot fold into `DCL.Editor` (cycle). |
 
 ### Native, vendored & generated
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
 | `DCL.Native` | `Plugins/NativeWindowManager` | Native interop anchor. Folds `Plugins/NativeAudioAnalysis`, `Plugins/WindowsRegistry`. |
-| `DCL.Native.Processes` | `Plugins/DclNativeProcesses` | Native process launching leaf (referenced by `Utility` — cannot fold into `DCL.Native`). |
+| `DCL.Native.Processes` | `Plugins/DclNativeProcesses` | Native process launching leaf (referenced by `Utility` â€” cannot fold into `DCL.Native`). |
 | `DOTween.Modules` | `Plugins/DOTween/Modules` | Vendored DOTween modules. |
 | `SocketIOClient` | `Plugins/SocketIO/SocketIOClient` | Vendored Socket.IO client. Folds `SocketIOClient.Newtonsoft.Json`. |
 | `Decentraland.Protocol.GeneratedCode` | `Protocol/DecentralandProtocol` | Protobuf-generated protocol code. Folds `Infrastructure/ProtobufPartialClasses`. |
 
-## Adding new code — decision guide
+## Adding new code â€” decision guide
 
 Work through these in order; the first match wins:
 
 1. **Default: no new assembly files at all.** Put the code in a folder already covered by an existing assembly (check parent folders for an `.asmdef`/`.asmref`). This is the right answer for the overwhelming majority of changes.
-2. **New feature folder?** Add a single `.asmref` at its root pointing to the **nearest domain anchor** from the tables above (e.g. a new social panel → `DCL.Social`; a new SDK component's non-system code → `ECS.Unity`; a new HUD element → `DCL.UI.Hud`).
+2. **New feature folder?** Add a single `.asmref` at its root pointing to the **nearest domain anchor** from the tables above (e.g. a new social panel â†’ `DCL.Social`; a new SDK component's non-system code â†’ `ECS.Unity`; a new HUD element â†’ `DCL.UI.Hud`).
 3. **Special folders always have a fixed target:**
-   - `Systems/` (ECS systems + the feature's `Plugin.cs`) → `.asmref` to `DCL.Plugins`
-   - `Tests/` → `.asmref` to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests`)
-   - `Editor/` → `.asmref` to `DCL.Editor`
+   - `Systems/` (ECS systems + the feature's `Plugin.cs`) â†’ `.asmref` to `DCL.Plugins`
+   - `Tests/` â†’ `.asmref` to `DCL.EditMode.Tests` (or `DCL.PlayMode.Tests`)
+   - `Editor/` â†’ `.asmref` to `DCL.Editor`
 4. **New `.asmdef` only when justified:** the code is a new lean leaf that will be referenced by several other assemblies, or it genuinely requires strict isolation (different define constraints, unsafe code scope, platform restrictions). Expect this to be rare.
-5. **Before adding an asmdef reference, check the dependency direction.** Leaves (foundation tables) must never gain references to feature assemblies, and anchors must not reference each other in both directions. The project maintains graph tooling for this: a script that regenerates the resolved dependency graph from all `.asmdef`/`.asmref` files, plus a simulation step that checks a proposed new edge against the transitive closure for cycles **before** the edge is added. Re-run the regeneration after any assembly change and treat any `UNRESOLVED:` entry or new cycle as a blocker. If you find yourself needing `ObjectProxy` or an event bus solely to dodge a reference, the dependency direction is wrong — restructure instead.
+5. **Before adding an asmdef reference, check the dependency direction.** Leaves (foundation tables) must never gain references to feature assemblies, and anchors must not reference each other in both directions. The project maintains graph tooling for this: a script that regenerates the resolved dependency graph from all `.asmdef`/`.asmref` files, plus a simulation step that checks a proposed new edge against the transitive closure for cycles **before** the edge is added. Re-run the regeneration after any assembly change and treat any `UNRESOLVED:` entry or new cycle as a blocker. If you find yourself needing `ObjectProxy` or an event bus solely to dodge a reference, the dependency direction is wrong â€” restructure instead.
 
 ## Gotcha: namespace shadowing inside `namespace DCL.*`
 
