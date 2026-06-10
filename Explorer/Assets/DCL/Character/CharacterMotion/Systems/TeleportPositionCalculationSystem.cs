@@ -62,7 +62,8 @@ namespace DCL.Character.CharacterMotion.Systems
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel)
                                               + new Vector3(HALF_PARCEL_SIZE, 0f, HALF_PARCEL_SIZE);
 
-                // Keep the landing inside the scene's parcels; falls back to the parcel base if not.
+                // Keep the landing inside the scene's parcels; if it falls outside, ValidateTeleportPosition
+                // clamps it to the requested parcel's base position.
                 ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef);
 
                 // Anchor the height on the scene's spawn point as a best guess: the exact parcel floor

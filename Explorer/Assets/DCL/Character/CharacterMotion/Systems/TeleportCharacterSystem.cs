@@ -13,6 +13,7 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -208,29 +209,32 @@ namespace DCL.CharacterMotion.Systems
             // force one here to guarantee the raycasts query the colliders' current poses.
             Physics.SyncTransforms();
 
-            // Sample a 3x3 grid spanning the parcel and collect every walkable hit under each column.
-            // The parcel center may sit over a gap or a lower level, so the floor we want is often only
-            // found off-center (e.g. an elevated step along one edge in a terraced scene).
+            // Sample a 3x3 grid spanning the parcel and collect every walkable hit under each column in
+            // a single raycast pass. The parcel center may sit over a gap or a lower level, so the floor
+            // we want is often only found off-center (e.g. an elevated step along one edge in a terraced
+            // scene). Caching the hits avoids re-casting the grid for the second (selection) pass below.
             Span<float> offsets = stackalloc float[] { -LAND_ON_PARCEL_SAMPLE_OFFSET, 0f, LAND_ON_PARCEL_SAMPLE_OFFSET };
 
-            var hasHit = false;
+            // Allocation is tolerated here: a land-on-parcel teleport happens rarely and only once.
+            var samples = new List<(Vector3 point, float centerDistSq)>();
             var lowestFloor = float.PositiveInfinity;
 
             foreach (float dx in offsets)
             foreach (float dz in offsets)
             {
                 Vector3 origin = new (position.x + dx, position.y + LAND_ON_PARCEL_RAYCAST_UP_OFFSET, position.z + dz);
+                float centerDistSq = (dx * dx) + (dz * dz);
 
                 RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
 
                 foreach (RaycastHit h in hits)
                 {
-                    hasHit = true;
+                    samples.Add((h.point, centerDistSq));
                     if (h.point.y < lowestFloor) lowestFloor = h.point.y;
                 }
             }
 
-            if (!hasHit) return position; // nothing to stand on in this parcel; keep the anchored height
+            if (samples.Count == 0) return position; // nothing to stand on in this parcel; keep the anchored height
 
             // Anything within a step-up of the parcel's lowest floor is walkable; higher hits are roofs.
             float ceiling = lowestFloor + LAND_ON_PARCEL_MAX_STEP_UP;
@@ -239,30 +243,20 @@ namespace DCL.CharacterMotion.Systems
             Vector3 bestPoint = position;
             var bestCenterDistSq = float.PositiveInfinity;
 
-            foreach (float dx in offsets)
-            foreach (float dz in offsets)
+            foreach ((Vector3 point, float centerDistSq) in samples)
             {
-                Vector3 origin = new (position.x + dx, position.y + LAND_ON_PARCEL_RAYCAST_UP_OFFSET, position.z + dz);
+                if (point.y > ceiling) continue; // overhead geometry, not a walkable step
 
-                RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+                // Prefer the highest walkable surface; on ties prefer the sample nearest the center
+                // so flat parcels land the avatar in the middle rather than at an arbitrary edge.
+                bool higher = point.y > bestY + LAND_ON_PARCEL_LEVEL_EPSILON;
+                bool sameLevelButCentred = point.y >= bestY - LAND_ON_PARCEL_LEVEL_EPSILON && centerDistSq < bestCenterDistSq;
 
-                foreach (RaycastHit h in hits)
+                if (higher || sameLevelButCentred)
                 {
-                    if (h.point.y > ceiling) continue; // overhead geometry, not a walkable step
-
-                    float centerDistSq = (dx * dx) + (dz * dz);
-
-                    // Prefer the highest walkable surface; on ties prefer the sample nearest the center
-                    // so flat parcels land the avatar in the middle rather than at an arbitrary edge.
-                    bool higher = h.point.y > bestY + LAND_ON_PARCEL_LEVEL_EPSILON;
-                    bool sameLevelButCentred = h.point.y >= bestY - LAND_ON_PARCEL_LEVEL_EPSILON && centerDistSq < bestCenterDistSq;
-
-                    if (higher || sameLevelButCentred)
-                    {
-                        bestY = h.point.y;
-                        bestPoint = h.point;
-                        bestCenterDistSq = centerDistSq;
-                    }
+                    bestY = point.y;
+                    bestPoint = point;
+                    bestCenterDistSq = centerDistSq;
                 }
             }
 

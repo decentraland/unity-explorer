@@ -10,6 +10,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace DCL.CharacterMotion.Tests
         private ISceneReadinessReportQueue? sceneReadinessReportQueue;
         private CharacterController characterController;
         private Camera? camera;
+        private readonly List<GameObject> spawnedColliders = new ();
 
         [SetUp]
         public void Setup()
@@ -40,7 +42,28 @@ namespace DCL.CharacterMotion.Tests
         {
             UnityObjectUtils.SafeDestroyGameObject(camera);
             UnityObjectUtils.SafeDestroyGameObject(characterController);
+
+            foreach (GameObject collider in spawnedColliders)
+                UnityObjectUtils.SafeDestroy(collider);
+
+            spawnedColliders.Clear();
         }
+
+        // Spawns a horizontal box collider whose top face sits at worldTopY, wide enough to cover the
+        // whole land-on-parcel probe grid centred on (x,z). Default layer 0 is part of CHARACTER_ONLY_MASK.
+        private void SpawnFloor(float worldTopY, float x = 8f, float z = 8f)
+        {
+            const float THICKNESS = 1f;
+            var go = new GameObject("test-floor");
+            var box = go.AddComponent<BoxCollider>();
+            box.size = new Vector3(100f, THICKNESS, 100f);
+            go.transform.position = new Vector3(x, worldTopY - (THICKNESS / 2f), z);
+            spawnedColliders.Add(go);
+            Physics.SyncTransforms();
+        }
+
+        private static PlayerTeleportIntent LandOnParcelIntent(Vector3 position) =>
+            new (null, new Vector2Int(0, 0), position, CancellationToken.None, isPositionSet: true, landOnParcel: true);
 
         [Test]
         public void ResolveTeleportImmediatelyWithoutAssetsToWait()
@@ -103,6 +126,54 @@ namespace DCL.CharacterMotion.Tests
             // Verify IsGrounded is preserved when position doesn't change (in-place rotation scenario)
             CharacterRigidTransform updatedRigidTransform = world.Get<CharacterRigidTransform>(e);
             Assert.That(updatedRigidTransform.IsGrounded, Is.True, "IsGrounded should be preserved for in-place rotation");
+        }
+
+        [Test]
+        public void LandOnParcelSnapsDownOntoFloorCollider()
+        {
+            // Floor top at y=0; the avatar is anchored 5m above it and should snap onto the floor.
+            SpawnFloor(worldTopY: 0f);
+
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
+                LandOnParcelIntent(new Vector3(8f, 5f, 8f)));
+
+            system!.Update(0);
+
+            Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
+            Assert.That(characterController.transform.position.y, Is.EqualTo(0.1f).Within(0.001f), "Should land just above the floor (top + ground clearance)");
+        }
+
+        [Test]
+        public void LandOnParcelPicksHighestWalkableSurfaceAndIgnoresRoof()
+        {
+            // A terraced parcel: low plane at y=0, an elevated walkable step at y=3, and a roof at y=50.
+            // The step is within a step-up of the lowest floor; the roof is far overhead and must be ignored.
+            SpawnFloor(worldTopY: 0f);
+            SpawnFloor(worldTopY: 3f);
+            SpawnFloor(worldTopY: 50f);
+
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
+                LandOnParcelIntent(new Vector3(8f, 0f, 8f)));
+
+            system!.Update(0);
+
+            Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
+            Assert.That(characterController.transform.position.y, Is.EqualTo(3.1f).Within(0.001f), "Should land on the elevated step, not the lower plane or the roof");
+        }
+
+        [Test]
+        public void LandOnParcelKeepsAnchorWhenNoFloorFound()
+        {
+            // No colliders in the probe grid: the precomputed anchor position must be preserved as-is.
+            var anchor = new Vector3(8f, 5f, 8f);
+
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new CharacterRigidTransform(),
+                LandOnParcelIntent(anchor));
+
+            system!.Update(0);
+
+            Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False, "Teleport intent should be resolved");
+            Assert.That(characterController.transform.position, Is.EqualTo(anchor), "Should keep the anchored position when there is no floor to snap to");
         }
     }
 }
