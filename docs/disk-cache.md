@@ -51,4 +51,5 @@ The motivating incident: a texture write cancelled mid-stream (entity despawned)
 - **Local Scene Development** mode disables the disk cache entirely (`MainSceneLoader`), so local iteration always fetches fresh content. Keep this in mind when a bug reproduces only against a deployed realm: LSD and production runs have different caching behavior.
 - `--disable-disk-cache` / `--disable-disk-cache-cleanup` — see [App Arguments](app-arguments.md).
 - **Decentraland → Cache → Clear Disk Cache** menu item deletes the cache directory from the Editor.
+- The `/cache` chat command opens the cache folder at runtime (like `/logs` for the logs folder).
 - Cache locations: Editor (macOS) `~/Library/Application Support/Decentraland/Explorer/DiskCacheV3`; built player (macOS) `~/Library/Application Support/com.Decentraland.Explorer/DiskCacheV3`; on Windows under `%userprofile%/AppData/LocalLow/<company>/<product>/DiskCacheV3`.

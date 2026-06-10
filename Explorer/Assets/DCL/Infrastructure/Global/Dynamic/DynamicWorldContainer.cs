@@ -599,6 +599,7 @@ namespace Global.Dynamic
                 new SupportChatCommand(supportRequestService),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new CacheChatCommand(),
                 new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
