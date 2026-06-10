@@ -220,7 +220,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             for (int i = 0; i < meshes.Count; ++i)
             {
-                Bounds meshBounds = meshes[i].Mesh.mesh.bounds;
+                 Bounds meshBounds = meshes[i].Mesh.sharedMesh.bounds;
 
                 if (maxCorner.x < meshBounds.max.x)
                     maxCorner.x = meshBounds.max.x;
