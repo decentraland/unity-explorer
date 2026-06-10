@@ -44,7 +44,6 @@
         "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
         "GUID:c0dd0d10738d4ad4a9de57c559d0ca1b",
         "GUID:15bc5ce9b9f747c8a365e7dff4e2ebd7",
-        "GUID:5836355a903740bdbbe2e65ca77cb95b",
         "GUID:e56a0d6a94c144c784012e63b6043100",
         "GUID:e25ef972de004615a22937e739de2def",
         "GUID:a29f69b42fb1815409464ac7b05381d0",
@@ -68,7 +67,6 @@
         "GUID:0401f68d61b24c63a3abf51e27bb46f1",
         "GUID:887770ff22b647ac864047b3c1af9a8b",
         "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
-        "GUID:7045ce3c8d4f002439a982bb9e670781",
         "GUID:7213a1d35667f9b40be6aca8cbfcee23",
         "GUID:0b6da6475647d445b857bdaaa93c9dae",
         "GUID:69448af7b92c7f342b298e06a37122aa",
@@ -98,7 +96,13 @@
         "GUID:809870cbfd80a7b46bcf72b178ab210b",
         "GUID:1087662aaf1c5462baa91fb9484296fd",
         "GUID:a810b70a479606d4f8dd40fff7a34d41",
-        "GUID:4c25211e0ab124d6b8723366932f7d9b"
+        "GUID:4c25211e0ab124d6b8723366932f7d9b",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:4129704b5a1a13841ba16f230bf24a57",
+        "GUID:d605e90bf5403438488dab77b4043585",
+        "GUID:6830e2f56251b492e9934f1fafbc8c7d",
+        "GUID:3ca842002c51d0a43b73e45298809a13"
     ],
     "includePlatforms": [
         "Editor"
@@ -118,7 +122,9 @@
         "Microsoft.CodeAnalysis.dll",
         "CodeLess.Attributes.dll",
         "Collections.Pooled.dll",
-        "Thirdweb.dll"
+        "Thirdweb.dll",
+        "Nethereum.Signer.dll",
+        "Arch.SystemGroups.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
