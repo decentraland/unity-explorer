@@ -33,6 +33,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 ## Core Systems
 - **[Asset Promises](asset-promises.md)** — Asynchronous asset loading with ECS promises
+- **[Disk Cache](disk-cache.md)** — Persistent asset cache: architecture, atomic writes, corruption self-healing, and eviction
 - **[Asset Bundles Conversion](asset-bundles-conversion.md)** — GLTF to Asset Bundle conversion pipeline
 - **[Web Requests Framework](web-requests-framework.md)** — Allocation-free web requests with retry policies
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
