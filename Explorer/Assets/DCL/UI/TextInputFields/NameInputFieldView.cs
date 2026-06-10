@@ -38,6 +38,12 @@ namespace DCL.UI
         public string Text => inputField.text;
         public bool IsValidName => inputField.text.Length > 0 && inputField.text.Length <= maxNameLength;
 
+        public void SetValue(string inputNameValue)
+        {
+            inputField.text = inputNameValue;
+            characterCountLabel.text = $"{inputNameValue.Length}/{maxNameLength}";
+        }
+
         private void Awake()
         {
             inputErrorMessage.text = characterLimitReachedMessage;
@@ -52,7 +58,6 @@ namespace DCL.UI
 
         private void OnEnable()
         {
-            inputField.text = string.Empty;
             characterCountLabel.text = $"{0}/{maxNameLength}";
 
             outline.enabled = false;
