@@ -101,26 +101,31 @@ jobs:
           HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
           SHORT_SHA="${HEAD_SHA:0:7}"
 
-          # 2. Find the most recent successful Unity Cloud Build run for this SHA.
-          RUN_JSON=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build")] | .[0]')
+          # 2. Find the most recent successful Unity Cloud Build run for this
+          #    SHA's `pull_request` event. /visual-tests is only meaningful
+          #    against a PR build: the artifact path is namespaced by the PR head
+          #    branch, so a build produced by another event (push to dev,
+          #    scheduled, manual dispatch) lives at a different prefix and our URL
+          #    would 404.
+          #
+          #    Scope the lookup to the build-unitycloud.yml workflow + the
+          #    pull_request event rather than listing *all* runs for the SHA and
+          #    name-matching. A busy PR racks up dozens of successful runs
+          #    (artifact-comment bot, label/dedup automation, ...), so the old
+          #    unscoped `actions/runs?status=success&per_page=20` page pushed the
+          #    single build run off the end — it was reported "not found" even
+          #    though it existed. (build-release-main.yml *also* carries the
+          #    display name "Unity Cloud Build", the other reason name-matching
+          #    was unreliable.) The scoped+filtered endpoint returns only PR build
+          #    runs, newest first, so the head SHA's build is reliably at [0].
+          RUN_JSON=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&event=pull_request&status=success&per_page=1" \
+            --jq '.workflow_runs[0]')
           if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
-            echo "::error::No successful Unity Cloud Build run found for SHA ${SHORT_SHA}. Is the build still in progress, or did it fail?"
+            echo "::error::No successful pull_request Unity Cloud Build run found for SHA ${SHORT_SHA}. Wait for the PR build to finish — a commit built only via push/merge (e.g. a dev tip cut into a release branch) won't have one."
             exit 1
           fi
           RUN_NUMBER=$(echo "$RUN_JSON" | jq -r '.run_number')
-          ORIGINAL_EVENT=$(echo "$RUN_JSON" | jq -r '.event')
-
-          # /visual-tests is only meaningful against a PR build. If the
-          # latest successful Unity Cloud Build for this SHA was triggered
-          # by something else (push to dev, scheduled run, manual dispatch),
-          # the artifact path uses a different prefix and our URL would
-          # 404. Fail loudly so the user knows to wait for a PR build
-          # rather than chasing a phantom 404 inside metaforge.
-          if [ "$ORIGINAL_EVENT" != "pull_request" ]; then
-            echo "::error::Latest successful Unity Cloud Build for ${SHORT_SHA} was triggered by '${ORIGINAL_EVENT}', not 'pull_request'. Visual tests can only run against PR builds."
-            exit 1
-          fi
 
           ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${HEAD_REF}/pr-${RUN_NUMBER}-${SHORT_SHA}"
           BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
