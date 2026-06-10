@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (manifestVersion == null || !manifestVersion.SupportsDepsDigests())
                 return;
 
-            //Needed to use the Time.realtimeSinceStartup on the intention creation
+            //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation
             await UniTask.SwitchToMainThread();
 
             var promise = AssetBundleManifestPromise.Create(world,

@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
             //Also used for the PX escape
             if (entityDefinition.assetBundleManifestVersion == null || entityDefinition.assetBundleManifestVersion.IsEmpty())
             {
-                //Needed to use the Time.realtimeSinceStartup on the intention creation
+                //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation
                 await UniTask.SwitchToMainThread();
 
                 if (!skipException)

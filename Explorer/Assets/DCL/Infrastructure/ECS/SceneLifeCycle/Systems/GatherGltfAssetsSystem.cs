@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
             progressTracker = new SceneByteProgressTracker();
-            startTime = Time.time;
+            startTime = UnityEngine.Time.time;
         }
 
         protected override void OnDispose()
@@ -151,7 +151,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ListPool<Entity>.Release(toDelete);
 
                 // it's an internal timeout
-                if (Time.time - startTime > TIMEOUT.TotalSeconds)
+                if (UnityEngine.Time.time - startTime > TIMEOUT.TotalSeconds)
                     concluded = true;
 
                 // Memory is filling up, we considered it complete to avoid deadlock

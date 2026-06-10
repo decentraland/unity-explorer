@@ -136,7 +136,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     if (state.Value != StreamableLoadingState.Status.Allowed) return;
 
-                    timeToAllowAverage.Add(Time.realtimeSinceStartup - time.Value);
+                    timeToAllowAverage.Add(UnityEngine.Time.realtimeSinceStartup - time.Value);
                     world!.Add<WasAllowed>(entity);
                 }
             }

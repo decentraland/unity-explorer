@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.Common
                 LoadingIntention = loadingIntention,
                 Entity =
                     StreamableLoadingDebug.ENABLED
-                        ? world.Create(loadingIntention, partition, StreamableLoadingState.Create(), new IntentionCreationTime(Time.realtimeSinceStartup))
+                        ? world.Create(loadingIntention, partition, StreamableLoadingState.Create(), new IntentionCreationTime(UnityEngine.Time.realtimeSinceStartup))
                         : world.Create(loadingIntention, partition, StreamableLoadingState.Create()),
             };
 
