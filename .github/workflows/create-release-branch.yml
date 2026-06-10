@@ -63,7 +63,7 @@ jobs:
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
 
           RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build")] | .[0]')
+            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build") | select(.event == "pull_request" or .event == "push")] | .[0]')
 
           if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
             {
