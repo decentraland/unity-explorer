@@ -1,6 +1,6 @@
 ﻿# Directories & Assemblies Structure
 
-> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 59. The rules below drove that consolidation and remain in force.
+> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 48. The rules below drove that consolidation and remain in force.
 
 ## Encapsulated Features
 
@@ -56,7 +56,7 @@ All containers and plugins belong to a "global" visibility level:
 
 ## Current assembly layout
 
-There are **59 `.asmdef` files** under `Explorer/Assets`: 49 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (325 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
+There are **48 `.asmdef` files** under `Explorer/Assets`: 38 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (320 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
 
 Paths below are relative to `Explorer/Assets`. "Folds" lists notable folders connected to the assembly via `.asmref` â€” the folder names on disk did **not** change during consolidation, so a folder name frequently differs from the assembly it compiles into.
 
@@ -66,23 +66,18 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
-| `Utility` | `DCL/Infrastructure/Utility` | Core helpers, math, pools, threading. Folds `PerformanceAndDiagnostics` (Diagnostics/ReportHub, Optimization, Profiling), `Platforms`, networking abstractions. |
-| `DCL.Prefs` | `DCL/Prefs` | Player preferences abstraction. Stays separate: `Utility` references it. |
+| `Utility` | `DCL/Infrastructure/Utility` | Core helpers, math, pools, threading. Folds `PerformanceAndDiagnostics` (Diagnostics/ReportHub, Optimization, Profiling, DebugUtilities debug-widget primitives; see [Debug Container](debug-container-and-widgets.md)), `Platforms`, `Prefs` (player preferences), `Infrastructure/ScenePermissions`, networking abstractions. |
 | `DCL.Network` | `DCL/NetworkDefinitions` | HTTP/networking stack. Folds `WebRequests`, `FeatureFlags`, `CommunicationData`, `Multiplayer/Connectivity`. |
 | `Web3` | `DCL/Web3` | Wallet identities and auth-chain primitives. Folds `Plugins/RustEthereum/SignServerWrap`. |
-| `DCL.Platform` | `DCL/Infrastructure/Global/AppArgs` | App/platform identity. Folds `Global/AppArgs`, `Global/Versioning`, `Clipboard`, `Time`, `ScriptableObjectsConfigurations`. |
+| `DCL.Platform` | `DCL/Infrastructure/Global/AppArgs` | App/platform identity. Folds `Global/AppArgs`, `Global/Versioning`, `Global/Dynamic/DebugSettings` (debug bootstrap settings), `Clipboard`, `Time`, `ScriptableObjectsConfigurations`. |
 | `DCL.Input` | `DCL/Input` | Input abstraction over Unity InputSystem (systems fold to `DCL.Plugins`). |
 | `ECS` | `DCL/Infrastructure/ECS` | Core ECS plumbing: groups, lifecycle, throttling abstractions. |
 | `CRDT` | `DCL/Infrastructure/CRDT` | CRDT protocol implementation. |
-| `Realm` | `DCL/Infrastructure/ECS/SceneLifeCycle/Realm` | Realm domain data leaf. |
-| `SceneRunner.Scene` | `DCL/Infrastructure/SceneRunner/Scene` | Scene data/facade abstractions consumed by everything scene-aware. |
+| `SceneRunner.Scene` | `DCL/Infrastructure/SceneRunner/Scene` | Scene data/facade abstractions consumed by everything scene-aware. Folds `ECS/SceneLifeCycle/Realm` (realm domain data): scene and realm are one domain. |
 | `Character` | `DCL/Character/CharacterObject` | Character object leaf. |
 | `DCL.CharacterMotion.Components` | `DCL/Character/CharacterMotion/Components` | Character motion data components leaf. |
-| `ScenePermissions` | `DCL/Infrastructure/ScenePermissions` | Scene permission model. |
 | `AssetsProvision` | `DCL/AssetsProvision` | Addressables provisioning helpers. |
-| `DebugUtilities` | `DCL/PerformanceAndDiagnostics/DebugUtilities` | Debug widget/binding primitives (see [Debug Container](debug-container-and-widgets.md)). |
 | `Quality.RenderFeatures` | `DCL/Quality/RenderFeatures` | URP render features used by quality settings. |
-| `DCL.UIToolkit` | `DCL/UIToolkit/Elements` | UIToolkit custom elements (zero references). |
 
 ### Infrastructure (scene & ECS stack)
 
@@ -90,11 +85,9 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 |---|---|---|
 | `ECS.Unity` | `DCL/Infrastructure/ECS/Unity` | The big Unity-facing ECS assembly. Folds `ECS/StreamableLoading`, `ECS/Prioritization`, most of `SDKComponents` (incl. `MediaStream`, `NFTShape`, `Billboard`, `SceneUI`, `TextShape`), `Audio`, `Character/CharacterCamera`, `SDKEntityTriggerArea`, `PerformanceAndDiagnostics/Gizmos`. |
 | `CRDT.ECS.Bridge` | `DCL/Infrastructure/CrdtEcsBridge` | CRDT â‡„ ECS bridge. Folds `WorldSynchronizer`, SDK observable events. |
-| `SceneRuntime` | `DCL/Infrastructure/SceneRuntime` | V8/ClearScript JS runtime and JS API modules. Folds `CrdtEcsBridge/JsModulesImplementation`, `SceneRunner/Debugging`, `SceneRunner/Mapping`. |
-| `SceneLifeCycle` | `DCL/Infrastructure/ECS/SceneLifeCycle` | Scene loading lifecycle and definition handling (systems fold to `DCL.Plugins`). |
-| `DCL.GlobalWorld` | `DCL/Infrastructure/Global/Dynamic/GlobalWorld` | Global world factory/accessor. Folds `Global/Dynamic/PortableExperiences`. |
+| `SceneRuntime` | `DCL/Infrastructure/SceneRuntime` | V8/ClearScript JS runtime and JS API modules. Folds `CrdtEcsBridge/JsModulesImplementation`, `SceneRunner/Debugging`, `SceneRunner/Mapping`, `CurrentSceneRoomMetadata` (incl. `SceneBannedUsers`). |
+| `SceneLifeCycle` | `DCL/Infrastructure/ECS/SceneLifeCycle` | Scene loading lifecycle and definition handling (systems fold to `DCL.Plugins`). Folds `Global/Dynamic/GlobalWorld` (global world factory/accessor) and `Global/Dynamic/PortableExperiences`. |
 | `MVC` | `DCL/Infrastructure/MVC` | MVC framework core (see [MVC](mvc.md)); `MVC/ViewDependencies` folds into `DCL.SharedAPI`, `MVC/MVCFacade` into `DCL.Plugins`. |
-| `Global.Dynamic.DebugSettings` | `DCL/Infrastructure/Global/Dynamic/DebugSettings` | Debug bootstrap settings; stays separate because production code (`DCL.UI.Flows`) consumes it. |
 
 ### Features
 
@@ -104,7 +97,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.Character` | `DCL/Character/CharacterMotion` | Character motion/camera logic anchor. Folds `CharacterPreview`. |
 | `DCL.Profiles` | `DCL/Profiles` | Profile fetching/caching (`Helpers` and `SharedAPI` subfolders fold into `DCL.SharedAPI`). |
 | `DCL.Multiplayer` | `DCL/Multiplayer` | Multiplayer anchor: movement, profiles, SDK sync. Folds `Connections` (LiveKit rooms, Archipelago). |
-| `DCL.SharedAPI` | `DCL/SharedAPI` | Cross-feature contracts and event buses. Folds 16 small API/bus folders: `SharedAPI/Events`, `NotificationsBus`, `MVC/ViewDependencies`, `Friends/UserBlocking`, `Navmap/NavmapBus`, `Passport/Bridge`, `SceneRestrictionBusController`, `TeleportPrompt/TeleportBus`, `UserInAppInitializationFlow/PublicAPI`, etc. |
+| `DCL.SharedAPI` | `DCL/SharedAPI` | Cross-feature contracts and event buses. Folds 15 small API/bus folders: `NotificationsBus`, `MVC/ViewDependencies`, `Friends/UserBlocking`, `Navmap/NavmapBus`, `Passport/Bridge`, `SceneRestrictionBusController`, `TeleportPrompt/TeleportBus`, `UserInAppInitializationFlow/PublicAPI`, etc. |
 | `DCL.ApiServices` | `DCL/Lambdas` | Lambdas client and REST API services. Folds `PlacesAPIService`, `EventsApi`, `BadgesAPIService`, `NftInfoAPIService`. |
 | `DCL.Social` | `DCL/Social` | The big social/UI feature bucket. Folds 23+ feature folders: `Chat`, `Friends`, `Communities`, `Passport`, `Navmap`, `Places`, `Events`, `ExplorePanel`, `EmotesWheel`, `EmojiPanel`, `VoiceChat`, `Translation`, `Donations`, `Backpack` (incl. gifting), `RewardPanel`, `InWorldCamera` (screencapture camera, reel storage/actions, gallery, photo detail), `UI/GenericContextMenu/Controllers`, and more. |
 | `DCL.Chat.History` | `DCL/Chat/History` | Chat history storage leaf. Stays separate: folding it into `DCL.Social` cycles via `DCL.RealmNavigation`. |
@@ -112,29 +105,25 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.LOD` | `DCL/LOD` | Scene LODs. Folds `ResourcesUnloading`, `Roads`. |
 | `DCL.Landscape` | `DCL/Landscape` | Terrain/landscape generation. Folds `Rendering/GPUInstancing`. |
 | `MapRenderer` | `DCL/MapRenderer` | Map rendering. Folds `MapPins`. |
-| `DCL.RealmNavigation` | `DCL/RealmNavigation` | Realm/teleport navigation flow. |
-| `DCL.SceneLoadingScreens` | `DCL/SceneLoadingScreens` | Loading screens. Stays separate from `DCL.UI.Flows`: cycle via `DCL.RealmNavigation`. |
+| `DCL.RealmNavigation` | `DCL/RealmNavigation` | Realm/teleport navigation flow. Folds `SceneLoadingScreens` (loading screens). |
 | `DCL.SkyBox` | `DCL/SkyBox` | Skybox and time-of-day. |
 | `Settings` | `DCL/Settings` | Settings feature. Folds `Quality`, `Chat/Settings`, `VoiceChat/Settings`. |
-| `DCL.Analytics` | `DCL/PerformanceAndDiagnostics/Analytics` | Analytics core. Folds `Plugins/RustSegment/SegmentServerWrap`. Stays split from its implementation: merging cycles via `DCL.Profiles`. |
-| `DCL.Analytics.Implementation` | `DCL/PerformanceAndDiagnostics/Analytics/EventBased` | Event/decorator-based analytics emitters. Folds `Analytics/DecoratorBased`. |
-| `CurrentSceneRoomMetadata` | `DCL/CurrentSceneRoomMetadata` | Current scene room metadata. Folds `SceneBannedUsers`. |
+| `DCL.Analytics` | `DCL/PerformanceAndDiagnostics/Analytics` | Analytics core. Folds `Plugins/RustSegment/SegmentServerWrap`. The event/decorator-based emitters (`Analytics/EventBased`, `Analytics/DecoratorBased`) fold into `DCL.Plugins` instead: merging them here cycles via `DCL.Profiles`. |
 | `DCL.Playgrounds` | `DCL/Playgrounds` | Demo/playground scenes and debug scene scripts. |
 
 ### UI
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
-| `UI` | `DCL/UI` | Shared UI widgets and primitives. Folds `UI/ErrorPopup`, `UI/GenericContextMenu`, `UI/InputSuggestions`, `UI/LayoutGroups`. |
+| `UI` | `DCL/UI` | Shared UI widgets and primitives. Folds `UI/ErrorPopup`, `UI/GenericContextMenu`, `UI/InputSuggestions`, `UI/LayoutGroups`, the modal prompts (`NftPrompt`, `ChangeRealmPrompt`, `ExternalUrlPrompt`, `TeleportPrompt`), `UIToolkit/Elements` (UIToolkit custom elements). |
 | `DCL.UI.Hud` | `DCL/UI/MainUIContainer` | Persistent HUD anchor. Folds `Minimap`, `UI/Sidebar`, `Notifications`, `MarketplaceCredits`, `UI/ConnectionStatusPanel`, `UI/DebugMenu`. |
-| `DCL.UI.Prompts` | `DCL/NftPrompt` | Modal prompts anchor. Folds `ChangeRealmPrompt`, `ExternalUrlPrompt`, `TeleportPrompt`. |
 | `DCL.UI.Flows` | `DCL/AuthenticationScreenFlow` | Startup/auth flow anchor. Folds `UserInAppInitializationFlow`, `ApplicationsGuards`. |
 
 ### Global / composition root
 
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
-| `DCL.Plugins` | `DCL/PluginSystem` | The composition root: all plugins, containers, bootstrap, and **every ECS `Systems/` folder in the project** (84 `.asmref`s) â€” avatar, character, SDK components, scene lifecycle, interaction, rendering, diagnostics, etc. References almost everything; referenced only by Tests, `DCL.Editor` and `DCL.Playgrounds`. |
+| `DCL.Plugins` | `DCL/PluginSystem` | The composition root: all plugins, containers, bootstrap, and **every ECS `Systems/` folder in the project** (84 `.asmref`s) â€” avatar, character, SDK components, scene lifecycle, interaction, rendering, diagnostics, etc. Also folds the event/decorator-based analytics emitters (`Analytics/EventBased`, `Analytics/DecoratorBased`). References almost everything; referenced only by Tests, `DCL.Editor` and `DCL.Playgrounds`. |
 
 ### Tests & Editor
 
