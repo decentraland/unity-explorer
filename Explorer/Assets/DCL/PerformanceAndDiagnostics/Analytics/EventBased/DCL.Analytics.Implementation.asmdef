@@ -2,8 +2,8 @@
     "name": "DCL.Analytics.Implementation",
     "rootNamespace": "",
     "references": [
+        "GUID:286980af24684da6acc1caa413039811",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:8baf705856414dad9a73b3f382f1bc8b",
         "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
@@ -29,7 +29,6 @@
         "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:f3634757d00dab2429c6c11e69404e97",
         "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
-        "GUID:286980af24684da6acc1caa413039811",
         "GUID:5556c2cd8a339d54ba194f39bbd30d73",
         "GUID:d0d87470ef1844e08586dabeb6d672bd",
         "GUID:e25ef972de004615a22937e739de2def",
