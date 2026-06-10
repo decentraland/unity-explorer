@@ -59,5 +59,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             // Assert
             Assert.IsFalse(shouldConnect);
         }
+
+        [Test]
+        public void NotForceFreshHandshakeBelowFailureThreshold([Values(0, 1, 2)] int consecutiveFailures) =>
+            // Act & Assert: fewer than 3 consecutive failures keep retrying the cached string
+            Assert.IsFalse(ArchipelagoIslandRoom.ShouldForceFreshHandshake(consecutiveFailures));
+
+        [Test]
+        public void ForceFreshHandshakeWhenFailureThresholdReached([Values(3, 4)] int consecutiveFailures) =>
+            // Act & Assert: at/above 3 consecutive failures the cached string is abandoned for a fresh handshake
+            Assert.IsTrue(ArchipelagoIslandRoom.ShouldForceFreshHandshake(consecutiveFailures));
     }
 }

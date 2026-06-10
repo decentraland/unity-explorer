@@ -31,11 +31,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private readonly object connectionStringLock = new ();
 
-        /// <summary>
-        ///     Latest connection string pushed by the server. Kept cached (not consumed) so the connection
-        ///     can be retried if a connect attempt fails — the server believes the client is on the island
-        ///     while heartbeats succeed, so it never re-sends the string on its own (see issue #8853).
-        /// </summary>
         private string? latestConnectionString;
         private bool hasPendingNewString;
 
@@ -138,7 +133,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             consecutiveConnectFailures++;
             nextReconnectAttemptUtc = DateTime.UtcNow + RECONNECT_BACKOFF;
 
-            if (consecutiveConnectFailures >= MAX_RECONNECT_ATTEMPTS_BEFORE_FRESH_HANDSHAKE)
+            if (ShouldForceFreshHandshake(consecutiveConnectFailures))
             {
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
                     $"Island room connection failed {consecutiveConnectFailures} times with the cached connection string, forcing a fresh archipelago handshake");
@@ -148,12 +143,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             }
         }
 
-        /// <summary>
-        ///     Decides whether a connect attempt should be made this cycle: a freshly pushed string always connects
-        ///     (initial connection and island changes), while the cached string only retries a dead room after backoff.
-        /// </summary>
         internal static bool ShouldAttemptConnection(bool isNewString, bool roomIsDisconnected, DateTime nowUtc, DateTime nextAttemptUtc) =>
             isNewString || (roomIsDisconnected && nowUtc >= nextAttemptUtc);
+
+        internal static bool ShouldForceFreshHandshake(int consecutiveFailures) =>
+            consecutiveFailures >= MAX_RECONNECT_ATTEMPTS_BEFORE_FRESH_HANDSHAKE;
 
         /// <summary>
         ///     The cached connection string keeps being rejected (e.g. its token expired during a long outage):
