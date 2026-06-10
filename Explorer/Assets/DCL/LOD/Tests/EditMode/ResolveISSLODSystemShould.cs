@@ -202,16 +202,19 @@ namespace DCL.LOD.Tests
         }
 
         [Test]
-        public void KeepContainerHiddenUntilFullyAssembled()
+        public void SuppressRenderingButKeepObjectsActiveUntilRevealed()
         {
-            // Guards the LOD_1 -> LOD_0 atomic-swap fix: while descriptor assets stream in, the container
-            // must stay inactive so the half-assembled LOD_0 never renders on top of the still-visible
-            // LOD_1. The reveal is owned by InstantiateSceneLODInfoSystem at the swap, not by assembly.
+            // Guards the LOD_1 -> LOD_0 atomic-swap fix: while descriptor assets stream in, their rendering
+            // must be suppressed so the half-assembled LOD_0 never draws on top of the still-visible LOD_1.
+            // Crucially the GameObjects stay active so colliders remain registered; the reveal (owned by
+            // InstantiateSceneLODInfoSystem at the swap) restores rendering, not GameObject activation.
             const string HASH_A = "ITEM_A";
             const string HASH_B = "ITEM_B";
 
-            cache.Stash(HASH_A, MakeFakeGltf(HASH_A));
-            cache.Stash(HASH_B, MakeFakeGltf(HASH_B));
+            GltfContainerAsset assetA = MakeFakeGltfWithRenderer(HASH_A, out Renderer rendererA);
+            GltfContainerAsset assetB = MakeFakeGltfWithRenderer(HASH_B, out Renderer rendererB);
+            cache.Stash(HASH_A, assetA);
+            cache.Stash(HASH_B, assetB);
 
             var descriptor = ISSDescriptor.CreateUninitialized();
 
@@ -226,13 +229,42 @@ namespace DCL.LOD.Tests
             system.Update(0);
 
             Assert.That(lod.AllAssetsInstantiated(), Is.True);
-            Assert.That(lod.ParentContainer.activeSelf, Is.False,
-                "Container must stay hidden during assembly; only RevealAssembledAssets (called at the swap) activates it");
+
+            Assert.That(rendererA.forceRenderingOff, Is.True, "Rendering must be suppressed while LOD_0 assembles");
+            Assert.That(rendererB.forceRenderingOff, Is.True, "Rendering must be suppressed while LOD_0 assembles");
+            Assert.That(assetA.Root.activeInHierarchy, Is.True, "GameObject must stay active so colliders survive");
+            Assert.That(assetB.Root.activeInHierarchy, Is.True, "GameObject must stay active so colliders survive");
 
             lod.RevealAssembledAssets();
-            Assert.That(lod.ParentContainer.activeSelf, Is.True, "RevealAssembledAssets must activate the container in one call");
+
+            Assert.That(rendererA.forceRenderingOff, Is.False, "Reveal must hand rendering back so the LODGroup can cull by distance");
+            Assert.That(rendererB.forceRenderingOff, Is.False, "Reveal must hand rendering back so the LODGroup can cull by distance");
 
             lod.Dispose(world);
+        }
+
+        [Test]
+        public void RestoreRenderingWhenAbortedBeforeReveal()
+        {
+            // An aborted run (ForgetLoading while PROCESSING) dereferences positioned assets back to the
+            // cache. They must not return with forceRenderingOff stuck on, or they reappear invisible on reuse.
+            const string HASH = "ITEM_A";
+
+            GltfContainerAsset asset = MakeFakeGltfWithRenderer(HASH, out Renderer renderer);
+            cache.Stash(HASH, asset);
+
+            var descriptor = ISSDescriptor.CreateUninitialized();
+            descriptor.MarkResolved(new[] { NewDescriptorEntry(HASH) });
+
+            InitialSceneStateLOD lod = CreateLODEntity(descriptor);
+
+            system.Update(0);
+            Assert.That(renderer.forceRenderingOff, Is.True);
+
+            lod.Dispose(world);
+
+            Assert.That(renderer.forceRenderingOff, Is.False,
+                "Clear must restore rendering before the asset is handed back to the cache");
         }
 
         [Test]
@@ -296,6 +328,15 @@ namespace DCL.LOD.Tests
 
         private static GltfContainerAsset MakeFakeGltf(string label) =>
             GltfContainerAsset.Create(new GameObject($"fake_{label}"), IStreamableRefCountData.Null.INSTANCE);
+
+        private static GltfContainerAsset MakeFakeGltfWithRenderer(string label, out Renderer renderer)
+        {
+            var go = new GameObject($"fake_{label}");
+            renderer = go.AddComponent<MeshRenderer>();
+            GltfContainerAsset asset = GltfContainerAsset.Create(go, IStreamableRefCountData.Null.INSTANCE);
+            asset.Renderers.Add(renderer);
+            return asset;
+        }
 
         /// <summary>
         ///     Pool-style stub mirroring <see cref="GltfContainerAssetsCache" />: <c>TryGet</c> removes,

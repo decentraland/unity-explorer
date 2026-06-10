@@ -67,7 +67,13 @@ namespace DCL.LOD.Components
             foreach (ISSStoredAsset gltfContainerAsset in Assets)
             {
                 if (gltfContainerAsset.succeded)
+                {
+                    // Restore rendering before handing the asset back: on an aborted run RevealAssembledAssets
+                    // never ran, so the asset would otherwise return to the cache with forceRenderingOff stuck
+                    // on and reappear invisible on its next reuse (bridge handoff or fresh instantiate).
+                    gltfContainerAsset.Asset.ToggleRendering(true);
                     gltfCache.Dereference(gltfContainerAsset.AssetHash, gltfContainerAsset.Asset, AssetsShouldGoToTheBridge);
+                }
             }
 
             Assets.Clear();
@@ -118,27 +124,23 @@ namespace DCL.LOD.Components
         {
             SceneID = sceneID;
             if (ParentContainer == null)
-            {
                 ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
-
-                // Stay hidden while descriptor assets stream in one-by-one. Otherwise the half-assembled
-                // LOD_0 renders on top of the still-visible LOD_1, causing z-fighting and double-shaded
-                // geometry for the (potentially multi-second) interval. RevealAssembledAssets() flips this
-                // on in a single frame once every asset is in place.
-                ParentContainer.SetActive(false);
-            }
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
         }
 
         /// <summary>
         ///     Atomically reveals the fully assembled LOD_0 once <see cref="AllAssetsInstantiated" /> is true.
-        ///     The caller hands the container to the LODGroup in the same frame, which then culls LOD_1 by
-        ///     distance, so the swap shows no overlap window and no empty frame.
+        ///     Each asset streamed in with rendering suppressed (but its GameObject active, so colliders stay
+        ///     registered); this restores rendering so the LODGroup the caller wires up in the same frame can
+        ///     cull LOD_1 by distance. No overlap window, no empty frame.
         /// </summary>
         public void RevealAssembledAssets()
         {
-            if (ParentContainer != null)
-                ParentContainer.SetActive(true);
+            foreach (ISSStoredAsset storedAsset in Assets)
+            {
+                if (storedAsset.succeded)
+                    storedAsset.Asset.ToggleRendering(true);
+            }
         }
 
         public void AddFailedAsset(string creationHelperAssetHash)
