@@ -27,13 +27,26 @@ namespace DCL.CharacterMotion.Systems
         private const int COUNTDOWN_FRAMES = 20;
 
         // A land-on-parcel teleport is positioned before the target scene's colliders load, so the
-        // parcel floor height is unknown at that point. Once the scene is ready we raycast straight
-        // down from well above the scene and snap onto the topmost walkable collider (Default/Floor/
-        // CharacterOnly layers), so the avatar lands on the actual floor at that parcel regardless of
-        // how high it sits relative to the spawn-point anchor.
+        // parcel floor height is unknown at that point. Once the scene is ready we probe the parcel
+        // for its walkable floor: a parcel center can sit over a gap, stairs or a lower level in a
+        // terraced scene, so we sample a grid across the parcel and land on the highest walkable
+        // surface that's still within a step-up of the parcel's own local ground (rejecting roofs and
+        // canopies far overhead).
         private const float LAND_ON_PARCEL_RAYCAST_UP_OFFSET = 100f;
         private const float LAND_ON_PARCEL_RAYCAST_DISTANCE = 200f;
         private const float LAND_ON_PARCEL_GROUND_CLEARANCE = 0.1f;
+
+        // Offset from the parcel center, on each axis, of the outer probe samples. 5m keeps every
+        // sample comfortably inside the 16m parcel (3m clear of each edge) so the avatar never settles
+        // across a parcel boundary.
+        private const float LAND_ON_PARCEL_SAMPLE_OFFSET = 5f;
+
+        // A walkable surface at most this far above the parcel's lowest floor is a reachable step or
+        // terrace; anything higher is treated as overhead geometry (roof, canopy, truss) and ignored.
+        private const float LAND_ON_PARCEL_MAX_STEP_UP = 15f;
+
+        // Two heights within this margin count as the same level, so ties break on proximity to center.
+        private const float LAND_ON_PARCEL_LEVEL_EPSILON = 0.1f;
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
@@ -181,59 +194,79 @@ namespace DCL.CharacterMotion.Systems
         }
 
         /// <summary>
-        ///     Snaps a land-on-parcel teleport down onto the scene floor, now that the scene is ready
-        ///     and its colliders exist. Falls back to the precomputed position when no floor collider
-        ///     is found within range.
+        ///     Snaps a land-on-parcel teleport onto the parcel's walkable floor, now that the scene is
+        ///     ready and its colliders exist. Probes a grid across the parcel and picks the highest
+        ///     walkable surface within a step-up of the parcel's local ground, so the avatar lands on an
+        ///     elevated terrace/deck rather than the lower plane beneath it. Falls back to the
+        ///     precomputed position when no floor collider is found anywhere in the parcel.
         /// </summary>
         private static Vector3 SnapToSceneFloor(Vector3 position)
         {
             // The scene container is moved from its loading position (Mordor, ~-10000) to its real
             // position on the same frame the readiness report resolves, and physics runs in manual mode
             // with auto-sync off. On the teleport-resolution frame the per-frame sync may be skipped, so
-            // force one here to guarantee the raycast queries the colliders' current poses.
+            // force one here to guarantee the raycasts query the colliders' current poses.
             Physics.SyncTransforms();
 
-            // TEMP diagnostic: dump the full vertical collider column at the landing point so we can
-            // see where the real floor is relative to the anchor (and whether a ceiling/truss is in
-            // the way). Remove before merge.
-            Vector3 columnOrigin = position + (Vector3.up * 200f);
-            LogColumn("character-only", columnOrigin, PhysicsLayers.CHARACTER_ONLY_MASK);
-            LogColumn("all-layers", columnOrigin, ~0);
-            ReportHub.LogProductionInfo($"[jumpin] anchor=({position.x:F2},{position.y:F2},{position.z:F2})");
+            // Sample a 3x3 grid spanning the parcel and collect every walkable hit under each column.
+            // The parcel center may sit over a gap or a lower level, so the floor we want is often only
+            // found off-center (e.g. an elevated step along one edge in a terraced scene).
+            Span<float> offsets = stackalloc float[] { -LAND_ON_PARCEL_SAMPLE_OFFSET, 0f, LAND_ON_PARCEL_SAMPLE_OFFSET };
 
-            float anchorY = position.y;
-            Vector3 origin = position + (Vector3.up * LAND_ON_PARCEL_RAYCAST_UP_OFFSET);
+            var hasHit = false;
+            var lowestFloor = float.PositiveInfinity;
 
-            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
-
-            if (hits.Length == 0)
+            foreach (float dx in offsets)
+            foreach (float dz in offsets)
             {
-                ReportHub.LogProductionInfo("[jumpin] no floor hit, keeping anchor height");
-                return position;
+                Vector3 origin = new (position.x + dx, position.y + LAND_ON_PARCEL_RAYCAST_UP_OFFSET, position.z + dz);
+
+                RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+
+                foreach (RaycastHit h in hits)
+                {
+                    hasHit = true;
+                    if (h.point.y < lowestFloor) lowestFloor = h.point.y;
+                }
             }
 
-            // Pick the collider closest to the scene's spawn-point height: that's the author's intended
-            // walking level, so we land on the actual floor instead of a roof/canopy high above it.
-            RaycastHit best = hits[0];
+            if (!hasHit) return position; // nothing to stand on in this parcel; keep the anchored height
 
-            foreach (RaycastHit h in hits)
-                if (Mathf.Abs(h.point.y - anchorY) < Mathf.Abs(best.point.y - anchorY))
-                    best = h;
+            // Anything within a step-up of the parcel's lowest floor is walkable; higher hits are roofs.
+            float ceiling = lowestFloor + LAND_ON_PARCEL_MAX_STEP_UP;
 
-            position.y = best.point.y + LAND_ON_PARCEL_GROUND_CLEARANCE;
-            ReportHub.LogProductionInfo($"[jumpin] snapped to floor y={best.point.y:F2} collider={best.collider.name}");
-            return position;
-        }
+            var bestY = float.NegativeInfinity;
+            Vector3 bestPoint = position;
+            var bestCenterDistSq = float.PositiveInfinity;
 
-        // TEMP diagnostic helper. Remove before merge.
-        private static void LogColumn(string label, Vector3 origin, int mask)
-        {
-            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 400f, mask, QueryTriggerInteraction.Ignore);
-            System.Array.Sort(hits, static (a, b) => a.distance.CompareTo(b.distance));
-            ReportHub.LogProductionInfo($"[jumpin] column[{label}] originY={origin.y:F2} hits={hits.Length}");
+            foreach (float dx in offsets)
+            foreach (float dz in offsets)
+            {
+                Vector3 origin = new (position.x + dx, position.y + LAND_ON_PARCEL_RAYCAST_UP_OFFSET, position.z + dz);
 
-            foreach (RaycastHit h in hits)
-                ReportHub.LogProductionInfo($"[jumpin]   {label} y={h.point.y:F2} layer={LayerMask.LayerToName(h.collider.gameObject.layer)} collider={h.collider.name}");
+                RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+
+                foreach (RaycastHit h in hits)
+                {
+                    if (h.point.y > ceiling) continue; // overhead geometry, not a walkable step
+
+                    float centerDistSq = (dx * dx) + (dz * dz);
+
+                    // Prefer the highest walkable surface; on ties prefer the sample nearest the center
+                    // so flat parcels land the avatar in the middle rather than at an arbitrary edge.
+                    bool higher = h.point.y > bestY + LAND_ON_PARCEL_LEVEL_EPSILON;
+                    bool sameLevelButCentred = h.point.y >= bestY - LAND_ON_PARCEL_LEVEL_EPSILON && centerDistSq < bestCenterDistSq;
+
+                    if (higher || sameLevelButCentred)
+                    {
+                        bestY = h.point.y;
+                        bestPoint = h.point;
+                        bestCenterDistSq = centerDistSq;
+                    }
+                }
+            }
+
+            return new Vector3(bestPoint.x, bestPoint.y + LAND_ON_PARCEL_GROUND_CLEARANCE, bestPoint.z);
         }
 
         [Query]

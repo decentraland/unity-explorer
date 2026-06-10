@@ -55,8 +55,9 @@ namespace DCL.Character.CharacterMotion.Systems
             {
                 // Land at the requested parcel itself rather than the scene's spawn point
                 // (e.g. jumping into an event located at a specific parcel of a multi-parcel scene).
-                // Aim at the parcel center instead of its base corner: the corner lies on the parcel
-                // boundary, where settling tips the avatar into the neighbouring parcel.
+                // Aim at the parcel center: its base corner lies on the parcel boundary, where settling
+                // tips the avatar into the neighbouring parcel. The exact landing XZ is refined later by
+                // TeleportCharacterSystem, which probes the parcel for its actual walkable floor.
                 const float HALF_PARCEL_SIZE = ParcelMathHelper.PARCEL_SIZE / 2f;
                 Vector3 targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel)
                                               + new Vector3(HALF_PARCEL_SIZE, 0f, HALF_PARCEL_SIZE);
@@ -66,7 +67,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
                 // Anchor the height on the scene's spawn point as a best guess: the exact parcel floor
                 // isn't knowable yet (the scene's colliders load later), so TeleportCharacterSystem
-                // snaps the avatar down onto the floor once the scene is ready.
+                // snaps the avatar onto the floor once the scene is ready.
                 (Vector3 spawnTarget, _) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
                 targetWorldPosition.y = spawnTarget.y;
 
