@@ -64,8 +64,9 @@ namespace DCL.Character.CharacterMotion.Systems
                 // Keep the landing inside the scene's parcels; falls back to the parcel base if not.
                 ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef);
 
-                // Derive the height from the scene's spawn point, not the Genesis terrain: a built
-                // scene's floor rarely sits at terrain height, so a terrain offset would bury the avatar.
+                // Anchor the height on the scene's spawn point as a best guess: the exact parcel floor
+                // isn't knowable yet (the scene's colliders load later), so TeleportCharacterSystem
+                // snaps the avatar down onto the floor once the scene is ready.
                 (Vector3 spawnTarget, _) = TeleportUtils.PickTargetWithOffset(sceneDef, parcel);
                 targetWorldPosition.y = spawnTarget.y;
 

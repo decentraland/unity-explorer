@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CrdtEcsBridge.Physics;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
@@ -24,6 +25,15 @@ namespace DCL.CharacterMotion.Systems
     public partial class TeleportCharacterSystem : BaseUnityLoopSystem
     {
         private const int COUNTDOWN_FRAMES = 20;
+
+        // A land-on-parcel teleport is positioned before the target scene's colliders load, so the
+        // parcel floor height is unknown at that point. Once the scene is ready we raycast down to
+        // place the avatar on the floor instead of inside or under the geometry. The window is kept
+        // tight around the spawn-point anchor so it catches the parcel floor a few metres above/below
+        // without snapping onto high overhead geometry (ceilings, trusses) that may carry colliders.
+        private const float LAND_ON_PARCEL_RAYCAST_UP_OFFSET = 5f;
+        private const float LAND_ON_PARCEL_RAYCAST_DISTANCE = 20f;
+        private const float LAND_ON_PARCEL_GROUND_CLEARANCE = 0.1f;
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
@@ -152,10 +162,14 @@ namespace DCL.CharacterMotion.Systems
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
+            // For a land-on-parcel teleport the floor height is only knowable now that the scene is
+            // ready, so snap the avatar down onto it instead of leaving it inside or under the geometry.
+            Vector3 targetPosition = teleportIntent.LandOnParcel ? SnapToSceneFloor(teleportIntent.Position) : teleportIntent.Position;
+
             // Only apply changes when position is actually different otherwise in-place rotation is bugged
-            if (!teleportIntent.Position.Equals(characterController.transform.position))
+            if (!targetPosition.Equals(characterController.transform.position))
             {
-                characterController.transform.position = teleportIntent.Position;
+                characterController.transform.position = targetPosition;
                 rigidTransform.IsGrounded = false; // teleportation is always above
             }
 
@@ -164,6 +178,21 @@ namespace DCL.CharacterMotion.Systems
 
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
+        }
+
+        /// <summary>
+        ///     Snaps a land-on-parcel teleport down onto the scene floor, now that the scene is ready
+        ///     and its colliders exist. Falls back to the precomputed position when no floor collider
+        ///     is found within range.
+        /// </summary>
+        private static Vector3 SnapToSceneFloor(Vector3 position)
+        {
+            var ray = new Ray(position + (Vector3.up * LAND_ON_PARCEL_RAYCAST_UP_OFFSET), Vector3.down);
+
+            if (DCLPhysics.Raycast(ray, out RaycastHit hit, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
+                position.y = hit.point.y + LAND_ON_PARCEL_GROUND_CLEARANCE;
+
+            return position;
         }
 
         [Query]
