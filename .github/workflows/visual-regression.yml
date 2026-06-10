@@ -110,19 +110,24 @@ jobs:
           fi
           RUN_NUMBER=$(echo "$RUN_JSON" | jq -r '.run_number')
           ORIGINAL_EVENT=$(echo "$RUN_JSON" | jq -r '.event')
+          RUN_BRANCH=$(echo "$RUN_JSON" | jq -r '.head_branch')
 
-          # /visual-tests is only meaningful against a PR build. If the
-          # latest successful Unity Cloud Build for this SHA was triggered
-          # by something else (push to dev, scheduled run, manual dispatch),
-          # the artifact path uses a different prefix and our URL would
-          # 404. Fail loudly so the user knows to wait for a PR build
-          # rather than chasing a phantom 404 inside metaforge.
-          if [ "$ORIGINAL_EVENT" != "pull_request" ]; then
-            echo "::error::Latest successful Unity Cloud Build for ${SHORT_SHA} was triggered by '${ORIGINAL_EVENT}', not 'pull_request'. Visual tests can only run against PR builds."
-            exit 1
-          fi
+          # The S3 prefix and branch segment depend on the event and branch of
+          # the run that produced the build (see build-unitycloud.yml), not on
+          # this PR. Derive both from the run so /visual-tests also works on
+          # PRs whose only build for the SHA ran on another trigger — e.g.
+          # bot-created release PRs, whose tip is built by the push to dev.
+          case "$ORIGINAL_EVENT" in
+            pull_request) BUILD_PREFIX="pr" ;;
+            push) BUILD_PREFIX="pu" ;;
+            merge_group) BUILD_PREFIX="mg" ;;
+            workflow_dispatch) BUILD_PREFIX="wd" ;;
+            workflow_call) BUILD_PREFIX="wc" ;;
+            schedule) BUILD_PREFIX="sc" ;;
+            *) BUILD_PREFIX="gn" ;;
+          esac
 
-          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${HEAD_REF}/pr-${RUN_NUMBER}-${SHORT_SHA}"
+          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
           BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
 
           {
