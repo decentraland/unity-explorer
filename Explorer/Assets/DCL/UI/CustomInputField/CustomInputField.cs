@@ -69,7 +69,7 @@ namespace DCL.UI.CustomInputField
             TMP_TextInfo textInfo = textComponent.textInfo;
             bool coloredAny = false;
 
-            // Match indices are raw-string offsets; emojis make them diverge from glyph indices (UNITY-EXPLORER-PAH).
+            // Match indices are raw-string offsets; emojis are surrogate pairs so they diverge from glyph indices.
             for (int i = 0; i < textInfo.characterCount; i++)
             {
                 TMP_CharacterInfo characterInfo = textInfo.characterInfo[i];
@@ -154,7 +154,7 @@ namespace DCL.UI.CustomInputField
 
         public void InsertTextAtCaretPosition(string newText)
         {
-            // A stale Select-All left TMP's caret indices out of sync with the text, crashing Delete (UNITY-EXPLORER-PAH).
+            // TMP caret indices go out of sync when a selection is active; collapse it before inserting.
             ReplaceActiveSelection();
             InsertTextAtPosition(newText, stringPosition);
             OnSelect(null);
