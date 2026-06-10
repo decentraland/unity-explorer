@@ -173,6 +173,7 @@ namespace DCL.UI.ProfileNames
             {
                 config.userHashLabel.text = $"#{profile.UserId[^4..]}";
                 config.saveButtonInteractable = false;
+                config.nameInputField.SetValue(profile.HasClaimedName ? string.Empty : profile.Name);
                 config.saveLoading.SetActive(false);
             }
         }
