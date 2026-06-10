@@ -1,4 +1,5 @@
-﻿using ECS;
+﻿using DCL.SceneRunner.Scene;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -17,10 +18,12 @@ namespace DCL.LOD
         }
 
         public VisualSceneState ResolveVisualSceneState(PartitionComponent partition, SceneDefinitionComponent sceneDefinitionComponent,
-            VisualSceneState currentVisualSceneState, bool scenesAreFixed)
+            VisualSceneState currentVisualSceneState, bool scenesAreFixed, ISSDescriptor issDescriptor)
         {
-            //If we are in a world, dont show lods
-            if (scenesAreFixed) return VisualSceneState.SHOWING_SCENE;
+            //In worlds, only SDK7 scenes with a resolved ISS descriptor participate in LODs.
+            //Anything else keeps the legacy always-full-scene behavior
+            if (scenesAreFixed && (!sceneDefinitionComponent.IsSDK7 || !issDescriptor.SupportsDescriptor()))
+                return VisualSceneState.SHOWING_SCENE;
 
             //For SDK6 scenes, we just show lod0
             if (!sceneDefinitionComponent.IsSDK7)

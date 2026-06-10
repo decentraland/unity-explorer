@@ -37,6 +37,12 @@ namespace DCL.SDKComponents.MediaStream
         private static float lastOpenMediaTime;
         private const float MIN_OPEN_MEDIA_INTERVAL_SECONDS = 0.5f;
 
+        // Generic-URL retry policy: 5 attempts with exponential backoff (2s, 4s, 8s, 16s, 32s).
+        // Covers cold-network scenarios on Windows where the initial reachability probe fails
+        // before DNS/SSL is warm. After MAX_RETRY_ATTEMPTS the component stays in VsError so
+        // genuinely-broken URLs don't burn CPU forever.
+        private const int MAX_RETRY_ATTEMPTS = 5;
+
         public UpdateMediaPlayerSystem(
             World world,
             ISceneData sceneData,
@@ -86,6 +92,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
+            if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
             component.UpdateState();
 
@@ -117,10 +124,15 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
+            {
                 ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+                component.UpdateState();
 
-            // Need to re-update state in case an update was needed from the sdk component or promise
-            component.UpdateState();
+                // Keep last: may trigger an archetype move that invalidates component's ref.
+                UpdateRetryState(entity, ref component);
+            }
+            else
+                component.UpdateState();
         }
 
         [Query]
@@ -130,6 +142,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (TryReInitializeOnSourceChange(entity, ref component, address)) return;
             if (TryReInitializeOnExpiredYouTubeUrl(entity, ref component)) return;
+            if (TryReInitializeOnFailedMedia(entity, ref component)) return;
 
             if (component.MediaPlayer.WaitingForProperties) return;
             if (!frameTimeBudget.TrySpendBudget()) return;
@@ -169,11 +182,18 @@ namespace DCL.SDKComponents.MediaStream
                         sdkComponent.HasSpatialMaxDistance ? sdkComponent.SpatialMaxDistance : null);
             }
 
-            if ((!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent) && ConsumePromise(ref component, false))
-                component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
+            if (!videoPrioritizationSettings.PlayCurrentSceneStreamOnly || sceneStateProvider.IsCurrent)
+            {
+                if (ConsumePromise(ref component, false))
+                    component.MediaPlayer.SetPlaybackPropertiesAsync(sdkComponent, component.IsLiveStream).Forget();
 
-            // Need to re-update state in case an update was needed from the sdk component or promise
-            component.UpdateState();
+                component.UpdateState();
+
+                // Keep last: may trigger an archetype move that invalidates component's ref.
+                UpdateRetryState(entity, ref component);
+            }
+            else
+                component.UpdateState();
         }
 
         /// <summary>
@@ -290,6 +310,76 @@ namespace DCL.SDKComponents.MediaStream
             return true;
         }
 
+        private bool TryReInitializeOnFailedMedia(in Entity entity, ref MediaPlayerComponent component)
+        {
+            if (component.State != VideoState.VsError) return false;
+            if (!World.Has<MediaPlayerRetryState>(entity)) return false;
+
+            MediaPlayerRetryState retry = World.Get<MediaPlayerRetryState>(entity);
+
+            if (retry.Attempts > MAX_RETRY_ATTEMPTS) return false;
+            if (UnityEngine.Time.realtimeSinceStartup < retry.NextRetryAt) return false;
+
+            ReportHub.Log(ReportCategory.MEDIA_STREAM,
+                $"[MediaRetry] Triggering retry {retry.Attempts}/{MAX_RETRY_ATTEMPTS} for {component.MediaAddress}");
+
+            // Tear down only the media player — retry state must survive the recreation, otherwise
+            // the backoff curve resets every cycle and we'd retry forever.
+            RemoveAndForceReInitialization(ref component, entity);
+            return true;
+        }
+
+        private void UpdateRetryState(in Entity entity, ref MediaPlayerComponent component)
+        {
+            // Success path: clear any stale retry bookkeeping the moment the promise resolves cleanly.
+            if (!component.HasFailed)
+            {
+                if (component.OpenMediaPromise is { IsConsumed: true } && World.Has<MediaPlayerRetryState>(entity))
+                    World.Remove<MediaPlayerRetryState>(entity);
+                return;
+            }
+
+            if (component.OpenMediaPromise is not { IsConsumed: true }) return;
+
+            float now = UnityEngine.Time.realtimeSinceStartup;
+            int attempts = 1;
+            bool hasState = World.Has<MediaPlayerRetryState>(entity);
+
+            if (hasState)
+            {
+                MediaPlayerRetryState existing = World.Get<MediaPlayerRetryState>(entity);
+                // Still waiting for the already-scheduled retry; nothing to do.
+                if (existing.NextRetryAt > now) return;
+                attempts = existing.Attempts + 1;
+            }
+
+            if (attempts > MAX_RETRY_ATTEMPTS)
+            {
+                // Otherwise the elapsed state keeps passing TryReInitializeOnFailedMedia's guard and retries fire every frame forever.
+                World.Set(entity, new MediaPlayerRetryState { Attempts = MAX_RETRY_ATTEMPTS + 1, NextRetryAt = float.MaxValue });
+                return;
+            }
+
+            float delay = 2f * (1 << (attempts - 1)); // 2, 4, 8, 16, 32
+
+            var newState = new MediaPlayerRetryState
+            {
+                Attempts = attempts,
+                NextRetryAt = now + delay,
+            };
+
+            // World.Add below invalidates component's ref, so read the address first.
+            MediaAddress mediaAddressForLog = component.MediaAddress;
+
+            if (hasState)
+                World.Set(entity, newState);
+            else
+                World.Add(entity, newState);
+
+            ReportHub.LogWarning(ReportCategory.MEDIA_STREAM,
+                $"[MediaRetry] {mediaAddressForLog} unreachable; scheduled retry {attempts}/{MAX_RETRY_ATTEMPTS} in {delay:F0}s");
+        }
+
         private bool TryReInitializeOnSourceChange(in Entity entity, ref MediaPlayerComponent component, MediaAddress address)
         {
             if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
@@ -300,14 +390,24 @@ namespace DCL.SDKComponents.MediaStream
                 if (selfUrl == otherUrl
                     || (sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) && selfUrl == localMediaUrl)) return false;
 
+                // Dispose while the ref is valid; clearing retry state is a structural change that would invalidate it.
                 RemoveAndForceReInitialization(ref component, entity);
+                ClearRetryStateOnSourceChange(entity);
                 return true;
             }
 
             if (component.MediaAddress == address) return false;
 
             RemoveAndForceReInitialization(ref component, entity);
+            ClearRetryStateOnSourceChange(entity);
             return true;
+        }
+
+        private void ClearRetryStateOnSourceChange(in Entity entity)
+        {
+            // A genuine source change starts a fresh retry budget; don't carry over backoff from the previous URL.
+            if (World.Has<MediaPlayerRetryState>(entity))
+                World.Remove<MediaPlayerRetryState>(entity);
         }
 
         private void RemoveAndForceReInitialization(ref MediaPlayerComponent component, in Entity entity)
