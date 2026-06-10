@@ -27,12 +27,12 @@ namespace DCL.CharacterMotion.Systems
         private const int COUNTDOWN_FRAMES = 20;
 
         // A land-on-parcel teleport is positioned before the target scene's colliders load, so the
-        // parcel floor height is unknown at that point. Once the scene is ready we raycast down to
-        // place the avatar on the floor instead of inside or under the geometry. The window is kept
-        // tight around the spawn-point anchor so it catches the parcel floor a few metres above/below
-        // without snapping onto high overhead geometry (ceilings, trusses) that may carry colliders.
-        private const float LAND_ON_PARCEL_RAYCAST_UP_OFFSET = 5f;
-        private const float LAND_ON_PARCEL_RAYCAST_DISTANCE = 20f;
+        // parcel floor height is unknown at that point. Once the scene is ready we raycast straight
+        // down from well above the scene and snap onto the topmost walkable collider (Default/Floor/
+        // CharacterOnly layers), so the avatar lands on the actual floor at that parcel regardless of
+        // how high it sits relative to the spawn-point anchor.
+        private const float LAND_ON_PARCEL_RAYCAST_UP_OFFSET = 100f;
+        private const float LAND_ON_PARCEL_RAYCAST_DISTANCE = 200f;
         private const float LAND_ON_PARCEL_GROUND_CLEARANCE = 0.1f;
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -187,12 +187,36 @@ namespace DCL.CharacterMotion.Systems
         /// </summary>
         private static Vector3 SnapToSceneFloor(Vector3 position)
         {
+            // TEMP diagnostic: dump the full vertical collider column at the landing point so we can
+            // see where the real floor is relative to the anchor (and whether a ceiling/truss is in
+            // the way). Remove before merge.
+            Vector3 columnOrigin = position + (Vector3.up * 200f);
+            LogColumn("character-only", columnOrigin, PhysicsLayers.CHARACTER_ONLY_MASK);
+            LogColumn("all-layers", columnOrigin, ~0);
+            ReportHub.LogProductionInfo($"[jumpin] anchor=({position.x:F2},{position.y:F2},{position.z:F2})");
+
             var ray = new Ray(position + (Vector3.up * LAND_ON_PARCEL_RAYCAST_UP_OFFSET), Vector3.down);
 
             if (DCLPhysics.Raycast(ray, out RaycastHit hit, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
+            {
                 position.y = hit.point.y + LAND_ON_PARCEL_GROUND_CLEARANCE;
+                ReportHub.LogProductionInfo($"[jumpin] snapped to floor y={hit.point.y:F2} collider={hit.collider.name}");
+            }
+            else
+                ReportHub.LogProductionInfo("[jumpin] no floor hit within window, keeping anchor height");
 
             return position;
+        }
+
+        // TEMP diagnostic helper. Remove before merge.
+        private static void LogColumn(string label, Vector3 origin, int mask)
+        {
+            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, 400f, mask, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(hits, static (a, b) => a.distance.CompareTo(b.distance));
+            ReportHub.LogProductionInfo($"[jumpin] column[{label}] originY={origin.y:F2} hits={hits.Length}");
+
+            foreach (RaycastHit h in hits)
+                ReportHub.LogProductionInfo($"[jumpin]   {label} y={h.point.y:F2} layer={LayerMask.LayerToName(h.collider.gameObject.layer)} collider={h.collider.name}");
         }
 
         [Query]
