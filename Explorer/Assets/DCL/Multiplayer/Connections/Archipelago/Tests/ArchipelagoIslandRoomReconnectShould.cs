@@ -69,5 +69,37 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public void ForceFreshHandshakeWhenFailureThresholdReached([Values(3, 4)] int consecutiveFailures) =>
             // Act & Assert: at/above 3 consecutive failures the cached string is abandoned for a fresh handshake
             Assert.IsTrue(ArchipelagoIslandRoom.ShouldForceFreshHandshake(consecutiveFailures));
+
+        [Test]
+        public void ConsumeNewPendingBecomesCurrentKeepingTheString()
+        {
+            ArchipelagoIslandRoom.ConnectionStringState consumed =
+                ArchipelagoIslandRoom.ConnectionStringState.NewPending("conn-str").Consume();
+
+            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.CURRENT, consumed.State);
+            Assert.AreEqual("conn-str", consumed.ConnectionString);
+        }
+
+        [Test]
+        public void ConsumeNoneStaysNone()
+        {
+            ArchipelagoIslandRoom.ConnectionStringState consumed = ArchipelagoIslandRoom.ConnectionStringState.None.Consume();
+
+            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.NONE, consumed.State);
+            Assert.IsNull(consumed.ConnectionString);
+        }
+
+        [Test]
+        public void ConsumeIsIdempotentOnceCurrent()
+        {
+            // A Current string is only re-evaluated against the room/backoff state, never re-consumed
+            ArchipelagoIslandRoom.ConnectionStringState current =
+                ArchipelagoIslandRoom.ConnectionStringState.NewPending("conn-str").Consume();
+
+            ArchipelagoIslandRoom.ConnectionStringState reconsumed = current.Consume();
+
+            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.CURRENT, reconsumed.State);
+            Assert.AreEqual("conn-str", reconsumed.ConnectionString);
+        }
     }
 }
