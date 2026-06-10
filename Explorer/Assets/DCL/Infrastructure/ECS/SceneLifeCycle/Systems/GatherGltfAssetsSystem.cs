@@ -7,6 +7,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
@@ -47,6 +48,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ILoadingStatus loadingStatus;
         private readonly Entity sceneContainerEntity;
 
+        private SceneByteProgressTracker? progressTracker;
+
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
@@ -67,6 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
+            progressTracker = new SceneByteProgressTracker();
             startTime = Time.time;
         }
 
@@ -77,6 +81,10 @@ namespace ECS.SceneLifeCycle.Systems
                 HashSetPool<Entity>.Release(entitiesUnderObservation);
                 entitiesUnderObservation = null;
             }
+
+            progressTracker?.Dispose();
+            progressTracker = null;
+
             sceneData.SceneLoadingConcluded = true;
         }
 
@@ -111,21 +119,27 @@ namespace ECS.SceneLifeCycle.Systems
                     if (!World.IsAlive(entityRef)
                         || !World.TryGet(entityRef, out GltfContainerComponent gltfContainerComponent))
                     {
+                        progressTracker!.CreditDeath(entityRef);
                         toDelete.Add(entityRef);
                         continue;
                     }
 
-                    // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
                     if (gltfContainerComponent.State == LoadingState.Loading)
-                        // if at least one entity is still loading, we are not done.
+                    {
+                        (long contentLength, float entityProgress) = ReadLoadingState(in gltfContainerComponent);
+                        progressTracker!.RegisterIfNew(entityRef, contentLength);
                         concluded = false;
+                        progressTracker.AccumulateInProgress(entityProgress, contentLength);
+                    }
                     else
-                        // remove entity from list - it's loaded, we don't need to check it anymore
+                    {
+                        progressTracker!.CreditFinish(entityRef);
                         toDelete.Add(entityRef);
+                    }
                 }
 
                 assetsResolved += toDelete.Count;
-                float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+                float progress = progressTracker!.ComputeAndClamp(totalAssetsToResolve, t);
 
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
@@ -154,6 +168,12 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (concluded)
                 {
+                    for (var i = 0; i < reports!.Value.Count; i++)
+                    {
+                        AsyncLoadProcessReport report = reports.Value[i];
+                        report.SetProgress(1);
+                    }
+
                     reports.Value.Dispose();
                     reports = null;
                     Conclude();
@@ -170,6 +190,15 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
                     sceneData.Geometry.BaseParcelPosition;
             }
+        }
+
+        private (long contentLength, float progress) ReadLoadingState(in GltfContainerComponent gltfContainerComponent)
+        {
+            Entity promiseEntity = gltfContainerComponent.Promise.Entity;
+            if (!World.IsAlive(promiseEntity) || !World.TryGet(promiseEntity, out StreamableLoadingState loadingState))
+                return (0, 0f);
+
+            return (loadingState.ContentLength, loadingState.Progress);
         }
 
         private void GatherEntities(Entity entity, GltfContainerComponent component)
