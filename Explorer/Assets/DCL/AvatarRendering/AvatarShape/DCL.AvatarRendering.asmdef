@@ -1,9 +1,8 @@
 {
-    "name": "AvatarShape",
+    "name": "DCL.AvatarRendering",
     "rootNamespace": "",
     "references": [
         "GUID:3c7b57a14671040bd8c549056adc04f5",
-        "GUID:5eabe9a3d4dd19d42a16208ea5411062",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:9e24947de15b9834991c9d8411ea37cf",
@@ -18,11 +17,19 @@
         "GUID:275e22790c04e9b47a5085d7b0c4432a",
         "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:e25ef972de004615a22937e739de2def",
-        "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:5373399c1dc14d2e8b7a17860aa6bd8b",
         "GUID:15fc0a57446b3144c949da3e2b9737a9",
         "GUID:6da682aafc9e2724594f4e4bf9cc2550",
-        "GUID:1087662aaf1c5462baa91fb9484296fd"
+        "GUID:1087662aaf1c5462baa91fb9484296fd",
+        "GUID:9e314663ce958b746873cb22d57ede55",
+        "GUID:b46779583a009f04ba9f5f31d0e7e6ac",
+        "GUID:a9afc38d31ba4565b0e470d9cb99225f",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
+        "GUID:3e5d614bc16b50d41bd94c8d7444ca46",
+        "GUID:f2ca1407928ebdc4bbe7765cc278be44"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

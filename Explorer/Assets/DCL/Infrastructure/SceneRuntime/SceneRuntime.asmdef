@@ -2,7 +2,6 @@
     "name": "SceneRuntime",
     "rootNamespace": "",
     "references": [
-        "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:9659fcb6593e30b46909c1245ed056df",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
@@ -32,7 +31,6 @@
         "GUID:bd0560debe21467c961ac123eedc3c05",
         "GUID:d832748739a186646b8656bdbd447ad0",
         "GUID:d0ec51c740809fd4680d3ea27279dca7",
-        "GUID:5eabe9a3d4dd19d42a16208ea5411062",
         "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
         "GUID:60728e6f5a869504aad5d4a84318c7cc",
         "GUID:a9afc38d31ba4565b0e470d9cb99225f",
