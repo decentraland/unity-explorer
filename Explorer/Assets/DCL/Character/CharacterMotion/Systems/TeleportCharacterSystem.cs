@@ -195,16 +195,27 @@ namespace DCL.CharacterMotion.Systems
             LogColumn("all-layers", columnOrigin, ~0);
             ReportHub.LogProductionInfo($"[jumpin] anchor=({position.x:F2},{position.y:F2},{position.z:F2})");
 
-            var ray = new Ray(position + (Vector3.up * LAND_ON_PARCEL_RAYCAST_UP_OFFSET), Vector3.down);
+            float anchorY = position.y;
+            Vector3 origin = position + (Vector3.up * LAND_ON_PARCEL_RAYCAST_UP_OFFSET);
 
-            if (DCLPhysics.Raycast(ray, out RaycastHit hit, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
+            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+
+            if (hits.Length == 0)
             {
-                position.y = hit.point.y + LAND_ON_PARCEL_GROUND_CLEARANCE;
-                ReportHub.LogProductionInfo($"[jumpin] snapped to floor y={hit.point.y:F2} collider={hit.collider.name}");
+                ReportHub.LogProductionInfo("[jumpin] no floor hit, keeping anchor height");
+                return position;
             }
-            else
-                ReportHub.LogProductionInfo("[jumpin] no floor hit within window, keeping anchor height");
 
+            // Pick the collider closest to the scene's spawn-point height: that's the author's intended
+            // walking level, so we land on the actual floor instead of a roof/canopy high above it.
+            RaycastHit best = hits[0];
+
+            foreach (RaycastHit h in hits)
+                if (Mathf.Abs(h.point.y - anchorY) < Mathf.Abs(best.point.y - anchorY))
+                    best = h;
+
+            position.y = best.point.y + LAND_ON_PARCEL_GROUND_CLEARANCE;
+            ReportHub.LogProductionInfo($"[jumpin] snapped to floor y={best.point.y:F2} collider={best.collider.name}");
             return position;
         }
 
