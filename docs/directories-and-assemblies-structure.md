@@ -1,6 +1,6 @@
 ﻿# Directories & Assemblies Structure
 
-> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 62. The rules below drove that consolidation and remain in force.
+> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 59. The rules below drove that consolidation and remain in force.
 
 ## Encapsulated Features
 
@@ -56,7 +56,7 @@ All containers and plugins belong to a "global" visibility level:
 
 ## Current assembly layout
 
-There are **62 `.asmdef` files** under `Explorer/Assets`: 52 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (325 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
+There are **59 `.asmdef` files** under `Explorer/Assets`: 49 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (325 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
 
 Paths below are relative to `Explorer/Assets`. "Folds" lists notable folders connected to the assembly via `.asmref` â€” the folder names on disk did **not** change during consolidation, so a folder name frequently differs from the assembly it compiles into.
 
@@ -106,10 +106,8 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.Multiplayer` | `DCL/Multiplayer` | Multiplayer anchor: movement, profiles, SDK sync. Folds `Connections` (LiveKit rooms, Archipelago). |
 | `DCL.SharedAPI` | `DCL/SharedAPI` | Cross-feature contracts and event buses. Folds 16 small API/bus folders: `SharedAPI/Events`, `NotificationsBus`, `MVC/ViewDependencies`, `Friends/UserBlocking`, `Navmap/NavmapBus`, `Passport/Bridge`, `SceneRestrictionBusController`, `TeleportPrompt/TeleportBus`, `UserInAppInitializationFlow/PublicAPI`, etc. |
 | `DCL.ApiServices` | `DCL/Lambdas` | Lambdas client and REST API services. Folds `PlacesAPIService`, `EventsApi`, `BadgesAPIService`, `NftInfoAPIService`. |
-| `DCL.Social` | `DCL/Social` | The big social/UI feature bucket. Folds 20 feature folders: `Chat`, `Friends`, `Communities`, `Passport`, `Navmap`, `Places`, `Events`, `ExplorePanel`, `EmotesWheel`, `EmojiPanel`, `VoiceChat`, `Translation`, `Donations`, `InWorldCamera/CameraReelGallery`, `InWorldCamera/PhotoDetail`, `UI/GenericContextMenu/Controllers`, and more. |
+| `DCL.Social` | `DCL/Social` | The big social/UI feature bucket. Folds 23+ feature folders: `Chat`, `Friends`, `Communities`, `Passport`, `Navmap`, `Places`, `Events`, `ExplorePanel`, `EmotesWheel`, `EmojiPanel`, `VoiceChat`, `Translation`, `Donations`, `Backpack` (incl. gifting), `RewardPanel`, `InWorldCamera` (screencapture camera, reel storage/actions, gallery, photo detail), `UI/GenericContextMenu/Controllers`, and more. |
 | `DCL.Chat.History` | `DCL/Chat/History` | Chat history storage leaf. Stays separate: folding it into `DCL.Social` cycles via `DCL.RealmNavigation`. |
-| `DCL.InWorldCamera` | `DCL/InWorldCamera/InWorldCamera` | In-world (screencapture) camera anchor. Folds `CameraReelStorageService`, `ReelActions` (gallery/detail UI folds into `DCL.Social`). |
-| `Backpack` | `DCL/Backpack` | Backpack feature (gifting notifications fold into `DCL.Social`). |
 | `DCL.SmartWearables` | `DCL/SmartWearables` | Smart wearables runtime. Stays separate from `DCL.AvatarRendering` due to structural `SceneLifeCycle` coupling. |
 | `DCL.LOD` | `DCL/LOD` | Scene LODs. Folds `ResourcesUnloading`, `Roads`. |
 | `DCL.Landscape` | `DCL/Landscape` | Terrain/landscape generation. Folds `Rendering/GPUInstancing`. |
@@ -131,7 +129,6 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | `DCL.UI.Hud` | `DCL/UI/MainUIContainer` | Persistent HUD anchor. Folds `Minimap`, `UI/Sidebar`, `Notifications`, `MarketplaceCredits`, `UI/ConnectionStatusPanel`, `UI/DebugMenu`. |
 | `DCL.UI.Prompts` | `DCL/NftPrompt` | Modal prompts anchor. Folds `ChangeRealmPrompt`, `ExternalUrlPrompt`, `TeleportPrompt`. |
 | `DCL.UI.Flows` | `DCL/AuthenticationScreenFlow` | Startup/auth flow anchor. Folds `UserInAppInitializationFlow`, `ApplicationsGuards`. |
-| `RewardPanel` | `DCL/RewardPanel` | Reward panel. Stays separate from `DCL.UI.Hud`: cycle via `DCL.Social`. |
 
 ### Global / composition root
 
