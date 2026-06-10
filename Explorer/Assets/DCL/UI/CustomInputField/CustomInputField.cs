@@ -64,24 +64,39 @@ namespace DCL.UI.CustomInputField
 
         private void ApplyVertexColors()
         {
-            if (string.IsNullOrEmpty(text)) return;
+            if (string.IsNullOrEmpty(text) || inputMatchesInfo.Count == 0) return;
 
-            var textInfo = textComponent.textInfo;
-            foreach (var matchInfo in inputMatchesInfo)
-                for (int i = matchInfo.match.Index; i < matchInfo.match.Index + matchInfo.match.Length; i++)
-                {
-                    int meshIndex = textInfo.characterInfo[i].materialReferenceIndex;
-                    int vertexIndex = textInfo.characterInfo[i].vertexIndex;
+            TMP_TextInfo textInfo = textComponent.textInfo;
+            bool coloredAny = false;
 
-                    Color32[] vertexColors = textInfo.meshInfo[meshIndex].colors32;
-                    vertexColors[vertexIndex + 0] = keywordColor;
-                    vertexColors[vertexIndex + 1] = keywordColor;
-                    vertexColors[vertexIndex + 2] = keywordColor;
-                    vertexColors[vertexIndex + 3] = keywordColor;
-                }
+            // Match indices are raw-string offsets; emojis make them diverge from glyph indices (UNITY-EXPLORER-PAH).
+            for (int i = 0; i < textInfo.characterCount; i++)
+            {
+                TMP_CharacterInfo characterInfo = textInfo.characterInfo[i];
 
-            if (inputMatchesInfo.Count > 0)
+                if (!characterInfo.isVisible || !IsWithinAnyMatch(characterInfo.index))
+                    continue;
+
+                Color32[] vertexColors = textInfo.meshInfo[characterInfo.materialReferenceIndex].colors32;
+                int vertexIndex = characterInfo.vertexIndex;
+                vertexColors[vertexIndex + 0] = keywordColor;
+                vertexColors[vertexIndex + 1] = keywordColor;
+                vertexColors[vertexIndex + 2] = keywordColor;
+                vertexColors[vertexIndex + 3] = keywordColor;
+                coloredAny = true;
+            }
+
+            if (coloredAny)
                 textComponent.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
+        }
+
+        private bool IsWithinAnyMatch(int stringIndex)
+        {
+            foreach ((TextFormatMatchType _, Match match) in inputMatchesInfo)
+                if (stringIndex >= match.Index && stringIndex < match.Index + match.Length)
+                    return true;
+
+            return false;
         }
 
         public override void OnDeselect(BaseEventData eventData)
@@ -139,8 +154,27 @@ namespace DCL.UI.CustomInputField
 
         public void InsertTextAtCaretPosition(string newText)
         {
+            // A stale Select-All left TMP's caret indices out of sync with the text, crashing Delete (UNITY-EXPLORER-PAH).
+            ReplaceActiveSelection();
             InsertTextAtPosition(newText, stringPosition);
             OnSelect(null);
+        }
+
+        private void ReplaceActiveSelection()
+        {
+            if (m_StringPosition == m_StringSelectPosition && !m_isSelectAll)
+                return;
+
+            int length = text.Length;
+            int start = Mathf.Clamp(Mathf.Min(m_StringPosition, m_StringSelectPosition), 0, length);
+            int end = Mathf.Clamp(Mathf.Max(m_StringPosition, m_StringSelectPosition), 0, length);
+
+            m_isSelectAll = false;
+
+            if (end > start)
+                text = text.Remove(start, end - start);
+
+            stringPosition = start;
         }
 
         /// <summary>
