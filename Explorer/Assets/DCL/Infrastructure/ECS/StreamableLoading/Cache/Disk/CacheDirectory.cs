@@ -11,6 +11,9 @@ namespace ECS.StreamableLoading.Cache.Disk
         private static readonly string DISK_CACHE_FOLDER = $"DiskCache{CACHE_VERSION}";
         public readonly string Path;
 
+        public static string DefaultPath =>
+            System.IO.Path.Combine(Application.persistentDataPath!, DISK_CACHE_FOLDER);
+
         private CacheDirectory(string path)
         {
             this.Path = path;

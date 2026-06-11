@@ -13,14 +13,7 @@ namespace DCL.Chat.Commands
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            // Resolves the same path the runtime writes to (and creates it if absent),
-            // so there is no per-platform mapping to maintain here
-            CacheDirectory cacheDirectory = CacheDirectory.NewDefault();
-
-            // Uri escapes characters that would make a concatenated file URL invalid and be
-            // silently ignored by OpenURL (e.g. the space in macOS' "Application Support")
-            Application.OpenURL(new Uri(cacheDirectory.Path).AbsoluteUri);
-
+            Application.OpenURL(new Uri(CacheDirectory.DefaultPath).AbsoluteUri);
             return UniTask.FromResult(string.Empty);
         }
     }
