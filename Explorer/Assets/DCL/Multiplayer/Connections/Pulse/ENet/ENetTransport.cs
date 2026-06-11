@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
             }
         }
 
-        public UniTask ConnectAsync(string ip, int port, CancellationToken ct)
+        public async UniTask ConnectAsync(string ip, int port, CancellationToken ct)
         {
             if (!isLibInitialized)
             {
@@ -113,8 +113,8 @@ namespace DCL.Multiplayer.Connections.Pulse.ENet
 
             try
             {
-                return UniTask.WaitUntil(() => State == ITransport.TransportState.CONNECTED, cancellationToken: ct)
-                              .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
+                await UniTask.WaitUntil(() => State == ITransport.TransportState.CONNECTED, cancellationToken: ct)
+                             .Timeout(TimeSpan.FromMilliseconds(options.ConnectTimeoutMs));
             }
             catch (TimeoutException)
             {
