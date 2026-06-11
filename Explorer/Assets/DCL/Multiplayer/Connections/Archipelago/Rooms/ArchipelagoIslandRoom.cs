@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
-        private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None);
+        private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         private int consecutiveConnectFailures;
         private DateTime nextReconnectAttemptUtc = DateTime.MinValue;
@@ -85,20 +85,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewConnectionString(string connectionString)
         {
-            using var guard = connectionState.Lock();
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             guard.Value = ConnectionStringState.NewPending(connectionString);
         }
 
         private void ResetConnectionState()
         {
-            using var guard = connectionState.Lock();
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             guard.Value = ConnectionStringState.None;
         }
 
         // Reads the state and consumes it (NewPending -> Current) atomically so a pushed string is acted on once.
         private ConnectionStringState ReadAndConsumeConnectionState()
         {
-            using var guard = connectionState.Lock();
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             ConnectionStringState state = guard.Value;
             guard.Value = state.Consume();
             return state;
