@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
@@ -62,16 +62,14 @@ namespace ECS.SceneLifeCycle.Systems
             return sceneFacade;
         }
 
-        protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
-
         protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
             const string NAME = "main.crdt";
 
-            // if scene does not contain main.crdt, do nothing
-            if (!sceneContent.TryGetContentUrl(NAME, out var url))
+            // CDN-first resolution is handled by URL overrides injected into SceneHashedContent when available.
+            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
             return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();

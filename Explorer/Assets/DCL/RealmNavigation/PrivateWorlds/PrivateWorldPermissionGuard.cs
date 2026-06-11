@@ -1,12 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using DCL.LiveKit.Public;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 using System.Threading;
@@ -102,7 +100,7 @@ namespace DCL.PrivateWorlds
 
         private async UniTask CheckCurrentWorldAccessAndTeleportIfRevokedAsync(CancellationToken ct)
         {
-            if (ct.IsCancellationRequested || 
+            if (ct.IsCancellationRequested ||
                 realmData.RealmType.Value is not RealmKind.World)
                 return;
 
@@ -113,7 +111,7 @@ namespace DCL.PrivateWorlds
 
             WorldAccessCheckContext context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
 
-            if (ct.IsCancellationRequested || 
+            if (ct.IsCancellationRequested ||
                 realmData.RealmType.Value is not RealmKind.World)
                 return;
 

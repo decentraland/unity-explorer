@@ -1,6 +1,7 @@
 using System;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Utility;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -88,13 +89,28 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
+            // Leak the resouces. Managed dispose of TransformAccessArray takes very much time.
+            if (DCL.Utility.ExitUtils.IsAboutToQuit)
+            {
+                return;
+            }
+
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(AvatarTransformMatrixJobWrapper));
+
             remoteAvatars.Complete();
+            stopwatch.LogStep("remoteAvatars.Complete");
 
             remoteAvatars.Dispose();
+            stopwatch.LogStep("remoteAvatars.Dispose");
+
             mainPlayerAvatar.Dispose();
+            stopwatch.LogStep("mainPlayerAvatar.Dispose");
 
             if (dummyTransform != null)
+            {
                 UnityEngine.Object.Destroy(dummyTransform.gameObject);
+                stopwatch.LogStep("dummyTransform.Destroy");
+            }
 
             disposed = true;
         }

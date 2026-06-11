@@ -96,6 +96,8 @@ namespace Global.Dynamic
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
+        private bool canShutdown;
+
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
@@ -103,32 +105,62 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            Shutdown();
+        }
+
+        private void Shutdown()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                return;
+
+            if (canShutdown == false)
+                return;
+
+            canShutdown = false;
+
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MainSceneLoader));
+
             DisableAllSelectableTransitions();
+            stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
 
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                {
                     plugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
 
                 if (globalWorld != null)
+                {
                     dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    stopwatch.LogStep("DisposeGlobalWorld");
+                }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("dynamicWorldContainer.SafeDispose");
             }
 
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
                 foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                {
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"ECSWorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
             bootstrapContainer?.Dispose();
-            splashScreen.Dispose();
+            stopwatch.LogStep("bootstrapContainer.Dispose");
 
-            ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
+            splashScreen.Dispose();
+            stopwatch.LogStep("splashScreen.Dispose");
+
+            ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private void OnApplicationQuit()
@@ -144,6 +176,11 @@ namespace Global.Dynamic
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
+
+            ExitUtils.Configure(
+                    softShutdown: applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN),
+                    nativeShutdownStopwatch: applicationParametersParser.HasFlag(AppArgsFlags.NATIVE_SHUTDOWN_STOPWATCH)
+                    );
         }
 
         private void ParseEnvironment(string environment)
@@ -154,6 +191,9 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            canShutdown = true;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters

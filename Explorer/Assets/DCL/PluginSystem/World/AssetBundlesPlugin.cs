@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
@@ -63,8 +64,10 @@ namespace DCL.PluginSystem.World
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL);
 
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache, byteWeightedProgress);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -74,8 +77,10 @@ namespace DCL.PluginSystem.World
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 
+            bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
+
             // TODO create a runtime ref-counting cache
-            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);
+            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache, byteWeightedProgress);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
