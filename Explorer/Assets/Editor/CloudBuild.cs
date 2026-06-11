@@ -25,6 +25,8 @@ namespace Editor
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PreExport ~~");
 
+            PurgeBurstCache();
+
             // Get all environment variables
             var environmentVariables = Environment.GetEnvironmentVariables();
             Parameters = environmentVariables.Cast<DictionaryEntry>().ToDictionary(x => x.Key.ToString(), x => x.Value);
@@ -78,6 +80,30 @@ namespace Editor
         public static void PostExport()
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
+        }
+
+        // The Library cache restored by Unity Cloud Build can contain truncated Burst
+        // hash-cache files (e.g. from builds cancelled mid-cache-write), which crash the
+        // Burst AOT step with EndOfStreamException instead of being treated as a cache miss.
+        private static void PurgeBurstCache()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Library", "BurstCache");
+
+            if (!Directory.Exists(path))
+            {
+                Debug.Log("[BURST]: no BurstCache directory found, nothing to purge");
+                return;
+            }
+
+            try
+            {
+                Directory.Delete(path, true);
+                Debug.Log("[BURST]: purged restored Library/BurstCache");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[BURST]: failed to purge BurstCache: {e.Message}");
+            }
         }
 
         private static void WriteReleaseStoreToBuildData(string installSource)
