@@ -24,7 +24,8 @@ namespace DCL.Multiplayer.Movement
         /// </summary>
         public void Enqueue(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
+            // Disabled due GC pressure on hot path
+            // ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
 
             incomingQueue.Enqueue((@for, fullMovementMessage));
         }
