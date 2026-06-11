@@ -51,12 +51,25 @@ jobs:
           # comment gets posted. The release branch is cut from dev tip, whose
           # SHA was already built by the push to dev — reuse that run's
           # artifacts instead of rebuilding.
-          EXISTING=$(gh pr view "$BRANCH_NAME" --json comments \
-            --jq '[.comments[] | select(.author.login == "github-actions") | select(.body | contains("img.shields.io/badge/Build"))] | length')
-          if [ "$EXISTING" -gt 0 ]; then
-            echo "Build comment already present, skipping."
+          PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number --jq '.number')
+          EXISTING=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("img.shields.io/badge/Build"))] | .[0] // empty')
+
+          # A "Build Not Found" comment is upgraded in place on re-run once the
+          # build exists; only a success comment short-circuits.
+          if [ -n "$EXISTING" ] && jq -e '.body | contains("Build-Success")' <<< "$EXISTING" > /dev/null; then
+            echo "Build links comment already present, skipping."
             exit 0
           fi
+          COMMENT_ID=$([ -n "$EXISTING" ] && jq -r '.id' <<< "$EXISTING" || echo "")
+
+          post_comment() {
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" -F body=@comment.md > /dev/null
+            else
+              gh pr comment "$BRANCH_NAME" --body-file comment.md
+            fi
+          }
 
           HEAD_SHA=$(git rev-parse HEAD)
           SHORT_SHA="${HEAD_SHA:0:7}"
@@ -76,7 +89,7 @@ jobs:
               echo ""
               echo "[badge]: https://img.shields.io/badge/Build-Not%20Found-yellow?logo=github&style=for-the-badge"
             } > comment.md
-            gh pr comment "$BRANCH_NAME" --body-file comment.md
+            post_comment
             exit 0
           fi
 
@@ -122,4 +135,4 @@ jobs:
             echo ""
             echo "[badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge"
           } > comment.md
-          gh pr comment "$BRANCH_NAME" --body-file comment.md
+          post_comment
