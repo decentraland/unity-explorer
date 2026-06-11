@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateEntity()
             {
-                entity = world.Create(component, new PBAudioSource());
+                entity = world.Create(component, new PBAudioSource(), new PartitionComponent());
                 AddTransformToEntity(entity);
             }
         }
