@@ -147,9 +147,7 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
-                        // Fresh LWW PUT with playing:true is an explicit retrigger intent.
-                        // Seek to the creator-specified cursor before Play() so same-URL
-                        // retriggers restart at the intended position even when already playing.
+                        // LWW PUT with playing:true is an explicit retrigger — seek first so the cursor is correct.
                         if (sdkComponent.HasCurrentTime)
                             audioSource.time = sdkComponent.CurrentTime;
 
