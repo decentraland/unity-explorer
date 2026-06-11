@@ -78,7 +78,7 @@ namespace Utility.Multithreading
 
             public bool MoveNext()
             {
-                frameCount = Time.frameCount;
+                frameCount = UnityEngine.Time.frameCount;
                 return true;
             }
         }

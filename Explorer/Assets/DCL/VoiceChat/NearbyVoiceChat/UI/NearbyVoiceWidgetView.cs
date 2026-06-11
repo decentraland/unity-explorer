@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.UI
             if (!isSpeakingState || amplitudeProvider == null) return;
 
             float target = Mathf.Clamp01(amplitudeProvider() * colorSensitivity);
-            smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * Time.deltaTime);
+            smoothedIntensity = Mathf.Lerp(smoothedIntensity, target, colorSmoothing * UnityEngine.Time.deltaTime);
             speakButtonImage.color = Color.Lerp(speakingColor, speakingColorBright, smoothedIntensity);
         }
     }
