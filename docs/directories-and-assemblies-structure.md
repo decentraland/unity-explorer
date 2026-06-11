@@ -1,6 +1,6 @@
 ﻿# Directories & Assemblies Structure
 
-> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 44. The rules below drove that consolidation and remain in force.
+> **Status:** reflects the assembly consolidation completed in June 2026, which reduced the project from 139 `.asmdef` files to 45. The rules below drove that consolidation and remain in force.
 
 ## Encapsulated Features
 
@@ -56,7 +56,7 @@ All containers and plugins belong to a "global" visibility level:
 
 ## Current assembly layout
 
-There are **44 `.asmdef` files** under `Explorer/Assets`: 34 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (322 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
+There are **45 `.asmdef` files** under `Explorer/Assets`: 35 first-party runtime, 3 test, 2 editor-only, 2 native plugin wrappers, 2 vendored, 1 generated. Everything else compiles into one of them via `.asmref` (322 of them at the time of writing). Assemblies coming from UPM packages (e.g. `LiveKit`, `RichTypes`, `REnum`, `Runtime.Wearables`, `DCL.RPC`, `Decentraland.ClearScript`, `UniTask`) live in `Explorer/Packages` / git packages and are not counted here.
 
 Paths below are relative to `Explorer/Assets`. "Folds" lists notable folders connected to the assembly via `.asmref` â€” the folder names on disk did **not** change during consolidation, so a folder name frequently differs from the assembly it compiles into.
 
@@ -136,6 +136,7 @@ Lean, high fan-in assemblies. They are **intentionally kept small** and must nev
 | Assembly | Path | Purpose / notable folds |
 |---|---|---|
 | `DCL.Native` | `Plugins/NativeWindowManager` | Native interop anchor. Folds `Plugins/NativeAudioAnalysis`, `Plugins/WindowsRegistry`. |
+| `JsWebSockets` | `Plugins/WebGLSockets` | WebGL WebSocket implementation. Currently unreferenced by design — kept on purpose for future WebGL support; do not delete as dead code. |
 | `DCL.Native.Processes` | `Plugins/DclNativeProcesses` | Native process launching leaf (referenced by `Utility` â€” cannot fold into `DCL.Native`). |
 | `DOTween.Modules` | `Plugins/DOTween/Modules` | Vendored DOTween modules. |
 | `SocketIOClient` | `Plugins/SocketIO/SocketIOClient` | Vendored Socket.IO client. Folds `SocketIOClient.Newtonsoft.Json`. |
