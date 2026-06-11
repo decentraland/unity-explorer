@@ -62,8 +62,11 @@ jobs:
           SHORT_SHA="${HEAD_SHA:0:7}"
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
 
-          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build") | select(.event == "pull_request" or .event == "push")] | .[0]')
+          # Scoped to the build workflow file — a repo-wide head_sha listing
+          # gets crowded out by bot runs sharing the SHA and the build falls
+          # past the first page.
+          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
 
           if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
             {

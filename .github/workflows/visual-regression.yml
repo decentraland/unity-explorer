@@ -102,11 +102,14 @@ jobs:
           SHORT_SHA="${HEAD_SHA:0:7}"
 
           # 2. Find the most recent successful Unity Cloud Build run for this
-          #    SHA. Only pull_request/push builds qualify — dispatch builds can
+          #    SHA, scoped to the build workflow file — a repo-wide head_sha
+          #    listing gets crowded out by bot runs sharing the SHA (90+ on a
+          #    typical release commit) and the build falls past the first page.
+          #    Only pull_request/push builds qualify — dispatch builds can
           #    carry non-default options (e.g. profiling) that break the
           #    determinism visual tests rely on.
-          RUN_JSON=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
-            --jq '[.workflow_runs[] | select(.name == "Unity Cloud Build") | select(.event == "pull_request" or .event == "push")] | .[0]')
+          RUN_JSON=$(gh api "repos/${{ github.repository }}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
           if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
             echo "::error::No successful Unity Cloud Build run found for SHA ${SHORT_SHA}. Is the build still in progress, or did it fail?"
             exit 1
