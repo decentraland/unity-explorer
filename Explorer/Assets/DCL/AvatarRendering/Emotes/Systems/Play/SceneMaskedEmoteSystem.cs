@@ -278,7 +278,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// </summary>
         private void TryStopMaskedEmote(ref CharacterMaskedEmoteComponent masked, bool permanent = false)
         {
-            messageBus.SendStop();
+            // If a full-body emote is already playing on the local player, its EmoteStart has
+            // already superseded this masked emote on the server (EmoteStop carries no emote id,
+            // so sending it now would clear that emote instead).
+            bool anotherEmoteIsBroadcast = globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent emoteComponent)
+                                           && emoteComponent.CurrentEmoteReference != null;
+
+            if (!anotherEmoteIsBroadcast)
+                messageBus.SendStop();
 
             if (masked.CurrentEmoteReference == null)
             {

@@ -346,6 +346,17 @@ namespace DCL.AvatarRendering.Emotes.Play
 
                     if (mask == AvatarEmoteMask.AemFullBody)
                     {
+                        // A masked emote may still be playing on a separate animator layer (remote players).
+                        // EmoteStart replaces the current emote, so the full-body emote supersedes it —
+                        // mirrors the masked branch below, which stops a playing full-body emote.
+                        ref CharacterMaskedEmoteComponent masked = ref World.TryGetRef<CharacterMaskedEmoteComponent>(entity, out bool hasMasked);
+
+                        if (hasMasked && masked.CurrentEmoteReference != null)
+                        {
+                            masked.StopEmote = true;
+                            emotePlayer.TryCancelMaskedEmote(ref masked, view);
+                        }
+
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = mask;
 
