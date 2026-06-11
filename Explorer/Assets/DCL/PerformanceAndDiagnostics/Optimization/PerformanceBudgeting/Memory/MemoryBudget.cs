@@ -40,7 +40,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private MemoryUsageStatus GetMemoryUsageStatus()
         {
-            if(Time.frameCount == cachedFrame)
+            if(UnityEngine.Time.frameCount == cachedFrame)
                 return cachedStatus;
 
             long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
@@ -54,7 +54,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                                _ => NORMAL,
                            };
 
-            cachedFrame = Time.frameCount;
+            cachedFrame = UnityEngine.Time.frameCount;
             return cachedStatus;
         }
 
