@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿#if AV_PRO_PRESENT
+using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -130,3 +131,4 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
+#endif

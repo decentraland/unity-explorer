@@ -1,3 +1,4 @@
+#if AV_PRO_PRESENT
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
@@ -122,3 +123,4 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
+#endif

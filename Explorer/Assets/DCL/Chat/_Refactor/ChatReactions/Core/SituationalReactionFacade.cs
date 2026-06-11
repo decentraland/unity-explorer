@@ -110,7 +110,7 @@ namespace DCL.Chat.ChatReactions.Core
             if (sendBudget == null || sendBudget.TryConsume())
                 networkBroadcaster.Broadcast(emojiIndex);
 
-            ReactionSent?.Invoke(emojiIndex, count, Time.unscaledTime);
+            ReactionSent?.Invoke(emojiIndex, count, UnityEngine.Time.unscaledTime);
             UserReactedToSituation?.Invoke(emojiIndex);
         }
 
