@@ -36,14 +36,14 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public readonly AsyncLoadProcessReport? AssetsResolution;
 
-        public bool TimedOut => Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
+        public bool TimedOut => UnityEngine.Time.realtimeSinceStartup - creationTime > TIMEOUT.TotalSeconds;
 
         public PlayerTeleportIntent(SceneEntityDefinition? sceneDef, Vector2Int parcel, Vector3 position, CancellationToken cancellationToken, AsyncLoadProcessReport? assetsResolution = null, bool isPositionSet = false)
         {
             Parcel = parcel;
             CancellationToken = cancellationToken;
             AssetsResolution = assetsResolution;
-            creationTime = Time.realtimeSinceStartup;
+            creationTime = UnityEngine.Time.realtimeSinceStartup;
             SceneDef = sceneDef;
             IsPositionSet = isPositionSet;
             Position = position;

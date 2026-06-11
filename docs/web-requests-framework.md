@@ -2,7 +2,7 @@
 
 ## General Structure
 
-We are using a custom generic structure for performing `Web Requests` in an asynchronous way. It's located in `DCL.WebRequests` assembly.
+We are using a custom generic structure for performing `Web Requests` in an asynchronous way. It's located in the `DCL.WebRequests` namespace (the `Assets/DCL/WebRequests` folder, which compiles into the `DCL.Network` assembly).
 
 Currently, the exposed API looks like this:
 ```csharp

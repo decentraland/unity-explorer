@@ -114,7 +114,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
                 bone.localRotation = capturedRotations[i];
             }
 
-            time += Time.deltaTime;
+            time += UnityEngine.Time.deltaTime;
 
             float length = currentClip.length;
             if (length <= 0f) return;
