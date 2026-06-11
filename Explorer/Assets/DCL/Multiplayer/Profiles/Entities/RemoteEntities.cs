@@ -4,7 +4,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -15,10 +14,8 @@ using DCL.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using LiveKit.Rooms;
 using System.Collections.Generic;
 using DCL.Profiles;
-using LiveKit.Proto;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -27,6 +24,8 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public class RemoteEntities : IRemoteEntities
     {
+        private static readonly Vector3 HIDDEN_SPAWN_POSITION = new (int.MinValue, 0f, int.MinValue);
+
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -132,12 +131,14 @@ namespace DCL.Multiplayer.Profiles.Entities
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
             transform.transform.SetParent(remoteEntitiesParent);
+            transform.transform.position = HIDDEN_SPAWN_POSITION;
             transform.transform.rotation = Quaternion.identity;
             transform.transform.localScale = Vector3.one;
 
             var remoteAvatarCollider = remoteAvatarColliderPool.Get()!;
             remoteAvatarCollider.name = $"Collider {profile.WalletId}";
             remoteAvatarCollider.transform.SetParent(transform);
+            remoteAvatarCollider.transform.localPosition = Vector3.zero;
             remoteAvatarCollider.transform.rotation = Quaternion.identity;
             remoteAvatarCollider.transform.localScale = Vector3.one;
             collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider);
