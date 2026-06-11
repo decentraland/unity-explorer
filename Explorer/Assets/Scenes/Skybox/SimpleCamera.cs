@@ -130,7 +130,7 @@ public class SimpleCamera : MonoBehaviour
 
     private void CalculateCurrentIncrease(bool moving)
     {
-        _currentIncrease = Time.deltaTime;
+        _currentIncrease = UnityEngine.Time.deltaTime;
 
         if (!_enableSpeedAcceleration || _enableSpeedAcceleration && !moving)
         {
@@ -138,8 +138,8 @@ public class SimpleCamera : MonoBehaviour
             return;
         }
 
-        _currentIncreaseMem += Time.deltaTime * (_speedAccelerationFactor - 1);
-        _currentIncrease = Time.deltaTime + Mathf.Pow(_currentIncreaseMem, 3) * Time.deltaTime;
+        _currentIncreaseMem += UnityEngine.Time.deltaTime * (_speedAccelerationFactor - 1);
+        _currentIncrease = UnityEngine.Time.deltaTime + Mathf.Pow(_currentIncreaseMem, 3) * UnityEngine.Time.deltaTime;
     }
 
     private void Update()
@@ -155,7 +155,7 @@ public class SimpleCamera : MonoBehaviour
         // Translation
         if (_enableTranslation)
         {
-            transform.Translate(Vector3.forward * Input.mouseScrollDelta.y * Time.deltaTime * _translationSpeed);
+            transform.Translate(Vector3.forward * Input.mouseScrollDelta.y * UnityEngine.Time.deltaTime * _translationSpeed);
         }
 
         // Movement
