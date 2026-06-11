@@ -275,6 +275,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         public void Hide()
         {
             HideBar();
+            buttonPresenter.Hide();
         }
 
         private void SyncShowOthersToggle()
