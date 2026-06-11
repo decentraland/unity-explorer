@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         {
             // Extract message case without parsing so we can get the message from the pool and merge it with new data
             // Extract the field number from the first tag byte.
-            // The field numbers (1–4) map directly to ServerMessage.MessageOneofCase values.
+            // The field numbers (<=15) map directly to ServerMessage.MessageOneofCase values.
             ServerMessage.MessageOneofCase messageCase = data.Length > 0
                 ? (ServerMessage.MessageOneofCase)(data[0] >> 3)
                 : ServerMessage.MessageOneofCase.None;
