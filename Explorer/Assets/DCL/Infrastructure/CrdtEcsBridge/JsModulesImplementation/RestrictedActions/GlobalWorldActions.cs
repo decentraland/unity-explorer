@@ -74,7 +74,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // Fixes https://github.com/decentraland/unity-explorer/issues/6246
             // We need to add a delay before we can start transitioning in the animator, or we might encounter artifacts
-            world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(Time.frameCount + 20));
+            world.AddOrSet(playerEntity, new DisableAnimationTransitionOnTeleport(UnityEngine.Time.frameCount + 20));
 
             // Update avatar rotation (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newAvatarTarget != null)

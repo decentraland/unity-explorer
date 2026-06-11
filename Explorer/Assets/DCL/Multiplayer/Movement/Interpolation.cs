@@ -82,7 +82,7 @@ namespace DCL.Multiplayer.Movement
             var currentRotation = Quaternion.LookRotation(headIK.LookAt);
             var targetRotation = Quaternion.Euler(targetYawAndPitch.y, targetYawAndPitch.x, 0);
 
-            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * Time.deltaTime);
+            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * UnityEngine.Time.deltaTime);
             Vector3 interpolatedYawAndPitch = interpolatedRotation.eulerAngles;
 
             return new Vector2(interpolatedYawAndPitch.y, interpolatedYawAndPitch.x);
@@ -92,7 +92,7 @@ namespace DCL.Multiplayer.Movement
         {
             if (pointAt.WorldHitPoint == Vector3.zero) return targetHitPoint;
 
-            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * Time.deltaTime);
+            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * UnityEngine.Time.deltaTime);
         }
     }
 }

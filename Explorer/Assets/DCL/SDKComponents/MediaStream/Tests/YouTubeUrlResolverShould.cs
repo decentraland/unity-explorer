@@ -1,3 +1,4 @@
+#if AV_PRO_PRESENT
 using Cysharp.Threading.Tasks;
 using DCL.SDKComponents.MediaStream.YouTube;
 using NSubstitute;
@@ -265,3 +266,4 @@ namespace DCL.SDKComponents.MediaStream.Tests
         }
     }
 }
+#endif

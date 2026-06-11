@@ -2,21 +2,19 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using Decentraland.Kernel.Comms.Rfc4;
-using DCL.LiveKit.Public;
-using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.Emotes
@@ -68,7 +66,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 return;
 
-            float timestamp = Time.unscaledTime;
+            float timestamp = UnityEngine.Time.unscaledTime;
 
             broadcaster.Send(BUILD_PLAYER_EMOTE_MESSAGE, (emote, timestamp, mask), LKDataPacketKind.KindReliable, cancellationTokenSource.Token);
 
@@ -81,7 +79,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 return;
 
-            float timestamp = Time.unscaledTime;
+            float timestamp = UnityEngine.Time.unscaledTime;
 
             broadcaster.Send(BUILD_STOP_MESSAGE, timestamp, LKDataPacketKind.KindReliable, cancellationTokenSource.Token);
 
@@ -136,7 +134,7 @@ namespace DCL.Multiplayer.Emotes
                 // Use timestamp from message if present (non-zero), otherwise fallback to current Unity time
                 float timestamp = receivedMessage.Payload.Timestamp != 0f
                     ? receivedMessage.Payload.Timestamp
-                    : Time.unscaledTime;
+                    : UnityEngine.Time.unscaledTime;
 
                 if (receivedMessage.Payload is { HasIsStopping: true, IsStopping: true })
                 {
