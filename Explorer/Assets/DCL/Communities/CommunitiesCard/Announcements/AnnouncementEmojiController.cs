@@ -77,7 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
             announcementInput.onValueChanged.AddListener(OnAnnouncementInputValueChanged);
             announcementInput.onValidateInput += OnAnnouncementInputValidateInput;
-            emojiButton.Button.onClick.AddListener(OnOpenEmojisPanel);
+            emojiButton.Button.onClick.AddListener(OnToggleEmojisPanel);
             emojiPanelPresenter.EmojiSelected += OnEmojiSelected;
             DCLInput.Instance.UI.Click.performed += OnUIClicked;
         }
@@ -86,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         {
             announcementInput.onValueChanged.RemoveListener(OnAnnouncementInputValueChanged);
             announcementInput.onValidateInput -= OnAnnouncementInputValidateInput;
-            emojiButton.Button.onClick.RemoveListener(OnOpenEmojisPanel);
+            emojiButton.Button.onClick.RemoveListener(OnToggleEmojisPanel);
             emojiPanelPresenter.EmojiSelected -= OnEmojiSelected;
             DCLInput.Instance.UI.Click.performed -= OnUIClicked;
 
@@ -137,13 +137,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             return addedChar;
         }
 
-        private void OnOpenEmojisPanel()
-        {
-            if (emojiPanel.IsVisible)
-                return;
-
-            SetEmojiPanelVisibility(true);
-        }
+        private void OnToggleEmojisPanel() =>
+            SetEmojiPanelVisibility(!emojiPanel.IsVisible);
 
         private void OnEmojiSelected(string emoji)
         {
@@ -163,7 +158,10 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             var clickPosition = DCLInputUtilities.GetPointerPosition(context);
             bool isClickedInsideEmojiPanel = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiPanel.transform, clickPosition, null);
 
-            if (!isClickedInsideEmojiPanel)
+            // Excluded so its own toggle handler isn't undone by closing here on the same click.
+            bool isClickedOnEmojiButton = RectTransformUtility.RectangleContainsScreenPoint((RectTransform)emojiButton.transform, clickPosition, null);
+
+            if (!isClickedInsideEmojiPanel && !isClickedOnEmojiButton)
                 SetEmojiPanelVisibility(false);
         }
 
