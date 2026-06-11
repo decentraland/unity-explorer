@@ -27,17 +27,22 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
+        public override void Initialize()
+        {
+            UpdateAvatarBaseQuery(World, true);
+        }
+
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
-            UpdateAvatarBaseQuery(World);
+            UpdateAvatarBaseQuery(World, false);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase(PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
+        private void UpdateAvatarBase([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
-            if (!profile.IsDirty) return;
+            if (!force && !profile.IsDirty) return;
 
             ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
             {

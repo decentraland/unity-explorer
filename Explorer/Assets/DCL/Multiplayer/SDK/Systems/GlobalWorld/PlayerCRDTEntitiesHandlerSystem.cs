@@ -18,7 +18,6 @@ using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    // Currently implemented to track reserved entities only on the CURRENT SCENE
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
@@ -73,27 +72,29 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void ResolvePlayerCRDTScene(in CharacterTransform characterTransform, ref PlayerCRDTEntity globalPlayerCRDTEntity, CRDTEntity reservedEntityId)
         {
             bool newSceneIsValid = scenesCache.TryGetByParcel(characterTransform.Transform.ParcelPosition(), out ISceneFacade currentScene)
-                                   && currentScene.SceneStateProvider.State == SceneState.Running
+                                   && currentScene.SceneStateProvider.State.Value() is SceneState.Running or SceneState.Starting
                                    && !currentScene.IsEmpty;
 
             if (globalPlayerCRDTEntity.SceneFacade != currentScene)
             {
-                // Only try to remove component if we have a valid scene world entity
-                if (globalPlayerCRDTEntity.SceneWorldEntity != Entity.Null)
-                {
-                    RemoveComponent(globalPlayerCRDTEntity.SceneWorldEntity, ref globalPlayerCRDTEntity, false);
-                }
+                if (globalPlayerCRDTEntity.SceneWorldEntity != Entity.Null
+                    && globalPlayerCRDTEntity.SceneFacade is not null) { RemovePlayerFromScene(globalPlayerCRDTEntity.SceneWorldEntity, reservedEntityId, globalPlayerCRDTEntity.SceneFacade); }
 
                 if (newSceneIsValid)
                 {
                     SceneEcsExecutor sceneEcsExecutor = currentScene.EcsExecutor;
 
-                    Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
-                    sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerSceneCRDTEntity(reservedEntityId));
+                    bool isLocalPlayer = reservedEntityId.Id == SpecialEntitiesID.PLAYER_ENTITY;
+
+                    // LocalPlayerCRDTEntityHandlerSystem creates PlayerSceneCRDTEntity on scene start-up
+                    Entity sceneWorldEntity = isLocalPlayer
+                        ? currentScene.PersistentEntities.Player
+                        : sceneEcsExecutor.World.Create(new PlayerSceneCRDTEntity(reservedEntityId));
 
                     globalPlayerCRDTEntity.AssignToScene(currentScene, sceneWorldEntity);
                 }
-                else { globalPlayerCRDTEntity.RemoveFromScene(); }
+                else
+                    globalPlayerCRDTEntity.RemoveFromScene();
             }
         }
 
@@ -116,16 +117,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             if (playerCRDTEntity is { AssignedToScene: true, SceneFacade: not null })
             {
-                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
-                // as the scene-level Writer systems need it to know which CRDT Entity to affect.
-                // Only post the cleanup intention if the previous scene's world is still running —
-                // writing to a Disposing/Disposed/error scene world races against its teardown.
-                if (playerCRDTEntity.SceneWorldEntity != Entity.Null
-                    && playerCRDTEntity.SceneFacade.SceneStateProvider.State == SceneState.Running)
-                {
-                    SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-                    sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
-                }
+                if (playerCRDTEntity.SceneWorldEntity != Entity.Null)
+                    RemovePlayerFromScene(playerCRDTEntity.SceneWorldEntity, playerCRDTEntity.CRDTEntity, playerCRDTEntity.SceneFacade);
 
                 if (noLongerExists)
                     FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
@@ -133,6 +126,20 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (noLongerExists)
                 World.Remove<PlayerCRDTEntity>(entity);
+        }
+
+        private static void RemovePlayerFromScene(Entity sceneWorldEntity, CRDTEntity crdtEntity, ISceneFacade sceneFacade)
+        {
+            // Local Player is never removed from the scene world
+            if (crdtEntity.Id == SpecialEntitiesID.PLAYER_ENTITY)
+                return;
+
+            SceneState state = sceneFacade.SceneStateProvider.State.Value();
+
+            if (state != SceneState.Running && state != SceneState.Starting)
+                return;
+
+            sceneFacade.EcsExecutor.World.Add<DeleteEntityIntention>(sceneWorldEntity);
         }
 
         private int ReserveNextFreeEntity()
