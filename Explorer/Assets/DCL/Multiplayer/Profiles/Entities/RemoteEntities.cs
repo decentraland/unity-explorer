@@ -138,6 +138,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             var remoteAvatarCollider = remoteAvatarColliderPool.Get()!;
             remoteAvatarCollider.name = $"Collider {profile.WalletId}";
             remoteAvatarCollider.transform.SetParent(transform);
+            remoteAvatarCollider.transform.localPosition = Vector3.zero;
             remoteAvatarCollider.transform.rotation = Quaternion.identity;
             remoteAvatarCollider.transform.localScale = Vector3.one;
             collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider);
