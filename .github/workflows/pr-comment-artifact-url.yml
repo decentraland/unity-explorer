@@ -65,14 +65,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Find Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v4
         id: find-comment
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
 
       - name: Post skipped comment
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
@@ -195,7 +195,7 @@ jobs:
           fi
 
       - name: Find Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v4
         id: find-comment
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
@@ -209,7 +209,7 @@ jobs:
           MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
           MAC_ARTIFACT_S3_URL: "${{ format('{0}/{1}/Decentraland_macos.zip', vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL, env.ARTIFACT_S3_DESTINATION_PATH) }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
@@ -260,14 +260,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Find Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@v4
         id: find-comment
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
 
       - name: Update Comment
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}

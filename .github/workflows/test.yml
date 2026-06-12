@@ -93,7 +93,7 @@ jobs:
           git add .
           git reset --hard
           
-      - uses: webfactory/ssh-agent@v0.8.0
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           
@@ -150,7 +150,7 @@ jobs:
 
       # --- Log into GHCR ---
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -208,7 +208,7 @@ jobs:
 
       - name: Report test results
         if: always()
-        uses: dorny/test-reporter@v2.1.1
+        uses: dorny/test-reporter@v3.0.0
         with:
           name: Unity Tests (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml

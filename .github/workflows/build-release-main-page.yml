@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v21
         with:
           run_id: ${{ github.event.workflow_run.id }}
           name: Decentraland_.*
@@ -61,7 +61,7 @@ jobs:
           skip_unpack: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           draft: true # Swap to auto-release!
