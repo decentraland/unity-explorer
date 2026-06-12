@@ -11,8 +11,5 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(MultiplayerCommunicationSettings))] [field: Space]
         [field: SerializeField]
         internal MultiplayerMovementSettings MovementSettings { get; private set; }
-
-        [field: SerializeField]
-        internal LandscapeDataRef LandscapeData { get; private set; }
     }
 }
