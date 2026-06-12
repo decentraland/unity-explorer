@@ -6,6 +6,7 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -157,6 +158,7 @@ namespace Global.Dynamic
         private readonly BannedNotificationHandler bannedNotificationHandler;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
+        private readonly PendingTransferService pendingTransferService;
 
         public IMVCManager MvcManager { get; }
 
@@ -202,7 +204,8 @@ namespace Global.Dynamic
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
+            PendingTransferService pendingTransferService)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -224,6 +227,7 @@ namespace Global.Dynamic
             this.multiplayerContainer = multiplayerContainer;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
+            this.pendingTransferService = pendingTransferService;
         }
 
         public override void Dispose()
@@ -237,6 +241,7 @@ namespace Global.Dynamic
             profileRepositoryWrapper.Dispose();
             multiplayerContainer.Dispose();
             joinedCommunitiesVoiceLiveTracker.Dispose();
+            pendingTransferService.Dispose();
         }
 
         [SuppressMessage("ReSharper", "MethodHasAsyncOverloadWithCancellation")]
@@ -348,11 +353,12 @@ namespace Global.Dynamic
             IProfileRepository profilesRepository = staticContainer.ProfilesContainer.Repository;
             IProfileCache profileCache = staticContainer.ProfilesContainer.Cache;
 
-            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity);
+            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence(identityCache);
+            PendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence, identityCache, wearableCatalog, emotesCache);
 
-            IGiftingPersistence giftingPersistence = new PlayerPrefsGiftingPersistence();
-            IPendingTransferService pendingTransferService = new PendingTransferService(giftingPersistence);
+            var selfProfile = new SelfProfile(profilesRepository, identityCache, equippedWearables, wearableCatalog,
+                emotesCache, equippedEmotes, selfEmotes, profileCache, globalWorld, playerEntity,
+                pendingTransferService);
             IAvatarEquippedStatusProvider equippedStatusProvider = new AvatarEquippedStatusProvider(selfProfile);
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
             IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
@@ -878,7 +884,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.EntitiesAnalytics,
                     emotesEventBus,
                     trimmedEmoteCatalog,
-                staticContainer.EmotesContainer.EmotePlayer),
+                    staticContainer.EmotesContainer.EmotePlayer),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder,
                     staticContainer.ScenesCache, dclVersion, dynamicSettings.AdaptivePhysicsSettings,
@@ -1068,7 +1074,8 @@ namespace Global.Dynamic
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
-                    joinedCommunitiesVoiceLiveTracker
+                    joinedCommunitiesVoiceLiveTracker,
+                    pendingTransferService
                 ),
                 new GiftingPlugin(assetsProvisioner,
                     mvcManager,
@@ -1441,7 +1448,8 @@ namespace Global.Dynamic
                 bannedNotificationHandler,
                 multiplayerContainer,
                 profileRepositoryWrapper,
-                joinedCommunitiesVoiceLiveTracker
+                joinedCommunitiesVoiceLiveTracker,
+                pendingTransferService
             );
 
             // Init itself

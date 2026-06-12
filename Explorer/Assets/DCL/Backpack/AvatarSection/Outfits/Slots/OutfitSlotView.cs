@@ -46,6 +46,13 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [SerializeField]
         private Image outfitThumbnailEmpty;
 
+        [Header("Pending state UI")]
+        [field: SerializeField]
+        private GameObject pendingBadge;
+
+        [field: SerializeField]
+        private Color thumbnailPendingColor;
+
         [Header("Placeholders & Empty State")]
         [SerializeField] private Image emptyStateSilhouette;
 
@@ -78,6 +85,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public AudioClipConfig DeleteOutfitAudio { get; private set; }
 
         private bool isEquipLoading;
+        private bool isPending;
+        private bool hoverRequested = true;
 
         private void Awake()
         {
@@ -85,7 +94,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
             equipButton?.onClick.AddListener(() =>
             {
-                if (isEquipLoading) return;
+                if (isEquipLoading || isPending) return;
 
                 OnEquipClicked?.Invoke();
 
@@ -97,7 +106,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
             previewButton?.onClick.AddListener(() =>
             {
-                if (isEquipLoading) return;
+                if (isEquipLoading || isPending) return;
 
                 OnPreviewClicked?.Invoke();
                 if (ClickAudio != null)
@@ -154,10 +163,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
             outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
             if (hasRealThumbnail)
-            {
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
-                outfitThumbnail.color = new Color(1, 1, 1, 1);
-            }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
@@ -217,7 +223,26 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void SetHoverEnabled(bool isEnabled)
         {
+            hoverRequested = isEnabled;
+            ApplyHoverEnabled();
+        }
+
+        /// <summary>
+        ///     Marks the outfit pending; disables hover so equip/preview can't be revealed.
+        /// </summary>
+        public void SetIsPending(bool pending)
+        {
+            isPending = pending;
+            ApplyHoverEnabled();
+            outfitThumbnail.color = pending ? thumbnailPendingColor : Color.white;
+            pendingBadge.SetActive(pending);
+        }
+
+        private void ApplyHoverEnabled()
+        {
             if (hoverHandler == null) return;
+
+            bool isEnabled = hoverRequested && !isPending;
 
             // Snap back if we're disabling while hovered — disabled HoverHandler won't fire OnPointerExit.
             if (!isEnabled && hoverHandler.enabled)
