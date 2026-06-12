@@ -57,6 +57,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
 parser.add_argument('--delete', help='Delete build target after PR is closed or merged', action='store_true')
+parser.add_argument('--fetch-log', help='Download the Unity log of the build stored in build_info.json (e.g. after the runner was cancelled)', action='store_true')
 
 def validate_branch_name(branch_name):
     #Validates the branch name to ensure it does not contain special characters like +, ., or @."""
@@ -340,6 +341,8 @@ def poll_build(id):
             return False, status, response_json
         case 'failure' | 'canceled' | 'unknown':
             print(f'Build error! Last known status: "{status}"')
+            if status == 'canceled':
+                print('::warning::The Unity Cloud build was cancelled outside this runner - typically a newer build for the same branch evicted it from the shared target (run_build cancels pending builds), or it was cancelled manually in the dashboard.')
             build_healthy = False
             return False, status, response_json
         case _:
@@ -607,6 +610,7 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
     """
     phase_durations = collections.defaultdict(float)
     queue_reasons = set()
+    queue_warned = False
 
     now = time.time()
     queue_start = now
@@ -624,6 +628,10 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         if build_start is None:
             queue_elapsed = now - queue_start
+            if not queue_warned and queue_elapsed > 1800:
+                reasons = ', '.join(sorted(queue_reasons)) or 'unknown'
+                print(f'::warning::Unity Cloud build queued for over 30 minutes (reasons seen: {reasons}). Build concurrency is likely saturated.')
+                queue_warned = True
             if queue_elapsed > QUEUE_TIMEOUT:
                 print(
                     f'Queue timeout exceeded ({datetime.timedelta(seconds=int(queue_elapsed))} '
@@ -647,7 +655,7 @@ def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
 
         if build_start is None and status in ACTIVE_STATUSES:
             build_start = now
-            print(f'Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
+            print(f'::notice::Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
 
         if status != last_status:
             queue_elapsed = (build_start or now) - queue_start
@@ -682,13 +690,21 @@ resumed_build_elapsed = 0
 
 if args.delete:
     delete_current_target()
-elif args.resume or args.cancel:
+elif args.resume or args.cancel or args.fetch_log:
     build_info = utils.read_build_info()
     if build_info is None:
+        if args.cancel or args.fetch_log:
+            # Runner was cancelled before a build was triggered - nothing to act on.
+            print('No persisted build info - nothing to do.')
+            sys.exit(0)
         sys.exit(1)
 
     os.environ['TARGET'] = build_info["target"]
     id = build_info["id"]
+
+    if args.fetch_log:
+        download_log(id)
+        sys.exit(0)
 
     if args.cancel:
         cancel_build(id)
@@ -766,6 +782,7 @@ download_artifact(id)
 download_log(id)
 
 if not build_healthy:
+    print(f'::error::Unity Cloud build did not succeed: target "{os.getenv('TARGET')}", build {id}. See the "Extract and display errors" step below, the unity_log artifact, or cloud.unity.com -> Build Automation.')
     print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
 

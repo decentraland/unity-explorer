@@ -899,6 +899,16 @@ jobs:
             --project "$SENTRY_PROJECT" \
             "build"
 
+      # The poll loop only downloads the log on completion; when the runner is
+      # cancelled mid-build, fetch the partial log so the artifact still exists.
+      - name: Fetch cloud log after cancellation
+        if: cancelled()
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --fetch-log || true
+
       # Will run always (even if failing)
       - name: Upload cloud logs
         if: always()
@@ -906,18 +916,47 @@ jobs:
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
-          if-no-files-found: error
+          # Absence is expected when the run is cancelled before the build starts.
+          if-no-files-found: warn
 
-      # Will run always (even if failing)
+      # The full log is huge (20k+ lines) and always available as an artifact,
+      # so only dump it inline when something went wrong.
       - name: Print cloud logs
-        if: always()
+        if: failure()
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
         if: always()
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
-          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
+
+          if [ ! -f unity_cloud_log.log ]; then
+            echo "No unity_cloud_log.log present (run cancelled before the build started?)."
+            exit 0
+          fi
+
+          PATTERN="error CS[0-9]|FATAL|fatal|Player export failed|Failed to find entry-points|BuildFailedException"
+          ERRORS=$(grep -B2 -A15 -E "$PATTERN" unity_cloud_log.log || true)
+
+          if [ -z "$ERRORS" ]; then
+            echo "No errors matched in ${{ matrix.target }} log."
+            exit 0
+          fi
+
+          echo "$ERRORS" | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/'
+
+          # Surface the root cause on the run page, but only when the job is
+          # actually failing - successful Unity builds still log benign matches.
+          if [ "${{ job.status }}" != "success" ]; then
+            REASON=$(grep -m1 -E "Player export failed\. Reason: .*|error CS[0-9].*" unity_cloud_log.log || true)
+            [ -n "$REASON" ] && echo "::error::${REASON:0:400}"
+            {
+              echo "### Unity errors (${{ matrix.target }})"
+              echo '```'
+              echo "$ERRORS" | head -200
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Generate Shader Compilation Report
         shell: pwsh
@@ -938,7 +977,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel || true
+        run: python -u scripts/cloudbuild/build.py --cancel || echo "::warning::Failed to cancel the Unity Cloud build - it may still be holding a build slot. Check cloud.unity.com -> Build Automation."
 
   build-gate:
     name: Build Gate (Windows + macOS)
@@ -981,8 +1020,12 @@ jobs:
           fi
 
           build_result='${{ needs.build.result }}'
+          if [ "$build_result" = "cancelled" ]; then
+            echo "::error::Build was cancelled - usually superseded by a newer run for this PR (cancel-in-progress). This red gate is expected; the replacing run's gate is the one that counts."
+            exit 1
+          fi
           if [ "$build_result" != "success" ]; then
-            echo "::error::Build matrix did not succeed (result: $build_result)"
+            echo "::error::Build matrix did not succeed (result: $build_result). Check the Build job's 'Extract and display errors' step for the root cause."
             exit 1
           fi
 
