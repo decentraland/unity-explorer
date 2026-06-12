@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
-        private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+        private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 
         private int consecutiveConnectFailures;
         private DateTime nextReconnectAttemptUtc = DateTime.MinValue;
@@ -86,16 +86,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private void OnNewConnectionString(string connectionString)
         {
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-            guard.Value = ConnectionStringState.NewPending(connectionString);
+            guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(connectionString));
         }
 
         private void ResetConnectionState()
         {
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-            guard.Value = ConnectionStringState.None;
+            guard.Value = ConnectionStringState.None();
         }
 
-        // Reads the state and consumes it (NewPending -> Current) atomically so a pushed string is acted on once.
+        // Reads the state and consumes it (Pending -> Current) atomically so a pushed string is acted on once.
         private ConnectionStringState ReadAndConsumeConnectionState()
         {
             using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -108,10 +108,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             ConnectionStringState state = ReadAndConsumeConnectionState();
 
-            if (state.State == ConnectionStringState.Kind.NONE) return;
+            (string? connectionString, bool isNewString) = state.Match(
+                onNone: static () => (null, false),
+                onPendingConnection: static pending => ((string?)pending.ConnectionString, true),
+                onCurrentConnection: static current => ((string?)current.ConnectionString, false));
 
-            string connectionString = state.ConnectionString!;
-            bool isNewString = state.State == ConnectionStringState.Kind.NEW_PENDING;
+            if (connectionString == null) return;
 
             if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
 
@@ -171,34 +173,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             string adapterUrl = currentAdapterAddress.AdapterUrl();
             Result welcomePeerId = await signFlow.ConnectAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
-        }
-
-        internal readonly struct ConnectionStringState
-        {
-            public enum Kind
-            {
-                NONE,
-                NEW_PENDING,
-                CURRENT,
-            }
-
-            public readonly Kind State;
-            public readonly string? ConnectionString;
-
-            private ConnectionStringState(Kind state, string? connectionString)
-            {
-                State = state;
-                ConnectionString = connectionString;
-            }
-
-            public static ConnectionStringState None => new (Kind.NONE, null);
-
-            public static ConnectionStringState NewPending(string connectionString) =>
-                new (Kind.NEW_PENDING, connectionString);
-
-            /// <summary>A NEW_PENDING string becomes CURRENT once read by the cycle loop; other states are unchanged.</summary>
-            public ConnectionStringState Consume() =>
-                State == Kind.NEW_PENDING ? new ConnectionStringState(Kind.CURRENT, ConnectionString) : this;
         }
     }
 }

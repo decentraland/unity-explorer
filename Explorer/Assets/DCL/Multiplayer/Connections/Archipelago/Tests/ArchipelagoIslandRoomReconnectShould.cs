@@ -71,35 +71,39 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
             Assert.IsTrue(ArchipelagoIslandRoom.ShouldForceFreshHandshake(consecutiveFailures));
 
         [Test]
-        public void ConsumeNewPendingBecomesCurrentKeepingTheString()
+        public void ConsumePendingBecomesCurrentKeepingTheString()
         {
-            ArchipelagoIslandRoom.ConnectionStringState consumed =
-                ArchipelagoIslandRoom.ConnectionStringState.NewPending("conn-str").Consume();
+            ConnectionStringState consumed =
+                ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str")).Consume();
 
-            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.CURRENT, consumed.State);
-            Assert.AreEqual("conn-str", consumed.ConnectionString);
+            Assert.IsTrue(consumed.IsCurrentConnection(out CurrentConnection current));
+            Assert.AreEqual("conn-str", current.ConnectionString);
         }
 
         [Test]
         public void ConsumeNoneStaysNone()
         {
-            ArchipelagoIslandRoom.ConnectionStringState consumed = ArchipelagoIslandRoom.ConnectionStringState.None.Consume();
+            ConnectionStringState consumed = ConnectionStringState.None().Consume();
 
-            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.NONE, consumed.State);
-            Assert.IsNull(consumed.ConnectionString);
+            bool isNone = consumed.Match(
+                onNone: static () => true,
+                onPendingConnection: static _ => false,
+                onCurrentConnection: static _ => false);
+
+            Assert.IsTrue(isNone);
         }
 
         [Test]
         public void ConsumeIsIdempotentOnceCurrent()
         {
             // A Current string is only re-evaluated against the room/backoff state, never re-consumed
-            ArchipelagoIslandRoom.ConnectionStringState current =
-                ArchipelagoIslandRoom.ConnectionStringState.NewPending("conn-str").Consume();
+            ConnectionStringState current =
+                ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str")).Consume();
 
-            ArchipelagoIslandRoom.ConnectionStringState reconsumed = current.Consume();
+            ConnectionStringState reconsumed = current.Consume();
 
-            Assert.AreEqual(ArchipelagoIslandRoom.ConnectionStringState.Kind.CURRENT, reconsumed.State);
-            Assert.AreEqual("conn-str", reconsumed.ConnectionString);
+            Assert.IsTrue(reconsumed.IsCurrentConnection(out CurrentConnection currentConnection));
+            Assert.AreEqual("conn-str", currentConnection.ConnectionString);
         }
     }
 }
