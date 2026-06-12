@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Check PR type
         id: check
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const title = context.payload.pull_request.title || '';
@@ -25,13 +25,13 @@ jobs:
     if: needs.detect-pr-type.outputs.is-feature == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v2.0.2
+      - uses: kentaro-m/auto-assign-action@0a2c53d3721e4c5cfcce6afd4014aecc337979f6 # v2.0.2
         with:
           configuration-path: '.github/auto_assign_config_dev.yml'
 
   assign-qa:
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v2.0.2
+      - uses: kentaro-m/auto-assign-action@0a2c53d3721e4c5cfcce6afd4014aecc337979f6 # v2.0.2
         with:
           configuration-path: '.github/auto_assign_config_qa.yml'

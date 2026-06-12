@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
     - name: Set platform flags
       id: platforms
@@ -112,7 +112,7 @@ jobs:
 
     - name: Cache BuildPatchTool
       id: bpt_cache
-      uses: actions/cache@v5
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ runner.temp }}\BuildPatchTool\Engine
         key: ${{ steps.bpt_version.outputs.cache_key }}
