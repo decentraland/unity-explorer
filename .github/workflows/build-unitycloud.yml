@@ -254,7 +254,7 @@ jobs:
 
       - name: Detect changes under Explorer/**
         id: changed_explorer
-        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        uses: step-security/changed-files@2e07db73e5ccdb319b9a6c7766bd46d39d304bad # v47.0.5
         with:
           files: |
             Explorer/**
@@ -554,7 +554,7 @@ jobs:
           pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
           timeout_minutes: 450

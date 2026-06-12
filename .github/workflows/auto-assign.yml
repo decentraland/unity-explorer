@@ -25,13 +25,13 @@ jobs:
     if: needs.detect-pr-type.outputs.is-feature == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v2.0.0
+      - uses: kentaro-m/auto-assign-action@v2.0.2
         with:
           configuration-path: '.github/auto_assign_config_dev.yml'
 
   assign-qa:
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v2.0.0
+      - uses: kentaro-m/auto-assign-action@v2.0.2
         with:
           configuration-path: '.github/auto_assign_config_qa.yml'
