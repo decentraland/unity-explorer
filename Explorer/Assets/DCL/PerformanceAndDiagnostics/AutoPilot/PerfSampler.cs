@@ -124,7 +124,7 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
 
             csv.WriteLine(string.Format(
                 CultureInfo.InvariantCulture, "{0},{1},{2}",
-                Time.frameCount,
+                UnityEngine.Time.frameCount,
                 profiler.LastFrameTimeValueNs * 0.000001f,
                 profiler.LastGpuFrameTimeValueNs * 0.000001f));
         }

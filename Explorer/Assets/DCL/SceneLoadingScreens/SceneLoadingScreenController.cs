@@ -175,9 +175,9 @@ namespace DCL.SceneLoadingScreens
 
             while (t < 1f && !ct.IsCancellationRequested)
             {
-                float time = Time.realtimeSinceStartup;
+                float time = UnityEngine.Time.realtimeSinceStartup;
                 await UniTask.NextFrame(cancellationToken: ct);
-                float dt = (Time.realtimeSinceStartup - time) / (float)minimumDisplayDuration.TotalSeconds;
+                float dt = (UnityEngine.Time.realtimeSinceStartup - time) / (float)minimumDisplayDuration.TotalSeconds;
                 t += dt;
                 AddLoadProgress(dt * progressProportion);
             }

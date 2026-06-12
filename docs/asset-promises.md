@@ -57,7 +57,7 @@ There are two main ways to create an `AssetPromise`:
 This is the most common method. It creates a new entity in the ECS world to represent the loading process.
 
 ```csharp
-// Example from DCL/Infrastructure/ECS/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
+// Example from DCL/Infrastructure/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
 
 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
    .Create(World, new GetSceneDefinition(new CommonLoadingArguments(url), ipfsPath), PartitionComponent.TOP_PRIORITY);
