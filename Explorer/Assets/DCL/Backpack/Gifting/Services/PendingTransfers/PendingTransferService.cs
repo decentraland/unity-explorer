@@ -51,7 +51,7 @@ namespace DCL.Backpack.Gifting.Services.PendingTransfers
 
                 ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService] Loaded {pendingTransfers.Count} items from disk.");
                 foreach (string? urn in pendingTransfers.Keys)
-                    ReportHub.Log(ReportCategory.GIFTING, $"  - Loaded Pending: {urn}");
+                    ReportHub.Log(ReportCategory.GIFTING, $"[PendingTransferService]  - Loaded Pending: {urn}");
             }
         }
 

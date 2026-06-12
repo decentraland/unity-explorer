@@ -10,7 +10,6 @@ using DCL.Utilities.Extensions;
 using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.Pool;
 
 namespace DCL.Profiles
@@ -114,11 +113,10 @@ namespace DCL.Profiles
 
         private static URN? PickRegistryUrn(IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry, IOwnedNftFilter? ownedNftFilter)
         {
-            if (ownedNftFilter == null)
-                return registry.Values.First().Urn;
-
+            // Any owned instance is equally valid for the deploy; the registry's enumeration order is undefined,
+            // but irrelevant. We only need the first tokenId that isn't gift-pending (a null filter excludes none).
             foreach (NftBlockchainOperationEntry entry in registry.Values)
-                if (!ownedNftFilter.ShouldExclude(entry.Urn))
+                if (ownedNftFilter == null || !ownedNftFilter.ShouldExclude(entry.Urn))
                     return entry.Urn;
 
             return null;
