@@ -4,8 +4,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.Pulse;
+using DCL.Multiplayer.Connections.Systems.Debug;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
@@ -14,15 +16,22 @@ using ECS;
 using Global.AppArgs;
 using System.Threading;
 using Utility;
-using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.Systems.PlayerMovementNetSendSystem;
-using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.Systems.RemotePlayersMovementSystem;
+using CleanUpRemoteMotionSystem = DCL.Multiplayer.Movement.CleanUpRemoteMotionSystem;
+using MultiplayerMovementDebugSystem = DCL.Multiplayer.Movement.MultiplayerMovementDebugSystem;
+using PlayerMovementNetSendSystem = DCL.Multiplayer.Movement.PlayerMovementNetSendSystem;
+using RemotePlayerAnimationSystem = DCL.Multiplayer.Movement.RemotePlayerAnimationSystem;
+using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.RemotePlayersMovementSystem;
 
 namespace DCL.PluginSystem.Global
 {
     public class MultiplayerMovementPlugin : IDCLGlobalPlugin<MultiplayerCommunicationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly LiveKitMovementMessageBus liveKitMovementMessageBus;
+        private readonly PulseMultiplayerBus pulseMultiplayerBus;
+        private readonly IMovementMessageBus effectiveMovementMessageBus;
+        private readonly IPulseMultiplayerService pulseMultiplayerService;
+        private readonly ITransport pulseTransport;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly RemoteEntities remoteEntities;
         private readonly ExposedTransform playerTransform;
@@ -31,17 +40,26 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly ParcelEncoder parcelEncoder;
 
         private MultiplayerMovementSettings settings;
-
         private Entity? selfReplicaEntity;
 
-        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
-          , RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
+        public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner,
+            LiveKitMovementMessageBus liveKitMovementMessageBus,
+            PulseMultiplayerBus pulseMultiplayerBus,
+            IMovementMessageBus effectiveMovementMessageBus,
+            IPulseMultiplayerService pulseMultiplayerService, ITransport pulseTransport,
+            IDebugContainerBuilder debugBuilder,
+            RemoteEntities remoteEntities, ExposedTransform playerTransform, MultiplayerDebugSettings debugSettings, IAppArgs appArgs,
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, ParcelEncoder parcelEncoder)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.messageBus = messageBus;
+            this.liveKitMovementMessageBus = liveKitMovementMessageBus;
+            this.pulseMultiplayerBus = pulseMultiplayerBus;
+            this.effectiveMovementMessageBus = effectiveMovementMessageBus;
+            this.pulseMultiplayerService = pulseMultiplayerService;
+            this.pulseTransport = pulseTransport;
             this.debugBuilder = debugBuilder;
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
@@ -50,20 +68,22 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.realmData = realmData;
             this.remoteMetadata = remoteMetadata;
+            this.parcelEncoder = parcelEncoder;
         }
 
         public void Dispose()
         {
-            messageBus.Dispose();
+            liveKitMovementMessageBus.Dispose();
         }
 
-        public async UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(MultiplayerCommunicationSettings settings, CancellationToken ct)
         {
             this.settings = settings.MovementSettings;
 
             ConfigureCompressionUsage();
 
-            messageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, (await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct)).Value);
+            liveKitMovementMessageBus.InitializeEncoder(this.settings.EncodingSettings, this.settings, parcelEncoder);
+            return UniTask.CompletedTask;
         }
 
         private void ConfigureCompressionUsage()
@@ -82,11 +102,12 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings, debugSettings);
+            PlayerMovementNetSendSystem.InjectToWorld(ref builder, liveKitMovementMessageBus, effectiveMovementMessageBus, settings, debugSettings);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, settings, settings.CharacterControllerSettings);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.ExtrapolationSettings, settings);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings, settings, entityParticipantTable, remoteMetadata);
+            DebugPulseSystem.InjectToWorld(ref builder, pulseMultiplayerService, pulseTransport, pulseMultiplayerBus, debugBuilder);
         }
     }
 }

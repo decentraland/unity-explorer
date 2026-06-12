@@ -7,10 +7,10 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using RemotePlayersMovementSystem = DCL.Multiplayer.Movement.RemotePlayersMovementSystem;
 
 namespace DCL.Character.CharacterMotion.Systems
 {
