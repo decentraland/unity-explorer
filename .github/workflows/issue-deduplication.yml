@@ -17,11 +17,11 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 1
       - name: Check for duplicate issues
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@0cb4f3e5e764d2e00407d29b6bf0aa9df0976d88 # v1.0.146
         with:
           allowed_bots: "sentry"
           prompt: |

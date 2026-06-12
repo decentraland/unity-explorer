@@ -248,7 +248,7 @@ jobs:
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
@@ -312,7 +312,7 @@ jobs:
 
       - name: Skip build and test checks
         if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const sha = context.payload.pull_request.head.sha;
@@ -538,13 +538,13 @@ jobs:
         target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.12.3
 
@@ -554,7 +554,7 @@ jobs:
           pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
           timeout_minutes: 450
@@ -654,7 +654,7 @@ jobs:
       - name: Upload artifact for macOS
         id: upload-macos-artifact
         if: matrix.target == 'macos'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}
           path: build.tar
@@ -663,7 +663,7 @@ jobs:
       - name: Upload artifact for Windows
         id: upload-windows-artifact
         if: matrix.target == 'windows64'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}
           path: |
@@ -824,7 +824,7 @@ jobs:
 
       - name: Upload size report
         if: always() && steps.size_check.outputs.result != ''
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: size_report/
@@ -878,7 +878,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}_debug_symbols
           path: |
@@ -902,7 +902,7 @@ jobs:
       # Will run always (even if failing)
       - name: Upload cloud logs
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
@@ -925,7 +925,7 @@ jobs:
           ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
 
       - name: Upload Shader Compilation Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
