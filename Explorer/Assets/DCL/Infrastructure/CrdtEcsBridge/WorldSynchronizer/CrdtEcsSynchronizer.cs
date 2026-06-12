@@ -28,6 +28,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
         private readonly DCLSemaphoreSlim semaphore = new (1, 1);
 
+        // Single-slot reuse: the semaphore guarantees one outstanding buffer at a time
+        // so the same instance can be renewed instead of allocating a new one per batch (per scene tick)
+        private WorldSyncCommandBuffer reusableSyncBuffer;
+
         private bool disposed;
 
         public IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap => entitiesMap;
@@ -68,6 +72,15 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
 #endif
 
+            WorldSyncCommandBuffer syncBuffer = reusableSyncBuffer;
+
+            if (syncBuffer != null)
+            {
+                reusableSyncBuffer = null;
+                syncBuffer.Renew();
+                return syncBuffer;
+            }
+
             return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool);
         }
 
@@ -81,15 +94,28 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 else
                     syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             }
-            finally
-            {
+            finally { FinalizeRent(syncCommandBuffer); }
+        }
+
+        public void ReleaseSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
+        {
+            try { syncCommandBuffer.Dispose(); }
+            finally { FinalizeRent(syncCommandBuffer); }
+        }
+
+        private void FinalizeRent(IWorldSyncCommandBuffer syncCommandBuffer)
+        {
+            // Keep the disposed instance for the next rent; when the scene is disposed let it be GCed
+            // (the collections pool the buffer renews from is released too)
+            if (!disposed && syncCommandBuffer is WorldSyncCommandBuffer concreteBuffer)
+                reusableSyncBuffer = concreteBuffer;
+
 #if !UNITY_WEBGL
-                // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
-                // including the disposed early-return and any exception thrown by Apply,
-                // otherwise the slot leaks and subsequent Rents time out forever.
-                semaphore.Release();
+            // Pairs with semaphore.Wait in GetSyncCommandBuffer; must release on every path,
+            // including the disposed early-return and any exception thrown by Apply,
+            // otherwise the slot leaks and subsequent Rents time out forever.
+            semaphore.Release();
 #endif
-            }
         }
     }
 }

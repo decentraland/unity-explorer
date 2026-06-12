@@ -15,6 +15,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
     public interface IWorldSyncCommandBuffer : IDisposable
     {
         /// <summary>
+        ///     True if applying the buffer would not change the World at all.
+        ///     Valid only after <see cref="FinalizeAndDeserialize" />
+        /// </summary>
+        bool IsEmpty { get; }
+
+        /// <summary>
         ///     Add messages in the order they are processed by CRDT
         ///     This sync function is for ECS syncing and it heavily relies on the proper result from the CRDT Protocol
         /// </summary>
