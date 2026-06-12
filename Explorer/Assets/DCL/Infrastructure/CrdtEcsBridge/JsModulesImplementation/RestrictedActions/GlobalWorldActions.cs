@@ -1,4 +1,4 @@
-using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
@@ -11,7 +11,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Ipfs;
-using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -34,17 +33,17 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
         private readonly bool isBuilderCollectionPreview;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles,
+        public GlobalWorldActions(World world, Entity playerEntity,
+            bool localSceneDevelopment,
+            bool useRemoteAssetBundles,
             bool isBuilderCollectionPreview)
         {
             this.world = world;
             this.playerEntity = playerEntity;
-            this.messageBus = messageBus;
             this.localSceneDevelopment = localSceneDevelopment;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.isBuilderCollectionPreview = isBuilderCollectionPreview;
@@ -102,11 +101,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void TriggerEmote(URN urn, bool isLooping, AvatarEmoteMask mask)
         {
-            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
-
             // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
             world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE, Mask = mask });
-            messageBus.Send(urn, isLooping, mask);
         }
 
         public async UniTask<(URN Urn, bool IsLooping)?> TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, AvatarEmoteMask mask,
@@ -146,16 +142,12 @@ namespace CrdtEcsBridge.RestrictedActions
             ref CharacterEmoteComponent emoteComponent = ref world.TryGetRef<CharacterEmoteComponent>(playerEntity, out bool emoteExists);
             if (emoteExists)
                 emoteComponent.StopEmote = true;
-
-            messageBus.SendStop();
         }
 
         private async UniTask<(URN Urn, bool IsLooping)?> ResolveSceneEmoteFromRealmAsync(string sceneId, AssetBundleManifestVersion sceneAssetBundleManifestVersion, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
-
-            if (!avatarShape.IsVisible) return null;
 
             var promise = SceneEmotePromise.Create(world,
                 new GetSceneEmoteFromRealmIntention(sceneId, sceneAssetBundleManifestVersion, emoteHash, loop, avatarShape.BodyShape),

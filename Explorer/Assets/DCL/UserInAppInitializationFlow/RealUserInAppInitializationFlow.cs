@@ -9,6 +9,7 @@ using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Prefs;
 using DCL.PrivateWorlds;
@@ -48,6 +49,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+        private readonly IPulseMultiplayerService pulseMultiplayerService;
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
@@ -75,6 +77,7 @@ namespace DCL.UserInAppInitializationFlow
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
             StartParcel startParcel,
+            IPulseMultiplayerService pulseMultiplayerService,
             bool isLocalSceneDevelopment,
             IWorldPermissionsService worldPermissionsService,
             IChatHistory chatHistory)
@@ -87,6 +90,7 @@ namespace DCL.UserInAppInitializationFlow
             this.characterObject = characterObject;
             this.startParcel = startParcel;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.pulseMultiplayerService = pulseMultiplayerService;
             this.characterExposedTransform = characterExposedTransform;
             this.worldPermissionsService = worldPermissionsService;
             this.chatHistory = chatHistory;
@@ -317,12 +321,14 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
