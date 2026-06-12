@@ -47,7 +47,11 @@ namespace DCL.Tests
 
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
-        private static readonly string[] EXCLUDED_PATHS_INCLUDE_SOCKET_IO = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/" };
+        private static readonly string[] EXCLUDED_PATHS_INCLUDE_SOCKET_IO =
+        {
+            "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/",
+            "/Pulse/ENet/",
+        };
 
 
         private static IEnumerable<string> AllCSharpFiles() =>

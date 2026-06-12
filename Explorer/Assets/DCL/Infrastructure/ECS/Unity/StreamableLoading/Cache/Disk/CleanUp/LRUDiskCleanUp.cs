@@ -51,7 +51,11 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
                 ShouldIncludePredicate = Predicate,
             };
 
-            static bool Predicate(ref FileSystemEntry entry) => entry.IsDirectory == false;
+            // Temp files are in-flight writes: they are not valid cache entries, and deleting one under
+            // an active writer would fail the write, so they are excluded from clean-up bookkeeping
+            static bool Predicate(ref FileSystemEntry entry) =>
+                entry.IsDirectory == false
+                && entry.FileName.EndsWith(IDiskCache.TEMP_FILE_SUFFIX.AsSpan(), StringComparison.Ordinal) == false;
         }
 
         public void CleanUpIfNeeded()

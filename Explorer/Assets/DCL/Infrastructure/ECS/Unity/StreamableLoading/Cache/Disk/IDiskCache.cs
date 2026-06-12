@@ -17,6 +17,12 @@ namespace ECS.StreamableLoading.Cache.Disk
 {
     public interface IDiskCache
     {
+        /// <summary>
+        ///     Suffix of the intermediate file content is streamed into before it is swapped into its final path.
+        ///     Such files are never valid cache entries and are excluded from clean-up bookkeeping.
+        /// </summary>
+        public const string TEMP_FILE_SUFFIX = ".tmp";
+
         UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator;
 
         UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
