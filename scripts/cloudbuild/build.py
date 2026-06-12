@@ -712,6 +712,18 @@ else:
         except Exception as e:
             print(f"Operation failed: {e}")
 
+        # A build cancelled mid-cache-write leaves truncated Burst hash-cache files in
+        # the target's Library cache, which crash the Burst AOT step on the next build.
+        # Ask PreExport to purge the Burst cache when the previous build on this target
+        # did not complete cleanly (or there is none - the cache was inherited from the
+        # template target unverified). Always set the param so a stale 'true' from an
+        # earlier run cannot stick on the target's env vars.
+        last_build = get_latest_build(os.getenv('TARGET'))
+        last_status = last_build.get('buildStatus') if last_build else None
+        purge_burst_cache = last_status is None or last_status in ('canceled', 'unknown')
+        print(f'Previous build status on target: {last_status} -> purge_burst_cache={purge_burst_cache}')
+        os.environ['PARAM_PURGE_BURST_CACHE'] = 'true' if purge_burst_cache else 'false'
+
         # Set parameters immediately before run_build to avoid races with concurrent
         # builds on shared targets.
         set_parameters(get_param_env_variables())

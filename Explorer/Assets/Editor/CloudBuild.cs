@@ -25,11 +25,11 @@ namespace Editor
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PreExport ~~");
 
-            PurgeBurstCache();
-
             // Get all environment variables
             var environmentVariables = Environment.GetEnvironmentVariables();
             Parameters = environmentVariables.Cast<DictionaryEntry>().ToDictionary(x => x.Key.ToString(), x => x.Value);
+
+            PurgeBurstCacheIfRequested();
 
             // E.g. access like:
             // Debug.Log(Parameters["TEST_VALUE"] as string);
@@ -82,11 +82,18 @@ namespace Editor
             Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
         }
 
-        // The Library cache restored by Unity Cloud Build can contain truncated Burst
-        // hash-cache files (e.g. from builds cancelled mid-cache-write), which crash the
-        // Burst AOT step with EndOfStreamException instead of being treated as a cache miss.
-        private static void PurgeBurstCache()
+        // A build cancelled mid-cache-write can leave truncated Burst hash-cache files in
+        // the restored Library cache, which crash the Burst AOT step with EndOfStreamException
+        // instead of being treated as a cache miss. build.py sets PURGE_BURST_CACHE when the
+        // previous build on the target did not complete cleanly.
+        private static void PurgeBurstCacheIfRequested()
         {
+            if (!Parameters.TryGetValue("PURGE_BURST_CACHE", out object purge) || (purge as string) != "true")
+            {
+                Debug.Log("[BURST]: purge not requested, keeping BurstCache");
+                return;
+            }
+
             string path = Path.Combine(Directory.GetCurrentDirectory(), "Library", "BurstCache");
 
             if (!Directory.Exists(path))
