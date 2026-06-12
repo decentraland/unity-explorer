@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using System;
 
 namespace DCL.Passport.Modules
 {
@@ -19,6 +20,20 @@ namespace DCL.Passport.Modules
             this.additionalFieldsController = additionalFieldsController;
 
             view.DescriptionForEditMode.onValueChanged.AddListener(UpdateCharacterCounter);
+            view.DescriptionForEditMode.onSelect.AddListener(EnableEditFields);
+            view.DescriptionForEditMode.onDeselect.AddListener(DisableEditFields);
+        }
+
+        private void DisableEditFields(string _)
+        {
+            view.DescriptionEditOutline.SetActive(false);
+            view.DescriptionCharacterCounter.gameObject.SetActive(false);
+        }
+
+        private void EnableEditFields(string _)
+        {
+            view.DescriptionEditOutline.SetActive(true);
+            view.DescriptionCharacterCounter.gameObject.SetActive(true);
         }
 
         public void Dispose() =>

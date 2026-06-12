@@ -531,6 +531,7 @@ MonoBehaviour:
   <Description>k__BackingField: {fileID: 6331718136935519988}
   <DescriptionForEditMode>k__BackingField: {fileID: 7047690265850872759}
   <DescriptionCharacterCounter>k__BackingField: {fileID: 4815623427901358645}
+  <DescriptionEditOutline>k__BackingField: {fileID: 6345390672040282493}
   <AdditionalFieldsConfiguration>k__BackingField: {fileID: 11400000, guid: a82c79cd534f5c04cad2251d197233dc, type: 2}
   <AdditionalInfoContainer>k__BackingField: {fileID: 8192459323221797964}
   <AdditionalInfoContainerForEditMode>k__BackingField: {fileID: 6884120503159257767}
@@ -1838,7 +1839,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4815623427901358643
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2675,7 +2676,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &544296940402819776
 RectTransform:
   m_ObjectHideFlags: 0
