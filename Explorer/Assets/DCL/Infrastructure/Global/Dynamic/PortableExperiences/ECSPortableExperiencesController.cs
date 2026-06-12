@@ -30,6 +30,7 @@ namespace PortableExperiences.Controller
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
+        private readonly HashSet<string> loadingPortableExperiences = new ();
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
         private GlobalWorld globalWorld;
@@ -78,67 +79,77 @@ namespace PortableExperiences.Controller
 
             var portableExperienceId = ens.ToString();
 
-            if (PortableExperienceEntities.ContainsKey(portableExperienceId)) throw new Exception($"ENS {ens} is already loaded");
-
-            string worldUrl = string.Empty;
-
-            if (ens.IsValid)
-                worldUrl = ens.ConvertEnsToWorldUrl(urlsSources.Url(DecentralandUrl.WorldServer));
-
-            if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
-
-            var portableExperiencePath = URLDomain.FromString(worldUrl);
-            URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-
-            var serverAbout = new ServerAbout();
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-
-            if (result.configurations.scenesUrn.Count == 0)
-
-                //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
-                throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
-
-            var assetBundleRegistry =
-                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
-                    ? URLBuilder.Combine(URLDomain.FromString(urlsSources.Url(DecentralandUrl.AssetBundleRegistry)),
-                        URLSubdirectory.FromString("entities/active"))
-                    : URLDomain.EMPTY;
-
-            var realmData = new RealmData();
-
-            realmData.Reconfigure(
-                new IpfsRealm(portableExperiencePath,
-                    result),
-                result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                result.configurations.networkId,
-                result.comms?.adapter ?? string.Empty,
-                result.comms?.protocol ?? string.Empty,
-                portableExperiencePath.Value,
-                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
-                WorldManifest.Empty
-            );
-
-            ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
-            string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create();
-            world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
-            world.Add(portableExperienceEntity, new PortableExperienceMetadata
+            if (PortableExperienceEntities.TryGetValue(portableExperienceId, out Entity existingEntity))
             {
-                Type = isGlobalPortableExperience ? PortableExperienceType.GLOBAL : PortableExperienceType.LOCAL,
-                Ens = portableExperienceId,
-                Id = portableExperienceEntity.Id.ToString(),
-                Name = realmData.RealmName,
-                ParentSceneId = parentSceneName
-            });
+                ReportHub.LogWarning(ReportCategory.PORTABLE_EXPERIENCE, $"ENS {ens} is already loaded, returning the existing Portable Experience");
 
-            PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
+                PortableExperienceMetadata existingMetadata = world.Get<PortableExperienceMetadata>(existingEntity);
 
-            PortableExperienceLoaded?.Invoke(portableExperienceId);
+                return new IPortableExperiencesController.SpawnResponse
+                    { name = existingMetadata.Name, ens = existingMetadata.Ens, parent_cid = existingMetadata.ParentSceneId, pid = existingMetadata.Id };
+            }
 
-            return new IPortableExperiencesController.SpawnResponse
-                { name = realmData.RealmName, ens = portableExperienceId, parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
+            if (!loadingPortableExperiences.Add(portableExperienceId)) throw new Exception($"ENS {ens} is already being loaded");
+
+            try
+            {
+                string worldUrl = string.Empty;
+
+                if (ens.IsValid)
+                    worldUrl = ens.ConvertEnsToWorldUrl(urlsSources.Url(DecentralandUrl.WorldServer));
+
+                if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
+
+                var portableExperiencePath = URLDomain.FromString(worldUrl);
+                URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
+
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+
+                var serverAbout = new ServerAbout();
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+
+                if (result.configurations.scenesUrn.Count == 0)
+                    //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
+                    throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
+
+                var realmData = new RealmData();
+
+                realmData.Reconfigure(
+                    new IpfsRealm(portableExperiencePath,
+                        result),
+                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                    result.configurations.networkId,
+                    result.comms?.adapter ?? string.Empty,
+                    result.comms?.protocol ?? string.Empty,
+                    portableExperiencePath.Value,
+                    launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment,
+                    WorldManifest.Empty
+                );
+
+                ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+                string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
+                Entity portableExperienceEntity = world.Create();
+                world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+                world.Add(portableExperienceEntity, new PortableExperienceMetadata
+                {
+                    Type = isGlobalPortableExperience ? PortableExperienceType.GLOBAL : PortableExperienceType.LOCAL,
+                    Ens = portableExperienceId,
+                    Id = portableExperienceEntity.Id.ToString(),
+                    Name = realmData.RealmName,
+                    ParentSceneId = parentSceneName
+                });
+
+                PortableExperienceEntities.Add(portableExperienceId, portableExperienceEntity);
+
+                PortableExperienceLoaded?.Invoke(portableExperienceId);
+
+                return new IPortableExperiencesController.SpawnResponse
+                    { name = realmData.RealmName, ens = portableExperienceId, parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
+            }
+            finally
+            {
+                loadingPortableExperiences.Remove(portableExperienceId);
+            }
         }
 
         public bool CanKillPortableExperience(string id)
