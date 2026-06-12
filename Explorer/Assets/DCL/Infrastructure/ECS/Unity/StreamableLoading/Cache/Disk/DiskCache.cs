@@ -34,12 +34,13 @@ namespace ECS.StreamableLoading.Cache.Disk
                 return EnumResult<TaskError>.SuccessResult();
 
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
-            string path = PathFrom(key, extension);
+            string fileName = HashNamings.HashNameFrom(key, extension);
+            string path = PathFrom(fileName);
 
             // Stream into a temporary file and swap it into the final path only once fully written.
             // A write interrupted by cancellation or a crash must never leave a truncated file at the
             // final path: it would be served as a valid cache entry on every subsequent read.
-            string tempPath = path + IDiskCache.TEMP_FILE_SUFFIX;
+            string tempPath = PathFrom(fileName + IDiskCache.TEMP_FILE_SUFFIX);
             bool existed = File.Exists(path);
 
             try
@@ -68,17 +69,17 @@ namespace ECS.StreamableLoading.Cache.Disk
             }
             catch (TimeoutException)
             {
-                DeleteSilently(tempPath);
+                DeleteNoThrow(tempPath);
                 return EnumResult<TaskError>.ErrorResult(TaskError.Timeout);
             }
             catch (OperationCanceledException)
             {
-                DeleteSilently(tempPath);
+                DeleteNoThrow(tempPath);
                 return EnumResult<TaskError>.ErrorResult(TaskError.Cancelled);
             }
             catch (Exception e)
             {
-                DeleteSilently(tempPath);
+                DeleteNoThrow(tempPath);
                 return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty);
             }
 
@@ -159,7 +160,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             return fullPath;
         }
 
-        private static void DeleteSilently(string path)
+        private static void DeleteNoThrow(string path)
         {
             try
             {
@@ -208,9 +209,8 @@ namespace ECS.StreamableLoading.Cache.Disk
             catch (OperationCanceledException) { return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.Cancelled); }
             catch (Exception e)
             {
-                // A failed deserialization means the stored entry is corrupt (e.g. a write interrupted
-                // by an older client). Drop the file and report the error so callers treat it as a miss
-                // and re-download instead of failing on the same entry forever.
+                // The stored entry is corrupt (e.g. a write interrupted by an older client):
+                // remove the file so subsequent reads don't deserialize the same corrupt entry again
                 await diskCache.RemoveAsync(key, extension, CancellationToken.None);
                 return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty);
             }
