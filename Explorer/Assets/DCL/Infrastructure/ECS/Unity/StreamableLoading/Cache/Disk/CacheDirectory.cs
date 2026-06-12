@@ -9,6 +9,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         //Bump this version if there is the need to wipe out the old disk cache when introducing major changes to DiskCaching
         private const string CACHE_VERSION = "V3";
         private static readonly string DISK_CACHE_FOLDER = $"DiskCache{CACHE_VERSION}";
+        public static string DefaultPath { get; } = System.IO.Path.Combine(Application.persistentDataPath!, DISK_CACHE_FOLDER);
         public readonly string Path;
 
         private CacheDirectory(string path)

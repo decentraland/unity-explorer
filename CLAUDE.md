@@ -125,6 +125,7 @@ Reviewers have repeatedly identified AI-generated code by these smells. Check yo
 * **Retry/resolve loops without a termination condition.** A loop that re-adds the same unresolved item to the queue will spin forever when the server returns stable but empty results. Always have a "give up" predicate.
 * **Wiring pooled/virtualized list items per rebind.** For item pools, wire callbacks once when the item is created, not every time `SetItemData` runs. Prefer an `Action` field (single subscriber, direct assignment) over C# `event` (`+=`/`-=` churn) when there is exactly one subscriber.
 * **Reimplementing primitives that already exist.** Before writing manual atlas UV math, check `TMP_Sprite Asset`. Before hand-batching profile lookups, check the batched `GetProfilesAsync(IReadOnlyList<string>, ct)` overload. Before adding a bespoke event pathway, check `ViewEventBus` / `ChatEvents`.
+* **Comments that narrate caller/external behavior.** A comment must state only what the annotated code itself does or guarantees ("remove the corrupt file so the next read doesn't hit it"), never what callers or upper layers will do with the result ("so callers treat it as a miss and re-download"). External behavior can change without this code changing, silently turning the comment into a lie.
 
 ### Other project-specific rules
 
