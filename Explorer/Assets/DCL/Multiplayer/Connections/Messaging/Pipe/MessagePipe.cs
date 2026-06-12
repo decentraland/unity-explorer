@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+        private MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
             RoomSource roomId)
         {
             this.dataPipe = dataPipe;

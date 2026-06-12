@@ -5,6 +5,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser.DecentralandUrls;
@@ -103,8 +104,14 @@ namespace DCL.InWorldCamera.Playground
                 null,
                 new DefaultProfileCache(),
                 world,
-                playerEntity
+                playerEntity,
+                new PassThroughOwnedNftFilter()
             );
+        }
+
+        private sealed class PassThroughOwnedNftFilter : IOwnedNftFilter
+        {
+            public bool ShouldExclude(URN fullUrn) => false;
         }
     }
 }
