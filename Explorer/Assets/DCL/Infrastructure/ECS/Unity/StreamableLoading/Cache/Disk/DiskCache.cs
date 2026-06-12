@@ -34,7 +34,13 @@ namespace ECS.StreamableLoading.Cache.Disk
                 return EnumResult<TaskError>.SuccessResult();
 
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
-            string path = PathFrom(key, extension);
+            string fileName = HashNamings.HashNameFrom(key, extension);
+            string path = PathFrom(fileName);
+
+            // Stream into a temporary file and swap it into the final path only once fully written.
+            // A write interrupted by cancellation or a crash must never leave a truncated file at the
+            // final path: it would be served as a valid cache entry on every subsequent read.
+            string tempPath = PathFrom(fileName + IDiskCache.TEMP_FILE_SUFFIX);
             bool existed = File.Exists(path);
 
             try
@@ -45,7 +51,7 @@ namespace ECS.StreamableLoading.Cache.Disk
                     return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "File is being used");
 
                 {
-                    await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+                    await using var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write);
 
                     while (data.MoveNext())
                     {
@@ -54,11 +60,28 @@ namespace ECS.StreamableLoading.Cache.Disk
                     }
                 }
 
+                if (File.Exists(path))
+                    File.Delete(path);
+
+                File.Move(tempPath, path);
+
                 diskCleanUp.CleanUpIfNeeded();
             }
-            catch (TimeoutException) { return EnumResult<TaskError>.ErrorResult(TaskError.Timeout); }
-            catch (OperationCanceledException) { return EnumResult<TaskError>.ErrorResult(TaskError.Cancelled); }
-            catch (Exception e) { return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
+            catch (TimeoutException)
+            {
+                DeleteNoThrow(tempPath);
+                return EnumResult<TaskError>.ErrorResult(TaskError.Timeout);
+            }
+            catch (OperationCanceledException)
+            {
+                DeleteNoThrow(tempPath);
+                return EnumResult<TaskError>.ErrorResult(TaskError.Cancelled);
+            }
+            catch (Exception e)
+            {
+                DeleteNoThrow(tempPath);
+                return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty);
+            }
 
             ReportHub.Log(
                 ReportCategory.STREAMABLE_LOADING,
@@ -136,6 +159,19 @@ namespace ECS.StreamableLoading.Cache.Disk
             string fullPath = Path.Combine(directory.Path, fileName);
             return fullPath;
         }
+
+        private static void DeleteNoThrow(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch (Exception)
+            {
+                // Best effort only: an orphaned temp file is harmless and is overwritten by the next write.
+            }
+        }
     }
 
     public class DiskCache<T, Ts> : IDiskCache<T> where Ts: IMemoryIterator
@@ -167,7 +203,17 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
-            T resultDeserialize = await serializer.DeserializeAsync(data.Value, token);
+            T resultDeserialize;
+
+            try { resultDeserialize = await serializer.DeserializeAsync(data.Value, token); }
+            catch (OperationCanceledException) { return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.Cancelled); }
+            catch (Exception e)
+            {
+                // The stored entry is corrupt (e.g. a write interrupted by an older client):
+                // remove the file so subsequent reads don't deserialize the same corrupt entry again
+                await diskCache.RemoveAsync(key, extension, CancellationToken.None);
+                return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty);
+            }
 
             if(resultDeserialize != null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(resultDeserialize));
