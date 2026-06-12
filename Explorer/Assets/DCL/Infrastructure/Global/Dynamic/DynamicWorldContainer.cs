@@ -1217,6 +1217,15 @@ namespace Global.Dynamic
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
                 globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
+            // No comms/internet popup while developing against a local scene.
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT))
+                globalPlugins.Add(new MultiplayerConnectionWatchdogPlugin(
+                    roomHub,
+                    multiplayerContainer.PulseTransport,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mvcManager,
+                    bootstrapContainer.DecentralandUrlsSource));
+
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
