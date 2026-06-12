@@ -34,6 +34,28 @@ const quantizeRuntimeSrc = normalizePath(
   path.resolve(bitwisePluginDir, 'runtime', 'cs', 'Quantize.cs'),
 )
 
+// Python interpreter the bitwise wrapper delegates to (must match createPluginWrapper).
+const pythonCommand = isWin ? 'py' : 'python3'
+
+/**
+ * Verifies the Python interpreter used by the protoc-gen-bitwise plugin is present
+ * and has the `protobuf` package, so the build fails here with an actionable message
+ * instead of an opaque protoc plugin stack trace mid-generation.
+ */
+async function checkPythonProtobuf() {
+  try {
+    await execAsync(
+      `${pythonCommand} -c "import google.protobuf.compiler.plugin_pb2"`,
+      { cwd: workingDirectory },
+    )
+  } catch {
+    throw new Error(
+      `The protoc-gen-bitwise plugin requires Python 3 with the 'protobuf' package, but '${pythonCommand}' could not import it.\n` +
+        `Install it with: ${pythonCommand} -m pip install protobuf`,
+    )
+  }
+}
+
 /**
  * Creates a platform-specific wrapper script that protoc can invoke as
  * --plugin=protoc-gen-bitwise=<path>.  The wrapper delegates to the Python
@@ -82,6 +104,8 @@ async function main() {
   })
 
   await execute(`${protocPath} --version`, workingDirectory)
+
+  await checkPythonProtobuf()
 
   await buildProtocol()
 
