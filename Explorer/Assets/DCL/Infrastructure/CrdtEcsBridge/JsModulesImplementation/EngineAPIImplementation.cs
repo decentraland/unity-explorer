@@ -44,7 +44,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler worldSyncBufferSampler;
         private readonly SceneRuntimeMetrics metrics;
 
-        private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
+        /// <summary>
+        ///     Invoked for every pending outgoing message before serialization.
+        ///     Null by default so the serialization loop skips the delegate invocation entirely
+        /// </summary>
+        protected virtual Action<OutgoingCRDTMessagesProvider.PendingMessage>? PendingMessageProcessor => null;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -78,8 +82,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
             crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
-
-            processPendingMessage = ProcessPendingMessage;
         }
 
         public virtual void Dispose() { }
@@ -154,9 +156,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             try
             {
-                // Apply outgoing messages straight-away so they are reflected in the current CRDT state
+                // Drain the outgoing messages so they are reflected in the current CRDT state:
+                // LWW messages are committed to the state by the provider on creation,
+                // the rest (APPEND) is not kept in the state so it must be released straight-away
                 using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
-                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+                    DisposeMessagesNotOwnedByState(outgoingMessagesSyncBlock.Messages);
 
                 // Create CRDT Messages from the current state
                 // we know exactly how big the array should be
@@ -190,9 +194,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() =>
-            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
-
-        protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage) { }
+            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(PendingMessageProcessor);
 
         private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
@@ -209,7 +211,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, serializationBufferPoolable.Span);
 
-                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+                    DisposeMessagesNotOwnedByState(outgoingMessagesSyncBlock.Messages);
 
                     metrics.MessagesToScene.Add(outgoingMessagesSyncBlock.Messages.Count);
                 }
@@ -225,29 +227,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         /// <summary>
-        ///     If local messages are not written in the local CRDT, the final state
-        ///     including timestamp is incorrect. Subsequent creation of propagated messages will result in a wrong timestamp
+        ///     LWW messages (PUT/DELETE_COMPONENT) are committed to the local CRDT state when they are created
+        ///     (see <see cref="ICRDTProtocol.CreateAndCommitPutMessage" />) so their data is owned by the state.
+        ///     The data of the remaining messages (APPEND) is not kept in <see cref="ICRDTProtocol" /> so it must be released immediately
         /// </summary>
-        private void SyncOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
+        private static void DisposeMessagesNotOwnedByState(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
         {
-            for (var i = 0; i < outgoingMessages.Count; i++) { SyncCRDTMessage(outgoingMessages[i]); }
-        }
-
-        private void SyncCRDTMessage(ProcessedCRDTMessage message)
-        {
-            // We are interested in LWW messages only, in AUTHORITATIVE_PUT_COMPONENT we are not interested as it can't be originated from the client
-            switch (message.message.Type)
+            for (var i = 0; i < outgoingMessages.Count; i++)
             {
-                case CRDTMessageType.DELETE_COMPONENT:
-                case CRDTMessageType.PUT_COMPONENT:
-                    // instead of processing via CRDTProtocol.ProcessMessage
-                    // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
-                    crdtProtocol.EnforceLWWState(message.message);
-                    break;
-                default:
-                    // as this data is not kept in CRDTProtocol it must be released immediately
-                    message.message.Data.Dispose();
-                    break;
+                CRDTMessage message = outgoingMessages[i].message;
+
+                if (message.Type is not CRDTMessageType.PUT_COMPONENT and not CRDTMessageType.DELETE_COMPONENT)
+                    message.Data.Dispose();
             }
         }
 

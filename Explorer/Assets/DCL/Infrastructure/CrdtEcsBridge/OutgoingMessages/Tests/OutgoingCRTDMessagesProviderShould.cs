@@ -43,7 +43,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(addedMessage.Bridge.Id, Is.EqualTo(ComponentID.POINTER_EVENTS_RESULT));
             Assert.That(addedMessage.Timestamp, Is.EqualTo(100));
 
-            Assert.That(provider.lwwMessageIndices, Does.Not.ContainKey(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
+            Assert.That(provider.lwwMessageIndices, Does.Not.ContainKey(OutgoingMessageKey.Pack(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(addedMessage.Bridge.Id, Is.EqualTo(ComponentID.POINTER_EVENTS_RESULT));
             Assert.That(addedMessage.Timestamp, Is.EqualTo(0));
 
-            Assert.That(provider.lwwMessageIndices, Contains.Key(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
+            Assert.That(provider.lwwMessageIndices, Contains.Key(OutgoingMessageKey.Pack(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             Assert.That(addedMessage.Bridge.Id, Is.EqualTo(ComponentID.POINTER_EVENTS_RESULT));
             Assert.That(addedMessage.Timestamp, Is.EqualTo(0));
 
-            Assert.That(provider.lwwMessageIndices, Contains.Key(new OutgoingMessageKey(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
+            Assert.That(provider.lwwMessageIndices, Contains.Key(OutgoingMessageKey.Pack(crdtEntity, ComponentID.POINTER_EVENTS_RESULT)));
         }
 
         [Test]
@@ -134,8 +134,8 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
 
             using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock(null);
 
-            crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 1), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
-            crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 2), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
+            crdtProtocol.Received(1).CreateAndCommitPutMessage(Arg.Is<CRDTEntity>(c => c.Id == 1), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
+            crdtProtocol.Received(1).CreateAndCommitPutMessage(Arg.Is<CRDTEntity>(c => c.Id == 2), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
             crdtProtocol.Received(1).CreateAppendMessage(Arg.Is<CRDTEntity>(c => c.Id == 3), ComponentID.POINTER_EVENTS_RESULT, 780, Arg.Any<IMemoryOwner<byte>>());
         }
 

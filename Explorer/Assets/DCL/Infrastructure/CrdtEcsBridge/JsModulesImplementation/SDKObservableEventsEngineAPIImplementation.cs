@@ -14,6 +14,7 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -24,15 +25,21 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
         private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
+        private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
         private bool enableSDKObservableMessagesDetection;
         private bool reportedSceneReady;
+
+        protected override Action<OutgoingCRDTMessagesProvider.PendingMessage>? PendingMessageProcessor => processPendingMessage;
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler,
             MultiThreadSync multiThreadSync, MultiThreadSync.Owner syncOwner, SceneRuntimeMetrics metrics) : base(poolsProvider, instancePoolsProvider, crdtProtocol,
             crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider,
-            systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner, metrics) { }
+            systemGroupsUpdateGate, exceptionsHandler, multiThreadSync, syncOwner, metrics)
+        {
+            processPendingMessage = ProcessPendingMessage;
+        }
 
         public void TryAddSubscription(string eventId)
         {
@@ -90,7 +97,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             sdkObservableEventSubscriptions.Clear();
         }
 
-        protected override void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
+        private void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
         {
             if (SDKObservableComponentIDs.Ids.Contains(pendingMessage.Bridge.Id))
                 DetectObservableEventsFromComponents(pendingMessage);
