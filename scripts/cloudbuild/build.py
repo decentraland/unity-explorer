@@ -245,7 +245,7 @@ def run_build(branch, clean):
                 print(f'Build response (attempt {attempt + 1}):', response_json)
                 
                 if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
-                    print('A build is already pending. Attempting to cancel it...')
+                    print(f'A build is already pending on target "{os.getenv('TARGET')}" - cancelling it so this build can start. The run polling that build will report status "canceled".')
                     latest_build = get_latest_build(os.getenv('TARGET'))
                     if latest_build:
                         cancel_build(latest_build['build'])
@@ -782,8 +782,10 @@ download_artifact(id)
 download_log(id)
 
 if not build_healthy:
-    print(f'::error::Unity Cloud build did not succeed: target "{os.getenv('TARGET')}", build {id}. See the "Extract and display errors" step below, the unity_log artifact, or cloud.unity.com -> Build Automation.')
-    print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+    if final_outcome == 'canceled':
+        print(f'::error::Unity Cloud build was cancelled: target "{os.getenv('TARGET')}", build {id}. See the warning above for the likely cause.')
+    else:
+        print(f'::error::Unity Cloud build failed: target "{os.getenv('TARGET')}", build {id}. See the "Extract and display errors" step, the unity_log artifact, or search the target at https://cloud.unity.com/')
     sys.exit(1)
 
 # Cleanup (only if build is healthy and not release)
