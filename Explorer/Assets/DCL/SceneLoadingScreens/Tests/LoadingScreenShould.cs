@@ -93,6 +93,9 @@ namespace DCL.SceneLoadingScreens.Tests
         [Test]
         public async Task TimeoutFinishAllInternalsOperationsAsync()
         {
+            // The timeout now reports LoadingScreenTimeoutException via ReportHub
+            LogAssert.ignoreFailingMessages = true;
+
             CancellationToken mvcCancellation = CancellationToken.None;
             CancellationToken opCancellation = CancellationToken.None;
             AsyncLoadProcessReport outerReport = null;
