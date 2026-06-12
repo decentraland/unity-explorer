@@ -13,7 +13,7 @@ namespace CrdtEcsBridge.Physics
                                                         | ColliderLayer.ClPointer
                                                         | ColliderLayer.ClNone
                                                         | ColliderLayer.ClPlayer
-                                                        | ColliderLayer.ClReserved2
+                                                        | ColliderLayer.ClMainPlayer
                                                         | ColliderLayer.ClReserved3
                                                         | ColliderLayer.ClReserved4
                                                         | ColliderLayer.ClReserved5

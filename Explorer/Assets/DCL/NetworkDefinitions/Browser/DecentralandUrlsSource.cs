@@ -237,6 +237,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ReportUserForm => $"https://decentraland.{ENV}/report/players?player_address={{0}}&reported_address={{1}}",
                 DecentralandUrl.BannedUsers => $"{Url(DecentralandUrl.Gatekeeper)}/users/{{0}}/bans",
                 DecentralandUrl.SceneAdmins => $"{Url(DecentralandUrl.Gatekeeper)}/scene-admin",
+                DecentralandUrl.Pulse => $"pulse-server.decentraland.{ENV}",
 
 
                 DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",

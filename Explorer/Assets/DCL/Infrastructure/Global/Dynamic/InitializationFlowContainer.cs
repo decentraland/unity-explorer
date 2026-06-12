@@ -3,6 +3,8 @@ using DCL.Audio;
 using DCL.Character.Plugin;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.PrivateWorlds;
@@ -40,6 +42,8 @@ namespace DCL.UserInAppInitializationFlow
             bool localSceneDevelopment,
             CharacterContainer characterContainer,
             ModerationDataProvider moderationDataProvider,
+            IPulseMultiplayerService pulseMultiplayerService,
+            IProfilePropagation profilePropagation,
             IWorldPermissionsService worldPermissionsService,
             IChatHistory chatHistory)
         {
@@ -48,6 +52,7 @@ namespace DCL.UserInAppInitializationFlow
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
 
@@ -55,6 +60,7 @@ namespace DCL.UserInAppInitializationFlow
             {
                 blocklistCheckStartupOperation,
                 loadPlayerAvatarStartupOperation,
+                startPulseMultiplayerStartupOperation,
                 loadLandscapeStartupOperation,
                 teleportStartupOperation
             };
@@ -104,6 +110,7 @@ namespace DCL.UserInAppInitializationFlow
                     characterContainer.CharacterObject,
                     characterContainer.Transform,
                     dynamicWorldParams.StartParcel,
+                    pulseMultiplayerService,
                     localSceneDevelopment,
                     worldPermissionsService,
                     chatHistory),

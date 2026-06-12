@@ -1,23 +1,26 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.Movement
 {
+    /// <summary>
+    ///     Encoder for compressed LiveKit movement
+    /// </summary>
     public class NetworkMessageEncoder
     {
         private readonly MessageEncodingSettings encodingSettings;
         private readonly TimestampEncoder timestampEncoder;
         private readonly ParcelEncoder parcelEncoder;
 
-        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, LandscapeData landscapeData)
+        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, ParcelEncoder parcelEncoder)
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
-            parcelEncoder = new ParcelEncoder(landscapeData.terrainData);
+            this.parcelEncoder = parcelEncoder;
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
@@ -29,10 +32,10 @@ namespace DCL.Multiplayer.Movement
                 pointAtData = CompressPointAtData(message.isPointingAt, message.pointAtWorldHitPoint - message.position)
             };
 
-        private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
+        private int CompressTemporalData(double timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
             float rotationY, int tier)
         {
-            int temporalData = timestampEncoder.Compress(Mathf.Abs(timestamp));
+            int temporalData = timestampEncoder.Compress(Math.Abs(timestamp));
 
             // Animations
             temporalData |= ((int)movementKind & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
@@ -155,7 +158,7 @@ namespace DCL.Multiplayer.Movement
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
-            float timestamp = timestampEncoder.Decompress(compressedTemporalData);
+            double timestamp = timestampEncoder.Decompress(compressedTemporalData);
 
             var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
 

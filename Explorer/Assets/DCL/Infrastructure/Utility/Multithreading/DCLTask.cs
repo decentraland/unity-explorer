@@ -52,19 +52,27 @@ namespace Utility.Multithreading
             UniTask.RunOnThreadPool(func, configureAwait, cancellationToken); // IGNORE_LINE_WEBGL_UNITASK_SAFETY_FLAG
 #endif
 
-        // Basically created for Explorer/Assets/DCL/Infrastructure/SceneRunner/SceneFacade.cs
 #if UNITY_WEBGL
         public static UniTask Delay(
                 int sleepMS,
                 CancellationToken cancellationToken = default) =>
             UniTask.Delay(sleepMS, cancellationToken);
+
+        public static UniTask Delay(
+                TimeSpan delay,
+                CancellationToken cancellationToken = default) =>
+            UniTask.Delay(delay, cancellationToken: cancellationToken);
 #else
         public static System.Threading.Tasks.Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
                 int sleepMS,
                 CancellationToken cancellationToken = default) =>
             System.Threading.Tasks.Task.Delay(sleepMS, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+
+        public static System.Threading.Tasks.Task Delay( // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
+            TimeSpan delay,
+            CancellationToken cancellationToken = default) =>
+            System.Threading.Tasks.Task.Delay(delay, cancellationToken); // IGNORE_LINE_WEBGL_SYSTEM_TASKS_SAFETY_FLAG
 #endif
-        // end created for
 
 #if UNITY_WEBGL
         public static UniTask RunOnThreadPool(

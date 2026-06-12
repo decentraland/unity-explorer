@@ -36,6 +36,7 @@ namespace DCL.FeatureFlags
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
         public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
+        public const string PULSE = "pulse";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
