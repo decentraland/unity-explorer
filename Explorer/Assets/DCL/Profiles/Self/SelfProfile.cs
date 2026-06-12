@@ -28,6 +28,8 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
 
+        public event Action<Profile>? ProfilePropagated;
+
         public SelfProfile(
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
@@ -141,7 +143,10 @@ namespace DCL.Profiles.Self
                         false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                     if (savedProfile != null)
+                    {
                         profileCache.Set(savedProfile.UserId, savedProfile);
+                        ProfilePropagated?.Invoke(savedProfile);
+                    }
 
                     return savedProfile;
                 }
@@ -168,6 +173,7 @@ namespace DCL.Profiles.Self
                     // breaking the avatar and the backpack
                     profileCache.Set(savedProfile!.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile!);
+                    ProfilePropagated?.Invoke(savedProfile);
                     return savedProfile;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
