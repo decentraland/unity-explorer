@@ -100,15 +100,25 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            var disconnectTask = assigned.DisconnectAsync(ct);
-            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
-            var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
-            if (winIndex != 0)
-            {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
-            }
+            await DisconnectWithTimeoutAsync(assigned, ct);
             Unsubscribe(assigned);
             assigned = NullRoom.INSTANCE;
+        }
+
+        /// <summary>
+        ///     Disconnects a room, but never blocks the reconnection flow indefinitely: a room whose native session is
+        ///     wedged in an internal reconnect loop can otherwise hang <see cref="DisconnectAsync" /> forever, stalling
+        ///     the swap and orphaning the freshly connected room.
+        /// </summary>
+        private static async UniTask DisconnectWithTimeoutAsync(IRoom room, CancellationToken ct)
+        {
+            UniTask disconnectTask = room.DisconnectAsync(ct);
+            UniTask timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
+
+            int winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
+
+            if (winIndex != 0)
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"Room disconnect timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
         }
 
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
@@ -116,8 +126,9 @@ namespace DCL.Multiplayer.Connections.Rooms
             switch (roomSelection)
             {
                 case RoomSelection.NEW:
-                    // Disconnect the previous room, but make its callbacks pass through
-                    try { await previous.DisconnectAsync(ct); }
+                    // Disconnect the previous room, but make its callbacks pass through.
+                    // Bounded by a timeout so a wedged native session cannot stall the swap and orphan the new room.
+                    try { await DisconnectWithTimeoutAsync(previous, ct); }
                     finally
                     {
                         Unsubscribe(previous);
