@@ -46,7 +46,7 @@ namespace DCL.ExplorePanel
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
         private bool includeCommunities;
 
-        private ReactivePropertyExtensions.DisposableSubscription<bool> communitiesLiveBadgeSubscription;
+        private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -121,7 +121,7 @@ namespace DCL.ExplorePanel
             setupExploreSectionsCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
 
-            communitiesLiveBadgeSubscription.Dispose();
+            communitiesLiveBadgeSubscription?.Dispose();
         }
 
         private async UniTaskVoid OnShowSectionFromNotificationAsync(object[] _, ExploreSections sectionToShow)
