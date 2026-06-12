@@ -17,7 +17,12 @@ namespace DCL.Passport.Modules
         {
             this.view = view;
             this.additionalFieldsController = additionalFieldsController;
+
+            view.DescriptionForEditMode.onValueChanged.AddListener(UpdateCharacterCounter);
         }
+
+        public void Dispose() =>
+            view.DescriptionForEditMode.onValueChanged.RemoveListener(UpdateCharacterCounter);
 
         public void Setup(Profile profile)
         {
@@ -36,5 +41,8 @@ namespace DCL.Passport.Modules
 
         public void SetAsInteractable(bool isInteractable) =>
             view.DescriptionForEditMode.interactable = isInteractable;
+
+        private void UpdateCharacterCounter(string text) =>
+            view.DescriptionCharacterCounter.text = $"{text.Length}/{view.DescriptionForEditMode.characterLimit}";
     }
 }
