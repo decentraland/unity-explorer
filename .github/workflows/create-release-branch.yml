@@ -39,3 +39,100 @@ jobs:
 
           # Always ensure labels are applied (handles 502 / retry scenarios)
           gh pr edit "$BRANCH_NAME" --add-label "release,auto-pr"
+
+      - name: Comment build links on the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLIC_URL_PREFIX: ${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+
+          # Bot-created PRs trigger no workflows, so no build runs and no badge
+          # comment gets posted. The release branch is cut from dev tip, whose
+          # SHA was already built by the push to dev — reuse that run's
+          # artifacts instead of rebuilding.
+          PR_NUMBER=$(gh pr view "$BRANCH_NAME" --json number --jq '.number')
+          EXISTING=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("img.shields.io/badge/Build"))] | .[0] // empty')
+
+          # A "Build Not Found" comment is upgraded in place on re-run once the
+          # build exists; only a success comment short-circuits.
+          if [ -n "$EXISTING" ] && jq -e '.body | contains("Build-Success")' <<< "$EXISTING" > /dev/null; then
+            echo "Build links comment already present, skipping."
+            exit 0
+          fi
+          COMMENT_ID=$([ -n "$EXISTING" ] && jq -r '.id' <<< "$EXISTING" || echo "")
+
+          post_comment() {
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" -F body=@comment.md > /dev/null
+            else
+              gh pr comment "$BRANCH_NAME" --body-file comment.md
+            fi
+          }
+
+          HEAD_SHA=$(git rev-parse HEAD)
+          SHORT_SHA="${HEAD_SHA:0:7}"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+
+          # Scoped to the build workflow file — a repo-wide head_sha listing
+          # gets crowded out by bot runs sharing the SHA and the build falls
+          # past the first page.
+          RUN_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml/runs?head_sha=${HEAD_SHA}&status=success&per_page=20" \
+            --jq '[.workflow_runs[] | select(.event == "pull_request" or .event == "push")] | .[0]')
+
+          if [ -z "$RUN_JSON" ] || [ "$RUN_JSON" = "null" ]; then
+            {
+              echo '![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
+              echo ""
+              echo "No completed Unity Cloud Build found for \`${SHORT_SHA}\` — check the [build runs](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows/build-unitycloud.yml) and re-run this workflow once one finishes."
+              echo ""
+              echo "[badge]: https://img.shields.io/badge/Build-Not%20Found-yellow?logo=github&style=for-the-badge"
+            } > comment.md
+            post_comment
+            exit 0
+          fi
+
+          RUN_ID=$(jq -r '.id' <<< "$RUN_JSON")
+          RUN_NUMBER=$(jq -r '.run_number' <<< "$RUN_JSON")
+          SUITE_ID=$(jq -r '.check_suite_id' <<< "$RUN_JSON")
+          RUN_EVENT=$(jq -r '.event' <<< "$RUN_JSON")
+          RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
+          BUILD_DATE=$(jq -r '.updated_at' <<< "$RUN_JSON")
+
+          # Same event -> S3 prefix mapping as build-unitycloud.yml
+          case "$RUN_EVENT" in
+            pull_request) BUILD_PREFIX="pr" ;;
+            push) BUILD_PREFIX="pu" ;;
+            merge_group) BUILD_PREFIX="mg" ;;
+            workflow_dispatch) BUILD_PREFIX="wd" ;;
+            workflow_call) BUILD_PREFIX="wc" ;;
+            schedule) BUILD_PREFIX="sc" ;;
+            *) BUILD_PREFIX="gn" ;;
+          esac
+
+          S3_PATH="@dcl/${REPO_NAME}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+
+          WINDOWS_ARTIFACT_ID=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" \
+            --jq '.artifacts[] | select(.name == "Decentraland_windows64") | .id' || true)
+          MAC_ARTIFACT_ID=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" \
+            --jq '.artifacts[] | select(.name == "Decentraland_macos") | .id' || true)
+
+          {
+            echo '![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30">'
+            echo ""
+            echo "Windows and Mac build successful in Unity Cloud! Links reused from the existing \`${RUN_BRANCH}\` build of this commit."
+            echo ""
+            echo "| Name                | Link                    |"
+            echo "| --------            | ----------------------- |"
+            echo "| Commit              | ${HEAD_SHA} |"
+            echo "| Logs                | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID} |"
+            echo "| Download Windows    | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/suites/${SUITE_ID}/artifacts/${WINDOWS_ARTIFACT_ID} |"
+            echo "| Download Windows S3 | ${PUBLIC_URL_PREFIX}/${S3_PATH}/Decentraland_windows64.zip |"
+            echo "| Download Mac        | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/suites/${SUITE_ID}/artifacts/${MAC_ARTIFACT_ID} |"
+            echo "| Download Mac S3     | ${PUBLIC_URL_PREFIX}/${S3_PATH}/Decentraland_macos.zip |"
+            echo "| Built on            | ${BUILD_DATE} |"
+            echo ""
+            echo "[badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge"
+          } > comment.md
+          post_comment

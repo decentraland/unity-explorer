@@ -419,7 +419,7 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
 
         private void OnMarketplaceCreditsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.sidebarConfigButton,
+            OpenPanelAsync(viewInstance!.marketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();

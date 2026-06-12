@@ -66,7 +66,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 return;
 
-            float timestamp = Time.unscaledTime;
+            float timestamp = UnityEngine.Time.unscaledTime;
 
             SendTo(emote, timestamp, mask, messagePipesHub.IslandPipe());
             SendTo(emote, timestamp, mask, messagePipesHub.ScenePipe());
@@ -103,7 +103,7 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 return;
 
-            float timestamp = Time.unscaledTime;
+            float timestamp = UnityEngine.Time.unscaledTime;
 
             SendStopTo(timestamp, messagePipesHub.IslandPipe());
             SendStopTo(timestamp, messagePipesHub.ScenePipe());
@@ -139,7 +139,7 @@ namespace DCL.Multiplayer.Emotes
                 // Use timestamp from message if present (non-zero), otherwise fallback to current Unity time
                 float timestamp = receivedMessage.Payload.Timestamp != 0f
                     ? receivedMessage.Payload.Timestamp
-                    : Time.unscaledTime;
+                    : UnityEngine.Time.unscaledTime;
 
                 if (receivedMessage.Payload is { HasIsStopping: true, IsStopping: true })
                 {
