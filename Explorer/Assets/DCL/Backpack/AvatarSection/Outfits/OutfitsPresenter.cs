@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.AvatarSection.Outfits;
@@ -38,6 +39,7 @@ namespace DCL.Backpack
         private readonly IAvatarScreenshotService screenshotService;
         private readonly CharacterPreviewControllerBase characterPreviewController;
         private readonly OutfitSlotPresenterFactory slotFactory;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         // Commands
         private readonly LoadOutfitsCommand loadOutfitsCommand;
@@ -64,7 +66,8 @@ namespace DCL.Backpack
             PreviewOutfitCommand previewOutfitCommand,
             IAvatarScreenshotService screenshotService,
             CharacterPreviewControllerBase characterPreviewController,
-            OutfitSlotPresenterFactory slotFactory)
+            OutfitSlotPresenterFactory slotFactory,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
             this.eventBus = eventBus;
@@ -81,6 +84,7 @@ namespace DCL.Backpack
             this.screenshotService = screenshotService;
             this.characterPreviewController = characterPreviewController;
             this.slotFactory = slotFactory;
+            this.ownedNftFilter = ownedNftFilter;
 
             outfitBannerPresenter = new OutfitBannerPresenter(view.OutfitsBanner,
                 OnGetANameClicked, OnLinkClicked);
@@ -200,6 +204,7 @@ namespace DCL.Backpack
                 if (cts.Token.IsCancellationRequested) return;
 
                 presenter.SetData(savedItem, loadThumbnail: false);
+                presenter.SetPending(IsOutfitPending(savedItem));
                 presenter.PlaySaveOutfitSound();
 
                 UpdateFirstEmptySlotPrompt();
@@ -256,6 +261,7 @@ namespace DCL.Backpack
                 if (cts.Token.IsCancellationRequested)
                 {
                     presenter.SetData(originalOutfitData);
+                    presenter.SetPending(IsOutfitPending(originalOutfitData));
                     return;
                 }
 
@@ -270,12 +276,14 @@ namespace DCL.Backpack
                 else
                 {
                     presenter.SetData(originalOutfitData);
+                    presenter.SetPending(IsOutfitPending(originalOutfitData));
                 }
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.OUTFITS);
                 presenter.SetData(originalOutfitData);
+                presenter.SetPending(IsOutfitPending(originalOutfitData));
             }
         }
 
@@ -376,6 +384,7 @@ namespace DCL.Backpack
                 if (outfits.TryGetValue(presenter.slotIndex, out var outfitItem))
                 {
                     presenter.SetData(outfitItem);
+                    presenter.SetPending(IsOutfitPending(outfitItem));
                     presenter.SetAsFirstEmptyAndReadyToSave(false);
                 }
                 else
@@ -383,6 +392,19 @@ namespace DCL.Backpack
             }
 
             UpdateFirstEmptySlotPrompt();
+        }
+
+        // Pending when it references a wearable instance awaiting a gift transfer.
+        private bool IsOutfitPending(OutfitItem? outfitItem)
+        {
+            var wearables = outfitItem?.outfit?.wearables;
+            if (wearables == null) return false;
+
+            foreach (string wearable in wearables)
+                if (!string.IsNullOrEmpty(wearable) && ownedNftFilter.ShouldExclude(new URN(wearable)))
+                    return true;
+
+            return false;
         }
 
         private void UpdateFirstEmptySlotPrompt()

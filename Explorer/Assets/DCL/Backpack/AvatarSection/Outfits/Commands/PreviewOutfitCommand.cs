@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -19,6 +20,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly ISelfProfile selfProfile;
         private readonly IWearableStorage wearableStorage;
         private readonly OutfitsLogger outfitsLogger;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         private Outfit? originalOutfit;
         private List<IWearable>? originalWearables;
@@ -27,13 +29,15 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             IWearableStorage wearableStorage,
-            OutfitsLogger outfitsLogger)
+            OutfitsLogger outfitsLogger,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.outfitApplier = outfitApplier;
             this.equippedWearables = equippedWearables;
             this.selfProfile = selfProfile;
             this.wearableStorage = wearableStorage;
             this.outfitsLogger = outfitsLogger;
+            this.ownedNftFilter = ownedNftFilter;
         }
 
         public async UniTask ExecuteAsync(OutfitItem outfitToPreview, CancellationToken ct)
@@ -120,7 +124,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             return new Outfit
             {
                 bodyShape = bodyShape, wearables = equippedWearables
-                    .ToFullWearableUrns(wearableStorage, profile),
+                    .ToFullWearableUrns(wearableStorage, profile, ownedNftFilter),
                 forceRender = new List<string>(equippedWearables.ForceRenderCategories),
                 hair = new Hair
                 {

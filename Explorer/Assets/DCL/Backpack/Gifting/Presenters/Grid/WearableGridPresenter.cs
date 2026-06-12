@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid;
@@ -27,6 +25,8 @@ namespace DCL.Backpack.Gifting.Presenters
         private readonly List<ITrimmedWearable> resultsBuffer = new();
         private readonly BackpackGridSort currentSort = new(NftOrderByOperation.Date, false);
 
+        protected override GiftableType GiftableKind => GiftableType.Wearable;
+
         public WearableGridPresenter(
             GiftingGridView view,
             SuperScrollGridAdapter<GiftItemViewModel> adapter,
@@ -35,16 +35,13 @@ namespace DCL.Backpack.Gifting.Presenters
             IAvatarEquippedStatusProvider equippedStatusProvider,
             IPendingTransferService pendingTransferService,
             IWearablesProvider wearablesProvider,
-            IWearableStylingCatalog stylingCatalog,
-            IWearableStorage wearableStorage,
-            IEmoteStorage  emoteStorage)
+            IWearableStylingCatalog stylingCatalog)
             : base(view,
                 adapter,
                 eventBus,
                 loadThumbnailCommand,
                 equippedStatusProvider,
-                pendingTransferService,
-                wearableStorage, emoteStorage)
+                pendingTransferService)
         {
             this.wearablesProvider = wearablesProvider;
             this.stylingCatalog = stylingCatalog;

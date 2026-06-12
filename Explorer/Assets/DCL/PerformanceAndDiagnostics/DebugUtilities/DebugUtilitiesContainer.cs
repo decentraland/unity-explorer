@@ -47,6 +47,7 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.REALM,
+                        IDebugContainerBuilder.Categories.PULSE,
                         IDebugContainerBuilder.Categories.ENTITY_REQUESTS,
                         IDebugContainerBuilder.Categories.ANALYTICS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,
