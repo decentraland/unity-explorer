@@ -27,6 +27,8 @@ namespace ECS.SceneLifeCycle
 
         bool Contains(Vector2Int parcel);
 
+        bool ContainsNonRealScene(Vector2Int parcel);
+
         bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade);
 
         bool TryGetBySceneId(string sceneId, out ISceneFacade? sceneFacade);
@@ -100,6 +102,9 @@ namespace ECS.SceneLifeCycle
 
         public bool Contains(Vector2Int parcel) =>
             scenesByParcels.ContainsKey(parcel) || nonRealSceneByParcel.Contains(parcel);
+
+        public bool ContainsNonRealScene(Vector2Int parcel) =>
+            nonRealSceneByParcel.Contains(parcel);
 
         public bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade) =>
             scenesByParcels.TryGetValue(parcel, out sceneFacade);

@@ -21,10 +21,13 @@ namespace ECS.SceneLifeCycle.Reporting
 
         public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
         {
-            // Shortcut
-            if (scenesCache.TryGetByParcel(parcel, out ISceneFacade scene)
-                && scene.SceneStateProvider.State == SceneState.Running)
-                // conclude immediately
+            // Shortcut: conclude immediately if the destination is already loaded. Non-real scenes
+            // (SDK6 LODs, roads) resolve reports only once, when they finish instantiating, so a report
+            // enqueued while they are already shown would never be dequeued and the loading screen
+            // would hang at 20%.
+            if ((scenesCache.TryGetByParcel(parcel, out ISceneFacade scene)
+                 && scene.SceneStateProvider.State == SceneState.Running)
+                || scenesCache.ContainsNonRealScene(parcel))
                 report.SetProgress(1f);
 
             if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
