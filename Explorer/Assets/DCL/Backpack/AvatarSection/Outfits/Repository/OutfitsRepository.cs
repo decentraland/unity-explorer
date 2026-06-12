@@ -39,6 +39,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         private readonly Dictionary<int, OutfitItem> committed = new ();
         private ulong lastPublishTimestampInSeconds;
+        private bool isInitialized;
 
         public OutfitsRepository(PublishIpfsEntityCommand publishIpfsEntityCommand,
             INftNamesProvider nftNamesProvider,
@@ -79,10 +80,22 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
             committed.Clear();
             foreach (var item in outfits)
                 committed[item.slot] = item;
+
+            isInitialized = true;
         }
+
+        /// <summary>
+        ///     Call before reloading outfits from the server. Blocks publishes until
+        ///     <see cref="Initialize" /> seeds a fresh snapshot, so a failed load can never
+        ///     lead to publishing from empty or stale state.
+        /// </summary>
+        public void Invalidate() =>
+            isInitialized = false;
 
         public async UniTask SaveSlotAsync(int slot, OutfitItem item, CancellationToken ct)
         {
+            ThrowIfNotInitialized();
+
             await WaitForPublishCooldownAsync(ct);
 
             var snapshot = new Dictionary<int, OutfitItem>(committed) { [slot] = item };
@@ -94,6 +107,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
         public async UniTask DeleteSlotAsync(int slot, CancellationToken ct)
         {
+            ThrowIfNotInitialized();
+
             if (!committed.ContainsKey(slot))
                 return;
 
@@ -105,6 +120,14 @@ namespace DCL.Backpack.AvatarSection.Outfits.Repository
 
             committed.Remove(slot);
             lastPublishTimestampInSeconds = NowSeconds();
+        }
+
+        // The :outfits entity is full-state replacement: every publish overwrites ALL outfits.
+        // Publishing without a server snapshot would silently delete the outfits we never saw.
+        private void ThrowIfNotInitialized()
+        {
+            if (!isInitialized)
+                throw new InvalidOperationException("Outfits were never loaded from the server; refusing to publish — it would overwrite unknown server state.");
         }
 
         /// <summary>

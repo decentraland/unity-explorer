@@ -37,6 +37,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
         public async UniTask<IReadOnlyDictionary<int, OutfitItem>> ExecuteAsync(CancellationToken ct)
         {
+            // A reload is starting: block publishes until a fresh server snapshot seeds the
+            // repository, so a failed load can't leave it publishing from empty/stale state.
+            outfitsRepository.Invalidate();
+
             var profile = await selfProfile.ProfileAsync(ct);
             var empty = new Dictionary<int, OutfitItem>();
             if (profile == null)

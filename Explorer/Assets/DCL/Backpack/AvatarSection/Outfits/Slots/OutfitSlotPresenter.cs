@@ -182,9 +182,7 @@ namespace DCL.Backpack.Slots
         public void SetOperationBusy(bool busy)
         {
             isOperationBusy = busy;
-            view.SetSaveInteractable(!busy);
-            view.SetDeleteInteractable(!busy);
-            // Equip stays interactable on purpose — see ShowFullState in OutfitSlotView for why.
+            view.SetActionButtonsInteractable(!busy);
             UpdateView();
         }
 

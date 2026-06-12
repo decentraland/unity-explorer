@@ -120,6 +120,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void ShowEmptyState(bool isHovering)
         {
             ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(!isHovering);
             hoverEmptyContainer.SetActive(isHovering);
             fullContainer.SetActive(false);
@@ -154,8 +155,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         /// <summary>
         ///     Forces the per-slot action buttons hidden regardless of where they sit in the
         ///     prefab hierarchy. Some prefabs place equip/delete outside <see cref="fullContainer"/>,
-        ///     so toggling the container alone isn't enough — these buttons would otherwise
-        ///     remain visible from their previous hovered state during Save/Loading transitions.
+        ///     so toggling the container alone isn't enough — these buttons would otherwise remain
+        ///     visible from their previous hovered state. Called on entry to every non-Full state;
+        ///     <see cref="ShowFullState"/> instead assigns each button explicitly.
         /// </summary>
         private void HideActionButtons()
         {
@@ -173,10 +175,9 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             loadingView.HideLoading();
             loadingContainer.SetActive(false);
 
-            bool hasRealThumbnail = thumbnail != null;
+            outfitThumbnail.gameObject.SetActive(thumbnail != null);
+            outfitThumbnailEmpty.gameObject.SetActive(thumbnail == null);
 
-            outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
-            outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
             if (thumbnail != null)
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
 
@@ -262,13 +263,10 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             hoverHandler.enabled = isEnabled;
         }
 
-        public void SetSaveInteractable(bool interactable)
+        // Equip deliberately stays interactable during operations — see ShowFullState for why.
+        public void SetActionButtonsInteractable(bool interactable)
         {
             if (saveButton != null) saveButton.interactable = interactable;
-        }
-
-        public void SetDeleteInteractable(bool interactable)
-        {
             if (deleteButton != null) deleteButton.interactable = interactable;
         }
 
