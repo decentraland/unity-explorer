@@ -95,7 +95,7 @@ namespace DCL.Prefs
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
         public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
 
-        public const string GIFTING_PENDING_GIFTS = "PendingGifts";
+        public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 

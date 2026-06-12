@@ -325,9 +325,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
+                // The write is detached from the intention's lifetime on purpose: once the asset is in memory
+                // the disk write should run to completion, otherwise a short-lived consumer (e.g. an entity
+                // destroyed mid-write) interrupts the stream and the entry is lost
                 if (result is { Succeeded: true })
                     genericCache
-                       .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), ct)
+                       .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), cancellationTokenSource.Token)
                        .Forget(static e =>
                             ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
                         );
@@ -344,8 +347,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 // (e.g. if in StreamingAssets the requested asset is not present, arguments to download from WEB source will be prepared separately)
                 return result;
             }
-            catch (Exception e) when (e is OperationCanceledException || e.InnerException is OperationCanceledException)
+            catch (Exception)
             {
+                // This clean-up must run for ANY exception, not only cancellations: an unexpected one
+                // (e.g. a corrupt disk-cache entry failing to deserialize) would otherwise leave the dangling
+                // completion source in OngoingRequests forever, and every subsequent request for the same
+                // intention would await it indefinitely without ever reaching the network
                 if (result is { Succeeded: true })
                     DisposeAbandonedResult(result.Value.Asset!);
 
@@ -353,12 +360,11 @@ namespace ECS.StreamableLoading.Common.Systems
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 RemoveOngoingRequest();
 
-                // Cancellation does not produce asset result
+                // No asset result is produced: cancelling the source makes waiters re-check OngoingRequests
+                // and start their own flow
                 source.TrySetCanceled(ct);
                 throw;
             }
-
-            // Other exceptions are impossible according to the flow
 
             void RemoveOngoingRequest()
             {

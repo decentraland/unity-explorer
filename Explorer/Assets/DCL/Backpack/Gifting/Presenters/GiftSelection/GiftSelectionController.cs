@@ -213,7 +213,7 @@ namespace DCL.Backpack.Gifting.Presenters
                     ? GiftingItemTypes.Wearable
                     : GiftingItemTypes.Emote;
 
-                if (!giftInventoryService.TryGetBestTransferableToken(new URN(selectedUrn), itemType, out string tokenId, out string instanceUrn))
+                if (!giftInventoryService.TryGetBestTransferableToken(new URN(selectedUrn), itemType, out string tokenId, out string instanceUrn, out DateTime transferredAt))
                 {
                     ReportHub.LogError( ReportCategory.GIFTING, string.Format(CouldNotFindTokenForUrnLog, selectedUrn));
                     giftingErrorsController?.Show(MsgErrorNonTransferableNft);
@@ -244,7 +244,8 @@ namespace DCL.Backpack.Gifting.Presenters
                     itemType,
                     tokenId,
                     instanceUrn,
-                    userNameColorHex
+                    userNameColorHex,
+                    transferredAt
                 );
 
                 await mvcManager.ShowAsync(GiftTransferController.IssueCommand(transferParams), CancellationToken.None);
