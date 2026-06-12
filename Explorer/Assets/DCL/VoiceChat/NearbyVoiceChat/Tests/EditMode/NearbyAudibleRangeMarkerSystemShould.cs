@@ -38,7 +38,7 @@ namespace DCL.VoiceChat.Nearby.Tests
         private Camera camera = null!;
         private VoiceChatConfiguration configuration = null!;
         private NearbyListenerState listenerState = null!;
-        private ObjectPool<SimplePriorityQueue<NetworkMovementMessage>> movementQueuePool = null!;
+        private ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> movementQueuePool = null!;
 
         [SetUp]
         public void SetUp()
@@ -57,8 +57,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             listenerState = new NearbyListenerState();
 
-            movementQueuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            movementQueuePool = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 

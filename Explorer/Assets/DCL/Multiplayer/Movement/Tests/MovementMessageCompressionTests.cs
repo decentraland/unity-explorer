@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Tests
         [SetUp]
         public void SetUp()
         {
-            encoder = new NetworkMessageEncoder(Settings, LandscapeData);
+            encoder = new NetworkMessageEncoder(Settings, new ParcelEncoder(LandscapeData.terrainData));
         }
 
         private static MessageEncodingSettings LoadSettings()

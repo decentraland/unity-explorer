@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -38,6 +39,7 @@ namespace DCL.Backpack
         private readonly ProfileChangesBus profileChangesBus;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly IOwnedNftFilter ownedNftFilter;
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -53,7 +55,8 @@ namespace DCL.Backpack
             Entity playerEntity,
             IAppArgs appArgs,
             WarningNotificationView inWorldWarningNotificationView,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -85,6 +88,7 @@ namespace DCL.Backpack
             this.appArgs = appArgs;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileChangesBus = profileChangesBus;
+            this.ownedNftFilter = ownedNftFilter;
         }
 
         public void Dispose()
@@ -210,7 +214,8 @@ namespace DCL.Backpack
                         equippedWearables,
                         forceRenderList,
                         emoteStorage,
-                        wearableStorage);
+                        wearableStorage,
+                        ownedNftFilter);
 
                     // Skip publishing the same profile
                     if (newProfile.IsSameProfile(oldProfile))

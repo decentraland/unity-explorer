@@ -155,5 +155,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Discord = 93,
 
         LodGeneratorCDN = 94,
+
+        Pulse = 100,
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.AvatarSection.Outfits.Events;
@@ -22,18 +23,21 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly IWearableStorage wearableStorage;
         private readonly IEventBus eventBus;
         private readonly OutfitsLogger outfitsLogger;
+        private readonly IOwnedNftFilter ownedNftFilter;
 
         public SaveOutfitCommand(ISelfProfile selfProfile,
             OutfitsRepository outfitsRepository,
             IWearableStorage wearableStorage,
             IEventBus eventBus,
-            OutfitsLogger outfitsLogger)
+            OutfitsLogger outfitsLogger,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.selfProfile = selfProfile;
             this.outfitsRepository = outfitsRepository;
             this.wearableStorage = wearableStorage;
             this.eventBus = eventBus;
             this.outfitsLogger = outfitsLogger;
+            this.ownedNftFilter = ownedNftFilter;
         }
 
         public async UniTask<OutfitItem> ExecuteAsync(int slotIndex,
@@ -47,7 +51,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             outfitsLogger.LogEquippedState("[SaveOutfitCommand - outfit state]", profile.UserId, equippedWearables);
 
-            var fullWearableUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile);
+            var fullWearableUrns = equippedWearables.ToFullWearableUrns(wearableStorage, profile, ownedNftFilter);
 
             var (hairColor, eyesColor, skinColor) = equippedWearables.GetColors();
 
