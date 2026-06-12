@@ -54,7 +54,7 @@ namespace DCL.VoiceChat
         {
             if (TryGetCurrentMicrophoneSourceIfInCall(out MicrophoneRtcAudioSource? source))
             {
-                buttonPressStartTime = Time.time;
+                buttonPressStartTime = UnityEngine.Time.time;
                 hasIntentionToDisable = source!.IsRecording; // Disable microphone on release if it was recording
                 EnableMicrophone();
             }
@@ -64,7 +64,7 @@ namespace DCL.VoiceChat
         {
             if (TryGetCurrentMicrophoneSourceIfInCall(out _))
             {
-                float pressDuration = Time.time - buttonPressStartTime;
+                float pressDuration = UnityEngine.Time.time - buttonPressStartTime;
 
                 // If the button was held for longer than the threshold, treat it as push-to-talk and stop communication on release
                 bool shouldDisableByThreshold = pressDuration >= voiceChatConfiguration.HoldThresholdInSeconds;

@@ -57,6 +57,7 @@ namespace DCL.Prefs
         public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
         public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
         public const string PS_RESOLUTION = "QS_Resolution";
+        public const string PS_WINDOWED_RESOLUTION = "QS_WindowedResolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";

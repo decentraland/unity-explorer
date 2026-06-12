@@ -59,7 +59,7 @@ namespace DCL.Chat.ChatReactions.Presenters
             {
                 try
                 {
-                    float dt = Time.unscaledDeltaTime;
+                    float dt = UnityEngine.Time.unscaledDeltaTime;
 
                     if (cachedMainCamera == null)
                         cachedMainCamera = Camera.main;

@@ -113,7 +113,7 @@ namespace DCL.MapRenderer.ConsumerUtils
             {
                 await UniTask.NextFrame(PlayerLoopTiming.PostLateUpdate);
                 if (ct.IsCancellationRequested) break;
-                float unscaledDeltaTime = Time.unscaledDeltaTime;
+                float unscaledDeltaTime = UnityEngine.Time.unscaledDeltaTime;
                 var cameraLocalPos = mapCameraController.LocalPosition;
 
                 if (dragging)

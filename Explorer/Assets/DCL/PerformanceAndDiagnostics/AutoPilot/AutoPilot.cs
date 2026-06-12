@@ -75,9 +75,9 @@ namespace DCL.PerformanceAndDiagnostics.AutoPilot
         /// </summary>
         private static async UniTask StandAtSpawnAsync()
         {
-            float startTime = Time.realtimeSinceStartup;
+            float startTime = UnityEngine.Time.realtimeSinceStartup;
 
-            while (Time.realtimeSinceStartup - startTime < 90f)
+            while (UnityEngine.Time.realtimeSinceStartup - startTime < 90f)
                 await UniTask.Yield();
         }
     }

@@ -16,7 +16,6 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Clipboard;
-using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;

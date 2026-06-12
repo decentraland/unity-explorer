@@ -43,7 +43,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             World sceneEcsWorld = playerCRDTEntity.SceneFacade!.EcsExecutor.World;
 
             // Position is updated to scene-relative on the writer system
-            if (!sceneEcsWorld.TryGet<SDKTransform>(playerCRDTEntity.SceneWorldEntity, out SDKTransform? sdkTransform))
+            if (!sceneEcsWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKTransform? sdkTransform))
                 sceneEcsWorld.Add(playerCRDTEntity.SceneWorldEntity, sdkTransform = sdkTransformPool.Get());
 
             sdkTransform!.Position.Value = characterTransform.Transform.position;
