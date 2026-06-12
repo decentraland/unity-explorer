@@ -79,7 +79,8 @@ namespace DCL.Utilities
 
             public void Dispose()
             {
-                reactiveProperty.Unsubscribe(observer);
+                // reactiveProperty is null when the subscription is a default struct (never assigned)
+                reactiveProperty?.Unsubscribe(observer);
             }
         }
     }
