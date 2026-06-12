@@ -36,8 +36,12 @@ namespace DCL.Passport.Modules
             view.DescriptionCharacterCounter.gameObject.SetActive(true);
         }
 
-        public void Dispose() =>
+        public void Dispose()
+        {
             view.DescriptionForEditMode.onValueChanged.RemoveListener(UpdateCharacterCounter);
+            view.DescriptionForEditMode.onSelect.RemoveListener(EnableEditFields);
+            view.DescriptionForEditMode.onDeselect.RemoveListener(DisableEditFields);
+        }
 
         public void Setup(Profile profile)
         {
