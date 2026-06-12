@@ -61,6 +61,12 @@ namespace SceneRuntime
         void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);
 
         V8RuntimeHeapInfo RuntimeHeapInfo { get; }
+
+        /// <summary>
+        ///     Script-bound array operations of the underlying engine,
+        ///     required by the API wrappers that marshal binary data back to the scene
+        /// </summary>
+        IJsOperations JsOperations { get; }
     }
 
     public static class SceneRuntimeExtensions
@@ -148,14 +154,14 @@ namespace SceneRuntime
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, SceneRuntimeMetrics runtimeMetrics)
         {
-            var newWrapper = new EngineApiWrapper(engineApi, sceneData, instancePoolsProvider, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
+            var newWrapper = new EngineApiWrapper(engineApi, sceneData, instancePoolsProvider, sceneRuntime.JsOperations, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
             sceneRuntime.Register("UnityEngineApi", newWrapper);
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISceneData sceneData,  ISDKObservableEventsEngineApi engineApi, ISDKMessageBusCommsControllerAPI commsApiImplementation, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, SceneRuntimeMetrics runtimeMetrics)
         {
-            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, sceneData, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
+            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, sceneData, commsApiImplementation, instancePoolsProvider, sceneRuntime.JsOperations, sceneExceptionsHandler, runtimeMetrics, sceneRuntime.isDisposingTokenSource);
             sceneRuntime.Register("UnityEngineApi", newWrapper);
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }

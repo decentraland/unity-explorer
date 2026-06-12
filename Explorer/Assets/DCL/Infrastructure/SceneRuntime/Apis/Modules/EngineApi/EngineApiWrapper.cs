@@ -13,15 +13,17 @@ namespace SceneRuntime.Apis.Modules.EngineApi
     public class EngineApiWrapper : JsApiWrapper<IEngineApi>
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly IJsOperations jsOperations;
         protected readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly SceneRuntimeMetrics metrics;
         private readonly string threadName;
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
-        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler, SceneRuntimeMetrics metrics, CancellationTokenSource disposeCts)
+        public EngineApiWrapper(IEngineApi api, ISceneData sceneData, IInstancePoolsProvider instancePoolsProvider, IJsOperations jsOperations, ISceneExceptionsHandler exceptionsHandler, SceneRuntimeMetrics metrics, CancellationTokenSource disposeCts)
             : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
+            this.jsOperations = jsOperations;
             this.exceptionsHandler = exceptionsHandler;
             this.metrics = metrics;
             threadName = $"CrdtSendToRenderer({sceneData.SceneShortInfo})";
@@ -34,10 +36,10 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
+        public ITypedArray<byte>? CrdtSendToRenderer(ITypedArray<byte> data)
         {
             if (disposeCts.IsCancellationRequested)
-                return PoolableByteArray.EMPTY;
+                return null;
 
             try
             {
@@ -53,7 +55,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
                 Profiler.EndThreadProfiling();
 
-                return result.IsEmpty ? PoolableByteArray.EMPTY : result;
+                return ToScriptArray(ref result);
             }
             catch (Exception e)
             {
@@ -62,28 +64,48 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                     // Report an uncategorized MANAGED exception (don't propagate it further)
                     exceptionsHandler.OnEngineException(e);
 
-                return PoolableByteArray.EMPTY;
+                return null;
             }
         }
 
         [UsedImplicitly]
-        public PoolableByteArray CrdtGetState()
+        public ITypedArray<byte>? CrdtGetState()
         {
             if (disposeCts.IsCancellationRequested)
-                return PoolableByteArray.EMPTY;
+                return null;
 
             try
             {
                 PoolableByteArray result = api.CrdtGetState();
                 metrics.BytesToScene.Add(result.Length);
-                return result.IsEmpty ? PoolableByteArray.EMPTY : result;
+                return ToScriptArray(ref result);
             }
             catch (Exception e)
             {
                 // Report an uncategorized MANAGED exception (don't propagate it further)
                 exceptionsHandler.OnEngineException(e);
-                return PoolableByteArray.EMPTY;
+                return null;
             }
+        }
+
+        /// <summary>
+        ///     Copies the payload into a script-owned Uint8Array in a single bulk write and returns the pooled
+        ///     array deterministically. Previously the <see cref="PoolableByteArray" /> itself was returned to JS:
+        ///     it was consumed through the per-byte fast-proxy enumerator (one host transition per byte in
+        ///     <c>new Uint8Array(...)</c>) and never disposed, so the shared bytes pool never got its arrays back.
+        /// </summary>
+        private ITypedArray<byte>? ToScriptArray(ref PoolableByteArray result)
+        {
+            if (result.IsEmpty)
+            {
+                result.Dispose();
+                return null;
+            }
+
+            ITypedArray<byte> scriptArray = jsOperations.NewUint8Array(result.Length);
+            scriptArray.WriteBytes(result.Array, 0ul, (ulong)result.Length, 0ul);
+            result.Dispose();
+            return scriptArray;
         }
 
         [UsedImplicitly]
