@@ -13,6 +13,7 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -108,18 +109,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             ConnectionStringState state = ReadAndConsumeConnectionState();
 
-            (string? connectionString, bool isNewString) = state.Match(
-                onNone: static () => (null, false),
-                onPendingConnection: static pending => ((string?)pending.ConnectionString, true),
-                onCurrentConnection: static current => ((string?)current.ConnectionString, false));
-
-            if (connectionString == null) return;
-
             if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
 
             bool roomIsDisconnected = Room().Info.ConnectionState != LKConnectionState.ConnConnected;
 
-            if (!ShouldAttemptConnection(isNewString, roomIsDisconnected, DateTime.UtcNow, nextReconnectAttemptUtc))
+            if (!ShouldAttemptConnection(state, roomIsDisconnected, DateTime.UtcNow, nextReconnectAttemptUtc, out string? connectionString))
                 return;
 
             await TryConnectToRoomAsync(connectionString, token);
@@ -146,8 +140,27 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             }
         }
 
-        internal static bool ShouldAttemptConnection(bool isNewString, bool roomIsDisconnected, DateTime nowUtc, DateTime nextAttemptUtc) =>
-            isNewString || (roomIsDisconnected && nowUtc >= nextAttemptUtc);
+        /// <summary>
+        ///     A pending string means the server assigned a new island: always connect, even if the room
+        ///     looks healthy. A current (cached) string is only retried on disconnect once the backoff elapsed.
+        /// </summary>
+        internal static bool ShouldAttemptConnection(in ConnectionStringState state, bool roomIsDisconnected, DateTime nowUtc, DateTime nextAttemptUtc, [NotNullWhen(true)] out string? connectionString)
+        {
+            if (state.IsPendingConnection(out PendingConnection pending))
+            {
+                connectionString = pending.ConnectionString;
+                return true;
+            }
+
+            if (state.IsCurrentConnection(out CurrentConnection current) && roomIsDisconnected && nowUtc >= nextAttemptUtc)
+            {
+                connectionString = current.ConnectionString;
+                return true;
+            }
+
+            connectionString = null;
+            return false;
+        }
 
         internal static bool ShouldForceFreshHandshake(int consecutiveFailures) =>
             consecutiveFailures >= MAX_RECONNECT_ATTEMPTS_BEFORE_FRESH_HANDSHAKE;

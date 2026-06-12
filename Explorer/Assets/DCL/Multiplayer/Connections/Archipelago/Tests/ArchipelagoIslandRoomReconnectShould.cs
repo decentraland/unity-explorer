@@ -12,36 +12,41 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public void ConnectWhenNewStringArrivesRegardlessOfRoomState([Values(true, false)] bool roomIsDisconnected)
         {
             // Arrange: a backoff in the future must not delay a server-pushed string
+            ConnectionStringState pending = ConnectionStringState.FromPendingConnection(new PendingConnection("conn-str"));
             DateTime nextAttempt = NOW + TimeSpan.FromSeconds(30);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(isNewString: true, roomIsDisconnected, NOW, nextAttempt);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(pending, roomIsDisconnected, NOW, nextAttempt, out string? connectionString);
 
             // Assert
             Assert.IsTrue(shouldConnect);
+            Assert.AreEqual("conn-str", connectionString);
         }
 
         [Test]
         public void ReconnectWithCachedStringWhenRoomIsDisconnectedAndBackoffElapsed()
         {
             // Arrange
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
             DateTime nextAttempt = NOW - TimeSpan.FromSeconds(1);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(isNewString: false, roomIsDisconnected: true, NOW, nextAttempt);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: true, NOW, nextAttempt, out string? connectionString);
 
             // Assert
             Assert.IsTrue(shouldConnect);
+            Assert.AreEqual("conn-str", connectionString);
         }
 
         [Test]
         public void SkipReconnectWhenWithinBackoff()
         {
             // Arrange
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
             DateTime nextAttempt = NOW + TimeSpan.FromSeconds(3);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(isNewString: false, roomIsDisconnected: true, NOW, nextAttempt);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: true, NOW, nextAttempt, out string? _);
 
             // Assert
             Assert.IsFalse(shouldConnect);
@@ -50,11 +55,25 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         [Test]
         public void SkipWhenRoomIsHealthy()
         {
-            // Arrange: no pending string and the room is connected — nothing to do, even past backoff
+            // Arrange: a cached string and a connected room — nothing to do, even past backoff
+            ConnectionStringState current = ConnectionStringState.FromCurrentConnection(new CurrentConnection("conn-str"));
             DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
 
             // Act
-            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(isNewString: false, roomIsDisconnected: false, NOW, nextAttempt);
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(current, roomIsDisconnected: false, NOW, nextAttempt, out string? _);
+
+            // Assert
+            Assert.IsFalse(shouldConnect);
+        }
+
+        [Test]
+        public void SkipWhenNoStringReceived()
+        {
+            // Arrange: nothing pushed by the server yet — never connect, even disconnected and past backoff
+            DateTime nextAttempt = NOW - TimeSpan.FromSeconds(10);
+
+            // Act
+            bool shouldConnect = ArchipelagoIslandRoom.ShouldAttemptConnection(ConnectionStringState.None(), roomIsDisconnected: true, NOW, nextAttempt, out string? _);
 
             // Assert
             Assert.IsFalse(shouldConnect);
@@ -85,12 +104,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         {
             ConnectionStringState consumed = ConnectionStringState.None().Consume();
 
-            bool isNone = consumed.Match(
-                onNone: static () => true,
-                onPendingConnection: static _ => false,
-                onCurrentConnection: static _ => false);
-
-            Assert.IsTrue(isNone);
+            Assert.IsTrue(consumed.IsNone());
         }
 
         [Test]
