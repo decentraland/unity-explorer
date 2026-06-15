@@ -1,5 +1,6 @@
 using Arch.Core;
 using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
@@ -422,6 +423,155 @@ namespace DCL.Interaction.Raycast.Tests
 
             Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
             Assert.That(raycastResult.Hits.Count, Is.EqualTo(0)); // Should not find any hits
+        }
+
+        [Test]
+        public void MainPlayer_QualifiesForPlayerMask()
+        {
+            // Arrange: a single CHARACTER_LAYER collider
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPlayer;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo((uint)SpecialEntitiesID.PLAYER_ENTITY));
+        }
+
+        [Test]
+        public void MainPlayer_QualifiesForMainPlayerMask()
+        {
+            // Arrange
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClMainPlayer;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo((uint)SpecialEntitiesID.PLAYER_ENTITY));
+        }
+
+        [Test]
+        public void MainPlayer_DoesNotQualifyForPhysicsOnlyMask()
+        {
+            // CL_PHYSICS is not in PLAYER_QUALIFYING_BITS — main player must not be hit.
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void RemoteAvatar_QualifiesForPlayerMask()
+        {
+            // Arrange
+            CreateAvatarLayerCollider(PhysicsLayers.OTHER_AVATARS_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPlayer;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(1));
+            // Remote avatars must not report a scene-local entity id (foundEntity stays null).
+            Assert.That(raycastResult.Hits[0].EntityId, Is.EqualTo(0u));
+        }
+
+        [Test]
+        public void RemoteAvatar_DoesNotQualifyForMainPlayerOnlyMask()
+        {
+            // Arrange
+            CreateAvatarLayerCollider(PhysicsLayers.OTHER_AVATARS_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClMainPlayer;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void MainPlayer_DoesNotQualifyForPointerOnlyMask()
+        {
+            // CL_POINTER is not in PLAYER_QUALIFYING_BITS — main player must not be hit.
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPointer;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void MainPlayer_DoesNotQualifyForCustomOnlyMask()
+        {
+            // Custom layers are not in PLAYER_QUALIFYING_BITS — main player must not be hit.
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClCustom1;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void MainPlayer_DoesNotQualifyForNoneMask()
+        {
+            // CL_NONE has no bits set — main player must not be hit.
+            CreateAvatarLayerCollider(PhysicsLayers.CHARACTER_LAYER);
+
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClNone;
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.That(raycastResult.Hits.Count, Is.EqualTo(0));
+        }
+
+        private BoxCollider CreateAvatarLayerCollider(int unityLayer)
+        {
+            Transform colliderTransform = new GameObject(nameof(ExecuteRaycastSystemShould) + "_AvatarLayer_" + unityLayer).transform;
+            // Place forward of the raycast origin so the global +Z ray hits it.
+            colliderTransform.position = new UnityEngine.Vector3(0, 0, 5f);
+            colliderTransform.gameObject.layer = unityLayer;
+            BoxCollider collider = colliderTransform.gameObject.AddComponent<BoxCollider>();
+            collider.size = UnityEngine.Vector3.one;
+            collider.isTrigger = false;
+
+            instantiatedTemp.Add(collider);
+            // Intentionally not registered in either the scene cache or the global
+            // cache: avatar branches in DoesHitColliderQualify must decide based on
+            // the GameObject layer alone.
+            return collider;
         }
 
         private void AssertHit(int index, int colliderIndex)
