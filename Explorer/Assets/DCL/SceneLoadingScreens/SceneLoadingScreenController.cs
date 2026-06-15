@@ -269,6 +269,11 @@ namespace DCL.SceneLoadingScreens
                 currentTip.Value = index;
 
                 await FadeOthers(ct);
+
+                // OnViewClose cancels this token and then clears the carousel; bail before driving the
+                // (possibly disposed/cleared) view so we don't race ClearTips into a dangling tip view.
+                if (ct.IsCancellationRequested) return;
+
                 await viewInstance!.ShowTipWithFadeAsync(index, DURATION, ct);
             }
 

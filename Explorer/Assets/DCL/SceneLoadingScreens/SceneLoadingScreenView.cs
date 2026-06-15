@@ -130,7 +130,7 @@ namespace DCL.SceneLoadingScreens
 
             if (tipView.Has == false)
             {
-                ReportHub.LogError(ReportCategory.UI, $"View does not exist: {index}");
+                ReportHub.LogError(ReportCategory.UI, $"{nameof(SceneLoadingScreenView)}: tip view does not exist at index {index}");
                 return;
             }
 
@@ -147,7 +147,7 @@ namespace DCL.SceneLoadingScreens
 
             if (tipView.Has == false)
             {
-                ReportHub.LogError(ReportCategory.UI, $"View does not exist: {index}");
+                ReportHub.LogError(ReportCategory.UI, $"{nameof(SceneLoadingScreenView)}: tip view does not exist at index {index}");
                 return;
             }
 
