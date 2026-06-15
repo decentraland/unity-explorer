@@ -119,8 +119,10 @@ namespace DCL.Backpack.Gifting.Presenters
                 wearablesGridPresenter?.SetSearchText(string.Empty);
                 emotesGridPresenter?.SetSearchText(string.Empty);
             }
-            catch (Exception)
+            catch (OperationCanceledException) { }
+            catch (Exception e)
             {
+                ReportHub.LogException(e, ReportCategory.GIFTING);
             }
         }
 

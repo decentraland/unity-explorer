@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.Controls.Configs;
 using System;
 using System.Threading;
@@ -148,7 +149,8 @@ namespace DCL.UI.Controls
                 if (!isHovering)
                     ShowSubmenu(false);
             }
-            catch (Exception) { }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
     }
 }

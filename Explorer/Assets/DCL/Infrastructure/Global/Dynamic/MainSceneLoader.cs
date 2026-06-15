@@ -167,7 +167,7 @@ namespace Global.Dynamic
         {
             // Dispose just in case, but if the process ends normally or by a crash, the lock should also be released due to how native OS works
             try { singleInstanceLock?.Dispose(); }
-            catch { }
+            catch (Exception e) { ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to release the single-instance lock on quit: {e}"); }
 
             DisableAllSelectableTransitions();
         }
