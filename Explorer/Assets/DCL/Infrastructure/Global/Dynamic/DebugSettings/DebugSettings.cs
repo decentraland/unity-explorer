@@ -1,19 +1,11 @@
-﻿using DCL.LiveKit.Public;
+﻿using DCL.Browser.DecentralandUrls;
+using DCL.LiveKit.Public;
 using LiveKit.Proto;
 using System;
 using UnityEngine;
 
 namespace Global.Dynamic.DebugSettings
 {
-    public enum GatekeeperMode
-    {
-        Org = 0,
-        Zone = 1,
-        Today = 2,
-        Localhost = 3,
-        Custom = 4,
-    }
-
     [Serializable]
     public class DebugSettings
     {

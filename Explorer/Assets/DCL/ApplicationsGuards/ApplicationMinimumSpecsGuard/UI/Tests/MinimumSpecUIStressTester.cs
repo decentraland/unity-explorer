@@ -53,8 +53,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             var realGuard = new MinimumSpecsGuard(
                 new DefaultSpecProfileProvider(),
-                new UnitySystemInfoProvider(),
-                new PlatformDriveInfoProvider());
+                new UnitySystemInfoProvider());
             
             realGuard.HasMinimumSpecs();
             tablePresenter.Populate(realGuard.Results);
