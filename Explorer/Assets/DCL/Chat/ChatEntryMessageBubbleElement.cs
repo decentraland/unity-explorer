@@ -142,12 +142,12 @@ namespace DCL.Chat
         private float CalculatePreferredWidth(string displayText, ChatMessage originalMessage, string usernameOverride = null, string walletIdOverride = null)
         {
             string username = string.IsNullOrEmpty(usernameOverride) ? originalMessage.SenderValidatedName : usernameOverride;
-            int nameLength = 0;
 
-            if (string.IsNullOrEmpty(username))
-                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"SenderValidatedName is null or empty for message: {originalMessage.MessageId} sent by wallet: {originalMessage.SenderWalletAddress}");
-            else
-                nameLength = username.Length;
+            // An empty name is an expected state, not an error: ChatMessageFactory fills
+            // SenderValidatedName with string.Empty whenever the sender's profile isn't available yet,
+            // and UpdateName re-runs this layout once the profile resolves. Until then the width
+            // calculation simply proceeds with the wallet id alone.
+            int nameLength = string.IsNullOrEmpty(username) ? 0 : username.Length;
 
             string walletId = string.IsNullOrEmpty(walletIdOverride) ? originalMessage.SenderWalletId : walletIdOverride;
             int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
