@@ -26,7 +26,7 @@ namespace DCL.AuthenticationScreenFlow
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.SetVersions(current, latest);
+            viewInstance!.SetVersions(current, latest);
             viewInstance.CloseButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
         }

@@ -63,21 +63,21 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnViewInstantiated();
 
-            viewInstance.ShowNextButton.onClick.AddListener(() =>
+            viewInstance!.ShowNextButton.onClick.AddListener(() =>
             {
                 ShowTipWithFade(currentTip.Value + 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
-            viewInstance.ShowPreviousButton.onClick.AddListener(() =>
+            viewInstance!.ShowPreviousButton.onClick.AddListener(() =>
             {
                 ShowTipWithFade(currentTip.Value - 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
-            viewInstance.OnBreadcrumbClicked += ShowTipWithFade;
+            viewInstance!.OnBreadcrumbClicked += ShowTipWithFade;
 
             UpdateLocalizedTextAsync().Forget();
         }
@@ -85,7 +85,7 @@ namespace DCL.SceneLoadingScreens
         private async UniTaskVoid UpdateLocalizedTextAsync()
         {
             AsyncOperationHandle<string> handle =
-                viewInstance.ProgressLabel.StringReference!.GetLocalizedStringAsync();
+                viewInstance!.ProgressLabel.StringReference!.GetLocalizedStringAsync();
 
             await handle;
 
@@ -106,14 +106,14 @@ namespace DCL.SceneLoadingScreens
             tipsFadeCancellationToken = tipsFadeCancellationToken.SafeRestart();
             BlockUnwantedInputs();
             SetLoadProgress(0);
-            viewInstance.ClearTips();
+            viewInstance!.ClearTips();
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            viewInstance.RootCanvasGroup.alpha = 1f;
-            viewInstance.ContentCanvasGroup.alpha = 1f;
+            viewInstance!.RootCanvasGroup.alpha = 1f;
+            viewInstance!.ContentCanvasGroup.alpha = 1f;
 
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
             audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
@@ -133,7 +133,7 @@ namespace DCL.SceneLoadingScreens
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
 
-            viewInstance.ClearTips();
+            viewInstance!.ClearTips();
             tips.Release();
         }
 
@@ -163,8 +163,8 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask FadeOutAsync(CancellationToken ct)
         {
-            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
-            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
+            var contentTask = viewInstance!.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
+            var rootTask = viewInstance!.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
             await UniTask.WhenAll(contentTask, rootTask);
             UnblockUnwantedInputs();
         }
@@ -194,7 +194,7 @@ namespace DCL.SceneLoadingScreens
             foreach (SceneTips.Tip tip in tips.Tips) tasks.Add(tip.LoadAsync());
             var loaded = await UniTask.WhenAll(tasks!);
 
-            foreach (SceneTips.LoadedTip tip in loaded) viewInstance.AddTip(tip);
+            foreach (SceneTips.LoadedTip tip in loaded) viewInstance!.AddTip(tip);
         }
 
         private async UniTask WaitUntilWorldIsLoadedAsync(float progressProportion, CancellationToken ct)
@@ -218,15 +218,15 @@ namespace DCL.SceneLoadingScreens
         private void SetLoadProgress(float progress)
         {
             progress = Mathf.Clamp01(progress);
-            viewInstance.ProgressBar.normalizedValue = progress;
+            viewInstance!.ProgressBar.normalizedValue = progress;
 
             var value = (int)(progress * 100);
             string formatted = progressLocalizationString.Replace("0", value.ToString());
-            viewInstance.LoadingPercentageText.SetText(formatted);
+            viewInstance!.LoadingPercentageText.SetText(formatted);
         }
 
         private void AddLoadProgress(float progress) =>
-            SetLoadProgress(viewInstance.ProgressBar.normalizedValue + progress);
+            SetLoadProgress(viewInstance!.ProgressBar.normalizedValue + progress);
 
         private void ShowTip(int index)
         {
@@ -237,8 +237,8 @@ namespace DCL.SceneLoadingScreens
 
             index %= tips.Tips.Count;
 
-            viewInstance.HideAllTips();
-            viewInstance.ShowTip(index);
+            viewInstance!.HideAllTips();
+            viewInstance!.ShowTip(index);
 
             currentTip.Value = index;
         }
@@ -252,7 +252,7 @@ namespace DCL.SceneLoadingScreens
                 fadingTasks.Clear();
 
                 for (var i = 0; i < tips.Tips.Count; i++)
-                    fadingTasks.Add(viewInstance.HideTipWithFadeAsync(i, DURATION, ct));
+                    fadingTasks.Add(viewInstance!.HideTipWithFadeAsync(i, DURATION, ct));
 
                 return UniTask.WhenAll(fadingTasks);
             }
@@ -269,7 +269,7 @@ namespace DCL.SceneLoadingScreens
                 currentTip.Value = index;
 
                 await FadeOthers(ct);
-                await viewInstance.ShowTipWithFadeAsync(index, DURATION, ct);
+                await viewInstance!.ShowTipWithFadeAsync(index, DURATION, ct);
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();

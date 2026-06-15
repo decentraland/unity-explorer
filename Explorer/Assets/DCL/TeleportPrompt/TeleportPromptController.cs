@@ -40,9 +40,9 @@ namespace DCL.TeleportPrompt
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = imageControllerProvider.Create(viewInstance.placeImage);
-            viewInstance.cancelButton.onClick.AddListener(Dismiss);
-            viewInstance.continueButton.onClick.AddListener(Approve);
+            placeImageController = imageControllerProvider.Create(viewInstance!.placeImage);
+            viewInstance!.cancelButton.onClick.AddListener(Dismiss);
+            viewInstance!.continueButton.onClick.AddListener(Approve);
         }
 
         protected override void OnViewShow()
@@ -69,8 +69,8 @@ namespace DCL.TeleportPrompt
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
-                viewInstance.cancelButton.OnClickAsync(ct),
-                viewInstance.continueButton.OnClickAsync(ct));
+                viewInstance!.cancelButton.OnClickAsync(ct),
+                viewInstance!.continueButton.OnClickAsync(ct));
 
         private void RequestTeleport(Vector2Int coords, Action<TeleportPromptResultType> result)
         {
@@ -90,7 +90,7 @@ namespace DCL.TeleportPrompt
         {
             try
             {
-                placeImageController.SetImage(viewInstance.defaultImage);
+                placeImageController!.SetImage(viewInstance!.defaultImage);
                 SetPopupAsLoading(true);
                 await UniTask.Delay(300, cancellationToken: ct);
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, ct);
@@ -112,27 +112,27 @@ namespace DCL.TeleportPrompt
         private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)
         {
             SetPopupAsLoading(false);
-            placeImageController.RequestImage(placeInfo.image);
-            viewInstance.placeName.text = placeInfo.title;
-            viewInstance.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
-            viewInstance.location.text = placeInfo.base_position;
+            placeImageController!.RequestImage(placeInfo.image);
+            viewInstance!.placeName.text = placeInfo.title;
+            viewInstance!.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+            viewInstance!.location.text = placeInfo.base_position;
         }
 
         private void SetEmptyPlaceInfo(Vector2Int parcel)
         {
             SetPopupAsLoading(false);
-            viewInstance.placeName.text = "Empty parcel";
-            viewInstance.placeCreator.text = "created by <b>Unknown</b>";
-            viewInstance.location.text = parcel.ToString();
+            viewInstance!.placeName.text = "Empty parcel";
+            viewInstance!.placeCreator.text = "created by <b>Unknown</b>";
+            viewInstance!.location.text = parcel.ToString();
         }
 
         private void SetPopupAsLoading(bool isLoading)
         {
-            viewInstance.loadingSpinner.SetActive(isLoading);
-            viewInstance.loadingPlaceContainer.SetActive(isLoading);
-            viewInstance.placeInfoContainer.SetActive(!isLoading);
-            viewInstance.cancelButton.interactable = !isLoading;
-            viewInstance.continueButton.interactable = !isLoading;
+            viewInstance!.loadingSpinner.SetActive(isLoading);
+            viewInstance!.loadingPlaceContainer.SetActive(isLoading);
+            viewInstance!.placeInfoContainer.SetActive(!isLoading);
+            viewInstance!.cancelButton.interactable = !isLoading;
+            viewInstance!.continueButton.interactable = !isLoading;
         }
     }
 }

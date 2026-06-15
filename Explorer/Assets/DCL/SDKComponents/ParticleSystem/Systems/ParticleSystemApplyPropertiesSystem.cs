@@ -121,7 +121,7 @@ namespace DCL.SDKComponents.ParticleSystem.Systems
 
             for (int i = 0; i < burstCount; i++)
             {
-                var protoBurst = bursts.Values[i];
+                var protoBurst = bursts!.Values[i];
                 short count = (short)protoBurst.Count;
                 component.CachedBursts[i] = new UnityEngine.ParticleSystem.Burst(
                     protoBurst.Time,

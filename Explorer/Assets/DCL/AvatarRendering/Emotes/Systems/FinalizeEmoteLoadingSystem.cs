@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the AB");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the AB");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -108,7 +108,7 @@ namespace DCL.AvatarRendering.Emotes
                     AssignEmoteResult(emote, bodyShape, regularAssetResult);
                 else
                 {
-                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO.id} failed to load from the GLTF");
+                    ReportHub.LogWarning(GetReportData(), $"The emote {emote.DTO?.id} failed to load from the GLTF");
                     AssignFailedEmoteResult(emote, bodyShape);
                 }
 
@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             var asset = new StreamableLoadingResult<AttachmentRegularAsset>(regularAssetResult);
 
-            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+            if (emote.DTO != null && emote.IsUnisex() && emote.HasSameClipForAllGenders())
             {
                 emote.AssetResults[BodyShape.MALE] = asset;
                 emote.AssetResults[BodyShape.FEMALE] = asset;
@@ -134,9 +134,9 @@ namespace DCL.AvatarRendering.Emotes
         {
             var failedResult = new StreamableLoadingResult<AttachmentRegularAsset>(
                 GetReportData(),
-                new Exception($"Emote {emote.DTO.id} failed to load"));
+                new Exception($"Emote {emote.DTO?.id} failed to load"));
 
-            if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
+            if (emote.DTO != null && emote.IsUnisex() && emote.HasSameClipForAllGenders())
             {
                 emote.AssetResults[BodyShape.MALE] = failedResult;
                 emote.AssetResults[BodyShape.FEMALE] = failedResult;

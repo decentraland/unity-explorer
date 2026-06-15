@@ -37,7 +37,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (!emoteStorage.TryGetElement(emoteIntent.EmoteId.Shorten(), out IEmote emote)) return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
+            // AssignedToScene guarantees SceneFacade is non-null; null-forgive for the compiler.
+            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade!.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
 
             bool componentFound = sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent emoteCommandComponent);

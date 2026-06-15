@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public bool IsEquipped(ITrimmedWearable wearable)
         {
-            return wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
+            return wearables[wearable.GetCategory()]?.DTO?.id == wearable.TrimmedDTO.id;
         }
 
         public void Equip(IWearable wearable) =>

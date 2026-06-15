@@ -133,7 +133,7 @@ namespace DCL.LOD.Systems
                     if (Utils.TryCreateGltfObject(Result.Asset, creationHelper.AssetNameInBundle, out GltfContainerAsset asset))
                     {
                         PositionAsset(creationHelper.InitialSceneStateLOD, creationHelper.Entry, creationHelper.CacheKey, asset,
-                            creationHelper.InitialSceneStateLOD.ParentContainer.transform);
+                            creationHelper.InitialSceneStateLOD.ParentContainer!.transform);
                     }
                     else
                     {

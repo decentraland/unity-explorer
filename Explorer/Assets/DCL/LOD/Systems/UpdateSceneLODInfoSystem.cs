@@ -86,7 +86,7 @@ namespace DCL.LOD.Systems
                 // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
-            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
+            string platformLODKey = $"{sceneDefinitionComponent.Definition.id?.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
                 platformLODKey,

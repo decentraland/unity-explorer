@@ -13,6 +13,13 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public void UpdateLoadingStatus(bool isLoading);
 
+        /// <summary>
+        ///     Null until the attachment's model resolves (and on a failed load - concrete getters back this
+        ///     with <c>Model.Asset!</c>, which FinalizeEmoteLoadingSystem guards on). The metadata accessors
+        ///     below that return a nullable type (manifest version, download url, entity id) propagate that
+        ///     null with <c>?.</c>; the value-returning helpers (hash, urn, category, thumbnail, ...) have a
+        ///     loaded precondition and dereference it directly.
+        /// </summary>
         AvatarAttachmentDTO? DTO { get; }
 
         int Amount { get; }
@@ -24,13 +31,13 @@ namespace DCL.AvatarRendering.Loading.Components
             DTO.GetHash();
 
         public new AssetBundleManifestVersion? GetAssetBundleManifestVersion() =>
-            DTO.assetBundleManifestVersion;
+            DTO?.assetBundleManifestVersion;
 
         public new string? GetContentDownloadUrl() =>
-            DTO.ContentDownloadUrl;
+            DTO?.ContentDownloadUrl;
 
         public new string? GetEntityId() =>
-            DTO.id;
+            DTO?.id;
 
         public bool IsUnisex()
         {

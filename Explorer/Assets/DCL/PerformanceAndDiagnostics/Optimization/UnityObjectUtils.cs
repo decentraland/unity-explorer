@@ -56,9 +56,9 @@ namespace Utility
                 return;
 
             if (!Application.isPlaying)
-                Object.DestroyImmediate(component.gameObject);
+                Object.DestroyImmediate(component?.gameObject);
             else
-                Object.Destroy(component.gameObject);
+                Object.Destroy(component?.gameObject);
         }
 
         public static void SafeDestroy(Object? @object)

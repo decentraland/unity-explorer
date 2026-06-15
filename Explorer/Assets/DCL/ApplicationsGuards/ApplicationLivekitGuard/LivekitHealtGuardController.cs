@@ -11,7 +11,7 @@ public class LivekitHealtGuardController : ControllerBase<LivekitHealthGuardView
 
     protected override void OnViewInstantiated()
     {
-        viewInstance.ExitButton.onClick.AddListener(ExitUtils.Exit);
+        viewInstance!.ExitButton.onClick.AddListener(ExitUtils.Exit);
     }
 
     protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

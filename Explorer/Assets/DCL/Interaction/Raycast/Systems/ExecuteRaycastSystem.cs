@@ -100,7 +100,7 @@ namespace DCL.Interaction.Raycast.Systems
         private void BudgetAndExecute(Vector3 scenePosition)
         {
             // Process only not executed raycasts which bucket is not farther than the max allowed distance
-            orderedRaycastData.Clear();
+            orderedRaycastData!.Clear();
 
             GatherSpecialEntitiesRaycastIntentsQuery(World);
             GatherRaycastIntentsQuery(World);
@@ -155,7 +155,7 @@ namespace DCL.Interaction.Raycast.Systems
             // Filter out invalid type
             if (raycast.QueryType == RaycastQueryType.RqtNone) return;
 
-            orderedRaycastData.Add(new RaycastData
+            orderedRaycastData!.Add(new RaycastData
             {
                 Partition = partitionComponent,
                 Component = new ManagedTypePointer<RaycastComponent>(ref raycastComponent),

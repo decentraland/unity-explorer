@@ -91,7 +91,7 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                if (result.Succeeded && result.Asset.TryGetAsset(out GameObject go))
+                if (result.Succeeded && result.Asset?.TryGetAsset(out GameObject go) == true)
                 {
                     GameObject? instantiatedLOD = Object.Instantiate(go,
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,

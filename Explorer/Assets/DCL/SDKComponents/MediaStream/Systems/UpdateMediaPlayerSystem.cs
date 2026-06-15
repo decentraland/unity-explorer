@@ -418,7 +418,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private static bool ConsumePromise(ref MediaPlayerComponent component, bool autoPlay)
         {
-            if (!component.OpenMediaPromise.IsResolved) return false;
+            if (component.OpenMediaPromise is not { IsResolved: true }) return false;
             if (component.OpenMediaPromise.IsConsumed) return false;
 
             // On macOS, enforce minimum gap between HLS stream opens to prevent
