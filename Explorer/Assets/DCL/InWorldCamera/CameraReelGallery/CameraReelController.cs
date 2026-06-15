@@ -121,6 +121,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public void ResetAnimator()
         {
+            // Sections are reset in bulk by SectionSelectorController.ResetAnimators while at most
+            // one is active; an inactive panel discards its animator state on disable anyway, so
+            // the reset is a no-op that would only log the Update-on-inactive-object warning.
+            if (!view.panelAnimator.gameObject.activeInHierarchy)
+                return;
+
             view.panelAnimator.Rebind();
             view.headerAnimator.Rebind();
             view.panelAnimator.Update(0);

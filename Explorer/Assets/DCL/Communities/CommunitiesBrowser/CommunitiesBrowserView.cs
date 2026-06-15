@@ -122,6 +122,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void ResetAnimator()
         {
+            // Sections are reset in bulk by SectionSelectorController.ResetAnimators while at most
+            // one is active; an inactive panel discards its animator state on disable anyway, so
+            // the reset is a no-op that would only log the Update-on-inactive-object warning.
+            if (!panelAnimator.gameObject.activeInHierarchy)
+                return;
+
             panelAnimator.Rebind();
             headerAnimator.Rebind();
             panelAnimator.Update(0);

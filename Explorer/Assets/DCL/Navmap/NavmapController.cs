@@ -233,6 +233,12 @@ namespace DCL.Navmap
 
         public void ResetAnimator()
         {
+            // Sections are reset in bulk by SectionSelectorController.ResetAnimators while at most
+            // one is active; an inactive panel discards its animator state on disable anyway, so
+            // the reset is a no-op that would only log the Update-on-inactive-object warning.
+            if (!navmapView.PanelAnimator.gameObject.activeInHierarchy)
+                return;
+
             navmapView.PanelAnimator.Rebind();
             navmapView.PanelAnimator.Update(0);
         }
