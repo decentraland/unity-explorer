@@ -6,6 +6,7 @@ namespace DCL.VoiceChat
 {
     public class PrivateVoiceChatCallStatusServiceNull : IPrivateVoiceChatCallStatusService
     {
+#pragma warning disable CS0067 // PrivateVoiceChatCallStatusServiceNull is a no-op null object; this interface event is intentionally never raised
         public string CurrentTargetWallet { get; }
         public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived;
         public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
@@ -34,5 +35,6 @@ namespace DCL.VoiceChat
         public void RejectCall() { }
 
         public void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update) { }
+#pragma warning restore CS0067
     }
 }

@@ -18,8 +18,10 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3Identity? identity;
 
+            #pragma warning disable CS0067 // no-op Fake null object; interface events intentionally never raised
             public event Action? OnIdentityCleared;
             public event Action? OnIdentityChanged;
+            #pragma warning restore CS0067
 
             public Fake() : this(new IWeb3Identity.Random()) { }
 

@@ -34,9 +34,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         class Fake : Null, IGateKeeperSceneRoom
         {
+            #pragma warning disable CS0067 // no-op Fake null object; interface events intentionally never raised
             public event Action? CurrentSceneRoomConnected;
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
+            #pragma warning restore CS0067
             public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input());
 
             public bool Activated => true;

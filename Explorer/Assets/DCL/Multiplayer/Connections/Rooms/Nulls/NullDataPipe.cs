@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 {
     public class NullDataPipe : IDataPipe
     {
+#pragma warning disable CS0067 // NullDataPipe is a no-op IDataPipe null object; this interface event is intentionally never raised
         public static readonly NullDataPipe INSTANCE = new ();
 
         public event ReceivedDataDelegate? DataReceived;
@@ -16,5 +17,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         {
             //ignore
         }
+#pragma warning restore CS0067
     }
 }

@@ -6,6 +6,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 {
     public class NullParticipantsHub : IParticipantsHub
     {
+#pragma warning disable CS0067 // NullParticipantsHub is a no-op IParticipantsHub null object; this interface event is intentionally never raised
         private static readonly IReadOnlyDictionary<string, LKParticipant> EMPTY_DICTIONARY = new Dictionary<string, LKParticipant>();
 
         public static readonly NullParticipantsHub INSTANCE = new ();
@@ -22,5 +23,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         public IReadOnlyDictionary<string, LKParticipant> RemoteParticipantIdentities() =>
             EMPTY_DICTIONARY;
+#pragma warning restore CS0067
     }
 }

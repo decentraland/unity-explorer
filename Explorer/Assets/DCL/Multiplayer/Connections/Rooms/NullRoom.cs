@@ -21,6 +21,7 @@ namespace DCL.Multiplayer.Connections.Rooms
 {
     public class NullRoom : IRoom
     {
+#pragma warning disable CS0067 // NullRoom is a no-op IRoom implementation; these interface events are intentionally never raised
         public static readonly NullRoom INSTANCE = new ();
         public static readonly WeakReference<IRoom> WEAK_INSTANCE = new (INSTANCE);
 
@@ -62,5 +63,6 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public UniTask DisconnectAsync(CancellationToken cancellationToken) =>
             UniTask.CompletedTask;
+#pragma warning restore CS0067
     }
 }
