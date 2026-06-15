@@ -10,7 +10,6 @@ using System.Diagnostics;
 using UnityEditor;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Linq;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
 
