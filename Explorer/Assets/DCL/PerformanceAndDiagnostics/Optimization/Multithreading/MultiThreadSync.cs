@@ -110,15 +110,40 @@ namespace Utility.Multithreading
                 {
                     lock (monitor)
                     {
-                        DateTime time = DateTime.Now;
-                        AcquisitionInfo current = currentAcquisitionInfo!.Value;
-                        TimeSpan difference = time - current.AcquiredAt;
+                        // Remove the abandoned waiter before throwing: leaving it enqueued makes the
+                        // holder's next Release signal an owner that is no longer waiting, which stalls
+                        // every waiter queued behind it (cascading timeouts) and trips
+                        // OwnerMismatchException on later releases.
+                        bool ownerWasSignaled = owner.IsSignaled;
+                        RemoveFromQueue(owner);
+
+                        // If the release signal landed right as the wait timed out, the turn was ours -
+                        // forfeit it by passing the signal to the next waiter in line.
+                        if (ownerWasSignaled)
+                        {
+                            owner.Reset();
+
+                            if (queue.TryPeek(out Owner? next))
+                                next.Set();
+                        }
+
+                        // The holder may have released between the timeout and taking this lock -
+                        // the diagnostic must not crash on the empty nullable (was an
+                        // InvalidOperationException masking the timeout).
+                        var currentDescription = "unknown (already released)";
+
+                        if (currentAcquisitionInfo.HasValue)
+                        {
+                            AcquisitionInfo current = currentAcquisitionInfo.Value;
+                            TimeSpan difference = DateTime.Now - current.AcquiredAt;
+                            currentDescription = $"\"{current.Owner?.Name}\" takes too long: {difference.TotalSeconds}";
+                        }
 
                         int requestingThreadId = NativeThread.CurrentId;
                         int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
 
                         syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: {currentDescription}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
                     }
                 }
             }
@@ -176,6 +201,20 @@ namespace Utility.Multithreading
             }
         }
 
+        // Queue<T> has no arbitrary remove; rebuild without the abandoned entry. Called only
+        // under monitor on the exceptional timeout path; the queue holds a handful of owners.
+        private void RemoveFromQueue(Owner owner)
+        {
+            var remaining = new List<Owner>(queue.Count);
+
+            while (queue.TryDequeue(out Owner? o))
+                if (!ReferenceEquals(o, owner))
+                    remaining.Add(o);
+
+            foreach (Owner o in remaining)
+                queue.Enqueue(o);
+        }
+
         public Scope GetScope(Owner source)
         {
             COMMON_SAMPLER.Begin(source.Name);
@@ -227,6 +266,8 @@ namespace Utility.Multithreading
         {
             private readonly ManualResetEventSlim eventSlim = new (false);
             public readonly string Name;
+
+            internal bool IsSignaled => eventSlim.IsSet;
 
             public Owner(string name)
             {
