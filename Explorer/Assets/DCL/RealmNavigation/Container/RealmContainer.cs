@@ -1,10 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using Global;
 using Global.Dynamic;
@@ -32,6 +34,7 @@ namespace DCL.RealmNavigation
         public RealmNavigatorDebugView DebugView { get; private set; }
         public LoadingScreenTimeout LoadingScreenTimeout { get; private set; }
         public ILoadingScreen LoadingScreen { get; private set; }
+        public ECSReloadScene ReloadSceneController { get; private set; }
 
         public static RealmContainer Create(
             StaticContainer staticContainer,
@@ -41,9 +44,13 @@ namespace DCL.RealmNavigation
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
-            DecentralandEnvironment dclEnvironment)
+            DecentralandEnvironment dclEnvironment,
+            World globalWorld,
+            Entity playerEntity)
         {
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
@@ -81,6 +88,7 @@ namespace DCL.RealmNavigation
                 TeleportController = teleportController,
                 LoadingScreenTimeout = loadingScreenTimeout,
                 LoadingScreen = loadingScreen,
+                ReloadSceneController = reloadSceneController,
             };
         }
 

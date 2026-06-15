@@ -10,6 +10,7 @@ using DCL.PrivateWorlds;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
@@ -30,6 +31,8 @@ namespace DCL.RealmNavigation
 
         public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
 
+        public IWorldPermissionsService WorldPermissionsService { get; private init; } = null!;
+
         public IWorldInfoHub WorldInfoHub { get; private init; } = null!;
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
@@ -49,12 +52,16 @@ namespace DCL.RealmNavigation
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
             IPlacesAPIService placesAPIService,
-            IWorldPermissionsService worldPermissionsService,
+            IWeb3IdentityCache identityCache,
+            ICommunityMembershipChecker communityMembershipChecker,
             IMVCManager mvcManager)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
             IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
+
+            var worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource, identityCache, communityMembershipChecker);
 
             var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
 
@@ -110,6 +117,7 @@ namespace DCL.RealmNavigation
                     teleportInSameRealmOperation,
                     worldAccessGate),
                 WorldAccessGate = worldAccessGate,
+                WorldPermissionsService = worldPermissionsService,
                 WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder
             };

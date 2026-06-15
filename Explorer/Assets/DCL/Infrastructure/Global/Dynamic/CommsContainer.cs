@@ -66,6 +66,8 @@ namespace Global.Dynamic
 
         public IHealthCheck LivekitHealthCheck { get; }
 
+        public CurrentSceneInfo CurrentSceneInfo { get; }
+
         private CommsContainer(
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
@@ -80,7 +82,8 @@ namespace Global.Dynamic
             MovementInbox movementInbox,
             RemoteEntities remoteEntities,
             IRemoteMetadata remoteMetadata,
-            IHealthCheck livekitHealthCheck)
+            IHealthCheck livekitHealthCheck,
+            CurrentSceneInfo currentSceneInfo)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -96,6 +99,7 @@ namespace Global.Dynamic
             RemoteEntities = remoteEntities;
             RemoteMetadata = remoteMetadata;
             LivekitHealthCheck = livekitHealthCheck;
+            CurrentSceneInfo = currentSceneInfo;
         }
 
         public static CommsContainer Create(
@@ -212,7 +216,8 @@ namespace Global.Dynamic
                 movementInbox,
                 remoteEntities,
                 remoteMetadata,
-                livekitHealthCheck);
+                livekitHealthCheck,
+                new CurrentSceneInfo());
         }
 
         public MultiplayerPlugin CreateMultiplayerPlugin(
@@ -249,8 +254,8 @@ namespace Global.Dynamic
                 MovementInbox
             );
 
-        public ConnectionStatusPanelPlugin CreateConnectionStatusPanelPlugin(CurrentSceneInfo currentSceneInfo, IAssetsProvisioner assetsProvisioner, IAppArgs appArgs) =>
-            new (RoomsStatus, currentSceneInfo, assetsProvisioner, appArgs);
+        public ConnectionStatusPanelPlugin CreateConnectionStatusPanelPlugin(IAssetsProvisioner assetsProvisioner, IAppArgs appArgs) =>
+            new (RoomsStatus, CurrentSceneInfo, assetsProvisioner, appArgs);
 
         public void Dispose()
         {

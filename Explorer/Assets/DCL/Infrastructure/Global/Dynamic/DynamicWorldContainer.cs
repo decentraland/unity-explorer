@@ -249,7 +249,9 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
-                bootstrapContainer.Environment);
+                bootstrapContainer.Environment,
+                globalWorld,
+                playerEntity);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
@@ -262,8 +264,6 @@ namespace Global.Dynamic
                 dynamicWorldParams.IsolateScenesCommunication,
                 dynamicWorldParams.EnableAnalytics,
                 localSceneDevelopment);
-
-            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
@@ -319,13 +319,8 @@ namespace Global.Dynamic
 
             CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
 
-            IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
-                bootstrapContainer.DecentralandUrlsSource,
-                identityCache,
-                communitiesContainer.DataProvider);
-
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, worldPermissionsService, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -340,7 +335,7 @@ namespace Global.Dynamic
                 identityCache,
                 userBlockingCache,
                 realmNavigatorContainer.WorldInfoHub,
-                reloadSceneController,
+                realmContainer.ReloadSceneController,
                 realmContainer.TeleportController,
                 realmNavigator,
                 debugBuilder,
@@ -387,7 +382,7 @@ namespace Global.Dynamic
                 moderationDataProvider,
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
-                worldPermissionsService,
+                realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
             MapRendererContainer mapRendererContainer =
@@ -410,8 +405,6 @@ namespace Global.Dynamic
                         chatContainer.ChatEventBus,
                         ct
                     );
-
-            var currentSceneInfo = new CurrentSceneInfo();
 
             var socialServiceContainer = new SocialServicesContainer(
                 bootstrapContainer.DecentralandUrlsSource,
@@ -598,7 +591,7 @@ namespace Global.Dynamic
                     uiShellContainer.MvcManager,
                     assetsProvisioner,
                     commsContainer.RoomHub,
-                    worldPermissionsService,
+                    realmNavigatorContainer.WorldPermissionsService,
                     realmNavigatorContainer.WorldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
@@ -692,7 +685,7 @@ namespace Global.Dynamic
                     realmNavigator,
                     friendsServices?.FriendsService,
                     staticContainer.PublishIpfsEntityCommand,
-                    worldPermissionsService,
+                    realmNavigatorContainer.WorldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
@@ -838,7 +831,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder));
 
             if (localSceneDevelopment)
-                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
+                globalPlugins.Add(new LocalSceneDevelopmentPlugin(realmContainer.ReloadSceneController, realmUrls));
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
@@ -952,7 +945,7 @@ namespace Global.Dynamic
                     bootstrapContainer.Analytics.Controller,
                     placesAndEventsContainer.HomePlaceEventBus,
                     socialServiceContainer.EventBus,
-                    worldPermissionsService));
+                    realmNavigatorContainer.WorldPermissionsService));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -982,7 +975,7 @@ namespace Global.Dynamic
                 ));
 
             if (!localSceneDevelopment)
-                globalPlugins.Add(commsContainer.CreateConnectionStatusPanelPlugin(currentSceneInfo, assetsProvisioner, appArgs));
+                globalPlugins.Add(commsContainer.CreateConnectionStatusPanelPlugin(assetsProvisioner, appArgs));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,
@@ -994,7 +987,7 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                currentSceneInfo,
+                commsContainer.CurrentSceneInfo,
                 lodContainer.LodCache,
                 lodContainer.RoadCoordinates,
                 lodContainer.LODSettings,
