@@ -67,13 +67,7 @@ namespace DCL.LOD.Components
             foreach (ISSStoredAsset gltfContainerAsset in Assets)
             {
                 if (gltfContainerAsset.succeded)
-                {
-                    // Restore rendering before handing the asset back: on an aborted run RevealAssembledAssets
-                    // never ran, so the asset would otherwise return to the cache with forceRenderingOff stuck
-                    // on and reappear invisible on its next reuse (bridge handoff or fresh instantiate).
-                    gltfContainerAsset.Asset.ToggleRendering(true);
                     gltfCache.Dereference(gltfContainerAsset.AssetHash, gltfContainerAsset.Asset, AssetsShouldGoToTheBridge);
-                }
             }
 
             Assets.Clear();
@@ -126,21 +120,6 @@ namespace DCL.LOD.Components
             if (ParentContainer == null)
                 ParentContainer = new GameObject($"{sceneID}_ISS_LOD");
             ParentContainer.transform.position = sceneGeometryBaseParcelPosition;
-        }
-
-        /// <summary>
-        ///     Atomically reveals the fully assembled LOD_0 once <see cref="AllAssetsInstantiated" /> is true.
-        ///     Each asset streamed in with rendering suppressed (but its GameObject active, so colliders stay
-        ///     registered); this restores rendering so the LODGroup the caller wires up in the same frame can
-        ///     cull LOD_1 by distance. No overlap window, no empty frame.
-        /// </summary>
-        public void RevealAssembledAssets()
-        {
-            foreach (ISSStoredAsset storedAsset in Assets)
-            {
-                if (storedAsset.succeded)
-                    storedAsset.Asset.ToggleRendering(true);
-            }
         }
 
         public void AddFailedAsset(string creationHelperAssetHash)

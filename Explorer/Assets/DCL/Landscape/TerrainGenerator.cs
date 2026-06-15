@@ -90,7 +90,7 @@ namespace DCL.Landscape
             if (!isInitialized) return;
 
             if (TerrainRoot != null)
-                UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
+                UnityObjectUtils.SafeDestroy(TerrainRoot);
         }
 
         public int GetChunkSize() =>
@@ -203,8 +203,7 @@ namespace DCL.Landscape
             catch (OperationCanceledException)
             {
                 if (TerrainRoot != null)
-                    UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
-
+                    UnityObjectUtils.SafeDestroy(TerrainRoot);
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally

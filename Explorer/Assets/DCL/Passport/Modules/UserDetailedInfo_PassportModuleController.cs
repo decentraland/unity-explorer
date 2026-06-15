@@ -69,7 +69,6 @@ namespace DCL.Passport.Modules
         public void Dispose()
         {
             Clear();
-            descriptionController.Dispose();
             view.InfoEditionButton.onClick.RemoveAllListeners();
             view.CancelInfoButton.onClick.RemoveAllListeners();
             view.SaveInfoButton.onClick.RemoveAllListeners();

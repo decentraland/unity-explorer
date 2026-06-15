@@ -18,29 +18,30 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
         internal readonly RPCSocialServices socialServicesRPC;
 
         private CancellationTokenSource cts = new ();
 
+        public ISocialServiceEventBus EventBus { get; }
+
         public SocialServicesContainer(IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
-            ISocialServiceEventBus socialServiceEventBus,
             IAppArgs appArgs)
         {
             this.dclUrlSource = dclUrlSource;
             this.web3IdentityCache = web3IdentityCache;
-            this.socialServiceEventBus = socialServiceEventBus;
             this.appArgs = appArgs;
+
+            EventBus = new SocialServiceEventBus();
 
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
 
-            socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
+            socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, EventBus);
         }
 
         public void Dispose()
@@ -66,7 +67,7 @@ namespace DCL.PluginSystem.Global
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
-                socialServiceEventBus.SendTransportReconnectedNotification();
+                EventBus.SendTransportReconnectedNotification();
             }
         }
 

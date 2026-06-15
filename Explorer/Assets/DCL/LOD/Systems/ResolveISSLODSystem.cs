@@ -168,12 +168,6 @@ namespace DCL.LOD.Systems
 
             asset.ToggleAnimationState(false);
 
-            // Suppress rendering while LOD_0 streams in asset-by-asset so the half-assembled LOD_0 never
-            // draws on top of the still-visible LOD_1. The GameObject stays active so its colliders remain
-            // registered; RevealAssembledAssets restores rendering once every asset is in place and the
-            // LODGroup takes over distance-based culling.
-            asset.ToggleRendering(false);
-
             // Store under the digest-aware cache key so the eventual Dereference in InitialSceneStateLOD.Clear
             // matches what the SDK runtime would look up — that's what allows bridging round-trips between
             // LOD and the real scene without spawning a second copy of the same asset.

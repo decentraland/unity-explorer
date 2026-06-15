@@ -3,7 +3,10 @@ using DCL.Chat.ChatServices;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Prefs;
 using DCL.SocialService;
+using DCL.VoiceChat.Nearby;
+using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -24,6 +27,9 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
 
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
+
+        public readonly NearbyMuteService? NearbyMuteService;
+        public readonly NearbyVoiceChatStateModel? NearbyStateModel;
 
         public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
@@ -55,6 +61,19 @@ namespace DCL.VoiceChat
                 sceneVoiceChatTrackerService,
                 chatEventBus,
                 currentChannelService);
+
+            NearbyMuteService = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyMuteService(
+                    new NearbyMuteCache(),
+                    new RestNearbyMuteRepository(webRequestController, urlsSource))
+                : null;
+
+            NearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
+                ? new NearbyVoiceChatStateModel(
+                    DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
+                        ? NearbyVoiceChatState.DISABLED
+                        : NearbyVoiceChatState.IDLE)
+                : null;
         }
 
         public void Dispose()

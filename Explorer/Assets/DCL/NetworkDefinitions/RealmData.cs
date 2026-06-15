@@ -137,7 +137,6 @@ namespace ECS
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
             WorldManifest.Dispose();
-            WorldManifest = WorldManifest.Empty;
             SkyboxFixedHour = null;
             realmType.Value = RealmKind.Uninitialized;
         }

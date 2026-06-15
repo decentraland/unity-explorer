@@ -32,9 +32,31 @@ MonoBehaviour:
   - rid: 4753057106328551424
   - rid: 6144113899072913497
   - rid: 857448815798779906
+  - rid: 7493825610294857301
   references:
     version: 2
     RefIds:
+    - rid: 7493825610294857301
+      type: {class: UIShellContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <CursorSettings>k__BackingField:
+          m_AssetGUID: 7382805fd18299d41925547efbad99f0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupCloserView>k__BackingField:
+          m_AssetGUID: dbfb7e67a438449f9a887f820f733868
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <MainUIView>k__BackingField:
+          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 250124815058075745
       type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Movement, asm: DCL.Plugins}
       data:

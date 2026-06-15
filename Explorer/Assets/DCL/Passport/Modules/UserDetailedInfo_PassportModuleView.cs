@@ -17,12 +17,6 @@ namespace DCL.Passport.Modules
         public TMP_InputField DescriptionForEditMode { get; private set; }
 
         [field: SerializeField]
-        public TMP_Text DescriptionCharacterCounter { get; private set; }
-
-        [field: SerializeField]
-        public GameObject DescriptionEditOutline { get; private set; }
-
-        [field: SerializeField]
         public PassportAdditionalFieldsConfigurationSO AdditionalFieldsConfiguration { get; private set; }
 
         [field: SerializeField]

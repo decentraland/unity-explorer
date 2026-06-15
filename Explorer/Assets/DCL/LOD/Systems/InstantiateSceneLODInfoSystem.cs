@@ -81,11 +81,6 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.InitialSceneStateLOD.AllAssetsInstantiated())
             {
-                // Reveal LOD_0 in the same frame it joins the LODGroup. The container streamed in hidden,
-                // so up to this point the player has been seeing LOD_1; from here the LODGroup culls LOD_1
-                // by distance. No overlap, no empty frame.
-                sceneLODInfo.InitialSceneStateLOD.RevealAssembledAssets();
-
                 sceneLODInfo.AddSuccessLOD(sceneLODInfo.InitialSceneStateLOD.ParentContainer, null, defaultFOV, defaultLodBias,
                     realmPartitionSettings.MaxLoadingDistanceInParcels, sceneDefinitionComponent.Parcels.Count);
                 sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.RESOLVED;

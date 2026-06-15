@@ -83,17 +83,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
                 Renderers[i].shadowCastingMode = newValue ? ShadowCastingMode.On : ShadowCastingMode.Off;
         }
 
-        /// <summary>
-        ///     Suppresses or restores rendering without touching the GameObject's active state, so colliders
-        ///     stay registered. Uses <see cref="Renderer.forceRenderingOff" />, the same mechanism the emote
-        ///     and landscape culling paths rely on.
-        /// </summary>
-        public void ToggleRendering(bool newState)
-        {
-            for (var i = 0; i < Renderers.Count; i++)
-                Renderers[i].forceRenderingOff = !newState;
-        }
-
         public void ToggleAnimationState(bool newState)
         {
             foreach (Animation animation in Animations)

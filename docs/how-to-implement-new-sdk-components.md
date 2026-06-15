@@ -114,8 +114,6 @@ npm install
 npm run build-protocol
 ```
 
-> **Prerequisite:** Besides Node/npm, `build-protocol` runs a Python `protoc` plugin (`protoc-gen-bitwise`, for the quantized/bit-packed Pulse network state). You need **Python 3** on your `PATH` with the **`protobuf`** package installed, otherwise the build fails with `ModuleNotFoundError: No module named 'google'`. Install it once with `python3 -m pip install protobuf`.
-
 To upgrade to the latest version of the `@dcl/protocol`, we should update using:
 
 ```bash

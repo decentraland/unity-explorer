@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global;
 using Global.Dynamic;
+using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
@@ -29,19 +30,24 @@ namespace DCL.RealmNavigation
         public TeleportController TeleportController { get; private set; }
         public IGlobalRealmController RealmController { get; private set; }
         public RealmNavigatorDebugView DebugView { get; private set; }
+        public LoadingScreenTimeout LoadingScreenTimeout { get; private set; }
+        public ILoadingScreen LoadingScreen { get; private set; }
 
         public static RealmContainer Create(
             StaticContainer staticContainer,
             IReadOnlyList<int2> staticLoadPositions,
             IDebugContainerBuilder debugContainerBuilder,
-            LoadingScreenTimeout loadingScreenTimeout,
-            ILoadingScreen loadingScreen,
+            IMVCManager mvcManager,
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
-            TeleportController teleportController,
             DecentralandEnvironment dclEnvironment)
         {
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+
+            var loadingScreenTimeout = new LoadingScreenTimeout();
+            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
+
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
 
@@ -73,6 +79,8 @@ namespace DCL.RealmNavigation
                 RealmController = realmController,
                 DebugView = realmNavigatorDebugView,
                 TeleportController = teleportController,
+                LoadingScreenTimeout = loadingScreenTimeout,
+                LoadingScreen = loadingScreen,
             };
         }
 
