@@ -410,7 +410,6 @@ namespace DCL.UI
 
             float bestOutOfBoundsPercent = adjustedOutOfBoundsPercent;
             float3 bestPosition = adjustedPosition;
-            var foundPerfectPosition = false;
 
             for (var i = 0; i < fallbackDirectionsCount; i++)
             {

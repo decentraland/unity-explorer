@@ -119,7 +119,7 @@ namespace DCL.Backpack.Gifting.Presenters
                 wearablesGridPresenter?.SetSearchText(string.Empty);
                 emotesGridPresenter?.SetSearchText(string.Empty);
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
         }

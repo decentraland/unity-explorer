@@ -227,7 +227,7 @@ namespace DCL.MapRenderer.MapLayers.HomeMarker
 					return;
 				navmapBus.SelectPlaceAsync(placeInfo, placesCts.Token, true, coords.Value).Forget();
 			}
-			catch (OperationCanceledException _) { }
+			catch (OperationCanceledException) { }
 			catch (Exception e)
 			{
 				ReportHub.LogError(ReportCategory.UNSPECIFIED, "HomeMarkerController: Error while fetching place info" + e);

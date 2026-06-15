@@ -524,7 +524,7 @@ namespace DCL.Minimap
             {
                 return await placesAPIService.GetWorldAsync(parcelPosition, worldName, ct);
             }
-            catch (OperationCanceledException _) { }
+            catch (OperationCanceledException) { }
             catch (NotAPlaceException notAPlaceException)
             {
                 ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a world requested: {notAPlaceException.Message}");

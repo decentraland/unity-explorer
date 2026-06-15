@@ -263,7 +263,7 @@ namespace DCL.PlacesAPIService
             {
                 await client.SetPlaceFavoriteAsync(placeId, isFavorite, ct);
             }
-            catch (Exception _)
+            catch (Exception)
             {
                 // Returning original value in case of exception.
                 TryUpdateCachedPlaceFavorite(placeId, cachedIsFavorite);

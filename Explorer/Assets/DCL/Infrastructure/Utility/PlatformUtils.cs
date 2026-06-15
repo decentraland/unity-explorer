@@ -60,7 +60,7 @@ namespace DCL.Utility
                     TotalSize = (ulong)drive.TotalSize
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }
@@ -83,7 +83,7 @@ namespace DCL.Utility
                 return new List<DriveData>();
 #endif
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new List<DriveData>();
             }

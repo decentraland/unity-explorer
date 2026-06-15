@@ -72,7 +72,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
                 usedResources = false;
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
         }
