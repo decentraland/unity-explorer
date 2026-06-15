@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using MVC;
 using SuperScrollView;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -29,7 +30,21 @@ namespace DCL.Notifications.NotificationsMenu
         public GameObject EmptyState { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button FoundationCommunityButton { get; private set; } = null!;
+        private Button foundationCommunityButton { get; set; } = null!;
+
+        public event Action? FoundationCommunityButtonClicked;
+
+        private void Awake()
+        {
+            foundationCommunityButton.onClick.AddListener(OnFoundationCommunityButtonClick);
+        }
+
+        private void OnDestroy()
+        {
+            foundationCommunityButton.onClick.RemoveListener(OnFoundationCommunityButtonClick);
+        }
+
+        private void OnFoundationCommunityButtonClick() => FoundationCommunityButtonClicked?.Invoke();
 
         public void SetLoading(bool isLoading)
         {

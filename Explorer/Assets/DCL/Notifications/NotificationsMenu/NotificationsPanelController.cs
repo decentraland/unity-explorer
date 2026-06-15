@@ -91,7 +91,7 @@ namespace DCL.Notifications.NotificationsMenu
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             viewInstance.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            viewInstance.FoundationCommunityButton.onClick.AddListener(OnFoundationCommunityButtonClicked);
+            viewInstance.FoundationCommunityButtonClicked += OnFoundationCommunityButtonClicked;
         }
 
         private void OnFoundationCommunityButtonClicked() =>
@@ -119,7 +119,8 @@ namespace DCL.Notifications.NotificationsMenu
             lifeCycleCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
 
-            viewInstance?.FoundationCommunityButton.onClick.RemoveListener(OnFoundationCommunityButtonClicked);
+            if (viewInstance != null)
+                viewInstance.FoundationCommunityButtonClicked -= OnFoundationCommunityButtonClicked;
         }
 
         protected override void OnViewShow()
@@ -169,6 +170,7 @@ namespace DCL.Notifications.NotificationsMenu
 
                 UpdateUnreadNotificationRender();
                 viewInstance.SetLoading(false);
+                viewInstance!.ShowEmptyState(notifications.Count == 0);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -177,8 +179,6 @@ namespace DCL.Notifications.NotificationsMenu
                 ReportHub.LogException(e, ReportCategory.UI);
                 NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(GET_NOTIFICATIONS_ERROR_MESSAGE));
             }
-
-            viewInstance!.ShowEmptyState(notifications.Count == 0);
         }
 
         private void UpdateUnreadNotificationRender()
@@ -416,7 +416,7 @@ namespace DCL.Notifications.NotificationsMenu
             if (NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
                 return;
 
-            viewInstance!.ShowEmptyState(false);
+            viewInstance?.ShowEmptyState(false);
 
             notifications.Insert(0, notification);
             viewInstance?.LoopList.SetListItemCount(notifications.Count, false);

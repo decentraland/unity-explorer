@@ -993,7 +993,7 @@ MonoBehaviour:
   <LoadingSpinner>k__BackingField: {fileID: 1236069814820928485}
   <ContentContainer>k__BackingField: {fileID: 7452264080537212193}
   <EmptyState>k__BackingField: {fileID: 7232095729196490626}
-  <FoundationCommunityButton>k__BackingField: {fileID: 1656864585580355527}
+  <foundationCommunityButton>k__BackingField: {fileID: 1656864585580355527}
 --- !u!114 &243641309283680884
 MonoBehaviour:
   m_ObjectHideFlags: 0
