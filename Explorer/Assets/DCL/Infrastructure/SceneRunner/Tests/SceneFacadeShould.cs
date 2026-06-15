@@ -138,7 +138,6 @@ namespace SceneRunner.Tests
         private SceneRuntimeFactory sceneRuntimeFactory = null!;
         private IECSWorldFactory ecsWorldFactory = null!;
         private ISharedPoolsProvider sharedPoolsProvider = null!;
-        private ICRDTDeserializer crdtDeserializer = null!;
         private ICRDTSerializer crdtSerializer = null!;
         private ISDKComponentsRegistry componentsRegistry = null!;
         private SceneFactory sceneFactory = null!;

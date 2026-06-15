@@ -13,8 +13,6 @@ namespace DCL.UI
         private const int CONTEXT_MENU_WIDTH = 210;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 8;
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 14, 14);
-        private static readonly RectOffset HORIZONTAL_LAYOUT_PADDING = new (0, 0, 0, 0);
-        private static readonly int HORIZONTAL_LAYOUT_SPACING = 8;
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, 80);
 
         private readonly IMVCManager mvcManager;
@@ -31,9 +29,7 @@ namespace DCL.UI
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
                 .AddControl(deleteChatHistoryButton);
 
-            //Disabled until we got multiple channels working
-            //.AddControl(new SeparatorContextMenuControlSettings())
-            //.AddControl(new ToggleWithIconContextMenuControlSettings(pinChatToggleTextIcon, pinChatToggleText, OnPinChatToggle, HORIZONTAL_LAYOUT_PADDING, HORIZONTAL_LAYOUT_SPACING));
+            // A separator and a pin-chat toggle control belong here too, but stay out until multiple channels are supported.
         }
 
         public async UniTask ShowContextMenuAsync(Vector2 position, UniTask closeMenuTask, Action onContextMenuHide = null)

@@ -39,9 +39,6 @@ namespace ECS.SceneLifeCycle.Tests
 
         private SceneLoadingLimit sceneLoadingLimit;
         private ISystemMemoryCap systemMemoryCap;
-        private int maximumAmountOfScenesThatCanLoad;
-        private int maximumAmountOfLODThatCanLoad;
-        private int maximumAmountOfLODReductedThatCanLoad;
 
         private int SDK7LODThreshold;
         private Entity playerEntity;
@@ -62,9 +59,6 @@ namespace ECS.SceneLifeCycle.Tests
 
             RealmData realmData = new RealmData(new TestIpfsRealm());
 
-            maximumAmountOfScenesThatCanLoad = 6;
-            maximumAmountOfLODThatCanLoad = 5;
-            maximumAmountOfLODReductedThatCanLoad = 8;
 
             systemMemoryCap = Substitute.For<ISystemMemoryCap>();
             systemMemoryCap.MemoryCapInMB.Returns(long.MaxValue);
