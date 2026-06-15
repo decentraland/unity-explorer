@@ -17,7 +17,7 @@ namespace DCL.Audio.Systems
     {
         private readonly IPointerInputAudioConfigs pointerInputAudioConfigs;
 
-        private PointerInputAudioSystem(World world, IPointerInputAudioConfigs pointerInputAudioConfigs) : base(world)
+        internal PointerInputAudioSystem(World world, IPointerInputAudioConfigs pointerInputAudioConfigs) : base(world)
         {
             this.pointerInputAudioConfigs = pointerInputAudioConfigs;
         }
@@ -42,6 +42,7 @@ namespace DCL.Audio.Systems
                 if (entry.EventType == PointerEventType.PetDown)
                 {
                     PBPointerEvents.Types.Info info = entry.EventInfo;
+                    if (info == null) continue;
 
                     switch (info.Button)
                     {
