@@ -233,8 +233,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -224.77664}
-  m_SizeDelta: {x: 101, y: 110}
+  m_AnchoredPosition: {x: 210, y: -0}
+  m_SizeDelta: {x: 101, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6917462299186460030
 CanvasRenderer:
@@ -529,8 +529,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -311.74164}
-  m_SizeDelta: {x: 194.5, y: 23.93}
+  m_AnchoredPosition: {x: 210, y: -20}
+  m_SizeDelta: {x: 194.5, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4554546185496148921
 CanvasRenderer:
@@ -667,8 +667,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190, y: -375.39163}
-  m_SizeDelta: {x: 340, y: 63.37}
+  m_AnchoredPosition: {x: 210, y: -40}
+  m_SizeDelta: {x: 380, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4752958187292225126
 CanvasRenderer:
@@ -698,18 +698,18 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Say hi \U0001F44B, join the <color=#FF2D55>Decentraland Foundation Community</color>,
-    or drop into an event\u2014this space will come to life."
+  m_text: "Say hi \U0001F44B, join the <color=#FF2D55><b>Decentraland Foundation
+    Community</b></color>, or drop into an event\u2014this space will come to life."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
-  m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+  m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4290688697
+  m_fontColor: {r: 0.7258126, g: 0.7136436, b: 0.745283, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -736,7 +736,7 @@ MonoBehaviour:
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
-  m_characterSpacing: 0
+  m_characterSpacing: -2
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
