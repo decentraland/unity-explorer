@@ -159,7 +159,14 @@ namespace DCL.VoiceChat
                     Disconnect();
                 }
                 else
+                {
+                    // A fresh Connected means a new room session (including the simulated post-swap Connected):
+                    // any previously published track is bound to the old room and must be dropped before republishing.
+                    if (connectionUpdate == ConnectionUpdate.Connected)
+                        micPublisher.Unpublish();
+
                     Connect();
+                }
             }
         }
 
