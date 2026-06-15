@@ -39,8 +39,8 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
-            new (sceneDeps.SceneData, sceneDeps.RoomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub) =>
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
                 analyticsController);
     }

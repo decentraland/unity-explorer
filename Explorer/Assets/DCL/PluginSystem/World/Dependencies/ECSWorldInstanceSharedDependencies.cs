@@ -3,7 +3,6 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
-using DCL.Multiplayer.Connections.RoomHubs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
@@ -16,13 +15,11 @@ namespace DCL.PluginSystem.World.Dependencies
     public readonly struct ECSWorldInstanceSharedDependencies
     {
         public readonly ISceneData SceneData;
-        public readonly IRoomHub RoomHub;
         public readonly IPartitionComponent ScenePartition;
         public readonly IECSToCRDTWriter EcsToCRDTWriter;
         public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
         public readonly ISceneExceptionsHandler SceneExceptionsHandler;
         public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
-        public readonly IEntityCollidersGlobalCache EntityCollidersGlobalCache;
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly EntityEventsBuilder EntityEventsBuilder;
         public readonly MultiThreadSync MultiThreadSync;
@@ -31,19 +28,16 @@ namespace DCL.PluginSystem.World.Dependencies
 
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
-            IRoomHub roomHub,
             IPartitionComponent scenePartition,
             IECSToCRDTWriter ecsToCRDTWriter,
             Dictionary<CRDTEntity, Entity> entitiesMap,
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
             MultiThreadSync multiThreadSync,
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
-            RoomHub = roomHub;
             EcsToCRDTWriter = ecsToCRDTWriter;
             EntitiesMap = entitiesMap;
             MultiThreadSync = multiThreadSync;
@@ -51,7 +45,6 @@ namespace DCL.PluginSystem.World.Dependencies
             SceneStateProvider = sceneStateProvider;
             SceneExceptionsHandler = sceneExceptionsHandler;
             EntityCollidersSceneCache = entityCollidersSceneCache;
-            EntityCollidersGlobalCache = entityCollidersGlobalCache;
             EcsGroupThrottler = ecsGroupThrottler;
             EcsSystemsGate = ecsSystemsGate;
             EntityEventsBuilder = entityEventsBuilder;
