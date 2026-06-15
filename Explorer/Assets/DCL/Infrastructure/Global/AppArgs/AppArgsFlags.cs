@@ -20,6 +20,7 @@ namespace Global.AppArgs
         public const string REALM = "realm";
         public const string COMMS_ADAPTER = "comms-adapter";
         public const string GATEKEEPER_URL = "gatekeeper-url";
+        public const string ASSET_BUNDLES_URL = "asset-bundles-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";

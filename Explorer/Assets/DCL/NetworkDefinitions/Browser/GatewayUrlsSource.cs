@@ -84,7 +84,7 @@ namespace DCL.Browser
 
         private bool enabled => envSupported && FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.USE_GATEWAY);
 
-        public GatewayUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null) : base(environment, realmData, launchMode, gatekeeperBaseOverride)
+        public GatewayUrlsSource(DecentralandEnvironment environment, IRealmData realmData, ILaunchMode launchMode, string? gatekeeperBaseOverride = null, string? assetBundlesUrlOverride = null) : base(environment, realmData, launchMode, gatekeeperBaseOverride, assetBundlesUrlOverride)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
