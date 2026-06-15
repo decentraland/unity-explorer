@@ -481,21 +481,15 @@ namespace DCL.PluginSystem.Global
                 settings.SettingsMenuConfiguration,
                 qualitySettingsController,
                 generalAudioMixer.Value,
-                settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
-                landscapeData.Value,
-                settings.QualitySettingsAsset,
-                settings.SkyboxSettingsAsset,
                 settings.ControlsSettingsAsset,
                 systemMemoryCap,
                 settings.ChatSettingsAsset,
                 userBlockingCache,
                 sceneLoadingLimit,
                 volumeBus,
-                upscalingController,
                 assetsProvisioner,
                 eventBus,
-                appArgs,
                 settings.pointAtMarkerVisibilitySettings);
 
             await settingsController.InitializeAsync();
