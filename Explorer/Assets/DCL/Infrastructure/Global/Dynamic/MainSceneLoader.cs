@@ -226,9 +226,16 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
-            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
+
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+
+            var decentralandUrlsSource = new GatewayUrlsSource(
+                decentralandEnvironment,
+                realmData,
+                launchSettings,
+                debugSettings.GatekeeperMode,
+                debugSettings.CustomGatekeeperUrl,
+                cliGatekeeperUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -884,17 +891,6 @@ namespace Global.Dynamic
             return EnsureClockSync.Result.CONTINUE;
         }
 
-        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
-            mode switch
-            {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
-
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
         {
             if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
@@ -908,6 +904,7 @@ namespace Global.Dynamic
             ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
             return null;
         }
+
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
