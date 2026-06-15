@@ -384,6 +384,14 @@ namespace DCL.LOD.Tests
                     stash[key] = entries = new Stack<GltfContainerAsset>();
 
                 entries.Push(asset);
+
+                // Mirror GltfContainerAssetsCache.DereferenceFinalOperation: the real cache reparents the
+                // asset's Root out of the LOD container when it is returned to the pool. Without this the
+                // pooled asset stays a child of InitialSceneStateLOD.ParentContainer, so Dispose's
+                // SafeDestroy(ParentContainer) cascades into it and destroys its renderers — the asset (and
+                // its renderers) must survive intact for reuse.
+                if (asset.Root != null)
+                    asset.Root.transform.SetParent(null, true);
             }
 
             public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
