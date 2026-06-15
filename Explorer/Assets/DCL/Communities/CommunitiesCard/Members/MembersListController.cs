@@ -46,7 +46,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
         private readonly MembersListView view;
         private readonly IMVCManager mvcManager;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -83,7 +83,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public MembersListController(MembersListView view,
             ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
@@ -93,7 +93,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             this.view = view;
             this.mvcManager = mvcManager;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
@@ -467,7 +467,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 switch (friendshipStatus)
                 {
                     case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.UserId, ct)
+                        await friendsService!.CancelFriendshipAsync(userData.UserId, ct)
                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                         break;
@@ -511,7 +511,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private async UniTask FetchFriendshipStatusAndRefreshAsync(string userId, CancellationToken ct)
         {
-            FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
+            FriendshipStatus status = await friendsService!.GetFriendshipStatusAsync(userId, ct);
 
             currentSectionFetchData.Items.Find(item => item.Address.Equals(userId))
                                    .FriendshipStatus = status.Convert();

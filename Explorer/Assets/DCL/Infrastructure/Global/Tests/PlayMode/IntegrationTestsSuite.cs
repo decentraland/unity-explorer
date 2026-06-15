@@ -14,6 +14,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Settings;
 using DCL.Time;
@@ -124,8 +125,6 @@ namespace Global.Tests.PlayMode
             if (!success)
                 throw new Exception("Cannot create the static container");
 
-            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
-
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(
@@ -145,7 +144,8 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>()
+                Substitute.For<ISystemClipboard>(),
+                Array.Empty<IDCLWorldPlugin>()
             );
 
             return (staticContainer, sceneSharedContainer);

@@ -117,6 +117,12 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
 
+        /// <summary>
+        ///     Scene-world plugins owned by this container because they depend on comms/multiplayer services.
+        ///     Combined with <see cref="StaticContainer.ECSWorldPlugins" /> for initialization and scene-world creation.
+        /// </summary>
+        public IReadOnlyList<IDCLWorldPlugin> WorldPlugins { get; }
+
         public IProfileRepository ProfileRepository { get; }
 
         public IUserInAppInitializationFlow UserInAppInAppInitializationFlow { get; }
@@ -135,6 +141,7 @@ namespace Global.Dynamic
             IRealmNavigator realmNavigator,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
+            IReadOnlyList<IDCLWorldPlugin> worldPlugins,
             IProfileRepository profileRepository,
             IUserInAppInitializationFlow userInAppInAppInitializationFlow,
             ChatContainer chatContainer,
@@ -151,6 +158,7 @@ namespace Global.Dynamic
             RealmNavigator = realmNavigator;
             GlobalWorldFactory = globalWorldFactory;
             GlobalPlugins = globalPlugins;
+            WorldPlugins = worldPlugins;
             ProfileRepository = profileRepository;
             UserInAppInAppInitializationFlow = userInAppInAppInitializationFlow;
             this.commsContainer = commsContainer;
@@ -259,10 +267,6 @@ namespace Global.Dynamic
                 ? new UserBlockingCache(friendsEventBus)
                 : new NullUserBlockingCache();
 
-            // LEGACY HACK â€” do not add new consumers. Kept only for Settings group + ExplorePanelPlugin; pass `userBlockingCache` directly instead. See ObjectProxy<T>.
-            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
-            userBlockingCacheProxy.SetObject(userBlockingCache);
-
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -308,8 +312,6 @@ namespace Global.Dynamic
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
-
-            staticContainer.EntityParticipantTableProxy.SetObject(commsContainer.EntityParticipantTable);
 
             CommunitiesContainer? communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
 
@@ -401,7 +403,7 @@ namespace Global.Dynamic
                         staticContainer.MapPinsEventBus,
                         realmNavigator,
                         staticContainer.RealmData,
-                        placesAndEventsContainer.SharedNavmapBus,
+                        placesAndEventsContainer.NavmapBus,
                         placesAndEventsContainer.OnlineUsersProvider,
                         identityCache,
                         placesAndEventsContainer.HomePlaceEventBus,
@@ -443,8 +445,14 @@ namespace Global.Dynamic
 
             IEmotesMessageBus multiplayerEmotesMessageBus = multiplayerContainer.EmotesMessageBus;
 
-            // Configure proxies for scene-side masked emote system
-            staticContainer.EmotesMessageBusProxy.SetObject(multiplayerEmotesMessageBus);
+            // Scene-world plugins that depend on comms/multiplayer services, which exist only in this container.
+            // They join StaticContainer.ECSWorldPlugins for initialization and scene-world injection.
+            var worldPlugins = new List<IDCLWorldPlugin>
+            {
+                new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
+                new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
+                new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+            };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
@@ -461,9 +469,14 @@ namespace Global.Dynamic
 
             NotificationsRequestController notificationsRequestController = new (staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
-            var friendServiceProxy = new ObjectProxy<IFriendsService>();
-            var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
-            var friendsCacheProxy = new ObjectProxy<FriendsCache>();
+            FriendsServicesContainer? friendsServices = includeFriends
+                ? new FriendsServicesContainer(
+                    profileContainer.SelfProfile,
+                    socialServiceContainer.socialServicesRPC,
+                    friendsEventBus,
+                    dynamicWorldParams.EnableAnalytics,
+                    bootstrapContainer.Analytics.Controller)
+                : null;
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
@@ -488,13 +501,13 @@ namespace Global.Dynamic
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 uiShellContainer.MvcManager,
                 profileCache,
-                friendServiceProxy,
+                friendsServices?.FriendsService,
                 chatContainer.ChatEventBus,
                 genericUserProfileContextMenuSettingsSo,
                 bootstrapContainer.Analytics.Controller,
                 placesAndEventsContainer.OnlineUsersProvider,
                 realmNavigator,
-                friendOnlineStatusCacheProxy,
+                friendsServices?.ConnectivityStatusTracker,
                 profilesRepository,
                 communityVoiceChatContextMenuSettingsSo,
                 voiceChatContainer.VoiceChatOrchestrator,
@@ -530,7 +543,7 @@ namespace Global.Dynamic
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                    staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsCacheProxy, multiplayerContainer.MovementMessageBus),
+                    staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsServices?.FriendsCache, multiplayerContainer.MovementMessageBus),
                 uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler),
                 new GlobalInteractionPlugin(assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, uiShellContainer.EventSystem, staticContainer.ScenesCache, uiShellContainer.MvcManager, menusAccessFacade, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
@@ -622,7 +635,7 @@ namespace Global.Dynamic
                     donationsService),
                 chatContainer.CreatePlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, commsContainer, profileContainer, communitiesContainer,
                     voiceChatContainer, socialServiceContainer, menusAccessFacade, dynamicSettings.NametagsData, hyperlinkTextFormatter, identityCache, userBlockingCache,
-                    friendsEventBus, friendServiceProxy, communitiesDataService, globalWorld, playerEntity),
+                    friendsEventBus, friendsServices?.FriendsService, communitiesDataService, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     chatContainer.ChatEventBus,
                     assetsProvisioner,
@@ -663,9 +676,10 @@ namespace Global.Dynamic
                     placesAndEventsContainer.EventsApiService,
                     userCalendar,
                     uiShellContainer.Clipboard,
-                    placesAndEventsContainer.ExplorePanelNavmapBus,
+                    placesAndEventsContainer.NavmapBus,
+                    placesAndEventsContainer.NavmapCommandFactory,
                     appArgs,
-                    userBlockingCacheProxy,
+                    userBlockingCache,
                     profileContainer.ProfileChangesBus,
                     staticContainer.SceneLoadingLimit,
                     uiShellContainer.MainUIView.WarningNotification,
@@ -685,7 +699,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     donationsService,
                     realmNavigator,
-                    friendServiceProxy,
+                    friendsServices?.FriendsService,
                     staticContainer.PublishIpfsEntityCommand,
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
@@ -745,8 +759,8 @@ namespace Global.Dynamic
                     cameraReelContainer.StorageService,
                     globalWorld,
                     playerEntity,
-                    friendServiceProxy,
-                    friendOnlineStatusCacheProxy,
+                    friendsServices?.FriendsService,
+                    friendsServices?.ConnectivityStatusTracker,
                     placesAndEventsContainer.OnlineUsersProvider,
                     realmNavigator,
                     identityCache,
@@ -847,7 +861,6 @@ namespace Global.Dynamic
 
             if (includeFriends)
             {
-                // TODO many circular dependencies - adjust the flow and get rid of ObjectProxy
                 var friendsContainer = new FriendsContainer(
                     uiShellContainer.MainUIView,
                     uiShellContainer.MvcManager,
@@ -860,14 +873,9 @@ namespace Global.Dynamic
                     uiShellContainer.PassportBridge,
                     placesAndEventsContainer.OnlineUsersProvider,
                     realmNavigator,
-                    dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics.Controller,
                     socialServiceContainer.EventBus,
-                    socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
-                    friendServiceProxy,
-                    friendOnlineStatusCacheProxy,
-                    friendsCacheProxy,
+                    friendsServices!,
                     userBlockingCache,
                     profileContainer.ProfileRepositoryWrapper,
                     voiceChatContainer.VoiceChatOrchestrator,
@@ -933,7 +941,7 @@ namespace Global.Dynamic
                     cameraReelContainer.StorageService,
                     cameraReelContainer.ScreenshotsStorage,
                     profileContainer.ProfileRepositoryWrapper,
-                    friendServiceProxy,
+                    friendsServices?.FriendsService,
                     communitiesContainer.DataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     placesAndEventsContainer.PlacesAPIService,
@@ -1009,14 +1017,13 @@ namespace Global.Dynamic
                 bootstrapContainer.Analytics.EntitiesAnalytics
             );
 
-            staticContainer.RoomHubProxy.SetObject(commsContainer.RoomHub);
-
             var container = new DynamicWorldContainer(
                 uiShellContainer,
                 realmContainer.RealmController,
                 realmNavigator,
                 globalWorldFactory,
                 globalPlugins,
+                worldPlugins,
                 profilesRepository,
                 initializationFlowContainer.InitializationFlow,
                 chatContainer,

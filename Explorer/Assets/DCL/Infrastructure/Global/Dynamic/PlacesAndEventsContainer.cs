@@ -6,7 +6,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
-using DCL.Utilities;
 using DCL.WebRequests;
 
 namespace Global.Dynamic
@@ -22,12 +21,13 @@ namespace Global.Dynamic
 
         public IMapPathEventBus MapPathEventBus { get; }
 
-        /// <summary>
-        ///     Filled by <see cref="DCL.PluginSystem.Global.ExplorePanelPlugin" /> once the navmap controller exists.
-        /// </summary>
-        public ObjectProxy<INavmapBus> ExplorePanelNavmapBus { get; }
+        public INavmapBus NavmapBus { get; }
 
-        public INavmapBus SharedNavmapBus { get; }
+        /// <summary>
+        ///     <see cref="DCL.PluginSystem.Global.ExplorePanelPlugin" /> attaches the navmap UI controllers
+        ///     once the explore panel UI is loaded.
+        /// </summary>
+        public NavmapCommandFactory NavmapCommandFactory { get; }
 
         public IOnlineUsersProvider OnlineUsersProvider { get; }
 
@@ -37,24 +37,22 @@ namespace Global.Dynamic
             IPlacesAPIService placesAPIService,
             HttpEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
-            ObjectProxy<INavmapBus> explorePanelNavmapBus,
-            INavmapBus sharedNavmapBus,
+            INavmapBus navmapBus,
+            NavmapCommandFactory navmapCommandFactory,
             IOnlineUsersProvider onlineUsersProvider,
             HomePlaceEventBus homePlaceEventBus)
         {
             PlacesAPIService = placesAPIService;
             EventsApiService = eventsApiService;
             MapPathEventBus = mapPathEventBus;
-            ExplorePanelNavmapBus = explorePanelNavmapBus;
-            SharedNavmapBus = sharedNavmapBus;
+            NavmapBus = navmapBus;
+            NavmapCommandFactory = navmapCommandFactory;
             OnlineUsersProvider = onlineUsersProvider;
             HomePlaceEventBus = homePlaceEventBus;
         }
 
         public static PlacesAndEventsContainer Create(IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
-            var explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
-
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(webRequestController,
                 URLAddress.FromString(urlsSource.Url(DecentralandUrl.RemotePeers)));
 
@@ -63,12 +61,20 @@ namespace Global.Dynamic
                 webRequestController,
                 URLAddress.FromString(urlsSource.Url(DecentralandUrl.RemotePeersWorld)));
 
+            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(webRequestController, urlsSource));
+            var eventsApiService = new HttpEventsApiService(webRequestController, urlsSource);
+
+            var navmapCommandFactory = new NavmapCommandFactory(placesAPIService, eventsApiService);
+
+            var navmapBus = new NavmapCommandBus(navmapCommandFactory.CreateSearchPlaceCommand,
+                navmapCommandFactory.CreateShowPlaceCommand, navmapCommandFactory.CreateShowEventCommand, placesAPIService);
+
             return new PlacesAndEventsContainer(
-                new PlacesAPIService(new PlacesAPIClient(webRequestController, urlsSource)),
-                new HttpEventsApiService(webRequestController, urlsSource),
+                placesAPIService,
+                eventsApiService,
                 new MapPathEventBus(),
-                explorePanelNavmapBus,
-                new SharedNavmapBus(explorePanelNavmapBus),
+                navmapBus,
+                navmapCommandFactory,
                 onlineUsersProvider,
                 new HomePlaceEventBus());
         }

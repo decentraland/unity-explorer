@@ -70,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -114,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
@@ -140,7 +140,7 @@ namespace DCL.Communities.CommunitiesCard
             this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileDataProvider;
@@ -374,7 +374,7 @@ namespace DCL.Communities.CommunitiesCard
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
                 mvcManager,
-                friendServiceProxy,
+                friendsService,
                 communitiesDataProvider,
                 chatEventBus,
                 web3IdentityCache,

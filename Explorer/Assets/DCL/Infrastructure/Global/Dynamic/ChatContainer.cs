@@ -173,7 +173,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache,
             IUserBlockingCache userBlockingCache,
             IFriendsEventBus friendsEventBus,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunityDataService communitiesDataService,
             World globalWorld,
             Entity playerEntity) =>
@@ -201,7 +201,7 @@ namespace Global.Dynamic
                 friendsEventBus,
                 ChatMessageFactory,
                 profileContainer.ProfileRepositoryWrapper,
-                friendServiceProxy,
+                friendsService,
                 communitiesContainer.DataProvider,
                 communitiesDataService,
                 profileContainer.ThumbnailCache,

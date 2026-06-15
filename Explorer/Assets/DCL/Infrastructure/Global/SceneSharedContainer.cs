@@ -1,6 +1,7 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.PluginSystem.World;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -18,6 +19,8 @@ using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Global
 {
@@ -45,7 +48,8 @@ namespace Global
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            IReadOnlyList<IDCLWorldPlugin> additionalWorldPlugins)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -53,7 +57,7 @@ namespace Global
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
-                staticContainer.ECSWorldPlugins);
+                staticContainer.ECSWorldPlugins.Concat(additionalWorldPlugins).ToArray());
 
             return new SceneSharedContainer
             {

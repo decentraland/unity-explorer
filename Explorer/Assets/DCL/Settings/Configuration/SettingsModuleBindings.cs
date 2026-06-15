@@ -12,7 +12,6 @@ using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.SkyBox;
-using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.AppArgs;
@@ -45,7 +44,7 @@ namespace DCL.Settings.Configuration
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
             UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,

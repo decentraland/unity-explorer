@@ -19,20 +19,20 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly Arch.Core.World globalWorld;
-        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ExposedTransform exposedPlayerTransform;
 
         public AvatarAttachPlugin(
             Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
             ExposedTransform exposedPlayerTransform)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
-            this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.entityParticipantTable = entityParticipantTable;
             this.exposedPlayerTransform = exposedPlayerTransform;
         }
 
@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.World
                 mainPlayerAvatarBaseProxy,
                 exposedPlayerTransform,
                 sharedDependencies.SceneStateProvider,
-                entityParticipantTableProxy,
+                entityParticipantTable,
                 sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.World
                 globalWorld,
                 mainPlayerAvatarBaseProxy,
                 sharedDependencies.SceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTable);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmoteStorage emoteStorage;
-        private readonly ObjectProxy<IEmotesMessageBus> messageBusProxy;
+        private readonly IEmotesMessageBus messageBus;
 
         public SceneMaskedEmotePlugin(
             Arch.Core.World globalWorld,
@@ -25,14 +25,14 @@ namespace DCL.PluginSystem.World
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             EmotePlayer emotePlayer,
             IEmoteStorage emoteStorage,
-            ObjectProxy<IEmotesMessageBus> messageBusProxy)
+            IEmotesMessageBus messageBus)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.emotePlayer = emotePlayer;
             this.emoteStorage = emoteStorage;
-            this.messageBusProxy = messageBusProxy;
+            this.messageBus = messageBus;
         }
 
         public void Dispose() { }
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.World
                 mainPlayerAvatarBaseProxy,
                 emotePlayer,
                 emoteStorage,
-                messageBusProxy.Object!,
+                messageBus,
                 sharedDependencies.SceneStateProvider);
 
             finalizeWorldSystems.Add(system);

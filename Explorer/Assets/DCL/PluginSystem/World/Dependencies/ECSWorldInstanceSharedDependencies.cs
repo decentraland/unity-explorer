@@ -3,6 +3,7 @@ using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.RoomHubs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
@@ -15,6 +16,7 @@ namespace DCL.PluginSystem.World.Dependencies
     public readonly struct ECSWorldInstanceSharedDependencies
     {
         public readonly ISceneData SceneData;
+        public readonly IRoomHub RoomHub;
         public readonly IPartitionComponent ScenePartition;
         public readonly IECSToCRDTWriter EcsToCRDTWriter;
         public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
@@ -29,6 +31,7 @@ namespace DCL.PluginSystem.World.Dependencies
 
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
+            IRoomHub roomHub,
             IPartitionComponent scenePartition,
             IECSToCRDTWriter ecsToCRDTWriter,
             Dictionary<CRDTEntity, Entity> entitiesMap,
@@ -40,6 +43,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate ecsSystemsGate)
         {
             SceneData = sceneData;
+            RoomHub = roomHub;
             EcsToCRDTWriter = ecsToCRDTWriter;
             EntitiesMap = entitiesMap;
             MultiThreadSync = multiThreadSync;

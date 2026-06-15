@@ -17,7 +17,6 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public class MediaFactoryBuilder
     {
-        private readonly ObjectProxy<IRoomHub> roomHub;
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
         private readonly MediaVolume volumeBus;
         private readonly IWebRequestController webRequestController;
@@ -26,11 +25,10 @@ namespace DCL.SDKComponents.MediaStream
         private readonly AssetPreLoadCache assetPreLoadCache;
         private readonly IAnalyticsController analyticsController;
 
-        public MediaFactoryBuilder(ObjectProxy<IRoomHub> roomHub, IWebRequestController webRequestController, MediaVolume volumeBus,
+        public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
             AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
         {
-            this.roomHub = roomHub;
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
             this.videoTexturesPool = videoTexturesPool;
@@ -42,7 +40,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
-            new (sceneDeps.SceneData, roomHub.StrictObject.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+            new (sceneDeps.SceneData, sceneDeps.RoomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
                 volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
                 analyticsController);
     }

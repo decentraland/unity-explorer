@@ -69,7 +69,19 @@ Composition root (MainSceneLoader / Bootstrap)
 - **Plugins read from containers. Plugins never construct, initialize, or mutate a container.** If you find yourself writing `container.SomeField = new Thing()` inside `InitializeAsync`, the graph is inverted — stop and restructure.
 - Containers are constructed from a single place (the composition root or a parent container). The constructor takes pre-built dependencies; the container exposes them.
 - If a plugin needs a dependency that doesn't exist yet, **create a scoped container** for the feature and construct it from the composition root. You can have as many small scoped containers as you want — they are cheap, and they keep the dependency graph honest.
-- Do not reach for `ObjectProxy` to paper over a missing dependency. `ObjectProxy` is an anti-pattern documented in CLAUDE.md; it exists only to unbreak legacy circular deps. For new code, the right answer is a scoped container.
+- **Never introduce a new `ObjectProxy`.** The codebase was swept of it; the only legitimate remaining instances model true runtime lifecycles (`MainPlayerAvatarBaseProxy`, `ExposedCameraData.CameraEntityProxy`). For everything else use a decoupling recipe below.
+
+### Decoupling without ObjectProxy
+
+Match the situation to the recipe (full rationale in `docs/architecture-overview.md` § "Deferred dependencies — decoupling without ObjectProxy"):
+
+| Situation | Fix | Existing example |
+|---|---|---|
+| Service trapped in a late, UI-owning container | Split services into their own container created before any consumer | `FriendsServicesContainer` (services) vs `FriendsContainer` (UI) |
+| Dependency exists only when a feature flag is on | Pass `T?` (null = disabled) and null-check where `.Configured` used to be, or use a null-object | `IFriendsService?`; `NullUserBlockingCache`, `NullRoomHub` |
+| Scene-world plugin needs comms/multiplayer services | Construct the plugin in `DynamicWorldContainer.WorldPlugins`, not in `StaticContainer` with an empty slot | `AvatarAttachPlugin`, `SceneMaskedEmotePlugin`, `RealmInfoPlugin` |
+| Dependency is per-scene data | Add it to `ECSWorldInstanceSharedDependencies`, threaded from `SceneFactory` | `IRoomHub` for the media streaming room |
+| Object created in a plugin's async `InitializeAsync` but consumed by earlier objects | Create it eagerly in a container; the plugin only *attaches* the UI-bound parts | `NavmapCommandBus` + `NavmapCommandFactory.AttachUiControllers` |
 
 **Symptoms of inverted flow:**
 
@@ -82,15 +94,17 @@ Composition root (MainSceneLoader / Bootstrap)
 
 Created first. Produces common dependencies and world plugins.
 - Creates `IComponentPoolsRegistry`, `CacheCleaner`, `IAssetsProvisioner`
-- Instantiates world plugins (`IDCLWorldPlugin`) with their dependencies
+- Instantiates most world plugins (`IDCLWorldPlugin`) as `ECSWorldPlugins`
 - Provides `StaticSettings` (all plugin settings)
 
 ### DynamicWorldContainer
 
 Created after StaticContainer. Holds global plugins and runtime state.
 - Instantiates global plugins (`IDCLGlobalPlugin`)
+- Instantiates the world plugins whose dependencies (comms, multiplayer) only exist here, exposed as `WorldPlugins`; the bootstrap concatenates them with `StaticContainer.ECSWorldPlugins` for initialization and scene-world creation
 - Creates `RealmController`, `GlobalWorldFactory`
 - Manages scene lifecycle
+- Never writes into `StaticContainer` — if a value created here is needed by something in `StaticContainer`, that something is constructed in the wrong container
 
 ### ComponentsContainer
 

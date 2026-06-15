@@ -53,7 +53,7 @@ namespace DCL.Settings
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly UpscalingController upscalingController;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
@@ -77,7 +77,7 @@ namespace DCL.Settings
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
             UpscalingController upscalingController,
@@ -97,7 +97,7 @@ namespace DCL.Settings
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
@@ -216,7 +216,7 @@ namespace DCL.Settings
                                 chatSettingsAsset,
                                 memoryCap,
                                 sceneLoadingLimit,
-                                userBlockingCacheProxy,
+                                userBlockingCache,
                                 this,
                                 upscalingController,
                                 assetsProvisioner,

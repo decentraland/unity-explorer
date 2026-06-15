@@ -130,7 +130,8 @@ namespace SceneRunner
             IJsApiPermissionsProvider permissionsProvider,
             IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory,
-            ISceneEntityFactory entityFactory)
+            ISceneEntityFactory entityFactory,
+            IRoomHub roomHub)
         {
             this.sceneData = sceneData;
             this.permissionsProvider = permissionsProvider;
@@ -149,7 +150,7 @@ namespace SceneRunner
             var entityEventsBuilder = new EntityEventsBuilder();
 
             /* Pass dependencies here if they are needed by the systems */
-            ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
+            ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, roomHub, partitionProvider, ecsToCRDTWriter, entitiesMap,
                 ExceptionsHandler, EntityCollidersCache, entityCollidersGlobalCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
                 systemGroupThrottler, systemsUpdateGate);
 
