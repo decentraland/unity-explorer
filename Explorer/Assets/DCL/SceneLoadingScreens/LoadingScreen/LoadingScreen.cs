@@ -92,7 +92,16 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                                                 .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
 
                 if (loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
-                    ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
+                {
+                    // The screen's close and the operation's result-setting are continuations of the
+                    // same completion and can land in either order within a frame. Give the racing
+                    // continuation one frame before concluding the loading flow is genuinely still
+                    // running - only then is this worth reporting.
+                    await UniTask.Yield();
+
+                    if (!finalResult.HasValue && loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
+                        ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
+                }
 
                 if (finalResult.HasValue && !result.Success)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Loading screen finished with an error after the flow has finished: {result.Error.AsMessage()}");
