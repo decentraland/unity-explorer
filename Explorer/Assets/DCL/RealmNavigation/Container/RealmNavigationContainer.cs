@@ -14,6 +14,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
 using MVC;
+using SceneRunner.Debugging.Hub;
 using System;
 
 namespace DCL.RealmNavigation
@@ -26,6 +27,10 @@ namespace DCL.RealmNavigation
         ///     Realm Navigator with core teleport functionality
         /// </summary>
         public IRealmNavigator RealmNavigator { get; private init; } = null!;
+
+        public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
+
+        public IWorldInfoHub WorldInfoHub { get; private init; } = null!;
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
@@ -44,11 +49,18 @@ namespace DCL.RealmNavigation
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen,
             IPlacesAPIService placesAPIService,
-            IWorldAccessGate worldAccessGate)
+            IWorldPermissionsService worldPermissionsService,
+            IMVCManager mvcManager)
         {
             const string ANALYTICS_OP_NAME = "teleportation";
 
             IAnalyticsController analytics = bootstrapContainer.Analytics.Controller;
+
+            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, mvcManager, staticContainer.RealmData);
+
+            var worldInfoHub = new LocationBasedWorldInfoHub(
+                new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
+                staticContainer.CharacterContainer.CharacterObject);
 
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
                 {
@@ -97,6 +109,8 @@ namespace DCL.RealmNavigation
                     realmChangeOperations,
                     teleportInSameRealmOperation,
                     worldAccessGate),
+                WorldAccessGate = worldAccessGate,
+                WorldInfoHub = worldInfoHub,
                 widgetBuilder = realmContainer.DebugView.DebugWidgetBuilder
             };
         }

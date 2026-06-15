@@ -101,7 +101,8 @@ namespace Global.Dynamic
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly MultiplayerContainer multiplayerContainer;
         private readonly BannedNotificationHandler bannedNotificationHandler;
-        private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
+        private readonly CommunitiesContainer communitiesContainer;
+        private readonly VoiceChatContainer voiceChatContainer;
         private readonly CommsContainer commsContainer;
         private readonly ProfileContainer profileContainer;
         private readonly UIShellContainer uiShellContainer;
@@ -151,7 +152,8 @@ namespace Global.Dynamic
             ProfileContainer profileContainer,
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
-            JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker)
+            CommunitiesContainer communitiesContainer,
+            VoiceChatContainer voiceChatContainer)
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
@@ -168,16 +170,18 @@ namespace Global.Dynamic
             this.profileContainer = profileContainer;
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.multiplayerContainer = multiplayerContainer;
-            this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
+            this.communitiesContainer = communitiesContainer;
+            this.voiceChatContainer = voiceChatContainer;
         }
 
         public override void Dispose()
         {
             // Reverse creation order
-            joinedCommunitiesVoiceLiveTracker.Dispose();
+            voiceChatContainer.Dispose(); // disposes JoinedCommunitiesVoiceLiveTracker, which unsubscribes from CommunityDataService
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
             chatContainer.Dispose();
+            communitiesContainer.Dispose(); // disposes CommunityDataService
             profileBroadcast.Dispose();
             multiplayerContainer.Dispose();
             commsContainer.Dispose();
@@ -313,26 +317,19 @@ namespace Global.Dynamic
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            CommunitiesContainer? communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
+            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
 
             IWorldPermissionsService worldPermissionsService = new WorldPermissionsService(staticContainer.WebRequestsContainer.WebRequestController,
                 bootstrapContainer.DecentralandUrlsSource,
                 identityCache,
                 communitiesContainer.DataProvider);
 
-            var worldAccessGate = new PrivateWorldAccessHandler(worldPermissionsService, uiShellContainer.MvcManager, staticContainer.RealmData);
-
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, worldAccessGate);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, worldPermissionsService, uiShellContainer.MvcManager);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
-            var worldInfoHub = new LocationBasedWorldInfoHub(
-                new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
-                staticContainer.CharacterContainer.CharacterObject
-            );
-
-            dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
+            dynamicWorldDependencies.WorldInfoTool.Initialize(realmNavigatorContainer.WorldInfoHub);
 
             var chatContainer = ChatContainer.Create(
                 staticContainer,
@@ -342,7 +339,7 @@ namespace Global.Dynamic
                 profileContainer,
                 identityCache,
                 userBlockingCache,
-                worldInfoHub,
+                realmNavigatorContainer.WorldInfoHub,
                 reloadSceneController,
                 realmContainer.TeleportController,
                 realmNavigator,
@@ -353,6 +350,9 @@ namespace Global.Dynamic
                 playerEntity,
                 localSceneDevelopment,
                 dynamicWorldParams.EnableAnalytics);
+
+            // Deferred: CommunityDataService needs chat history (only available now) but is owned by CommunitiesContainer.
+            CommunityDataService communitiesDataService = communitiesContainer.CreateDataService(chatContainer.ChatHistory, uiShellContainer.MvcManager, identityCache);
 
             bool includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             bool includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -390,7 +390,7 @@ namespace Global.Dynamic
                 worldPermissionsService,
                 chatContainer.ChatHistory);
 
-            MapRendererContainer? mapRendererContainer =
+            MapRendererContainer mapRendererContainer =
                 await MapRendererContainer
                    .CreateAsync(
                         dynamicWorldDependencies.SettingsContainer,
@@ -413,21 +413,21 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            IDonationsService donationsService;
+            var socialServiceContainer = new SocialServicesContainer(
+                bootstrapContainer.DecentralandUrlsSource,
+                identityCache,
+                appArgs,
+                staticContainer.ScenesCache,
+                staticContainer.EthereumApi,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.RealmData,
+                placesAndEventsContainer.PlacesAPIService,
+                bootstrapContainer.Environment,
+                bootstrapContainer.Analytics.Controller,
+                localSceneDevelopment,
+                dynamicWorldParams.EnableAnalytics);
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.DONATIONS))
-            {
-                IDonationsService coreDonationsService = new DonationsService(staticContainer.ScenesCache, staticContainer.EthereumApi,
-                    staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData,
-                    placesAndEventsContainer.PlacesAPIService, bootstrapContainer.Environment,
-                    bootstrapContainer.DecentralandUrlsSource, localSceneDevelopment);
-
-                donationsService = dynamicWorldParams.EnableAnalytics ? new DonationsServiceAnalyticsDecorator(coreDonationsService, bootstrapContainer.Analytics.Controller) : coreDonationsService;
-            }
-            else
-                donationsService = new DonationsServiceDisabled();
-
-            var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs);
+            IDonationsService donationsService = socialServiceContainer.DonationsService;
 
             var voiceChatContainer = new VoiceChatContainer(
                 socialServiceContainer.socialServicesRPC,
@@ -440,7 +440,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 bootstrapContainer.DecentralandUrlsSource,
                 chatContainer.ChatEventBus,
-                chatContainer.CurrentChannelService
+                chatContainer.CurrentChannelService,
+                communitiesDataService
             );
 
             IEmotesMessageBus multiplayerEmotesMessageBus = multiplayerContainer.EmotesMessageBus;
@@ -480,16 +481,6 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
-
-            var communitiesDataService = new CommunityDataService(chatContainer.ChatHistory,
-                uiShellContainer.MvcManager,
-                communitiesContainer.EventBus,
-                communitiesContainer.DataProvider,
-                identityCache);
-
-            var joinedCommunitiesVoiceLiveTracker = new JoinedCommunitiesVoiceLiveTracker(
-                voiceChatContainer.VoiceChatOrchestrator,
-                communitiesDataService);
 
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (!appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE))
@@ -541,7 +532,7 @@ namespace Global.Dynamic
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
                 commsContainer.CreateMultiplayerPlugin(staticContainer, assetsProvisioner, debugBuilder, multiplayerContainer),
                 staticContainer.ProfilesContainer.CreatePlugin(),
-                new WorldInfoPlugin(worldInfoHub, debugBuilder, chatContainer.ChatHistory),
+                new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     staticContainer.SceneReadinessReportQueue, terrainContainer.Landscape, staticContainer.ScenesCache, assetsProvisioner, identityCache, friendsServices?.FriendsCache, multiplayerContainer.MovementMessageBus),
                 uiShellContainer.CreateInputPlugin(assetsProvisioner, wearableContainer.EmoteWheelShortcutHandler),
@@ -601,14 +592,14 @@ namespace Global.Dynamic
                     placesAndEventsContainer.EventsApiService,
                     staticContainer.SmartWearableCache,
                     uiShellContainer.SupportRequestService,
-                    joinedCommunitiesVoiceLiveTracker),
+                    voiceChatContainer.JoinedCommunitiesVoiceLiveTracker),
                 uiShellContainer.CreateErrorPopupPlugin(assetsProvisioner),
                 new PrivateWorldsPlugin(
                     uiShellContainer.MvcManager,
                     assetsProvisioner,
                     commsContainer.RoomHub,
                     worldPermissionsService,
-                    worldAccessGate,
+                    realmNavigatorContainer.WorldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
@@ -704,7 +695,7 @@ namespace Global.Dynamic
                     worldPermissionsService,
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
-                    joinedCommunitiesVoiceLiveTracker,
+                    voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
                     profileContainer.PendingTransferService
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
@@ -1033,7 +1024,8 @@ namespace Global.Dynamic
                 profileContainer,
                 bannedNotificationHandler,
                 multiplayerContainer,
-                joinedCommunitiesVoiceLiveTracker
+                communitiesContainer,
+                voiceChatContainer
             );
 
             // Init itself
