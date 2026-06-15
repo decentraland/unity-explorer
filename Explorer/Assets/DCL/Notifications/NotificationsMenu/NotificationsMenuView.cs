@@ -4,6 +4,7 @@ using SuperScrollView;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DCL.Notifications.NotificationsMenu
 {
@@ -24,11 +25,19 @@ namespace DCL.Notifications.NotificationsMenu
         [field: SerializeField]
         public GameObject ContentContainer { get; private set; } = null!;
 
+        [field: SerializeField]
+        public GameObject EmptyState { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button FoundationCommunityButton { get; private set; } = null!;
+
         public void SetLoading(bool isLoading)
         {
             LoadingSpinner.SetActive(isLoading);
             ContentContainer.SetActive(!isLoading);
         }
+
+        public void ShowEmptyState(bool show) => EmptyState.SetActive(show);
 
         // Swallow the click event so it's not processed by the main sidebar button: retriggers -> cancel previous token -> panel stuck
         public void OnPointerClick(PointerEventData eventData)
