@@ -43,8 +43,9 @@ namespace DCL.CharacterMotion.Systems
                 // The input action itself is disabled, no jumping or gliding are allowed
                 return;
 
-            // Jump and double jump only prevent input if gliding is also disabled
-            // That way it's still possible to glide when falling down, even if jumping is not possible
+            // Each flag gates only its own action so they can be disabled independently.
+            // The jump button is shared between normal jump, air/double jump and gliding; which action a
+            // press maps to is decided downstream from JumpCount vs MaxAirJumpCount in ApplyJump/ApplyGliding.
 
             bool isNormalJump = jumpState.JumpCount == 0;
 
@@ -52,16 +53,19 @@ namespace DCL.CharacterMotion.Systems
             bool disableDoubleJump = inputModifierComponent.DisableDoubleJump || !FeaturesRegistry.Instance.IsEnabled(FeatureId.DOUBLE_JUMP);
             bool disableGliding = inputModifierComponent.DisableGliding || !FeaturesRegistry.Instance.IsEnabled(FeatureId.GLIDING);
 
-            if (disableJump && disableGliding && isNormalJump)
-                // Trying to jump but BOTH normal jump and gliding are disabled
+            if (disableJump && isNormalJump)
+                // Trying to do a normal (ground) jump but jumping is disabled.
+                // Gliding is impossible from a normal jump state (JumpCount == 0), so this never blocks a glide.
                 return;
 
             if (disableDoubleJump && disableGliding && !isNormalJump)
-                // Trying to double jump but BOTH double jump and gliding are disabled
+                // Trying to air jump but BOTH double jump and gliding are disabled.
+                // If gliding is still enabled we let the press through so the player can glide while falling.
                 return;
 
-            // If jumping is disabled set 0 max air jumps regardless of settings, that way we go directly to gliding
-            jumpState.MaxAirJumpCount = disableJump || disableDoubleJump ? 0 : settings.AirJumpCount;
+            // Double jump availability depends solely on disableDoubleJump.
+            // Setting 0 max air jumps routes the input straight to gliding.
+            jumpState.MaxAirJumpCount = disableDoubleJump ? 0 : settings.AirJumpCount;
 
             if (disableGliding && jumpState.JumpCount > jumpState.MaxAirJumpCount)
                 // Trying to glide but gliding is disabled

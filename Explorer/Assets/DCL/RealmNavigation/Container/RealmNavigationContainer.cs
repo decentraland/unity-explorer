@@ -4,8 +4,6 @@ using DCL.Diagnostics;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
-using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.PrivateWorlds;
@@ -40,8 +38,6 @@ namespace DCL.RealmNavigation
             LODContainer lodContainer,
             RealmContainer realmContainer,
             RemoteEntities remoteEntities,
-            RemoteAnnouncements remoteAnnouncements,
-            RemoteProfiles remoteProfiles,
             World globalWorld,
             IRoomHub roomHub,
             ILandscape landscape,
@@ -57,7 +53,7 @@ namespace DCL.RealmNavigation
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
                 {
                     new RestartLoadingStatus(),
-                    new RemoveRemoteEntitiesTeleportOperation(remoteEntities, remoteAnnouncements, remoteProfiles, globalWorld),
+                    new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                     new ClearWorldsCacheTeleportOperation(placesAPIService),
