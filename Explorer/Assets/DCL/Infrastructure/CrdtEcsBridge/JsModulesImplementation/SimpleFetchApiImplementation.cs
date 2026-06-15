@@ -11,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using static DCL.CrdtEcsBridge.JsModulesImplementation.SimpleFetchAdHoc;
+using static CrdtEcsBridge.JsModulesImplementation.SimpleFetchAdHoc;
 
-namespace DCL.CrdtEcsBridge.JsModulesImplementation
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SimpleFetchApiImplementation : ISimpleFetchApi
     {

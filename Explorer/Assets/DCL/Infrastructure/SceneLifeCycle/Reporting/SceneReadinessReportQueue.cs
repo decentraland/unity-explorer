@@ -1,0 +1,70 @@
+using DCL.Optimization.Pools;
+using DCL.Utilities;
+using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ECS.SceneLifeCycle.Reporting
+{
+    public class SceneReadinessReportQueue : ISceneReadinessReportQueue
+    {
+        private static readonly ListObjectPool<AsyncLoadProcessReport> REPORT_POOL = new (listInstanceDefaultCapacity: 1, maxSize: 10);
+
+        private readonly Dictionary<Vector2Int, PooledLoadReportList> queue = new (1);
+
+        private readonly IScenesCache scenesCache;
+
+        public SceneReadinessReportQueue(IScenesCache scenesCache)
+        {
+            this.scenesCache = scenesCache;
+        }
+
+        public void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report)
+        {
+            // Shortcut: conclude immediately if the destination is already loaded. Non-real scenes
+            // (SDK6 LODs, roads) resolve reports only once, when they finish instantiating, so a report
+            // enqueued while they are already shown would never be dequeued and the loading screen
+            // would hang at 20%.
+            if ((scenesCache.TryGetByParcel(parcel, out ISceneFacade scene)
+                 && scene.SceneStateProvider.State == SceneState.Running)
+                || scenesCache.ContainsNonRealScene(parcel))
+                report.SetProgress(1f);
+
+            if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
+                queue[parcel] = queuedReport = new PooledLoadReportList(REPORT_POOL);
+
+            queuedReport.reports.Add(report);
+        }
+
+        public bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out PooledLoadReportList? report)
+        {
+            if (queue.Count == 0) // nothing to dequeue
+            {
+                report = null;
+                return false;
+            }
+
+            for (var i = 0; i < parcels.Count; i++)
+            {
+                if (TryDequeue(parcels[i], out report))
+                    return true;
+            }
+
+            report = null;
+            return false;
+        }
+
+        public bool TryDequeue(Vector2Int parcel, out PooledLoadReportList? report)
+        {
+            if (queue.TryGetValue(parcel, out PooledLoadReportList list))
+            {
+                report = list;
+                queue.Remove(parcel);
+                return true;
+            }
+
+            report = null;
+            return false;
+        }
+    }
+}

@@ -28,6 +28,8 @@ jobs:
         run: |
           echo "## Release Build" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** \`${{ steps.get_version.outputs.next_short_version }}\` | **Tag:** \`${{ steps.get_version.outputs.next_tag_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ If some artefacts are missing please take a look at previous attempts" >> $GITHUB_STEP_SUMMARY
 
   # Run a clean build (no cache)
   build:

@@ -6,6 +6,8 @@ import {
   camelToSnakeCase,
   cleanGeneratedCode,
   execute,
+  isWin,
+  nodeModulesPath,
   normalizePath,
   protocolOutputPath,
   protocolPath,
@@ -21,6 +23,77 @@ const protocolInputPath = normalizePath(
   path.resolve(__dirname, '../temp/'),
 )
 
+// protoc-gen-bitwise plugin and runtime paths (from @dcl/protocol npm package)
+const bitwisePluginDir = normalizePath(
+  path.resolve(nodeModulesPath, '@dcl/protocol', 'protoc-gen-bitwise'),
+)
+const bitwisePluginScript = normalizePath(
+  path.resolve(bitwisePluginDir, 'plugin.py'),
+)
+const quantizeRuntimeSrc = normalizePath(
+  path.resolve(bitwisePluginDir, 'runtime', 'cs', 'Quantize.cs'),
+)
+
+// Python interpreter the bitwise wrapper delegates to (must match createPluginWrapper).
+const pythonCommand = isWin ? 'py' : 'python3'
+
+/**
+ * Verifies the Python interpreter used by the protoc-gen-bitwise plugin is present
+ * and has the `protobuf` package, so the build fails here with an actionable message
+ * instead of an opaque protoc plugin stack trace mid-generation.
+ */
+async function checkPythonProtobuf() {
+  try {
+    await execAsync(
+      `${pythonCommand} -c "import google.protobuf.compiler.plugin_pb2"`,
+      { cwd: workingDirectory },
+    )
+  } catch {
+    throw new Error(
+      `The protoc-gen-bitwise plugin requires Python 3 with the 'protobuf' package, but '${pythonCommand}' could not import it.\n` +
+        `Install it with: ${pythonCommand} -m pip install protobuf`,
+    )
+  }
+}
+
+/**
+ * Creates a platform-specific wrapper script that protoc can invoke as
+ * --plugin=protoc-gen-bitwise=<path>.  The wrapper delegates to the Python
+ * plugin.py shipped inside @dcl/protocol.
+ */
+function createPluginWrapper(dir: string): string {
+  if (isWin) {
+    const wrapper = path.resolve(dir, 'protoc-gen-bitwise.cmd')
+    fs.writeFileSync(
+      wrapper,
+      `@echo off\r\npy "${bitwisePluginScript}" %*\r\n`,
+    )
+    return normalizePath(wrapper)
+  } else {
+    const wrapper = path.resolve(dir, 'protoc-gen-bitwise')
+    fs.writeFileSync(
+      wrapper,
+      `#!/usr/bin/env bash\nexec python3 "${bitwisePluginScript}" "$@"\n`,
+    )
+    fs.chmodSync(wrapper, 0o755)
+    return normalizePath(wrapper)
+  }
+}
+
+/**
+ * Removes bitwise-generated files (*.Bitwise.cs, Quantize.cs) from the output
+ * directory so they are regenerated cleanly.
+ */
+function cleanBitwiseFiles(outputDir: string) {
+  const patterns = ['**/*.Bitwise.cs', 'Quantize.cs']
+  for (const pattern of patterns) {
+    const files = glob.sync(normalizePath(`${outputDir}/${pattern}`))
+    for (const file of files) {
+      fs.unlinkSync(file)
+    }
+  }
+}
+
 async function main() {
   if (fs.existsSync(protocolInputPath)) {
     fs.rmSync(protocolInputPath, { recursive: true })
@@ -31,6 +104,8 @@ async function main() {
   })
 
   await execute(`${protocPath} --version`, workingDirectory)
+
+  await checkPythonProtobuf()
 
   await buildProtocol()
 
@@ -125,6 +200,7 @@ const execAsync = promisify(exec)
 async function buildProtocol() {
   console.log('Building protocol...')
   cleanGeneratedCode(protocolOutputPath)
+  cleanBitwiseFiles(protocolOutputPath)
 
   await preProcessComponents()
 
@@ -134,10 +210,20 @@ async function buildProtocol() {
       .filter((value) => !value.endsWith('v2/comms.proto'))
       .filter((value) => !value.endsWith('v3/comms.proto'))
 
+  // Create a platform-specific wrapper so protoc can invoke the Python plugin
+  const pluginWrapper = createPluginWrapper(protocolInputPath)
+
   // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)
   //command += ` --plugin=protoc-gen-dclunity=${nodeModulesPath}/protoc-gen-dclunity/dist/index.${isWin ? 'cmd' : 'js'}`
   //command += ` --dclunity_out "${protocolOutputPath}"`
-  const baseCommand = `${protocPath} --csharp_out "${protocolOutputPath}" --csharp_opt=file_extension=.gen.cs --proto_path "${protocolInputPath}"`
+  const baseCommand = [
+    protocPath,
+    `--csharp_out "${protocolOutputPath}"`,
+    '--csharp_opt=file_extension=.gen.cs',
+    `--plugin=protoc-gen-bitwise="${pluginWrapper}"`,
+    `--bitwise_out="${protocolOutputPath}"`,
+    `--proto_path "${protocolInputPath}"`,
+  ].join(' ')
 
   // Split protoFiles into chunks
   const chunkSize = 10
@@ -152,6 +238,12 @@ async function buildProtocol() {
       throw error
     }
   }
+
+  // Copy Quantize.cs runtime (used by the generated bitwise partial classes)
+  fs.copyFileSync(
+    quantizeRuntimeSrc,
+    path.resolve(protocolOutputPath, 'Quantize.cs'),
+  )
 
   console.log('Building protocol... Done!')
 }

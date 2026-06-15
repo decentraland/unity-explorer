@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiles.Helpers;
@@ -27,6 +28,9 @@ namespace DCL.Profiles.Self
         private readonly ProfileBuilder profileBuilder = new ();
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
+        private readonly IOwnedNftFilter ownedNftFilter;
+
+        public event Action<Profile>? ProfilePropagated;
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -38,7 +42,8 @@ namespace DCL.Profiles.Self
             IReadOnlyList<URN>? forcedEmotes,
             IProfileCache profileCache,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -50,6 +55,7 @@ namespace DCL.Profiles.Self
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.ownedNftFilter = ownedNftFilter;
 
             web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
             web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
@@ -102,6 +108,7 @@ namespace DCL.Profiles.Self
             var forceRenderList = new List<string>(equippedWearables.ForceRenderCategories);
 
             Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRenderList, emoteStorage, wearableStorage,
+                ownedNftFilter,
                 // Don't update the version as it will be incremented at UpdateProfileAsync function
                 incrementVersion: false);
 
@@ -141,7 +148,10 @@ namespace DCL.Profiles.Self
                         false, IProfileRepository.FetchBehaviour.FORCE_FETCH_FROM_CATALYST | IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                     if (savedProfile != null)
+                    {
                         profileCache.Set(savedProfile.UserId, savedProfile);
+                        ProfilePropagated?.Invoke(savedProfile);
+                    }
 
                     return savedProfile;
                 }
@@ -168,6 +178,7 @@ namespace DCL.Profiles.Self
                     // breaking the avatar and the backpack
                     profileCache.Set(savedProfile!.UserId, savedProfile);
                     UpdateAvatarInWorld(savedProfile!);
+                    ProfilePropagated?.Invoke(savedProfile);
                     return savedProfile;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)

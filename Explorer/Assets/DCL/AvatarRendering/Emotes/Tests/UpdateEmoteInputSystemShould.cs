@@ -5,8 +5,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.CharacterMotion.Components;
-using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
 using NUnit.Framework;
@@ -23,7 +21,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
     {
         private World world;
         private UpdateEmoteInputSystem system;
-        private MockEmotesMessageBus mockMessageBus;
         private TestEmoteWheelShortcutHandler testShortcutHandler;
         private GameObject testGameObject;
 
@@ -32,11 +29,10 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             world = World.Create();
 
-            mockMessageBus = new MockEmotesMessageBus();
             testShortcutHandler = new TestEmoteWheelShortcutHandler();
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            system = UpdateEmoteInputSystem.InjectToWorld(ref builder, mockMessageBus, testShortcutHandler);
+            system = UpdateEmoteInputSystem.InjectToWorld(ref builder, testShortcutHandler);
             system.Initialize();
 
             testGameObject = new GameObject("TestPlayer");
@@ -105,39 +101,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void SendEmoteToMessageBusWhenTriggered()
-        {
-            // Arrange
-            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:clap");
-            var entity = CreatePlayerEntity(profile);
-            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.AreEqual(1, mockMessageBus.SentEmotes.Count);
-            Assert.AreEqual("urn:decentraland:off-chain:base-avatars:clap", mockMessageBus.SentEmotes[0].emoteId.ToString());
-            Assert.IsFalse(mockMessageBus.SentEmotes[0].loopCyclePassed);
-        }
-
-        [Test]
-        public void NotTriggerEmoteWhenAvatarIsNotVisible()
-        {
-            // Arrange
-            var profile = CreateProfileWithEmotes("urn:decentraland:off-chain:base-avatars:dance");
-            var entity = CreatePlayerEntity(profile, isVisible: false);
-            world.Add(entity, new TriggerEmoteBySlotIntent { Slot = 0 });
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.IsFalse(world.Has<CharacterEmoteIntent>(entity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
-        }
-
-        [Test]
         public void NotTriggerEmoteWhenInputModifierDisablesEmote()
         {
             // Arrange
@@ -150,7 +113,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             // Assert
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(entity));
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
@@ -191,7 +153,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             // Assert - should still have the original emote intent
             var intent = world.Get<CharacterEmoteIntent>(entity);
             Assert.AreEqual("existing-emote", intent.EmoteId.ToString());
-            Assert.AreEqual(0, mockMessageBus.SentEmotes.Count);
         }
 
         [Test]
@@ -233,7 +194,8 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 // Assert - both should have triggered
                 Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity1));
                 Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity2));
-                Assert.AreEqual(2, mockMessageBus.SentEmotes.Count);
+                Assert.AreEqual("urn:decentraland:off-chain:base-avatars:wave", world.Get<CharacterEmoteIntent>(entity1).EmoteId.ToString());
+                Assert.AreEqual("urn:decentraland:off-chain:base-avatars:clap", world.Get<CharacterEmoteIntent>(entity2).EmoteId.ToString());
             }
             finally
             {
@@ -322,19 +284,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 NotifyCalls.Add(source);
                 base.NotifyEmotePlayed(source);
             }
-        }
-
-        // Mock implementation of IEmotesMessageBus
-        private class MockEmotesMessageBus : IEmotesMessageBus
-        {
-            public List<(URN emoteId, bool loopCyclePassed, AvatarEmoteMask mask)> SentEmotes = new ();
-            public OwnedBunch<RemoteEmoteStopIntention> EmoteStopIntentions() => throw new NotImplementedException();
-            public void Send(URN urn, bool loopCyclePassed, AvatarEmoteMask mask) => SentEmotes.Add((urn, loopCyclePassed, mask));
-            public void SendStop() => throw new NotImplementedException();
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
-            public void SaveForRetry(RemoteEmoteStopIntention intention) => throw new NotImplementedException();
         }
     }
 }

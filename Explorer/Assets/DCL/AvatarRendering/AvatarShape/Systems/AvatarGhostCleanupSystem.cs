@@ -3,12 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.AvatarRendering.Loading.Assets;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using UnityEngine;
 using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -47,7 +45,10 @@ namespace DCL.AvatarRendering.AvatarShape
             if (UnityObjectUtils.IsQuitting)
                 return;
 
-            avatarBase.GhostGameObject.SetActive(false);
+            // The avatar hierarchy can be destroyed out-of-band before this delete-pending cleanup runs
+            if (avatarBase != null && avatarBase.GhostGameObject != null)
+                avatarBase.GhostGameObject.SetActive(false);
+
             UnityObjectUtils.SafeDestroy(ghost.GhostMaterial);
         }
     }
