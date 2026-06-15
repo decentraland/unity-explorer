@@ -217,9 +217,11 @@ namespace DCL.Backpack
                     return;
                 }
 
-                // Optimistic display: show the thumbnail immediately so the user gets feedback
-                // during the ~15s deploy window. PNG is only persisted to disk after the
-                // backend save succeeds (PersistPngAsync below).
+                // Hand the captured texture to the slot now so it's ready in memory. The slot is
+                // still in its Saving state (SetSaving above shows a spinner, not the thumbnail),
+                // so this isn't visible yet — it renders once SetData flips the slot to Full after
+                // the backend save succeeds, without a disk reload (SetData loadThumbnail: false).
+                // PNG is only persisted to disk after that success (PersistPngAsync below).
                 presenter.SetThumbnail(capture.Value.Thumbnail);
 
                 var savedItem = await saveOutfitCommand.ExecuteAsync(slotIndex, equippedWearables, ct);
