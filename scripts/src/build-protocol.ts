@@ -203,7 +203,7 @@ async function buildProtocol() {
       .filter((value) => !value.endsWith('v2/comms.proto'))
       .filter((value) => !value.endsWith('v3/comms.proto'))
 
-  // Create a platform-specific wrapper so protoc can invoke the Python plugin
+  // Create a platform-specific wrapper so protoc can invoke the Node plugin
   const pluginWrapper = createPluginWrapper(protocolInputPath)
 
   // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)
