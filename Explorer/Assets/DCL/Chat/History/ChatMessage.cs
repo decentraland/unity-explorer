@@ -87,8 +87,14 @@ namespace DCL.Chat.History
         ///     Recovers the sender wallet address from an id produced by <see cref="GetId" />.
         ///     Returns false for ids that don't follow the composite format (e.g. system-message GUIDs).
         /// </summary>
-        public static bool TryGetSenderWalletAddress(string messageId, out string walletAddress)
+        public static bool TryGetSenderWalletAddress(string? messageId, out string walletAddress)
         {
+            if (string.IsNullOrEmpty(messageId))
+            {
+                walletAddress = string.Empty;
+                return false;
+            }
+
             int separator = messageId.IndexOf(':');
 
             if (separator <= 0)

@@ -153,6 +153,9 @@ namespace DCL.Chat.ChatServices
             if (translation.State != TranslationState.Success || string.IsNullOrEmpty(translation.TranslatedBody))
                 return;
 
+            if (!translationSettings.IsTranslationFeatureActive())
+                return;
+
             // The message id encodes the sender wallet address, which the participant table maps to the live avatar entity.
             if (!ChatUtils.TryGetSenderWalletAddress(evt.MessageId, out string senderWalletAddress)
                 || !entityParticipantTable.TryGet(senderWalletAddress, out var entry)
