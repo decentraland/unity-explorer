@@ -39,6 +39,7 @@ namespace DCL.Nametags
 
         private readonly IObjectPool<NametagHolder> nametagHolderPool;
         private readonly NametagsData nametagsData;
+        private Vector3 nametagPosition;
 
         // When ghosts are enabled, nametags should appear immediately (alongside the ghost placeholder).
         // Otherwise, wait until the avatar has been fully instantiated before showing the nametag.
@@ -186,7 +187,7 @@ namespace DCL.Nametags
                 return;
             }
 
-            Vector3 nametagPosition = avatarBase.GetAdaptiveNametagPosition();
+            nametagPosition = avatarBase.GetAdaptiveNametagPosition();
 
             if (World.Has<GliderPropEnabled>(e))
                 nametagPosition.y += avatarBase.NametagGlideOffset;
