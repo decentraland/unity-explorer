@@ -79,7 +79,9 @@ namespace DCL.Utilities
 
             public void Dispose()
             {
-                reactiveProperty.Unsubscribe(observer);
+                // a default(DisposableSubscription<T>) - e.g. a controller torn down before it ever
+                // subscribed - carries a null reactiveProperty; the ?. keeps that default safe to dispose
+                reactiveProperty?.Unsubscribe(observer);
             }
         }
     }
