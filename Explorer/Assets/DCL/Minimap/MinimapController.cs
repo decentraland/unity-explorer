@@ -230,7 +230,6 @@ namespace DCL.Minimap
                          .AddControl(new ButtonContextMenuControlSettings(minimapContextMenuSettings.ReloadSceneText, minimapContextMenuSettings.ReloadSceneSprite, ReloadScene));
 
             EvaluateDonateToCreatorButton(donationsService.DonationsEnabledCurrentScene.Value);
-            SetInitialHomeToggleValue();
             viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
 
             if (includeBannedUsersFromScene)
@@ -265,6 +264,7 @@ namespace DCL.Minimap
 
         private void ShowContextMenu()
         {
+            SetInitialHomeToggleValue();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(contextMenu!, viewInstance!.contextMenuButton.transform.position)))
                       .Forget();

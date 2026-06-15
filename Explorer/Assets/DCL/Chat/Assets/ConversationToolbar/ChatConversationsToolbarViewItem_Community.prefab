@@ -489,6 +489,22 @@ PrefabInstance:
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 5714849469400794328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5714849469400794328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5714849469400794328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5714849469400794328, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5752101683759274867, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: aspectRatioFitter
       value: 
@@ -503,6 +519,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7352371846437751057, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
+      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7465909787489353167, guid: 9c539eb546569c843a1d69f353b89bee, type: 3}
