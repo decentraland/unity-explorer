@@ -457,8 +457,7 @@ namespace Global.Dynamic
         private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
-                new UnitySystemInfoProvider(),
-                new PlatformDriveInfoProvider());
+                new UnitySystemInfoProvider());
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
             bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
