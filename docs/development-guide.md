@@ -520,7 +520,7 @@ In the current project, **media streaming** is implemented via external package,
 1. Import AVPro package. Trial/preview version of it can be downloaded from the official [GitHub repository](https://github.com/RenderHeads/UnityPlugin-AVProVideo/releases). At the moment of writing this documentation AVPro version used in this project was 2.8.0.
 2. Add `csc.rsp` file to the `Assets` folder with only one line `-define:AV_PRO_PRESENT` in this file.
 3. Close and re-open Unity Editor, so the define symbols are updated.
-4. Verify that symbol is recognized by checking `DCL.MediaPlayer.asmdef` in inspector. You should not see red sign in front of Define Constraints `AV_PRO_PRESENT` there.
+4. Verify that symbol is recognized by checking `DCL.Plugins.asmdef` in inspector (the `AV_PRO_PRESENT` define lives there; the MediaStream code itself compiles into `ECS.Unity`). You should not see red sign in front of the `AV_PRO_PRESENT` define there.
 
 After importing trial package you can:
 1. Run `MediaStreaming` sdk-scene from `StaticSceneLoader.unity` scene to verify that media streaming is working. This scene includes both audio- and video streams.
@@ -532,6 +532,11 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 
 ## How to update protocol
+
+> **Prerequisites:** Besides Node/npm, the protocol build runs a Python `protoc` plugin (`protoc-gen-bitwise`, used for the quantized/bit-packed Pulse network state). You need **Python 3** on your `PATH` with the **`protobuf`** package installed, otherwise `build-protocol` fails with `ModuleNotFoundError: No module named 'google'`:
+> ```bash
+> python3 -m pip install protobuf
+> ```
 
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 

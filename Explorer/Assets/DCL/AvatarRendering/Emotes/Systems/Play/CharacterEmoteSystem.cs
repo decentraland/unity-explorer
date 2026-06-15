@@ -13,6 +13,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
+using DCL.Multiplayer.Movement;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -83,6 +84,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByMovementInputQuery(World);
             ReplicateLoopingEmotesQuery(World);
             ConsumeEmoteIntentQuery(World, t);
+            BroadcastEmoteOnLocalPlayerQuery(World);
+            DiscardEmoteBroadcastOnRemotePlayersQuery(World);
             CancelEmotesByDeletionQuery(World);
             CancelMaskedEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
@@ -97,20 +100,20 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void CancelSceneEmotesBySceneChange(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        private void CancelSceneEmotesBySceneChange(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
             if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
             if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
 
-            StopEmote(ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView);
             messageBus.SendStop();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByDeletion(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
@@ -130,8 +133,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByTeleportIntention(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         /// <summary>
         /// Stops emote playback when smooth movement with duration is initiated.
@@ -139,8 +142,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [All(typeof(PlayerMoveToWithDurationIntent))]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMoveToWithDuration(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
-            StopEmote(ref emoteComponent, avatarView);
+        private void CancelEmotesByMoveToWithDuration(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView) =>
+            StopEmote(entity, ref emoteComponent, avatarView);
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
         [Query]
@@ -153,7 +156,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         // emotes that do not loop need to trigger some kind of cancellation, so we can take care of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
-        private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView, in Entity entity)
+        private void CancelEmotes(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             bool wantsToCancelEmote = emoteComponent.StopEmote;
             emoteComponent.StopEmote = false;
@@ -164,7 +167,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldCancelEmote = wantsToCancelEmote || World.Has<HiddenPlayerComponent>(entity);
             if (shouldCancelEmote)
             {
-                StopEmote(ref emoteComponent, avatarView);
+                StopEmote(entity, ref emoteComponent, avatarView);
                 return;
             }
 
@@ -172,7 +175,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (emoteReference.legacy)
             {
                 if (!avatarView.IsLegacyAnimationPlaying)
-                    StopEmote(ref emoteComponent, avatarView);
+                    StopEmote(entity, ref emoteComponent, avatarView);
                 return;
             }
 
@@ -186,7 +189,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
-                StopEmote(ref emoteComponent, avatarView);
+                StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         // Related issues:
@@ -199,6 +202,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [None(typeof(CharacterEmoteIntent), typeof(PlayerTeleportIntent.JustTeleported))]
         private void CancelEmotesByMovementInput(
+            Entity entity,
             ref CharacterEmoteComponent emoteComponent,
             in IAvatarView avatarView,
             ref JumpInputComponent jumpInputComponent,
@@ -216,11 +220,11 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             ReportHub.Log(ReportCategory.EMOTE, $"CancelEmotesByMovementInput() {profile.UserId} Stopping emote");
 
-            StopEmote(ref emoteComponent, avatarView);
+            StopEmote(entity, ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
+        private void StopEmote(Entity entity, ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
 
@@ -237,6 +241,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
             avatarView.ResetArmatureInclination();
+
+            // Propagate emote stop only for local player
+            if (World.Has<PlayerComponent>(entity))
+                messageBus.SendStop();
 
             emoteComponent.Reset();
         }
@@ -334,20 +342,38 @@ namespace DCL.AvatarRendering.Emotes.Play
                     bool spatial = emoteIntent.Spatial;
                     IAvatarView view = avatarView;
 
+                    bool isLooping = emote.IsLooping();
+
                     if (mask == AvatarEmoteMask.AemFullBody)
                     {
+                        // A masked emote may still be playing on a separate animator layer (remote players).
+                        // EmoteStart replaces the current emote, so the full-body emote supersedes it —
+                        // mirrors the masked branch below, which stops a playing full-body emote.
+                        ref CharacterMaskedEmoteComponent masked = ref World.TryGetRef<CharacterMaskedEmoteComponent>(entity, out bool hasMasked);
+
+                        if (hasMasked && masked.CurrentEmoteReference != null)
+                        {
+                            masked.StopEmote = true;
+                            emotePlayer.TryCancelMaskedEmote(ref masked, view);
+                        }
+
                         emoteComponent.EmoteUrn = emoteId;
                         emoteComponent.Mask = mask;
 
-                        if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref emoteComponent))
+                        if (!emotePlayer.Play(mainAsset, audioClip, isLooping, spatial, in view, ref emoteComponent))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                        else
+                        {
+                            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                        }
                     }
                     else
                     {
                         // Masked emotes for remote players are handled here in the global world.
                         // Local player masked emotes go through SceneMaskedEmoteSystem instead.
                         if (emoteComponent.CurrentEmoteReference != null)
-                            StopEmote(ref emoteComponent, view);
+                            StopEmote(entity, ref emoteComponent, view);
 
                         // After AddOrGet the query-provided refs (emoteIntent, avatarView,
                         // emoteComponent) are potentially dangling, use only local copies.
@@ -356,8 +382,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                         masked.EmoteUrn = emoteId;
                         masked.Mask = mask;
 
-                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), spatial, in view, ref masked))
+                        if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, spatial, in view, ref masked))
                             ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+                        else
+                        {
+                            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                            World.Add(entity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = mask});
+                        }
                     }
 
                     World.Remove<CharacterEmoteIntent>(entity);
@@ -369,8 +400,69 @@ namespace DCL.AvatarRendering.Emotes.Play
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
 
+        [Query]
+        [All(typeof(PlayerComponent))]
+        private void BroadcastEmoteOnLocalPlayer(
+            in Entity entity,
+            ref EmotePendingToBroadcast broadcast,
+            in PlayerMovementNetworkComponent playerMovement,
+            in CharacterAnimationComponent animation,
+            in StunComponent stun,
+            in MovementInputComponent input,
+            in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt)
+        {
+            var playerState = new NetworkMovementMessage
+            {
+                timestamp = UnityEngine.Time.unscaledTime,
+                position = playerMovement.Character.transform.position,
+                velocity = playerMovement.Character.velocity,
+                velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
+                rotationY = playerMovement.Character.transform.eulerAngles.y,
+                isEmoting = true,
+                isInstant = true,
+                isStunned = stun.IsStunned,
+                isSliding = animation.States.IsSliding,
+                isPointingAt = pointAt.IsPointing,
+                pointAtWorldHitPoint = pointAt.WorldHitPoint,
+                headIKYawEnabled = headIK.YawEnabled,
+                headIKPitchEnabled = headIK.PitchEnabled,
+                headYawAndPitch = headIK.GetHeadYawAndPitch(),
+                movementKind = input.Kind,
+                animState = new AnimationStates
+                {
+                    IsSliding = animation.States.IsSliding,
+                    IsGrounded = animation.States.IsGrounded,
+                    JumpCount = animation.States.JumpCount,
+                    IsLongJump = animation.States.IsLongJump,
+                    IsFalling = animation.States.IsFalling,
+                    IsLongFall = animation.States.IsLongFall,
+                    IsStunned = stun.IsStunned,
+                    GlideState = animation.States.GlideState,
+                    SlideBlendValue = animation.States.SlideBlendValue,
+                    MovementBlendValue = animation.States.MovementBlendValue,
+                },
+            };
+
+            URN emoteId = broadcast.EmoteId;
+            uint durationMs = broadcast.DurationMs;
+            AvatarEmoteMask mask = broadcast.Mask;
+
+            World.Remove<EmotePendingToBroadcast>(entity);
+
+            messageBus.Send(emoteId, false, mask, durationMs, playerState);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent))]
+        [All(typeof(EmotePendingToBroadcast))]
+        private void DiscardEmoteBroadcastOnRemotePlayers(Entity entity)
+        {
+            World.Remove<EmotePendingToBroadcast>(entity);
+        }
+
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
-        // TODO (Kinerius): This does not support scene emotes yet
+        // TODO: we can safely remove this propagation for pulse multiplayer as it is no longer needed (based on emote start/emote stop events)
         [Query]
         [All(typeof(PlayerComponent))]
         [None(typeof(CharacterEmoteIntent))]

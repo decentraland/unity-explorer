@@ -12,6 +12,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials;
 using System.Threading.Tasks;
 using Entity = Arch.Core.Entity;
+using SDKTransform = CrdtEcsBridge.Components.Transform.SDKTransform;
 using Quaternion = Decentraland.Common.Quaternion;
 using Vector2 = Decentraland.Common.Vector2;
 using Vector3 = Decentraland.Common.Vector3;
@@ -218,14 +219,14 @@ namespace DCL.SDKComponents.Tween.Tests
             system.Update(0);
 
             // Initial SDKTransform should be at start
-            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            var sdkTransform = world.Get<SDKTransform>(testEntity);
             Assert.AreEqual(startValue.X, sdkTransform.Position.Value.x, 0.01f);
 
             // Wait for sequence to complete
             await RunSystemForSeconds(600, testEntity);
 
             // SDKTransform should be updated to end value (verifying sync works)
-            sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            sdkTransform = world.Get<SDKTransform>(testEntity);
             Assert.AreEqual(endValue.X, sdkTransform.Position.Value.x, 0.5f, "SDKTransform should be synced to Unity Transform at end");
         }
 
@@ -250,10 +251,10 @@ namespace DCL.SDKComponents.Tween.Tests
             await RunSystemForSeconds(250, testEntity);
 
             // Verify CRDT writer was called with SDKTransform updates
-            ecsToCRDTWriter.Received().PutMessage<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>(
-                Arg.Any<System.Action<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>>(),
+            ecsToCRDTWriter.Received().PutMessage<SDKTransform, SDKTransform>(
+                Arg.Any<System.Action<SDKTransform, SDKTransform>>(),
                 Arg.Any<CRDTEntity>(),
-                Arg.Any<CrdtEcsBridge.Components.Transform.SDKTransform>());
+                Arg.Any<SDKTransform>());
         }
 
         [Test]
@@ -279,7 +280,7 @@ namespace DCL.SDKComponents.Tween.Tests
             await RunSystemForSeconds(250, testEntity);
 
             // SDKTransform should be marked as dirty (not updating cache) when scene is not current
-            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            var sdkTransform = world.Get<SDKTransform>(testEntity);
             Assert.IsTrue(sdkTransform.IsDirty, "SDKTransform should be marked dirty when scene is not current");
 
             // Verify SDKTransform was synced from Unity Transform (even though scene not current)
@@ -403,9 +404,9 @@ namespace DCL.SDKComponents.Tween.Tests
 
             // Verify CRDT writer was NOT called with SDKTransform updates
             ecsToCRDTWriter.DidNotReceive().PutMessage(
-                Arg.Any<System.Action<CrdtEcsBridge.Components.Transform.SDKTransform, CrdtEcsBridge.Components.Transform.SDKTransform>>(),
+                Arg.Any<System.Action<SDKTransform, SDKTransform>>(),
                 Arg.Any<CRDTEntity>(),
-                Arg.Any<CrdtEcsBridge.Components.Transform.SDKTransform>());
+                Arg.Any<SDKTransform>());
 
             // It SHOULD write TweenState
             ecsToCRDTWriter.Received().PutMessage(
@@ -464,7 +465,7 @@ namespace DCL.SDKComponents.Tween.Tests
 
             await RunSystemForSeconds(600, testEntity);
 
-            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            var sdkTransform = world.Get<SDKTransform>(testEntity);
             Assert.AreEqual(posEnd.X, sdkTransform.Position.Value.x, 0.5f, "Position X should reach end value");
             Assert.AreEqual(scaleEnd.X, sdkTransform.Scale.x, 0.5f, "Scale X should reach end value");
         }
@@ -525,7 +526,7 @@ namespace DCL.SDKComponents.Tween.Tests
             comp = world.Get<SDKTweenSequenceComponent>(testEntity);
             Assert.AreEqual(TweenStateStatus.TsCompleted, comp.TweenStateStatus);
 
-            var sdkTransform = world.Get<CrdtEcsBridge.Components.Transform.SDKTransform>(testEntity);
+            var sdkTransform = world.Get<SDKTransform>(testEntity);
             Assert.AreEqual(scaleEnd.X, sdkTransform.Scale.x, 0.5f,
                 "Scale should remain 2 after step 2 (omitted scale resolved from current transform at step start)");
         }

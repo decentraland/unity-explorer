@@ -11,7 +11,6 @@ using DCL.Interaction.Raycast;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -70,7 +69,6 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
         private readonly IRoadAssetPool roadAssetPool;
-        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -98,7 +96,6 @@ namespace Global.Dynamic
             ILODCache lodCache,
             HashSet<Vector2Int> roadCoordinates,
             ILODSettingsAsset lodSettingsAsset,
-            IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
@@ -126,7 +123,6 @@ namespace Global.Dynamic
             this.hybridSceneParams = hybridSceneParams;
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
-            this.emotesMessageBus = emotesMessageBus;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
@@ -251,7 +247,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, localSceneDevelopment, useRemoteAssetBundles, isBuilderCollectionPreview));
 
             return globalWorld;
         }

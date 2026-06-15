@@ -10,11 +10,14 @@ using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading; 
+using Utility.Multithreading;
 using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
+    using Chat = Decentraland.Kernel.Comms.Rfc4.Chat;
+    using Movement = Decentraland.Kernel.Comms.Rfc4.Movement;
+
     public struct MessageWrap<T> where T: class, IMessage, new()
     {
         private static readonly Type SELF_MESSAGE_TYPE = typeof(T);

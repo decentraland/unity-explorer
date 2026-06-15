@@ -173,7 +173,7 @@ namespace DCL.SceneLoadingScreens
                 Color newColor = Color.Lerp(currentColor, toColor, time / duration);
                 Background.material.SetColor(BG_COLOR_PROPERTY, newColor);
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                time += Time.deltaTime;
+                time += UnityEngine.Time.deltaTime;
             }
 
             Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
