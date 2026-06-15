@@ -141,9 +141,20 @@ namespace DCL.Nametags
             if (!chatBubbleComponent.IsDirty)
                 return;
 
-            nametagHolder.Nametag.DisplayMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor, chatBubbleComponent.IsCommunityMessage, chatBubbleComponent.CommunityName);
-
             chatBubbleComponent.IsDirty = false;
+
+            if (chatBubbleComponent.IsTranslationUpdate)
+            {
+                chatBubbleComponent.IsTranslationUpdate = false;
+
+                // Swap the text in place only while the bubble is still visible; never revive an already-hidden bubble.
+                if (nametagHolder.Nametag.ShowMessage)
+                    nametagHolder.Nametag.MessageText = chatBubbleComponent.ChatMessage;
+
+                return;
+            }
+
+            nametagHolder.Nametag.DisplayMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention, chatBubbleComponent.IsPrivateMessage, chatBubbleComponent.IsOwnMessage, chatBubbleComponent.RecipientValidatedName, chatBubbleComponent.RecipientWalletId, chatBubbleComponent.RecipientNameColor, chatBubbleComponent.IsCommunityMessage, chatBubbleComponent.CommunityName);
         }
 
         [Query]
