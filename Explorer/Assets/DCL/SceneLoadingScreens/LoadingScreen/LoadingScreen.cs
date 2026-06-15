@@ -16,9 +16,9 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
         private readonly IMVCManager mvcManager;
 
-        private readonly ILoadingStatus loadingStatus;
+        private readonly IReadOnlyLoadingStatus loadingStatus;
 
-        public LoadingScreen(IMVCManager mvcManager, LoadingScreenTimeout loadingScreenTimeout, ILoadingStatus loadingStatus)
+        public LoadingScreen(IMVCManager mvcManager, LoadingScreenTimeout loadingScreenTimeout, IReadOnlyLoadingStatus loadingStatus)
         {
             this.mvcManager = mvcManager;
             this.loadingScreenTimeout = loadingScreenTimeout;
