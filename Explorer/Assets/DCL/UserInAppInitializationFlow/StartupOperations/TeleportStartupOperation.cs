@@ -48,7 +48,7 @@ namespace DCL.UserInAppInitializationFlow
             bool useDefault = appArgs.HasFlag(AppArgsFlags.POSITION) || editorOverride;
 
             if (useDefault)
-                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                return await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct, landOnParcel: startParcel.LandOnParcel);
 
             // World manifest spawn coordinate takes next priority
             if (realmController.RealmData.WorldManifest is { IsEmpty: false, spawn_coordinate: { } spawn })
@@ -58,7 +58,7 @@ namespace DCL.UserInAppInitializationFlow
             return realmController.RealmData.IsLocalSceneDevelopment
                    && await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct) is { Value: { Count: > 0 } } sceneDefinitions
                 ? await InternalExecuteAsync(args, sceneDefinitions.Value[0].metadata.scene.DecodedBase, ct)
-                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct);
+                : await InternalExecuteAsync(args, startParcel.ConsumeByTeleportOperation(), ct, landOnParcel: startParcel.LandOnParcel);
         }
     }
 }

@@ -32,13 +32,14 @@ namespace DCL.RuntimeDeepLink
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
+            bool landOnParcel = LandOnParcelFrom(deeplink);
 
             var result = Result.ErrorResult("no matches");
 
             if (realm.HasValue)
             {
                 if(position.HasValue)
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token).Forget();
+                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token, landOnParcel).Forget();
                 else
                     chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
 
@@ -49,9 +50,9 @@ namespace DCL.RuntimeDeepLink
                 var parcel = position.Value;
 
                 if (startParcel.IsConsumed())
-                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token).Forget();
+                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token, landOnParcel).Forget();
                 else
-                    startParcel.Assign(parcel);
+                    startParcel.Assign(parcel, landOnParcel);
 
                 result = Result.SuccessResult();
             }
@@ -94,5 +95,8 @@ namespace DCL.RuntimeDeepLink
             string? rawCommunity = deepLink.ValueOf(AppArgsFlags.COMMUNITY);
             return rawCommunity ?? null;
         }
+
+        private static bool LandOnParcelFrom(DeepLink deepLink) =>
+            string.Equals(deepLink.ValueOf(AppArgsFlags.LAND_ON_PARCEL), "true", System.StringComparison.OrdinalIgnoreCase);
     }
 }

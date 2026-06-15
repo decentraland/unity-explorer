@@ -37,13 +37,20 @@ namespace DCL.RealmNavigation
             this.value = value;
         }
 
+        /// <summary>
+        ///     When true, the startup teleport should land at <see cref="value" /> itself rather than the
+        ///     scene's spawn point (set by a land-on-parcel deep link).
+        /// </summary>
+        public bool LandOnParcel { get; private set; }
+
         public bool IsConsumed() =>
             consumed;
 
-        public AssignResult Assign(Vector2Int newParcel)
+        public AssignResult Assign(Vector2Int newParcel, bool landOnParcel = false)
         {
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
+            LandOnParcel = landOnParcel;
             return AssignResult.Ok;
         }
 
