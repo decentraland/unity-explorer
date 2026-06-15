@@ -83,8 +83,10 @@ namespace DCL.PluginSystem.Global
             roomHub.IslandRoom().ConnectionUpdated -= OnRoomConnectionUpdated;
             roomHub.SceneRoom().Room().ConnectionUpdated -= OnRoomConnectionUpdated;
 
-            lifeCts.SafeCancelAndDispose();
-            popupCts.SafeCancelAndDispose();
+            // Cancel only — never dispose. Disposing while in-flight UniTask.Delay / ShowAsync continuations
+            // are draining races their unregister path (ObjectDisposedException). Cancelling lifeCts also
+            // cancels the linked popupCts; GC reclaims both sources.
+            lifeCts?.Cancel();
         }
 
         private void OnRoomConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, LKDisconnectReason? disconnectReason = null)
@@ -198,8 +200,12 @@ namespace DCL.PluginSystem.Global
 
         private void DismissPopupIfShowing()
         {
-            if (popupShowing)
-                popupCts.SafeCancelAndDispose();
+            if (!popupShowing) return;
+
+            // Cancel only — ShowConnectionLostPopupAsync's finally disposes popupCts once its ShowAsync
+            // continuation has drained. Disposing here (mid-await) would race that and throw ObjectDisposedException.
+            try { popupCts?.Cancel(); }
+            catch (ObjectDisposedException) { }
         }
     }
 }

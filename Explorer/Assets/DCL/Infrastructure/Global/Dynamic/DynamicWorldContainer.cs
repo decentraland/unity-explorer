@@ -1218,7 +1218,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
 
             // No comms/internet popup while developing against a local scene.
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT))
+            if (!localSceneDevelopment)
                 globalPlugins.Add(new MultiplayerConnectionWatchdogPlugin(
                     roomHub,
                     multiplayerContainer.PulseTransport,
