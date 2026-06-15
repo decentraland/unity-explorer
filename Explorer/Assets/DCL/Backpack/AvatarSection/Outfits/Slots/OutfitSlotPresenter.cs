@@ -47,6 +47,7 @@ namespace DCL.Backpack.Slots
         private bool isHovered;
         private bool isForcedHover;
         private bool isOperationBusy;
+        private bool disposed;
         private OutfitSlotState currentState;
         private OutfitItem? currentOutfitData;
         private Texture2D? currentThumbnail;
@@ -232,7 +233,7 @@ namespace DCL.Backpack.Slots
 
         private async UniTaskVoid LoadExistingScreenshotAsync()
         {
-            if (currentOutfitData == null) return;
+            if (disposed || currentOutfitData == null) return;
 
             try
             {
@@ -277,6 +278,7 @@ namespace DCL.Backpack.Slots
 
         public void Dispose()
         {
+            disposed = true;
             cts.SafeCancelAndDispose();
             view.OnSaveClicked -= HandleSaveClicked;
             view.OnEquipClicked -= HandleEquipClicked;

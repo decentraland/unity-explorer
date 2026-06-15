@@ -569,6 +569,8 @@ namespace DCL.Backpack
 
         public void Dispose()
         {
+            cts.SafeCancelAndDispose();
+
             backpackEventBus.EquipOutfitCompletedEvent -= EndSlotBusy;
             outfitBannerPresenter.Dispose();
             foreach (var presenter in slotPresenters)
