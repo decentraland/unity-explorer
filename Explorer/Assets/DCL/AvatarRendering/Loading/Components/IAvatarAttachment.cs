@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Ipfs;
@@ -157,7 +158,16 @@ namespace DCL.AvatarRendering.Loading.Components
                     }
             }
             else
-                ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {DTO.Metadata.id}");
+            {
+                // Scene emotes are built in-client with no content array at all (see
+                // LoadSceneEmotesSystem): their asset is loaded directly by the hash embedded in
+                // the URN, so a missing content map is their designed state, not an error. For
+                // catalog wearables a null content array IS a real data problem - keep reporting it.
+                string id = DTO.Metadata?.id ?? string.Empty;
+
+                if (!id.StartsWith(GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX, StringComparison.Ordinal))
+                    ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {id}");
+            }
 
             hash = null;
             return false;
