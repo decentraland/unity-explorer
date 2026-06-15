@@ -187,7 +187,7 @@ namespace DCL.Nametags
                 return;
             }
 
-            nametagPosition = avatarBase.GetAdaptiveNametagPosition();
+            Vector3 nametagPosition = avatarBase.GetAdaptiveNametagPosition();
 
             if (World.Has<GliderPropEnabled>(e))
                 nametagPosition.y += avatarBase.NametagGlideOffset;
