@@ -30,7 +30,7 @@ In `js-sdk-toolchain`, generate serialization code and optional helper functions
 
 In `unity-explorer`:
 1. Run protocol update: `npm install @dcl/protocol@experimental && npm run build-protocol`
-   - Requires **Python 3** on `PATH` with the **`protobuf`** package (`python3 -m pip install protobuf`) — `build-protocol` runs a Python `protoc` plugin (`protoc-gen-bitwise`); without it the build fails with `ModuleNotFoundError: No module named 'google'`.
+   - Node/npm only — `build-protocol` runs the `protoc-gen-bitwise` plugin, a dependency-free Node script bundled in `@dcl/protocol` (no Python or extra packages required).
 2. Add partial class to `IDirtyMarker.cs`
 3. Register in `ComponentsContainer.cs` using `SDKComponentBuilder<T>`
 4. Create feature folder under `Explorer/Assets/DCL/SDKComponents/<Feature>/`
