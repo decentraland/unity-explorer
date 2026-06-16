@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace DCL.FeatureFlags
@@ -47,24 +46,7 @@ namespace DCL.FeatureFlags
             FeatureFlagsConfiguration.Reset();
             FeatureFlagsConfiguration.Initialize(config);
 
-            LogEnabledFlags(config);
-
             return config;
-        }
-
-        private static void LogEnabledFlags(FeatureFlagsConfiguration config)
-        {
-            var sb = new StringBuilder();
-            int count = 0;
-
-            foreach (string flag in config.AllEnabledFlags)
-            {
-                if (count > 0) sb.Append(", ");
-                sb.Append(flag);
-                count++;
-            }
-
-            ReportHub.LogProductionInfo($"[FEATURE FLAGS] {count} enabled: {sb}");
         }
 
         private static FeatureFlagsResultDto StripAppNameFromKeys(string name, FeatureFlagsResultDto response)
