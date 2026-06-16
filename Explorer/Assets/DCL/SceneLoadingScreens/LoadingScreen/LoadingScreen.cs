@@ -97,7 +97,9 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                     // same completion and can land in either order within a frame. Give the racing
                     // continuation one frame before concluding the loading flow is genuinely still
                     // running - only then is this worth reporting.
-                    await UniTask.Yield();
+                    await UniTask.Yield(ct);
+
+                    if (ct.IsCancellationRequested) return result;
 
                     if (!finalResult.HasValue && loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
                         ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
