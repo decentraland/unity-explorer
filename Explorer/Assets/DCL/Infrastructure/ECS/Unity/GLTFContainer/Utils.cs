@@ -1,6 +1,8 @@
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,24 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
+        public static bool TryDuplicateGltfAssetFromTemplate(GltfContainerAsset template, string hash, out GltfContainerAsset duplicate)
+        {
+            switch (template.AssetData)
+            {
+                case AssetBundleData assetBundleData when TryCreateGltfObject(assetBundleData, hash, out duplicate):
+                    // Factories leave ref-counting to the cache layer, so the clone must take its own reference to balance Dispose().
+                    assetBundleData.AcquireRef();
+                    return true;
+                case GLTFData gltfData:
+                    duplicate = CreateGltfAssetFromRawGltfSystem.CreateGltfObject(gltfData);
+                    gltfData.AcquireRef();
+                    return true;
+                default:
+                    duplicate = null;
+                    return false;
+            }
+        }
+
         public static bool TryCreateGltfObject(AssetBundleData assetBundleData, string assetHash, out GltfContainerAsset gltfContainerAsset)
         {
             if (!assetBundleData.TryGetAsset(out GameObject asset, assetHash))

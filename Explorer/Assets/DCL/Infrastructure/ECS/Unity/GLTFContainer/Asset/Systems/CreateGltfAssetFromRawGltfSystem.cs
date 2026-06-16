@@ -72,7 +72,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         }
 
-        private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
+        public static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
             // Instantiate a per-consumer copy of the template hierarchy. Mesh, Material, Texture and AnimationClip
             // references are shared with gltfData.Root — Object.Instantiate only clones GameObjects and Component
