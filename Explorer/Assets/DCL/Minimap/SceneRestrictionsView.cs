@@ -20,6 +20,10 @@ namespace DCL.Minimap
 
     public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
     {
+        private CancellationTokenSource cts = new ();
+        private float toastDeadline;
+        private bool isCycling;
+
         [field: SerializeField]
         public RectTransform SceneRestrictionsIcon { get; set; }
 
@@ -37,13 +41,6 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         public float CycleDurationTime { get; set; } = 3f;
-
-        public RectTransform ToastRectTransform { get; set; }
-
-        private CancellationTokenSource cts = new ();
-        private float toastDeadline;
-        private bool isCycling;
-
 
         public void OnPointerEnter() => ShowRestrictionToast();
         public void OnPointerExit() => HideRestrictionToast();
@@ -91,7 +88,6 @@ namespace DCL.Minimap
             ToastCanvasGroup.alpha = 0;
             ToastCanvasGroup.gameObject.SetActive(false);
             SceneRestrictionsIcon.gameObject.SetActive(false);
-            ToastRectTransform = ToastCanvasGroup.GetComponent<RectTransform>();
         }
 
         private void OnDestroy()
