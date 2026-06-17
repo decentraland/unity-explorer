@@ -76,7 +76,7 @@ namespace DCL.Chat.ChatReactions.Presenters
         {
             recentsService.RecordUsage(atlasIndex);
 
-            // Re-render live so the bar reflects the new usage without a close/reopen; Skip if hidden as will be ran in Show()
+            // Skip the refresh if hidden as it will run in Show()
             if (IsVisible)
                 RefreshRecents();
         }
