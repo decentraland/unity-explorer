@@ -16,8 +16,8 @@ namespace DCL.RealmNavigation
 
     public interface ILoadingStatus : IReadOnlyLoadingStatus
     {
-        public new ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
-        public new ReactiveProperty<string> AssetState { get; }
+        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStageMut { get; }
+        public ReactiveProperty<string> AssetStateMut { get; }
 
         void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad);
 

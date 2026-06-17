@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.Nearby.Tests
             using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Act
-            loadingStatus.CurrentStage.Value = LoadingStatus.LoadingStage.Completed;
+            loadingStatus.CurrentStageMut.Value = LoadingStatus.LoadingStage.Completed;
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
@@ -104,7 +104,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             // Act — should not trigger further state changes
             callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
-            loadingStatus.CurrentStage.Value = LoadingStatus.LoadingStage.Init;
+            loadingStatus.CurrentStageMut.Value = LoadingStatus.LoadingStage.Init;
 
             // Assert
             Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
@@ -112,27 +112,27 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private class FakeLoadingStatus : ILoadingStatus
         {
-            public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
-            public ReactiveProperty<string> AssetState { get; } = new (string.Empty);
+            public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStageMut { get; }
+            public ReactiveProperty<string> AssetStateMut { get; } = new (string.Empty);
 
-            IReadonlyReactiveProperty<LoadingStatus.LoadingStage> IReadOnlyLoadingStatus.CurrentStage => CurrentStage;
-            IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => AssetState;
+            public IReadonlyReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => CurrentStageMut;
+            public IReadonlyReactiveProperty<string> AssetState => AssetStateMut;
 
             public FakeLoadingStatus(LoadingStatus.LoadingStage stage)
             {
-                CurrentStage = new ReactiveProperty<LoadingStatus.LoadingStage>(stage);
+                CurrentStageMut = new ReactiveProperty<LoadingStatus.LoadingStage>(stage);
             }
 
             public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad) { }
 
             public float SetCurrentStage(LoadingStatus.LoadingStage stage)
             {
-                CurrentStage.Value = stage;
+                CurrentStageMut.Value = stage;
                 return 0f;
             }
 
             public bool IsLoadingScreenOn() =>
-                CurrentStage.Value != LoadingStatus.LoadingStage.Completed;
+                CurrentStageMut.Value != LoadingStatus.LoadingStage.Completed;
         }
     }
 }

@@ -18,11 +18,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int loadingScreenStageId;
         private bool isFirstLoading;
 
-        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
-        public ReactiveProperty<string> AssetState => core.AssetState;
+        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStageMut => core.CurrentStageMut;
+        public ReactiveProperty<string> AssetStateMut => core.AssetStateMut;
 
-        IReadonlyReactiveProperty<LoadingStatus.LoadingStage> IReadOnlyLoadingStatus.CurrentStage => core.CurrentStage;
-        IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => core.AssetState;
+        public IReadonlyReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
+        public IReadonlyReactiveProperty<string> AssetState => core.AssetState;
 
         public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, IWeb3IdentityCache web3IdentityCache)
         {

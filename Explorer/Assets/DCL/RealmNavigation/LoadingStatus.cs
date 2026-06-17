@@ -7,11 +7,11 @@ namespace DCL.RealmNavigation
 {
     public class LoadingStatus : ILoadingStatus
     {
-        public ReactiveProperty<LoadingStage> CurrentStage { get; } = new (LoadingStage.Init);
-        public ReactiveProperty<string> AssetState { get; } = new("NA");
+        public ReactiveProperty<LoadingStage> CurrentStageMut { get; } = new (LoadingStage.Init);
+        public ReactiveProperty<string> AssetStateMut { get; } = new ("NA");
 
-        IReadonlyReactiveProperty<LoadingStage> IReadOnlyLoadingStatus.CurrentStage => CurrentStage;
-        IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => AssetState;
+        public IReadonlyReactiveProperty<LoadingStage> CurrentStage => CurrentStageMut;
+        public IReadonlyReactiveProperty<string> AssetState => AssetStateMut;
 
         private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
@@ -59,13 +59,13 @@ namespace DCL.RealmNavigation
         public float SetCurrentStage(LoadingStage stage)
         {
             ReportHub.LogProductionInfo($"Current loading stage: {stage}");
-            CurrentStage.Value = stage;
+            CurrentStageMut.Value = stage;
             return PROGRESS[stage];
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {
-            AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
+            AssetStateMut.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
 
         public bool IsLoadingScreenOn() =>
