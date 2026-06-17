@@ -206,6 +206,20 @@ jobs:
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
+      - name: Dump Unity Editor log on failure
+        if: always() && steps.testRunner.outcome != 'success'
+        run: |
+          LOG="Explorer/artifacts/${{ matrix.testMode }}.log"
+          echo "::group::Unity Editor log (last 200 lines)"
+          if [ -f "$LOG" ]; then
+            tail -200 "$LOG"
+          else
+            echo "No log file found at $LOG"
+            echo "Searching for any Unity logs:"
+            find Explorer/artifacts -name "*.log" 2>/dev/null || echo "No logs in artifacts/"
+          fi
+          echo "::endgroup::"
+
       - name: Report test results
         if: always()
         uses: dorny/test-reporter@v2.1.1
