@@ -8,14 +8,17 @@ namespace DCL.RealmNavigation
     /// </summary>
     public interface IReadOnlyLoadingStatus
     {
-        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
-        public ReactiveProperty<string> AssetState { get; }
+        public IReadonlyReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
+        public IReadonlyReactiveProperty<string> AssetState { get; }
 
         bool IsLoadingScreenOn();
     }
 
     public interface ILoadingStatus : IReadOnlyLoadingStatus
     {
+        public new ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
+        public new ReactiveProperty<string> AssetState { get; }
+
         void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad);
 
         float SetCurrentStage(LoadingStatus.LoadingStage stage);

@@ -115,6 +115,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage { get; }
             public ReactiveProperty<string> AssetState { get; } = new (string.Empty);
 
+            IReadonlyReactiveProperty<LoadingStatus.LoadingStage> IReadOnlyLoadingStatus.CurrentStage => CurrentStage;
+            IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => AssetState;
+
             public FakeLoadingStatus(LoadingStatus.LoadingStage stage)
             {
                 CurrentStage = new ReactiveProperty<LoadingStatus.LoadingStage>(stage);

@@ -10,6 +10,9 @@ namespace DCL.RealmNavigation
         public ReactiveProperty<LoadingStage> CurrentStage { get; } = new (LoadingStage.Init);
         public ReactiveProperty<string> AssetState { get; } = new("NA");
 
+        IReadonlyReactiveProperty<LoadingStage> IReadOnlyLoadingStatus.CurrentStage => CurrentStage;
+        IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => AssetState;
+
         private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
             [LoadingStage.Init] = 0f,

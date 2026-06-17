@@ -21,6 +21,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
 
+        IReadonlyReactiveProperty<LoadingStatus.LoadingStage> IReadOnlyLoadingStatus.CurrentStage => core.CurrentStage;
+        IReadonlyReactiveProperty<string> IReadOnlyLoadingStatus.AssetState => core.AssetState;
+
         public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, IWeb3IdentityCache web3IdentityCache)
         {
             core = loadingStatus;
