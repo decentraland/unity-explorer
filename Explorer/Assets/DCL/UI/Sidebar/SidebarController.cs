@@ -67,7 +67,7 @@ namespace DCL.UI.Sidebar
         private readonly bool isNearbyVoiceChatEnabled;
         private readonly HttpEventsApiService eventsApiService;
 
-        private ReactivePropertyExtensions.DisposableSubscription<bool> communitiesLiveBadgeSubscription;
+        private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
 
         private readonly CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForLiveEventsCts = new ();
@@ -174,7 +174,7 @@ namespace DCL.UI.Sidebar
             openPanelCts.SafeCancelAndDispose();
             checkForLiveEventsCts.SafeCancelAndDispose();
 
-            communitiesLiveBadgeSubscription.Dispose();
+            communitiesLiveBadgeSubscription?.Dispose();
         }
 
         private void OnChatStateChanged(ChatEvents.ChatStateChangedEvent eventData) =>
@@ -419,7 +419,7 @@ namespace DCL.UI.Sidebar
             OpenPanelAsync(viewInstance!.friendsButton, FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
 
         private void OnMarketplaceCreditsButtonClicked() =>
-            OpenPanelAsync(viewInstance!.sidebarConfigButton,
+            OpenPanelAsync(viewInstance!.marketplaceCreditsButton,
                 MarketplaceCreditsMenuController.IssueCommand(new MarketplaceCreditsMenuController.Params(isOpenedFromNotification: false))).Forget();
 
         private void OnHelpButtonClicked() => OpenPanelAsync(viewInstance!.helpButton, HelpMenuController.IssueCommand()).Forget();

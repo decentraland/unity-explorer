@@ -17,7 +17,6 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.ChromeDevtool;
 using DCL.WebRequests.RequestsHub;
 using ECS;
-using Global.AppArgs;
 using LiveKit.Internal.FFIClients;
 using UnityEngine;
 using Utility;
@@ -50,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new ApplicationParametersParser(), new RealmData());
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData());
 
             new GateKeeperSceneRoom(
                     webRequests,

@@ -548,10 +548,10 @@ namespace DCL.Chat.History
                 {
                     foreach (KeyValuePair<ChatChannel.ChannelId, ChannelFile> channelFilePair in channelFiles)
                     {
-                        if(channelFilePair.Value.Content != null && Time.realtimeSinceStartup - channelFilePair.Value.LastMessageTime >= TIMEOUT)
+                        if(channelFilePair.Value.Content != null && UnityEngine.Time.realtimeSinceStartup - channelFilePair.Value.LastMessageTime >= TIMEOUT)
                             CloseChannelFile(channelFilePair.Key);
 
-                        if(channelFilePair.Value.ReactionContent != null && Time.realtimeSinceStartup - channelFilePair.Value.LastReactionTime >= TIMEOUT)
+                        if(channelFilePair.Value.ReactionContent != null && UnityEngine.Time.realtimeSinceStartup - channelFilePair.Value.LastReactionTime >= TIMEOUT)
                             CloseReactionFile(channelFilePair.Key);
                     }
                 }
@@ -682,7 +682,7 @@ namespace DCL.Chat.History
             ReportHub.Log(reportData, $"Appending message to file. Message: " + messageToAppend.Message);
 
             ChannelFile channelFile = OpenChannelFileForWriting(channelId);
-            channelFile.LastMessageTime = Time.realtimeSinceStartup;
+            channelFile.LastMessageTime = UnityEngine.Time.realtimeSinceStartup;
 
             if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                 chatSerializer.AppendPrivateConversationMessage(messageToAppend, channelFile.Content);
@@ -730,7 +730,7 @@ namespace DCL.Chat.History
                 if (channelFile == null)
                     return;
 
-                channelFile.LastReactionTime = Time.realtimeSinceStartup;
+                channelFile.LastReactionTime = UnityEngine.Time.realtimeSinceStartup;
                 chatSerializer.AppendReactionEntry(reaction.MessageId, reaction.EmojiIndex, reaction.WalletAddress, reaction.IsRemoval, channelFile.ReactionContent);
 
                 ReportHub.Log(reportData, $"[ReactionPersistence] Reaction appended for channel {reaction.ChannelId.Id}");

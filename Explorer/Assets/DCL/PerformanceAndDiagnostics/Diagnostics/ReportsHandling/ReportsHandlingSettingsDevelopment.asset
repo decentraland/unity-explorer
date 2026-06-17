@@ -706,6 +706,8 @@ MonoBehaviour:
       Severity: 3
     - Category: AUTHENTICATION
       Severity: 2
+    - Category: MULTIPLAYER
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

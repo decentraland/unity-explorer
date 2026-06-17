@@ -57,7 +57,7 @@ namespace DCL.CharacterPreview
 
             // FOV
             TargetFOV = freeLookCamera.m_Lens.FieldOfView;
-            fovTransitionStartTime = Time.time;
+            fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
             isFOVTransitioning = false;
 
@@ -84,7 +84,7 @@ namespace DCL.CharacterPreview
         public void StartFOVTransition(float targetFOV)
         {
             TargetFOV = targetFOV;
-            fovTransitionStartTime = Time.time;
+            fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
             isFOVTransitioning = true;
         }
@@ -101,7 +101,7 @@ namespace DCL.CharacterPreview
         private void UpdateRotation()
         {
             // Check if dragging has timed out
-            if (IsDragging && Time.time - LastDragTime > DRAG_TIMEOUT)
+            if (IsDragging && UnityEngine.Time.time - LastDragTime > DRAG_TIMEOUT)
                 IsDragging = false;
 
             // If not dragging, decelerate
@@ -114,7 +114,7 @@ namespace DCL.CharacterPreview
                 }
 
                 // Deceleration, higher inertia = faster deceleration
-                float decelerationRate = RotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * Time.deltaTime;
+                float decelerationRate = RotationInertia * ANGULAR_VELOCITY_DECELERATION_COEFF * UnityEngine.Time.deltaTime;
                 float velocitySign = Mathf.Sign(AngularVelocity);
                 float velocityMagnitude = Mathf.Abs(AngularVelocity);
 
@@ -131,7 +131,7 @@ namespace DCL.CharacterPreview
             {
                 Vector3 rotation = rotationTarget.rotation.eulerAngles;
 
-                float rotationAmount = AngularVelocity * RotationModifier * Time.deltaTime;
+                float rotationAmount = AngularVelocity * RotationModifier * UnityEngine.Time.deltaTime;
 
                 rotation.y += rotationAmount;
                 rotationTarget.rotation = Quaternion.Euler(rotation);
@@ -154,7 +154,7 @@ namespace DCL.CharacterPreview
             if (isFOVTransitioning)
             {
                 // Smooth transition for category changes
-                float elapsedTime = Time.time - fovTransitionStartTime;
+                float elapsedTime = UnityEngine.Time.time - fovTransitionStartTime;
                 float normalizedTime = Mathf.Clamp01(elapsedTime / FOV_SMOOTH_TIME);
 
                 float easedTime = Mathf.SmoothStep(0f, 1f, normalizedTime);
@@ -169,7 +169,7 @@ namespace DCL.CharacterPreview
             else
             {
                 // Smooth interpolation for scroll input
-                float t = 1f - Mathf.Exp(-FOV_SPEED_COEFF * Time.deltaTime);
+                float t = 1f - Mathf.Exp(-FOV_SPEED_COEFF * UnityEngine.Time.deltaTime);
                 newFOV = Mathf.Lerp(currentFOV, TargetFOV, t);
             }
 
@@ -186,7 +186,7 @@ namespace DCL.CharacterPreview
 
             // Reset FOV
             TargetFOV = freeLookCamera.m_Lens.FieldOfView;
-            fovTransitionStartTime = Time.time;
+            fovTransitionStartTime = UnityEngine.Time.time;
             fovTransitionStartValue = freeLookCamera.m_Lens.FieldOfView;
             isFOVTransitioning = false;
         }

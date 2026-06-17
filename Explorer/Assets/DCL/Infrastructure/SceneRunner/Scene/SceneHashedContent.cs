@@ -44,6 +44,11 @@ namespace SceneRunner.Scene
             return false;
         }
 
+        public void OverrideContentUrl(string contentPath, URLAddress url)
+        {
+            resolvedContentURLs[contentPath] = (true, url);
+        }
+
         public bool TryGetHash(string name, out string hash) =>
             fileToHash.TryGetValue(name, out hash);
     }

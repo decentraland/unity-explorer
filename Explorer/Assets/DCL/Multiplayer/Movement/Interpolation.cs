@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Movement
 {
     public static class Interpolation
     {
-        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.0001f;
+        private const float MIN_DIRECTION_SQR_MAGNITUDE = 0.01f;
 
         public static float Execute(float deltaTime, ref CharacterTransform transComp, ref InterpolationComponent intComp, float lookAtTimeDelta, float rotationSpeed)
         {
@@ -30,7 +30,12 @@ namespace DCL.Multiplayer.Movement
                 remainedDeltaTime = intComp.TotalDuration - intComp.Time;
                 intComp.Time = intComp.TotalDuration;
 
-                lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : intComp.End.position - transComp.Transform.position;
+                Vector3 posDelta = intComp.End.position - transComp.Transform.position;
+
+                if (posDelta.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE)
+                    lookDirection = intComp.End.velocitySqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE ? intComp.End.velocity : posDelta;
+                else
+                    lookDirection = Quaternion.Euler(transComp.Rotation.x, intComp.End.rotationY, transComp.Rotation.z) * Vector3.forward;
 
                 transComp.Transform.position = intComp.End.position;
             }
@@ -45,9 +50,9 @@ namespace DCL.Multiplayer.Movement
         {
             lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
 
-            Quaternion lookRotation = lookDirection != Vector3.zero
+            Quaternion lookRotation = lookDirection.sqrMagnitude > MIN_DIRECTION_SQR_MAGNITUDE
                 ? Quaternion.LookRotation(lookDirection, Vector3.up)
-                : transComp.Transform.rotation;
+                : Quaternion.Euler(transComp.Transform.rotation.x, yRotation, transComp.Transform.rotation.z);
 
             if (useMessageRotation)
                 lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);
@@ -77,7 +82,7 @@ namespace DCL.Multiplayer.Movement
             var currentRotation = Quaternion.LookRotation(headIK.LookAt);
             var targetRotation = Quaternion.Euler(targetYawAndPitch.y, targetYawAndPitch.x, 0);
 
-            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * Time.deltaTime);
+            var interpolatedRotation = Quaternion.Slerp(currentRotation, targetRotation, interpolationFactor * UnityEngine.Time.deltaTime);
             Vector3 interpolatedYawAndPitch = interpolatedRotation.eulerAngles;
 
             return new Vector2(interpolatedYawAndPitch.y, interpolatedYawAndPitch.x);
@@ -87,7 +92,7 @@ namespace DCL.Multiplayer.Movement
         {
             if (pointAt.WorldHitPoint == Vector3.zero) return targetHitPoint;
 
-            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * Time.deltaTime);
+            return Vector3.Lerp(pointAt.WorldHitPoint, targetHitPoint, interpolationFactor * UnityEngine.Time.deltaTime);
         }
     }
 }

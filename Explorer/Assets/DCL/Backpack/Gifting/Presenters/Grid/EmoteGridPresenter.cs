@@ -2,7 +2,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.Gifting.Commands;
 using DCL.Backpack.Gifting.Models;
 using DCL.Backpack.Gifting.Presenters.Grid.Adapter;
@@ -23,6 +22,8 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
         private readonly IWearableStylingCatalog stylingCatalog;
         private readonly IEmoteProvider.OrderOperation currentOrder = new("date", isAscending: false);
 
+        protected override GiftableType GiftableKind => GiftableType.Emote;
+
         public EmoteGridPresenter(
             GiftingGridView view,
             SuperScrollGridAdapter<GiftItemViewModel> adapter,
@@ -31,17 +32,13 @@ namespace DCL.Backpack.Gifting.Presenters.Grid
             IAvatarEquippedStatusProvider equippedStatusProvider,
             IPendingTransferService pendingTransferService,
             IEmoteProvider emoteProvider,
-            IWearableStylingCatalog stylingCatalog,
-            IWearableStorage wearableStorage,
-            IEmoteStorage  emoteStorage)
+            IWearableStylingCatalog stylingCatalog)
             : base(view,
                 adapter,
                 eventBus,
                 loadThumbnailCommand,
                 equippedStatusProvider,
-                pendingTransferService,
-                wearableStorage,
-                emoteStorage)
+                pendingTransferService)
         {
             this.emoteProvider = emoteProvider;
             this.stylingCatalog = stylingCatalog;

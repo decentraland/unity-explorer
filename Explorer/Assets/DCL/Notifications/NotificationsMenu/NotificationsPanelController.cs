@@ -1,7 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
@@ -30,6 +32,7 @@ namespace DCL.Notifications.NotificationsMenu
         private const int FRIENDS_NOTIFICATION_INDEX = 1;
         private const int GIFT_NOTIFICATION_INDEX = 2;
         private const string GET_NOTIFICATIONS_ERROR_MESSAGE = "There was an error loading notifications. Please try again.";
+        private const string FOUNDATION_COMMUNITY_ID_FALLBACK = "e99471aa-31c4-4952-abf6-99905445f43b";
 
         private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
         {
@@ -46,11 +49,13 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly IWebRequestController webRequestController;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IMVCManager mvcManager;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly ProfileRepositoryWrapper profileRepository;
         private readonly CancellationTokenSource notificationThumbnailCts = new ();
+        private readonly string foundationCommunityId;
 
         private UniTaskCompletionSource? closeViewTask;
         private int unreadNotifications;
@@ -64,7 +69,8 @@ namespace DCL.Notifications.NotificationsMenu
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache,
-            ProfileRepositoryWrapper profileRepository) : base(viewFactory)
+            ProfileRepositoryWrapper profileRepository,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.notificationsRequestController = notificationsRequestController;
             this.notificationIconTypes = notificationIconTypes;
@@ -73,6 +79,10 @@ namespace DCL.Notifications.NotificationsMenu
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
+            this.mvcManager = mvcManager;
+
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.FOUNDATION_COMMUNITY_ID, "main", out string? communityId);
+            foundationCommunityId = communityId ?? FOUNDATION_COMMUNITY_ID_FALLBACK;
         }
 
         protected override void OnViewInstantiated()
@@ -81,7 +91,11 @@ namespace DCL.Notifications.NotificationsMenu
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
             NotificationsBusController.Instance.SubscribeToAllNotificationTypesReceived(OnNotificationReceived);
             viewInstance.LoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
+            viewInstance.FoundationCommunityButtonClicked += OnFoundationCommunityButtonClicked;
         }
+
+        private void OnFoundationCommunityButtonClicked() =>
+            mvcManager.ShowAndForget(CommunityCardController.IssueCommand(new CommunityCardParameter(foundationCommunityId)));
 
         protected override void OnBeforeViewShow()
         {
@@ -104,6 +118,9 @@ namespace DCL.Notifications.NotificationsMenu
             notificationThumbnailCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
+
+            if (viewInstance != null)
+                viewInstance.FoundationCommunityButtonClicked -= OnFoundationCommunityButtonClicked;
         }
 
         protected override void OnViewShow()
@@ -153,6 +170,7 @@ namespace DCL.Notifications.NotificationsMenu
 
                 UpdateUnreadNotificationRender();
                 viewInstance.SetLoading(false);
+                viewInstance!.ShowEmptyState(notifications.Count == 0);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -397,6 +415,8 @@ namespace DCL.Notifications.NotificationsMenu
         {
             if (NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
                 return;
+
+            viewInstance?.ShowEmptyState(false);
 
             notifications.Insert(0, notification);
             viewInstance?.LoopList.SetListItemCount(notifications.Count, false);

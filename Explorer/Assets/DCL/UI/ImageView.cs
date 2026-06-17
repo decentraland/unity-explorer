@@ -101,7 +101,7 @@ namespace DCL.UI
             {
                 ct.ThrowIfCancellationRequested();
                 Alpha = Mathf.Lerp(from, 1f, t / duration);
-                t += Time.deltaTime;
+                t += UnityEngine.Time.deltaTime;
                 await UniTask.NextFrame(ct);
             }
 

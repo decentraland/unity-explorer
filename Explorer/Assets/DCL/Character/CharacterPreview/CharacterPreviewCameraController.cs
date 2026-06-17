@@ -126,7 +126,7 @@ namespace DCL.CharacterPreview
             if (characterPreviewAvatarContainer.freeLookCamera.m_Lens.FieldOfView < cameraSettings.fieldOfViewThresholdForPanning)
             {
                 Vector3 position = characterPreviewAvatarContainer.cameraTarget.localPosition;
-                float dragModifier = Time.deltaTime * cameraSettings.dragMovementModifier;
+                float dragModifier = UnityEngine.Time.deltaTime * cameraSettings.dragMovementModifier;
 
                 position.y -= pointerEventData.delta.y * dragModifier;
 
@@ -143,10 +143,10 @@ namespace DCL.CharacterPreview
             characterPreviewAvatarContainer.RotationInertia = cameraSettings.rotationInertia;
 
             characterPreviewAvatarContainer.IsDragging = true;
-            characterPreviewAvatarContainer.LastDragTime = Time.time;
+            characterPreviewAvatarContainer.LastDragTime = UnityEngine.Time.time;
 
             float angularVelocity = characterPreviewAvatarContainer.AngularVelocity;
-            float targetVelocity = -pointerEventData.delta.x / Time.deltaTime;
+            float targetVelocity = -pointerEventData.delta.x / UnityEngine.Time.deltaTime;
 
             if (cameraSettings.rotationInertia <= 0f)
             {
@@ -156,7 +156,7 @@ namespace DCL.CharacterPreview
             else
             {
                 // Acceleration, higher inertia = slower acceleration
-                float accelerationRate = (1f / cameraSettings.rotationInertia) * Time.deltaTime;
+                float accelerationRate = (1f / cameraSettings.rotationInertia) * UnityEngine.Time.deltaTime;
                 angularVelocity = Mathf.Lerp(angularVelocity, targetVelocity, accelerationRate);
             }
 

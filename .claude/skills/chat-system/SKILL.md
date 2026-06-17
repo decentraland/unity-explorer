@@ -101,8 +101,9 @@ public interface IChatCommand
 | `/reloadscene` | `ReloadSceneChatCommand` | Yes |
 | `/debugpanel` | `DebugPanelChatCommand` | Yes |
 | `/showentity <id>` | `ShowEntityChatCommand` | Yes |
-| `/logs <category> <level>` | `LogsChatCommand` | Yes |
-| `/logmatrix` | `LogMatrixChatCommand` | Yes |
+| `/logs` (opens the logs folder) | `LogsChatCommand` | No |
+| `/cache` (opens the disk cache folder) | `CacheChatCommand` | No |
+| `/logmatrix` | `LogMatrixChatCommand` | No |
 | `/rooms` | `RoomsChatCommand` | Yes |
 | `/loadpx <urn>` | `LoadPortableExperienceChatCommand` | Yes |
 | `/killpx <urn>` | `KillPortableExperienceChatCommand` | Yes |
