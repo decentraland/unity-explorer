@@ -50,12 +50,14 @@ namespace DCL.Minimap
 
         private void ShowRestrictionToast()
         {
+            ToastCanvasGroup.DOKill();
             ToastCanvasGroup.gameObject.SetActive(true);
             ToastCanvasGroup.DOFade(1f, FadeTime);
         }
 
         public void HideRestrictionToast()
         {
+            ToastCanvasGroup.DOKill();
             cts.Cancel();
             ToastCanvasGroup.DOFade(0f, FadeTime).OnComplete(() => ToastCanvasGroup.gameObject.SetActive(false));
         }
@@ -90,6 +92,11 @@ namespace DCL.Minimap
             ToastCanvasGroup.gameObject.SetActive(false);
             SceneRestrictionsIcon.gameObject.SetActive(false);
             ToastRectTransform = ToastCanvasGroup.GetComponent<RectTransform>();
+        }
+
+        private void OnDestroy()
+        {
+            cts.SafeCancelAndDispose();
         }
     }
 }
