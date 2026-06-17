@@ -69,15 +69,17 @@ namespace DCL.Chat.ChatReactions.Presenters
             view.Show();
         }
 
-        public void Hide() => 
+        public void Hide() =>
             view.Hide();
 
-        /// <summary>
-        /// Records that the user sent this emoji without refreshing the bar.
-        /// The bar updates next time <see cref="Show"/> is called.
-        /// </summary>
-        public void RecordUsage(int atlasIndex) => 
+        public void RecordUsage(int atlasIndex)
+        {
             recentsService.RecordUsage(atlasIndex);
+
+            // Re-render live so the bar reflects the new usage without a close/reopen; Skip if hidden as will be ran in Show()
+            if (IsVisible)
+                RefreshRecents();
+        }
 
         public void Dispose()
         {
