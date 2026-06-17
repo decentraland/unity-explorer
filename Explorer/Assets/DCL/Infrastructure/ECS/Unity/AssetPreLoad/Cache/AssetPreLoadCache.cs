@@ -44,9 +44,9 @@ namespace ECS.Unity.AssetLoad.Cache
         public bool TryGetGltfInstance(string key, out GltfContainerAsset? instance)
         {
             if (cache.TryGetValue(key, out object? value) && value is GltfTemplate gltfTemplate
-                && Utils.TryDuplicateGltfAssetFromTemplate(gltfTemplate.Template, gltfTemplate.Hash, out GltfContainerAsset duplicate))
+                && Utils.TryDuplicateGltfAssetFromTemplate(gltfTemplate.Template, gltfTemplate.Hash, out GltfContainerAsset? duplicate))
             {
-                gltfTemplate.Copies.Add(duplicate);
+                gltfTemplate.Copies.Add(duplicate!);
                 instance = duplicate;
                 return true;
             }

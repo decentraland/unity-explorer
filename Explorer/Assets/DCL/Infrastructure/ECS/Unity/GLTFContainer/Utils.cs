@@ -13,7 +13,7 @@ namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
-        public static bool TryDuplicateGltfAssetFromTemplate(GltfContainerAsset template, string hash, out GltfContainerAsset duplicate)
+        public static bool TryDuplicateGltfAssetFromTemplate(GltfContainerAsset template, string hash, out GltfContainerAsset? duplicate)
         {
             switch (template.AssetData)
             {

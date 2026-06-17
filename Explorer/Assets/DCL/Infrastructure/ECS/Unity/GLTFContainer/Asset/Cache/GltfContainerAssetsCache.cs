@@ -90,14 +90,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// </summary>
         public void Dereference(in string key, GltfContainerAsset asset, bool putInBridge = false, bool handleAssetLoad = true)
         {
-            // A preloaded copy is unique to its consumer, so it can't return to the shared pool (the bridge still needs it for LOD visuals).
             if (handleAssetLoad && assetLoadCache != null && assetLoadCache.ContainsGltf(key))
             {
-                if (putInBridge)
-                    DereferenceFinalOperation(asset, true);
-                else
-                    assetLoadCache.ReleaseGltfInstance(key, asset);
-
+                assetLoadCache.ReleaseGltfInstance(key, asset);
                 return;
             }
 
