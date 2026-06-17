@@ -15,7 +15,7 @@ namespace DCL.Minimap
 
         void HideRestrictionToast();
 
-        UniTask CycleToastAsync();
+        UniTaskVoid CycleToastAsync();
     }
 
     public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
@@ -41,6 +41,8 @@ namespace DCL.Minimap
         public RectTransform ToastRectTransform { get; set; }
 
         private CancellationTokenSource cts = new ();
+        private float toastDeadline;
+        private bool isCycling;
 
 
         public void OnPointerEnter() => ShowRestrictionToast();
@@ -52,17 +54,33 @@ namespace DCL.Minimap
             ToastCanvasGroup.DOFade(1f, FadeTime);
         }
 
-        public void HideRestrictionToast() =>
-            ToastCanvasGroup.DOFade(0f, FadeTime).OnComplete(() => ToastCanvasGroup.gameObject.SetActive(false));
-
-        public async UniTask CycleToastAsync()
+        public void HideRestrictionToast()
         {
-            if (ToastCanvasGroup.gameObject.activeInHierarchy) return;
+            cts.Cancel();
+            ToastCanvasGroup.DOFade(0f, FadeTime).OnComplete(() => ToastCanvasGroup.gameObject.SetActive(false));
+        }
 
+        public async UniTaskVoid CycleToastAsync()
+        {
+            // Every caller pushes the hide time forward, so the toast stays visible as long as restrictions keep arriving.
+            toastDeadline = UnityEngine.Time.realtimeSinceStartup + CycleDurationTime;
+
+            if (isCycling) return;
+
+            isCycling = true;
             cts = cts.SafeRestart();
 
             ShowRestrictionToast();
-            await UniTask.Delay(TimeSpan.FromSeconds(CycleDurationTime), cancellationToken: cts.Token).SuppressCancellationThrow();
+
+            while (UnityEngine.Time.realtimeSinceStartup < toastDeadline)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(toastDeadline - UnityEngine.Time.realtimeSinceStartup), cancellationToken: cts.Token).SuppressCancellationThrow();
+
+                if (cts.IsCancellationRequested)
+                    break;
+            }
+
+            isCycling = false;
             HideRestrictionToast();
         }
 
