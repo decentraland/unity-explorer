@@ -307,6 +307,9 @@ namespace DCL.CharacterPreview
             previewController?.StopEmotes();
         }
 
+        public bool IsPlayingEmote() =>
+            previewController?.IsPlayingEmote() ?? false;
+
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
             if (previewController == null || !previewController.Value.IsAvatarLoaded()) return;
