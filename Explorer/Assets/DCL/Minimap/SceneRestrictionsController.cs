@@ -1,6 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -11,8 +11,6 @@ namespace DCL.Minimap
 {
     public class SceneRestrictionsController : IDisposable
     {
-        private const float TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER = 0.75f;
-
         private readonly ISceneRestrictionsView restrictionsView;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Dictionary<SceneRestrictions, int> restrictionsRegistry = new();
@@ -44,29 +42,13 @@ namespace DCL.Minimap
                 restrictionsGameObjects[restriction] = restrictionsObject;
             }
 
-            restrictionsView.OnPointerEnterEvent += OnMouseEnter;
-            restrictionsView.OnPointerExitEvent += OnMouseExit;
             sceneRestrictionBusController.SubscribeToSceneRestriction(ManageSceneRestrictions);
         }
 
         public void Dispose()
         {
-            restrictionsView.OnPointerEnterEvent -= OnMouseEnter;
-            restrictionsView.OnPointerExitEvent -= OnMouseExit;
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(ManageSceneRestrictions);
         }
-
-        private void OnMouseEnter()
-        {
-            restrictionsView.ToastCanvasGroup.gameObject.SetActive(true);
-            Vector3 toastPosition = restrictionsView.ToastRectTransform.anchoredPosition;
-            toastPosition.x = restrictionsView.SceneRestrictionsIcon.transform.localPosition.x - (restrictionsView.SceneRestrictionsIcon.rect.width * TOAST_X_POSITION_OFFSET_ICON_WIDTH_SCALER);
-            restrictionsView.ToastRectTransform.anchoredPosition = toastPosition;
-            restrictionsView.ToastCanvasGroup.DOFade(1f, restrictionsView.FadeTime);
-        }
-
-        private void OnMouseExit() =>
-            restrictionsView.ToastCanvasGroup.DOFade(0f, restrictionsView.FadeTime).OnComplete(() => restrictionsView.ToastCanvasGroup.gameObject.SetActive(false));
 
         private void ManageSceneRestrictions(SceneRestriction sceneRestriction)
         {
@@ -81,8 +63,11 @@ namespace DCL.Minimap
 
             bool restrictionIconEnabled = RestrictionsRegistryHasAtLeastOneActive();
             restrictionsView.SceneRestrictionsIcon.gameObject.SetActive(restrictionIconEnabled);
+
             if (!restrictionIconEnabled)
-                OnMouseExit();
+                restrictionsView.HideRestrictionToast();
+            else
+                restrictionsView.CycleToastAsync().Forget();
         }
 
         private bool RestrictionsRegistryHasAtLeastOneActive()

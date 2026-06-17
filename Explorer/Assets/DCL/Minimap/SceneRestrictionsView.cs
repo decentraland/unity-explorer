@@ -1,5 +1,9 @@
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Minimap
 {
@@ -7,13 +11,11 @@ namespace DCL.Minimap
     {
         RectTransform SceneRestrictionsIcon { get; set; }
         GameObject RestrictionTextPrefab { get; set; }
-        CanvasGroup ToastCanvasGroup { get; set; }
         GameObject ToastTextParent { get; set; }
-        float FadeTime { get; set; }
-        RectTransform ToastRectTransform { get; set; }
 
-        event Action? OnPointerEnterEvent;
-        event Action? OnPointerExitEvent;
+        void HideRestrictionToast();
+
+        UniTask CycleToastAsync();
     }
 
     public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
@@ -33,13 +35,36 @@ namespace DCL.Minimap
         [field: SerializeField]
         public float FadeTime { get; set; } = 0.3f;
 
+        [field: SerializeField]
+        public float CycleDurationTime { get; set; } = 3f;
+
         public RectTransform ToastRectTransform { get; set; }
 
-        public event Action? OnPointerEnterEvent;
-        public event Action? OnPointerExitEvent;
+        private CancellationTokenSource cts = new ();
 
-        public void OnPointerEnter() => OnPointerEnterEvent?.Invoke();
-        public void OnPointerExit() => OnPointerExitEvent?.Invoke();
+
+        public void OnPointerEnter() => ShowRestrictionToast();
+        public void OnPointerExit() => HideRestrictionToast();
+
+        private void ShowRestrictionToast()
+        {
+            ToastCanvasGroup.gameObject.SetActive(true);
+            ToastCanvasGroup.DOFade(1f, FadeTime);
+        }
+
+        public void HideRestrictionToast() =>
+            ToastCanvasGroup.DOFade(0f, FadeTime).OnComplete(() => ToastCanvasGroup.gameObject.SetActive(false));
+
+        public async UniTask CycleToastAsync()
+        {
+            if (ToastCanvasGroup.gameObject.activeInHierarchy) return;
+
+            cts = cts.SafeRestart();
+
+            ShowRestrictionToast();
+            await UniTask.Delay(TimeSpan.FromSeconds(CycleDurationTime), cancellationToken: cts.Token).SuppressCancellationThrow();
+            HideRestrictionToast();
+        }
 
         private void Awake()
         {
