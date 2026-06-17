@@ -293,6 +293,8 @@ namespace Global.Dynamic
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
+                DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
+
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)
                 // potentially saves one extra HEAD request
