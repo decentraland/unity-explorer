@@ -2,7 +2,6 @@ using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
-using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
@@ -228,9 +227,6 @@ namespace ECS.Unity.GLTFContainer
             gltfContainerAsset = result;
             return true;
         }
-
-        // If we update AddVisibleMeshCollider and/or CreateAndAddMeshCollider please check and update them in CreateGltfAssetFromRawGltfSystem.cs
-        // As a tech-debt we might want to move these functions elsewhere to avoid repetition, but for now it's acceptable since the other one is only for local scene development
 
 #region Helper Collider Methods
 
