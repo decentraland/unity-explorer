@@ -7,12 +7,131 @@ using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.Unity.GLTFContainer
 {
     public class Utils
     {
+        private const string COLLIDER_SUFFIX = "_collider";
+        private const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
+
+        private static void AddVisibleMeshCollider(List<GltfContainerAsset.VisibleMeshCollider> result, GameObject go, Mesh mesh)
+        {
+            result.Add(new GltfContainerAsset.VisibleMeshCollider
+            {
+                GameObject = go,
+                Mesh = mesh,
+            });
+        }
+
+        private static void CreateAndAddMeshCollider(List<SDKCollider> result, GameObject go)
+        {
+            // Asset Bundle converter creates Colliders during the processing in some cases
+            Collider collider = go.GetComponent<Collider>();
+
+            if (collider)
+            {
+                // Disable it as its activity controlled by another system based on PBGltfContainer component
+                collider.enabled = false;
+
+                result.Add(new SDKCollider(collider));
+            }
+        }
+
+        private static MeshCollider AddMeshCollider(MeshFilter meshFilter, GameObject go)
+        {
+            Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+            MeshCollider newCollider = go.AddComponent<MeshCollider>();
+            var renderer = go.GetComponent<MeshRenderer>();
+
+            if (renderer)
+                renderer.enabled = false;
+
+            UnityObjectUtils.SafeDestroy(meshFilter);
+            return newCollider;
+        }
+
+        public static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
+        {
+            // Instantiate a per-consumer copy of the template hierarchy. Mesh, Material, Texture and AnimationClip
+            // references are shared with gltfData.Root — Object.Instantiate only clones GameObjects and Component
+            // metadata, not the underlying asset data. This mirrors Utils.TryCreateGltfObject for the AB path and
+            // is what lets 50 entities share one GltfImport's mesh/texture memory instead of loading 50 copies.
+            GameObject cloneRoot = Object.Instantiate(gltfData.Root);
+            cloneRoot.SetActive(false);
+
+            var result = GltfContainerAsset.Create(cloneRoot, gltfData, hierarchyPaths: gltfData.HierarchyPaths);
+
+            // Collect all renderers, they are needed for Visibility system
+            using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
+            {
+                cloneRoot.GetComponentsInChildren(true, instanceRenderers.Value);
+                result.Renderers.AddRange(instanceRenderers.Value);
+            }
+
+            // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
+            using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
+            {
+                cloneRoot.GetComponentsInChildren(true, animationScope.Value);
+                result.Animations.AddRange(animationScope.Value);
+            }
+
+            // Collect all Animators as they are used in Animation System
+            using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
+            {
+                cloneRoot.GetComponentsInChildren(true, animatorScope.Value);
+                result.Animators.AddRange(animatorScope.Value);
+            }
+
+            // Collect colliders from mesh filters
+            // Colliders are created/fetched disabled as its layer is controlled by another system
+            using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
+            {
+                List<MeshFilter> list = meshFilterScope.Value;
+                cloneRoot.GetComponentsInChildren(true, list);
+
+                foreach (MeshFilter meshFilter in list)
+                {
+                    GameObject go = meshFilter.gameObject;
+
+                    // This treatment mimics what's being done in the AB converter
+                    if (meshFilter.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE))
+                    {
+                        MeshCollider newCollider = AddMeshCollider(meshFilter, go);
+                        result.InvisibleColliders.Add(new SDKCollider(newCollider));
+                    }
+                    else
+                    {
+                        // Consider it a visible collider when it has a renderer on it
+                        if (go.GetComponent<Renderer>())
+                            AddVisibleMeshCollider(result.VisibleColliderMeshes, go, meshFilter.sharedMesh);
+                        else
+
+                            // Gather invisible colliders
+                            CreateAndAddMeshCollider(result.InvisibleColliders, go);
+                    }
+                }
+            }
+
+            // Collect colliders from skinned mesh renderers
+            using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
+            {
+                cloneRoot.GetComponentsInChildren(true, instanceRenderers.Value);
+
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
+                {
+                    GameObject go = skinnedMeshRenderer.gameObject;
+
+                    // Always considered as visible collider
+                    AddVisibleMeshCollider(result.VisibleColliderMeshes, go, skinnedMeshRenderer.sharedMesh);
+                }
+            }
+
+            return result;
+        }
+
         public static bool TryDuplicateGltfAssetFromTemplate(GltfContainerAsset template, string hash, out GltfContainerAsset? duplicate)
         {
             switch (template.AssetData)
@@ -22,7 +141,7 @@ namespace ECS.Unity.GLTFContainer
                     assetBundleData.AcquireRef();
                     return true;
                 case GLTFData gltfData:
-                    duplicate = CreateGltfAssetFromRawGltfSystem.CreateGltfObject(gltfData);
+                    duplicate = CreateGltfObject(gltfData);
                     gltfData.AcquireRef();
                     return true;
                 default:

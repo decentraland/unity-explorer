@@ -97,10 +97,8 @@ namespace ECS.Unity.AssetLoad.Cache
             return false;
         }
 
-        public void Dispose()
-        {
-            cache.Clear();
-        }
+        public void Dispose() =>
+            Clear();
 
         public void Clear()
         {
