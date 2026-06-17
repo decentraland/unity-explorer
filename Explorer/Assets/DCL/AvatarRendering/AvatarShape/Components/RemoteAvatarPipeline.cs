@@ -16,8 +16,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// <summary>
     ///     Batched pipeline for all remote avatars. Supports dynamic resizing and index recycling.
     ///     Completion is deferred to a later system for maximum parallelism.
-    ///     Flat backing arrays are pre-filled with dummyTransform so TAA slots can be updated
-    ///     in-place via indexed access, avoiding full rebuilds on every Register/Release.
+    ///     Flat backing arrays are pre-filled with dummyTransform. Register updates the avatar's TAA
+    ///     slots in-place; Release does NOT touch the TAA (released avatars are pooled, so their
+    ///     transforms stay valid and the calculation job skips the slot) — see Release for details.
     /// </summary>
     internal class RemoteAvatarPipeline : IDisposable
     {
@@ -129,7 +130,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             updateAvatar[validIndex] = false;
 
-            // Reset flat backing arrays to dummyTransform
+            // Reset the flat backing arrays to dummyTransform (cheap managed writes) so a later
+            // RebuildTransformAccessArrays (on resize) produces a clean TAA with no released slots.
             int offset = validIndex * bonesArrayLength;
 
             for (int b = 0; b < bonesArrayLength; b++)
@@ -137,14 +139,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             flatRoots[validIndex] = dummyTransform;
 
-            // Update TAA in-place — no rebuild needed
-            if (bonesTransformAccessArray.isCreated && validIndex < taaSlotCount)
-            {
-                for (int b = 0; b < bonesArrayLength; b++)
-                    bonesTransformAccessArray[offset + b] = dummyTransform;
-
-                rootsTransformAccessArray[validIndex] = dummyTransform;
-            }
+            // The TAA is intentionally NOT reset here — that per-bone managed<->native loop was the
+            // bulk-unload spike. Released avatars are returned to a GameObject pool (deactivated, NOT
+            // destroyed), so the slot keeps referencing valid transforms: the gather jobs read them
+            // harmlessly and BoneMatrixCalculationJob skips the slot (updateAvatar = false, set above).
+            // Reuse overwrites the slot in Register; a resize rebuilds the TAA from the flat arrays
+            // (already dummied above). Invariant this relies on: a released avatar's transforms are not
+            // destroyed while its slot is still live in the TAA (guaranteed by pooling; the TAA is
+            // disposed at teardown).
 
             releasedIndexes.Push(avatarTransformMatrixComponent.IndexInGlobalJobArray);
             avatarTransformMatrixComponent.IndexInGlobalJobArray = GlobalJobArrayIndex.Unassign();
@@ -245,7 +247,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job.Dispose();
             stopwatch.LogStep("job.Dispose");
 
-            if (bonesTransformAccessArray.isCreated) 
+            if (bonesTransformAccessArray.isCreated)
             {
                 bonesTransformAccessArray.Dispose();
                 stopwatch.LogStep("bonesTransformAccessArray.Dispose");
