@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -69,18 +70,26 @@ namespace DCL.Minimap
             isCycling = true;
             cts = cts.SafeRestart();
 
-            ShowRestrictionToast();
-
-            while (UnityEngine.Time.realtimeSinceStartup < toastDeadline)
+            try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(toastDeadline - UnityEngine.Time.realtimeSinceStartup), cancellationToken: cts.Token).SuppressCancellationThrow();
+                ShowRestrictionToast();
 
-                if (cts.IsCancellationRequested)
-                    break;
+                while (UnityEngine.Time.realtimeSinceStartup < toastDeadline)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(toastDeadline - UnityEngine.Time.realtimeSinceStartup), cancellationToken: cts.Token).SuppressCancellationThrow();
+
+                    if (cts.IsCancellationRequested)
+                        break;
+                }
+            }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+            finally
+            {
+                isCycling = false;
             }
 
-            isCycling = false;
-            HideRestrictionToast();
+            if (!cts.IsCancellationRequested)
+                HideRestrictionToast();
         }
 
         private void Awake()
