@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
@@ -11,10 +11,6 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
-using DCL.Backpack.BackpackBus;
-using DCL.Backpack.Gifting.Services;
-using DCL.Backpack.Gifting.Services.PendingTransfers;
-using DCL.Backpack.Gifting.Services.SnapshotEquipped;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
