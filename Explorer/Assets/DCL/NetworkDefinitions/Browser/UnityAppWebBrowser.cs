@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.AppArgs;
 using System;
 using UnityEngine;
 #if ALTTESTER
@@ -11,10 +12,12 @@ namespace DCL.Browser
     public class UnityAppWebBrowser : IWebBrowser
     {
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IAppArgs? appArgs;
 
-        public UnityAppWebBrowser(IDecentralandUrlsSource decentralandUrlsSource)
+        public UnityAppWebBrowser(IDecentralandUrlsSource decentralandUrlsSource, IAppArgs? appArgs = null)
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.appArgs = appArgs;
         }
 
         public void OpenUrl(string url)
@@ -22,19 +25,27 @@ namespace DCL.Browser
             var escaped = Uri.EscapeUriString(url);
 
 #if ALTTESTER
-            // ALTTESTER builds write auth URL to disk and suppress the system browser so Playwright tests can drive their own browser to it.
-            try
+            // Only skip the system browser when an AltTester cross-stack test is actually driving
+            // this session (client launched with --alttester). Those tests read auth-url.txt and
+            // navigate their own browser. Without the flag — Editor and dev/QA standalone builds,
+            // which all carry the ALTTESTER compile define — we must still open the browser or
+            // wallet login can never complete. The block is stripped from release builds entirely.
+            if (appArgs?.HasFlag(AppArgsFlags.ALTTESTER) == true)
             {
-                var path = Path.Combine(Application.persistentDataPath, "auth-url.txt");
-                File.WriteAllText(path, escaped);
+                try
+                {
+                    var path = Path.Combine(Application.persistentDataPath, "auth-url.txt");
+                    File.WriteAllText(path, escaped);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+                }
+
+                return;
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
-            }
-#else
-            Application.OpenURL(escaped);
 #endif
+            Application.OpenURL(escaped);
         }
 
         public void OpenUrl(DecentralandUrl url)
