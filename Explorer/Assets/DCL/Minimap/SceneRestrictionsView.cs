@@ -21,7 +21,7 @@ namespace DCL.Minimap
 
     public class SceneRestrictionsView : MonoBehaviour, ISceneRestrictionsView
     {
-        private CancellationTokenSource cts = new ();
+        private CancellationTokenSource cts;
         private float toastDeadline;
         private bool isCycling;
 
@@ -68,7 +68,7 @@ namespace DCL.Minimap
             if (isCycling) return;
 
             isCycling = true;
-            cts = cts.SafeRestart();
+            cts = cts.SafeRestartLinked(this.GetCancellationTokenOnDestroy());
 
             try
             {
@@ -94,14 +94,11 @@ namespace DCL.Minimap
 
         private void Awake()
         {
+            cts = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+
             ToastCanvasGroup.alpha = 0;
             ToastCanvasGroup.gameObject.SetActive(false);
             SceneRestrictionsIcon.gameObject.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            cts.SafeCancelAndDispose();
         }
     }
 }
