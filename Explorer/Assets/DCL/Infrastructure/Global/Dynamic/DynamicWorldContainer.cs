@@ -319,7 +319,7 @@ namespace Global.Dynamic
                 : coreMvcManager;
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
-            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
+            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout, staticContainer.LoadingStatus);
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
