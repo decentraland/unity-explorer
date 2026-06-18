@@ -52,6 +52,13 @@ namespace DCL.Places
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
 
+        /// <summary>
+        /// When set, a card selection (Jump In button or card body) routes to this callback instead of
+        /// teleporting/opening the detail panel. Used by the authentication flow to pick a destination
+        /// before the loading screen starts. Null in the Explore panel, where the default behaviour applies.
+        /// </summary>
+        private readonly Action<PlacesData.PlaceInfo>? onPlaceSelectedOverride;
+
         private PlacesFilters currentFilters = null!;
         private int currentPlacesPageNumber = 1;
         private bool isPlacesGridLoadingItems;
@@ -77,9 +84,11 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             HttpEventsApiService eventsApiService,
-            IWorldPermissionsService worldPermissionsService)
+            IWorldPermissionsService worldPermissionsService,
+            Action<PlacesData.PlaceInfo>? onPlaceSelectedOverride = null)
         {
             this.view = view;
+            this.onPlaceSelectedOverride = onPlaceSelectedOverride;
             this.placesController = placesController;
             this.placesAPIService = placesAPIService;
             this.placesStateService = placesStateService;
@@ -173,6 +182,12 @@ namespace DCL.Places
 
         private void OnPlaceJumpInButtonClicked(PlacesData.PlaceInfo placeInfo)
         {
+            if (onPlaceSelectedOverride != null)
+            {
+                onPlaceSelectedOverride(placeInfo);
+                return;
+            }
+
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
             placesCardSocialActionsController.JumpInPlace(placeInfo, placeCardOperationsCts.Token);
         }
@@ -185,6 +200,12 @@ namespace DCL.Places
 
         private void OnMainButtonClicked(PlacesData.PlaceInfo placeInfo, PlaceCardView placeCardView)
         {
+            if (onPlaceSelectedOverride != null)
+            {
+                onPlaceSelectedOverride(placeInfo);
+                return;
+            }
+
             var placeInfoWithConnectedFriends = placesStateService.GetPlaceInfoById(placeInfo.id);
             mvcManager.ShowAsync(PlaceDetailPanelController.IssueCommand(new PlaceDetailPanelParameter(placeInfo, placeCardView, placeInfoWithConnectedFriends?.ConnectedFriends, placeInfoWithConnectedFriends?.LiveEvent))).Forget();
             PlaceClicked?.Invoke(placeInfo, placeCardView, currentPlacesTotalAmount, currentFilters);

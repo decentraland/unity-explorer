@@ -49,7 +49,8 @@ namespace DCL.Places
             PlacesCardSocialActionsController placesCardSocialActionsController,
             HomePlaceEventBus homePlaceEventBus,
             IWorldPermissionsService worldPermissionsService,
-            HttpEventsApiService eventsApiService)
+            HttpEventsApiService eventsApiService,
+            Action<PlacesData.PlaceInfo>? onPlaceSelectedOverride = null)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -60,7 +61,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
+                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService, onPlaceSelectedOverride);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

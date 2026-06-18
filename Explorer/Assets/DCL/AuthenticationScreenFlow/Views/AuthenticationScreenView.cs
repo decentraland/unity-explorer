@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.Places;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -32,6 +33,15 @@ namespace DCL.AuthenticationScreenFlow
         public LobbyForExistingAccountAuthView LobbyForExistingAccountAuthView { get; private set; } = null!;
         [field: SerializeField]
         public LobbyForNewAccountAuthView LobbyForNewAccountAuthView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public PlacesView PlacesView { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button GoToGenesisButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button PlacesPickerBackButton { get; private set; } = null!;
 
         [field: Header("BUTTONS")]
         [field: SerializeField]

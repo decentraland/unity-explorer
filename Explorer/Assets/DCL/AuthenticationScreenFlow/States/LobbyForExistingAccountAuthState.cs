@@ -27,6 +27,8 @@ namespace DCL.AuthenticationScreenFlow
 
         private readonly Vector3 characterPreviewOrigPosition;
         private CancellationToken loginCt;
+        private Profile? enteredProfile;
+        private bool enteredIsCached;
 
         public LobbyForExistingAccountAuthState(MVCStateMachine<AuthStateBase> fsm,
             AuthenticationScreenView viewInstance,
@@ -60,6 +62,8 @@ namespace DCL.AuthenticationScreenFlow
             base.Enter();
 
             loginCt = payload.ct;
+            enteredProfile = payload.profile;
+            enteredIsCached = payload.isCached;
             view.JumpIntoWorldButton.interactable = true;
             view.DiffAccountButton.interactable = true;
 
@@ -114,6 +118,15 @@ namespace DCL.AuthenticationScreenFlow
             controller.ChangeAccount();
         }
 
+        private void ReturnToLobby(CancellationToken ct)
+        {
+            if (enteredProfile == null)
+                return;
+
+            fsm.Enter<LobbyForExistingAccountAuthState, (Profile profile, bool isCached, CancellationToken ct)>(
+                (enteredProfile, enteredIsCached, ct));
+        }
+
         private void OnJumpIntoWorld()
         {
             view!.JumpIntoWorldButton.interactable = false;
@@ -132,8 +145,9 @@ namespace DCL.AuthenticationScreenFlow
                     await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                     characterPreviewController?.OnHide();
 
-                    fsm.Enter<InitAuthState>();
-                    controller.TrySetLifeCycle();
+                    // Capture the token: this state's Exit() (triggered when entering the picker) resets the loginCt field.
+                    fsm.Enter<PlacesPickerAuthState, PlacesPickerPayload>(
+                        new PlacesPickerPayload(ct, () => ReturnToLobby(ct)));
                 }
                 catch (OperationCanceledException)
                 { /* Expected on cancellation */

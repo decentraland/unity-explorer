@@ -4,11 +4,14 @@ using DCL.Audio;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Places;
+using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -66,8 +69,11 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly AuthPlacesDependencies placesDeps;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
+        private PlacesController? placesController;
+        private PlacesPickerAuthState? placesPickerAuthState;
         private readonly IInputBlock inputBlock;
 
         private UniTaskCompletionSource? lifeCycleTask;
@@ -113,7 +119,8 @@ namespace DCL.AuthenticationScreenFlow
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus)
+            ProfileChangesBus profileChangesBus,
+            AuthPlacesDependencies placesDeps)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -133,12 +140,14 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.placesDeps = placesDeps;
         }
 
         public override void Dispose()
         {
             base.Dispose();
             characterPreviewController?.Dispose();
+            placesController?.Dispose();
 
             CancelLoginProcess();
             audio.Dispose();
@@ -181,8 +190,29 @@ namespace DCL.AuthenticationScreenFlow
                 );
             }
 
+            BuildPlacesPicker();
+
             fsm.Enter<InitAuthState>();
         }
+
+        private void BuildPlacesPicker()
+        {
+            var placesCardActions = new PlacesCardSocialActionsController(placesDeps.PlacesAPIService, placesDeps.RealmNavigator, webBrowser,
+                placesDeps.Clipboard, decentralandUrlsSource, navmapBus: null, mapPathEventBus: null, placesDeps.HomePlaceEventBus);
+
+            var thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
+
+            placesController = new PlacesController(viewInstance.PlacesView, placesDeps.Cursor, placesDeps.PlacesAPIService, placesDeps.PlaceCategories,
+                inputBlock, selfProfile, webBrowser, placesDeps.FriendServiceProxy, placesDeps.ProfileRepositoryWrapper, placesDeps.MvcManager,
+                thumbnailLoader, placesCardActions, placesDeps.HomePlaceEventBus, placesDeps.WorldPermissionsService, placesDeps.EventsApiService,
+                onPlaceSelectedOverride: OnPlacePickedInAuth);
+
+            placesPickerAuthState = new PlacesPickerAuthState(fsm, viewInstance, this, placesController, placesDeps.StartParcel, placesDeps.RealmController, decentralandUrlsSource);
+            fsm.AddStates(placesPickerAuthState);
+        }
+
+        private void OnPlacePickedInAuth(PlacesData.PlaceInfo placeInfo) =>
+            placesPickerAuthState?.OnPlaceSelected(placeInfo);
 
         /// <summary>
         /// First time view is shown from bootstrap and could have storedIdentity.

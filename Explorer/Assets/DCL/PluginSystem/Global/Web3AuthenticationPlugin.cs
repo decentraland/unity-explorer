@@ -6,21 +6,33 @@ using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Clipboard;
 using DCL.DebugUtilities;
+using DCL.EventsApi;
+using DCL.Friends;
 using DCL.Input;
+using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Places;
+using DCL.PlacesAPIService;
+using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
@@ -47,6 +59,17 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IGlobalRealmController realmController;
+        private readonly StartParcel startParcel;
+        private readonly ISystemClipboard clipboard;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly HomePlaceEventBus homePlaceEventBus;
+        private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly HttpEventsApiService eventsApiService;
+        private readonly ICursor cursor;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -72,7 +95,18 @@ namespace DCL.PluginSystem.Global
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus
+            ProfileChangesBus profileChangesBus,
+            IPlacesAPIService placesAPIService,
+            IRealmNavigator realmNavigator,
+            IGlobalRealmController realmController,
+            StartParcel startParcel,
+            ISystemClipboard clipboard,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            HomePlaceEventBus homePlaceEventBus,
+            IWorldPermissionsService worldPermissionsService,
+            HttpEventsApiService eventsApiService,
+            ICursor cursor
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -95,6 +129,17 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.placesAPIService = placesAPIService;
+            this.realmNavigator = realmNavigator;
+            this.realmController = realmController;
+            this.startParcel = startParcel;
+            this.clipboard = clipboard;
+            this.friendServiceProxy = friendServiceProxy;
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.homePlaceEventBus = homePlaceEventBus;
+            this.worldPermissionsService = worldPermissionsService;
+            this.eventsApiService = eventsApiService;
+            this.cursor = cursor;
         }
 
         public void Dispose() { }
@@ -103,6 +148,23 @@ namespace DCL.PluginSystem.Global
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+
+            PlaceCategoriesSO placeCategories = (await assetsProvisioner.ProvideMainAssetAsync(settings.PlaceCategoriesSO, ct)).Value;
+
+            var placesDeps = new AuthPlacesDependencies(
+                placesAPIService,
+                realmNavigator,
+                realmController,
+                startParcel,
+                clipboard,
+                friendServiceProxy,
+                profileRepositoryWrapper,
+                homePlaceEventBus,
+                worldPermissionsService,
+                eventsApiService,
+                cursor,
+                placeCategories,
+                mvcManager);
 
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory,
                 web3Authenticator,
@@ -121,7 +183,8 @@ namespace DCL.PluginSystem.Global
                 wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource,
-                profileChangesBus);
+                profileChangesBus,
+                placesDeps);
 
             mvcManager.RegisterController(authenticationScreenController);
 
@@ -151,6 +214,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
         [field: SerializeField] public TransactionConfirmationPopupRef TransactionConfirmationPopupPrefab { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
+
+        [field: Tooltip("Should point to the same PlaceCategoriesSO asset used by the Explore panel")]
+        [field: SerializeField] public AssetReferenceT<PlaceCategoriesSO> PlaceCategoriesSO { get; private set; }
 
         [field: Space]
         [field: SerializeField] public AuthScreenEmotesSettings EmotesSettings { get; private set; }

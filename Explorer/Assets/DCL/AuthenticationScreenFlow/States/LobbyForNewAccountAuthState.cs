@@ -48,6 +48,7 @@ namespace DCL.AuthenticationScreenFlow
         private Profile newUserProfile;
         private string userEmail;
         private CancellationToken loginCt;
+        private bool enteredIsCached;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -90,6 +91,7 @@ namespace DCL.AuthenticationScreenFlow
 
             loginCt = payload.ct;
             userEmail = payload.email;
+            enteredIsCached = payload.isCached;
             selectedBodyType = BodyShape.MALE;
             newUserProfile = payload.profile;
 
@@ -250,6 +252,10 @@ namespace DCL.AuthenticationScreenFlow
             controller.ChangeAccount();
         }
 
+        private void ReturnToLobby(CancellationToken ct) =>
+            fsm.Enter<LobbyForNewAccountAuthState, (Profile profile, string email, bool isCached, CancellationToken ct)>(
+                (newUserProfile, userEmail, enteredIsCached, ct));
+
         private void UpdateCharacterPreview(Avatar newAvatar)
         {
             newUserProfile.Avatar = newAvatar;
@@ -367,8 +373,8 @@ namespace DCL.AuthenticationScreenFlow
                     await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                     characterPreviewController.OnHide();
 
-                    fsm.Enter<InitAuthState>();
-                    controller.TrySetLifeCycle();
+                    fsm.Enter<PlacesPickerAuthState, PlacesPickerPayload>(
+                        new PlacesPickerPayload(ct, () => ReturnToLobby(ct)));
                 }
                 catch (OperationCanceledException)
                 { /* Expected on cancellation */
