@@ -533,6 +533,8 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 ## How to update protocol
 
+> **Prerequisites:** Node/npm only. The protocol build runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), which ships inside the `@dcl/protocol` package as a dependency-free Node script — no Python or extra packages required.
+
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 
 **[RECOMMENDED]** For using the protocol [experimental branch](https://github.com/decentraland/protocol/tree/experimental) package (the experimental features depend on this otherwise Unity project won't compile due to missing protobuf message for the experimental components):

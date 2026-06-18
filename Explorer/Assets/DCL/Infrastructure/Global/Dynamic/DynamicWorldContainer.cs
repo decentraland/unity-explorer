@@ -397,7 +397,6 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
-                appArgs,
                 staticContainer.RealmData);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
@@ -639,6 +638,7 @@ namespace Global.Dynamic
                 new SupportChatCommand(supportRequestService),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new CacheChatCommand(),
                 new SceneAdminsChatCommand(),
                 new AppArgsCommand(appArgs),
                 new LogMatrixChatCommand((RuntimeReportsHandlingSettings)bootstrapContainer.DiagnosticsContainer.Settings),
@@ -1216,6 +1216,15 @@ namespace Global.Dynamic
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.STOP_ON_DUPLICATE_IDENTITY))
                 globalPlugins.Add(new DuplicateIdentityPlugin(roomHub, mvcManager, assetsProvisioner));
+
+            // No comms/internet popup while developing against a local scene.
+            if (!localSceneDevelopment)
+                globalPlugins.Add(new MultiplayerConnectionWatchdogPlugin(
+                    roomHub,
+                    multiplayerContainer.PulseTransport,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mvcManager,
+                    bootstrapContainer.DecentralandUrlsSource));
 
             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))

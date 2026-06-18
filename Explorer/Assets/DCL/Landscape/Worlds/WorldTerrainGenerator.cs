@@ -73,6 +73,12 @@ namespace DCL.Landscape
         {
             if (!IsInitialized) return;
 
+            if (ownedParcels.Count == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skipping world terrain generation: occupied parcels set is empty.");
+                return;
+            }
+
             TerrainModel = new TerrainModel(ParcelSize, ownedParcels, terrainGenData.borderPadding, true);
 
 
