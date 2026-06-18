@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
@@ -15,10 +16,13 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
         private readonly IMVCManager mvcManager;
 
-        public LoadingScreen(IMVCManager mvcManager, LoadingScreenTimeout loadingScreenTimeout)
+        private readonly IReadOnlyLoadingStatus loadingStatus;
+
+        public LoadingScreen(IMVCManager mvcManager, LoadingScreenTimeout loadingScreenTimeout, IReadOnlyLoadingStatus loadingStatus)
         {
             this.mvcManager = mvcManager;
             this.loadingScreenTimeout = loadingScreenTimeout;
+            this.loadingStatus = loadingStatus;
         }
 
         /// <summary>
@@ -70,6 +74,13 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                         operationFinished.Dispose();
                         return;
                     case 1:
+                        // The timeout branch also wins when the outer token is cancelled; only report genuine timeouts
+                        if (timeoutResult is TaskError.Timeout)
+                            ReportHub.LogException(
+                                new LoadingScreenTimeoutException(loadingScreenTimeout.Value, loadReport.ProgressCounter.Value,
+                                    loadingStatus.CurrentStage.Value, loadingStatus.AssetState.Value),
+                                ReportCategory.SCENE_LOADING);
+
                         finalResult = EnumResult<TaskError>.ErrorResult(timeoutResult);
                         timeOut.Cancel();
                         timeOut.Dispose();

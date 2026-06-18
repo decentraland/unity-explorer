@@ -79,10 +79,11 @@ namespace ECS.SceneLifeCycle.Realm
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
             bool isWorld = false,
-            bool allowsSpawnPointerOverride = false
+            bool allowsSpawnPointerOverride = false,
+            bool landOnParcel = false
         );
 
-        UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
+        UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal, bool landOnParcel = false);
 
         bool IsAlreadyOnRealm(URLDomain realm);
 

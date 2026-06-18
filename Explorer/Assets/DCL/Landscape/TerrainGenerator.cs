@@ -144,6 +144,12 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
+            if (worldManifest.GetOccupiedParcels().Count == 0)
+            {
+                ReportHub.LogWarning(reportData, "Skipping genesis terrain generation: occupied parcels set is empty.");
+                return;
+            }
+
             TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);

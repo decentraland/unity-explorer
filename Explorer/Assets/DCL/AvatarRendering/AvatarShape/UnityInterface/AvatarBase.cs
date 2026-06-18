@@ -129,11 +129,15 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         private float nametagBoundedOffset = 1f;
         [SerializeField] [Tooltip("Small buffer to have some air/space between nametag and head, [m]")]
         private float nametagBuffer = 0.025f;
+        [SerializeField] [Tooltip("Extra height added to the nametag while the glider is deployed, to avoid clipping the glider model, [m]")]
+        private float nametagGlideOffset = 0.8f;
 
         [SerializeField] private Transform headAramatureBone;
         [SerializeField] private Transform[] potentialHighestBones;
         private float cachedHeadWearableOffset; // Cached offset from head bone to the highest point of head wearables (like tall hats). Updated when wearables change.
         private Vector3 headArmatureBoneStartPosition;
+
+        public float NametagGlideOffset => nametagGlideOffset;
 
         public bool IsLegacyAnimationPlaying => LegacyAnimation != null && LegacyAnimation.isPlaying;
         public bool IsMaskedLegacyEmotePlaying => maskedLegacyBlender != null && maskedLegacyBlender.IsPlaying;

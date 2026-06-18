@@ -30,7 +30,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
         {
             UpdatePhysicsProfiling();
 
-            if (settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed
+            if (settings.Mode == PhysSimulationMode.ADAPTIVE && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed
                                                              && UnityEngine.Time.unscaledTime - lastTimeChanged > settings.changeCooldown
                                                              && profiler.MainThreadFrameTimes.SamplesAmount > settings.minFrameTimeAmount)
             {

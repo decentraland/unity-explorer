@@ -115,14 +115,15 @@ namespace DCL.Backpack
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
                 decentralandUrlsSource,
-                outfitsLogger);
+                outfitsLogger,
+                outfitsRepository);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
                 wearableStorage,
                 eventBus,
                 outfitsLogger,
                 ownedNftFilter);
-            var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
+            var deleteOutfitCommand = new DeleteOutfitCommand(outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
                 equippedWearables,

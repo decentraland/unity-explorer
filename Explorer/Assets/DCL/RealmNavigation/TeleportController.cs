@@ -53,8 +53,8 @@ namespace DCL.RealmNavigation
         /// <summary>
         ///     If current scene is still loading it will block the teleport until its assets are resolved or timed out
         /// </summary>
-        public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct) =>
-            TeleportAsync(parcel, loadReport, ct);
+        public UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false) =>
+            TeleportAsync(parcel, loadReport, ct, landOnParcel: landOnParcel);
 
         /// <summary>
         ///     Debug Widget teleportation
@@ -65,11 +65,11 @@ namespace DCL.RealmNavigation
         public void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct) =>
             world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDataSceneEntityDefinition, Vector2Int.zero, TeleportUtils.PickTargetWithOffset(sceneDataSceneEntityDefinition, sceneDataSceneEntityDefinition.metadata.scene.DecodedBase).targetWorldPosition, ct, isPositionSet: true));
 
-        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false)
+        private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool nullifySceneDef = false, bool landOnParcel = false)
         {
             if (retrieveScene == null)
             {
-                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport));
+                world?.AddOrGet(playerEntity, new PlayerTeleportIntent(null, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -78,7 +78,10 @@ namespace DCL.RealmNavigation
 
             if (sceneDef != null && !TeleportUtils.IsRoad(sceneDef.metadata.OriginalJson.AsSpan()))
             {
-                parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
+                // When landing on the exact parcel, keep the requested parcel; otherwise snap to the
+                // scene base so the spawn point is used.
+                if (!landOnParcel)
+                    parcel = sceneDef.metadata.scene.DecodedBase; // Override parcel as it's a new target
 
                 if (nullifySceneDef)
                     sceneDef = null;
@@ -86,7 +89,7 @@ namespace DCL.RealmNavigation
 
             await UniTask.Yield(PlayerLoopTiming.PostLateUpdate);
 
-            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport));
+            world?.AddOrGet(playerEntity, new PlayerTeleportIntent(sceneDef, parcel, Vector3.zero, ct, loadReport, landOnParcel: landOnParcel));
 
             if (sceneDef == null)
             {
