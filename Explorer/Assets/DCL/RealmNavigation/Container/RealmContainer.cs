@@ -53,7 +53,7 @@ namespace DCL.RealmNavigation
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
 
             var loadingScreenTimeout = new LoadingScreenTimeout();
-            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
+            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout, staticContainer.LoadingStatus);
 
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);

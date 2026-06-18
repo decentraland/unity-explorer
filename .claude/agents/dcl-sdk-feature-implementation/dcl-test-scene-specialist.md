@@ -32,14 +32,39 @@ sdk7-test-scenes/
 
 Each scene folder follows the naming convention: `{x},{y}-{scene-name}`
 
+## MANDATORY: Folder Naming Convention
+
+**Every new scene folder MUST be named `{x},{y}-{scene-name}` where `{x},{y}` matches the parcel coordinates declared in `scene.json` (`scene.parcels[0]` / the base parcel).**
+
+Examples:
+- ✅ `scenes/5,5-collider-layer-main-player` (parcel `5,5`)
+- ✅ `scenes/0,7-particle-system` (parcel `0,7`)
+- ✅ `scenes/100,100-mannakia-test-scene` (parcel `100,100`)
+- ❌ `scenes/collider-layer-main-player` — missing coordinate prefix
+- ❌ `scenes/my-feature-test` — missing coordinate prefix
+- ❌ `scenes/3,3-feature` while `scene.json` says base `5,5` — folder/parcel mismatch
+
+Tooling and humans alike rely on this prefix:
+- `dcl-workspace.json` lists scenes alphabetically by folder name — coordinate-prefixed entries sort coherently.
+- `npm run check-parcels` validates parcel collisions; a missing prefix slips past spatial review.
+- Operators locate scenes by parcel when bug-bashing; an unprefixed folder is invisible to that workflow.
+
+If you ever find yourself about to create a folder without `{x},{y}-` at the start, stop and pick the parcel first.
+
 ## Scene Creation Workflow
 
 ### Step 1: Duplicate an existing scene
 
-Choose a scene close to your use case and copy it:
+Choose a scene close to your use case and copy it. **The destination folder name MUST be `{x},{y}-{scene-name}`** — pick the parcel before creating the folder:
+
 ```bash
 cd ../sdk7-test-scenes
 cp -r scenes/0,0-cube-spawner scenes/<x>,<y>-<new-scene-name>
+```
+
+Example for a new scene at parcel `5,5`:
+```bash
+cp -r scenes/0,0-cube-spawner scenes/5,5-my-feature-test
 ```
 
 ### Step 2: Update scene metadata
@@ -170,14 +195,23 @@ npm run check-parcels                      # Validates all scene parcels, update
 
 ## Completion Gate
 
-**Do not report success until `npm run build` passes with zero errors.** Always run before finishing:
+Before reporting success, ALL of the following must hold:
 
-```bash
-cd ../sdk7-test-scenes/scenes/<x>,<y>-<scene-name>
-npm run build   # TypeScript compilation must succeed with no errors
-```
+1. **Folder name matches `{x},{y}-{scene-name}`** and `{x},{y}` equals the parcel coordinates declared in `scene.json`. Verify with:
+   ```bash
+   cd ../sdk7-test-scenes
+   ls -d scenes/<x>,<y>-<scene-name>   # folder exists with coordinate prefix
+   grep -E '"base"|"parcels"' scenes/<x>,<y>-<scene-name>/scene.json   # matches folder prefix
+   ```
+   If the folder is missing the coordinate prefix (or the prefix does not match the parcel in `scene.json`), rename it now via `mv` and update `dcl-workspace.json` accordingly — do NOT defer this to the user.
+2. `npm run check-parcels` (from repo root) reports `✅ No collisions found`.
+3. `npm run build` (from inside the scene folder) passes with zero TypeScript errors:
+   ```bash
+   cd ../sdk7-test-scenes/scenes/<x>,<y>-<scene-name>
+   npm run build
+   ```
 
-If the build fails, diagnose and fix before reporting done. Do not hand off a scene that does not compile.
+If any gate fails, diagnose and fix before reporting done. Do not hand off a scene that does not compile, lacks the coordinate prefix, or collides with another parcel.
 
 ## Git Rules
 

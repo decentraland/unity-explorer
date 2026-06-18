@@ -21,6 +21,8 @@ using UnityEngine;
 using Utility;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.SDK.Components;
+using Quaternion = Decentraland.Common.Quaternion;
+using Vector3 = Decentraland.Common.Vector3;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -37,20 +39,20 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             public readonly TriggerAreaEventType EventType;
             public readonly uint TriggeredEntity;
             public readonly uint Timestamp;
-            public readonly Decentraland.Common.Vector3 TriggeredEntityPosition;
-            public readonly Decentraland.Common.Quaternion TriggeredEntityRotation;
+            public readonly Vector3 TriggeredEntityPosition;
+            public readonly Quaternion TriggeredEntityRotation;
             public readonly uint TriggerEntity;
             public readonly uint TriggerLayers;
-            public readonly Decentraland.Common.Vector3 TriggerEntityPosition;
-            public readonly Decentraland.Common.Quaternion TriggerEntityRotation;
-            public readonly Decentraland.Common.Vector3 TriggerEntityScale;
+            public readonly Vector3 TriggerEntityPosition;
+            public readonly Quaternion TriggerEntityRotation;
+            public readonly Vector3 TriggerEntityScale;
 
             public ResultData(
                 TriggerAreaEventType eventType, uint triggeredEntity, uint timestamp,
-                Decentraland.Common.Vector3 triggeredEntityPosition, Decentraland.Common.Quaternion triggeredEntityRotation,
+                Vector3 triggeredEntityPosition, Quaternion triggeredEntityRotation,
                 uint triggerEntity, uint triggerLayers,
-                Decentraland.Common.Vector3 triggerEntityPosition, Decentraland.Common.Quaternion triggerEntityRotation,
-                Decentraland.Common.Vector3 triggerEntityScale)
+                Vector3 triggerEntityPosition, Quaternion triggerEntityRotation,
+                Vector3 triggerEntityScale)
             {
                 EventType = eventType;
                 TriggeredEntity = triggeredEntity;
@@ -97,13 +99,19 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
+            ColliderLayer mask = pbTriggerArea.GetColliderLayer();
+
+            // Fast-path: mask is EXACTLY CL_MAIN_PLAYER — SDKEntityTriggerArea.OnTriggerEnter
+            // early-outs on any collider that isn't the local player.
+            bool targetOnlyMainPlayer = mask == ColliderLayer.ClMainPlayer;
+
             World.Add(
                 entity,
                 new SDKEntityTriggerAreaComponent(
-                    areaSize: Vector3.zero,
-                    targetOnlyMainPlayer: false,
+                    areaSize: UnityEngine.Vector3.zero,
+                    targetOnlyMainPlayer: targetOnlyMainPlayer,
                     meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType(),
-                    layerMask: pbTriggerArea.GetColliderLayer()),
+                    layerMask: mask),
                 new TriggerAreaComponent()
             );
         }
@@ -145,17 +153,23 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
-            if (triggerEntityCollider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
-                || triggerEntityCollider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            int colliderLayer = triggerEntityCollider.gameObject.layer;
+            bool isMainAvatar = colliderLayer == PhysicsLayers.CHARACTER_LAYER;
+            bool isRemoteAvatar = colliderLayer == PhysicsLayers.OTHER_AVATARS_LAYER;
+            if (isMainAvatar || isRemoteAvatar)
             {
-                if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, ColliderLayer.ClPlayer)
+                // Additive: main player matches (CL_PLAYER | CL_MAIN_PLAYER); remote avatars match CL_PLAYER only.
+                ColliderLayer expected = isMainAvatar
+                    ? PhysicsLayers.PLAYER_QUALIFYING_BITS
+                    : ColliderLayer.ClPlayer;
+                if ((areaLayerMask & expected) == 0
                     || !TryGetAvatarEntity(triggerEntityCollider.transform, out avatarEntity))
                     return;
             }
 
-            Decentraland.Common.Vector3 triggerEntityPos;
-            Decentraland.Common.Quaternion triggerEntityRot;
-            Decentraland.Common.Vector3 triggerEntityScale;
+            Vector3 triggerEntityPos;
+            Quaternion triggerEntityRot;
+            Vector3 triggerEntityScale;
             if (avatarEntity == Entity.Null)
             {
                 if (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
@@ -176,7 +190,14 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 triggerEntityScale = characterTransform.Transform.localScale.ToProtoVector();
             }
 
-            uint triggerLayers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
+            // Report the intersection of the area mask with the bits the avatar carries.
+            ColliderLayer triggerLayers;
+            if (avatarEntity == Entity.Null)
+                triggerLayers = entityInfo.SDKLayer;
+            else if (isMainAvatar)
+                triggerLayers = PhysicsLayers.PLAYER_QUALIFYING_BITS & areaLayerMask;
+            else
+                triggerLayers = ColliderLayer.ClPlayer & areaLayerMask;
 
             uint triggerEntity;
             if (avatarEntity != Entity.Null)
@@ -187,7 +208,7 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             var data = new ResultData(
                 eventType, (uint)triggerAreaCRDTEntity.Id, incrementalTick,
                 triggerAreaTransform.localPosition.ToProtoVector(), triggerAreaTransform.localRotation.ToProtoQuaternion(),
-                triggerEntity, triggerLayers, triggerEntityPos, triggerEntityRot, triggerEntityScale);
+                triggerEntity, (uint)triggerLayers, triggerEntityPos, triggerEntityRot, triggerEntityScale);
 
             ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, ResultData>
             (

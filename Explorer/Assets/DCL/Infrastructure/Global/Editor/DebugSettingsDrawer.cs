@@ -1,3 +1,4 @@
+using DCL.Browser.DecentralandUrls;
 using DCL.WebRequests.ChromeDevtool;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;

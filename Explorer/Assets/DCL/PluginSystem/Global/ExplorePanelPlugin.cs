@@ -365,7 +365,7 @@ namespace DCL.PluginSystem.Global
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
                 dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
 
-            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider);
+            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider, selfProfile);
 
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
