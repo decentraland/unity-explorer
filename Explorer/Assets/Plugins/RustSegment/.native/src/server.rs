@@ -84,7 +84,8 @@ impl Server {
                     queue_file_path,
                     queue_count_limit,
                     writer_key,
-                    event_bridge.input()
+                    event_bridge.input(),
+                    &new_runtime,
                 );
 
                 *state = ServerState::Ready(Arc::new(server), new_runtime, event_bridge);
@@ -235,6 +236,7 @@ impl SegmentServer {
         queue_count_limit: u32,
         writer_key: String,
         event_input: EventInput,
+        async_runtime: &tokio::runtime::Runtime,
     ) -> Self {
         let error_event_input = event_input.clone();
         let error_fn = Box::new(move |message: &str| {
@@ -262,12 +264,19 @@ impl SegmentServer {
             AnalyticsEventSendDaemon::new(event_queue.clone(), None, writer_key.clone(), client);
         let send_daemon = Arc::new(parking_lot::Mutex::new(send_daemon));
 
-        let daemon_event_input = event_input.clone();
+        let moved_send_daemon = send_daemon.clone();
 
-        send_daemon.lock().start(move |message: &str| {
-            let message = String::from(message);
-            daemon_event_input.try_enqueue_error(message);
-        });
+        let daemon_event_input = event_input.clone();
+        async_runtime.spawn(
+            AssertUnwindSafe(async move {
+                let mut guard = moved_send_daemon.lock();
+                guard.start(move |message: &str| {
+                    let message = String::from(message);
+                    daemon_event_input.try_enqueue_error(message);
+                });
+            })
+            .catch_unwind(),
+        );
 
         let direct_client = HttpClient::default();
 
