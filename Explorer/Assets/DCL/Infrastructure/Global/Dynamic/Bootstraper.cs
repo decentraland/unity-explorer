@@ -34,6 +34,7 @@ using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -196,7 +197,7 @@ namespace Global.Dynamic
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
@@ -259,7 +260,8 @@ namespace Global.Dynamic
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
                 bootstrapContainer.Environment,
-                dynamicWorldContainer.SystemClipboard
+                dynamicWorldContainer.SystemClipboard,
+                dynamicWorldContainer.WorldPlugins
             );
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(

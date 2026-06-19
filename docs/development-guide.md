@@ -533,10 +533,7 @@ For guidance on detached flows, cancellation, `SuppressToResultAsync`, and the e
 
 ## How to update protocol
 
-> **Prerequisites:** Besides Node/npm, the protocol build runs a Python `protoc` plugin (`protoc-gen-bitwise`, used for the quantized/bit-packed Pulse network state). You need **Python 3** on your `PATH` with the **`protobuf`** package installed, otherwise `build-protocol` fails with `ModuleNotFoundError: No module named 'google'`:
-> ```bash
-> python3 -m pip install protobuf
-> ```
+> **Prerequisites:** Node/npm only. The protocol build runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), which ships inside the `@dcl/protocol` package as a dependency-free Node script — no Python or extra packages required.
 
 To update the protocol to the last version of the protocol, open a terminal like CMD and navigate to your working copy of the repository, there you will see a folder named 'scripts'; execute the following commands:
 

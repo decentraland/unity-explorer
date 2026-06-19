@@ -42,7 +42,7 @@ namespace DCL.Places
             IInputBlock inputBlock,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
@@ -60,7 +60,7 @@ namespace DCL.Places
 
             placesStateService = new PlacesStateService();
             PlacesResultsController = new PlacesResultsController(view.PlacesResultsView, this, placesAPIService, placesStateService, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
+                friendsService, profileRepositoryWrapper, mvcManager, thumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, eventsApiService, worldPermissionsService);
 
             view.AnyFilterChanged += OnAnyFilterChanged;
             view.SearchBarSelected += DisableShortcutsInput;

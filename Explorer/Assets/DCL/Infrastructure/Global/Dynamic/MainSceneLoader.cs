@@ -25,6 +25,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -129,6 +130,12 @@ namespace Global.Dynamic
                 {
                     plugin.SafeDispose(ReportCategory.ENGINE);
                     stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
+
+                foreach (IDCLWorldPlugin worldPlugin in dynamicWorldContainer.WorldPlugins)
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"WorldPlugin {worldPlugin.GetType().Name}");
                 }
 
                 if (globalWorld != null)
@@ -292,6 +299,8 @@ namespace Global.Dynamic
 
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+
+                DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
 
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)

@@ -45,7 +45,9 @@ namespace DCL.WebRequests
             if (webRequestException?.ResponseCode is 429 or 503)
             {
                 // "Retry-After" header is not present or not parsable, don't repeat
-                if (!webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader) || retryAfterHeader is null)
+                if (webRequestException.ResponseHeaders == null
+                    || !webRequestException.ResponseHeaders.TryGetValue("Retry-After", out string? retryAfterHeader)
+                    || retryAfterHeader is null)
                     return (false, TimeSpan.Zero);
 
                 TimeSpan retryDelay;

@@ -1,5 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
@@ -16,11 +18,15 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Optimization.Multithreading;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
+using Global;
+using Global.AppArgs;
+using Global.Dynamic;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -224,6 +230,30 @@ namespace DCL.Multiplayer.Movement
                 new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings),
                 selfProfile
             );
+
+        public MultiplayerMovementPlugin CreatePlugin(
+            StaticContainer staticContainer,
+            IAssetsProvisioner assetsProvisioner,
+            IDebugContainerBuilder debugBuilder,
+            CommsContainer commsContainer,
+            MultiplayerDebugSettings debugSettings,
+            IAppArgs appArgs) =>
+            new (
+                assetsProvisioner,
+                LiveKitMovementMessageBus,
+                PulseMultiplayerBus,
+                MovementMessageBus,
+                PulseMultiplayerService,
+                PulseTransport,
+                debugBuilder,
+                commsContainer.RemoteEntities,
+                staticContainer.CharacterContainer.Transform,
+                debugSettings,
+                appArgs,
+                commsContainer.EntityParticipantTable,
+                staticContainer.RealmData,
+                commsContainer.RemoteMetadata,
+                ParcelEncoder);
 
         private void OnSelfProfilePropagated(Profile profile) =>
             ProfilePropagation.Propagate(profile);

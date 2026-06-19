@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
@@ -108,7 +108,7 @@ namespace DCL.PluginSystem.Global
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
@@ -158,7 +158,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
-                friendServiceProxy,
+                friendsService,
                 communitiesDataProvider,
                 webRequestController,
                 profileRepositoryWrapper,
