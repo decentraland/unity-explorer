@@ -378,6 +378,7 @@ namespace Global.Dynamic
                 moderationDataProvider,
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
+                multiplayerContainer.PulseActivation,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 

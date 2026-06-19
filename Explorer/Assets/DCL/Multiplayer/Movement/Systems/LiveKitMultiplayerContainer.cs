@@ -1,6 +1,6 @@
-﻿using DCL.FeatureFlags;
-using DCL.Friends.UserBlocking;
+﻿using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement.Settings;
@@ -27,10 +27,10 @@ namespace DCL.Multiplayer.Movement
             MovementInbox movementInbox,
             ISelfProfile selfProfile,
             IUserBlockingCache userBlockingCache,
-            MultiplayerDebugSettings multiplayerDebugSettings)
+            MultiplayerDebugSettings multiplayerDebugSettings,
+            PulseActivation pulseActivation)
         {
-            bool backwardCompatibilityMode = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);
-            var broadcaster = new LiveKitMessagesBroadcaster(messagePipesHub, backwardCompatibilityMode);
+            var broadcaster = new LiveKitMessagesBroadcaster(messagePipesHub, pulseActivation);
 
             RemoteAnnouncements = new LiveKitRemoteAnnouncements(messagePipesHub, broadcaster);
             ProfileBroadcast = new DebounceLiveKitProfileBroadcast(new LiveKitProfileBroadcast(selfProfile, broadcaster));

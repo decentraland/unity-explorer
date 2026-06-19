@@ -369,6 +369,20 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+## Multiplayer Flags
+
+### `pulse`
+**Type:** Bool (`true` / `false`)
+**Description:** Toggles the Pulse transport (an ENet-based UDP channel that runs alongside LiveKit), overriding the `pulse` remote feature flag. When **specified**, the value wins over the remote flag: `--pulse true` force-enables Pulse, `--pulse false` force-disables it (LiveKit-only, as if Pulse were never present). When **not specified**, Pulse is driven by the remote feature flag. Always ignored during local scene development.
+
+**Usage:**
+```bash
+--pulse true
+--pulse false
+```
+
+---
+
 ## Feature Flags Configuration
 
 ### `feature-flags-url`
