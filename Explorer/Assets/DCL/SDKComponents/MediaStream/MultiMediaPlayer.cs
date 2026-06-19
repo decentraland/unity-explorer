@@ -193,14 +193,14 @@ namespace DCL.SDKComponents.MediaStream
                 static (ctx, avPro) => avPro.AvProMediaPlayer.Control.SetLooping(ctx),
                 static (_, _) => { });
 
-        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer)
+        public readonly async UniTaskVoid SetPlaybackPropertiesAsync(PBVideoPlayer sdkVideoPlayer, bool isLiveStream = false)
         {
             if (IsAvProPlayer(out var mediaPlayer))
             {
                 MediaPlayer avProPlayer = mediaPlayer!.AvProMediaPlayer;
                 if (!avProPlayer.MediaOpened) return;
                 mediaPlayer.WaitingForProperties = true;
-                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer);
+                await MediaPlayerExtensions.SetPlaybackPropertiesAsync(avProPlayer.Control!, sdkVideoPlayer, isLiveStream);
                 mediaPlayer.WaitingForProperties = false;
             }
 
@@ -308,15 +308,15 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         /// <summary>
-        /// MUST be used in place, caller doesn't take ownership of the referene.
+        /// MUST be used in place, caller doesn't take ownership of the reference.
         /// Caveat: AVProVideo uses direct audio output bypassing Unity's audio system.
         /// It such cases the exposure is not possible through this method.
         /// </summary>
-        public AudioSource? ExposedAudioSource()
+        public AudioSource? AnyExposedAudioSource()
         {
             return Match(
                 static avPro => avPro.AvProMediaPlayer.AudioSource,
-                static livekitPlayer => livekitPlayer.ExposedAudioSource()
+                static livekitPlayer => livekitPlayer.AnyExposedAudioSource()
             );
         }
     }

@@ -6,7 +6,9 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
+using DCL.SceneRunner.Scene;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using NSubstitute;
@@ -74,7 +76,7 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene());
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent, SceneLoadingState.CreateBuiltScene(), ISSDescriptor.NONE);
 
             //Act
             system.Update(0);

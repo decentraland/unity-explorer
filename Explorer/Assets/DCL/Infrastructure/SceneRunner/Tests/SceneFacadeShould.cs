@@ -51,7 +51,6 @@ using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -91,6 +90,12 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
+            // SceneFactory unconditionally fires SceneAdmins.FireRequestAsync unless realmData reports
+            // LSD; the cube.js fixture is loaded locally so LSD == true is semantically correct and
+            // skips the unrelated signed-fetch path that would otherwise log an empty-URI exception.
+            var realmData = Substitute.For<IRealmData>();
+            realmData.IsLocalSceneDevelopment.Returns(true);
+
             sceneFactory = new SceneFactory(
                 ecsWorldFactory,
                 sceneRuntimeFactory,
@@ -106,13 +111,14 @@ namespace SceneRunner.Tests
                 Substitute.For<IDecentralandUrlsSource>(),
                 IWebRequestController.TEST,
                 NullRoomHub.INSTANCE,
-                Substitute.For<IRealmData>(),
+                realmData,
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<SkyboxSettingsAsset>(),
                 Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>());
+                Substitute.For<ISystemClipboard>(),
+                string.Empty);
         }
 
         [OneTimeTearDown]
@@ -137,7 +143,7 @@ namespace SceneRunner.Tests
         private ISDKComponentsRegistry componentsRegistry = null!;
         private SceneFactory sceneFactory = null!;
 
-        private readonly ConcurrentBag<ISceneFacade> sceneFacades = new ();
+        private readonly DCLConcurrentBag<ISceneFacade> sceneFacades = new ();
 
         private string path;
 
@@ -198,7 +204,8 @@ namespace SceneRunner.Tests
             var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(DURATION);
 
-            await sceneFacade.StartUpdateLoopAsync(fps, cancellationTokenSource.Token);
+            await sceneFacade.StartAsync(fps, cancellationTokenSource.Token);
+            await sceneFacade.UpdateLoopAsync(cancellationTokenSource.Token);
 
             float tolerance = Mathf.Max(0.02f, expectedDT * 0.1f);
 
@@ -223,7 +230,7 @@ namespace SceneRunner.Tests
         {
             int waitTime = lifeTimeMs.Max() + 100;
 
-            var list = new ConcurrentBag<int>();
+            var list = new DCLConcurrentBag<int>();
 
             await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i], i.ToString())));
 
@@ -384,8 +391,10 @@ namespace SceneRunner.Tests
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<ISystemsUpdateGate>(),
-                    new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>()) { }
+                    new ECSWorldInstanceSharedDependencies()
+                ),
+                Substitute.For<ISceneRuntime>()
+            ) {}
         }
 
         public class TestAPIWrapper : JsApiWrapper<IDisposable>

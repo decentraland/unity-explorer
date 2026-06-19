@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PrivateWorlds;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -15,7 +16,7 @@ using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
 {
-    public class CommunitiesDataProvider
+    public class CommunitiesDataProvider : ICommunityMembershipChecker
     {
         public event Action<CreateOrUpdateCommunityResponse.CommunityData> CommunityCreated;
         public event Action<string> CommunityUpdated;
@@ -62,10 +63,16 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response;
         }
 
+        public async UniTask<bool> IsMemberOfCommunityAsync(string communityId, CancellationToken ct)
+        {
+            GetCommunityResponse response = await GetCommunityAsync(communityId, ct);
+            return response.data.role != CommunityMemberRole.none;
+        }
+
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
         {
             var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
-            if (isStreaming) //TODO FRAN & DAVIDE: FIX THIS, IT WORKS BUT IS NOT PROPER :)
+            if (isStreaming) //TODO FRAN & DAVIDE: Fix this, we should be paginating results here.
                 url = $"{communitiesBaseUrl}?onlyWithActiveVoiceChat={isStreaming}";//&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
 

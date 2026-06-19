@@ -13,7 +13,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
@@ -25,18 +25,20 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float VELOCITY_MOVE_EPSILON = 0.01f; // 1 cm/s
         private const float HEAD_IK_EPSILON = 1; // 1 deg
 
-        private readonly MultiplayerMovementMessageBus messageBus;
+        private readonly LiveKitMovementMessageBus messageBus;
+        private readonly IMovementMessageBus movementMessageBus;
         private readonly MultiplayerMovementSettings settings;
         private readonly MultiplayerDebugSettings debugSettings;
 
         private float sendRate;
 
-        public PlayerMovementNetSendSystem(World world, MultiplayerMovementMessageBus messageBus, MultiplayerMovementSettings settings,
-            MultiplayerDebugSettings debugSettings) : base(world)
+        internal PlayerMovementNetSendSystem(World world, LiveKitMovementMessageBus messageBus, IMovementMessageBus movementMessageBus,
+            MultiplayerMovementSettings settings, MultiplayerDebugSettings debugSettings) : base(world)
         {
             this.messageBus = messageBus;
             this.settings = settings;
             this.debugSettings = debugSettings;
+            this.movementMessageBus = movementMessageBus;
 
             sendRate = this.settings.MoveSendRate;
         }
@@ -55,7 +57,8 @@ namespace DCL.Multiplayer.Movement.Systems
             ref StunComponent stun,
             ref MovementInputComponent move,
             in CharacterEmoteComponent emote,
-            in HeadIKComponent headIK
+            in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt
         )
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -64,23 +67,23 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, isInstant: true);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, isInstant: true);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
 
-            float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
+            var timeDiff = (float)(UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
             bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
 
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.JumpCount != anim.States.JumpCount)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
                 return;
             }
 
-            bool anythingChanged = AnythingChanged(playerMovement, headIK);
+            bool anythingChanged = AnythingChanged(playerMovement, headIK, pointAt);
 
             if (anythingChanged && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
@@ -90,12 +93,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!anythingChanged && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, emote.IsPlayingEmote, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, in headIK, in pointAt, emote.IsPlayingEmote, justTeleported);
             }
 
             return;
 
-            bool AnythingChanged(PlayerMovementNetworkComponent playerMovement, in HeadIKComponent headIK)
+            bool AnythingChanged(PlayerMovementNetworkComponent playerMovement, in HeadIKComponent headIK, in HandPointAtComponent pointAt)
             {
                 NetworkMovementMessage snapshot = playerMovement.LastSentMessage;
                 Vector2 currentHeadYawAndPitch = headIK.GetHeadYawAndPitch();
@@ -106,7 +109,9 @@ namespace DCL.Multiplayer.Movement.Systems
                        snapshot.headIKYawEnabled != headIK.YawEnabled ||
                        snapshot.headIKPitchEnabled != headIK.PitchEnabled ||
                        Math.Abs(snapshot.headYawAndPitch.x - currentHeadYawAndPitch.x) > HEAD_IK_EPSILON ||
-                       Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON;
+                       Math.Abs(snapshot.headYawAndPitch.y - currentHeadYawAndPitch.y) > HEAD_IK_EPSILON ||
+                       Vector3.SqrMagnitude(snapshot.pointAtWorldHitPoint - pointAt.WorldHitPoint) > POSITION_MOVE_EPSILON * POSITION_MOVE_EPSILON ||
+                       snapshot.isPointingAt != pointAt.IsPointing;
             }
         }
 
@@ -126,6 +131,7 @@ namespace DCL.Multiplayer.Movement.Systems
             in StunComponent playerStunComponent,
             in MovementInputComponent input,
             in HeadIKComponent headIK,
+            in HandPointAtComponent pointAt,
             bool isEmoting,
             bool isInstant)
         {
@@ -133,7 +139,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
             float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
-            float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
+            var speed = (float)(dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp));
 
             byte velocityTier = VelocityTierFromSpeed(speed);
 
@@ -160,6 +166,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 isInstant = isInstant,
                 isEmoting = isEmoting,
 
+                isPointingAt = pointAt.IsPointing,
+                pointAtWorldHitPoint =  pointAt.WorldHitPoint,
+
                 animState = new AnimationStates
                 {
                     IsSliding = animation.States.IsSliding,
@@ -179,7 +188,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementKind = input.Kind,
             };
 
-            messageBus.Send(playerMovement.LastSentMessage);
+            movementMessageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending

@@ -40,7 +40,7 @@ namespace DCL.Notifications.NewNotification
         private ImageController communityThumbnailImageController;
         private ImageController giftToastImageController;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
@@ -148,6 +148,11 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.TIP_RECEIVED:
                         await ProcessTipReceivedNotificationAsync(notification);
+                        break;
+                    case NotificationType.BAN_WARNING:
+                    case NotificationType.BANNED:
+                    case NotificationType.BAN_LIFTED:
+                        await ProcessPersistentNotificationAsync(notification);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -265,6 +270,26 @@ namespace DCL.Notifications.NewNotification
             await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 
+        private async UniTask ProcessPersistentNotificationAsync(INotification notification)
+        {
+            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.NotificationView.NotificationType = notification.Type;
+            viewInstance.NotificationView.Notification = notification;
+            viewInstance.NotificationView.CloseButton.gameObject.SetActive(true);
+
+            DefaultNotificationThumbnail defaultThumbnail = notificationDefaultThumbnails.GetNotificationDefaultThumbnail(notification.Type);
+
+            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true, fitAndCenterImage: defaultThumbnail.FitAndCenter, defaultSprite: defaultThumbnail.Thumbnail);
+            else
+                thumbnailImageController.SetImage(defaultThumbnail.Thumbnail, defaultThumbnail.FitAndCenter);
+
+            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimatePersistentNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
+        }
+
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)
         {
             viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
@@ -372,7 +397,27 @@ namespace DCL.Notifications.NewNotification
             {
                 notificationCanvasGroup.interactable = false;
                 notificationCanvasGroup.blocksRaycasts = false;
-                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token)
+                                             .SuppressCancellationThrow();
+            }
+        }
+
+        private async UniTask AnimatePersistentNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
+        {
+            try
+            {
+                notificationCanvasGroup.interactable = true;
+                notificationCanvasGroup.blocksRaycasts = true;
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.WaitUntilCanceled(cts.Token);
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                notificationCanvasGroup.interactable = false;
+                notificationCanvasGroup.blocksRaycasts = false;
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token)
+                                             .SuppressCancellationThrow();
             }
         }
 

@@ -186,8 +186,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -60}
-  m_SizeDelta: {x: 0, y: -120}
+  m_AnchoredPosition: {x: 0, y: -45}
+  m_SizeDelta: {x: 0, y: -90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1046812407926960482
 GameObject:
@@ -307,11 +307,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3562841211509877782}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1860, y: 20}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -30, y: 0}
   m_SizeDelta: {x: 70, y: 70}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &919916049060324999
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -377,12 +377,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 3867697833987753308}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &2351624679238676444
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -522,11 +522,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3562841211509877782}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -1860, y: 20}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 30, y: 0}
   m_SizeDelta: {x: 70, y: 70}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &6468958701516645429
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -592,12 +592,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 6746342827942324036}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &1338762124361885238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -734,11 +734,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3562841211509877782}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 1060.1, y: 304.4}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 333, y: -160}
   m_SizeDelta: {x: 468, y: 24}
-  m_Pivot: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4539861884075813028
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -816,6 +816,7 @@ GameObject:
   - component: {fileID: 8454101078806804241}
   - component: {fileID: 1242405793850228617}
   - component: {fileID: 8917684428663623926}
+  - component: {fileID: -5542763421220340937}
   m_Layer: 0
   m_Name: SceneLoadingScreen
   m_TagString: Untagged
@@ -862,6 +863,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -883,7 +885,7 @@ MonoBehaviour:
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
-  m_ScreenMatchMode: 0
+  m_ScreenMatchMode: 1
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
@@ -953,6 +955,19 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &-5542763421220340937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5357728835287357475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ea1b65aaa149fa438425d71fd8122ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AltTester.AltTesterUnitySDK::AltTester.AltTesterUnitySDK.AltId
+  altID: 21e9d696-d866-4717-85c0-2b6e4f1c4d9d
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0
@@ -1468,6 +1483,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

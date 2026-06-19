@@ -62,7 +62,7 @@ namespace DCL.UI.OTPInput
 
                 if (caretImage.gameObject.activeSelf)
                 {
-                    caretBlinkTimer += Time.deltaTime * caretBlinkRate;
+                    caretBlinkTimer += UnityEngine.Time.deltaTime * caretBlinkRate;
                     caretImage.enabled = caretBlinkTimer % 1f < 0.5f; // Carret blink:  visible first half of the cycle
                 }
 

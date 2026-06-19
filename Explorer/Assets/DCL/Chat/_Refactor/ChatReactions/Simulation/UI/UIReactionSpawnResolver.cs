@@ -1,0 +1,58 @@
+using UnityEngine;
+
+namespace DCL.Chat.ChatReactions.Simulation.UI
+{
+    /// <summary>
+    /// Resolves screen-space spawn positions (pixels) from UI <see cref="RectTransform"/> elements
+    /// and clamps live particle positions to a defined screen-space lane. No camera required —
+    /// all coordinates are in pixel space (ScreenSpaceOverlay canvas).
+    /// </summary>
+    public sealed class UIReactionSpawnResolver
+    {
+        private readonly RectTransform laneRect;
+        private readonly Vector3[] corners = new Vector3[4];
+
+        private Rect cachedLaneRect;
+        private int cachedFrame = -1;
+
+        // Parent Canvas uses ScreenSpaceOverlay — WorldToScreenPoint with null camera
+        // returns pixel coordinates directly, which is the correct behavior for overlay mode.
+        public UIReactionSpawnResolver(RectTransform laneRect)
+        {
+            this.laneRect = laneRect;
+        }
+
+        /// <summary>Screen position (pixels) at the center of the given rect, plus a local-space offset.</summary>
+        public Vector2 GetSpawnPxFromRectCenter(RectTransform rect, Vector2 localOffset = default)
+        {
+            Vector3 worldPoint = rect.TransformPoint(rect.rect.center + localOffset);
+            return RectTransformUtility.WorldToScreenPoint(null, worldPoint);
+        }
+
+        /// <summary>Screen position (pixels) at the bottom 12% of the lane rect.</summary>
+        public Vector2 GetSpawnPxBottomCenter()
+        {
+            Rect r = GetLaneScreenRect();
+            return new Vector2(r.center.x, Mathf.Lerp(r.yMin, r.yMax, 0.12f));
+        }
+
+        private Rect GetLaneScreenRect()
+        {
+            int frame = UnityEngine.Time.frameCount;
+            if (frame == cachedFrame)
+                return cachedLaneRect;
+
+            cachedFrame = frame;
+            laneRect.GetWorldCorners(corners);
+
+            Vector2 a = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+            Vector2 b = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+
+            cachedLaneRect = Rect.MinMaxRect(
+                Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y),
+                Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+
+            return cachedLaneRect;
+        }
+    }
+}

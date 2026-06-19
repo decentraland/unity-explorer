@@ -27,12 +27,13 @@ namespace DCL.Chat.ChatServices
 
         private readonly CurrentChannelService currentChannelService;
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly IEventBus eventBus;
 
         private readonly List<ChatMemberListData> membersBuffer = new ();
 
         private readonly HashSet<string> lastKnownMemberIds = new (StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> participantsBuffer = new ();
 
         private int lastKnownTitleBarCount = -1;
 
@@ -59,12 +60,12 @@ namespace DCL.Chat.ChatServices
         private Action<IReadOnlyList<ChatMemberListData>>? onMemberListUpdated;
 
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             CurrentChannelService currentChannelService,
             IEventBus eventBus)
         {
             this.profileRepository = profileRepository;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
         }
@@ -77,7 +78,7 @@ namespace DCL.Chat.ChatServices
         /// </summary>
         public void Start()
         {
-            if (!friendsServiceProxy.Configured)
+            if (friendsService == null)
             {
                 ReportHub.LogWarning(ReportCategory.UI, "[ChatMemberListService] FriendsService is not configured. Cannot start member list service.");
                 return;
@@ -163,8 +164,11 @@ namespace DCL.Chat.ChatServices
         ///     Performs a single, fresh fetch of the full member list.
         ///     This should be called by the UI when the member list panel is first opened.
         /// </summary>
-        public UniTask RequestInitialMemberListAsync() =>
-            RefreshFullListAsync(currentChannelService.UserStateService!.OnlineParticipants, liveUpdateCts!.Token);
+        public UniTask RequestInitialMemberListAsync()
+        {
+            currentChannelService.UserStateService!.CopyOnlineParticipantsTo(participantsBuffer);
+            return RefreshFullListAsync(participantsBuffer, liveUpdateCts!.Token);
+        }
 
         private void OnChannelSelected(ChatEvents.ChannelSelectedEvent @event)
         {
@@ -186,14 +190,14 @@ namespace DCL.Chat.ChatServices
 
         private UniTask RefreshFullListIfNeededAsync(CancellationToken ct)
         {
-            IReadOnlyCollection<string> participants = currentChannelService.UserStateService!.OnlineParticipants;
+            currentChannelService.UserStateService!.CopyOnlineParticipantsTo(participantsBuffer);
 
-            if (lastKnownMemberIds.SetEquals(participants))
+            if (lastKnownMemberIds.SetEquals(participantsBuffer))
                 return UniTask.CompletedTask;
 
             lastKnownMemberIds.Clear();
 
-            foreach (string participant in participants)
+            foreach (string participant in participantsBuffer)
                 lastKnownMemberIds.Add(participant);
 
             return RefreshFullListAsync(lastKnownMemberIds, ct);

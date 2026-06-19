@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes;
@@ -14,6 +15,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
@@ -42,6 +44,7 @@ namespace DCL.GlobalPartitioning
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearablesDTOList>(),
                 CreateQuery<GetTrimmedWearableByParamIntention, IWearable[]>(),
@@ -53,14 +56,14 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetEmotesDTOByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetTrimmedEmotesByParamIntention, TrimmedEmotesResponse>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetProfilesBatchIntent, ProfilesBatchResult>(),
             };
 
             COMPONENT_HANDLERS_SCENES = new[]
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
-                CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
+                CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
+                CreateQuery<GetISSDescriptorIntention, ISSDescriptorMetadata>(),
             };
         }
 
@@ -83,11 +86,11 @@ namespace DCL.GlobalPartitioning
             //We check if the player is teleporting, and if the scene we want to teleport to has started.
             //If so, only scene metadata will be allowed to de downloaded
             TeleportUtils.PlayerTeleportingState teleportParcel = TeleportUtils.GetTeleportParcel(World, playerEntity);
-            if (teleportParcel.IsTeleporting)
-            {
-                if (scenesCache.Contains(teleportParcel.Parcel))
-                    downloadOnlySceneMetadata = true;
-            }
+
+            if (teleportParcel.IsTeleporting
+                && scenesCache.TryGetByParcel(teleportParcel.Parcel, out ISceneFacade scene)
+                && scene.SceneStateProvider.State == SceneState.Running)
+                downloadOnlySceneMetadata = true;
 
             sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }

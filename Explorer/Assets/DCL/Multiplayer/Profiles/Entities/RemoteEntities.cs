@@ -1,11 +1,12 @@
 using Arch.Core;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
@@ -14,10 +15,8 @@ using DCL.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using LiveKit.Rooms;
 using System.Collections.Generic;
 using DCL.Profiles;
-using LiveKit.Proto;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -26,26 +25,32 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public class RemoteEntities : IRemoteEntities
     {
+        private static readonly Vector3 HIDDEN_SPAWN_POSITION = new (int.MinValue, 0f, int.MinValue);
+
         private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly MovementInbox movementInbox;
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
         private readonly Transform? remoteEntitiesParent = null;
+
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
         public RemoteEntities(
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
-            IEntityCollidersGlobalCache collidersGlobalCache)
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool,
+            IEntityCollidersGlobalCache collidersGlobalCache,
+            MovementInbox movementInbox)
         {
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;
             this.collidersGlobalCache = collidersGlobalCache;
+            this.movementInbox = movementInbox;
 #if UNITY_EDITOR
             remoteEntitiesParent = new GameObject("REMOTE_ENTITIES").transform;
 #endif
@@ -97,6 +102,8 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (!entityParticipantTable.Release(walletId, roomSource))
                 return;
 
+            movementInbox.RemovePending(walletId);
+
             if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
             {
                 remoteAvatarColliderPool.Release(remoteAvatarCollider);
@@ -120,6 +127,8 @@ namespace DCL.Multiplayer.Profiles.Entities
             {
                 entity = CreateCharacter(profile, world);
                 entityParticipantTable.Register(profile.WalletId, entity, profile.FromRoom);
+                // Must apply any pending movement since the creation of the avatar might be processed after the processing of the movement
+                movementInbox.TryFlushPending(profile.WalletId);
             }
 
             entityParticipantTable.AddRoomSource(profile.WalletId, profile.FromRoom);
@@ -131,12 +140,14 @@ namespace DCL.Multiplayer.Profiles.Entities
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
             transform.transform.SetParent(remoteEntitiesParent);
+            transform.transform.position = HIDDEN_SPAWN_POSITION;
             transform.transform.rotation = Quaternion.identity;
             transform.transform.localScale = Vector3.one;
 
             var remoteAvatarCollider = remoteAvatarColliderPool.Get()!;
             remoteAvatarCollider.name = $"Collider {profile.WalletId}";
             remoteAvatarCollider.transform.SetParent(transform);
+            remoteAvatarCollider.transform.localPosition = Vector3.zero;
             remoteAvatarCollider.transform.rotation = Quaternion.identity;
             remoteAvatarCollider.transform.localScale = Vector3.one;
             collidersByWalletId.TryAdd(profile.WalletId, remoteAvatarCollider);
@@ -152,7 +163,9 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new RemotePlayerMovementComponent(queuePool),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent(),
+                new TorsoIKComponent()
             );
 
             collidersGlobalCache.Associate(remoteAvatarCollider.Collider, entity);

@@ -109,19 +109,23 @@ namespace DCL.Navmap
 
                 if (@params.filter == NavmapSearchPlaceFilter.All)
                 {
-                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(@params.page, @params.pageSize, ct,
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchDestinationsAsync(@params.page, @params.pageSize, ct,
                         searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
-                        category: @params.category is "All" or "Favorites" ? string.Empty : @params.category);
+                        category: @params.category is "All" or "Favorites" ? string.Empty : @params.category,
+                        onlySdk7: true,
+                        onlyPlaces: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }
                 else if (@params.filter == NavmapSearchPlaceFilter.Favorites)
                 {
-                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.GetFavoritesAsync(
+                    using PlacesData.IPlacesAPIResponse response = await placesAPIService.GetFavoritesDestinationsAsync(
                         ct,
                         pageNumber: @params.page, pageSize: @params.pageSize,
-                        sortByBy: sort, sortDirection: sortDirection);
+                        sortByBy: sort, sortDirection: sortDirection,
+                        onlySdk7: true,
+                        onlyPlaces: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }

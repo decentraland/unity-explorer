@@ -42,11 +42,12 @@ namespace DCL.Events
         private readonly ICursor cursor;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private bool isSectionActivated;
-        private bool isFriendsAndCommunitiesLoaded;
+        private bool isFriendsLoaded;
+        private bool isCommunitiesLoaded;
         private readonly EventsByDayController eventsByDayController;
         private readonly EventsStateService eventsStateService;
 
@@ -61,7 +62,7 @@ namespace DCL.Events
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
@@ -69,7 +70,7 @@ namespace DCL.Events
             this.cursor = cursor;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             EventCardActionsController = eventCardActionsController;
 
@@ -108,7 +109,8 @@ namespace DCL.Events
             EventsClosed?.Invoke();
             eventsStateService.ClearAllFriends();
             eventsStateService.ClearMyCommunities();
-            isFriendsAndCommunitiesLoaded = false;
+            isFriendsLoaded = false;
+            isCommunitiesLoaded = false;
         }
 
         public void Animate(int triggerId) =>
@@ -128,23 +130,28 @@ namespace DCL.Events
             SectionOpen?.Invoke(section, fromDate ?? todayAtTheBeginningOfTheDay);
         }
 
-        public async UniTask RefreshFriendsAndCommunitiesDataAsync(CancellationToken ct)
+        public async UniTask RefreshFriendsDataAsync(CancellationToken ct)
         {
-            if (isFriendsAndCommunitiesLoaded)
+            if (isFriendsLoaded)
                 return;
 
             await GetAllFriendsAsync(ct);
-            await GetMyCommunitiesAsync(ct);
+        }
 
-            isFriendsAndCommunitiesLoaded = true;
+        public async UniTask RefreshCommunitiesDataAsync(CancellationToken ct)
+        {
+            if (isCommunitiesLoaded)
+                return;
+
+            await GetMyCommunitiesAsync(ct);
         }
 
         private async UniTask GetAllFriendsAsync(CancellationToken ct)
         {
-            if (!friendServiceProxy.Configured)
+            if (friendsService == null)
                 return;
 
-            var result = await friendServiceProxy.StrictObject
+            var result = await friendsService
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 
@@ -158,6 +165,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetAllFriends(result.Value.Friends.ToList());
+            isFriendsLoaded = true;
         }
 
         private async UniTask GetMyCommunitiesAsync(CancellationToken ct)
@@ -181,6 +189,7 @@ namespace DCL.Events
             }
 
             eventsStateService.SetMyCommunities(result.Value.data.results.ToList());
+            isCommunitiesLoaded = true;
         }
 
         private void OnGoToTodayButtonClicked() =>
@@ -191,7 +200,7 @@ namespace DCL.Events
 
         public void GoToCreateEventPage(bool fromHeader)
         {
-            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.WhatsOnNewEventLink)}?utm_source=explorer&utm_campaign=discover");
             CreateEventButtonClicked?.Invoke(fromHeader);
         }
     }

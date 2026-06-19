@@ -67,6 +67,15 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
         public Bunch<RemoteProfile> Bunch() =>
             new (remoteProfiles);
 
+        public void Reset()
+        {
+            foreach (var kv in pendingProfiles)
+                kv.Value.Cts.SafeCancelAndDispose();
+
+            pendingProfiles.Clear();
+            remoteProfiles.Clear();
+        }
+
         private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
         {
             URLDomain? lambdasEndpoint = remoteMetadata.GetLambdaDomainOrNull(remoteAnnouncement.WalletId);
@@ -101,13 +110,18 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             try
             {
                 // Delay the profile resolution in case it's not found, as otherwise it will be re-requested every frame - it's not the desired behaviour
-                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token, batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
+                // In case it needs to be retrieved, force it to the catalyst, otherwise we get outdated profiles
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, lambdasEndpoint, cts.Token,
+                    batchBehaviour: IProfileRepository.FetchBehaviour.DELAY_UNTIL_RESOLVED);
 
                 if (profile is null)
                     return;
 
-                // Take the room source from the dictionary as the value could be updated
-                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId, pendingProfiles[remoteAnnouncement.WalletId].FromRoom));
+                // Reset() may have cancelled and cleared pendingProfiles while we were awaiting.
+                if (cts.IsCancellationRequested || !pendingProfiles.TryGetValue(remoteAnnouncement.WalletId, out PendingRequest currentRequest))
+                    return;
+
+                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId, currentRequest.FromRoom));
 
                 ReportHub.Log(ReportCategory.PROFILE,
                     $"{remoteAnnouncement} was downloaded for {(DateTime.Now - startedAt).TotalSeconds} s.");

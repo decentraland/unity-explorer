@@ -4,19 +4,14 @@ using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
-using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Quality;
+using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
-using DCL.SkyBox;
 using DCL.UI;
-using DCL.Utilities;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,12 +33,9 @@ namespace DCL.Settings
 
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly QualitySettingsController qualitySettingsController;
         private readonly AudioMixer generalAudioMixer;
-        private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
-        private readonly LandscapeData landscapeData;
-        private readonly QualitySettingsAsset qualitySettingsAsset;
-        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
@@ -51,57 +43,45 @@ namespace DCL.Settings
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly UpscalingController upscalingController;
-        private readonly bool isTranslationChatEnabled;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
-        private readonly IAppArgs appParameters;
+        private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
 
-        public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+        public event Action<ChatBubbleVisibilitySettings>? ChatBubblesVisibilityChanged;
 
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            QualitySettingsController qualitySettingsController,
             AudioMixer generalAudioMixer,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            LandscapeData landscapeData,
-            QualitySettingsAsset qualitySettingsAsset,
-            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
-            UpscalingController upscalingController,
-            bool isTranslationChatEnabled,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            IAppArgs appParameters)
+            PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.qualitySettingsController = qualitySettingsController;
             this.generalAudioMixer = generalAudioMixer;
-            this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
-            this.landscapeData = landscapeData;
-            this.qualitySettingsAsset = qualitySettingsAsset;
-            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.upscalingController = upscalingController;
-            this.isTranslationChatEnabled = isTranslationChatEnabled;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
-            this.appParameters = appParameters;
+            this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             sections = new Dictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)>
@@ -184,7 +164,7 @@ namespace DCL.Settings
 
                 if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
-                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer)).Value;
+                SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
                     generalGroupView.GroupTitle.text = group.GroupTitle;
@@ -201,24 +181,19 @@ namespace DCL.Settings
                             await module.CreateModuleAsync
                             (
                                 generalGroupView.ModulesContainer,
-                                realmPartitionSettingsAsset,
+                                qualitySettingsController,
                                 videoPrioritizationSettings,
-                                landscapeData,
                                 generalAudioMixer,
-                                qualitySettingsAsset,
-                                skyboxSettingsAsset,
                                 controlsSettingsAsset,
                                 chatSettingsAsset,
                                 memoryCap,
                                 sceneLoadingLimit,
-                                userBlockingCacheProxy,
+                                userBlockingCache,
                                 this,
-                                upscalingController,
                                 assetsProvisioner,
                                 volumeBus,
-                                isTranslationChatEnabled,
                                 eventBus,
-                                appParameters);
+                                pointAtMarkerVisibilitySettings);
 
                         if (controller != null)
                             controllers.Add(controller);

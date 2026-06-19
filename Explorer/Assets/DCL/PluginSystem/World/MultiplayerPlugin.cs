@@ -1,4 +1,6 @@
+using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
@@ -12,13 +14,26 @@ namespace DCL.PluginSystem.World
 {
     public class MultiplayerPlugin : IDCLWorldPluginWithoutSettings
     {
-        public void Dispose()
+        private readonly Arch.Core.World globalWorld;
+        private readonly Entity localPlayerEntity;
+        private readonly CharacterDataPropagationUtility characterDataPropagationUtility;
+
+        public MultiplayerPlugin(
+            Arch.Core.World globalWorld,
+            Entity localPlayerEntity,
+            CharacterDataPropagationUtility characterDataPropagationUtility)
         {
-            //ignore
+            this.globalWorld = globalWorld;
+            this.localPlayerEntity = localPlayerEntity;
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void Dispose() { }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+            LocalPlayerCRDTEntityHandlerSystem.InjectToWorld(ref builder, globalWorld, localPlayerEntity, characterDataPropagationUtility, persistentEntities);
+
             WritePlayerIdentityDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteSDKAvatarBaseSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);

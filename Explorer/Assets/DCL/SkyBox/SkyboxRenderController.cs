@@ -1,4 +1,6 @@
 ﻿using DCL.Diagnostics;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Cysharp.Threading.Tasks;
@@ -7,6 +9,14 @@ using Utility;
 
 public class SkyboxRenderController : MonoBehaviour
 {
+    [Serializable]
+    public class LensFlareTimeEntry
+    {
+        [Range(0f, 1f)]
+        public float StartTime;
+        public LensFlareDataSRP FlareAsset = null!;
+    }
+
     private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
     private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
     private static readonly int NADIR_COLOR = Shader.PropertyToID("_NadirColor");
@@ -19,6 +29,9 @@ public class SkyboxRenderController : MonoBehaviour
     private static readonly int SUN_RADIANCE = Shader.PropertyToID("_Sun_Radiance");
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
+    private static readonly int CLOUDS_ROTATION_SPEED = Shader.PropertyToID("_CloudsRotationSpeed");
+    private static readonly int SECOND_SUN_ROTATION_SPEED = Shader.PropertyToID("_Second_Sun_Rotation_Speed");
+    private static readonly int TIME_PARAMETERS = Shader.PropertyToID("_TimeParameters");
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -34,6 +47,12 @@ public class SkyboxRenderController : MonoBehaviour
     [SerializeField] private AnimationCurve sunRadiance;
     [SerializeField] private AnimationCurve sunRadianceIntensity;
     [SerializeField] private AnimationCurve moonMaskSize;
+
+    [Header("Lens Flare")]
+    [SerializeField] private AnimationCurve lensFlareIntensity;
+    [SerializeField] private List<LensFlareTimeEntry> lensFlareEntries = new();
+    private LensFlareComponentSRP? lensFlare;
+    private LensFlareDataSRP? activeLensFlareData;
 
     [Header("Skybox Color")]
     [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp;
@@ -66,8 +85,16 @@ public class SkyboxRenderController : MonoBehaviour
     [Header("Transition Settings")]
     [SerializeField] private float transitionDuration;
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay, bool lensFlareEnabled = true, bool freezeTime = false)
     {
+        // Pre-seed transition target so UpdateSkybox below short-circuits and skips the directional-light
+        // coroutine, whose first sync tick would Lerp from float.MinValue and clamp the gradient samplers.
+        if (freezeTime)
+        {
+            directionalLightTimeOfDay = initialTimeOfDay;
+            targetTimeOfDay = initialTimeOfDay;
+        }
+
         if (skyboxMat)
         {
 #if UNITY_EDITOR
@@ -109,6 +136,8 @@ public class SkyboxRenderController : MonoBehaviour
                 ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
             else
                 lightAnimator.AddClip(lightAnimation, lightAnimation.name);
+
+            InitializeLensFlare(lensFlareEnabled);
         }
 
         //setup indirect light
@@ -148,11 +177,11 @@ public class SkyboxRenderController : MonoBehaviour
 
         CancellationToken token = transitionCancellationTokenSource.Token;
         float startTime = directionalLightTimeOfDay;
-        float startTimeStamp = Time.time;
+        float startTimeStamp = UnityEngine.Time.time;
 
-        while (Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        while (UnityEngine.Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
         {
-            float progress = (Time.time - startTimeStamp) / duration;
+            float progress = (UnityEngine.Time.time - startTimeStamp) / duration;
             float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
 
             directionalLightTimeOfDay = lerpedTimeOfDay;
@@ -208,6 +237,52 @@ public class SkyboxRenderController : MonoBehaviour
 
         //change size of moon mask
         RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
+
+        UpdateLensFlare(timeOfDay);
+    }
+
+    private void InitializeLensFlare(bool lensFlareEnabled)
+    {
+        lensFlare = directionalLight.gameObject.GetComponent<LensFlareComponentSRP>()
+                    ?? directionalLight.gameObject.AddComponent<LensFlareComponentSRP>();
+
+        lensFlare.useOcclusion = true;
+        lensFlare.enabled = lensFlareEnabled;
+
+        lensFlareEntries.Sort(static (a, b) => a.StartTime.CompareTo(b.StartTime));
+    }
+
+    private void UpdateLensFlare(float timeOfDay)
+    {
+        if (lensFlare == null) return;
+
+        lensFlare.intensity = lensFlareIntensity.Evaluate(timeOfDay);
+
+        LensFlareDataSRP? newFlareData = GetActiveLensFlareData(timeOfDay);
+
+        if (newFlareData != activeLensFlareData)
+        {
+            activeLensFlareData = newFlareData;
+            lensFlare.lensFlareData = newFlareData;
+        }
+    }
+
+    private LensFlareDataSRP? GetActiveLensFlareData(float timeOfDay)
+    {
+        if (lensFlareEntries.Count == 0)
+            return null;
+
+        // Find the last entry whose StartTime is <= current time
+        LensFlareDataSRP? result = null;
+
+        for (int i = 0; i < lensFlareEntries.Count; i++)
+        {
+            if (lensFlareEntries[i].StartTime <= timeOfDay)
+                result = lensFlareEntries[i].FlareAsset;
+        }
+
+        // If timeOfDay is before the first entry, wrap around to the last
+        return result ?? lensFlareEntries[lensFlareEntries.Count - 1].FlareAsset;
     }
 
     /// <summary>
@@ -232,6 +307,20 @@ public class SkyboxRenderController : MonoBehaviour
     {
         if (fog)
             RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
+    }
+
+    public void DisableSkyboxTime()
+    {
+        skyboxMaterial.SetFloat(CLOUDS_ROTATION_SPEED, 0f);
+        skyboxMaterial.SetFloat(SECOND_SUN_ROTATION_SPEED, 0f);
+
+        // Override shader-side time per-material to disable stars rotation and sky oscillation,
+        // which are driven by Unity's _TimeParameters global but have no material speed property.
+        skyboxMaterial.SetVector(TIME_PARAMETERS, Vector4.one);
+
+        // Cancel the pending directional light transition started during Initialize(),
+        // which would lerp from float.MinValue and corrupt the light's position.
+        transitionCancellationTokenSource?.Cancel();
     }
 
     private void OnDestroy()

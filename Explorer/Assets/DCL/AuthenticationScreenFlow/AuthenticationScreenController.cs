@@ -9,7 +9,7 @@ using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings.Utils;
@@ -57,16 +57,15 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly BuildData buildData;
+        private readonly string installSource;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
         private readonly AuthScreenEmotesSettings emotesSettings;
-        private readonly List<Resolution> possibleResolutions = new ();
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IAppArgs appArgs;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly ProfileChangesBus profileChangesBus;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private readonly IInputBlock inputBlock;
@@ -74,14 +73,24 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private CancellationTokenSource? loginCancellationTokenSource;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.FULLSCREEN;
         public ReactiveProperty<AuthStatus> CurrentState { get; } = new (AuthStatus.None);
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
+        // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
+        // whether the session created a new account or restored an existing one. Without this flag
+        // the LOGGED_IN vs LOGGED_IN_CACHED split conflates "fresh auth" with "new account",
+        // misclassifying returning users whose cached identity expired.
+        public bool IsCurrentlyNewAccount { get; internal set; }
+
         public event Action DiscordButtonClicked;
         public event Action<string, bool> OTPVerified;
         public event Action OTPResend;
+        public event Action ProfileFinalized;
+
+        internal void RaiseProfileFinalized() =>
+            ProfileFinalized?.Invoke();
 
         private MVCStateMachine<AuthStateBase> fsm;
         private AuthenticationScreenAudio audio;
@@ -96,15 +105,15 @@ namespace DCL.AuthenticationScreenFlow
             SplashScreen splashScreen,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
-            BuildData buildData,
+            string installSource,
             World world,
             AuthScreenEmotesSettings emotesSettings,
             IInputBlock inputBlock,
             AudioClipConfig backgroundMusic,
-            IAppArgs appArgs,
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -115,17 +124,15 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreen = splashScreen;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
-            this.buildData = buildData;
+            this.installSource = installSource;
             this.world = world;
             this.emotesSettings = emotesSettings;
             this.inputBlock = inputBlock;
             this.backgroundMusic = backgroundMusic;
-            this.appArgs = appArgs;
             this.wearablesProvider = wearablesProvider;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            possibleResolutions.AddRange(ResolutionUtils.GetAvailableResolutions());
+            this.profileChangesBus = profileChangesBus;
         }
 
         public override void Dispose()
@@ -155,10 +162,10 @@ namespace DCL.AuthenticationScreenFlow
             fsm = new MVCStateMachine<AuthStateBase>();
 
             fsm.AddStates(
-                new InitAuthState(viewInstance, buildData.InstallSource),
+                new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
-                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator, appArgs, possibleResolutions),
+                new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
+                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
             );
 
@@ -170,7 +177,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 fsm.AddStates(
                     otpVerificationState,
-                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource)
+                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
                 );
             }
 

@@ -4,9 +4,12 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -17,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -45,6 +49,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -67,7 +72,8 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IEmoteStorage emoteStorage)
+            IEmoteStorage emoteStorage,
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -82,6 +88,7 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
+            this.ownedNftFilter = ownedNftFilter;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
@@ -103,6 +110,7 @@ namespace DCL.Backpack.EmotesSection
 
         public void Deactivate()
         {
+            loadElementsCancellationToken.SafeCancelAndDispose();
             eventBus.FilterEvent -= OnFilterEvent;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
@@ -127,7 +135,7 @@ namespace DCL.Backpack.EmotesSection
             );
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             if (!string.IsNullOrEmpty(command.BodyShape))
                 currentBodyShape = BodyShape.FromStringSafe(command.BodyShape);
@@ -148,93 +156,110 @@ namespace DCL.Backpack.EmotesSection
 
             async UniTaskVoid RequestPageAsync(CancellationToken ct)
             {
-                IReadOnlyList<ITrimmedEmote> emotes;
+                List<ITrimmedEmote> customOwnedEmotes = ListPool<ITrimmedEmote>.Get();
 
-                using var _ = ListPool<ITrimmedEmote>.Get(out var customOwnedEmotes);
-                customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
-
-                var result = await emoteProvider.GetTrimmedByParamsAsync(
-                    new IEmoteProvider.OwnedEmotesRequestOptions(
-                        pageNum: pageNumber,
-                        pageSize: CURRENT_PAGE_SIZE,
-                        collectionId: null,
-                        orderOperation: currentOrder,
-                        name: currentSearch
-                    ),
-                    ct,
-                    customOwnedEmotes
-                );
-
-                int totalAmount = result.totalAmount;
-
-                // TODO: request base emotes collection instead of pointers:
-                // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
-                if (onChainEmotesOnly)
-                    emotes = customOwnedEmotes;
-                else
+                try
                 {
-                    using var scope = ListPool<IEmote>.Get(out var baseEmotes);
-                    baseEmotes = baseEmotes.EnsureNotNull();
+                    var result = await emoteProvider.GetTrimmedByParamsAsync(
+                        new IEmoteProvider.OwnedEmotesRequestOptions(
+                            pageNum: pageNumber,
+                            pageSize: CURRENT_PAGE_SIZE,
+                            collectionId: null,
+                            orderOperation: currentOrder,
+                            name: currentSearch
+                        ),
+                        ct,
+                        customOwnedEmotes
+                    );
 
-                    await emoteProvider.GetByPointersAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
+                    // The fetch repopulated the registry — a reliable point to prune pending emote gifts that
+                    // left the wallet (or came back).
+                    ownedNftFilter.Prune(GiftableType.Emote);
 
-                    IEnumerable<IEmote> filteredEmotes = baseEmotes;
+                    int totalAmount = result.totalAmount;
+                    IReadOnlyList<ITrimmedEmote> emotes;
 
-                    if (!string.IsNullOrEmpty(currentSearch!))
-                        filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
+                    // TODO: request base emotes collection instead of pointers:
+                    // https://peer-ec1.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars
+                    if (onChainEmotesOnly)
+                        emotes = customOwnedEmotes;
+                    else
+                    {
+                        using var scope = ListPool<IEmote>.Get(out var baseEmotes);
+                        baseEmotes = baseEmotes.EnsureNotNull();
 
-                    if (!string.IsNullOrEmpty(currentCategory!))
-                        filteredEmotes = baseEmotes.Where(emote => emote.GetCategory() == currentCategory);
+                        await emoteProvider.GetByPointersAsync(emoteStorage.BaseEmotesUrns, currentBodyShape, ct, baseEmotes);
 
-                    filteredEmotes = currentOrder.By switch
-                                     {
-                                         "name" => currentOrder.IsAscending
-                                             ? filteredEmotes.OrderBy(emote => emote.GetName())
-                                             : filteredEmotes.OrderByDescending(emote => emote.GetName()),
-                                         _ => filteredEmotes,
-                                     };
+                        IEnumerable<IEmote> filteredEmotes = baseEmotes;
 
-                    baseEmotes = filteredEmotes.ToList();
+                        if (!string.IsNullOrEmpty(currentSearch!))
+                            filteredEmotes = baseEmotes.Where(emote => emote.GetName().Contains(currentSearch, StringComparison.OrdinalIgnoreCase));
 
-                    int customOwnedEmotesAmount = result.totalAmount;
-                    totalAmount += baseEmotes.Count;
+                        if (!string.IsNullOrEmpty(currentCategory!))
+                            filteredEmotes = baseEmotes.Where(emote => emote.GetCategory() == currentCategory);
 
-                    var baseEmotesToSkip = 0;
-                    int emotesPageIndex = (pageNumber - 1) * CURRENT_PAGE_SIZE;
+                        filteredEmotes = currentOrder.By switch
+                                         {
+                                             "name" => currentOrder.IsAscending
+                                                 ? filteredEmotes.OrderBy(emote => emote.GetName())
+                                                 : filteredEmotes.OrderByDescending(emote => emote.GetName()),
+                                             _ => filteredEmotes,
+                                         };
 
-                    if (emotesPageIndex > customOwnedEmotesAmount)
-                        baseEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
+                        baseEmotes = filteredEmotes.ToList();
 
-                    // We always need to concat embedded emotes at the end, no matter the filter & sorting
-                    // otherwise the pagination in the realm provider get inconsistent with the union of the embedded emotes
-                    // The only way of getting to work properly is by the realm providing also off-chain emotes or request all emotes at once
-                    // For example:
-                    // 1. Set sort by name
-                    // 2. Page 1 will contain some embedded emotes & owned emotes
-                    // 3. Request page 2, the realm will not provide any of the owned emotes since they are part of page 1
-                    // 4. We will probably skip most of the owned emotes in the grid becoming inconsistent
-                    emotes = customOwnedEmotes.Concat(baseEmotes.Skip(baseEmotesToSkip))
-                                              .Take(CURRENT_PAGE_SIZE)
-                                              .ToArray();
+                        int customOwnedEmotesAmount = result.totalAmount;
+                        totalAmount += baseEmotes.Count;
+
+                        var baseEmotesToSkip = 0;
+                        int emotesPageIndex = (pageNumber - 1) * CURRENT_PAGE_SIZE;
+
+                        if (emotesPageIndex > customOwnedEmotesAmount)
+                            baseEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
+
+                        // We always need to concat embedded emotes at the end, no matter the filter & sorting
+                        // otherwise the pagination in the realm provider get inconsistent with the union of the embedded emotes
+                        // The only way of getting to work properly is by the realm providing also off-chain emotes or request all emotes at once
+                        // For example:
+                        // 1. Set sort by name
+                        // 2. Page 1 will contain some embedded emotes & owned emotes
+                        // 3. Request page 2, the realm will not provide any of the owned emotes since they are part of page 1
+                        // 4. We will probably skip most of the owned emotes in the grid becoming inconsistent
+                        emotes = customOwnedEmotes.Concat(baseEmotes.Skip(baseEmotesToSkip))
+                                                  .Take(CURRENT_PAGE_SIZE)
+                                                  .ToArray();
+                    }
+
+                    if (emotes.Count == 0)
+                    {
+                        view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSearch));
+                        view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
+                        view.RegularResults.SetActive(string.IsNullOrEmpty(currentSearch) && string.IsNullOrEmpty(currentCategory));
+                    }
+                    else
+                    {
+                        view.NoSearchResults.SetActive(false);
+                        view.NoCategoryResults.SetActive(false);
+                        view.RegularResults.SetActive(true);
+                    }
+
+                    if (ct.IsCancellationRequested)
+                        return;
+
+                    SetGridElements(emotes);
+
+                    if (reconfigurePageSelector)
+                        pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
                 }
-
-                if (emotes.Count == 0)
+                catch (OperationCanceledException)
                 {
-                    view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSearch));
-                    view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
-                    view.RegularResults.SetActive(string.IsNullOrEmpty(currentSearch) && string.IsNullOrEmpty(currentCategory));
+                    //No need to do anything if the operation was canceled
                 }
-                else
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.BACKPACK); }
+                finally
                 {
-                    view.NoSearchResults.SetActive(false);
-                    view.NoCategoryResults.SetActive(false);
-                    view.RegularResults.SetActive(true);
+                    ListPool<ITrimmedEmote>.Release(customOwnedEmotes);
                 }
-
-                SetGridElements(emotes);
-
-                if (reconfigurePageSelector)
-                    pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
             }
         }
 
@@ -296,6 +321,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsPending = IsFullyPending(emotes[i].GetUrn());
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
@@ -304,6 +330,13 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base emotes have no
+        // registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            emoteStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+            && registry.Count > 0
+            && !ownedNftFilter.HasAvailableInstance(registry);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
@@ -345,12 +378,27 @@ namespace DCL.Backpack.EmotesSection
 
         private async UniTaskVoid WaitForThumbnailAsync(IThumbnailAttachment emote, BackpackItemView itemView, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            Sprite sprite = await thumbnailProvider.GetAsync(emote, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+            }
         }
 
         private void ClearPoolElements()

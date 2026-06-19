@@ -1,3 +1,4 @@
+using DCL.Browser.DecentralandUrls;
 using DCL.WebRequests.ChromeDevtool;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
@@ -5,6 +6,7 @@ using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Global.Editor
 {
@@ -157,10 +159,14 @@ namespace Global.Editor
             SerializedProperty endProperty = property.GetEndProperty();
 
             bool enterChildren = true;
+            bool isCustomGatekeeper = IsCustomGatekeeperMode(property);
 
             while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
             {
                 enterChildren = false;
+
+                if (iterator.name == "customGatekeeperUrl" && !isCustomGatekeeper)
+                    continue;
 
                 float propertyHeight = EditorGUI.GetPropertyHeight(iterator, true);
                 position.height = propertyHeight;
@@ -178,14 +184,26 @@ namespace Global.Editor
             SerializedProperty endProperty = property.GetEndProperty();
 
             bool enterChildren = true;
+            bool isCustomGatekeeper = IsCustomGatekeeperMode(property);
 
             while (iterator.NextVisible(enterChildren) && !SerializedProperty.EqualContents(iterator, endProperty))
             {
                 enterChildren = false;
+
+                if (iterator.name == "customGatekeeperUrl" && !isCustomGatekeeper)
+                    continue;
+
                 height += EditorGUI.GetPropertyHeight(iterator, true) + EditorGUIUtility.standardVerticalSpacing;
             }
 
             return height;
+        }
+
+        private static bool IsCustomGatekeeperMode(SerializedProperty property)
+        {
+            SerializedProperty gatekeeperMode = property.FindPropertyRelative("gatekeeperMode");
+            Assert.IsNotNull(gatekeeperMode, "Failed to find 'gatekeeperMode' property.");
+            return gatekeeperMode.intValue == (int)GatekeeperMode.Custom;
         }
 
         private static string? FindCreatorHubPath()

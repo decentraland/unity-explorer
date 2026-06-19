@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using System;
 
 namespace DCL.Passport.Modules
 {
@@ -17,6 +18,29 @@ namespace DCL.Passport.Modules
         {
             this.view = view;
             this.additionalFieldsController = additionalFieldsController;
+
+            view.DescriptionForEditMode.onValueChanged.AddListener(UpdateCharacterCounter);
+            view.DescriptionForEditMode.onSelect.AddListener(EnableEditFields);
+            view.DescriptionForEditMode.onDeselect.AddListener(DisableEditFields);
+        }
+
+        private void DisableEditFields(string _)
+        {
+            view.DescriptionEditOutline.SetActive(false);
+            view.DescriptionCharacterCounter.gameObject.SetActive(false);
+        }
+
+        private void EnableEditFields(string _)
+        {
+            view.DescriptionEditOutline.SetActive(true);
+            view.DescriptionCharacterCounter.gameObject.SetActive(true);
+        }
+
+        public void Dispose()
+        {
+            view.DescriptionForEditMode.onValueChanged.RemoveListener(UpdateCharacterCounter);
+            view.DescriptionForEditMode.onSelect.RemoveListener(EnableEditFields);
+            view.DescriptionForEditMode.onDeselect.RemoveListener(DisableEditFields);
         }
 
         public void Setup(Profile profile)
@@ -31,10 +55,13 @@ namespace DCL.Passport.Modules
         public void ResetEdition() =>
             view.DescriptionForEditMode.text = view.Description.text;
 
-        public void SaveDataIntoProfile() =>
-            currentProfile.Description = view.DescriptionForEditMode.text;
+        public void SaveDataIntoProfile(Profile profile) =>
+            profile.Description = view.DescriptionForEditMode.text;
 
         public void SetAsInteractable(bool isInteractable) =>
             view.DescriptionForEditMode.interactable = isInteractable;
+
+        private void UpdateCharacterCounter(string text) =>
+            view.DescriptionCharacterCounter.text = $"{text.Length}/{view.DescriptionForEditMode.characterLimit}";
     }
 }

@@ -21,6 +21,29 @@ using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRend
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 ```
 
+### Intention Equality Contract
+
+Loading caches that derive from `RefCountStreamableCacheBase<TAssetData, TAsset, TIntention>` (e.g. `GltfLoadCache`) deduplicate concurrent requests via a `Dictionary<TIntention, TAssetData>` and an `OngoingRequests` table keyed by intention. For dedup to fire, the intention struct **must** override `Equals` and `GetHashCode` consistently:
+
+- Equal intentions must produce equal hash codes.
+- Only fields that uniquely identify the asset content should participate in equality.
+
+The default `ValueType.GetHashCode` is unsafe for intentions with multiple reference fields: it picks the first non-null reference field for the hash, which is silently inconsistent with a custom `Equals`. The result is a dedup that compiles, runs, and quietly misses — concurrent consumers spawn duplicate loads and the cache fills with redundant entries.
+
+Concrete example, `GetGLTFIntention`:
+
+```csharp
+public bool Equals(GetGLTFIntention other) =>
+    StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) && Name == other.Name;
+
+public override int GetHashCode() =>
+    HashCode.Combine(
+        Hash == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(Hash),
+        Name);
+```
+
+`Hash` is compared case-insensitively as defense against an upstream toolchain emitting uppercase hashes. `Equals` and `GetHashCode` use the same case-folding so the contract holds.
+
 ## The Lifecycle of an AssetPromise
 
 The lifecycle of an `AssetPromise` involves creation, polling for the result, consuming it, and handling cleanup.
@@ -34,7 +57,7 @@ There are two main ways to create an `AssetPromise`:
 This is the most common method. It creates a new entity in the ECS world to represent the loading process.
 
 ```csharp
-// Example from DCL/Infrastructure/ECS/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
+// Example from DCL/Infrastructure/SceneLifeCycle/Systems/LoadFixedPointersSystem.cs
 
 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
    .Create(World, new GetSceneDefinition(new CommonLoadingArguments(url), ipfsPath), PartitionComponent.TOP_PRIORITY);
@@ -194,6 +217,8 @@ protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInt
 ```
 
 This is the **processing** stage. `LoadTextureSystem` finds the promise entity that `MapPinLoaderSystem` created. It reads the `GetTextureIntention`, performs the web request to download the image, and creates the texture. When it's done, it adds a `StreamableLoadingResult<Texture2DData>` component to that same promise entity.
+
+`FlowInternalAsync` only runs on a full cache miss. Before it, `LoadSystemBase` consults the in-memory cache, then the persistent [disk cache](disk-cache.md), and deduplicates against the `OngoingRequests` table (concurrent requests for an equal intention piggyback on the first one's flow instead of downloading twice). After a successful download, the result is written back to memory and disk.
 
 ### Step 3: Promise Resolution (`MapPinLoaderSystem`)
 

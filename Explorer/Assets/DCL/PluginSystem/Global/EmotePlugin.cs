@@ -5,12 +5,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Load;
-using DCL.AvatarRendering.Emotes.Systems;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Emotes;
@@ -18,7 +17,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.ResourcesUnloading;
-using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -32,6 +30,8 @@ using ECS.SceneLifeCycle;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
+using DCL.AvatarRendering.Emotes.Play;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.Play.CharacterEmoteSystem;
 using LoadAudioClipGlobalSystem = DCL.AvatarRendering.Emotes.Load.LoadAudioClipGlobalSystem;
 using LoadEmotesByPointersSystem = DCL.AvatarRendering.Emotes.Load.LoadEmotesByPointersSystem;
@@ -59,19 +59,22 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private AudioSource? audioSourceReference;
-        private EmotesWheelController? emotesWheelController;
+        private readonly EmotePlayer emotePlayer;
         private readonly bool localSceneDevelopment;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly bool builderCollectionsPreview;
-        private readonly IAppArgs appArgs;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IScenesCache scenesCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly EntitiesAnalytics entitiesAnalytics;
+
+        private readonly IEventBus emotesEventBus;
+
+        private EmotesWheelController? emotesWheelController;
+        private IDisposable? requestOpenEmoteWheelSubscription;
+
         private readonly ITrimmedEmoteStorage trimmedEmoteStorage;
         private TimeSpan batchHeartbeat;
+
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -88,16 +91,15 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             string builderContentURL,
-            bool localSceneDevelopment,
-            ISharedSpaceManager sharedSpaceManager,
-            bool builderCollectionsPreview,
-            IAppArgs appArgs,
             IThumbnailProvider thumbnailProvider,
             IScenesCache scenesCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             EntitiesAnalytics entitiesAnalytics,
-            ITrimmedEmoteStorage trimmedEmoteStorage)
+            IEventBus emotesEventBus,
+            ITrimmedEmoteStorage trimmedEmoteStorage,
+            EmotePlayer emotePlayer)
         {
+            this.emotePlayer = emotePlayer;
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
@@ -112,13 +114,11 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
-            this.localSceneDevelopment = localSceneDevelopment;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.builderCollectionsPreview = builderCollectionsPreview;
-            this.appArgs = appArgs;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.thumbnailProvider = thumbnailProvider;
             this.scenesCache = scenesCache;
             this.entitiesAnalytics = entitiesAnalytics;
+            this.emotesEventBus = emotesEventBus;
             this.trimmedEmoteStorage = trimmedEmoteStorage;
             this.decentralandUrlsSource = decentralandUrlsSource;
 
@@ -128,6 +128,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            requestOpenEmoteWheelSubscription?.Dispose();
             emotesWheelController?.Dispose();
         }
 
@@ -137,7 +138,7 @@ namespace DCL.PluginSystem.Global
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesDTOByPointersFromRealmIntention>(false, false),
-                emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics);
+                emoteStorage, decentralandUrlsSource, EMOTES_EMBEDDED_SUBDIRECTORY, entitiesAnalytics, localSceneDevelopment);
 
             BatchEmotesDTOSystem.InjectToWorld(ref builder, decentralandUrlsSource, batchHeartbeat);
 
@@ -146,10 +147,7 @@ namespace DCL.PluginSystem.Global
                 emoteStorage, trimmedEmoteStorage, EMOTES_COMPLEMENT_URL,
                 decentralandUrlsSource, builderContentURL);
 
-            if(builderCollectionsPreview)
-                ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
-
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs, scenesCache);;
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, emotePlayer, debugBuilder, localSceneDevelopment, scenesCache);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
@@ -175,8 +173,6 @@ namespace DCL.PluginSystem.Global
             // TODO: convert into an async operation so we don't increment the loading times at app's startup
             IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
 
-            audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
-
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteStorage.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
@@ -187,18 +183,27 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, this.thumbnailProvider,
-                inputBlock, cursor, sharedSpaceManager);
-
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
+                inputBlock, cursor, mvcManager);
 
             mvcManager.RegisterController(emotesWheelController);
+
+            requestOpenEmoteWheelSubscription = emotesEventBus.Subscribe<RequestToggleEmoteWheelEvent>(OnEmoteWheelShortcutPerformed);
+        }
+
+        private void OnEmoteWheelShortcutPerformed(RequestToggleEmoteWheelEvent _)
+        {
+            if (emotesWheelController == null) return;
+
+            if (emotesWheelController.State == ControllerState.ViewHidden)
+                mvcManager.ShowAndForget(EmotesWheelController.IssueCommand());
+            else
+                emotesWheelController.Close();
         }
 
         [Serializable]
         public class EmoteSettings : IDCLPluginSettings
         {
             [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
-            [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
             [field: SerializeField] public uint BatchHeartbeatMs { get; private set; } = 100;
@@ -209,21 +214,13 @@ namespace DCL.PluginSystem.Global
                 public EmbeddedEmotesReference(string guid) : base(guid) { }
             }
 
-            [Serializable]
-            public class EmoteAudioSourceReference : AssetReferenceGameObject
-            {
-                public EmoteAudioSourceReference(string guid) : base(guid) { }
-            }
-
             /// <summary>
             /// Ordered list of base emote URNs.
             /// The order defines the default emote order for users with no equipped emotes.
             /// </summary>
-            [field: SerializeField]
-            public string[] BaseEmotes { get; private set; }
+            [field: SerializeField] public string[] BaseEmotes { get; private set; }
 
-            public IReadOnlyCollection<URN> BaseEmotesAsURN() =>
-                BaseEmotes.Select(s => new URN(s)).ToArray();
+            public IReadOnlyCollection<URN> BaseEmotesAsURN() => BaseEmotes.Select(s => new URN(s)).ToArray();
         }
     }
 }

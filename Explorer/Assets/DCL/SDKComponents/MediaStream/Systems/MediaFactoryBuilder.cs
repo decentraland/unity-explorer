@@ -1,5 +1,6 @@
-﻿using Arch.Core;
+using Arch.Core;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities;
@@ -16,30 +17,31 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public class MediaFactoryBuilder
     {
-        private readonly ObjectProxy<IRoomHub> roomHub;
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
         private readonly MediaVolume volumeBus;
         private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget performanceBudget;
         private readonly IObjectPool<RenderTexture> videoTexturesPool;
         private readonly AssetPreLoadCache assetPreLoadCache;
+        private readonly IAnalyticsController analyticsController;
 
-        public MediaFactoryBuilder(ObjectProxy<IRoomHub> roomHub, IWebRequestController webRequestController, MediaVolume volumeBus,
+        public MediaFactoryBuilder(IWebRequestController webRequestController, MediaVolume volumeBus,
             IPerformanceBudget performanceBudget, MediaPlayer mediaPlayerPrefab, IObjectPool<RenderTexture> videoTexturesPool,
-            AssetPreLoadCache assetPreLoadCache)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
         {
-            this.roomHub = roomHub;
             this.webRequestController = webRequestController;
             this.performanceBudget = performanceBudget;
             this.videoTexturesPool = videoTexturesPool;
             this.volumeBus = volumeBus;
             this.assetPreLoadCache = assetPreLoadCache;
+            this.analyticsController = analyticsController;
 
             mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
         }
 
-        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps) =>
-            new (sceneDeps.SceneData, roomHub.StrictObject.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
-                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache);
+        public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub) =>
+            new (sceneDeps.SceneData, roomHub.StreamingRoom(), mediaPlayerCustomPool, sceneDeps.SceneStateProvider,
+                volumeBus, videoTexturesPool, sceneDeps.EntitiesMap, world, webRequestController, performanceBudget, assetPreLoadCache,
+                analyticsController);
     }
 }

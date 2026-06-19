@@ -7,7 +7,13 @@ namespace DCL.Multiplayer.Movement
     [Serializable]
     public struct NetworkMovementMessage : IEquatable<NetworkMovementMessage>
     {
-        public float timestamp;
+        public double timestamp;
+
+        /// <summary>
+        ///     Stored to be able to perform diffs
+        /// </summary>
+        public Vector2Int parcel;
+
         public Vector3 position;
         public Vector3 velocity;
         public float velocitySqrMagnitude;
@@ -23,6 +29,9 @@ namespace DCL.Multiplayer.Movement
         public bool isStunned;
         public bool isInstant;
         public bool isEmoting;
+
+        public bool isPointingAt;
+        public Vector3 pointAtWorldHitPoint;
 
         public AnimationStates animState;
 

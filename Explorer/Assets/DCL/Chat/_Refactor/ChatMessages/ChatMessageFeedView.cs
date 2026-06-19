@@ -1,11 +1,12 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using DCL.Chat.ChatReactions.Configs;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.Utilities;
 using DG.Tweening;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using DCL.Translation;
 using UnityEngine;
@@ -29,6 +30,12 @@ namespace DCL.Chat.ChatMessages
         private CancellationTokenSource? fadeoutCts;
 
         private IReadOnlyCollection<string> onlineParticipants = Array.Empty<string>();
+
+        private ChatReactionsAtlasConfig reactionsAtlasConfig;
+        private string ownWalletAddress = string.Empty;
+        private ChatReactionsMessageConfig messageReactionsConfig;
+
+        private bool reactionsEnabled = true;
 
         // View models are reused and set
         // by reference from the presenter
@@ -59,6 +66,10 @@ namespace DCL.Chat.ChatMessages
 
         public event Action? OnScrolledToBottom;
         public event Action? OnScrollToBottomButtonClicked;
+        public event Action<string, ChatEntryView>? OnReactionButtonClicked;
+
+        [field: Header("Event Bus")]
+        [field: SerializeField] internal ViewEventBus reactionEventBus { get; private set; }
 
         private Sequence? _fadeSequenceTween;
 
@@ -83,6 +94,19 @@ namespace DCL.Chat.ChatMessages
         public void SetUserConnectivityProvider(IReadOnlyCollection<string> onlineParticipants)
         {
             this.onlineParticipants = onlineParticipants;
+        }
+
+        public void SetReactionsConfig(ChatReactionsAtlasConfig atlasConfig, string walletAddress,
+            ChatReactionsMessageConfig messageReactionsConfig)
+        {
+            reactionsAtlasConfig = atlasConfig;
+            ownWalletAddress = walletAddress;
+            this.messageReactionsConfig = messageReactionsConfig;
+        }
+
+        public void SetReactionsEnabled(bool activated)
+        {
+            reactionsEnabled = activated;
         }
 
         private void ChatScrollToBottomToBottomClicked()
@@ -119,7 +143,11 @@ namespace DCL.Chat.ChatMessages
         ///     Reconstructs the scroll view with the data source that was previously set.
         /// </summary>
         /// <param name="resetPosition"></param>
-        public void ReconstructScrollView(bool resetPosition)
+        /// <param name="preserveScrollPosition">
+        ///     When true, forces the non-scrolling "prevent movement" branch even if the user is at the bottom.
+        ///     Used to keep an anchored reaction popup visually stable when new messages arrive.
+        /// </param>
+        public void ReconstructScrollView(bool resetPosition, bool preserveScrollPosition = false)
         {
             int entriesCountWithPaddings = viewModels.Count + 2; // +2 for the padding at the top and bottom
 
@@ -132,7 +160,7 @@ namespace DCL.Chat.ChatMessages
             loopList.RefreshAllShownItem();
 
             // Scroll view adjustment
-            if (IsAtBottom()) { loopList.MovePanelToItemIndex(0, 0); }
+            if (IsAtBottom() && !preserveScrollPosition) { loopList.MovePanelToItemIndex(0, 0); }
             else
             {
                 // TODO this solution doesn't account for the sliding separator element
@@ -191,13 +219,25 @@ namespace DCL.Chat.ChatMessages
         internal void StartScrollBarFade(float targetValue, float duration, Ease easing)
         {
             scrollbarCanvasGroup.DOKill();
-
-            float scrollbarTargetAlpha = targetValue;
-            scrollbarCanvasGroup.DOFade(scrollbarTargetAlpha, duration).SetEase(easing);
+            scrollbarCanvasGroup.DOFade(targetValue, duration).SetEase(easing);
         }
 
         internal bool IsAtBottom() =>
             viewModels.Count == 0 || loopList.IsLastItemVisible();
+
+        /// <summary>
+        /// True when the chat content overflows the viewport — i.e. the user can actually scroll.
+        /// </summary>
+        internal bool IsScrollable()
+        {
+            if (scrollRect == null) return false;
+
+            RectTransform? content = scrollRect.content;
+            RectTransform? viewport = scrollRect.viewport;
+            if (content == null || viewport == null) return false;
+
+            return content.rect.height > viewport.rect.height;
+        }
 
         /// <summary>
         ///     Accounts for the padding
@@ -236,34 +276,46 @@ namespace DCL.Chat.ChatMessages
                 ItemPrefabConfData? prefabConf = listView.ItemPrefabDataList[(int)prefabIndex];
 
                 item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
-                ChatEntryView? itemScript = item.GetComponent<ChatEntryView>();
-                itemScript.Reset();
-                itemScript.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
+                ChatEntryView? chatEntry = item.GetComponent<ChatEntryView>();
+                chatEntry.Reset();
+                chatEntry.SetItemData(viewModel, OnChatMessageOptionsButtonClicked,
                     !chatMessage.IsSentByOwnUser ? OnProfileClicked : null, isTranslationActivated, isAutoTranslationEnabled);
 
-                itemScript.OnTranslateRequested -= HandleTranslateRequest;
-                itemScript.OnRevertRequested -= HandleRevertRequest;
-                itemScript.OnTranslateRequested += HandleTranslateRequest;
-                itemScript.OnRevertRequested += HandleRevertRequest;
+                chatEntry.OnTranslateRequested = HandleTranslateRequest;
+                chatEntry.OnRevertRequested = HandleRevertRequest;
+                chatEntry.InitializeReactions(reactionsAtlasConfig, ownWalletAddress, messageReactionsConfig, reactionEventBus);
 
-                float padding = viewModel.ShowDateDivider ? itemScript.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
+                if (chatEntry.messageBubbleElement.reactionButton != null)
+                {
+                    chatEntry.messageBubbleElement.reactionButton.onClick.RemoveAllListeners();
+
+                    if (reactionsEnabled)
+                    {
+                        chatEntry.messageBubbleElement.reactionButton.onClick.AddListener(() =>
+                            OnReactionButtonClicked?.Invoke(viewModel.Message.MessageId, chatEntry));
+                    }
+                    else
+                    {
+                        chatEntry.messageBubbleElement.reactionButton.gameObject.SetActive(false);
+                    }
+                }
+
+                float padding = viewModel.ShowDateDivider ? chatEntry.dateDividerElement.sizeDelta.y : prefabConf.mPadding;
                 item.Padding = padding;
 
-                // Online connectivity could be integrated to the view model, but it's more efficient and simpler to do it here
-                // for shown elements only
-                itemScript.GreyOut(prefabIndex == ChatItemPrefabIndex.ChatEntry &&
-                                   !onlineParticipants.Contains(chatMessage.SenderWalletAddress)
-                    ? entryGreyOutOpacity
-                    : 0.0f);
+                bool senderIsOffline = prefabIndex == ChatItemPrefabIndex.ChatEntry
+                                      && !IsParticipantOnline(chatMessage.SenderWalletAddress);
+
+                chatEntry.GreyOut(senderIsOffline ? entryGreyOutOpacity : 0.0f);
 
                 if (viewModel.PendingToAnimate)
                 {
-                    itemScript.AnimateChatEntry();
+                    chatEntry.AnimateChatEntry();
                     viewModel.PendingToAnimate = false;
                 }
 
                 if (!chatMessage.IsSentByOwnUser)
-                    itemScript.ChatEntryClicked = OnProfileClicked;
+                    chatEntry.ChatEntryClicked = OnProfileClicked;
             }
 
             return item;
@@ -308,33 +360,12 @@ namespace DCL.Chat.ChatMessages
 
         internal void StartChatEntriesFadeout()
         {
-            // Kill any previous sequence or
-            // tweens touching this CanvasGroup
-            _fadeSequenceTween?.Kill();
-            chatEntriesCanvasGroup.DOKill();
-
-            chatEntriesCanvasGroup.alpha = 1f;
-
-            bool completed = false;
+            StopChatEntriesFadeout();
             float waitSeconds = chatEntriesWaitBeforeFading / 1000f;
 
             _fadeSequenceTween = DOTween.Sequence()
                 .AppendInterval(waitSeconds)
-                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime))
-                .OnComplete(() =>
-                {
-                    completed = true;
-                    _fadeSequenceTween = null;
-                })
-                .OnKill(() =>
-                {
-                    // If killed before completion,
-                    // snap back to fully visible
-                    if (!completed && chatEntriesCanvasGroup)
-                        chatEntriesCanvasGroup.alpha = 1f;
-
-                    _fadeSequenceTween = null;
-                });
+                .Append(chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime));
         }
 
         internal void StopChatEntriesFadeout()
@@ -342,7 +373,6 @@ namespace DCL.Chat.ChatMessages
             _fadeSequenceTween?.Kill();
             chatEntriesCanvasGroup.DOKill();
             chatEntriesCanvasGroup.alpha = 1f;
-            _fadeSequenceTween = null;
         }
 
         public void SetScrollToBottomButtonVisibility(bool isVisible, int unreadCount, bool useAnimation)
@@ -353,6 +383,15 @@ namespace DCL.Chat.ChatMessages
         public void StartButtonFocusFade(float targetAlpha, float duration, Ease easing)
         {
             chatScrollToBottomView.StartFocusFade(targetAlpha, duration, easing);
+        }
+
+        private bool IsParticipantOnline(string walletAddress)
+        {
+            foreach (string participant in onlineParticipants)
+                if (participant == walletAddress)
+                    return true;
+
+            return false;
         }
 
         private string GetPrefabName(ChatItemPrefabIndex index) =>

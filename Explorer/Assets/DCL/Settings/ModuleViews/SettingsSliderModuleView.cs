@@ -58,6 +58,12 @@ namespace DCL.Settings.ModuleViews
             sliderType = configuration.sliderType;
         }
 
+        public void ConfigureWithoutNotify(float value)
+        {
+            SliderView.Slider.SetValueWithoutNotify(value);
+            OnSliderValueChanged(value);
+        }
+
         private void OnSliderValueChanged(float value)
         {
             switch (sliderType)

@@ -10,9 +10,14 @@ using LiveKit.Rooms.DataPipes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
+    using Chat = Decentraland.Kernel.Comms.Rfc4.Chat;
+    using Movement = Decentraland.Kernel.Comms.Rfc4.Movement;
+
     public struct MessageWrap<T> where T: class, IMessage, new()
     {
         private static readonly Type SELF_MESSAGE_TYPE = typeof(T);
@@ -43,12 +48,12 @@ namespace DCL.Multiplayer.Connections.Messaging
             sent = false;
         }
 
-        public async UniTaskVoid SendAndDisposeAsync(CancellationToken cancellationToken, DataPacketKind dataPacketKind = DataPacketKind.KindLossy)
+        public async UniTaskVoid SendAndDisposeAsync(CancellationToken cancellationToken, LKDataPacketKind dataPacketKind = LKDataPacketKind.KindLossy)
         {
             if (sent)
                 throw new Exception("Request already sent");
 
-            await UniTask.SwitchToThreadPool();
+            await DCLTask.SwitchToThreadPool();
 
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -103,7 +108,9 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(Movement)] = (packet, o) => packet.Movement = (Movement)o,
             [typeof(MovementCompressed)] = (packet, o) => packet.MovementCompressed = (MovementCompressed)o,
             [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o,
-            [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o
+            [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o,
+            [typeof(Reaction)] = (packet, o) => packet.Reaction = (Reaction)o,
+            [typeof(ChatReaction)] = (packet, o) => packet.ChatReaction = (ChatReaction)o
         };
     }
 }

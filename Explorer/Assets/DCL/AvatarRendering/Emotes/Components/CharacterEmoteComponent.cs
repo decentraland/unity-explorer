@@ -1,4 +1,6 @@
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
+using System.Runtime.CompilerServices;
 using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
@@ -8,41 +10,31 @@ namespace DCL.AvatarRendering.Emotes
         public URN EmoteUrn;
         public bool EmoteLoop;
         public EmoteReferences? CurrentEmoteReference;
-        public int CurrentAnimationTag;
         public bool StopEmote;
+        public AvatarEmoteMask Mask;
+
+        private int currentAnimationTag;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
-            ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
+            ? CurrentEmoteReference.avatarClip.length * (CurrentEmoteReference.animatorComp != null ? CurrentEmoteReference.animatorComp.speed : 1f)
             : 0f;
 
-        /// <summary>
-        ///     Whether an emote is being played.
-        /// </summary>
-        /// <remarks>
-        ///     In Local Scene Development mode the method behaves slightly differently. Check the implementation for details.
-        /// </remarks>
-        public readonly bool IsPlayingEmote
-        {
-            get
-            {
-                // NOTE in Local Scene Development mode -- where legacy anims are allowed -- we will have different behavior
+        public readonly bool IsPlayingEmote =>
+            (CurrentEmoteReference != null && CurrentEmoteReference.legacy)
+            || currentAnimationTag == AnimationHashes.EMOTE
+            || currentAnimationTag == AnimationHashes.EMOTE_LOOP;
 
-                // Legacy clips are handled with the legacy animation component
-                if (CurrentEmoteReference && CurrentEmoteReference.legacy) return CurrentEmoteReference.animationComp!.isPlaying;
+        public readonly int CurrentAnimationTag => currentAnimationTag;
 
-                // For mecanim animations, we check the actual animator tag
-                // We do that because we can be in a different state even if triggers have been set (e.g., waiting for a jump to finish)
-                return CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
-            }
-        }
-
-        public readonly bool IsPlayingLegacyEmote => CurrentEmoteReference && CurrentEmoteReference.legacy;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetAnimationTag(int tag) => currentAnimationTag = tag;
 
         public void Reset()
         {
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;
+            Mask = AvatarEmoteMask.AemFullBody;
         }
     }
 }

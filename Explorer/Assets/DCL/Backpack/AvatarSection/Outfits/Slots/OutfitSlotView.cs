@@ -15,7 +15,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         private readonly Vector3 hoveredScale = new (1.02f, 1.02f, 1.02f);
         private const float ANIMATION_TIME = 0.1f;
         private CancellationTokenSource cts;
-        
+
         public event Action? OnSaveClicked;
         public event Action? OnEquipClicked;
         public event Action? OnDeleteClicked;
@@ -33,6 +33,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [SerializeField] private Button? saveButton;
 
         [SerializeField] private Button? equipButton;
+        [SerializeField] private GameObject? equipButtonContent;
+        [SerializeField] private GameObject? equipSpinner;
         [SerializeField] private Button? unEquipButton;
         [SerializeField] private Button? deleteButton;
         [SerializeField] private Button? previewButton;
@@ -44,12 +46,19 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [SerializeField]
         private Image outfitThumbnailEmpty;
 
+        [Header("Pending state UI")]
+        [field: SerializeField]
+        private GameObject pendingBadge;
+
+        [field: SerializeField]
+        private Color thumbnailPendingColor;
+
         [Header("Placeholders & Empty State")]
-        [SerializeField] private Image emptyStateSilhouette; 
+        [SerializeField] private Image emptyStateSilhouette;
 
         [SerializeField]
         private Image outfitEquippedOutline;
-        
+
         [SerializeField]
         private Image outfitHoverOutline;
 
@@ -75,12 +84,18 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         [field: SerializeField]
         public AudioClipConfig DeleteOutfitAudio { get; private set; }
 
+        private bool isEquipLoading;
+        private bool isPending;
+        private bool hoverRequested = true;
+
         private void Awake()
         {
             saveButton?.onClick.AddListener(() => OnSaveClicked?.Invoke());
-            
+
             equipButton?.onClick.AddListener(() =>
             {
+                if (isEquipLoading || isPending) return;
+
                 OnEquipClicked?.Invoke();
 
                 if (EquipWearableAudio != null)
@@ -91,6 +106,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
             previewButton?.onClick.AddListener(() =>
             {
+                if (isEquipLoading || isPending) return;
+
                 OnPreviewClicked?.Invoke();
                 if (ClickAudio != null)
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
@@ -102,6 +119,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowEmptyState(bool isHovering)
         {
+            ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(!isHovering);
             hoverEmptyContainer.SetActive(isHovering);
             fullContainer.SetActive(false);
@@ -112,6 +131,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowLoadingState()
         {
+            ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             fullContainer.SetActive(false);
@@ -122,6 +143,8 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
 
         public void ShowStateSaving()
         {
+            ResetEquipButtonContent();
+            HideActionButtons();
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
             loadingContainer.SetActive(false);
@@ -129,7 +152,21 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             savingContainer.SetActive(true);
         }
 
-        public void ShowFullState(Texture2D thumbnail, bool isHovered)
+        /// <summary>
+        ///     Forces the per-slot action buttons hidden regardless of where they sit in the
+        ///     prefab hierarchy. Some prefabs place equip/delete outside <see cref="fullContainer"/>,
+        ///     so toggling the container alone isn't enough — these buttons would otherwise remain
+        ///     visible from their previous hovered state. Called on entry to every non-Full state;
+        ///     <see cref="ShowFullState"/> instead assigns each button explicitly.
+        /// </summary>
+        private void HideActionButtons()
+        {
+            deleteButton?.gameObject.SetActive(false);
+            equipButton?.gameObject.SetActive(false);
+            unEquipButton?.gameObject.SetActive(false);
+        }
+
+        public void ShowFullState(Texture2D? thumbnail, bool isHovered, bool isOperationBusy)
         {
             emptyContainer.SetActive(false);
             hoverEmptyContainer.SetActive(false);
@@ -138,35 +175,27 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
             loadingView.HideLoading();
             loadingContainer.SetActive(false);
 
-            bool hasRealThumbnail = thumbnail != null;
+            outfitThumbnail.gameObject.SetActive(thumbnail != null);
+            outfitThumbnailEmpty.gameObject.SetActive(thumbnail == null);
 
-            outfitThumbnail.gameObject.SetActive(hasRealThumbnail);
-            outfitThumbnailEmpty.gameObject.SetActive(!hasRealThumbnail);
-            if (hasRealThumbnail)
-            {
+            if (thumbnail != null)
                 outfitThumbnail.sprite = Sprite.Create(thumbnail, new Rect(0, 0, thumbnail.width, thumbnail.height), new Vector2(0.5f, 0.5f));
-                outfitThumbnail.color = new Color(1, 1, 1, 1);
-            }
 
             outfitHoverOutline?.gameObject.SetActive(isHovered);
             unEquipButton?.gameObject.SetActive(false);
-            
-            if (isHovered)
-            {
-                deleteButton?.gameObject.SetActive(true);
-                equipButton?.gameObject.SetActive(true);
-            }
-            else
-            {
-                deleteButton?.gameObject.SetActive(false);
-                equipButton?.gameObject.SetActive(false);
-            }
+
+            // Equip stays available on hover even during a save/delete: it's safe because
+            // SaveOutfitCommand snapshots equippedWearables before its await, and delete
+            // doesn't touch equipped state at all. Delete is hidden during operations to
+            // keep destructive actions serialized.
+            equipButton?.gameObject.SetActive(isHovered);
+            deleteButton?.gameObject.SetActive(isHovered && !isOperationBusy);
         }
 
         public void AnimateHover()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
-            
+
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             outfitHoverOutline.transform.localScale = Vector3.zero;
@@ -195,6 +224,71 @@ namespace DCL.Backpack.AvatarSection.Outfits.Slots
         public void SetEquipped(bool equipped)
         {
             outfitEquippedOutline.gameObject.SetActive(equipped);
+        }
+
+        public void SetEquipLoading(bool loading)
+        {
+            isEquipLoading = loading;
+            equipButtonContent?.SetActive(!loading);
+            equipSpinner?.SetActive(loading);
+        }
+
+        public void SetHoverEnabled(bool isEnabled)
+        {
+            hoverRequested = isEnabled;
+            ApplyHoverEnabled();
+        }
+
+        /// <summary>
+        ///     Marks the outfit pending; disables hover so equip/preview can't be revealed.
+        /// </summary>
+        public void SetIsPending(bool pending)
+        {
+            isPending = pending;
+            ApplyHoverEnabled();
+            outfitThumbnail.color = pending ? thumbnailPendingColor : Color.white;
+            pendingBadge.SetActive(pending);
+        }
+
+        private void ApplyHoverEnabled()
+        {
+            if (hoverHandler == null) return;
+
+            bool isEnabled = hoverRequested && !isPending;
+
+            // Snap back if we're disabling while hovered — disabled HoverHandler won't fire OnPointerExit.
+            if (!isEnabled && hoverHandler.enabled)
+                AnimateExit();
+
+            hoverHandler.enabled = isEnabled;
+        }
+
+        // Equip deliberately stays interactable during operations — see ShowFullState for why.
+        public void SetActionButtonsInteractable(bool interactable)
+        {
+            if (saveButton != null) saveButton.interactable = interactable;
+            if (deleteButton != null) deleteButton.interactable = interactable;
+        }
+
+        public void ResetHoverState()
+        {
+            cts?.SafeCancelAndDispose();
+            cts = null;
+
+            transform.localScale = Vector3.one;
+
+            if (outfitHoverOutline != null)
+            {
+                outfitHoverOutline.transform.localScale = Vector3.zero;
+                outfitHoverOutline.gameObject.SetActive(false);
+            }
+        }
+
+        private void ResetEquipButtonContent()
+        {
+            isEquipLoading = false;
+            equipButtonContent?.SetActive(true);
+            equipSpinner?.SetActive(false);
         }
 
         public void PlayDeleteOutfitSound()

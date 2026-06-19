@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MediaStream.Settings;
@@ -40,14 +41,14 @@ namespace DCL.SDKComponents.MediaStream
 #endif
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sceneDeps, List<IFinalizeWorldSystem> finalizeWorldSystems,
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub, List<IFinalizeWorldSystem> finalizeWorldSystems,
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps);
+            MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, mediaFactory);
-            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed, flipMaterial));
+            sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed, flipMaterial, videoPrioritizationSettings));
 
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
                 UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);

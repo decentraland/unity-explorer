@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.Analytics.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
+using DCL.PluginSystem.Global;
 using DCL.Profiling;
 using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
@@ -30,7 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits(),
-                    buildData.EnsureNotNull(),
+                    buildData.EnsureNotNull().InstallSource,
                     DCLVersion.Mock(),
                     null
                 ),

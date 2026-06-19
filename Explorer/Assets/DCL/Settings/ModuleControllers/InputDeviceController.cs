@@ -9,6 +9,7 @@ using RichTypes;
 using System;
 using System.Threading;
 using TMPro;
+using Utility.Multithreading;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -95,6 +96,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetSelection(string[] devices)
         {
+            if (devices.Length == 0)
+                return;
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
                 string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
@@ -118,7 +122,7 @@ namespace DCL.Settings.ModuleControllers
 
             async UniTaskVoid BackgroundTaskAsync()
             {
-                await UniTask.SwitchToThreadPool();
+                await DCLTask.SwitchToThreadPool();
 
                 Result<MicrophoneSelection> result = MicrophoneSelection.FromIndex(index);
 

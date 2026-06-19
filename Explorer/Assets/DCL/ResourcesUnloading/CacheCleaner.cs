@@ -13,6 +13,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -40,6 +41,7 @@ namespace DCL.ResourcesUnloading
         private readonly List<IThrottledClearable> extendedObjectPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention>? assetBundleCache;
+        private IStreamableCache<GLTFData, GetGLTFIntention>? gltfLoadCache;
         private IGltfContainerAssetsCache? gltfContainerAssetsCache;
         private IStreamableCache<TextureData, GetTextureIntention>? texturesCache;
         private ILODCache? lodCache;
@@ -85,6 +87,7 @@ namespace DCL.ResourcesUnloading
             trimmedEmoteStorage!.Unload(budgetToUse);
             emoteCache!.Unload(budgetToUse);
             gltfContainerAssetsCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            gltfLoadCache?.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             assetBundleCache!.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
             profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
@@ -114,6 +117,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IGltfContainerAssetsCache gltfContainerAssetsCache) =>
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
+
+        public void Register(IStreamableCache<GLTFData, GetGLTFIntention> gltfLoadCache) =>
+            this.gltfLoadCache = gltfLoadCache;
 
         public void Register(IAttachmentsAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;

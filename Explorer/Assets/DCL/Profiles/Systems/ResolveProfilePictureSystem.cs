@@ -5,9 +5,10 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.TextureData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using System;
 
 namespace DCL.Profiles
 {
@@ -23,13 +24,38 @@ namespace DCL.Profiles
         }
 
         [Query]
-        private void CompleteProfilePictureDownload(in Entity entity, ref ProfileTier profile, ref Promise promise)
+        [None(typeof(DeleteEntityIntention))]
+        private void CompleteProfilePictureDownload(Profile profile)
         {
+            if (profile.PicturePromise is not { } promise) return;
+
+            // Consume first: if the download already finished, the asset must be handled here even when cancellation was requested (late-cancel race).
             if (promise.TryConsume(World, out StreamableLoadingResult<TextureData> result))
             {
-                profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
-                World.Destroy(entity);
+                try
+                {
+                    // Guard: the Profile may have been pooled and reused for a different user by the time the texture resolved.
+                    if (profile.UserId == promise.LoadingIntention.AvatarTextureUserId)
+                        profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
+                    else
+                        result.Asset?.Dispose();
+                }
+                catch (Exception e)
+                {
+                    result.Asset?.Dispose();
+                    ReportHub.LogException(e, ReportCategory.PROFILE);
+                }
+                finally
+                {
+                    profile.PicturePromise = null;
+                }
+
+                return;
             }
+
+            // Load hasn't completed yet; if cancellation was signaled, ForgetLoading cleans up the loading entity.
+            if (promise.IsCancellationRequested(World))
+                profile.PicturePromise = null;
         }
     }
 }

@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
+using DCL.Optimization.ThreadSafePool;
 using UnityEngine.Scripting;
 
 namespace DCL.Profiles
@@ -121,7 +121,7 @@ namespace DCL.Profiles
 
             if (root is { Type: JTokenType.Array })
             {
-                list ??= ListPool<LinkJsonDto>.Get();
+                list ??= ThreadSafeCollectionPool<List<LinkJsonDto>, LinkJsonDto>.SHARED.Get();
 
                 foreach (JToken? item in root.Children())
                     list.Add(DeserializeLink(item, new LinkJsonDto()));
@@ -196,7 +196,7 @@ namespace DCL.Profiles
 
             if (token is { Type: JTokenType.Array })
             {
-                list ??= CollectionPool<TCollection, T>.Get();
+                list ??= ThreadSafeCollectionPool<TCollection, T>.SHARED.Get();
 
                 foreach (JToken? item in token.Children())
                 {
@@ -216,28 +216,28 @@ namespace DCL.Profiles
             writer.WriteValue(profile.HasClaimedName);
 
             writer.WritePropertyName("description");
-            writer.WriteValue(profile.Description);
+            writer.WriteValue(Sanitize(profile.Description));
 
             writer.WritePropertyName("tutorialStep");
             writer.WriteValue(profile.TutorialStep);
 
             writer.WritePropertyName("name");
-            writer.WriteValue(profile.Name);
+            writer.WriteValue(Sanitize(profile.Name));
 
             writer.WritePropertyName("userId");
-            writer.WriteValue(profile.UserId);
+            writer.WriteValue(Sanitize(profile.UserId));
 
             writer.WritePropertyName("email");
-            writer.WriteValue(profile.Email);
+            writer.WriteValue(Sanitize(profile.Email));
 
             writer.WritePropertyName("ethAddress");
-            writer.WriteValue(profile.UserId);
+            writer.WriteValue(Sanitize(profile.UserId));
 
             writer.WritePropertyName("version");
             writer.WriteValue(profile.Version);
 
             writer.WritePropertyName("unclaimedName");
-            writer.WriteValue(profile.UnclaimedName);
+            writer.WriteValue(Sanitize(profile.UnclaimedName));
 
             writer.WritePropertyName("hasConnectedWeb3");
             writer.WriteValue(profile.HasConnectedWeb3);
@@ -246,34 +246,34 @@ namespace DCL.Profiles
             SerializeAvatar(writer, profile);
 
             writer.WritePropertyName("country");
-            writer.WriteValue(profile.Country);
+            writer.WriteValue(Sanitize(profile.Country));
 
             writer.WritePropertyName("gender");
-            writer.WriteValue(profile.Gender);
+            writer.WriteValue(Sanitize(profile.Gender));
 
             writer.WritePropertyName("pronouns");
-            writer.WriteValue(profile.Pronouns);
+            writer.WriteValue(Sanitize(profile.Pronouns));
 
             writer.WritePropertyName("relationshipStatus");
-            writer.WriteValue(profile.RelationshipStatus);
+            writer.WriteValue(Sanitize(profile.RelationshipStatus));
 
             writer.WritePropertyName("sexualOrientation");
-            writer.WriteValue(profile.SexualOrientation);
+            writer.WriteValue(Sanitize(profile.SexualOrientation));
 
             writer.WritePropertyName("language");
-            writer.WriteValue(profile.Language);
+            writer.WriteValue(Sanitize(profile.Language));
 
             writer.WritePropertyName("employmentStatus");
-            writer.WriteValue(profile.EmploymentStatus);
+            writer.WriteValue(Sanitize(profile.EmploymentStatus));
 
             writer.WritePropertyName("profession");
-            writer.WriteValue(profile.Profession);
+            writer.WriteValue(Sanitize(profile.Profession));
 
             writer.WritePropertyName("realName");
-            writer.WriteValue(profile.RealName);
+            writer.WriteValue(Sanitize(profile.RealName));
 
             writer.WritePropertyName("hobbies");
-            writer.WriteValue(profile.Hobbies);
+            writer.WriteValue(Sanitize(profile.Hobbies));
 
             writer.WritePropertyName("birthDate");
             writer.WriteValue(profile.Birthdate != null ? new DateTimeOffset(profile.Birthdate.Value, TimeSpan.Zero).ToUnixTimeSeconds() : 0);
@@ -360,9 +360,9 @@ namespace DCL.Profiles
                 {
                     writer.WriteStartObject();
                     writer.WritePropertyName("title");
-                    writer.WriteValue(link.title);
+                    writer.WriteValue(Sanitize(link.title));
                     writer.WritePropertyName("url");
-                    writer.WriteValue(link.url);
+                    writer.WriteValue(Sanitize(link.url));
                     writer.WriteEndObject();
                 }
             }
@@ -412,5 +412,8 @@ namespace DCL.Profiles
 
             writer.WriteEndArray();
         }
+
+        private static string Sanitize(string? value) =>
+            value?.Trim() ?? "";
     }
 }

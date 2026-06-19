@@ -71,8 +71,17 @@ namespace DCL.UI.ProfileElements
             switch (model.ThumbnailState)
             {
                 case ProfileThumbnailViewModel.State.LOADING:
-                    SetLoadingState(true);
-                    thumbnailImageView.Alpha = 0f;
+                    if (model.Sprite != null)
+                    {
+                        thumbnailImageView.SetImage(model.Sprite, model.FitAndCenterImage);
+                        SetLoadingState(false);
+                        thumbnailImageView.Alpha = 1f;
+                    }
+                    else
+                    {
+                        SetLoadingState(true);
+                        thumbnailImageView.Alpha = 0f;
+                    }
                     break;
                 case ProfileThumbnailViewModel.State.FALLBACK:
                 case ProfileThumbnailViewModel.State.LOADED_FROM_CACHE:
@@ -160,7 +169,7 @@ namespace DCL.UI.ProfileElements
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = profileRepositoryWrapper.GetProfileThumbnail(faceSnapshotUrl);
+                Sprite? sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(faceSnapshotUrl, cts.Token);
 
                 if (sprite != null)
                 {
@@ -178,7 +187,7 @@ namespace DCL.UI.ProfileElements
                 if (sprite == null)
                     currentUrl = null;
 
-                await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
+                await SetThumbnailImageWithAnimationAsync(sprite ? sprite : defaultEmptyThumbnail, cts.Token);
             }
             catch (OperationCanceledException) { currentUrl = null; }
             catch (Exception e)

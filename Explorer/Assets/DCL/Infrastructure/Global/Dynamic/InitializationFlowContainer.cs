@@ -1,9 +1,13 @@
-﻿using DCL.Audio;
+﻿using DCL.ApplicationBlocklistGuard;
+using DCL.Audio;
 using DCL.Character.Plugin;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.PrivateWorlds;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
@@ -29,7 +33,6 @@ namespace DCL.UserInAppInitializationFlow
             TerrainContainer terrainContainer,
             ILoadingScreen loadingScreen,
             IHealthCheck liveKitHealthCheck,
-            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
@@ -37,21 +40,27 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             bool localSceneDevelopment,
-            CharacterContainer characterContainer)
+            CharacterContainer characterContainer,
+            ModerationDataProvider moderationDataProvider,
+            IPulseMultiplayerService pulseMultiplayerService,
+            IProfilePropagation profilePropagation,
+            IWorldPermissionsService worldPermissionsService,
+            IChatHistory chatHistory)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck, roomHub);
-            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
+            var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource, moderationDataProvider);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
+            var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmContainer.RealmController);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
 
-            var loadingOperations = new List<IStartupOperation>()
+            var loadingOperations = new List<IStartupOperation>
             {
                 blocklistCheckStartupOperation,
                 loadPlayerAvatarStartupOperation,
+                startPulseMultiplayerStartupOperation,
                 loadLandscapeStartupOperation,
                 teleportStartupOperation
             };
@@ -95,14 +104,16 @@ namespace DCL.UserInAppInitializationFlow
                     roomHub,
                     startUpOps,
                     reLoginOps,
-                    checkOnboardingStartupOperation,
                     bootstrapContainer.IdentityCache.EnsureNotNull(),
                     ensureLivekitConnectionStartupOperation,
                     appArgs,
                     characterContainer.CharacterObject,
                     characterContainer.Transform,
                     dynamicWorldParams.StartParcel,
-                    localSceneDevelopment),
+                    pulseMultiplayerService,
+                    localSceneDevelopment,
+                    worldPermissionsService,
+                    chatHistory),
             };
         }
     }

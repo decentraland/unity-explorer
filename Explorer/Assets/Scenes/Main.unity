@@ -264,7 +264,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233166825}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
@@ -316,7 +316,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -388,7 +388,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 100, y: 100}
-    targetWorld: yemel.dcl.eth
+    targetWorld: flutterecho.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -409,6 +409,8 @@ MonoBehaviour:
     emotesToAddToUserProfile: []
     overrideConnectionQuality: 0
     connectionQuality: 2
+    gatekeeperMode: 0
+    customGatekeeperUrl: 
     appParameters: []
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
@@ -510,6 +512,13 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  clockDesyncPopupRef:
+    m_AssetGUID: c16a7c2b7d6b642a4822df00f8bd5f71
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  altTesterPrefab: {fileID: 6159525817960279506, guid: d311441ba5d3f4a05b5a75c9aa33f8bc, type: 3}
 --- !u!1001 &1170007222
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -15,8 +15,8 @@ namespace DCL.Multiplayer.Movement
         public const string TEST_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
+        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool;
+        private readonly SimplePriorityQueue<NetworkMovementMessage, double> queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -25,15 +25,17 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
+        public readonly SimplePriorityQueue<NetworkMovementMessage, double>? Queue => disposed ? null : queue;
 
         public float InitialCooldownTime;
 
         public bool HeadIKYawEnabled;
         public bool HeadIKPitchEnabled;
         public float2 HeadIKYawAndPitch;
+        public bool IsPointingAt;
+        public float3 PointAtWorldHitPoint;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;
@@ -50,6 +52,9 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = false;
             HeadIKPitchEnabled = false;
             HeadIKYawAndPitch = float2.zero;
+
+            IsPointingAt = false;
+            PointAtWorldHitPoint = float3.zero;
         }
 
         public void Enqueue(NetworkMovementMessage message)
@@ -64,7 +69,7 @@ namespace DCL.Multiplayer.Movement
         {
             if (!WasTeleported)
             {
-                float totalDuration = message.timestamp - PastMessage.timestamp;
+                var totalDuration = (float)(message.timestamp - PastMessage.timestamp);
 
                 message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
                     message.movementKind, message.velocitySqrMagnitude, settings);
@@ -83,6 +88,12 @@ namespace DCL.Multiplayer.Movement
             HeadIKYawEnabled = message.headIKYawEnabled;
             HeadIKPitchEnabled = message.headIKPitchEnabled;
             HeadIKYawAndPitch = message.headYawAndPitch;
+        }
+
+        public void UpdatePointAtIK(in NetworkMovementMessage message)
+        {
+            IsPointingAt = message.isPointingAt;
+            PointAtWorldHitPoint = message.pointAtWorldHitPoint;
         }
 
         public void Dispose()

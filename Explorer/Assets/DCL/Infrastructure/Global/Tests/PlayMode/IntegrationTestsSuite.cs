@@ -13,8 +13,11 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Settings;
+using DCL.Time;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -26,7 +29,11 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.Audio;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.SDKComponents.InputModifier.Components;
 using DCL.Utilities;
 using DCL.Utility;
 using DCL.WebRequests.Analytics;
@@ -79,10 +86,15 @@ namespace Global.Tests.PlayMode
 
             var cameraComponent = new CameraComponent(camera);
             world.Add(cameraEntity, cameraComponent);
+            Entity playerEntity = world.Create(new PlayerComponent(),
+                new CharacterTransform(),
+                new PlayerMovementNetworkComponent(),
+                new InputModifierComponent(),
+                new CharacterRigidTransform());
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, new BuildData(), globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 analyticsContainer,
@@ -91,7 +103,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 debugBuilder,
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, ct),
+                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -99,13 +111,12 @@ namespace Global.Tests.PlayMode
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
                 world,
-                new Entity(),
+                playerEntity,
                 new SystemMemoryCap(),
                 new VolumeBus(),
                 enableAnalytics: false,
                 new IDiskCache.Fake(),
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
-                DecentralandEnvironment.Org,
                 ct,
                 appArgs,
                 enableGPUInstancing: false
@@ -113,8 +124,6 @@ namespace Global.Tests.PlayMode
 
             if (!success)
                 throw new Exception("Cannot create the static container");
-
-            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
 
             await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
@@ -135,7 +144,8 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>()
+                Substitute.For<ISystemClipboard>(),
+                Array.Empty<IDCLWorldPlugin>()
             );
 
             return (staticContainer, sceneSharedContainer);

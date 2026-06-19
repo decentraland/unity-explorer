@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -11,7 +10,6 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using ECS.Abstract;
 using UnityEngine;
-using Utility.Arch;
 
 namespace DCL.CharacterMotion.Systems
 {

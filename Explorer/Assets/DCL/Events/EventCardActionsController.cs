@@ -74,13 +74,13 @@ namespace DCL.Events
 
         public void AddEventToCalendar(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
         public void AddEventToCalendar(IEventDTO eventData, DateTime utcStart)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventAddToCalendarLink(eventData, utcStart, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             AddEventToCalendarClicked?.Invoke(eventData);
         }
 
@@ -94,20 +94,23 @@ namespace DCL.Events
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else
-                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false).Forget();
+                // Land at the event's exact parcel instead of the scene's spawn point — e.g. an event at the
+                // Theatre (0,5) inside the Genesis Plaza scene should drop the player at the Theatre, not at
+                // Genesis Plaza's spawn point.
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false, landOnParcel: true).Forget();
 
             JumpedInEventPlace?.Invoke(eventData);
         }
 
         public void ShareEvent(IEventDTO eventData)
         {
-            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData)}&utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=discover");
             EventShared?.Invoke(eventData);
         }
 
         public void CopyEventLink(IEventDTO eventData)
         {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData, decentralandUrlsSource));
             NotificationsBusController.Instance.AddNotification(new DefaultSuccessNotification(LINK_COPIED_MESSAGE));
             EventLinkCopied?.Invoke(eventData);
         }

@@ -24,9 +24,9 @@ TagManager:
   - 
   - CharacterController
   - CharacterOnly
-  - AllAvatars
+  - SDKAvatarTriggerArea
   - SDKEntityTriggerArea
-  - 
+  - SDKAvatarHit
   - 
   - 
   - 
@@ -34,7 +34,7 @@ TagManager:
   - 
   - SDKCustomLayer
   - Minimap
-  - 
+  - ReactionLaneFX
   - NameTag
   - OtherAvatars
   - CharacterPreview
@@ -56,3 +56,4 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
+  m_MigratedRenderPipelines: []

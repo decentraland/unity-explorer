@@ -3,13 +3,13 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Systems;
@@ -319,7 +319,8 @@ namespace DCL.Character.Tests
             Entity remoteEntity = globalWorld.Create(
                 characterTransform,
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent()
             );
 
             // Setup movement system dependencies
@@ -344,8 +345,8 @@ namespace DCL.Character.Tests
                 globalWorld, movementSettings, characterControllerSettings);
 
             // Setup movement component
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 
@@ -404,7 +405,8 @@ namespace DCL.Character.Tests
                     WearablesConstants.DefaultColors.GetRandomSkinColor())),
                 new AvatarShapeComponent(),
                 new PartitionComponent { Bucket = 0, IsBehind = false, IsDirty = false },
-                new HeadIKComponent()
+                new HeadIKComponent(),
+                new HandPointAtComponent()
             );
 
             // Setup movement system
@@ -419,8 +421,8 @@ namespace DCL.Character.Tests
             var movementSystem = new RemotePlayersMovementSystem(
                 globalWorld, movementSettings, characterControllerSettings);
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
-                () => new SimplePriorityQueue<NetworkMovementMessage>(),
+            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage, double>>(
+                () => new SimplePriorityQueue<NetworkMovementMessage, double>(),
                 actionOnRelease: queue => queue.Clear()
             );
 

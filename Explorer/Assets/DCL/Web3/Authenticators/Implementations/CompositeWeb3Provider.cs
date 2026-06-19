@@ -30,6 +30,12 @@ namespace DCL.Web3.Authenticators
             remove => dappAuth.VerificationRequired -= value;
         }
 
+        public event Action<string>? OTPSendSucceeded
+        {
+            add => thirdWebAuth.OTPSendSucceeded += value;
+            remove => thirdWebAuth.OTPSendSucceeded -= value;
+        }
+
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
@@ -60,6 +66,10 @@ namespace DCL.Web3.Authenticators
             IWeb3Identity identity = await currentAuthenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
             analytics.Identify(identity);
+
+            if (identity.Source != IWeb3Identity.Web3IdentitySource.OTP)
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
             return identity;
         }
 

@@ -1,11 +1,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Backpack.Breadcrumb;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -44,6 +47,7 @@ namespace DCL.Backpack
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private readonly PageSelectorController pageSelectorController;
         private readonly BackpackBreadCrumbController breadcrumbController;
@@ -80,7 +84,8 @@ namespace DCL.Backpack
             ColorPresetsSO bodyshapeColors,
             IWearableStorage wearableStorage,
             SmartWearableCache smartWearableCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -97,6 +102,7 @@ namespace DCL.Backpack
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
+            this.ownedNftFilter = ownedNftFilter;
 
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
@@ -126,10 +132,12 @@ namespace DCL.Backpack
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             backpackSortController.OnSmartWearablesOnlyChanged += OnSmartWearablesOnlyChanged;
+            RequestPage(1, true);
         }
 
         public void Deactivate()
         {
+            pageFetchCancellationToken.SafeCancelAndDispose();
             eventBus.FilterEvent -= OnFilterChanged;
             backpackSortController.OnSortChanged -= OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
@@ -157,7 +165,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             IWearable? newBodyShape = null;
             foreach (var w in wearables)
@@ -253,6 +261,7 @@ namespace DCL.Backpack
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 backpackItemView.EquippedIcon.SetActive(equippedWearables.IsEquipped(wearable));
                 backpackItemView.IsEquipped = equippedWearables.IsEquipped(wearable);
+                backpackItemView.IsPending = IsFullyPending(wearable.GetUrn());
 
                 backpackItemView.IsCompatibleWithBodyShape = (currentBodyShape != null
                                                               && wearable.IsCompatibleWithBodyShape(currentBodyShape.GetUrn()))
@@ -269,6 +278,13 @@ namespace DCL.Backpack
                 InitializeItemViewAsync(wearable, backpackItemView, pageFetchCancellationToken!.Token).Forget();
             }
         }
+
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base items have no
+        // registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            wearableStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+            && registry.Count > 0
+            && !ownedNftFilter.HasAvailableInstance(registry);
 
         private void EquipItem(int slot, string itemId)
         {
@@ -378,6 +394,10 @@ namespace DCL.Backpack
                     ct,
                     results);
 
+                // The fetch repopulated the registry — a reliable point to prune pending wearable gifts that
+                // left the wallet (or came back).
+                ownedNftFilter.Prune(GiftableType.Wearable);
+
                 if (refreshPageSelector)
                     pageSelectorController.Configure(totalAmount, CURRENT_PAGE_SIZE);
 
@@ -396,6 +416,9 @@ namespace DCL.Backpack
                     view.RegularResults.SetActive(true);
                 }
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 SetGridElements(currentPageWearables);
             }
             catch (OperationCanceledException) { }
@@ -404,13 +427,29 @@ namespace DCL.Backpack
 
         private async UniTaskVoid InitializeItemViewAsync(ITrimmedWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
-            if (ct.IsCancellationRequested) return;
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                if (ct.IsCancellationRequested) return;
 
-            itemView.WearableThumbnail.sprite = sprite;
-            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.WearableThumbnail.sprite = sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
 
-            itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.THUMBNAILS));
+
+                // Failure path must still unblock the cell, otherwise it sits in the "loading"
+                // state forever and the surrounding grid input stays gated.
+                if (ct.IsCancellationRequested) return;
+
+                itemView.WearableThumbnail.sprite = LoadThumbnailsUtils.DEFAULT_THUMBNAIL.Sprite;
+                itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
+                itemView.SmartWearableBadgeContainer.SetActive(itemWearable.IsSmart());
+            }
         }
 
         private void ClearPoolElements()

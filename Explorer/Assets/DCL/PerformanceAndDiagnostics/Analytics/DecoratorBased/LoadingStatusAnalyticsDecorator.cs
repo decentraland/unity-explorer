@@ -8,18 +8,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class LoadingStatusAnalyticsDecorator : ILoadingStatus
     {
-        private readonly ILoadingStatus core;
         private const string STAGE_KEY = "state";
-        private int loadingScreenStageId;
+
+        private const string LOADING_TRANSACTION_NAME = "loading_process";
+        private readonly ILoadingStatus core;
 
         private readonly IAnalyticsController analytics;
         private readonly IWeb3IdentityCache web3IdentityCache;
-
-        private const string LOADING_TRANSACTION_NAME = "loading_process";
-
-        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
-        public ReactiveProperty<string> AssetState => core.AssetState;
+        private int loadingScreenStageId;
         private bool isFirstLoading;
+
+        public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStageMut => core.CurrentStageMut;
+        public ReactiveProperty<string> AssetStateMut => core.AssetStateMut;
+
+        public IReadonlyReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
+        public IReadonlyReactiveProperty<string> AssetState => core.AssetState;
 
         public LoadingStatusAnalyticsDecorator(ILoadingStatus loadingStatus, IAnalyticsController analytics, IWeb3IdentityCache web3IdentityCache)
         {
@@ -43,13 +46,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             if (stage == LoadingStatus.LoadingStage.Init)
             {
+                var tags = new List<KeyValuePair<string, string>>(3)
+                {
+                    new ("launch_count", LaunchCounter.Count.ToString()),
+                };
+
+                if (web3IdentityCache.Identity == null)
+                    tags.Add(new KeyValuePair<string, string>("has_identity", "false"));
+                else
+                {
+                    tags.Add(new KeyValuePair<string, string>("has_identity", "true"));
+                    tags.Add(new KeyValuePair<string, string>("identity_expired", web3IdentityCache.Identity.IsExpired.ToString()));
+                }
+
                 var transactionData = new TransactionData
                 {
                     TransactionName = LOADING_TRANSACTION_NAME,
                     TransactionOperation = "loading",
-                    Tags = web3IdentityCache.Identity == null
-                        ? new[] { new KeyValuePair<string, string>("has_identity", "false") }
-                        : new[] { new KeyValuePair<string, string>("has_identity", "true"), new KeyValuePair<string, string>("identity_expired", web3IdentityCache.Identity.IsExpired.ToString()) },
+                    Tags = tags,
                 };
 
                 SentryTransactionNameMapping.Instance.StartSentryTransaction(transactionData);
@@ -61,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 {
                     SpanName = stage.ToString(),
                     SpanOperation = $"loading_stage_{stage.ToString().ToLower()}",
-                    Depth = 0
+                    Depth = 0,
                 };
 
                 SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, spanData);
@@ -73,7 +87,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 {
                     SpanName = stage.ToString(),
                     SpanOperation = "loading_completed",
-                    Depth = 0
+                    Depth = 0,
                 };
 
                 SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, spanData);
@@ -94,6 +108,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 OnLoadingStageChanged(stage);
                 isFirstLoading = stage != LoadingStatus.LoadingStage.Completed;
             }
+
             return core.SetCurrentStage(stage);
         }
 

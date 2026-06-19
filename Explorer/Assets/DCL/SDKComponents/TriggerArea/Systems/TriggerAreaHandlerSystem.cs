@@ -10,7 +10,6 @@ using DCL.SDKEntityTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.TriggerArea.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -22,6 +21,8 @@ using UnityEngine;
 using Utility;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Multiplayer.SDK.Components;
+using Quaternion = Decentraland.Common.Quaternion;
+using Vector3 = Decentraland.Common.Vector3;
 
 namespace DCL.SDKComponents.TriggerArea.Systems
 {
@@ -29,11 +30,45 @@ namespace DCL.SDKComponents.TriggerArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class TriggerAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        /// <summary>
+        ///     Value-type snapshot of all result data passed into the CRDT writer closure,
+        ///     avoiding shared pooled references that could be overwritten before deferred serialization.
+        /// </summary>
+        internal readonly struct ResultData
+        {
+            public readonly TriggerAreaEventType EventType;
+            public readonly uint TriggeredEntity;
+            public readonly uint Timestamp;
+            public readonly Vector3 TriggeredEntityPosition;
+            public readonly Quaternion TriggeredEntityRotation;
+            public readonly uint TriggerEntity;
+            public readonly uint TriggerLayers;
+            public readonly Vector3 TriggerEntityPosition;
+            public readonly Quaternion TriggerEntityRotation;
+            public readonly Vector3 TriggerEntityScale;
+
+            public ResultData(
+                TriggerAreaEventType eventType, uint triggeredEntity, uint timestamp,
+                Vector3 triggeredEntityPosition, Quaternion triggeredEntityRotation,
+                uint triggerEntity, uint triggerLayers,
+                Vector3 triggerEntityPosition, Quaternion triggerEntityRotation,
+                Vector3 triggerEntityScale)
+            {
+                EventType = eventType;
+                TriggeredEntity = triggeredEntity;
+                Timestamp = timestamp;
+                TriggeredEntityPosition = triggeredEntityPosition;
+                TriggeredEntityRotation = triggeredEntityRotation;
+                TriggerEntity = triggerEntity;
+                TriggerLayers = triggerLayers;
+                TriggerEntityPosition = triggerEntityPosition;
+                TriggerEntityRotation = triggerEntityRotation;
+                TriggerEntityScale = triggerEntityScale;
+            }
+        }
+
         private readonly World globalWorld;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<PBTriggerAreaResult> triggerAreaResultPool;
-        private readonly IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
         private readonly ISceneData sceneData;
 
@@ -41,17 +76,11 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             World world,
             World globalWorld,
             IECSToCRDTWriter ecsToCRDTWriter,
-            IComponentPool<PBTriggerAreaResult> triggerAreaResultPool,
-            IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool,
-            ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache collidersSceneCache,
             ISceneData sceneData) : base(world)
         {
             this.globalWorld = globalWorld;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.triggerAreaResultPool = triggerAreaResultPool;
-            this.triggerAreaResultTriggerPool = triggerAreaResultTriggerPool;
-            this.sceneStateProvider = sceneStateProvider;
             this.collidersSceneCache = collidersSceneCache;
             this.sceneData = sceneData;
         }
@@ -70,13 +99,19 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         [All(typeof(TransformComponent))]
         private void SetupTriggerArea(Entity entity, in PBTriggerArea pbTriggerArea)
         {
+            ColliderLayer mask = pbTriggerArea.GetColliderLayer();
+
+            // Fast-path: mask is EXACTLY CL_MAIN_PLAYER — SDKEntityTriggerArea.OnTriggerEnter
+            // early-outs on any collider that isn't the local player.
+            bool targetOnlyMainPlayer = mask == ColliderLayer.ClMainPlayer;
+
             World.Add(
                 entity,
                 new SDKEntityTriggerAreaComponent(
-                    areaSize: Vector3.zero,
-                    targetOnlyMainPlayer: false,
+                    areaSize: UnityEngine.Vector3.zero,
+                    targetOnlyMainPlayer: targetOnlyMainPlayer,
                     meshType: (SDKEntityTriggerAreaMeshType)pbTriggerArea.GetMeshType(),
-                    layerMask: pbTriggerArea.GetColliderLayer()),
+                    layerMask: mask),
                 new TriggerAreaComponent()
             );
         }
@@ -86,7 +121,10 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         private void UpdateTriggerArea(Entity entity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
         {
             ProcessOnEnterTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
-            ProcessOnStayInTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
+
+            // TAET_STAY is intentionally not emitted on the wire. The SDK runtime synthesizes
+            // per-tick OnStay callbacks locally from ENTER/EXIT events to avoid flooding the
+            // GOVS-capped TriggerAreaResult buffer with redundant per-frame messages.
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 
@@ -98,15 +136,6 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                     entityCollider, TriggerAreaEventType.TaetEnter, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
             }
             triggerAreaComponent.TryClearEnteredAvatarsToBeProcessed();
-        }
-
-        private void ProcessOnStayInTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
-        {
-            foreach (Collider entityCollider in triggerAreaComponent.CurrentEntitiesInside)
-            {
-                PropagateResultComponent(triggerAreaEntity, triggerAreaCRDTEntity, transform.Transform,
-                    entityCollider, TriggerAreaEventType.TaetStay, triggerAreaComponent.LayerMask, triggerAreaComponent.IncrementalTick);
-            }
         }
 
         private void ProcessOnExitTriggerArea(in Entity triggerAreaEntity, in CRDTEntity triggerAreaCRDTEntity, in TransformComponent transform, ref SDKEntityTriggerAreaComponent triggerAreaComponent)
@@ -124,17 +153,23 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             Entity avatarEntity = Entity.Null;
             ColliderSceneEntityInfo entityInfo = default;
-            if (triggerEntityCollider.gameObject.layer == PhysicsLayers.CHARACTER_LAYER
-                || triggerEntityCollider.gameObject.layer == PhysicsLayers.OTHER_AVATARS_LAYER)
+            int colliderLayer = triggerEntityCollider.gameObject.layer;
+            bool isMainAvatar = colliderLayer == PhysicsLayers.CHARACTER_LAYER;
+            bool isRemoteAvatar = colliderLayer == PhysicsLayers.OTHER_AVATARS_LAYER;
+            if (isMainAvatar || isRemoteAvatar)
             {
-                if (!PhysicsLayers.LayerMaskContainsTargetLayer(areaLayerMask, ColliderLayer.ClPlayer)
+                // Additive: main player matches (CL_PLAYER | CL_MAIN_PLAYER); remote avatars match CL_PLAYER only.
+                ColliderLayer expected = isMainAvatar
+                    ? PhysicsLayers.PLAYER_QUALIFYING_BITS
+                    : ColliderLayer.ClPlayer;
+                if ((areaLayerMask & expected) == 0
                     || !TryGetAvatarEntity(triggerEntityCollider.transform, out avatarEntity))
                     return;
             }
 
-            Decentraland.Common.Vector3 triggerEntityPos;
-            Decentraland.Common.Quaternion triggerEntityRot;
-            Decentraland.Common.Vector3 triggerEntityScale;
+            Vector3 triggerEntityPos;
+            Quaternion triggerEntityRot;
+            Vector3 triggerEntityScale;
             if (avatarEntity == Entity.Null)
             {
                 if (!collidersSceneCache.TryGetEntity(triggerEntityCollider, out entityInfo)
@@ -155,41 +190,45 @@ namespace DCL.SDKComponents.TriggerArea.Systems
                 triggerEntityScale = characterTransform.Transform.localScale.ToProtoVector();
             }
 
-            var resultComponent = triggerAreaResultPool.Get();
-            resultComponent.EventType = eventType;
-            resultComponent.TriggeredEntity = (uint)triggerAreaCRDTEntity.Id;
-            resultComponent.Timestamp = incrementalTick;
-            resultComponent.TriggeredEntityPosition = triggerAreaTransform.localPosition.ToProtoVector();
-            resultComponent.TriggeredEntityRotation = triggerAreaTransform.localRotation.ToProtoQuaternion();
-
-            // 'Trigger' Entity (the entity that provokes the trigger event)
-            resultComponent.Trigger = triggerAreaResultTriggerPool.Get();
-            resultComponent.Trigger.Layers = avatarEntity == Entity.Null ? (uint)entityInfo.SDKLayer : (uint)ColliderLayer.ClPlayer;
-            resultComponent.Trigger.Position = triggerEntityPos;
-            resultComponent.Trigger.Rotation = triggerEntityRot;
-            resultComponent.Trigger.Scale = triggerEntityScale;
-
-            if (avatarEntity != Entity.Null)
-                resultComponent.Trigger.Entity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
+            // Report the intersection of the area mask with the bits the avatar carries.
+            ColliderLayer triggerLayers;
+            if (avatarEntity == Entity.Null)
+                triggerLayers = entityInfo.SDKLayer;
+            else if (isMainAvatar)
+                triggerLayers = PhysicsLayers.PLAYER_QUALIFYING_BITS & areaLayerMask;
             else
-                resultComponent.Trigger.Entity = (uint)entityInfo.SDKEntity.Id;
+                triggerLayers = ColliderLayer.ClPlayer & areaLayerMask;
 
-            ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, (PBTriggerAreaResult result, uint timestamp)>
+            uint triggerEntity;
+            if (avatarEntity != Entity.Null)
+                triggerEntity = globalWorld.TryGet(avatarEntity, out PlayerCRDTEntity playerCrdtEntityComp) ? (uint)playerCrdtEntityComp.CRDTEntity.Id : 999999;
+            else
+                triggerEntity = (uint)entityInfo.SDKEntity.Id;
+
+            var data = new ResultData(
+                eventType, (uint)triggerAreaCRDTEntity.Id, incrementalTick,
+                triggerAreaTransform.localPosition.ToProtoVector(), triggerAreaTransform.localRotation.ToProtoQuaternion(),
+                triggerEntity, (uint)triggerLayers, triggerEntityPos, triggerEntityRot, triggerEntityScale);
+
+            ecsToCRDTWriter.AppendMessage<PBTriggerAreaResult, ResultData>
             (
                 prepareMessage: static (pbTriggerAreaResult, data) =>
                 {
-                    pbTriggerAreaResult.EventType = data.result.EventType;
-                    pbTriggerAreaResult.TriggeredEntity = data.result.TriggeredEntity;
-                    pbTriggerAreaResult.Timestamp = data.timestamp;
-                    pbTriggerAreaResult.TriggeredEntityRotation = data.result.TriggeredEntityRotation;
-                    pbTriggerAreaResult.TriggeredEntityPosition = data.result.TriggeredEntityPosition;
-                    pbTriggerAreaResult.Trigger = data.result.Trigger;
-                },
-                triggerAreaCRDTEntity, (int)incrementalTick, (resultComponent, incrementalTick)
-            );
+                    pbTriggerAreaResult.EventType = data.EventType;
+                    pbTriggerAreaResult.TriggeredEntity = data.TriggeredEntity;
+                    pbTriggerAreaResult.Timestamp = data.Timestamp;
+                    pbTriggerAreaResult.TriggeredEntityPosition = data.TriggeredEntityPosition;
+                    pbTriggerAreaResult.TriggeredEntityRotation = data.TriggeredEntityRotation;
 
-            triggerAreaResultTriggerPool.Release(resultComponent.Trigger);
-            triggerAreaResultPool.Release(resultComponent);
+                    pbTriggerAreaResult.Trigger ??= new PBTriggerAreaResult.Types.Trigger();
+                    pbTriggerAreaResult.Trigger.Entity = data.TriggerEntity;
+                    pbTriggerAreaResult.Trigger.Layers = data.TriggerLayers;
+                    pbTriggerAreaResult.Trigger.Position = data.TriggerEntityPosition;
+                    pbTriggerAreaResult.Trigger.Rotation = data.TriggerEntityRotation;
+                    pbTriggerAreaResult.Trigger.Scale = data.TriggerEntityScale;
+                },
+                triggerAreaCRDTEntity, (int)incrementalTick, data
+            );
         }
 
         [Query]
@@ -220,6 +259,8 @@ namespace DCL.SDKComponents.TriggerArea.Systems
             FinalizeComponentsQuery(World);
         }
 
+        protected override void OnDispose() { }
+
         private bool TryGetAvatarEntity(Transform transform, out Entity entity)
         {
             entity = Entity.Null;
@@ -230,6 +271,3 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         }
     }
 }
-
-
-

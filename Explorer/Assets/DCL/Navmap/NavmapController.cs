@@ -69,7 +69,7 @@ namespace DCL.Navmap
             NavmapSearchBarController navmapSearchBarController,
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
-            IPlacesAPIService placesAPIService, 
+            IPlacesAPIService placesAPIService,
             HomePlaceEventBus homePlaceEventBus)
         {
             this.navmapView = navmapView;
@@ -200,6 +200,7 @@ namespace DCL.Navmap
             satelliteController.Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
+            navmapView.gameObject.SetActive(true);
 
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
             {
@@ -222,6 +223,7 @@ namespace DCL.Navmap
             cameraController?.Release(this);
             navmapBus.ClearHistory();
             searchBarController.ClearInput();
+            navmapView.gameObject.SetActive(false);
         }
 
         public void Animate(int triggerId)

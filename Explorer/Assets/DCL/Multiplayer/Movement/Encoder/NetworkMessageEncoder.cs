@@ -1,23 +1,26 @@
 ﻿using DCL.CharacterMotion.Components;
-using DCL.Landscape.Settings;
 using DCL.Multiplayer.Movement.Settings;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.Movement
 {
+    /// <summary>
+    ///     Encoder for compressed LiveKit movement
+    /// </summary>
     public class NetworkMessageEncoder
     {
         private readonly MessageEncodingSettings encodingSettings;
         private readonly TimestampEncoder timestampEncoder;
         private readonly ParcelEncoder parcelEncoder;
 
-        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, LandscapeData landscapeData)
+        public NetworkMessageEncoder(MessageEncodingSettings encodingSettings, ParcelEncoder parcelEncoder)
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
-            parcelEncoder = new ParcelEncoder(landscapeData.terrainData);
+            this.parcelEncoder = parcelEncoder;
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>
@@ -25,13 +28,14 @@ namespace DCL.Multiplayer.Movement
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned, message.rotationY, message.velocityTier),
                 movementData = CompressMovementData(message.position, message.velocity, encodingSettings.GetConfigForTier(message.velocityTier)),
-                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch)
+                headSyncData = CompressHeadSyncData(message.headIKYawEnabled, message.headIKPitchEnabled, message.headYawAndPitch),
+                pointAtData = CompressPointAtData(message.isPointingAt, message.pointAtWorldHitPoint - message.position)
             };
 
-        private int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
+        private int CompressTemporalData(double timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned,
             float rotationY, int tier)
         {
-            int temporalData = timestampEncoder.Compress(Mathf.Abs(timestamp));
+            int temporalData = timestampEncoder.Compress(Math.Abs(timestamp));
 
             // Animations
             temporalData |= ((int)movementKind & MessageEncodingSettings.TWO_BITS_MASK) << encodingSettings.MOVEMENT_KIND_START_BIT;
@@ -105,6 +109,46 @@ namespace DCL.Multiplayer.Movement
             return value;
         }
 
+        private int CompressPointAtData(bool isPointing, Vector3 relativeHitPoint)
+        {
+            if (!isPointing) return 0;
+
+            const int AXIS_BITS = 10;
+            float maxDist = encodingSettings.POINT_AT_MAX_DISTANCE;
+
+            int x = CompressPointAtAxis(relativeHitPoint.x, maxDist, AXIS_BITS);
+            int y = CompressPointAtAxis(relativeHitPoint.y, maxDist, AXIS_BITS);
+            int z = CompressPointAtAxis(relativeHitPoint.z, maxDist, AXIS_BITS);
+
+            int value = x;
+            value |= y << AXIS_BITS;
+            value |= z << (AXIS_BITS * 2);
+            if (isPointing) value |= 1 << 30;
+
+            return value;
+        }
+
+        private void DecompressPointAtData(int data, out bool isPointing, out Vector3 relativeHitPoint)
+        {
+            isPointing = (data & (1 << 30)) != 0;
+
+            if (!isPointing)
+            {
+                relativeHitPoint = Vector3.zero;
+                return;
+            }
+
+            const int AXIS_BITS = 10;
+            const int AXIS_MASK = (1 << AXIS_BITS) - 1;
+            float maxDist = encodingSettings.POINT_AT_MAX_DISTANCE;
+
+            float x = DecompressPointAtAxis(data & AXIS_MASK, maxDist, AXIS_BITS);
+            float y = DecompressPointAtAxis((data >> AXIS_BITS) & AXIS_MASK, maxDist, AXIS_BITS);
+            float z = DecompressPointAtAxis((data >> (AXIS_BITS * 2)) & AXIS_MASK, maxDist, AXIS_BITS);
+
+            relativeHitPoint = new Vector3(x, y, z);
+        }
+
         public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
         {
             int compressedTemporalData = compressedMessage.temporalData;
@@ -114,11 +158,12 @@ namespace DCL.Multiplayer.Movement
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
-            float timestamp = timestampEncoder.Decompress(compressedTemporalData);
+            double timestamp = timestampEncoder.Decompress(compressedTemporalData);
 
             var movementKind = (MovementKind)((compressedTemporalData >> encodingSettings.MOVEMENT_KIND_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK);
 
             DecompressHeadIK(compressedMessage, out float2 headYawAndPitch, out bool headIKYawEnabled, out bool headIKPitchEnabled);
+            DecompressPointAtData(compressedMessage.pointAtData, out bool isPointing, out Vector3 relativeHitPoint);
 
             return new NetworkMovementMessage
             {
@@ -153,6 +198,9 @@ namespace DCL.Multiplayer.Movement
                 headIKYawEnabled = headIKYawEnabled,
                 headIKPitchEnabled = headIKPitchEnabled,
                 headYawAndPitch = headYawAndPitch,
+
+                isPointingAt = isPointing,
+                pointAtWorldHitPoint = position + relativeHitPoint
             };
         }
 
@@ -249,6 +297,29 @@ namespace DCL.Multiplayer.Movement
             float pitch = FloatQuantizer.Decompress(compressedPitch, 0, 360, ROTATION_BITS);
             float yaw = FloatQuantizer.Decompress(compressedYaw, 0, 360, ROTATION_BITS);
             yawAndPitch = new Vector2(yaw, pitch);
+        }
+
+        private static int CompressPointAtAxis(float value, float maxDist, int sizeInBits)
+        {
+            int withoutSignBits = sizeInBits - 1;
+            float absNormalized = Mathf.Clamp01(Mathf.Abs(value) / maxDist);
+            float sqrtNormalized = Mathf.Sqrt(absNormalized);
+            int maxStep = (1 << withoutSignBits) - 1;
+            int compressed = Mathf.RoundToInt(sqrtNormalized * maxStep);
+            compressed <<= 1;
+            compressed |= value < 0 ? 1 : 0;
+            return compressed;
+        }
+
+        private static float DecompressPointAtAxis(int compressed, float maxDist, int sizeInBits)
+        {
+            bool negativeSign = (compressed & 1) == 1;
+            int withoutSign = compressed >> 1;
+            int withoutSignBits = sizeInBits - 1;
+            float maxStep = (1 << withoutSignBits) - 1f;
+            float sqrtNormalized = withoutSign / maxStep;
+            float value = sqrtNormalized * sqrtNormalized * maxDist;
+            return negativeSign ? -value : value;
         }
     }
 }

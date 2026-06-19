@@ -38,13 +38,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-
-        private readonly List<Avatar> avatarHistory = new ();
+        private readonly ProfileChangesBus profileChangesBus;
 
         private Dictionary<string, List<URN>>? maleWearablesByCategory;
         private Dictionary<string, List<URN>>? femaleWearablesByCategory;
 
-        private int currentAvatarIndex = -1;
+        private BodyShape selectedBodyType = BodyShape.MALE;
 
         private Profile newUserProfile;
         private string userEmail;
@@ -63,7 +62,8 @@ namespace DCL.AuthenticationScreenFlow
             IWearablesProvider wearablesProvider,
             IWebBrowser webBrowser,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource decentralandUrlsSource) : base(viewInstance)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ProfileChangesBus profileChangesBus) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -76,6 +76,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.profileChangesBus = profileChangesBus;
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -89,15 +90,13 @@ namespace DCL.AuthenticationScreenFlow
 
             loginCt = payload.ct;
             userEmail = payload.email;
+            selectedBodyType = BodyShape.MALE;
+            newUserProfile = payload.profile;
 
             InitializeAvatarAsync().Forget();
 
-            view.PrevRandomButton.interactable = false;
-            view.NextRandomButton.interactable = false;
-
+            controller.IsCurrentlyNewAccount = true;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
-
-            newUserProfile = payload.profile;
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
@@ -110,8 +109,13 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.AddListener(OnBackButtonClicked);
 
             view.RandomizeButton.onClick.AddListener(OnRandomizeButtonPressed);
-            view.PrevRandomButton.onClick.AddListener(PrevRandomAvatar);
-            view.NextRandomButton.onClick.AddListener(NextRandomAvatar);
+
+            // Body type selector
+            view.BodyTypeDropdownButton.onClick.AddListener(ToggleBodyTypeDropdown);
+            view.BodyTypeOptionA.onClick.AddListener(() => SelectBodyType(BodyShape.MALE));
+            view.BodyTypeOptionB.onClick.AddListener(() => SelectBodyType(BodyShape.FEMALE));
+            view.SetBodyTypeDropdownOpen(false);
+            view.UpdateBodyTypeUI(selectedBodyType.Equals(BodyShape.MALE));
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.SetIsOnWithoutNotify(false);
@@ -129,7 +133,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             characterPreviewController.OnHide();
 
-            avatarHistory.Clear();
             maleWearablesByCategory = null;
             femaleWearablesByCategory = null;
 
@@ -140,8 +143,9 @@ namespace DCL.AuthenticationScreenFlow
             view.BackButton.onClick.RemoveAllListeners();
 
             view.RandomizeButton.onClick.RemoveAllListeners();
-            view.PrevRandomButton.onClick.RemoveAllListeners();
-            view.NextRandomButton.onClick.RemoveAllListeners();
+            view.BodyTypeDropdownButton.onClick.RemoveAllListeners();
+            view.BodyTypeOptionA.onClick.RemoveAllListeners();
+            view.BodyTypeOptionB.onClick.RemoveAllListeners();
 
             // Toggle listeners for terms agreement
             view.SubscribeToggle.onValueChanged.RemoveAllListeners();
@@ -171,9 +175,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 if (loadedWearables != null)
                     PopulateWearablesCatalogs(loadedWearables);
-                UpdateCharacterPreview(RandomizeAvatar());
-                UpdateAvatarNavigationButtons();
-                InitializeAvatarHistory(newUserProfile.Avatar);
+                UpdateCharacterPreview(CreateRandomAvatar());
             }
             catch (OperationCanceledException)
             { /* Expected on cancellation */
@@ -242,31 +244,10 @@ namespace DCL.AuthenticationScreenFlow
             ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalogs populated: male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
         }
 
-        private void InitializeAvatarHistory(Avatar initialAvatar)
-        {
-            avatarHistory.Add(initialAvatar);
-            currentAvatarIndex = 0;
-            UpdateAvatarNavigationButtons();
-        }
-
         private void OnBackButtonClicked()
         {
             view.Hide(UIAnimationHashes.SLIDE);
             controller.ChangeAccount();
-        }
-
-        private Avatar RandomizeAvatar()
-        {
-            // If we're not at the end of history, remove all avatars after current position
-            if (currentAvatarIndex < avatarHistory.Count - 1)
-                avatarHistory.RemoveRange(currentAvatarIndex + 1, avatarHistory.Count - currentAvatarIndex - 1);
-
-            // Create and add new avatar to history
-            Avatar newAvatar = CreateRandomAvatar();
-            avatarHistory.Add(newAvatar);
-            currentAvatarIndex = avatarHistory.Count - 1;
-
-            return newAvatar;
         }
 
         private void UpdateCharacterPreview(Avatar newAvatar)
@@ -279,37 +260,22 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OnRandomizeButtonPressed()
         {
-            UpdateCharacterPreview(RandomizeAvatar());
-            UpdateAvatarNavigationButtons();
+            UpdateCharacterPreview(CreateRandomAvatar());
         }
 
-        private void PrevRandomAvatar()
+        private void ToggleBodyTypeDropdown()
         {
-            if (currentAvatarIndex <= 0)
-                return;
-            currentAvatarIndex--;
-
-            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
-            UpdateAvatarNavigationButtons();
+            bool isOpen = !view.BodyTypeDropdownPanel.activeSelf;
+            view.SetBodyTypeDropdownOpen(isOpen);
         }
 
-        private void NextRandomAvatar()
+        private void SelectBodyType(BodyShape bodyShape)
         {
-            if (currentAvatarIndex >= avatarHistory.Count - 1)
-                return;
-            currentAvatarIndex++;
-
-            UpdateCharacterPreview(avatarHistory[currentAvatarIndex]);
-            UpdateAvatarNavigationButtons();
-        }
-
-        private void UpdateAvatarNavigationButtons()
-        {
-            if (viewInstance == null)
-                return;
-
-            view.PrevRandomButton.interactable = currentAvatarIndex > 0;
-            view.NextRandomButton.interactable = currentAvatarIndex < avatarHistory.Count - 1;
+            selectedBodyType = bodyShape;
+            view.SetBodyTypeDropdownOpen(false);
+            view.UpdateBodyTypeUI(bodyShape.Equals(BodyShape.MALE));
+            // Regenerate avatar with the new body type
+            UpdateCharacterPreview(CreateRandomAvatar());
         }
 
         private void OnToggleChanged(bool _) =>
@@ -325,7 +291,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private Avatar CreateRandomAvatar()
         {
-            BodyShape bodyShape = Random.value > 0.5f ? BodyShape.MALE : BodyShape.FEMALE;
+            BodyShape bodyShape = selectedBodyType;
 
             // If base wearables loaded from backend - use randomizer
             if (loadedWearables != null && loadedWearables.Count > 0)
@@ -386,6 +352,15 @@ namespace DCL.AuthenticationScreenFlow
                     Profile? publishedProfile = await selfProfile.UpdateProfileAsync(newUserProfile, ct, updateAvatarInWorld: false);
                     newUserProfile = publishedProfile ?? throw new ProfileNotFoundException();
 
+                    // Notify profile-bus subscribers (sidebar thumbnail, explore panel, chat) that the
+                    // freshly created profile is live
+                    profileChangesBus.PushUpdate(newUserProfile);
+
+                    // Mark the analytics-visible end of the onboarding step. Anything between
+                    // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
+                    // setting up their account.
+                    controller.RaiseProfileFinalized();
+
                     await characterPreviewController.PlayJumpInEmoteAndAwaitItAsync();
 
                     view.Hide(UIAnimationHashes.OUT);
@@ -404,7 +379,7 @@ namespace DCL.AuthenticationScreenFlow
                     spanErrorInfo = new SpanErrorInfo("Exception on finalizing new user", e);
 
                     view.Hide(UIAnimationHashes.SLIDE);
-                    fsm.Enter<LoginSelectionAuthState, PopupType>(PopupType.CONNECTION_ERROR);
+                    fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
                 }
             }
         }

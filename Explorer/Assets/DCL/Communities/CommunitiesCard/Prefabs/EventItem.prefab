@@ -1079,12 +1079,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 5087602760573563177}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &4859581663002636863
 GameObject:
   m_ObjectHideFlags: 0
@@ -1644,12 +1644,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 8462107412257126423}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &6904617891973823716
 GameObject:
   m_ObjectHideFlags: 0
@@ -2105,12 +2105,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 7796272018042831747}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &9206113397840283227
 GameObject:
   m_ObjectHideFlags: 0
@@ -2247,12 +2247,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 6124658969080785628}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
   <images>k__BackingField: []
   <text>k__BackingField: {fileID: 0}
   interactableColor: {r: 1, g: 1, b: 1, a: 1}
   hoverColor: {r: 0.54, g: 0.54, b: 0.54, a: 1}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1001 &323780496686981649
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2261,6 +2261,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4536725697558613486}
     m_Modifications:
+    - target: {fileID: 1158863092587464282, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
+    - target: {fileID: 1158863092587464282, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4906287755250558190, guid: bf63ab8a4820b4024a7aedaf81568166, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0

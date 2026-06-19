@@ -1,6 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
+using DCL.ECSComponents;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
 using DCL.TeleportPrompt;
@@ -24,6 +27,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         private IGlobalWorldActions globalWorldActions;
         private ISceneData sceneData;
         private ISystemClipboard systemClipboard;
+        private World sceneWorld;
 
         [SetUp]
         public void SetUp()
@@ -41,13 +45,23 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 new Vector2Int(0, 2),
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
+            sceneWorld = World.Create();
+            Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
                 mvcManager,
                 sceneStateProvider,
                 globalWorldActions,
                 sceneData,
                 new AllowEverythingJsApiPermissionsProvider(),
-                systemClipboard);
+                systemClipboard,
+                sceneWorld,
+                scenePlayerEntity);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            World.Destroy(sceneWorld);
         }
 
         [Test]
@@ -280,6 +294,47 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 Arg.Any<Vector3?>(),
                 0f,
                 Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void TryTriggerEmote_WithMask_RoutesThroughSceneWorld()
+        {
+            // Arrange
+            const string EMOTE_URN = "urn:emote:foo";
+
+            // Act
+            restrictedActionsAPIImplementation.TryTriggerEmote(EMOTE_URN, AvatarEmoteMask.AemUpperBody);
+
+            // Assert: masked path taken (TriggerEmote on global world is NOT called for masked emotes —
+            // they go through the scene world via TriggerMaskedEmoteOnSceneWorld instead)
+            globalWorldActions.DidNotReceive().TriggerEmote(Arg.Any<URN>(), Arg.Any<bool>(), Arg.Any<AvatarEmoteMask>());
+        }
+
+        [Test]
+        public void TryTriggerSceneEmoteAsync_WithMask_PreservesMask()
+        {
+            // Arrange
+            const string SRC = "scene/foo_emote.glb";
+            const string HASH = "QmFakeHash";
+            StubSceneContentHash(SRC, HASH);
+
+            // Act
+            restrictedActionsAPIImplementation.TryTriggerSceneEmoteAsync(SRC, false, AvatarEmoteMask.AemUpperBody, CancellationToken.None).Forget();
+
+            // Assert: original mask is preserved
+            globalWorldActions.Received(1).TriggerSceneEmoteAsync(sceneData, SRC, HASH, false, AvatarEmoteMask.AemUpperBody, Arg.Any<CancellationToken>());
+        }
+
+        private void StubSceneContentHash(string src, string hash)
+        {
+            var sceneContent = Substitute.For<ISceneContent>();
+            sceneContent.TryGetHash(src, out Arg.Any<string>())
+                        .Returns(call =>
+                         {
+                             call[1] = hash;
+                             return true;
+                         });
+            sceneData.SceneContent.Returns(sceneContent);
         }
     }
 }

@@ -67,6 +67,7 @@ namespace DCL.Profiles
                    && SkinColor.Equals(other.SkinColor);
         }
 
+        // Consider Profile.Clear before using it. The Clear was not used there, since the scope was not well defined
         public void Clear()
         {
             wearables.Clear();

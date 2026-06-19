@@ -1,5 +1,5 @@
-using System;
 using Arch.SystemGroups;
+using System;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.Gifting.Views;
@@ -25,7 +25,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.SharedSpaceManager;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utility;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -55,13 +55,12 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IScreenModeController screenModeController;
         private readonly ImageControllerProvider imageControllerProvider;
         private GiftSelectionController? giftSelectionController;
         private GiftTransferController? giftTransferStatusController;
         private GiftTransferSuccessController? giftTransferSuccessController;
         private GiftReceivedPopupController? giftReceivedPopupController;
+        private GiftNotificationOpenerController? giftNotificationOpenerController;
 
         public GiftingPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -80,8 +79,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ISharedSpaceManager sharedSpaceManager,
-            IScreenModeController screenModeController,
             ImageControllerProvider imageControllerProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -101,8 +98,6 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.web3Provider = web3Provider;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.sharedSpaceManager = sharedSpaceManager;
-            this.screenModeController = screenModeController;
             this.imageControllerProvider = imageControllerProvider;
         }
 
@@ -159,7 +154,7 @@ namespace DCL.PluginSystem.Global
                 giftItemLoaderService,
                 wearableCatalog,
                 imageControllerProvider,
-                sharedSpaceManager
+                mvcManager
             );
 
             var gridFactory = new GiftingGridPresenterFactory(eventBus,
@@ -168,9 +163,7 @@ namespace DCL.PluginSystem.Global
                 loadThumbnailCommand,
                 wearableCatalog,
                 pendingTransferService,
-                equippedStatusProvider,
-                wearableStorage,
-                emoteStorage);
+                equippedStatusProvider);
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 inputBlock,
@@ -193,8 +186,7 @@ namespace DCL.PluginSystem.Global
                 eventBus,
                 mvcManager,
                 decentralandUrlsSource,
-                giftTransferRequestCommand,
-                screenModeController
+                giftTransferRequestCommand
             );
 
             giftTransferSuccessController = new GiftTransferSuccessController(GiftTransferSuccessController
@@ -205,6 +197,8 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(giftTransferStatusController);
             mvcManager.RegisterController(giftTransferSuccessController);
             mvcManager.RegisterController(giftReceivedPopupController);
+
+            giftNotificationOpenerController = new GiftNotificationOpenerController(mvcManager);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

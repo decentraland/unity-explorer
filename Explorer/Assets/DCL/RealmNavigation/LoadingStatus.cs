@@ -7,8 +7,11 @@ namespace DCL.RealmNavigation
 {
     public class LoadingStatus : ILoadingStatus
     {
-        public ReactiveProperty<LoadingStage> CurrentStage { get; } = new (LoadingStage.Init);
-        public ReactiveProperty<string> AssetState { get; } = new("NA");
+        public ReactiveProperty<LoadingStage> CurrentStageMut { get; } = new (LoadingStage.Init);
+        public ReactiveProperty<string> AssetStateMut { get; } = new ("NA");
+
+        public IReadonlyReactiveProperty<LoadingStage> CurrentStage => CurrentStageMut;
+        public IReadonlyReactiveProperty<string> AssetState => AssetStateMut;
 
         private static readonly Dictionary<LoadingStage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<LoadingStage>())
         {
@@ -17,7 +20,6 @@ namespace DCL.RealmNavigation
             [LoadingStage.UnloadCacheChecking] = 0.05f,
             [LoadingStage.LiveKitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
-            [LoadingStage.OnboardingChecking] = 0.3f,
             [LoadingStage.ProfileLoading] = 0.4f,
             [LoadingStage.PlayerAvatarLoading] = 0.5f,
             [LoadingStage.LandscapeLoading] = 0.6f,
@@ -40,13 +42,12 @@ namespace DCL.RealmNavigation
             // Initial loading stages, in order
             Init = 0,
             AuthenticationScreenShowing = 1,
-            OnboardingChecking = 2,
-            ProfileLoading = 3,
-            PlayerAvatarLoading = 4,
-            LandscapeLoading = 5,
-            PlayerTeleporting = 6,
-            GlobalPXsLoading = 7,
-            Completed = 8,
+            ProfileLoading = 2,
+            PlayerAvatarLoading = 3,
+            LandscapeLoading = 4,
+            PlayerTeleporting = 5,
+            GlobalPXsLoading = 6,
+            Completed = 7,
 
             // Others
             UnloadCacheChecking,
@@ -58,13 +59,13 @@ namespace DCL.RealmNavigation
         public float SetCurrentStage(LoadingStage stage)
         {
             ReportHub.LogProductionInfo($"Current loading stage: {stage}");
-            CurrentStage.Value = stage;
+            CurrentStageMut.Value = stage;
             return PROGRESS[stage];
         }
 
         public void UpdateAssetsLoaded(int assetsLoaded, int assetsToLoad)
         {
-            AssetState.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
+            AssetStateMut.Value = $"{assetsLoaded.ToString()}/{assetsToLoad.ToString()}";
         }
 
         public bool IsLoadingScreenOn() =>

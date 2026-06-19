@@ -1,4 +1,6 @@
-﻿using LiveKit.Proto;
+﻿using DCL.Browser.DecentralandUrls;
+using DCL.LiveKit.Public;
+using LiveKit.Proto;
 using System;
 using UnityEngine;
 
@@ -32,7 +34,14 @@ namespace Global.Dynamic.DebugSettings
         [SerializeField]
         private bool overrideConnectionQuality;
         [SerializeField]
-        private ConnectionQuality connectionQuality;
+        private LKConnectionQuality connectionQuality;
+        [Space]
+        [Header("Comms Gatekeeper")]
+        [SerializeField]
+        private GatekeeperMode gatekeeperMode;
+        [SerializeField] [Tooltip("Base gatekeeper URL used only when Gatekeeper Mode is set to Custom (e.g. http://localhost:3000)")]
+        private string customGatekeeperUrl = string.Empty;
+        [Space]
         [SerializeField]
         private string[] appParameters;
 
@@ -48,9 +57,11 @@ namespace Global.Dynamic.DebugSettings
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
                 overrideConnectionQuality = false,
-                connectionQuality = ConnectionQuality.QualityExcellent,
+                connectionQuality = LKConnectionQuality.QualityExcellent,
                 enableRemotePortableExperiences = true,
                 emotesToAddToUserProfile = null,
+                gatekeeperMode = GatekeeperMode.Org,
+                customGatekeeperUrl = string.Empty,
                 appParameters = Array.Empty<string>(),
             };
 
@@ -66,7 +77,9 @@ namespace Global.Dynamic.DebugSettings
         public bool EnableVersionUpdateGuard => Application.isEditor ? this.enableVersionUpdateGuard : RELEASE_SETTINGS.enableVersionUpdateGuard;
         public bool EnableEmulateNoLivekitConnection => Application.isEditor? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
         public bool OverrideConnectionQuality => Application.isEditor ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
-        public ConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
-        public string[] AppParameters => appParameters;
+        public LKConnectionQuality ConnectionQuality => Application.isEditor ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
+        public GatekeeperMode GatekeeperMode => Application.isEditor ? gatekeeperMode : RELEASE_SETTINGS.gatekeeperMode;
+        public string CustomGatekeeperUrl => Application.isEditor ? customGatekeeperUrl : RELEASE_SETTINGS.customGatekeeperUrl;
+        public string[] AppParameters => Application.isEditor ? appParameters : RELEASE_SETTINGS.appParameters;
     }
 }

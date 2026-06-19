@@ -41,7 +41,6 @@ namespace DCL.PluginSystem.World
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private IComponentPool<SDKEntityTriggerArea.SDKEntityTriggerArea>? sdkEntityTriggerAreaPoolRegistry;
-        private IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool;
 
         public SDKEntityTriggerAreaPlugin(
             Arch.Core.World globalWorld,
@@ -53,8 +52,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IExposedCameraData cameraData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IWeb3IdentityCache web3IdentityCache,
-            IComponentPool<PBTriggerAreaResult.Types.Trigger> triggerAreaResultTriggerPool)
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.globalWorld = globalWorld;
             this.assetsProvisioner = assetsProvisioner;
@@ -66,7 +64,6 @@ namespace DCL.PluginSystem.World
             this.cameraData = cameraData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.web3IdentityCache = web3IdentityCache;
-            this.triggerAreaResultTriggerPool = triggerAreaResultTriggerPool;
         }
 
         public void Dispose()
@@ -79,7 +76,7 @@ namespace DCL.PluginSystem.World
             await CreateSDKEntityTriggerAreaPoolAsync(settings, ct);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
 
@@ -91,9 +88,6 @@ namespace DCL.PluginSystem.World
                 ref builder,
                 globalWorld,
                 sharedDependencies.EcsToCRDTWriter,
-                componentPoolsRegistry.GetReferenceTypePool<PBTriggerAreaResult>(),
-                triggerAreaResultTriggerPool,
-                sharedDependencies.SceneStateProvider,
                 sharedDependencies.EntityCollidersSceneCache,
                 sharedDependencies.SceneData));
             finalizeWorldSystems.Add(SDKEntityTriggerAreaCleanupSystem.InjectToWorld(ref builder, sdkEntityTriggerAreaPoolRegistry!));

@@ -26,6 +26,8 @@ MemoryBudgetProvider --> ISystemMemory : Gets Total Available Memory
 ## Resources Unloading
 In situations where memory consumption nears or exceeds critical levels, it becomes essential to reduce this pressure by strategically unloading resources that are no longer necessary. The goal of resource unloading is to free up memory space for new or more relevant resources needed for the current user experience. This is achieved through several components:
 
+> Note: this chapter is about **in-memory** caches. Assets evicted from memory may still be retained on disk and reloaded from there instead of the network — see [Disk Cache](disk-cache.md), which has its own size budget and LRU eviction.
+
 1. **`ReleaseMemorySystem`**: Continuously monitors memory usage (provided by `MemoryBudgetProvider`). When usage reaches or surpasses a predefined threshold, it activates the resource unloading process. This process prioritizes the unloading of resources with minimal impact on the user experience or those that can be reloaded as needed. Currently, it focuses on clearing resource-intensive caches and pools through the `CacheCleaner` class.
 2. **`CacheCleaner`**: This class encapsulates the logic for resource clearance using a visitor pattern, where different caches and pools are registered. Upon activation by `ReleaseMemorySystem`, `CacheCleaner` unloads registered pools and caches in a specific sequence and chunk sizes.
 3. **Disposal in Pools and Caches**: Each pool and cache is designed with unloading functionalities. Caches use an LRU-based approach for identifying and unloading less needed items, typically employing a `PriorityQueue`. Pools, derived from Unity's standard pools, extend it with a chunk-based clearance method. All unloading operations are conducted within the constraints of FrameTime budgeting to ensure efficient performance. Unloading initiates the disposal of respective assets.
@@ -47,6 +49,7 @@ classDiagram
         +Unload()
         +Register(AssetBundleCache)
         +Register(GltfContainerCache)
+        +Register(GltfLoadCache)
         +Register(...)
     }
 
@@ -54,6 +57,7 @@ classDiagram
     CacheCleaner --> WearableAssetsCache : Unload
     CacheCleaner --> WearableCatalog : Unload
     CacheCleaner --> GltfContainerAssetsCache : Unload
+    CacheCleaner --> GltfLoadCache : Unload
     CacheCleaner --> AssetBundleCache : Unload
 
     %% Cache Classes
@@ -61,6 +65,7 @@ classDiagram
     class WearableAssetsCache{ +Unload(amount) }
     class WearableCatalog{ +Unload(amount) }
     class GltfContainerAssetsCache { +Unload(amount) }
+    class GltfLoadCache { +Unload(amount) }
     class AssetBundleCache{ +Unload(amount) }
 
     %% Other Associations
@@ -76,7 +81,15 @@ classDiagram
     }
     GltfContainerAssetsCache --> GltfContainerAsset : Dispose cached assets
     GltfContainerAsset : +Dispose()
-    GltfContainerAsset --> AssetBundleData : Dereference on disposal
+    GltfContainerAsset --> AssetBundleData : Dereference on disposal (AB path)
+    GltfContainerAsset --> GLTFData : Dereference on disposal (raw-GLTF path)
+    GltfLoadCache --> GLTFData : Dispose dereferenced
+    GLTFData --> GltfImport : Dispose on terminal disposal
+    class GLTFData {
+        +Dispose()
+        +AddReference()
+        +Dereference()
+    }
     AssetBundleCache --> AssetBundleData : Dispose dereferenced
     class AssetBundleData {
         +Dispose()
@@ -84,6 +97,10 @@ classDiagram
         +Dereference()
     }
 ```
+
+### LSD eager drain on `/reload`
+
+In Local Scene Development mode, `ECSReloadScene.DisposeAndRestartAsync` calls `cacheCleaner.UnloadCache(budgeted: false)` between scene-unload and the new-scene wait. This is required because the local dev server derives content hashes from the file path, not the file bytes — when an author edits a `.glb` and reloads, the new request carries the same hash as the previous one, so a cache hit would return the stale asset and the updated model would never appear. Draining forces fresh loads on every `/reload`. The drain is unbudgeted (runs to completion in one pass) and applies to **every** cache `CacheCleaner` knows about, not just the GLTF caches — any asset type sourced via the dev server has the same staleness risk.
 
 ## Debug and Profiling
 There are several tools that help to debug and profile this process.

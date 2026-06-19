@@ -1,0 +1,235 @@
+name: Dependency Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    paths:
+      - 'Explorer/Packages/manifest.json'
+      - 'Explorer/Packages/packages-lock.json'
+      - 'Explorer/Assets/Plugins/**'
+      - '**/*.dll'
+      - '**/*.so'
+      - '**/*.dylib'
+      - '**/*.bundle'
+      - '**/*.aar'
+      - '**/*.jar'
+      - '.github/workflows/**'
+      - '.github/prompts/**'
+
+concurrency:
+  group: dependency-security-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  detect-and-review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Detect security-relevant changes
+        id: detect
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          BASE_SHA=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")
+
+          DEPENDENCY_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
+            'Explorer/Packages/manifest.json' \
+            'Explorer/Packages/packages-lock.json' \
+            'Explorer/Assets/Plugins/' \
+            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
+
+          WORKFLOW_CHANGES=$(git diff --name-only "$BASE_SHA" -- \
+            '.github/workflows/' \
+            '.github/prompts/' || true)
+
+          if [ -z "$DEPENDENCY_CHANGES" ] && [ -z "$WORKFLOW_CHANGES" ]; then
+            echo "No security-relevant changes detected."
+            echo "has-changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has-changes=true" >> "$GITHUB_OUTPUT"
+
+          DELIM="EOF_$(uuidgen)"
+
+          # New binaries (dependency review focus)
+          NEW_BINARIES=$(git diff --name-only --diff-filter=A "$BASE_SHA" -- \
+            '*.dll' '*.so' '*.dylib' '*.bundle' '*.aar' '*.jar' || true)
+          {
+            echo "new-binaries<<$DELIM"
+            echo "$NEW_BINARIES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+          # Workflow / prompt files (workflow security focus)
+          {
+            echo "workflow-changes<<$DELIM"
+            echo "$WORKFLOW_CHANGES"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ -n "$DEPENDENCY_CHANGES" ]; then
+            echo "Dependency changes detected:"
+            echo "$DEPENDENCY_CHANGES"
+          fi
+          if [ -n "$NEW_BINARIES" ]; then
+            echo ""
+            echo "⚠️ New binary files added:"
+            echo "$NEW_BINARIES"
+          fi
+          if [ -n "$WORKFLOW_CHANGES" ]; then
+            echo ""
+            echo "Workflow / prompt changes detected:"
+            echo "$WORKFLOW_CHANGES"
+          fi
+
+      - name: Add label
+        if: steps.detect.outputs.has-changes == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.pull_request.number }},
+              labels: ['new-dependency']
+            });
+
+      - name: Set status to pending
+        if: steps.detect.outputs.has-changes == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'pending',
+              context: 'Dependency Security Review',
+              description: 'Reviewing external dependency changes...'
+            });
+
+      - name: Load review prompt
+        if: steps.detect.outputs.has-changes == 'true'
+        id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          DELIM="PROMPT_EOF_$(uuidgen)"
+          {
+            echo "instructions<<$DELIM"
+            gh api "repos/${{ github.repository }}/contents/.github/prompts/dependency-security-review.md?ref=$BASE_SHA" \
+              --jq '.content' | base64 -d
+            echo
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Claude Dependency Review
+        if: steps.detect.outputs.has-changes == 'true'
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            This PR touches dependency files, workflow files, prompt files, or some combination. Perform a security-focused review using the instructions below. Run the dependency-review section if dependency files changed and the workflow-review section if workflow / prompt files changed (both can apply on a single PR).
+
+            New binary files added in this PR (pre-computed from the diff — may not appear in `gh pr diff` output for large binaries):
+            ${{ steps.detect.outputs.new-binaries || 'None' }}
+
+            Workflow / prompt files changed in this PR:
+            ${{ steps.detect.outputs.workflow-changes || 'None' }}
+
+            ${{ steps.prompt.outputs.instructions }}
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --max-turns 40
+
+      - name: Set final status
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const hasChanges = '${{ steps.detect.outputs.has-changes }}' === 'true';
+            const detectFailed = '${{ steps.detect.outcome }}' === 'failure';
+
+            // No dependency changes and detect didn't crash — nothing to report
+            if (!hasChanges && !detectFailed) return;
+
+            let state, description;
+
+            if (detectFailed) {
+              state = 'failure';
+              description = 'Dependency detection step failed — check workflow logs';
+            } else {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ github.event.pull_request.number }},
+              });
+
+              const claudeComments = comments.filter(c =>
+                c.user?.login === 'claude[bot]' && c.body?.includes('DEPENDENCY_REVIEW:')
+              );
+              const claudeComment = claudeComments[claudeComments.length - 1];
+
+              for (const c of claudeComments.slice(0, -1)) {
+                await github.graphql(
+                  `mutation($id: ID!) {
+                    minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                      minimizedComment { isMinimized }
+                    }
+                  }`,
+                  { id: c.node_id }
+                ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
+              }
+
+              const output = claudeComment?.body ?? '';
+              const errored = '${{ steps.claude.outcome }}' === 'failure';
+              const isBlock = output.includes('DEPENDENCY_REVIEW: BLOCK');
+              const needsAttention = output.includes('DEPENDENCY_REVIEW: NEEDS_ATTENTION');
+
+              if (errored && !output) {
+                state = 'failure';
+                description = 'Dependency review failed — credit balance too low or API error';
+              } else if (errored) {
+                state = 'failure';
+                description = 'Dependency review encountered an error';
+              } else if (isBlock) {
+                state = 'failure';
+                description = 'HIGH RISK dependencies found — must be addressed before merge';
+              } else if (needsAttention) {
+                state = 'pending';
+                description = 'MEDIUM RISK dependencies — human review required';
+              } else {
+                state = 'success';
+                description = 'No high-risk dependency changes found';
+              }
+            }
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state,
+              context: 'Dependency Security Review',
+              description
+            });

@@ -8,17 +8,20 @@ namespace DCL.Multiplayer.Emotes
         /// <summary>
         ///     As IDs are incremental we only need to store and play the latest one
         /// </summary>
-        private readonly Dictionary<string, float> lastProcessedTimestamps = new (PoolConstants.AVATARS_COUNT);
+        private readonly Dictionary<string, double> lastProcessedTimestamps = new (PoolConstants.AVATARS_COUNT);
 
         public void RemoveWallet(string walletId) =>
             lastProcessedTimestamps.Remove(walletId);
 
-        public bool TryPass(string walletId, float timestamp)
+        public bool TryPass(string walletId, double timestamp)
         {
-            if (lastProcessedTimestamps.TryGetValue(walletId, out float storedTimestamp))
+            if (lastProcessedTimestamps.TryGetValue(walletId, out double storedTimestamp))
             {
+                if (timestamp < storedTimestamp)
+                    return false;
+
                 lastProcessedTimestamps[walletId] = timestamp;
-                return timestamp > storedTimestamp;
+                return true;
             }
 
             lastProcessedTimestamps.Add(walletId, timestamp);

@@ -8,10 +8,8 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -30,7 +28,8 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
-using DCL.PrivateWorlds;
+using UnityEngine;
+using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
 
 namespace Global.Dynamic
@@ -52,11 +51,9 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
@@ -72,6 +69,7 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
+        private IReadOnlyList<int2> localSceneParcels = Array.Empty<int2>();
 
         public IRealmData RealmData => realmData;
 
@@ -89,7 +87,6 @@ namespace Global.Dynamic
         }
 
         public RealmController(
-            IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
@@ -104,14 +101,11 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider,
-            IWorldPermissionsService worldPermissionsService)
+            WorldManifestProvider worldManifestProvider)
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
-            this.worldPermissionsService = worldPermissionsService;
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
@@ -144,6 +138,7 @@ namespace Global.Dynamic
 
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                localSceneParcels = ParseLocalSceneParcels(result.configurations.localSceneParcels);
                 WorldManifest worldManifest = await worldManifestProvider.FetchWorldManifestAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.AssetBundleRegistry)), result.configurations.realmName, environment, ct);
 
                 string hostname = ResolveHostname(realm, result);
@@ -199,50 +194,6 @@ namespace Global.Dynamic
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
-        public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
-        {
-            if (!TryExtractWorldName(realm, out string worldName))
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to extract world name from realm '{realm}'.");
-                return false;
-            }
-
-            WorldAccessCheckContext context;
-            try
-            {
-                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                return false;
-            }
-
-            return context.Result == WorldAccessCheckResult.Allowed;
-        }
-
-        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
-        {
-            worldName = string.Empty;
-
-            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
-                return false;
-
-            string path = uri.AbsolutePath.Trim('/');
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (segments.Length == 0)
-                return false;
-
-            worldName = segments[^1];
-            return !string.IsNullOrEmpty(worldName);
-        }
-
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
             FixedScenePointers fixedScenePointers = default;
@@ -255,11 +206,13 @@ namespace Global.Dynamic
 
         public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
         {
-            if (staticLoadPositions.Count == 0) return null;
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+            if (positions.Count == 0)
+                return null;
 
             World world = GlobalWorld.EcsWorld;
 
-            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
+            var intention = new GetSceneDefinitionList(new List<SceneEntityDefinition>(positions.Count), positions, new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint));
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world, intention, PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
@@ -277,7 +230,6 @@ namespace Global.Dynamic
             }
 
             return sceneDefinitions;
-
         }
 
         public void DisposeGlobalWorld()
@@ -343,6 +295,20 @@ namespace Global.Dynamic
                 (ref PartitionComponent partitionComponent) => { partitionComponent.Bucket = byte.MaxValue; });
         }
 
+        private static List<int2> ParseLocalSceneParcels(List<string> parcels)
+        {
+            if (parcels.Count == 0)
+                return new List<int2>();
+
+            var parsed = new List<int2>(parcels.Count);
+
+            foreach (string parcelStr in parcels)
+                if (RealmHelper.TryParseParcelFromString(parcelStr, out Vector2Int parcel))
+                    parsed.Add(parcel.ToInt2());
+
+            return parsed;
+        }
+
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
             world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
@@ -350,10 +316,12 @@ namespace Global.Dynamic
 
         private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
         {
-            if (staticLoadPositions is { Count: > 0 })
+            IReadOnlyList<int2> positions = localSceneParcels.Count > 0 ? localSceneParcels : staticLoadPositions;
+
+            if (positions is { Count: > 0 })
             {
                 // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
+                world.Add(realmEntity, new StaticScenePointers(positions));
                 return true;
             }
 

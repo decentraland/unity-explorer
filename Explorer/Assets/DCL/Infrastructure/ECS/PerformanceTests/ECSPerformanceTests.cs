@@ -4,6 +4,8 @@ using Arch.System;
 using NUnit.Framework;
 using System.Linq;
 using Unity.PerformanceTesting;
+using Unity.Profiling;
+using UnityEngine;
 
 namespace ECS.PerformanceTests
 {
@@ -116,11 +118,20 @@ namespace ECS.PerformanceTests
             for (var i = 0; i < entitiesCount; i++)
                 world.Create(archetype);
 
+            ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
+
             Measure.Method(() => { ChangeMarkerQuery(world); })
                    .IterationsPerMeasurement(ITERATIONS_COUNT)
                    .WarmupCount(5)
                    .MeasurementCount(MEASUREMENTS_COUNT)
+                   .GC()
                    .Run();
+
+            long gcBytes = gcAlloc.LastValue;
+            gcAlloc.Dispose();
+
+            Debug.Log($"[ECS Iteration] {entitiesCount} entities — GC.Alloc last: {gcBytes} bytes");
+            Assert.That(gcBytes, Is.EqualTo(0), $"Query iteration must be allocation-free, but allocated {gcBytes} bytes with {entitiesCount} entities");
         }
 
         /// <summary>
@@ -135,11 +146,20 @@ namespace ECS.PerformanceTests
             for (var i = 0; i < entitiesCount; i++)
                 world.Create(LONG_ARCHETYPE);
 
+            ProfilerRecorder gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC.Alloc");
+
             Measure.Method(() => { ChangeMarkerQuery(world); })
                    .IterationsPerMeasurement(ITERATIONS_COUNT)
                    .WarmupCount(5)
                    .MeasurementCount(MEASUREMENTS_COUNT)
+                   .GC()
                    .Run();
+
+            long gcBytes = gcAlloc.LastValue;
+            gcAlloc.Dispose();
+
+            Debug.Log($"[ECS EmptyIteration] {entitiesCount} entities — GC.Alloc last: {gcBytes} bytes");
+            Assert.That(gcBytes, Is.EqualTo(0), $"Empty query iteration must be allocation-free, but allocated {gcBytes} bytes with {entitiesCount} entities");
         }
 
         [Query]

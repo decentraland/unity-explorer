@@ -36,13 +36,16 @@ namespace DCL.ExplorePanel
         public ProfileMenuView ProfileMenuView { get; private set; } = null!;
 
         [field: SerializeField]
-        public ProfileMenuView SkyMenuView { get; private set; } = null!;
+        public Button ProfileMenuCloserButton { get; private set; } = null!;
 
         [field: SerializeField]
         public WarningNotificationView? WarningNotificationView { get; private set; }
 
         [field: SerializeField]
         public TMP_Text LiveEventsCounterText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject CommunitiesLiveBadge { get; private set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]

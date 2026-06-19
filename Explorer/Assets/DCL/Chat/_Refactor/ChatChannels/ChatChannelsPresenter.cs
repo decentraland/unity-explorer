@@ -2,8 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatCommands;
 using DCL.Chat.ChatServices;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Communities;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Chat
@@ -18,7 +20,7 @@ namespace DCL.Chat
     public class ChatChannelsPresenter : IDisposable
     {
         private readonly ChatChannelsView view;
-        private readonly IChatEventBus chatEventBus;
+        private readonly ChatEventBus chatEventBus;
         private readonly IChatHistory chatHistory;
         private readonly CurrentChannelService currentChannelService;
         private readonly CommunityDataService communityDataService;
@@ -26,6 +28,7 @@ namespace DCL.Chat
         private readonly CloseChannelCommand closeChannelCommand;
         private readonly OpenConversationCommand openConversationCommand;
         private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
+        private readonly ProfileRepositoryWrapper profileRepository;
         private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new ();
         private readonly EventSubscriptionScope scope = new ();
 
@@ -35,14 +38,15 @@ namespace DCL.Chat
 
         public ChatChannelsPresenter(ChatChannelsView view,
             IEventBus eventBus,
-            IChatEventBus chatEventBus,
+            ChatEventBus chatEventBus,
             IChatHistory chatHistory,
             CurrentChannelService currentChannelService,
             CommunityDataService communityDataService,
             SelectChannelCommand selectChannelCommand,
             CloseChannelCommand closeChannelCommand,
             OpenConversationCommand openConversationCommand,
-            CreateChannelViewModelCommand createChannelViewModelCommand)
+            CreateChannelViewModelCommand createChannelViewModelCommand,
+            ProfileRepositoryWrapper profileRepository)
         {
             this.view = view;
             this.chatEventBus = chatEventBus;
@@ -53,6 +57,7 @@ namespace DCL.Chat
             this.closeChannelCommand = closeChannelCommand;
             this.openConversationCommand = openConversationCommand;
             this.createChannelViewModelCommand = createChannelViewModelCommand;
+            this.profileRepository = profileRepository;
 
             lifeCts = new CancellationTokenSource();
 
@@ -63,8 +68,8 @@ namespace DCL.Chat
             this.chatHistory.ChannelRemoved += OnChannelRemoved;
             this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
             this.chatHistory.MessageAdded += OnMessageAdded;
-            this.chatEventBus.OpenPrivateConversationRequested += OnOpenUserConversation;
-            this.chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversation;
+            scope.Add(chatEventBus.Subscribe<ChatEvents.OpenPrivateConversationRequestedEvent>(evt => OnOpenUserConversation(evt.UserId)));
+            scope.Add(chatEventBus.Subscribe<ChatEvents.OpenCommunityConversationRequestedEvent>(evt => OnOpenCommunityConversation(evt.CommunityId)));
 
             this.communityDataService.CommunityMetadataUpdated += CommunityChannelMetadataUpdated;
 
@@ -76,6 +81,8 @@ namespace DCL.Chat
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
             scope.Add(eventBus.Subscribe<ChatEvents.ChannelUsersStatusUpdated>(OnChannelUsersStatusUpdated));
             scope.Add(eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnLiveUserConnectionStateChange));
+
+            profileRepository.UserThumbnailRefreshed += OnUserThumbnailRefreshed;
         }
 
         public void Dispose()
@@ -90,10 +97,20 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnMessageAdded;
             chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
 
-            chatEventBus.OpenPrivateConversationRequested -= OnOpenUserConversation;
-            chatEventBus.OpenCommunityConversationRequested -= OnOpenCommunityConversation;
+            profileRepository.UserThumbnailRefreshed -= OnUserThumbnailRefreshed;
 
             scope.Dispose();
+        }
+
+        private void OnUserThumbnailRefreshed(string userId)
+        {
+            if (!viewModels.TryGetValue(new ChatChannel.ChannelId(userId), out BaseChannelViewModel? vm)) return;
+            if (vm is not UserChannelViewModel userVm) return;
+
+            Sprite? sprite = profileRepository.GetLatestThumbnailForUser(userId);
+
+            if (sprite != null)
+                userVm.ProfilePicture.SetLoaded(sprite, false);
         }
 
         private void CommunityChannelMetadataUpdated(CommunityMetadataUpdatedEvent evt)

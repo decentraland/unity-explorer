@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utility.Types;
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -11,6 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public GlobalJobArrayIndex IndexInGlobalJobArray;
         public BoneArray bones;
+        public bool IsMainPlayer;
 
         public static AvatarTransformMatrixComponent Create(BoneArray bones) =>
             new ()
@@ -72,26 +74,26 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
     }
 
-    /// <summary>
-    /// Guarantees amount of bones in the array
-    /// </summary>
-    public readonly struct BoneArray
+    public struct BoneArray
     {
-        public const int COUNT = ComputeShaderConstants.BONE_COUNT;
+        public Transform[] Inner;
 
-        public readonly Transform[] Inner;
+        public int Count => Inner.Length;
 
         public Transform this[int i] => Inner[i];
 
         private BoneArray(Transform[] inner)
         {
-            this.Inner = inner;
+            Inner = inner;
         }
 
-        public static Result<BoneArray> From(Transform[] bones) =>
-            bones.Length != COUNT
-                ? Result<BoneArray>.ErrorResult($"Cannot map bone array, mismatch count: real {bones.Length}, expected: {COUNT}")
-                : Result<BoneArray>.SuccessResult(new BoneArray(bones));
+        public static Result<BoneArray> From(Transform[] bones)
+        {
+            if (bones.Length < ComputeShaderConstants.BASE_BONE_COUNT || bones.Length > ComputeShaderConstants.MAX_BONE_COUNT)
+                return Result<BoneArray>.ErrorResult($"Cannot map bone array, count {bones.Length} outside valid range [{ComputeShaderConstants.BASE_BONE_COUNT}, {ComputeShaderConstants.MAX_BONE_COUNT}]");
+
+            return Result<BoneArray>.SuccessResult(new BoneArray(bones));
+        }
 
         public static BoneArray FromOrDefault(Transform[] bones, ReportData reportData)
         {
@@ -108,9 +110,29 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public static BoneArray NewDefault()
         {
-            var inner = new Transform[COUNT];
-            for (int i = 0; i < COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
+            var inner = new Transform[ComputeShaderConstants.BASE_BONE_COUNT];
+            for (int i = 0; i < ComputeShaderConstants.BASE_BONE_COUNT; i++) inner[i] = new GameObject("BoneDefault").transform;
             return new BoneArray(inner);
+        }
+
+        public void Append(List<Transform> bones)
+        {
+            if (bones.Count == 0) return;
+
+            int oldCount = Inner.Length;
+            int newCount = oldCount + bones.Count;
+
+            if (newCount > ComputeShaderConstants.MAX_BONE_COUNT)
+            {
+                ReportHub.LogWarning(ReportCategory.AVATAR, $"Spring bone count would exceed MAX_BONE_COUNT ({ComputeShaderConstants.MAX_BONE_COUNT}), capping from {newCount} to {ComputeShaderConstants.MAX_BONE_COUNT}");
+                newCount = ComputeShaderConstants.MAX_BONE_COUNT;
+            }
+
+            Array.Resize(ref Inner, newCount);
+
+            int extraCount = newCount - oldCount;
+            for (int i = 0; i < extraCount; i++)
+                Inner[oldCount + i] = bones[i];
         }
     }
 }

@@ -5,6 +5,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
+using Utility.Animations;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -65,28 +67,36 @@ namespace DCL.CharacterMotion.Systems
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings,
-            in CharacterEmoteComponent emoteComponent
+            in CharacterEmoteComponent emoteComponent,
+            in HandPointAtComponent handPointAtComponent
         )
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
+
+            int maskedLayerTag = avatarBase.GetAnimatorCurrentStateTag(AnimatorEmoteLayers.UPPER_BODY_LAYER);
+            bool isPlayingMaskedEmote = maskedLayerTag == AnimationHashes.MASKED_EMOTE || maskedLayerTag == AnimationHashes.MASKED_EMOTE_LOOP;
 
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
                              && rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
-                             && emoteComponent.CurrentEmoteReference == null;
+                             && emoteComponent.CurrentEmoteReference == null
+                             && !isPlayingMaskedEmote;
 
             avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isEnabled ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
             if (handsIKComponent.IsDisabled) return;
 
             ApplyHandIK(avatarBase.LeftHandRaycast, avatarBase.LeftHandSubTarget, avatarBase.LeftHandIK, settings, dt);
-            ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
+            if (!handPointAtComponent.IsPointing)
+                ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
 
             Transform leftHint = avatarBase.LeftHandIK.data.hint;
             Vector3 leftPosition = settings.HandsIKElbowOffset;
             leftPosition.x = -leftPosition.x;
             leftHint.localPosition = leftPosition;
+
+            if (handPointAtComponent.IsPointing) return;
 
             Transform rightHint = avatarBase.RightHandIK.data.hint;
             Vector3 rightPosition = settings.HandsIKElbowOffset;

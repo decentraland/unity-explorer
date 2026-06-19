@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
+using DCL.LiveKit.Public;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
@@ -28,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly RoomSource roomId;
         private readonly CancellationTokenSource cts;
 
-        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
+        private readonly Dictionary<Packet.MessageOneofCase, (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)> subscribers = new ();
 
         private bool isDisposed;
 
@@ -41,10 +42,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
-            }),
+            }).WithDiscardUnknownFields(true),
             100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+        private MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
             RoomSource roomId)
         {
             this.dataPipe = dataPipe;
@@ -71,13 +72,19 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             isDisposed = true;
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
+        private void OnDataReceived(ReadOnlySpan<byte> data, LKParticipant participant, string topic, LKDataPacketKind kind)
         {
             try
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
+            }
+            catch (InvalidProtocolBufferException)
+            {
+                // Defensive fallback for non-DCL participants that publish non-protobuf data
+                // on the shared IDataPipe. DCL clients (including cast2) speak protobuf, and
+                // CommsApi traffic routes via MsgType.CommsData — neither reaches here.
             }
             catch (Exception e)
             {
@@ -88,7 +95,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, Participant participant, string topic, CancellationToken ctsToken)
+        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, LKParticipant participant, string topic, CancellationToken ctsToken)
         {
             try
             {
@@ -102,7 +109,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
                     await UniTask.SwitchToMainThread();
 
-                foreach (Action<(Packet, Participant, string)>? action in r.list)
+                foreach (Action<(Packet, LKParticipant, string)>? action in r.list)
                 {
                     ctsToken.ThrowIfCancellationRequested();
                     action((packet, participant, topic));
@@ -126,7 +133,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                .Add(tuple =>
                     {
                         Packet packet = tuple.Item1!;
-                        Participant participant = tuple.Item2!;
+                        LKParticipant participant = tuple.Item2!;
                         string topic = tuple.Item3!;
 
                         uint version = packet.ProtocolVersion;
@@ -167,17 +174,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
-        private (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
+        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
-                subscribers[typeName] = item = (new List<Action<(Packet, Participant, string)>>(), threadStrict);
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+                subscribers[typeName] = item = (new List<Action<(Packet, LKParticipant, string)>>(), threadStrict);
 
             return item;
         }
 
-        private (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
+        private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict)? SubscribersListOrNull(Packet.MessageOneofCase typeName)
         {
-            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
+            if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)
                 return null;
 
             return item;
@@ -197,6 +204,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.MovementCompressed => (packet.MovementCompressed as T).EnsureNotNull(),
                 Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
+                Packet.MessageOneofCase.Reaction => (packet.Reaction as T).EnsureNotNull(),
+                Packet.MessageOneofCase.ChatReaction => (packet.ChatReaction as T).EnsureNotNull(),
                 Packet.MessageOneofCase.None => null,
                 _ => null,
             };

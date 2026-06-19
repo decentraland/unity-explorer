@@ -73,6 +73,16 @@ For embedded links you will need to place value after `=` sign, instead of space
 
 ---
 
+### `skip-minimum-specs-screen`
+**Description:** Skips the minimum system specifications screen on startup, even when the host hardware does not meet the minimum requirements. Also bypasses the automatic low-quality preset that is normally enforced on sub-spec hardware, so the user-selected preset (or `--graphics`) controls quality. Intended for visual tests and CI machines that may register as low-spec but should still render at the configured quality. The hardware check still runs and is recorded in analytics/Sentry. Ignored when `--forceMinimumSpecsScreen` is also passed.
+
+**Usage:**
+```bash
+--skip-minimum-specs-screen
+```
+
+---
+
 ## Scene & Environment Flags
 
 ### `scene-console`
@@ -115,6 +125,40 @@ For embedded links you will need to place value after `=` sign, instead of space
 **Usage:**
 ```bash
 --local-scene true
+```
+
+---
+
+### `lsd-use-remote-ab`
+**Type:** Bool (presence flag)
+**Description:** Enables the use of remote asset bundles during local scene development (LSD). By default, local scene development relies on locally converted assets; with this flag the explorer can instead fetch already-deployed asset bundles from a remote content server. Only takes effect when local scene development is active (`--local-scene true` together with a valid `--realm` URL). Pair it with either `--lsd-remote-ab-world` or `--lsd-remote-ab-server` to choose where the remote asset bundles are sourced from.
+
+**Usage:**
+```bash
+--lsd-use-remote-ab
+```
+
+---
+
+### `lsd-remote-ab-world`
+**Type:** String (world name)
+**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), sources them from a specific deployed **world**. The value is the world name to pull the asset bundles from. Setting this flag implicitly selects the `World` content server, so it takes precedence over `--lsd-remote-ab-server`. Only effective during local scene development.
+
+**Usage:**
+```bash
+--lsd-remote-ab-world my-world.dcl.eth
+```
+
+---
+
+### `lsd-remote-ab-server`
+**Type:** String (`Genesis`, `Goerli`, case-insensitive)
+**Description:** When remote asset bundles are enabled (`--lsd-use-remote-ab`), selects which deployed environment the asset bundles are sourced from — `Genesis` (Genesis City) or `Goerli` (Goerli Plaza). `World` is also accepted, but to target a world you should use `--lsd-remote-ab-world` instead, since it sets the world name as well. Invalid values are ignored. Only effective during local scene development.
+
+**Usage:**
+```bash
+--lsd-remote-ab-server Genesis
+--lsd-remote-ab-server Goerli
 ```
 
 ---
@@ -241,6 +285,19 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `graphics`
+**Type:** String (`Low`, `Medium`, or `High`, case-insensitive)
+**Description:** Forces a graphics quality preset on startup, overriding whatever preset is saved in PlayerPrefs. The override is ephemeral — PlayerPrefs are not modified, so launching again without the flag restores the user's saved preset (including any `Custom` overrides). `Custom` is not accepted as a value.
+
+**Usage:**
+```bash
+--graphics high
+--graphics medium
+--graphics low
+```
+
+---
+
 ## Development Tools Flags
 
 ### `identity-expiration-duration`
@@ -300,6 +357,18 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `resolution`
+**Type:** String (`WxH`)
+**Description:** Overrides the resolution on startup, taking precedence over both PlayerPrefs and the default resolution. Applies in both fullscreen and windowed modes. Format is width × height separated by `x`.
+
+**Usage:**
+```bash
+--resolution 1920x1080
+--resolution 2560x1440
+```
+
+---
+
 ## Feature Flags Configuration
 
 ### `feature-flags-url`
@@ -344,6 +413,25 @@ More detailed instructions on how to test can be found in the description of rel
 **Usage:**
 ```bash
 --launcher_anonymous_id user123
+```
+
+---
+
+## Visual Test Determinism
+
+Visual regression tests need a deterministic scene: a fixed window, no time-of-day drift, no procedural terrain, and no overlapping HUD UI on top of the rendered output. The flags below are the canonical set passed to the Explorer when capturing or comparing reference frames.
+
+| Flag                                | Effect in visual tests |
+|-------------------------------------| --- |
+| `--landscape-terrain-enabled false` | Disables the procedural landscape terrain so the empty/grid background is identical across runs. Requires `--debug` (the flag is gated to debug builds). |
+| `--skybox-time-enabled false`       | Freezes the skybox time-of-day cycle so lighting, sun position, and shadows stay constant frame-to-frame. |
+| `--resolution 1024x768`             | Forces a fixed render resolution. Capturing at the same resolution that the reference frames were taken at avoids upscaler/MSAA differences. Only honored in fullscreen mode. |
+| `--disable-hud`                     | Hides the HUD (chat, minimap, notifications, etc.) so transient UI doesn't pollute the captured frame. SDK UI from scenes remains visible. |
+| `--skip-minimum-specs-screen`       | Skips the "performance adjusted to your device" screen on sub-spec hardware and prevents the automatic low-quality preset from overriding `--graphics`. |
+
+**Example launch:**
+```bash
+--landscape-terrain-enabled false --skybox-time-enabled false --resolution 1024x768 --disable-hud --skip-minimum-specs-screen
 ```
 
 ---

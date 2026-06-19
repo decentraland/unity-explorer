@@ -19,6 +19,14 @@ namespace DCL.SDKComponents.SceneUI.Components
             internal set { if (IsRoot) rootTransform = value; else reusableTransform = value;}
         }
 
+        /// <summary>
+        /// Where child entities and widgets (text, input, dropdown) are added.
+        /// When overflow is Scroll, this is the inner ScrollView's contentContainer; otherwise it is Transform.
+        /// </summary>
+        public VisualElement ContentContainer => InnerScrollView != null ? InnerScrollView.contentContainer : Transform;
+
+        public ScrollView? InnerScrollView { get; set; }
+
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
@@ -62,11 +70,18 @@ namespace DCL.SDKComponents.SceneUI.Components
             if (!RelationData.layoutIsDirty)
                 return;
 
-            Assert.IsNotNull(RelationData.head);
+            RelationData.RebuildLinkedList();
+
+            if (RelationData.head == null)
+            {
+                RelationData.layoutIsDirty = false;
+                return;
+            }
 
             // Instead of creating a new collection with VisualElements keep the index in the tabIndex
 
             int i = 0;
+
             for (UITransformRelationLinkedData.Node node = RelationData.head; node != null; node = node.Next)
             {
                 var childEntityId = node.EntityId;
@@ -75,13 +90,20 @@ namespace DCL.SDKComponents.SceneUI.Components
                 {
                     var childTransform = world.Get<UITransformComponent>(child);
 
-                    childTransform.Transform.tabIndex = childTransform.ZIndex ?? i;
+                    // Use the explicit ZIndex only when it's a non-zero value.
+                    // ZIndex=0 is treated the same as ZIndex=null (positional ordering)
+                    // because the SDK always sends zIndex:0 in its defaults even when
+                    // the user didn't specify one, making it indistinguishable from "not set".
+                    // This matches CSS semantics where z-index:0 is the default stacking order.
+                    childTransform.Transform.tabIndex = childTransform.ZIndex is not null and not 0
+                        ? childTransform.ZIndex.Value
+                        : i;
                 }
 
                 i++;
             }
 
-            Transform.Sort(CACHED_COMPARISON);
+            ContentContainer.Sort(CACHED_COMPARISON);
 
             RelationData.layoutIsDirty = false;
         }
@@ -95,6 +117,20 @@ namespace DCL.SDKComponents.SceneUI.Components
 
             // If it's not a root, its transform can be reused
             if (IsRoot) return;
+
+            if (InnerScrollView != null)
+            {
+                var scrollView = InnerScrollView;
+                var content = scrollView.contentContainer;
+                while (content.childCount > 0)
+                {
+                    var child = content[0];
+                    child.RemoveFromHierarchy();
+                    reusableTransform.Add(child);
+                }
+                scrollView.RemoveFromHierarchy();
+                InnerScrollView = null;
+            }
 
             this.UnregisterPointerCallbacks();
             reusableTransform.UnregisterHoverStyleCallbacks();

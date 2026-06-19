@@ -1,17 +1,21 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CrdtEcsBridge.Physics;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Movement;
 using DCL.Utilities;
+using ECS;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -25,11 +29,35 @@ namespace DCL.CharacterMotion.Systems
     {
         private const int COUNTDOWN_FRAMES = 20;
 
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        // A land-on-parcel teleport is positioned before the target scene's colliders load, so the
+        // parcel floor height is unknown at that point. Once the scene is ready we probe the parcel
+        // for its walkable floor: a parcel center can sit over a gap, stairs or a lower level in a
+        // terraced scene, so we sample a grid across the parcel and land on the highest walkable
+        // surface that's still within a step-up of the parcel's own local ground (rejecting roofs and
+        // canopies far overhead).
+        private const float LAND_ON_PARCEL_RAYCAST_UP_OFFSET = 100f;
+        private const float LAND_ON_PARCEL_RAYCAST_DISTANCE = 200f;
+        private const float LAND_ON_PARCEL_GROUND_CLEARANCE = 0.1f;
 
-        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+        // Offset from the parcel center, on each axis, of the outer probe samples. 5m keeps every
+        // sample comfortably inside the 16m parcel (3m clear of each edge) so the avatar never settles
+        // across a parcel boundary.
+        private const float LAND_ON_PARCEL_SAMPLE_OFFSET = 5f;
+
+        // A walkable surface at most this far above the parcel's lowest floor is a reachable step or
+        // terrace; anything higher is treated as overhead geometry (roof, canopy, truss) and ignored.
+        private const float LAND_ON_PARCEL_MAX_STEP_UP = 15f;
+
+        // Two heights within this margin count as the same level, so ties break on proximity to center.
+        private const float LAND_ON_PARCEL_LEVEL_EPSILON = 0.1f;
+
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IMovementMessageBus teleportBroadcast;
+
+        internal TeleportCharacterSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IMovementMessageBus teleportBroadcast) : base(world)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.teleportBroadcast = teleportBroadcast;
         }
 
         protected override void Update(float t)
@@ -152,18 +180,93 @@ namespace DCL.CharacterMotion.Systems
         {
             FinalizeQueuedLoadReport(in teleportIntent, static report => report.SetProgress(1f));
 
+            // For a land-on-parcel teleport the floor height is only knowable now that the scene is
+            // ready, so snap the avatar down onto it instead of leaving it inside or under the geometry.
+            Vector3 targetPosition = teleportIntent.LandOnParcel ? SnapToSceneFloor(teleportIntent.Position) : teleportIntent.Position;
+
             // Only apply changes when position is actually different otherwise in-place rotation is bugged
-            if (!teleportIntent.Position.Equals(characterController.transform.position))
+            if (!targetPosition.Equals(characterController.transform.position))
             {
-                characterController.transform.position = teleportIntent.Position;
+                characterController.transform.position = targetPosition;
                 rigidTransform.IsGrounded = false; // teleportation is always above
             }
 
             // Reset the current platform so we don't bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
 
+            teleportBroadcast.BroadcastTeleport(characterController.transform.position);
+
             World.Remove<PlayerTeleportIntent>(playerEntity);
             World.Add(playerEntity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES, teleportIntent.Parcel));
+        }
+
+        /// <summary>
+        ///     Snaps a land-on-parcel teleport onto the parcel's walkable floor, now that the scene is
+        ///     ready and its colliders exist. Probes a grid across the parcel and picks the highest
+        ///     walkable surface within a step-up of the parcel's local ground, so the avatar lands on an
+        ///     elevated terrace/deck rather than the lower plane beneath it. Falls back to the
+        ///     precomputed position when no floor collider is found anywhere in the parcel.
+        /// </summary>
+        private static Vector3 SnapToSceneFloor(Vector3 position)
+        {
+            // The scene container is moved from its loading position (Mordor, ~-10000) to its real
+            // position on the same frame the readiness report resolves, and physics runs in manual mode
+            // with auto-sync off. On the teleport-resolution frame the per-frame sync may be skipped, so
+            // force one here to guarantee the raycasts query the colliders' current poses.
+            Physics.SyncTransforms();
+
+            // Sample a 3x3 grid spanning the parcel and collect every walkable hit under each column in
+            // a single raycast pass. The parcel center may sit over a gap or a lower level, so the floor
+            // we want is often only found off-center (e.g. an elevated step along one edge in a terraced
+            // scene). Caching the hits avoids re-casting the grid for the second (selection) pass below.
+            Span<float> offsets = stackalloc float[] { -LAND_ON_PARCEL_SAMPLE_OFFSET, 0f, LAND_ON_PARCEL_SAMPLE_OFFSET };
+
+            // Allocation is tolerated here: a land-on-parcel teleport happens rarely and only once.
+            var samples = new List<(Vector3 point, float centerDistSq)>();
+            var lowestFloor = float.PositiveInfinity;
+
+            foreach (float dx in offsets)
+            foreach (float dz in offsets)
+            {
+                Vector3 origin = new (position.x + dx, position.y + LAND_ON_PARCEL_RAYCAST_UP_OFFSET, position.z + dz);
+                float centerDistSq = (dx * dx) + (dz * dz);
+
+                RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, LAND_ON_PARCEL_RAYCAST_DISTANCE, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+
+                foreach (RaycastHit h in hits)
+                {
+                    samples.Add((h.point, centerDistSq));
+                    if (h.point.y < lowestFloor) lowestFloor = h.point.y;
+                }
+            }
+
+            if (samples.Count == 0) return position; // nothing to stand on in this parcel; keep the anchored height
+
+            // Anything within a step-up of the parcel's lowest floor is walkable; higher hits are roofs.
+            float ceiling = lowestFloor + LAND_ON_PARCEL_MAX_STEP_UP;
+
+            var bestY = float.NegativeInfinity;
+            Vector3 bestPoint = position;
+            var bestCenterDistSq = float.PositiveInfinity;
+
+            foreach ((Vector3 point, float centerDistSq) in samples)
+            {
+                if (point.y > ceiling) continue; // overhead geometry, not a walkable step
+
+                // Prefer the highest walkable surface; on ties prefer the sample nearest the center
+                // so flat parcels land the avatar in the middle rather than at an arbitrary edge.
+                bool higher = point.y > bestY + LAND_ON_PARCEL_LEVEL_EPSILON;
+                bool sameLevelButCentred = point.y >= bestY - LAND_ON_PARCEL_LEVEL_EPSILON && centerDistSq < bestCenterDistSq;
+
+                if (higher || sameLevelButCentred)
+                {
+                    bestY = point.y;
+                    bestPoint = point;
+                    bestCenterDistSq = centerDistSq;
+                }
+            }
+
+            return new Vector3(bestPoint.x, bestPoint.y + LAND_ON_PARCEL_GROUND_CLEARANCE, bestPoint.z);
         }
 
         [Query]

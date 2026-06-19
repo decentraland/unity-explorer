@@ -6,7 +6,6 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Optimization.Pools;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using Decentraland.SocialService.V2;
@@ -33,16 +32,16 @@ namespace DCL.Chat.ChatServices
 
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCache;
+        private readonly IUserBlockingCache userBlockingCache;
 
         private readonly IChatHistory chatHistory;
 
         private readonly Dictionary<ChatChannel.ChannelId, (HashSet<string> normal, HashSet<string> blocked)> onlineParticipantsPerChannel = new (10);
 
-        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, IEventBus eventBus, IChatHistory chatHistory,
-            IWeb3IdentityCache web3IdentityCache, ObjectProxy<IUserBlockingCache> userBlockingCache)
+        public CommunityUserStateService(CommunitiesDataProvider communitiesDataProvider, CommunitiesEventBus communitiesEventBus, ChatEventBus eventBus, IChatHistory chatHistory,
+            IWeb3IdentityCache web3IdentityCache, IUserBlockingCache userBlockingCache)
         {
             this.communitiesDataProvider = communitiesDataProvider;
             this.communitiesEventBus = communitiesEventBus;
@@ -103,10 +102,10 @@ namespace DCL.Chat.ChatServices
 
             foreach (ICommunityMemberData memberData in response.data.results)
             {
-                if (web3IdentityCache.Identity?.Address == localPlayerAddress)
+                if (memberData.Address == localPlayerAddress)
                     continue;
 
-                if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(memberData.Address))
+                if (userBlockingCache.UserIsBlocked(memberData.Address))
                     onlineParticipants.blocked.Add(memberData.Address);
                 else
                     onlineParticipants.normal.Add(memberData.Address);
@@ -115,7 +114,15 @@ namespace DCL.Chat.ChatServices
             // Edge case - the channel is initialized AFTER the community is selected
             // (on the moment of the community selection the online users collection was empty)
             if (currentChannelId.Equals(communityChannelId))
-                eventBus.Publish(new ChatEvents.ChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants.normal));
+                eventBus.RaiseChannelUsersStatusUpdated(communityChannelId, ChatChannel.ChatChannelType.COMMUNITY, onlineParticipants.normal);
+        }
+
+        public void CopyOnlineParticipantsTo(HashSet<string> destination)
+        {
+            destination.Clear();
+
+            foreach (string participant in OnlineParticipants)
+                destination.Add(participant);
         }
 
         public void Deactivate()
@@ -139,7 +146,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(communityChannelId, out var onlineParticipants))
                 return;
 
-            if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(userConnectivity.Member.Address))
+            if (userBlockingCache.UserIsBlocked(userConnectivity.Member.Address))
             {
                 onlineParticipants.blocked.Add(userConnectivity.Member.Address);
                 return;
@@ -155,7 +162,7 @@ namespace DCL.Chat.ChatServices
             if (!onlineParticipantsPerChannel.TryGetValue(communityChannelId, out var onlineParticipants))
                 return;
 
-            if (userBlockingCache.Configured && userBlockingCache.StrictObject.UserIsBlocked(userConnectivity.Member.Address))
+            if (userBlockingCache.UserIsBlocked(userConnectivity.Member.Address))
                 onlineParticipants.blocked.Remove(userConnectivity.Member.Address);
 
             SetOffline(communityChannelId, userConnectivity.Member.Address);
@@ -183,7 +190,7 @@ namespace DCL.Chat.ChatServices
 
             // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.normal.Add(userId) && currentChannelId.Equals(channelId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true));
+                eventBus.RaiseUserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, true);
         }
 
         private void SetOffline(ChatChannel.ChannelId channelId, string userId)
@@ -193,7 +200,7 @@ namespace DCL.Chat.ChatServices
 
             // Notifications for non-current channel are not sent as it's not needed from the design standpoint (it's possible to open only one community at a time)
             if (onlineParticipants.normal.Remove(userId) && currentChannelId.Equals(channelId))
-                eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false));
+                eventBus.RaiseUserStatusUpdatedEvent(channelId, ChatChannel.ChatChannelType.COMMUNITY, userId, false);
         }
 
         public void Reset()
@@ -218,13 +225,10 @@ namespace DCL.Chat.ChatServices
             communitiesEventBus.UserConnectedToCommunity += UserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity += UserDisconnectedFromCommunity;
 
-            userBlockingCache.OnObjectSet += cache =>
-            {
-                cache.UserBlocked += BlockedTrySetOffline;
-                cache.UserBlocksYou += BlockedTrySetOffline;
-                cache.UserUnblocked += UnblockedTrySetOnline;
-                cache.UserUnblocksYou += UnblockedTrySetOnline;
-            };
+            userBlockingCache.UserBlocked += BlockedTrySetOffline;
+            userBlockingCache.UserBlocksYou += BlockedTrySetOffline;
+            userBlockingCache.UserUnblocked += UnblockedTrySetOnline;
+            userBlockingCache.UserUnblocksYou += UnblockedTrySetOnline;
         }
 
         private void UnsubscribeFromEvents()
@@ -234,12 +238,10 @@ namespace DCL.Chat.ChatServices
             communitiesEventBus.UserConnectedToCommunity -= UserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= UserDisconnectedFromCommunity;
 
-            if (!userBlockingCache.Configured) return;
-
-            userBlockingCache.StrictObject.UserBlocked -= BlockedTrySetOffline;
-            userBlockingCache.StrictObject.UserBlocksYou -= BlockedTrySetOffline;
-            userBlockingCache.StrictObject.UserUnblocked -= UnblockedTrySetOnline;
-            userBlockingCache.StrictObject.UserUnblocksYou -= UnblockedTrySetOnline;
+            userBlockingCache.UserBlocked -= BlockedTrySetOffline;
+            userBlockingCache.UserBlocksYou -= BlockedTrySetOffline;
+            userBlockingCache.UserUnblocked -= UnblockedTrySetOnline;
+            userBlockingCache.UserUnblocksYou -= UnblockedTrySetOnline;
         }
     }
 }

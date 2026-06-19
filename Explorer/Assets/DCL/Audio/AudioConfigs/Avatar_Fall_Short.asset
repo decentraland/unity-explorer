@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Avatar_Fall_Short
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 63a86ad2327497440a10ac906e382987, type: 3}
-  - {fileID: 8300000, guid: 9d41617110f7136479e938bad8bbd599, type: 3}
-  - {fileID: 8300000, guid: 6502663cae0809c4f9a443057c15ed3b, type: 3}
-  - {fileID: 8300000, guid: da0ce89bf527bfb45bdc6b7a3d8230f7, type: 3}
+  - {fileID: 8300000, guid: 8f52f789dd3954375b6a46c3611894de, type: 3}
+  - {fileID: 8300000, guid: 22b97edaac1f148a09d722a5ceae532a, type: 3}
+  - {fileID: 8300000, guid: 36f8c0444f98940499324484913ba5d3, type: 3}
+  - {fileID: 8300000, guid: 942cd3a6edfd8412abc4221c825a02a1, type: 3}
   relativeVolume: 0.4
   audioCategory: 3
   pitchVariation: 0.05

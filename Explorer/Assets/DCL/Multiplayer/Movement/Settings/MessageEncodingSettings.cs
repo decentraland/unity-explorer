@@ -25,6 +25,9 @@ namespace DCL.Multiplayer.Movement.Settings
         public MovementEncodingConfig tier2;
         public MovementEncodingConfig tier3;
 
+        [Header("POINT AT")]
+        public float POINT_AT_MAX_DISTANCE = 1000f; // Max distance it's the far clipping plane
+
         public int MOVEMENT_KIND_START_BIT => TIMESTAMP_BITS;
         public int SLIDING_BIT => MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;
         public int STUNNED_BIT => SLIDING_BIT + 1;

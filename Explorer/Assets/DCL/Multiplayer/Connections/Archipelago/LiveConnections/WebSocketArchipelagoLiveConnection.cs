@@ -4,11 +4,12 @@ using DCL.Utility.Types;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
-using System.Net.WebSockets;
+using System.IO;
 using System.Text;
 using System.Threading;
 using Utility.Multithreading;
 using Utility.Ownership;
+using Utility.Networking;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
@@ -37,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             try
             {
-                await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token).AsUniTask(false);
+                await current!.Value.WebSocket.ConnectAsync(new Uri(adapterUrl), token);
                 return Result.SuccessResult();
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot connect to adapter url: {adapterUrl}, {e.Message}"); }
@@ -48,7 +49,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             try
             {
                 TryUpdateWebSocket();
-                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
+                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
                 return Result.SuccessResult();
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot disconnect: {e}"); }
@@ -115,6 +116,28 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                            ),
                        };
             }
+            catch (WebSocketException e)
+            {
+                DCLWebSocket socket = current!.Value.WebSocket;
+
+                if (IndicatesConnectionClosed(e.WebSocketErrorCode, socket.State))
+                    return ConnectionClosedException.NewErrorResult(socket, e);
+
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    $"WebSocket protocol error: {e.WebSocketErrorCode} (state: {socket.State}) - {e.Message}"
+                );
+            }
+            catch (IOException e) { return ConnectionClosedException.NewErrorResult(current!.Value.WebSocket, e); }
+            catch (ObjectDisposedException e)
+            {
+                // Don't probe the websocket here — it's the disposed object. Property access on a disposed
+                // ClientWebSocket is not contractually safe across runtimes (Mono/IL2CPP/.NET differ).
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
+                    $"WebSocket disposed: {e}"
+                );
+            }
             catch (Exception e)
             {
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
@@ -163,19 +186,36 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         private bool IsWebSocketInvalid() =>
             current?.WebSocket is not { State: WebSocketState.Open };
 
+        /// <summary>
+        ///     A <see cref="WebSocketException" /> can mean either a connection-level failure or a
+        ///     protocol/format issue on an otherwise live socket. We classify by the reported error
+        ///     code, falling back to the socket state because Mono/IL2CPP commonly reports everything
+        ///     as <see cref="WebSocketError.Faulted" />.
+        /// </summary>
+        private static bool IndicatesConnectionClosed(WebSocketError error, WebSocketState state)
+        {
+            if (state != WebSocketState.Open)
+                return true;
+
+            return error is WebSocketError.Faulted
+                or WebSocketError.NativeError
+                or WebSocketError.ConnectionClosedPrematurely
+                or WebSocketError.InvalidState;
+        }
+
         private readonly struct Current : IDisposable
         {
-            public readonly ClientWebSocket WebSocket;
+            public readonly DCLWebSocket WebSocket;
             public readonly Atomic<bool> IsSomeoneReceiving;
 
-            private Current(ClientWebSocket webSocket, Atomic<bool> isSomeoneReceiving)
+            private Current(DCLWebSocket webSocket, Atomic<bool> isSomeoneReceiving)
             {
                 WebSocket = webSocket;
                 IsSomeoneReceiving = isSomeoneReceiving;
             }
 
             public static Current New() =>
-                new (new ClientWebSocket(), new Atomic<bool>(false));
+                new (new DCLWebSocket(), new Atomic<bool>(false));
 
             public void Dispose()
             {

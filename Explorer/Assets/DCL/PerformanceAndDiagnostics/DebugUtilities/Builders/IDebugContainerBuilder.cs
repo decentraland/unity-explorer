@@ -29,6 +29,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName ROOM_ISLAND = "Room: Island".AsWidgetName();
             public static readonly WidgetName ROOM_SCENE = "Room: Scene".AsWidgetName();
             public static readonly WidgetName ROOM_THROUGHPUT = "Room: Throughput".AsWidgetName();
+            public static readonly WidgetName PULSE = "Pulse".AsWidgetName();
             public static readonly WidgetName PERFORMANCE = "Performance".AsWidgetName();
             public static readonly WidgetName CRASH = "Crash".AsWidgetName();
             public static readonly WidgetName MEMORY = "Memory".AsWidgetName();
@@ -41,6 +42,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName WEB_REQUESTS = "Web Requests".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_DEBUG_METRICS = "Web Requests Debug Metrics".AsWidgetName();
             public static readonly WidgetName VOICE_CHAT = "Voice Chat".AsWidgetName();
+            public static readonly WidgetName NEARBY_VOICE_CHAT = "Voice Chat - Nearby".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_DELAY = "Web Requests Delay".AsWidgetName();
             public static readonly WidgetName WEB_REQUESTS_STRESS_TEST = "Web Requests Stress Test".AsWidgetName();
             public static readonly WidgetName LANDSCAPE_GPUI = "Landscape - GPUI".AsWidgetName();
@@ -51,6 +53,7 @@ namespace DCL.DebugUtilities
             public static readonly WidgetName LOCOMOTION_HANDS_IK = "locomotion: hands ik".AsWidgetName();
             public static readonly WidgetName QUALITY = "Quality".AsWidgetName();
             public static readonly WidgetName RENDERING = "Rendering".AsWidgetName();
+            public static readonly WidgetName PARTICLES = "Particles".AsWidgetName();
         }
     }
 

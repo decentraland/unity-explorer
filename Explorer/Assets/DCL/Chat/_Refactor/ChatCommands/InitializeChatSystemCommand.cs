@@ -13,16 +13,15 @@ using DCL.Utility.Types;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Web3.Identities;
-using Utility;
 
 namespace DCL.Chat.ChatCommands
 {
     public class InitializeChatSystemCommand
     {
-        private readonly IEventBus eventBus;
+        private readonly ChatEventBus eventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IChatHistory chatHistory;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ICommunityDataService communityDataService;
@@ -32,10 +31,10 @@ namespace DCL.Chat.ChatCommands
         private readonly NearbyUserStateService nearbyUserStateService;
 
         public InitializeChatSystemCommand(
-            IEventBus eventBus,
+            ChatEventBus eventBus,
             IWeb3IdentityCache identityCache,
             IChatHistory chatHistory,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             ChatHistoryStorage? chatHistoryStorage,
             CommunitiesDataProvider communitiesDataProvider,
             ICommunityDataService communityDataService,
@@ -47,7 +46,7 @@ namespace DCL.Chat.ChatCommands
             this.eventBus = eventBus;
             this.identityCache = identityCache;
             this.chatHistory = chatHistory;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.chatHistoryStorage = chatHistoryStorage;
             this.communitiesDataProvider = communitiesDataProvider;
             this.communityDataService = communityDataService;
@@ -68,10 +67,7 @@ namespace DCL.Chat.ChatCommands
             ct.ThrowIfCancellationRequested();
 
             // Publish the full list of channels (DMs + Communities) to the UI
-            eventBus.Publish(new ChatEvents.InitialChannelsLoadedEvent
-            {
-                Channels = new List<ChatChannel>(chatHistory.Channels.Values)
-            });
+            eventBus.RaiseInitialChannelsLoadedEvent(new List<ChatChannel>(chatHistory.Channels.Values));
 
             // Set default channel after all channels are loaded
             if (chatHistory.Channels.TryGetValue(ChatChannel.NEARBY_CHANNEL_ID, out var nearbyChannel))
@@ -98,7 +94,7 @@ namespace DCL.Chat.ChatCommands
 
             nearbyChannel.MarkAllMessagesAsRead();
 
-            if (friendsServiceProxy.Configured)
+            if (friendsService != null)
                 chatHistoryStorage?.LoadAllChannelsWithoutMessages();
         }
 
@@ -164,7 +160,7 @@ namespace DCL.Chat.ChatCommands
         {
             nearbyUserStateService.Activate();
             currentChannelService.SetCurrentChannel(nearbyChannel, nearbyUserStateService);
-            eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = nearbyChannel, FromInitialization = true} );
+            eventBus.RaiseChannelSelectedEvent(nearbyChannel, fromInitialization: true);
         }
     }
 }

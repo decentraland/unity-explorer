@@ -1,7 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
@@ -21,24 +18,24 @@ namespace DCL.TeleportPrompt
         private readonly ICursor cursor;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly TeleportPromptBus teleportPromptBus;
         private ImageController? placeImageController;
         private Action<TeleportPromptResultType> resultCallback;
         private CancellationTokenSource cts;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
             ImageControllerProvider imageControllerProvider,
             IPlacesAPIService placesAPIService,
-            IChatMessagesBus chatMessagesBus
+            TeleportPromptBus teleportPromptBus
         ) : base(viewFactory)
         {
             this.cursor = cursor;
             this.imageControllerProvider = imageControllerProvider;
             this.placesAPIService = placesAPIService;
-            this.chatMessagesBus = chatMessagesBus;
+            this.teleportPromptBus = teleportPromptBus;
         }
 
         protected override void OnViewInstantiated()
@@ -57,7 +54,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ChatMessageOrigin.TELEPORT_PROMPT);
+                teleportPromptBus.ApproveTeleport(inputData.Coords);
             });
         }
 

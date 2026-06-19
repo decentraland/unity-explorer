@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Utility;
 using ITransport = rpc_csharp.transport.ITransport;
+using Utility.Networking;
 
 namespace DCL.SocialService
 {
@@ -14,7 +14,7 @@ namespace DCL.SocialService
         private readonly Uri uri;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly byte[] receiveBuffer;
-        private readonly ClientWebSocket webSocket;
+        private readonly DCLWebSocket webSocket;
 
         private bool isDisposed;
 
@@ -32,7 +32,7 @@ namespace DCL.SocialService
         {
             this.uri = uri;
             receiveBuffer = new byte[bufferSize];
-            webSocket = new ClientWebSocket();
+            webSocket = new DCLWebSocket();
         }
 
         public void Dispose()
@@ -102,6 +102,7 @@ namespace DCL.SocialService
                     catch (Exception e)
                     {
                         ReportHub.LogException(e, ReportCategory.SOCIAL);
+                        webSocket.Abort();
                         OnErrorEvent?.Invoke(e);
                         break;
                     }
@@ -114,7 +115,10 @@ namespace DCL.SocialService
             if (isDisposed) return;
 
             try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
+            catch (WebSocketException e)
+            {
+                OnErrorEvent?.Invoke(e);
+            }
         }
 
         public virtual async UniTask SendMessageAsync(string data, CancellationToken ct)
@@ -122,7 +126,10 @@ namespace DCL.SocialService
             if (isDisposed) return;
 
             try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
+            catch (WebSocketException e)
+            {
+                OnErrorEvent?.Invoke(e);
+            }
         }
 
         public void Close() =>

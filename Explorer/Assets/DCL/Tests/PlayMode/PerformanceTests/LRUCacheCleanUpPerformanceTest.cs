@@ -41,7 +41,11 @@ namespace DCL.Tests.PlayMode.PerformanceTests
                 .GC()
                 .Run();
 
-            Debug.Log($"GC Alloc: {gcAlloc.LastValue} bytes");
+            long gcBytes = gcAlloc.LastValue;
+            gcAlloc.Dispose();
+
+            Debug.Log($"[LRUDiskCleanUp] GC.Alloc last: {gcBytes} bytes");
+            Assert.That(gcBytes, Is.EqualTo(0), $"CleanUpIfNeeded must be allocation-free, but allocated {gcBytes} bytes");
         }
     }
 }

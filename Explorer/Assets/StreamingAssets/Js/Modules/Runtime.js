@@ -27,9 +27,10 @@ module.exports.getSceneInformation = function (message) {
 }
 
 module.exports.getExplorerInformation = async function (body) {
+    const result = UnityRuntime.GetExplorerInformation()
     return {
-        agent: 'unity-explorer',
-        platform: 'desktop',
-        configurations: {}
+        agent: result.agent,
+        platform: result.platform,
+        configurations: JSON.parse(result.configurationsJson)
     }
 }

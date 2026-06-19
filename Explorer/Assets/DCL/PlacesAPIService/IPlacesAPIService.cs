@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace DCL.PlacesAPIService
 {
     public interface IPlacesAPIService
     {
+        [Obsolete("Use SearchDestinationsAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(int pageNumber, int pageSize, CancellationToken ct,
             string? searchText = null,
             SortBy sortBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC,
@@ -19,12 +21,14 @@ namespace DCL.PlacesAPIService
             string? category = null,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null);
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null);
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
         UniTask<PlacesData.PlaceInfo?> GetWorldAsync(Vector2Int coords, string worldName, CancellationToken ct);
 
+        [Obsolete("Use GetFavoritesDestinationsAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
@@ -34,11 +38,14 @@ namespace DCL.PlacesAPIService
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC,
             bool? withConnectedUsers = null,
             bool? onlySdk7 = null,
-            bool? withLiveEvents = null);
+            bool? withLiveEvents = null,
+            bool? onlyPlaces = null);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
+        [Obsolete("Use GetDestinationsByIdsAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null);
+        [Obsolete("Use GetDestinationsByOwnerAsync instead")]
         UniTask<PlacesData.IPlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.IPlacesAPIResponse> GetDestinationsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false, bool? withConnectedUsers = null, bool? onlySdk7 = null, bool? withLiveEvents = null);
         UniTask<PlacesData.IPlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);

@@ -12,6 +12,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.EmotesSection;
 using UnityEngine.Pool;
 using Utility;
 
@@ -27,6 +28,7 @@ namespace DCL.Backpack.BackpackBus
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearablesProvider wearablesProvider;
         private readonly IEmoteProvider emotesProvider;
+        private readonly CacheOutfitWearablesCommand  cacheOutfitWearablesCommand;
 
         private readonly CancellationTokenSource fetchWearableCts = new ();
         private readonly CancellationTokenSource fetchEmoteCts = new ();
@@ -45,7 +47,8 @@ namespace DCL.Backpack.BackpackBus
             IEquippedEmotes equippedEmotes,
             IEmoteStorage emoteStorage,
             IWearablesProvider wearablesProvider,
-            IEmoteProvider emotesProvider)
+            IEmoteProvider emotesProvider,
+            CacheOutfitWearablesCommand cacheOutfitWearablesCommand)
         {
             this.wearableStorage = wearableStorage;
             this.backpackEventBus = backpackEventBus;
@@ -55,6 +58,7 @@ namespace DCL.Backpack.BackpackBus
             this.equippedWearables = equippedWearables;
             this.wearablesProvider = wearablesProvider;
             this.emotesProvider = emotesProvider;
+            this.cacheOutfitWearablesCommand = cacheOutfitWearablesCommand;
 
             this.backpackCommandBus.EquipWearableMessageReceived += HandleEquipWearableCommand;
             this.backpackCommandBus.UnEquipWearableMessageReceived += HandleUnEquipWearableCommand;
@@ -250,64 +254,33 @@ namespace DCL.Backpack.BackpackBus
 
         private async UniTaskVoid EquipOutfitAsync(BackpackEquipOutfitCommand command, CancellationToken ct)
         {
+            using var _ = ListPool<URN>.Get(out var urns);
+
             try
             {
-                var resolvedWearables = new List<IWearable>();
-                var missingUrns = new List<URN>();
+                BodyShape bodyShape = BodyShape.FromStringSafe(command.BodyShape);
 
-                void TryAdd(string urn)
-                {
-                    if (string.IsNullOrEmpty(urn)) return;
+                foreach (var wearableUrn in command.Wearables)
+                    if (wearableUrn != null)
+                        urns.Add(wearableUrn);
 
-                    if (wearableStorage.TryGetElement(urn, out IWearable w))
-                    {
-                        resolvedWearables.Add(w);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            missingUrns.Add(new URN(urn));
-                        }
-                        catch (Exception e)
-                        {
-                            ReportHub.LogError(ReportCategory.BACKPACK, $"Invalid URN in outfit: {urn}. Error: {e.Message}");
-                        }
-                    }
-                }
+                List<IWearable> resolvedWearables = new List<IWearable>(urns.Count);
 
-                TryAdd(command.BodyShape);
+                await cacheOutfitWearablesCommand.ExecuteAsync(urns, bodyShape, ct, resolvedWearables, command.UseFullUrns);
 
-                foreach (var w in command.Wearables)
-                    TryAdd(w);
+                if (ct.IsCancellationRequested)
+                    return;
 
-                if (missingUrns.Count > 0)
-                {
-                    BodyShape bodyShape = BodyShape.FromStringSafe(command.BodyShape);
-
-                    var fetched =
-                        await wearablesProvider.GetByPointersAsync(missingUrns, bodyShape, ct);
-
-                    if (fetched != null)
-                        resolvedWearables.AddRange(fetched);
-                }
-
-                // NOTE: simulate outfit loading takes a bit of time to make sure that
-                // NOTE: we can cancel previous outfit loading
-                // NOTE: await UniTask.Delay(2000, cancellationToken: ct);
-
-                if (!ct.IsCancellationRequested)
-                {
-                    backpackEventBus.SendEquipOutfit(command, resolvedWearables.ToArray());
-                }
+                backpackEventBus.SendEquipOutfit(command, resolvedWearables);
             }
             catch (OperationCanceledException)
             {
                 // Correctly swallowed: The user switched outfits, so we abort this one.
             }
-            catch (Exception e)
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK)); }
+            finally
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.BACKPACK));
+                backpackEventBus.SendEquipOutfitCompleted();
             }
         }
     }

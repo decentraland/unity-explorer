@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -105,7 +105,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (parentComponent == childComponent) return;
 
             parentComponent.RelationData.AddChild(parentEntity, childEntity, ref childComponent.RelationData);
-            parentComponent.Transform.Add(childComponent.Transform);
+            parentComponent.ContentContainer.Add(childComponent.Transform);
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, CRDTEntity child)

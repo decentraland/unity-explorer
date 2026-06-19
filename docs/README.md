@@ -18,7 +18,8 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Architecture Overview](architecture-overview.md)** — ECS concepts, dependency management, containers, and abstractions
 - **[Directories & Assemblies](directories-and-assemblies-structure.md)** — Project folder structure and assembly rules
 - **[Systems](systems.md)** — ECS system lifecycle, streamables, and scene bounds
-- **[Scene Runtime](scene-runtime.md)** — SDK7 scene execution, CRDT bridge, and JS modules
+- **[Scene Runtime](scene-runtime.md)** — SDK7 scene execution, CRDT bridge, JS modules, scene lifecycle states, and threading model
+- **[Cross-World ECS Access](cross-world-ecs-access.md)** — Global world from scene systems, injection chain, propagation systems, bridge components
 - **[MVC](mvc.md)** — UI architecture: controllers, views, and the MVC manager
 - **[Third-Party Libraries](third-party-libraries.md)** — ArchECS, ClearScript, and Sentry
 
@@ -32,10 +33,13 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 ## Core Systems
 - **[Asset Promises](asset-promises.md)** — Asynchronous asset loading with ECS promises
+- **[Disk Cache](disk-cache.md)** — Persistent asset cache: architecture, atomic writes, corruption self-healing, and eviction
 - **[Asset Bundles Conversion](asset-bundles-conversion.md)** — GLTF to Asset Bundle conversion pipeline
 - **[Web Requests Framework](web-requests-framework.md)** — Allocation-free web requests with retry policies
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
-- **[Network Synchronization](network-synchronization.md)** — Entity sync via LiveKit in worlds and Genesis City
+- **[Multiplayer](multiplayer.md)** — Transport-agnostic multiplayer hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation, dual-transport wiring
+- **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
+- **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 
 ## Avatar System
@@ -43,6 +47,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Emotes](emotes.md)** — Emote loading, animation controllers, and pooling
 - **[Skeleton Loading Animation](skeleton-loading-animation.md)** — Bone animations for loading states
 - **[Avatar Animation for Demos](avatar-animation-for-demos.md)** — Using Unity Timeline for demo recordings
+- **[Unreleased Wearables & Emotes Preview](unreleased-wearables-emotes-preview.md)** — Builder API signing, GLTF-based loading, and self-preview collection flow
 
 ## Chat & Social
 - **[Chat](chat.md)** — Chat system architecture, state machine, and MVP structure
@@ -64,6 +69,9 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[IPFS Realms](ipfs-realms.md)** — Publishing entities to IPFS catalysts
 
 ## Testing & Debugging
+- **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
+- **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
+- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides
@@ -73,3 +81,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Build & CI](build-and-ci.md)** — GitHub workflows, Python build handler, and Unity Cloud
 - **[Unity Upgrades](unity-upgrades.md)** — Handling Unity version upgrades and CI images
 - **[Troubleshooting Missing Docker Images](troubleshooting-missing-docker-images.md)** — Fixing missing UnityCI Docker images
+
+## Operations
+- **[Incident Response](incident-response.md)** — Severity levels, #qa-team flow, crash escalation, hotfix rules, and SEV-1 postmortems
+- **[Issue Triage Categories](issue-triage-categories.md)** — Primary vs secondary feature categories used to assign severity labels and decide SEV-2 hotfixes

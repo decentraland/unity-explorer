@@ -114,6 +114,8 @@ npm install
 npm run build-protocol
 ```
 
+> **Prerequisite:** Node/npm only. `build-protocol` runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), a dependency-free Node script bundled in `@dcl/protocol` — no Python or extra packages required.
+
 To upgrade to the latest version of the `@dcl/protocol`, we should update using:
 
 ```bash
@@ -145,6 +147,7 @@ After the C# code for the protobuf component was generated, one or more systems 
 > **NOTE:** You'll see that some special components are registered as "result components". Those are some components designed mainly to be PUT by the Explorer and only READ by the scene (e.g. input result component, raycast result component).
 
 - Create a folder dedicated to the new component at https://github.com/decentraland/unity-explorer/tree/dev/Explorer/Assets/DCL/SDKComponents and implement the handling systems, components, etc. in there.
+  - **Assembly references:** add a `<Feature>.Systems.asmref` pointing at `DCL.Plugins` (GUID `fc4fd35fb877e904d8cedee73b2256f6`) for the systems folder, and a `<Feature>.Tests.asmref` pointing at `DCL.EditMode.Tests` for the `Tests/EditMode/` folder. Only create a new `asmdef` if the feature genuinely needs isolated compilation or has conflicting dependencies. Prefer edit-mode tests over play-mode tests unless the feature requires scene lifecycle or physics simulation.
 - Create a PLUGIN file at https://github.com/decentraland/unity-explorer/tree/dev/Explorer/Assets/DCL/PluginSystem/World to INJECT your Systems in that code.
   - Your Plugin has to be instantiated at https://github.com/decentraland/unity-explorer/blob/dev/Explorer/Assets/DCL/Infrastructure/Global/StaticContainer.cs#L254~L280 along with the other Scene Plugins (not GLOBAL).
 
@@ -158,13 +161,71 @@ The following must be implemented:
 
 - Relevant functionalities for the new component
   - Custom non-sdk `struct` components (can be empty) are normally used to change the state of the entity.
-  - If `IsDirty` needs to be relied upon, for the case of the scene modifying the component values in runtime and reacting to that: then the `IsDirty` reset handling can either be manual in your systems OR by injecting `ResetDirtyFlagSystem<PBYourComponent>.InjectToWorld(ref builder)` in your Plugin.
+  - If `IsDirty` needs to be relied upon, for the case of the scene modifying the component values in runtime and reacting to that: **prefer** injecting `ResetDirtyFlagSystem<PBYourComponent>.InjectToWorld(ref builder)` in your Plugin — it clears the flag automatically after all systems in the group have run. Only set `IsDirty = false` manually inside a query when you need granular control (e.g. a system that handles one sub-case and must leave the flag set for a downstream system).
 - Cleanup of the component
   - SDK component removal
   - Scene unloading (`IFinalizeWorldSystem` implementation)
 - Pausing of component functionality if the scene is not current or player leaves/re-enters the scene:
   - Usage of `ISceneStateProvider.IsCurrent` to escape the `Update()` of the system.
   - (more complex and powerful) Usage of `ISceneIsCurrentListener` to listen to the moments the user enters/exits the scene.
+
+#### ColliderLayer mask semantics
+
+Several SDK components carry a `collision_mask` / `collisionMask` field of type `ColliderLayer` (defined in `decentraland/sdk/components/common/mesh_collider.proto`). The full enum is:
+
+| Name | Value | Meaning |
+|---|---|---|
+| `CL_NONE` | 0 | No collisions. |
+| `CL_POINTER` | 1 | Pointer-ray collisions (mouse hover, click). |
+| `CL_PHYSICS` | 2 | Scene-mesh walls / floors / platforms that affect the player's physics. **Does NOT target the character itself** — see "Unified main-player qualification rule" below. |
+| `CL_PLAYER` | 4 | Any player avatar — main player AND remote avatars. |
+| `CL_MAIN_PLAYER` | 8 | The local (main) player avatar only. |
+| `CL_RESERVED3..6` | 16/32/64/128 | Reserved — do not use. |
+| `CL_CUSTOM1..8` | 256..32768 | Scene-defined custom layers (8 of them). |
+
+**Additive avatar semantics.** The main player capsule is "tagged" with both `CL_PLAYER` and `CL_MAIN_PLAYER`: a mask containing either bit matches it. Remote avatars are tagged only with `CL_PLAYER`. Consequently:
+
+| Mask | Main player matches? | Remote avatar matches? |
+|---|---|---|
+| `CL_PLAYER` | yes | yes |
+| `CL_MAIN_PLAYER` | yes | no |
+| `CL_PLAYER \| CL_MAIN_PLAYER` | yes | yes |
+
+**Unified main-player qualification rule.** Both **Raycast** (`ExecuteRaycastSystem.DoesHitColliderQualify`) and **TriggerArea** (`TriggerAreaHandlerSystem.PropagateResultComponent`) qualify the main player using the same constant:
+
+```csharp
+PhysicsLayers.PLAYER_QUALIFYING_BITS = CL_PLAYER | CL_MAIN_PLAYER
+```
+
+A scene mask that contains either of those two bits qualifies the local player. Any other mask (`CL_PHYSICS`, `CL_POINTER`, `CL_CUSTOM*`, `CL_NONE`) does NOT qualify the main player on either system.
+
+`CL_PHYSICS` is **deliberately excluded** from this set. Per the proto definition, `CL_PHYSICS` targets *scene-mesh walls and floors* that affect the player's physics — not the character itself. This matches the convention of every major game engine:
+
+- **Unreal**: `WorldStatic` / `WorldDynamic` vs the separate `Pawn` channel.
+- **Unity (idiomatic)**: project layers like `Environment` vs `Player`/`Character`.
+- **Godot**: world geometry on its own layer; characters on a separate `Player` layer.
+- **Source / Half-Life 2**: `MASK_NPCWORLDSTATIC` (world without entities) vs masks that opt entities in.
+
+Scenes that need to detect the local player on a raycast or trigger area must opt in via `CL_PLAYER` or `CL_MAIN_PLAYER` explicitly.
+
+Remote avatars qualify only on `CL_PLAYER`. They have no client-side physics body either way.
+
+**TriggerArea `targetOnlyMainPlayer` optimisation.** When the scene mask is **exactly** `CL_MAIN_PLAYER` (no other bits), `TriggerAreaHandlerSystem.SetupTriggerArea` sets `targetOnlyMainPlayer = true`. The underlying `SDKEntityTriggerArea` MonoBehaviour then short-circuits any `OnTriggerEnter`/`OnTriggerExit` whose collider transform isn't the main player's, dropping remote-avatar overlaps before they reach the per-frame query in `PropagateResultComponent`. Any other mask (including `CL_PLAYER | CL_MAIN_PLAYER`) must NOT enable this optimisation, because it would also reject the colliders the mask is meant to match.
+
+**Scene-mesh routing (`MeshCollider` / `GltfContainer`).** `PhysicsLayers.TryGetUnityLayerFromSDKLayer` picks the destination Unity layer per SDK mask:
+
+| SDK mask | Unity layer | Effect on player capsule |
+|---|---|---|
+| `CL_PHYSICS \| CL_POINTER` (Default mask) | `Default` | Solid (player blocks) |
+| `CL_PHYSICS` alone | `CharacterOnly` | Solid |
+| `CL_POINTER` alone | `OnPointerEvent` | Pass-through |
+| `CL_PLAYER` and/or `CL_MAIN_PLAYER` (no other bits) | `SDKAvatarHit` | Pass-through; only trigger areas / raycasts targeting avatar bits detect it |
+| Any mask containing `CL_PHYSICS` (mixed) | `CharacterOnly` (physics wins) | Solid |
+| Custom layers | `SDKCustomLayer` | Pass-through |
+
+`SDKAvatarHit` is matrix-configured to only overlap with `SDKEntityTriggerArea` and `SDKAvatarTriggerArea`, so the player capsule walks straight through avatar-tagged scene meshes while trigger areas and avatar-targeting raycasts still pick them up.
+
+**Migration note for scenes pre-dating this rule.** A scene that previously used `CL_PHYSICS` raycasts to detect the local player (e.g. line-of-sight checks) must now OR `CL_MAIN_PLAYER` (or `CL_PLAYER`) into the mask. Walls-and-floors checks that don't want to detect the player keep working unchanged.
 
 #### "Perfect implementation" checks before shipping
 

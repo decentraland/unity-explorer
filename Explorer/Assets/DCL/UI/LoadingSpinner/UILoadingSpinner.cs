@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,8 +14,6 @@ namespace DCL.UI.LoadingSpinner
         public float head;
         public float tail;
 
-        private Material material;
-
         private void Awake()
         {
             InitializeMaterial();
@@ -27,20 +24,17 @@ namespace DCL.UI.LoadingSpinner
             UpdateValues();
         }
 
-        private void InitializeMaterial()
-        {
-            material = img.maskable ? new Material(img.materialForRendering) : new Material(img.material);
-
-            img.material = material;
-        }
+        private void InitializeMaterial() =>
+            img.material = new Material(img.material);
 
         private void UpdateValues()
         {
-            if (!material) return;
+            Material rendered = img.materialForRendering;
+            if (!rendered) return;
 
-            material.SetColor(COLOR01_SHADER_PROP, color);
-            material.SetFloat(FILL_HEAD_SHADER_PROP, head);
-            material.SetFloat(FILL_TAIL_SHADER_PROP, tail);
+            rendered.SetColor(COLOR01_SHADER_PROP, color);
+            rendered.SetFloat(FILL_HEAD_SHADER_PROP, head);
+            rendered.SetFloat(FILL_TAIL_SHADER_PROP, tail);
         }
     }
 }

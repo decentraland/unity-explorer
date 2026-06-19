@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.Dumper;
@@ -32,7 +34,9 @@ namespace DCL.WebRequests
             ISet<long>? ignoreErrorCodes = null,
             bool suppressErrors = false,
             DownloadHandler? downloadHandler = null,
-            bool ignoreIrrecoverableErrors = false
+            bool ignoreIrrecoverableErrors = false,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -50,7 +54,7 @@ namespace DCL.WebRequests
                     suppressErrors,
                     downloadHandler,
                     ignoreIrrecoverableErrors
-                ), op
+                ), op, expectedContentLength, progressReporter
             )!;
 
         /// <summary>
@@ -136,14 +140,15 @@ namespace DCL.WebRequests
             CancellationToken ct,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
-            controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
+            controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
 
-        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct, int timeout = 0)
+        public static async UniTask<bool> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct, int timeout = 0, bool suppressErrors = false)
         {
             await UniTask.SwitchToMainThread();
 
-            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url, RetryPolicy.NONE, timeout: timeout), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData); }
+            try { await HeadAsync<WebRequestUtils.NoOp<GenericHeadRequest>, WebRequestUtils.NoResult>(controller, new CommonArguments(url, RetryPolicy.NONE, timeout: timeout), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct, reportData, suppressErrors: suppressErrors); }
             catch (UnityWebRequestException unityWebRequestException)
             {
                 // Endpoint was unreacheable
@@ -217,8 +222,47 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.ASSET_BUNDLES,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
-            bool suppressErrors = false) =>
-            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors);
+            bool suppressErrors = false,
+            long expectedContentLength = -1,
+            IProgress<float>? progressReporter = null
+            ) =>
+            controller.SendAsync<GetAssetBundleWebRequest, GetAssetBundleArguments, GetAssetBundleWebRequest.CreateAssetBundleOp, AssetBundleLoadingResult>(commonArguments, args, new GetAssetBundleWebRequest.CreateAssetBundleOp(), ct, reportCategory, headersInfo, signInfo, suppressErrors: suppressErrors, expectedContentLength: expectedContentLength, progressReporter: progressReporter);
+
+        public static async UniTask<long> GetDecompressedContentLengthAsync(
+            this IWebRequestController controller,
+            URLAddress url,
+            CancellationToken ct,
+            int timeoutMs = 500)
+        {
+            if (url.Value.StartsWith("file://"))
+                return -1;
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(timeoutMs);
+
+            // No try/catch here on purpose. IL2CPP/MSVC emitted a miscompiled catch funclet for this
+            // method (merged OCE+Exception dispatcher with a broken entry point that dereferences an
+            // uninitialized register), crashing deterministically on the first HEAD timeout.
+            // SuppressToResultAsync keeps the exception handling in shared generic code instead.
+            Result<long> result = await controller.HeadAsync<GetDecompressedContentLengthOp, long>(
+                                                       new CommonArguments(url, RetryPolicy.NONE),
+                                                       new GetDecompressedContentLengthOp(),
+                                                       default(GenericHeadArguments),
+                                                       cts.Token,
+                                                       ReportCategory.ASSET_BUNDLES)
+                                                  .SuppressToResultAsync();
+
+            if (result.Success)
+                return result.Value;
+
+            // Timeouts (cancellation) are expected for slow first connections and stay silent;
+            // anything else is worth a warning before falling back.
+            if (result.ErrorMessage != nameof(OperationCanceledException))
+                ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES,
+                    $"HEAD for decompressed content length failed for {url}: {result.ErrorMessage}. Falling back to count-based progress.");
+
+            return -1;
+        }
 
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);

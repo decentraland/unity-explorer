@@ -85,13 +85,15 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct OnSuccessfulGift
         {
             public readonly string ItemUrn;
+            public readonly string InstanceUrn;
             public readonly string SenderAddress;
             public readonly string ReceiverAddress;
             public readonly string ItemType;
 
-            public OnSuccessfulGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            public OnSuccessfulGift(string itemUrn, string instanceUrn, string senderAddress, string receiverAddress, string itemType)
             {
                 ItemUrn = itemUrn;
+                InstanceUrn = instanceUrn;
                 SenderAddress = senderAddress;
                 ReceiverAddress = receiverAddress;
                 ItemType = itemType;
@@ -104,13 +106,15 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct OnFailedGift
         {
             public readonly string ItemUrn;
+            public readonly string InstanceUrn;
             public readonly string SenderAddress;
             public readonly string ReceiverAddress;
             public readonly string ItemType;
 
-            public OnFailedGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            public OnFailedGift(string itemUrn, string instanceUrn, string senderAddress, string receiverAddress, string itemType)
             {
                 ItemUrn = itemUrn;
+                InstanceUrn = instanceUrn;
                 SenderAddress = senderAddress;
                 ReceiverAddress = receiverAddress;
                 ItemType = itemType;
@@ -120,13 +124,15 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct OnCanceledGift
         {
             public readonly string ItemUrn;
+            public readonly string InstanceUrn;
             public readonly string SenderAddress;
             public readonly string ReceiverAddress;
             public readonly string ItemType;
 
-            public OnCanceledGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            public OnCanceledGift(string itemUrn, string instanceUrn, string senderAddress, string receiverAddress, string itemType)
             {
                 ItemUrn = itemUrn;
+                InstanceUrn = instanceUrn;
                 SenderAddress = senderAddress;
                 ReceiverAddress = receiverAddress;
                 ItemType = itemType;
@@ -136,13 +142,15 @@ namespace DCL.Backpack.Gifting.Events
         public readonly struct OnSentGift
         {
             public readonly string ItemUrn;
+            public readonly string InstanceUrn;
             public readonly string SenderAddress;
             public readonly string ReceiverAddress;
             public readonly string ItemType;
 
-            public OnSentGift(string itemUrn, string senderAddress, string receiverAddress, string itemType)
+            public OnSentGift(string itemUrn, string instanceUrn, string senderAddress, string receiverAddress, string itemType)
             {
                 ItemUrn = itemUrn;
+                InstanceUrn = instanceUrn;
                 SenderAddress = senderAddress;
                 ReceiverAddress = receiverAddress;
                 ItemType = itemType;
