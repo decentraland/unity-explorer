@@ -229,6 +229,63 @@ Serialized into `PulseContainer.Settings` so the options can be tuned per build 
 
 ---
 
+## ENet native libraries — build provenance
+
+The native ENet libraries that back the managed `ENet.cs` P/Invoke wrapper (shipped by the `com.decentraland.pulse.transport` package) live in the repo at `Explorer/Assets/Plugins/ENet/runtimes/`. The bindings expect the native symbol library to resolve to the name `enet` (Windows) / `libenet` (macOS, Linux) — see the `[DllImport]` declarations in that package's `Runtime/ENet.cs`.
+
+Keep this section in sync whenever any binary under `runtimes/` is rebuilt or swapped, so the exact source and flags behind each slice stay auditable.
+
+**Upstream source:** https://github.com/SoftwareGuy/ENet-CSharp
+
+### Building the macOS libraries
+
+All commands run from the **upstream repository root**.
+
+> **Note (CMake 4.x):** Homebrew's CMake 4.x removed support for the `cmake_minimum_required(VERSION 3.1)` this project declares. Pass `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` to configure anyway (shown below). It does not affect the output.
+
+**Universal binary (arm64 + x86_64 in one file) — via CMake:**
+
+```bash
+cmake -S . -B build-mac \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build build-mac --config Release
+```
+
+**Universal binary — directly with clang (no CMake):**
+
+```bash
+clang -arch arm64 -arch x86_64 -O2 -dynamiclib \
+  -DENET_NO_PRAGMA_LINK -DENET_DLL \
+  -ISource/Native Source/Native/enet.c \
+  -o libenet.dylib
+```
+
+**Separate single-architecture binaries — directly with clang** (this is how the two macOS slices currently in `runtimes/` were produced):
+
+```bash
+# x86_64 only
+clang -arch x86_64 -O2 -dynamiclib \
+  -DENET_NO_PRAGMA_LINK -DENET_DLL \
+  -ISource/Native Source/Native/enet.c \
+  -o libenet-x86_64.dylib
+
+# arm64 only
+clang -arch arm64 -O2 -dynamiclib \
+  -DENET_NO_PRAGMA_LINK -DENET_DLL \
+  -ISource/Native Source/Native/enet.c \
+  -o libenet-arm64.dylib
+```
+
+Check any resulting binary with `file libenet.dylib` or `lipo -archs libenet.dylib`.
+
+### Windows & Linux libraries
+
+The Windows (`runtimes/win-x64/native/enet.dll`) and Linux (`runtimes/linux-x64/native/libenet.so`) binaries were not built locally — they were taken directly from the upstream prebuilt release: https://github.com/SoftwareGuy/ENet-CSharp/releases/tag/autobuild-14c4dc5
+
+---
+
 ## Service and message model
 
 One abstraction up from `ITransport`: `PulseMultiplayerService` owns the connection lifecycle (including the authentication handshake), routes incoming messages to registered handlers, and exposes a Send API. Everything above (`PulseMultiplayerBus`, `PulseProfilePropagationBus`) consumes this service through the `IPulseMultiplayerService` interface.
