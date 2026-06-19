@@ -265,7 +265,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PlayerTeleportIntent.JustTeleported))]
         private void ConsumeEmoteIntent([Data] float dt, Entity entity,
             ref CharacterEmoteComponent emoteComponent,
             ref CharacterEmoteIntent emoteIntent,

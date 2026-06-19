@@ -54,8 +54,8 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly ObjectProxy<IFriendsService> friendsService;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -88,8 +88,8 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            ObjectProxy<IFriendsService> friendsService,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
@@ -121,7 +121,7 @@ namespace DCL.PluginSystem.Global
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendsService = friendsService;
-            this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;

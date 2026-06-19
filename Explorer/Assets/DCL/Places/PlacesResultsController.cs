@@ -47,7 +47,7 @@ namespace DCL.Places
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
         private readonly IWorldPermissionsService worldPermissionsService;
         private readonly HttpEventsApiService eventsApiService;
@@ -70,7 +70,7 @@ namespace DCL.Places
             PlacesStateService placesStateService,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
@@ -85,7 +85,7 @@ namespace DCL.Places
             this.placesStateService = placesStateService;
             this.selfProfile = selfProfile;
             this.webBrowser = webBrowser;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.mvcManager = mvcManager;
             this.placesCardSocialActionsController = placesCardSocialActionsController;
             this.eventsApiService = eventsApiService;
@@ -421,10 +421,10 @@ namespace DCL.Places
         {
             var emptyResult = new List<Profile.CompactInfo>();
 
-            if (!friendServiceProxy.Configured)
+            if (friendsService == null)
                 return emptyResult;
 
-            var result = await friendServiceProxy.StrictObject
+            var result = await friendsService
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.PLACES);
 
