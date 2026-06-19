@@ -1,9 +1,11 @@
 ﻿using DCL.LiveKit.Public;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.Rooms;
 using Google.Protobuf;
+using LiveKit.Rooms;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,6 +19,12 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
     /// </summary>
     public class LiveKitMessagesBroadcaster
     {
+        /// <summary>
+        ///     Hardcoded identity for the authoritative server in the LiveKit network.
+        /// </summary>
+        public const string AUTH_SERVER_IDENTITY = "authoritative-server";
+
+        private readonly IGateKeeperSceneRoom sceneRoom;
         private readonly IMessagePipesHub messagePipesHub;
 
         /// <summary>
@@ -26,8 +34,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         private readonly Dictionary<string, RoomSource> announcedWallets = new ();
 
-        public LiveKitMessagesBroadcaster(IMessagePipesHub messagePipesHub, bool backwardCompatibilityMode)
+        public LiveKitMessagesBroadcaster(IGateKeeperSceneRoom sceneRoom, IMessagePipesHub messagePipesHub, bool backwardCompatibilityMode)
         {
+            this.sceneRoom = sceneRoom;
             this.messagePipesHub = messagePipesHub;
             this.backwardCompatibilityMode = backwardCompatibilityMode;
         }
@@ -50,6 +59,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                     if (EnumUtils.HasFlag(rooms, RoomSource.GATEKEEPER))
                         sceneList.Add(walletId);
                 }
+
+                if (sceneRoom.Room().Participants.RemoteParticipant(AUTH_SERVER_IDENTITY) != null)
+                    sceneList.Add(AUTH_SERVER_IDENTITY);
 
                 if (islandList.Count > 0)
                     BuildMessageAndSend(messagePipesHub.IslandPipe(), islandList);
