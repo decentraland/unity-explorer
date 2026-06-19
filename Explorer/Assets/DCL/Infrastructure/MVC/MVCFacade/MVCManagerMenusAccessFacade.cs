@@ -34,13 +34,13 @@ namespace MVC
     {
         private readonly IMVCManager mvcManager;
         private readonly IProfileCache profileCache;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly ChatEventBus chatEventBus;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly IProfileRepository profileRepository;
         private readonly CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
@@ -60,12 +60,12 @@ namespace MVC
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
             IProfileCache profileCache,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             ChatEventBus chatEventBus,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator, ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IRealmNavigator realmNavigator, FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             IProfileRepository profileRepository,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
             IVoiceChatOrchestrator voiceChatOrchestrator,
@@ -79,13 +79,13 @@ namespace MVC
             this.nearbyMuteService = nearbyMuteService;
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.chatEventBus = chatEventBus;
             this.contextMenuSettings = contextMenuSettings;
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.profileRepository = profileRepository;
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
@@ -151,7 +151,7 @@ namespace MVC
         private async UniTask ShowUserProfileContextMenuAsync(Profile.CompactInfo profile, Vector3 position, Vector2 offset, CancellationToken ct, Action? onContextMenuHide, Action? onContextMenuShow,
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isOpenedOnWorldAvatar = false)
         {
-            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendServiceProxy, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCacheProxy, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
+            genericUserProfileContextMenuController ??= new GenericUserProfileContextMenuController(friendsService, chatEventBus, mvcManager, contextMenuSettings, analytics, onlineUsersProvider, realmNavigator, friendOnlineStatusCache, includeCommunities, communitiesDataProvider, voiceChatOrchestrator, webBrowser, decentralandUrlsSource, selfProfile, nearbyMuteService);
             await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), onContextMenuShow, isOpenedOnWorldAvatar);
         }
 
@@ -159,9 +159,9 @@ namespace MVC
             UniTask closeMenuTask, MenuAnchorPoint anchorPoint = MenuAnchorPoint.DEFAULT, bool isSpeaker = false)
         {
             communityPlayerEntryContextMenu ??= new CommunityPlayerEntryContextMenu(
-                friendServiceProxy, mvcManager,
+                friendsService, mvcManager,
                 contextMenuSettings, analytics, onlineUsersProvider,
-                realmNavigator, friendOnlineStatusCacheProxy,
+                realmNavigator, friendOnlineStatusCache,
                 voiceChatContextMenuSettings, voiceChatOrchestrator, communitiesDataProvider, decentralandUrlsSource);
 
             await communityPlayerEntryContextMenu.ShowUserProfileContextMenuAsync(profile, position, offset, ct, closeMenuTask, onContextMenuHide, ConvertMenuAnchorPoint(anchorPoint), isSpeaker);

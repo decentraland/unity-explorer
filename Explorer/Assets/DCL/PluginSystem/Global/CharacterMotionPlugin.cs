@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ObjectProxy<FriendsCache> friendsCache;
+        private readonly FriendsCache? friendsCache;
         private readonly IMovementMessageBus teleportBroadcast;
 
         private CharacterMotionSettings settings;
@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
-            ObjectProxy<FriendsCache> friendsCache,
+            FriendsCache? friendsCache,
             IMovementMessageBus teleportBroadcast)
         {
             this.realmData = realmData;
