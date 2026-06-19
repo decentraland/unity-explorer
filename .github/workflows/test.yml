@@ -232,13 +232,6 @@ jobs:
             -name "packages-lock.json" \
           \) | sort
 
-          echo "===== GenerateSolution script ====="
-          if [ -f Explorer/Assets/Editor/CI/GenerateSolution.cs ]; then
-            sed -n '1,200p' Explorer/Assets/Editor/CI/GenerateSolution.cs
-          else
-            echo "Explorer/Assets/Editor/CI/GenerateSolution.cs not found"
-          fi
-
           echo "===== Look for executeMethod target references ====="
           grep -RIn --include="*.cs" --include="*.asmdef" "GenerateSolution\|SyncVS\|CI\." Explorer/Assets Explorer/Packages || true
 
