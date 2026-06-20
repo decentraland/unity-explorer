@@ -29,9 +29,19 @@ runs:
           exit 1
         fi
 
-        # '.CSharpErrors' / '.CppCompilerErrors' are false positives caused by the
-        # '--no-build' flag (unresolved references), not real lint findings.
-        jq '.runs[0].results | map(select(.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors"))' "$report" > "$out"
+        # Exclude two classes of noise:
+        #  - '.CSharpErrors' / '.CppCompilerErrors': false positives from the '--no-build'
+        #    flag (unresolved references), not real lint findings.
+        #  - vendored / third-party code we don't own: everything under 'Packages/' and the
+        #    'DOTween' / 'SocketIO' plugins.
+        jq '
+          .runs[0].results
+          | map(select(
+              (.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors")
+              and ((.locations[0].physicalLocation.artifactLocation.uri // "")
+                   | test("^(Packages/|Assets/Plugins/(DOTween|SocketIO)/)"; "i") | not)
+            ))
+        ' "$report" > "$out"
 
         count=$(jq length "$out")
         echo "count=$count" >> "$GITHUB_OUTPUT"

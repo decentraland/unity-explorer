@@ -318,10 +318,8 @@ jobs:
           exit 1
 
       # Lower the baseline on merge to dev. Only ever decreases it.
-      # TODO(remove before merge): the second clause seeds the very first baseline from this
-      # PR's branch so the gate has something to compare against. Delete it once dev has run.
       - name: Update warnings baseline on S3 (dev)
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/dev') || (github.event_name == 'pull_request' && github.head_ref == 'chore/enable-linting-in-ci')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' 
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           AWS_MAX_ATTEMPTS: 3
