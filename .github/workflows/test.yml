@@ -27,6 +27,7 @@ env:
   UNITY_IMAGE_FLAVOR: linux-il2cpp
   UNITY_IMAGE_VERSION: 3.2.0
   GHCR_IMAGE_NAME: unityci-editor
+  INSPECT_REPORT_JSON_FILE_NAME: InspectCodeReport.json
   
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -271,14 +272,23 @@ jobs:
             --verbosity=INFO \
             --properties:Configuration=Debug \
             --disable-settings-layers:SolutionPersonal \
-            --output=InspectCodeReport.json
+            --output="$INSPECT_REPORT_JSON_FILE_NAME"
+
+      - name: Filter Fasle-Positives in InspectCode
+        run: |
+          # Filter false positive entries that are caused by '--no-build' flag
+          jq '.runs[0].results | map(select(.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors"))' "$INSPECT_REPORT_JSON_FILE_NAME" > filtered.json
+
+          echo "Warning count: $(jq length filtered.json)"
+
 
       - name: Upload lint reports
         uses: actions/upload-artifact@v4
         with:
           name: csharp-lint-reports
           path: |
-            InspectCodeReport.json
+            ${{ env.INSPECT_REPORT_JSON_FILE_NAME }}
+            filtered.json
             # CodeStyleReport.xml
 
       # END: C# Linting using JetBrains ReSharper CLI
