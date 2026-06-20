@@ -1,0 +1,38 @@
+name: 'Count Warnings'
+description: 'Filter InspectCode false positives and count the remaining C# warnings. Single source of truth for the warning ratchet.'
+inputs:
+  report:
+    description: 'Path to the raw InspectCode SARIF/JSON report'
+    required: false
+    default: 'InspectCodeReport.json'
+  filtered_output:
+    description: 'Path to write the filtered results array to'
+    required: false
+    default: 'filtered.json'
+outputs:
+  count:
+    description: 'Number of warnings remaining after filtering false positives'
+    value: ${{ steps.count.outputs.count }}
+runs:
+  using: "composite"
+  steps:
+    - name: Filter false positives and count
+      id: count
+      shell: bash
+      run: |
+        set -euo pipefail
+        report="${{ inputs.report }}"
+        out="${{ inputs.filtered_output }}"
+
+        if [ ! -f "$report" ]; then
+          echo "::error::InspectCode report not found at '$report'"
+          exit 1
+        fi
+
+        # '.CSharpErrors' / '.CppCompilerErrors' are false positives caused by the
+        # '--no-build' flag (unresolved references), not real lint findings.
+        jq '.runs[0].results | map(select(.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors"))' "$report" > "$out"
+
+        count=$(jq length "$out")
+        echo "count=$count" >> "$GITHUB_OUTPUT"
+        echo "Warning count: $count"

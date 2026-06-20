@@ -28,7 +28,8 @@ env:
   UNITY_IMAGE_VERSION: 3.2.0
   GHCR_IMAGE_NAME: unityci-editor
   INSPECT_REPORT_JSON_FILE_NAME: InspectCodeReport.json
-  
+  WARNINGS_BASELINE_S3_KEY: '@dcl/unity-explorer/ci/warnings-baseline.json'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -36,7 +37,7 @@ concurrency:
 jobs:
 
   lint:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
 
     name: Lint
     runs-on: ubuntu-latest
@@ -275,13 +276,94 @@ jobs:
             --disable-settings-layers:SolutionPersonal \
             --output="$INSPECT_REPORT_JSON_FILE_NAME"
 
-      - name: Filter Fasle-Positives in InspectCode
+      # Filter false positives ('.CSharpErrors'/'.CppCompilerErrors' from '--no-build') and count.
+      - name: Count warnings
+        id: warnings
+        uses: ./.github/actions/count-warnings
+        with:
+          report: ${{ env.INSPECT_REPORT_JSON_FILE_NAME }}
+          filtered_output: filtered.json
+
+      - name: Read warnings baseline from S3
+        id: baseline
         run: |
-          # Filter false positive entries that are caused by '--no-build' flag
-          jq '.runs[0].results | map(select(.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors"))' "$INSPECT_REPORT_JSON_FILE_NAME" > filtered.json
+          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
+          baseline=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
+          echo "Baseline warnings: ${baseline:-<none>}"
 
-          echo "Warning count: $(jq length filtered.json)"
+      # Hard gate: a PR may only merge if it strictly reduces the warning count.
+      # No baseline yet -> pass (the first dev push seeds it). Add the 'no-warning-ratchet'
+      # label to bypass on a PR that legitimately cannot touch warnings.
+      - name: Enforce warning reduction (PR)
+        if: github.event_name == 'pull_request'
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
+          BYPASS: ${{ contains(github.event.pull_request.labels.*.name, 'no-warning-ratchet') }}
+        run: |
+          if [ -z "$BASELINE" ]; then
+            echo "No baseline established yet — passing. The first push to dev will seed it."
+            exit 0
+          fi
+          if [ "$COUNT" -lt "$BASELINE" ]; then
+            echo "Warnings reduced: $COUNT < $BASELINE"
+            exit 0
+          fi
+          if [ "$BYPASS" = "true" ]; then
+            echo "::warning::Warnings not reduced ($COUNT >= $BASELINE) but 'no-warning-ratchet' label present — bypassing."
+            exit 0
+          fi
+          echo "::error::Compilation warnings ($COUNT) must be strictly LESS than the baseline ($BASELINE). Remove at least one warning to merge (or apply the 'no-warning-ratchet' label)."
+          exit 1
 
+      # Lower the baseline on merge to dev. Only ever decreases it.
+      # TODO(remove before merge): the second clause seeds the very first baseline from this
+      # PR's branch so the gate has something to compare against. Delete it once dev has run.
+      - name: Update warnings baseline on S3 (dev)
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/dev') || (github.event_name == 'pull_request' && github.head_ref == 'chore/enable-linting-in-ci')
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
+          cur=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          if [ -n "$cur" ] && [ "$COUNT" -ge "$cur" ]; then
+            echo "No update: current count ($COUNT) is not less than existing baseline ($cur)."
+            exit 0
+          fi
+          echo "Updating baseline: ${cur:-<none>} => $COUNT"
+          jq -n --argjson c "$COUNT" \
+            '{count: $c, comment: "read and modified by CI/CD of explorer repo"}' > baseline.json
+          aws s3 cp baseline.json "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" \
+            --content-type application/json --cache-control no-cache
+
+      # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
+      - name: Write warning result for PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
+        run: |
+          jq -n \
+            --argjson pr "${{ github.event.pull_request.number }}" \
+            --argjson count "$COUNT" \
+            --arg baseline "$BASELINE" \
+            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end)}' \
+            > warning-result.json
+          cat warning-result.json
+
+      - name: Upload warning result
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: warning-result
+          path: warning-result.json
 
       - name: Upload lint reports
         uses: actions/upload-artifact@v4
