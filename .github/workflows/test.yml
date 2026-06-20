@@ -267,6 +267,7 @@ jobs:
 
       - name: Run ReSharper InspectCode (static analysis)
         run: |
+          # --no-build flags to reduce the execution time
           rsharp/inspectcode.sh Explorer/Explorer.sln \
             --no-build \
             --verbosity=INFO \
