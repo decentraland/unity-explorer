@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public int amount;
 
             [JsonIgnore]
-            public WearableDTO Entity => entity.EnsureNotNull("entity != null");
+            public WearableDTO Entity => entity.EnsureNotNull("WearableDTO entity is null");
 
             [JsonIgnore]
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData ?? Array.Empty<ElementIndividualDataDto>();
@@ -76,14 +76,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public string? type;
 
             [JsonIgnore]
-            public IReadOnlyDictionary<string, string> Contents => contents;
+            public IReadOnlyDictionary<string, string>? Contents => contents;
 
             public BuilderWearableDTO BuildElementDTO(string contentDownloadUrl)
             {
-                ContentDefinition[] parsedContent = new ContentDefinition[contents.Count];
+                int count = contents?.Count ?? 0;
+                ContentDefinition[] parsedContent = new ContentDefinition[count];
 
-                using (var enumerator = contents.GetEnumerator())
+                if (contents != null)
                 {
+                    using var enumerator = contents.GetEnumerator();
+
                     for (int i = 0; i < parsedContent.Length; i++)
                     {
                         enumerator.MoveNext();
