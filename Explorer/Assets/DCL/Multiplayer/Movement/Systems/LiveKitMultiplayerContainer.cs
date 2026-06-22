@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
             MultiplayerDebugSettings multiplayerDebugSettings)
         {
             bool backwardCompatibilityMode = FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE);
-            var broadcaster = new LiveKitMessagesBroadcaster(messagePipesHub, backwardCompatibilityMode);
+            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, backwardCompatibilityMode);
 
             RemoteAnnouncements = new LiveKitRemoteAnnouncements(messagePipesHub, broadcaster);
             ProfileBroadcast = new DebounceLiveKitProfileBroadcast(new LiveKitProfileBroadcast(selfProfile, broadcaster));

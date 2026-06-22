@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
-            in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();

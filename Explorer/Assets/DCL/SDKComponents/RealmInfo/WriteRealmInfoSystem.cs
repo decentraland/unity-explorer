@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Utilities;
 using ECS;
 using ECS.Abstract;
 using ECS.Groups;
@@ -23,13 +22,13 @@ namespace DCL.SDKComponents.RealmInfo
 
         private bool initialized;
 
-        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, ObjectProxy<IRoomHub> roomHubProxy, ISceneData sceneData)
+        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub, ISceneData sceneData)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.realmData = realmData;
 
-            commsRoomInfo = new CommsRoomInfo(roomHubProxy, sceneData);
+            commsRoomInfo = new CommsRoomInfo(roomHub, sceneData);
         }
 
         public override void Initialize()
@@ -70,16 +69,16 @@ namespace DCL.SDKComponents.RealmInfo
 
         public class CommsRoomInfo
         {
-            private readonly ObjectProxy<IRoomHub> roomHubProxy;
+            private readonly IRoomHub roomHub;
             private readonly ISceneData sceneData;
 
             public string IslandSid { get; private set; }
 
             public bool IsConnectedSceneRoom { get; private set; }
 
-            public CommsRoomInfo(ObjectProxy<IRoomHub> roomHubProxy, ISceneData sceneData)
+            public CommsRoomInfo(IRoomHub roomHub, ISceneData sceneData)
             {
-                this.roomHubProxy = roomHubProxy;
+                this.roomHub = roomHub;
                 this.sceneData = sceneData;
             }
 
@@ -89,8 +88,6 @@ namespace DCL.SDKComponents.RealmInfo
             /// <returns></returns>
             public bool TryFetchNewInfo()
             {
-                IRoomHub roomHub = roomHubProxy.StrictObject;
-
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
                 bool isConnectedToSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
 

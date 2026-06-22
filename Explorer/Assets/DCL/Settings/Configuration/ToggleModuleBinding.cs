@@ -3,19 +3,13 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
-using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
-using DCL.SkyBox;
-using DCL.Utilities;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -53,23 +47,17 @@ namespace DCL.Settings.Configuration
         public override async UniTask<SettingsFeatureController> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
-            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
-            UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             var viewInstance = (await assetsProvisioner.ProvideInstanceAsync(View, parent)).Value;
@@ -78,7 +66,7 @@ namespace DCL.Settings.Configuration
             SettingsFeatureController controller = Feature switch
             {
                 ToggleFeatures.GRAPHICS_VSYNC_TOGGLE_FEATURE => new GraphicsVSyncController(viewInstance, qualitySettingsController),
-                ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCacheProxy),
+                ToggleFeatures.HIDE_BLOCKED_USER_CHAT_MESSAGES_FEATURE => new HideBlockedUsersChatMessagesController(viewInstance, userBlockingCache),
                 ToggleFeatures.HEAD_SYNC_FEATURE => new HeadSyncController(viewInstance),
                 ToggleFeatures.CHAT_REACTIONS_ENABLED_FEATURE => CreateChatReactionsController(viewInstance, chatSettingsAsset),
                 ToggleFeatures.HDR_FEATURE => CreateSimpleToggle(viewInstance, qualitySettingsController, qualitySettingsController.SetHdr, x => x.Hdr),
