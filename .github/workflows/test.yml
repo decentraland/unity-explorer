@@ -212,20 +212,10 @@ jobs:
           buildMethod: Packages.Rider.Editor.RiderScriptEditor.SyncSolution
 
       - name: Download ReSharper Command Line Tools
-        run: |
-          wget -q  https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip -O rsharp.zip
-          unzip -q rsharp.zip -d rsharp
-          chmod +x rsharp/*.sh
+        run: bash scripts/lint/download-resharper.sh rsharp
 
       - name: Run ReSharper InspectCode (static analysis)
-        run: |
-          # --no-build flags to reduce the execution time
-          rsharp/inspectcode.sh Explorer/Explorer.sln \
-            --no-build \
-            --verbosity=INFO \
-            --properties:Configuration=Debug \
-            --disable-settings-layers:SolutionPersonal \
-            --output="$INSPECT_REPORT_JSON_FILE_NAME"
+        run: bash scripts/lint/run-inspectcode.sh Explorer/Explorer.sln "$INSPECT_REPORT_JSON_FILE_NAME"
 
       # Filter false positives ('.CSharpErrors'/'.CppCompilerErrors' from '--no-build') and count.
       - name: Count warnings

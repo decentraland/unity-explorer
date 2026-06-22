@@ -21,28 +21,6 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        report="${{ inputs.report }}"
-        out="${{ inputs.filtered_output }}"
-
-        if [ ! -f "$report" ]; then
-          echo "::error::InspectCode report not found at '$report'"
-          exit 1
-        fi
-
-        # Exclude two classes of noise:
-        #  - '.CSharpErrors' / '.CppCompilerErrors': false positives from the '--no-build'
-        #    flag (unresolved references), not real lint findings.
-        #  - vendored / third-party code we don't own: everything under 'Packages/' and the
-        #    'DOTween' / 'SocketIO' plugins.
-        jq '
-          .runs[0].results
-          | map(select(
-              (.ruleId != ".CSharpErrors" and .ruleId != ".CppCompilerErrors")
-              and ((.locations[0].physicalLocation.artifactLocation.uri // "")
-                   | test("^(Packages/|Assets/Plugins/(DOTween|SocketIO)/)"; "i") | not)
-            ))
-        ' "$report" > "$out"
-
-        count=$(jq length "$out")
+        count=$(bash "$GITHUB_WORKSPACE/scripts/lint/filter-warnings.sh" "${{ inputs.report }}" "${{ inputs.filtered_output }}")
         echo "count=$count" >> "$GITHUB_OUTPUT"
         echo "Warning count: $count"
