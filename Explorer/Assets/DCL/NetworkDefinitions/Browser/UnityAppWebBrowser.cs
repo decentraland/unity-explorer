@@ -25,11 +25,7 @@ namespace DCL.Browser
             var escaped = Uri.EscapeUriString(url);
 
 #if ALTTESTER
-            // Only skip the system browser when an AltTester cross-stack test is actually driving
-            // this session (client launched with --alttester). Those tests read auth-url.txt and
-            // navigate their own browser. Without the flag — Editor and dev/QA standalone builds,
-            // which all carry the ALTTESTER compile define — we must still open the browser or
-            // wallet login can never complete. The block is stripped from release builds entirely.
+            // Suppress system browser only when --alttester runtime flag is set; Editor/QA builds carry the ALTTESTER define but still need wallet login.
             if (appArgs?.HasFlag(AppArgsFlags.ALTTESTER) == true)
             {
                 try
