@@ -474,7 +474,9 @@ namespace Global.Dynamic
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (!appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE))
             {
-                var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService);
+                // Follow-up wiring: the auth state machine must subscribe to this same dispatcher instance to receive signin deep links.
+                var deeplinkSigninDispatcher = new DeeplinkSigninDispatcher();
+                var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, deeplinkSigninDispatcher);
                 deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
             }
 
