@@ -6,6 +6,5 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 {
     internal interface IAtlasController : IMapLayerController
     {
-        new UniTask InitializeAsync(CancellationToken ct);
     }
 }
