@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Movement
             MultiplayerDebugSettings multiplayerDebugSettings,
             PulseActivation pulseActivation)
         {
-            var broadcaster = new LiveKitMessagesBroadcaster(messagePipesHub, pulseActivation);
+            var broadcaster = new LiveKitMessagesBroadcaster(roomHub.SceneRoom(), messagePipesHub, pulseActivation);
 
             RemoteAnnouncements = new LiveKitRemoteAnnouncements(messagePipesHub, broadcaster);
             ProfileBroadcast = new DebounceLiveKitProfileBroadcast(new LiveKitProfileBroadcast(selfProfile, broadcaster));
