@@ -108,10 +108,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             }
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken)
-        {
-
-        }
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         private void ShowPlaces(IReadOnlyList<PlacesData.PlaceInfo> places, CategoriesEnum mapLayer)
         {
@@ -181,7 +179,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return UniTask.CompletedTask;
         }
 
-        public async UniTask EnableAsync(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
@@ -193,6 +191,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             }
 
             isEnabled = true;
+            return UniTask.CompletedTask;
         }
 
         public void ResetToBaseScale()

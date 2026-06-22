@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
 
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
-            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token);
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).Forget();
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();

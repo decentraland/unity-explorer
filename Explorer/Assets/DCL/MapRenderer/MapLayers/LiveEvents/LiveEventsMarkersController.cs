@@ -68,9 +68,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.navmapBus = navmapBus;
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken)
-        {
-        }
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {

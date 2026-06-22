@@ -79,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             ReleaseMarkers();
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
+        public UniTask InitializeAsync(CancellationToken cancellationToken) => UniTask.CompletedTask;
 
         private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchParams,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount)
@@ -148,7 +148,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             return UniTask.CompletedTask;
         }
 
-        public async UniTask EnableAsync(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
@@ -160,6 +160,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             }
 
             isEnabled = true;
+            return UniTask.CompletedTask;
         }
 
         public void ResetToBaseScale()

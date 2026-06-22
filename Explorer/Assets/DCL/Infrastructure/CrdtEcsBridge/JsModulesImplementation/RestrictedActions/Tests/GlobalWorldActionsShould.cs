@@ -216,7 +216,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None).Forget();
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
@@ -237,7 +237,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, src, hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None).Forget();
 
             LogAssert.Expect(LogType.Error, $"'{src}' scene emote cannot be played. It must follow the naming convention ending in '_emote.glb'");
 
@@ -261,7 +261,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             int promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(0, promiseEntitiesCount, $"Expected to find 0 promise entity but found {promiseEntitiesCount}.");
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "ignored_src.glb", hash, loop, AvatarEmoteMask.AemFullBody, CancellationToken.None).Forget();
 
             promiseEntitiesCount = world.CountEntities(in promiseOutcomeQuery);
             Assert.AreEqual(1, promiseEntitiesCount, $"Expected to find 1 promise entity but found {promiseEntitiesCount}.");
@@ -276,7 +276,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition("sceneInvisibleTest", new SceneMetadata()) };
             var hash = "emote_hash_invisible";
 
-            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, AvatarEmoteMask.AemFullBody, CancellationToken.None);
+            globalWorldActions.TriggerSceneEmoteAsync(mockSceneData, "any.glb", hash, false, AvatarEmoteMask.AemFullBody, CancellationToken.None).Forget();
 
             Assert.IsFalse(world.Has<CharacterEmoteIntent>(playerEntity));
         }
