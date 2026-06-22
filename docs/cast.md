@@ -66,7 +66,7 @@ In `CurrentStream` mode, the video automatically switches to whoever is speaking
 
 **Presentation bot:** Any participant whose identity starts with `presentation-bot:` (`PRESENTATION_BOT_IDENTITY_PREFIX`) is treated as the authoritative video source. While a presentation bot is present, it holds the stream regardless of active speakers.
 
-**Screen share:** Any video track published with `TrackSource.SourceScreenshare` ranks above active-speaker cameras and below the presentation bot. While a screen share is available, it holds the stream; the player falls back to active-speaker tracking only once it ends.
+**Screen share:** Any video track published with `TrackSource.SourceScreenshare` ranks above active-speaker cameras and below the presentation bot. While a screen share is live, it holds the stream; the player falls back to active-speaker tracking once it ends **or is paused (the track is muted)**, and switches back when it resumes.
 
 **Fallback rules:**
 

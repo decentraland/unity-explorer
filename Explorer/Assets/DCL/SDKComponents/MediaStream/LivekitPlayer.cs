@@ -318,7 +318,8 @@ namespace DCL.SDKComponents.MediaStream
 
                 foreach ((string sid, TrackPublication track) in participant.Tracks)
                 {
-                    if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare)
+                    // Skip a paused (muted) share so video falls through to the active speaker until it resumes.
+                    if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare && !track.Muted)
                         return new StreamKey(identity, sid);
                 }
             }
