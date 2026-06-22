@@ -8,9 +8,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public int Amount { get; set; }
         bool IsCompatibleWithBodyShape(string bodyShape);
 
-        TrimmedWearableDTO TrimmedDTO { get; }
-
-
         public bool IsSmart() =>
             TrimmedDTO.metadata.isSmart;
 

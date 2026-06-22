@@ -1,6 +1,7 @@
 using DCL.Profiles;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -48,7 +49,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         }
 
         public GetCommunityInviteRequestResponseData data;
-        public ICommunityMemberData[] members => data.results;
+        public IReadOnlyList<ICommunityMemberData> members => data.results;
         public int total => data.total;
     }
 }

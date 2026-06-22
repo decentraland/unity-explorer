@@ -21,17 +21,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         void SetCategorySprite(Sprite sprite);
 
-        void OnBecameVisible();
+        new void OnBecameVisible();
 
-        void OnBecameInvisible();
+        new void OnBecameInvisible();
 
         void SetZoom(float baseScale, float baseZoom, float zoom);
 
-        void ResetScale(float scale);
+        new void ResetScale(float scale);
 
-        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
+        new UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
 
-        UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
+        new UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
 
         GameObject? GetGameObject();
     }

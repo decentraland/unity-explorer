@@ -16,8 +16,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
 
-        private readonly object lockObject = new ();
-
         internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
         public IWearable GetOrAddByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true)
