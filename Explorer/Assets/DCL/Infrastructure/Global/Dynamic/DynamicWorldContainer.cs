@@ -588,7 +588,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     commsContainer.RoomHub,
                     realmNavigatorContainer.WorldPermissionsService,
-                    realmNavigatorContainer.WorldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,

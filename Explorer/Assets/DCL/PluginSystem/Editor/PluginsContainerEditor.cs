@@ -1,6 +1,4 @@
-﻿using DCL.PluginSystem.Global;
-using DCL.PluginSystem.World;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -76,29 +74,23 @@ namespace DCL.PluginSystem.Editor
 
         private IReadOnlyCollection<Type> GetEligibleSettingsTypes()
         {
-            Type targetPluginType;
-            Type targetContainerType;
-
-            if (targetObj.GetType() == typeof(GlobalPluginSettingsContainer))
-            {
-                targetPluginType = typeof(IDCLGlobalPlugin<>);
-                targetContainerType = typeof(DCLGlobalContainer<>);
-            }
-            else if (targetObj.GetType() == typeof(WorldPluginSettingsContainer))
-            {
-                targetPluginType = typeof(IDCLWorldPlugin<>);
-                targetContainerType = typeof(DCLWorldContainer<>);
-            }
-            else return TypeCache.GetTypesDerivedFrom<IDCLPluginSettings>().Where(AdditionalTypeFiler).ToList();
-
-            // Get their settings types
-            var derivedTypes = TypeCache.GetTypesDerivedFrom(targetPluginType).Concat(TypeCache.GetTypesDerivedFrom(targetContainerType));
+            // Discover settings by interface only: every IDCLPlugin<T> implementor contributes its settings type T.
             var targetCollection = new List<Type>();
 
-            foreach (Type pluginType in derivedTypes.Where(AdditionalTypeFiler))
+            foreach (Type pluginType in TypeCache.GetTypesDerivedFrom(typeof(IDCLPlugin<>)).Where(AdditionalTypeFiler))
             {
-                Type genericType = pluginType.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDCLPlugin<>));
-                targetCollection.Add(genericType.GenericTypeArguments[0]);
+                if (pluginType.IsGenericTypeDefinition) continue;
+
+                var settingsInterface = pluginType.GetInterfaces()
+                                                  .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDCLPlugin<>));
+
+                if (settingsInterface == null) continue;
+
+                Type settingsType = settingsInterface.GenericTypeArguments[0];
+
+                if (settingsType.IsGenericParameter) continue;
+
+                targetCollection.Add(settingsType);
             }
 
             return targetCollection;
