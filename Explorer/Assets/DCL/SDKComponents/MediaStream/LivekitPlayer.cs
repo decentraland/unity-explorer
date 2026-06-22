@@ -67,6 +67,37 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => cvs.HasValue && cvs.Value.videoStream.Resource.Has;
 
+        // True when the currently-shown video track is muted (e.g. the streamer turned their camera off).
+        // The track stays subscribed while muted, so DecodeLastFrame would otherwise return a frozen frame.
+        public bool IsCurrentVideoMuted
+        {
+            get
+            {
+                if (!cvs.HasValue) return false;
+
+                StreamKey key = cvs.Value.key;
+                var participant = room.Participants.RemoteParticipant(key.identity);
+                return participant != null
+                       && participant.Tracks.TryGetValue(key.sid, out TrackPublication track)
+                       && track.Muted;
+            }
+        }
+
+        // Display name of the participant whose video is currently shown, or null when unknown
+        // (no current stream, or the participant has no display name — the wallet identity is not shown).
+        public string? CurrentStreamerName
+        {
+            get
+            {
+                if (!cvs.HasValue) return null;
+
+                var participant = room.Participants.RemoteParticipant(cvs.Value.key.identity);
+                if (participant == null) return null;
+
+                return string.IsNullOrEmpty(participant.Name) ? null : participant.Name;
+            }
+        }
+
         private bool isAudioOpened => audioSources.Count > 0;
 
         public LivekitPlayer(IRoom streamingRoom)
@@ -150,13 +181,13 @@ namespace DCL.SDKComponents.MediaStream
             StreamKey? streamKey = livekitAddress.Match(
                 this,
                 onUserStream: static (self, userStream) => new StreamKey(userStream.Identity, userStream.Sid),
-                onCurrentStream: static self => self.FirstAvailableTrackSid(TrackKind.KindVideo)
+                onCurrentStream: static self => self.BestInitialVideoKey()
             );
 
             if (streamKey.HasValue)
             {
                 Weak<IVideoStream> stream = room.VideoStreams.ActiveStream(streamKey.Value);
-                cvs = CurrentVideoStreamInfo.New(streamKey.Value.identity, stream);
+                cvs = CurrentVideoStreamInfo.New(streamKey.Value, stream);
             }
             else
             {
@@ -209,11 +240,12 @@ namespace DCL.SDKComponents.MediaStream
 
             StreamKey? targetKey = BestFollowCandidate();
 
-            // switch if found
-            if (targetKey != null)
+            // Switch only if the best source actually changed; re-allocating cvs every frame would
+            // reset the speaker-hold timer and re-wrap a healthy stream (e.g. while a screen share holds it).
+            if (targetKey != null && cvs?.key.Equals(targetKey.Value) != true)
             {
                 var currentVideoStream = room.VideoStreams.ActiveStream(targetKey.Value);
-                cvs = CurrentVideoStreamInfo.New(targetKey.Value.identity, currentVideoStream);
+                cvs = CurrentVideoStreamInfo.New(targetKey.Value, currentVideoStream);
             }
         }
 
@@ -222,7 +254,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             StreamKey? targetKey = PresentationBotVideoKey();
 
-            // try pick up another key if PresentationBot is unavailable
+            // Screen share ranks below the presentation bot but above speaker cameras.
+            targetKey ??= FirstScreenShareVideoKey();
+
+            // try pick up another key if presentation bot and screen share are unavailable
             if (targetKey == null)
             {
                 float lastSwitch = cvs?.switchedAtTime ?? 0;
@@ -246,6 +281,10 @@ namespace DCL.SDKComponents.MediaStream
             return targetKey;
         }
 
+        // Pure. Initial selection priority: presentation bot, then screen share, then first available track.
+        private StreamKey? BestInitialVideoKey() =>
+            PresentationBotVideoKey() ?? FirstScreenShareVideoKey() ?? FirstAvailableTrackSid(TrackKind.KindVideo);
+
         private StreamKey? FindVideoTrackForParticipant(string identity)
         {
             // See: solved https://github.com/decentraland/unity-explorer/issues/3796
@@ -258,6 +297,25 @@ namespace DCL.SDKComponents.MediaStream
             {
                 if (track.Kind == TrackKind.KindVideo)
                     return new StreamKey(identity, sid);
+            }
+
+            return null;
+        }
+
+        private StreamKey? FirstScreenShareVideoKey()
+        {
+            foreach ((string identity, _) in room.Participants.RemoteParticipantIdentities())
+            {
+                var participant = room.Participants.RemoteParticipant(identity);
+
+                if (participant == null)
+                    continue;
+
+                foreach ((string sid, TrackPublication track) in participant.Tracks)
+                {
+                    if (track.Kind == TrackKind.KindVideo && track.Source == TrackSource.SourceScreenshare)
+                        return new StreamKey(identity, sid);
+                }
             }
 
             return null;
@@ -474,35 +532,36 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly struct CurrentVideoStreamInfo
         {
-            public readonly string fromIdentity;
+            public readonly StreamKey key;
             public readonly Weak<IVideoStream> videoStream;
             public readonly float switchedAtTime;
 
+            public string fromIdentity => key.identity;
+
             private CurrentVideoStreamInfo(
-                    string fromIdentity,
+                    StreamKey key,
                     Weak<IVideoStream> videoStream,
                     float switchedAtTime)
             {
-                this.fromIdentity = fromIdentity;
+                this.key = key;
                 this.videoStream = videoStream;
                 this.switchedAtTime = switchedAtTime;
             }
 
             public static CurrentVideoStreamInfo New(
-                    string fromIdentity,
+                    StreamKey key,
                     Weak<IVideoStream> videoStream)
             {
                 return new (
-                        fromIdentity,
+                        key,
                         videoStream,
                         UnityEngine.Time.realtimeSinceStartup
                         );
             }
 
-            // add "IsFromPresentationBot"?
             public bool IsFromPresentationBot()
             {
-                return fromIdentity.IsPresentationBotIdentity();
+                return key.identity.IsPresentationBotIdentity();
             }
         }
     }

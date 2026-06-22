@@ -36,7 +36,10 @@ namespace DCL.PluginSystem.World
             this.mediaFactory = mediaFactory;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            mediaPlayerPluginWrapper?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
             mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies, systemsDependencies.RoomHub, finalizeWorldSystems, sceneIsCurrentListeners);
@@ -49,7 +52,8 @@ namespace DCL.PluginSystem.World
                 settings.FadeSpeed,
                 settings.VideoPrioritizationSettings,
                 mediaFactory,
-                settings.FlipMaterial
+                settings.FlipMaterial,
+                settings.CameraOffPlaceholder
             );
 
             return UniTask.CompletedTask;
@@ -61,6 +65,9 @@ namespace DCL.PluginSystem.World
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
             [field: SerializeField] public Material FlipMaterial { get; private set; }
+
+            [field: SerializeField] [field: Tooltip("Shown on LiveKit screens when the streamer turns their camera off. Falls back to black if unset.")]
+            public Texture2D CameraOffPlaceholder { get; private set; }
 
             public VideoPrioritizationSettings VideoPrioritizationSettings;
         }

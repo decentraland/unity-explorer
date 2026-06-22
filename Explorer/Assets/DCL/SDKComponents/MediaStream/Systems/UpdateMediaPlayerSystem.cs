@@ -32,6 +32,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly float audioFadeSpeed;
         private readonly Material flipMaterial;
+        private readonly CameraOffScreenComposer cameraOffComposer;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
         private static float lastOpenMediaTime;
@@ -51,6 +52,7 @@ namespace DCL.SDKComponents.MediaStream
             MediaFactory mediaFactory,
             float audioFadeSpeed,
             Material flipMaterial,
+            CameraOffScreenComposer cameraOffComposer,
             VideoPrioritizationSettings videoPrioritizationSettings
         ) : base(world)
         {
@@ -60,6 +62,7 @@ namespace DCL.SDKComponents.MediaStream
             this.mediaFactory = mediaFactory;
             this.audioFadeSpeed = audioFadeSpeed;
             this.flipMaterial = flipMaterial;
+            this.cameraOffComposer = cameraOffComposer;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
         }
 
@@ -231,6 +234,27 @@ namespace DCL.SDKComponents.MediaStream
                 if (!livekitPlayer.IsVideoOpened)
                 {
                     RenderBlackTexture(ref assignedTexture);
+                    return;
+                }
+
+                // The track stays subscribed while muted, so LastTexture would return a frozen frame.
+                // Show the camera-off placeholder (avatar + streamer name) instead, like a video call.
+                if (livekitPlayer.IsCurrentVideoMuted)
+                {
+                    Texture? placeholder = cameraOffComposer.Compose(livekitPlayer.CurrentStreamerName);
+
+                    if (placeholder != null)
+                    {
+                        // Size the target to the placeholder so a stream that starts muted isn't blitted
+                        // onto the pool's initial 1x1 texture (which would show a single sampled color).
+                        if (assignedTexture.Texture.width != placeholder.width || assignedTexture.Texture.height != placeholder.height)
+                            assignedTexture.Resize(placeholder.width, placeholder.height);
+
+                        Graphics.Blit(placeholder, assignedTexture.Texture);
+                    }
+                    else
+                        RenderBlackTexture(ref assignedTexture);
+
                     return;
                 }
             }

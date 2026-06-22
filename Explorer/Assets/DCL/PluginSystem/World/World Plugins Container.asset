@@ -36,27 +36,6 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 7493825610294857301
-      type: {class: UIShellContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
-      data:
-        <CursorSettings>k__BackingField:
-          m_AssetGUID: 7382805fd18299d41925547efbad99f0
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <PopupCloserView>k__BackingField:
-          m_AssetGUID: dbfb7e67a438449f9a887f820f733868
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <MainUIView>k__BackingField:
-          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 250124815058075745
       type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Movement, asm: DCL.Plugins}
       data:
@@ -253,6 +232,7 @@ MonoBehaviour:
       data:
         <FadeSpeed>k__BackingField: 1
         <FlipMaterial>k__BackingField: {fileID: 2100000, guid: d08e60223593f4abe8863c64316f3476, type: 2}
+        <CameraOffPlaceholder>k__BackingField: {fileID: 2800000, guid: e44cab49d5bd4474a04a45081ef16aeb, type: 3}
         VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 4938242198007709791
       type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.SDKComponents.ParticleSystem.Systems, asm: DCL.Plugins}
@@ -277,6 +257,27 @@ MonoBehaviour:
         <LoadingAttemptsCount>k__BackingField: 6
         <PoolInitialCapacity>k__BackingField: 256
         <PoolMaxSize>k__BackingField: 2048
+    - rid: 7493825610294857301
+      type: {class: UIShellContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <CursorSettings>k__BackingField:
+          m_AssetGUID: 7382805fd18299d41925547efbad99f0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupCloserView>k__BackingField:
+          m_AssetGUID: dbfb7e67a438449f9a887f820f733868
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <MainUIView>k__BackingField:
+          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 7615904969758605314
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
