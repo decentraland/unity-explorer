@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IProfileBroadcast profileBroadcast;
-        private readonly IProfileRepository profileRepository;
+        private readonly RemoteProfiles remoteProfiles;
         private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
             IActivatableConnectiveRoom chatRoom,
             IRoomHub roomHub,
             RoomsStatus roomsStatus,
-            IProfileRepository profileRepository,
+            RemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
             ILoadingStatus realFlowLoadingStatus,
@@ -103,7 +103,7 @@ namespace DCL.PluginSystem.Global
             this.chatRoom = chatRoom;
             this.roomHub = roomHub;
             this.roomsStatus = roomsStatus;
-            this.profileRepository = profileRepository;
+            this.remoteProfiles = remoteProfiles;
             this.profileBroadcast = profileBroadcast;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
@@ -157,7 +157,7 @@ namespace DCL.PluginSystem.Global
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,
                 removeIntentions,
-                new RemoteProfiles(profileRepository, remoteMetadata),
+                remoteProfiles,
                 profileBroadcast,
                 remoteEntities,
                 remoteMetadata,

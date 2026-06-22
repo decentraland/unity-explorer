@@ -41,5 +41,8 @@ namespace DCL.Multiplayer.Profiles.Announcements
             foreach (RemoveIntention removeIntention in removeIntentions)
                 broadcaster.Remove(removeIntention.WalletId, removeIntention.FromRoom);
         }
+
+        public void Clear() =>
+            list.Clear();
     }
 }

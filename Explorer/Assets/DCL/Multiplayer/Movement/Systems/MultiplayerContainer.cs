@@ -82,6 +82,12 @@ namespace DCL.Multiplayer.Movement
                 pulseAnnouncements.Remove(removeIntentions);
                 liveKitAnnouncements.Remove(removeIntentions);
             }
+
+            public void Clear()
+            {
+                pulseAnnouncements.Clear();
+                liveKitAnnouncements.Clear();
+            }
         }
 
         private class EmoteMessageBusProxy : IEmotesMessageBus
