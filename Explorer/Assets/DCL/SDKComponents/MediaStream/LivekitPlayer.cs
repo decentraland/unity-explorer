@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => cvs.HasValue && cvs.Value.videoStream.Resource.Has;
 
-        // True when the currently-shown video track is muted (e.g. the streamer turned their camera off).
+        // True when the currently-shown camera track is muted (e.g. the streamer turned their camera off).
         // The track stays subscribed while muted, so DecodeLastFrame would otherwise return a frozen frame.
         public bool IsCurrentVideoMuted
         {
@@ -77,9 +77,14 @@ namespace DCL.SDKComponents.MediaStream
 
                 StreamKey key = cvs.Value.key;
                 var participant = room.Participants.RemoteParticipant(key.identity);
-                return participant != null
-                       && participant.Tracks.TryGetValue(key.sid, out TrackPublication track)
-                       && track.Muted;
+
+                if (participant == null || !participant.Tracks.TryGetValue(key.sid, out TrackPublication track))
+                    return false;
+
+                // Screen-share tracks are not cameras; the camera-off placeholder doesn't apply to them.
+                if (track.Source == TrackSource.SourceScreenshare) return false;
+
+                return track.Muted;
             }
         }
 

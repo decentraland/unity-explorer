@@ -35,6 +35,7 @@ namespace DCL.SDKComponents.MediaStream
         private GameObject? rig;
         private Camera? camera;
         private TextMeshProUGUI? label;
+        private RectTransform? canvasRect;
         private bool rigCreationFailed;
 
         public CameraOffScreenComposer(Texture? background)
@@ -52,6 +53,7 @@ namespace DCL.SDKComponents.MediaStream
             rig = null;
             camera = null;
             label = null;
+            canvasRect = null;
         }
 
         /// <summary>
@@ -61,7 +63,7 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public Texture? Compose(string? streamerName)
         {
-            // No background configured — caller renders black.
+            // No background configured — return null so the caller can pick its own fallback.
             if (background == null)
                 return null;
 
@@ -73,7 +75,7 @@ namespace DCL.SDKComponents.MediaStream
 
             EnsureRig();
 
-            if (camera == null || label == null)
+            if (camera == null || label == null || canvasRect == null)
                 return background;
 
             if (cache.Count >= MAX_CACHED)
@@ -82,10 +84,14 @@ namespace DCL.SDKComponents.MediaStream
             var composite = new RenderTexture(WIDTH, HEIGHT, 0, RenderTextureFormat.BGRA32) { name = "CameraOffComposite" };
             composite.Create();
 
-            // Target texture first so the screen-space canvas sizes to it, then build and render.
-            camera.targetTexture = composite;
             label.text = streamerName;
-            Canvas.ForceUpdateCanvases();
+
+            // Rebuild only this rig's layout/graphics. The world-space canvas has an explicit size, so it
+            // needs no global Canvas.ForceUpdateCanvases() (which would flush every canvas in the scene).
+            LayoutRebuilder.ForceRebuildLayoutImmediate(canvasRect);
+            label.ForceMeshUpdate();
+
+            camera.targetTexture = composite;
             camera.Render();
             camera.targetTexture = null;
 
@@ -116,6 +122,8 @@ namespace DCL.SDKComponents.MediaStream
 
             camera = cameraObject.AddComponent<Camera>();
             camera.orthographic = true;
+            camera.orthographicSize = HEIGHT / 2f; // 1 world unit == 1 px, so the canvas maps 1:1 to the RT.
+            camera.aspect = (float)WIDTH / HEIGHT;
             camera.cullingMask = 1 << UI_LAYER;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = BACKGROUND_COLOR;
@@ -123,15 +131,18 @@ namespace DCL.SDKComponents.MediaStream
             camera.farClipPlane = 100f;
             camera.enabled = false; // rendered manually via camera.Render().
 
-            // Screen-space-camera canvas always faces the camera and fills its target texture, so the
-            // layout maps 1:1 to the baked WIDTH x HEIGHT regardless of camera placement/orientation.
+            // World-space canvas with an explicit WIDTH x HEIGHT size sits 1 unit in front of the camera and
+            // maps 1:1 to the render texture. Unlike a screen-space-camera canvas it needs no global
+            // Canvas.ForceUpdateCanvases() to track the viewport (see Compose).
             var canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas)) { layer = UI_LAYER };
             canvasObject.transform.SetParent(rig.transform, false);
+            canvasObject.transform.localPosition = new Vector3(0f, 0f, 1f);
 
             var canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = camera;
-            canvas.planeDistance = 1f;
+            canvas.renderMode = RenderMode.WorldSpace;
+
+            canvasRect = (RectTransform)canvasObject.transform;
+            canvasRect.sizeDelta = new Vector2(WIDTH, HEIGHT);
 
             var backgroundObject = new GameObject("Background", typeof(RawImage)) { layer = UI_LAYER };
             backgroundObject.transform.SetParent(canvasObject.transform, false);
