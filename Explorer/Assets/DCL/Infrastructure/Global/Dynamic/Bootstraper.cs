@@ -100,7 +100,7 @@ namespace Global.Dynamic
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
             RealmData realmData,
             Entity playerEntity,
@@ -116,7 +116,7 @@ namespace Global.Dynamic
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.CompositeWeb3Provider,
@@ -136,7 +136,7 @@ namespace Global.Dynamic
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer,
+            PluginSettingsContainer pluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             AudioClipConfig backgroundMusic,
@@ -153,7 +153,7 @@ namespace Global.Dynamic
                 appArgs,
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
-                scenePluginSettingsContainer,
+                pluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.IdentityCache,
@@ -192,13 +192,13 @@ namespace Global.Dynamic
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, IAnalyticsController analyticsController,
+            PluginSettingsContainer pluginSettingsContainer, IAnalyticsController analyticsController,
             CancellationToken ct)
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => scenePluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Concat(dynamicWorldContainer.WorldPlugins).Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => pluginSettingsContainer.InitializePluginWithAnalyticsAsync(gp, analyticsController, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
