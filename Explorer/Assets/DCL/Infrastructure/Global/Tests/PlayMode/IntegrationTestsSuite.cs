@@ -14,6 +14,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Settings;
 using DCL.Time;
@@ -50,8 +51,7 @@ namespace Global.Tests.PlayMode
 {
     public static class IntegrationTestsSuite
     {
-        private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
-        private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
+        private const string CONTAINER_ADDRESS = "Integration Tests Container";
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
@@ -59,8 +59,7 @@ namespace Global.Tests.PlayMode
 
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
             FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, false));
-            PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
-            PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            PluginSettingsContainer settingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(CONTAINER_ADDRESS);
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
             IDecentralandUrlsSource dclUrls = DecentralandUrlsSource.CreateForTest(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
@@ -93,7 +92,7 @@ namespace Global.Tests.PlayMode
 
             IDebugContainerBuilder? debugBuilder = Substitute.For<IDebugContainerBuilder>();
 
-            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, globalSettingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
+            AnalyticsContainer? analyticsContainer = await AnalyticsContainer.CreateAsync(appArgs, identityCache, ILaunchMode.PLAY, debugBuilder, string.Empty, settingsContainer, DCLVersion.FromAppArgs(appArgs), ct);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 analyticsContainer,
@@ -102,8 +101,8 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 debugBuilder,
-                await WebRequestsContainer.CreateAsync(globalSettingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
-                globalSettingsContainer,
+                await WebRequestsContainer.CreateAsync(settingsContainer, new IWeb3IdentityCache.Default(), debugBuilder, dclUrls, ChromeDevToolHandler.NewForTest(), null, new RealmClock(), ct),
+                settingsContainer,
                 diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
@@ -124,9 +123,7 @@ namespace Global.Tests.PlayMode
             if (!success)
                 throw new Exception("Cannot create the static container");
 
-            staticContainer!.RoomHubProxy.SetObject(NullRoomHub.INSTANCE);
-
-            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
+            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => settingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
@@ -145,7 +142,8 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,
-                Substitute.For<ISystemClipboard>()
+                Substitute.For<ISystemClipboard>(),
+                Array.Empty<IDCLWorldPlugin>()
             );
 
             return (staticContainer, sceneSharedContainer);

@@ -61,8 +61,8 @@ namespace DCL.UI
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
         private static readonly Vector2 SUBMENU_CONTEXT_MENU_OFFSET = new (0, -30);
 
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly IMVCManager mvcManager;
         private readonly ChatEventBus chatEventBus;
         private readonly IAnalyticsController analytics;
@@ -110,14 +110,14 @@ namespace DCL.UI
         private Profile.CompactInfo targetProfile;
 
         public GenericUserProfileContextMenuController(
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             ChatEventBus chatEventBus,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             bool isCommunitiesFeatureEnabled,
             CommunitiesDataProvider communitiesDataProvider,
             IVoiceChatOrchestratorActions voiceChatOrchestrator,
@@ -127,14 +127,14 @@ namespace DCL.UI
             NearbyMuteService? nearbyMuteService = null)
         {
             this.nearbyMuteService = nearbyMuteService;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.isUserBlockingFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.isVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             this.isNearbyVoiceChatFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT);
             this.webBrowser = webBrowser;
@@ -212,9 +212,9 @@ namespace DCL.UI
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
             targetProfile = profile;
 
-            if (friendServiceProxy is { Configured: true, Object: not null })
+            if (friendsService != null)
             {
-                Result<FriendshipStatus> friendshipStatusAsyncResult = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct)
+                Result<FriendshipStatus> friendshipStatusAsyncResult = await friendsService.GetFriendshipStatusAsync(profile.UserId, ct)
                                                                                     .SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 if (!friendshipStatusAsyncResult.Success)
@@ -235,8 +235,8 @@ namespace DCL.UI
 
                     contextMenuBlockUserButton.Enabled = isUserBlockingFeatureEnabled && friendshipStatus != FriendshipStatus.BLOCKED;
                     contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
-                                                      friendOnlineStatusCacheProxy is { Configured: true, Object: not null } &&
-                                                      friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
+                                                      friendOnlineStatusCache != null &&
+                                                      friendOnlineStatusCache.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
                 }
             }
 
@@ -346,9 +346,9 @@ namespace DCL.UI
 
         private void CancelFriendRequest(string userAddress)
         {
-            if (!friendServiceProxy.Configured || friendServiceProxy.Object == null) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object;
+            IFriendsService friendService = friendsService;
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
             CancelFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
             return;
@@ -377,7 +377,7 @@ namespace DCL.UI
         private void AcceptFriendship(string userAddress)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService!;
 
             AcceptFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
             return;

@@ -1,7 +1,6 @@
-﻿using DCL.Friends.UserBlocking;
+using DCL.Friends.UserBlocking;
 using DCL.Prefs;
 using DCL.Settings.ModuleViews;
-using DCL.Utilities;
 
 namespace DCL.Settings.ModuleControllers
 {
@@ -9,13 +8,13 @@ namespace DCL.Settings.ModuleControllers
     {
 
         private readonly SettingsToggleModuleView view;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
 
         public HideBlockedUsersChatMessagesController(SettingsToggleModuleView view,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            IUserBlockingCache userBlockingCache)
         {
             this.view = view;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES))
                 view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
@@ -26,9 +25,7 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetToggle(bool enabled)
         {
-            if (!userBlockingCacheProxy.Configured) return;
-
-            userBlockingCacheProxy.Object.HideChatMessages = enabled;
+            userBlockingCache.HideChatMessages = enabled;
 
             DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
         }

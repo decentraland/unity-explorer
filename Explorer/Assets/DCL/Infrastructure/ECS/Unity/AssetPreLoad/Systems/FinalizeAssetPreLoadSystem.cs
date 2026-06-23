@@ -57,8 +57,8 @@ namespace ECS.Unity.AssetLoad.Systems
                 && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (result.Succeeded)
-                    // Must match the key used by GltfContainerAssetsCache.TryGet (and looked up via assetLoadCache.TryGet there)
-                    assetPreLoadCache.TryAdd(component.CacheKey, result.Asset);
+                    // Hash is stored alongside the key because the AB clone needs the bare hash, not the composed CacheKey.
+                    assetPreLoadCache.TryAddGltf(component.CacheKey, component.Hash, result.Asset);
 
                 MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
             }

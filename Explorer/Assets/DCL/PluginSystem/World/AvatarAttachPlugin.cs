@@ -19,20 +19,20 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly Arch.Core.World globalWorld;
-        private readonly ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ExposedTransform exposedPlayerTransform;
 
         public AvatarAttachPlugin(
             Arch.Core.World globalWorld,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy,
+            IReadOnlyEntityParticipantTable entityParticipantTable,
             ExposedTransform exposedPlayerTransform)
         {
             this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
-            this.entityParticipantTableProxy = entityParticipantTableProxy;
+            this.entityParticipantTable = entityParticipantTable;
             this.exposedPlayerTransform = exposedPlayerTransform;
         }
 
@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.World
             //ignore
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             InstantiateTransformForAvatarAttachSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<Transform>(), persistentEntities.SceneRoot);
 
@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.World
                 mainPlayerAvatarBaseProxy,
                 exposedPlayerTransform,
                 sharedDependencies.SceneStateProvider,
-                entityParticipantTableProxy,
+                entityParticipantTable,
                 sharedDependencies.EcsToCRDTWriter);
 
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.World
                 globalWorld,
                 mainPlayerAvatarBaseProxy,
                 sharedDependencies.SceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTable);
         }
     }
 }

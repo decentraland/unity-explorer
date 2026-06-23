@@ -412,8 +412,7 @@ MonoBehaviour:
     gatekeeperMode: 0
     customGatekeeperUrl: 
     appParameters: []
-  globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
-  scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
+  pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
   splashScreenRef:
     m_AssetGUID: fc78f0ea3986a4e08922b0212a1734b5
@@ -422,20 +421,8 @@ MonoBehaviour:
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   dynamicSettings:
-    <PopupCloserView>k__BackingField:
-      m_AssetGUID: dbfb7e67a438449f9a887f820f733868
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
     <DirectionalLight>k__BackingField: {fileID: 233166827}
     <NametagsData>k__BackingField: {fileID: 11400000, guid: d65049d6f7a244863b39c4dda5ba538e, type: 2}
-    <CursorSettings>k__BackingField:
-      m_AssetGUID: 7382805fd18299d41925547efbad99f0
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
     <GenericUserProfileContextMenuSettings>k__BackingField:
       m_AssetGUID: 19167fed20773434b8bb06d4ca81f60c
       m_SubObjectName: 
@@ -444,12 +431,6 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <CommunityVoiceChatContextMenuSettings>k__BackingField:
       m_AssetGUID: f3988fe058c9e463580d97c75e2b574d
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-    <MainUIView>k__BackingField:
-      m_AssetGUID: c7887090193b1ec4c994ad22169b86db
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 

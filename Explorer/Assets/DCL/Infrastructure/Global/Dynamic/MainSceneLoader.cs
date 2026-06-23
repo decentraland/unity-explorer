@@ -25,6 +25,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -76,8 +77,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("REFERENCES")]
-        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
-        [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
+        [SerializeField] private PluginSettingsContainer pluginSettingsContainer = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private SplashScreenRef splashScreenRef = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
@@ -129,6 +129,12 @@ namespace Global.Dynamic
                 {
                     plugin.SafeDispose(ReportCategory.ENGINE);
                     stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
+
+                foreach (IDCLWorldPlugin worldPlugin in dynamicWorldContainer.WorldPlugins)
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"WorldPlugin {worldPlugin.GetType().Name}");
                 }
 
                 if (globalWorld != null)
@@ -261,7 +267,7 @@ namespace Global.Dynamic
                 decentralandUrlsSource,
                 debugContainer,
                 identityCache,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
                 splashScreen.Value,
@@ -304,7 +310,7 @@ namespace Global.Dynamic
                 await ensureClockSyncAction.ExecuteAsync(ct);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, pluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -321,7 +327,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
-                    scenePluginSettingsContainer,
+                    pluginSettingsContainer,
                     settings,
                     dynamicSettings,
                     backgroundMusic,
@@ -361,7 +367,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, pluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -713,10 +719,7 @@ namespace Global.Dynamic
         {
             using var scope = new CheckingScope(ReportData.UNSPECIFIED);
 
-            await UniTask.WhenAll(
-                globalPluginSettingsContainer.EnsureValidAsync(),
-                scenePluginSettingsContainer.EnsureValidAsync()
-            );
+            await pluginSettingsContainer.EnsureValidAsync();
 
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }

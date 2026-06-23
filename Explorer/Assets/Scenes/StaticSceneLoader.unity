@@ -176,8 +176,7 @@ MonoBehaviour:
     - Dance-floor
     - MediaStreaming
     - user-identity
-  globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
-  scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
+  pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   useRealAuthentication: 1
   useStoredCredentials: 1
   authenticationServerUrl: https://auth-api.decentraland.zone

@@ -15,7 +15,6 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Passport;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -60,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
 
         private UserBlockingCache? userBlockingCache;
+        private readonly FriendsServicesContainer friendsServices;
         private readonly RPCFriendsService rpcFriendsService;
 
         private readonly FriendsPanelController friendsPanelController;
@@ -83,14 +83,9 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool useAnalytics,
-            IAnalyticsController? analyticsController,
             ISocialServiceEventBus socialServiceEventBus,
-            IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
-            ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
-            ObjectProxy<FriendsCache> friendsCacheProxy,
+            FriendsServicesContainer friendsServices,
             IUserBlockingCache injectedUserBlockingCache,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
@@ -111,16 +106,15 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.dclInput = DCLInput.Instance;
 
-            friendsCache = new FriendsCache();
-
-            rpcFriendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, socialServicesRPC);
-            friendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(rpcFriendsService, analyticsController!) : rpcFriendsService;
+            this.friendsServices = friendsServices;
+            friendsCache = friendsServices.FriendsCache;
+            rpcFriendsService = friendsServices.RpcFriendsService;
+            friendsService = friendsServices.FriendsService;
+            friendsConnectivityStatusTracker = friendsServices.ConnectivityStatusTracker;
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
             this.isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_CONNECTIVITY_STATUS);
             this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
-
-            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -155,10 +149,6 @@ namespace DCL.PluginSystem.Global
                 friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
-
-            friendServiceProxy.SetObject(friendsService);
-            friendsConnectivityStatusTrackerProxy.SetObject(friendsConnectivityStatusTracker);
-            friendsCacheProxy.SetObject(friendsCache);
         }
 
         public void Dispose()
@@ -170,8 +160,7 @@ namespace DCL.PluginSystem.Global
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
             syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
-            friendsCache.Clear();
-            friendsService.Dispose();
+            friendsServices.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

@@ -3,19 +3,13 @@ using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
-using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
-using DCL.SkyBox;
-using DCL.Utilities;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using Global.AppArgs;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -35,23 +29,17 @@ namespace DCL.Settings.Configuration
         public abstract UniTask<SettingsFeatureController?> CreateModuleAsync(
             Transform parent,
             QualitySettingsController qualitySettingsController,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
-            QualitySettingsAsset qualitySettingsAsset,
-            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             SceneLoadingLimit sceneLoadingLimit,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ISettingsModuleEventListener settingsEventListener,
-            UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             VolumeBus volumeBus,
             IEventBus eventBus,
-            IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings);
     }
 
