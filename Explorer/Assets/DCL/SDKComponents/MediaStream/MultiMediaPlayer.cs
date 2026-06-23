@@ -95,7 +95,7 @@ namespace DCL.SDKComponents.MediaStream
                 float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
                 return new Vector2(1, vScale);
             },
-            static _ => new Vector2(1, -1)
+            static livekitPlayer => livekitPlayer.CurrentTextureScale
         );
 
         public bool IsSpatial => Match(static avPro => Mathf.Approximately(avPro.AvProMediaPlayer.AudioSource?.spatialBlend ?? 0f, 1f),

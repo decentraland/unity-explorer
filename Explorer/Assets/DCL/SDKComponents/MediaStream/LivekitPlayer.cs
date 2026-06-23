@@ -38,6 +38,10 @@ namespace DCL.SDKComponents.MediaStream
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
         private readonly IRoom room;
+
+        // Supplied only by the media-player factory; null for factories that never show a camera-off
+        // placeholder (then a muted camera falls back to the live, possibly frozen, frame).
+        private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private PlayerState playerState;
 
         private LivekitAddress? playingAddress;
@@ -67,9 +71,16 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => cvs.HasValue && cvs.Value.videoStream.Resource.Has;
 
+        // Vertical orientation of the texture currently returned by LastTexture: live LiveKit frames are
+        // flipped, but the camera-off placeholder is rendered upright. Consumed by MultiMediaPlayer.GetTexureScale.
+        public Vector2 CurrentTextureScale => IsShowingPlaceholder ? Vector2.one : new Vector2(1f, -1f);
+
+        // True when LastTexture returns the camera-off placeholder rather than a live (or frozen) frame.
+        private bool IsShowingPlaceholder => placeholderSource != null && IsCurrentVideoMuted;
+
         // True when the currently-shown camera track is muted (e.g. the streamer turned their camera off).
         // The track stays subscribed while muted, so DecodeLastFrame would otherwise return a frozen frame.
-        public bool IsCurrentVideoMuted
+        private bool IsCurrentVideoMuted
         {
             get
             {
@@ -90,7 +101,7 @@ namespace DCL.SDKComponents.MediaStream
 
         // Display name of the participant whose video is currently shown, or null when unknown
         // (no current stream, or the participant has no display name — the wallet identity is not shown).
-        public string? CurrentStreamerName
+        private string? CurrentStreamerName
         {
             get
             {
@@ -105,9 +116,10 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool isAudioOpened => audioSources.Count > 0;
 
-        public LivekitPlayer(IRoom streamingRoom)
+        public LivekitPlayer(IRoom streamingRoom, AvatarPlaceHolderTextureSource? placeholderSource)
         {
             room = streamingRoom;
+            this.placeholderSource = placeholderSource;
 
             room.ConnectionUpdated += OnRoomConnectionUpdated;
             room.TrackSubscribed += OnRoomTrackSubscribed;
@@ -397,9 +409,15 @@ namespace DCL.SDKComponents.MediaStream
             if (playerState is not PlayerState.PLAYING)
                 return null;
 
-            return cvs.HasValue && cvs.Value.videoStream.Resource.Has
-                ? cvs.Value.videoStream.Resource.Value.DecodeLastFrame()
-                : null;
+            if (!cvs.HasValue || !cvs.Value.videoStream.Resource.Has)
+                return null;
+
+            // Camera off: the track stays subscribed but muted, so DecodeLastFrame would return a frozen
+            // frame. Show the camera-off placeholder (avatar + streamer name) instead, like a video call.
+            if (placeholderSource != null && IsCurrentVideoMuted)
+                return placeholderSource.TextureFor(CurrentStreamerName);
+
+            return cvs.Value.videoStream.Resource.Value.DecodeLastFrame();
         }
 
         public void Dispose()

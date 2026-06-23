@@ -79,7 +79,7 @@ In `CurrentStream` mode, the video automatically switches to whoever is speaking
 | Rapid speaker changes (<1.5s) | Debounced — stays on current |
 | UserStream mode | No auto-switching (early return) |
 
-**Camera-off (muted) state:** `IsCurrentVideoMuted` reads the current video track's `TrackPublication.Muted` flag. Muting a camera does not unpublish the track, so the last decoded frame would otherwise stay frozen on screen. When the current track is muted, `UpdateMediaPlayerSystem` shows a **camera-off placeholder** (an avatar silhouette plus the streamer's name, like a video call) instead of the frozen frame. `CameraOffScreenComposer` composites the static `CameraOffPlaceholder` texture (configured on `MediaPlayerPluginSettings`) with the streamer name (`LivekitPlayer.CurrentStreamerName`) into a per-name cached texture via an offscreen camera; it falls back to the plain placeholder when no name is known, and to black when no placeholder texture is set. Audio is unaffected, so muted participants are still heard.
+**Camera-off (muted) state:** Muting a camera doesn't unpublish the track, so the last decoded frame would otherwise stay frozen on screen. `LivekitPlayer` detects this internally from the current camera track's `TrackPublication.Muted` flag, and `LivekitPlayer.LastTexture()` returns a **camera-off placeholder** (an avatar silhouette plus the streamer's name, like a video call) instead of the frozen frame. `AvatarPlaceHolderTextureSource` builds that placeholder by compositing the static `CameraOffPlaceholder` texture (configured on `MediaPlayerPluginSettings`) with the streamer name through an offscreen camera. It renders into a single reusable render texture and re-renders only when the name changes. When no name is known it shows just the background, and when no placeholder texture is configured it shows a plain dark screen with the name. `UpdateMediaPlayerSystem` blits whatever `LastTexture()` returns, so it needs no special muted-state path. Audio is unaffected, so muted participants are still heard.
 
 **Key methods in `LivekitPlayer.cs`:**
 
@@ -90,7 +90,7 @@ In `CurrentStream` mode, the video automatically switches to whoever is speaking
 - `PresentationBotVideoKey()` / `PresentationBotIdentity()` — Find the presentation bot's video track / identity
 - `FindVideoTrackForParticipant(identity)` — Looks up a participant's video track by identity
 - `FirstAvailableTrackSid(kind)` — Returns the first available track of a kind (final fallback)
-- `IsCurrentVideoMuted` — Reads the current track's muted state from its publication
+- `LastTexture()` — Returns the live frame, or the camera-off placeholder when the current camera track is muted
 
 ---
 
@@ -143,9 +143,9 @@ No dead sources + within interval → No action
 
 ## Resolution Capping
 
-LiveKit video textures are capped at **1920x1080** (`MAX_LIVEKIT_VIDEO_WIDTH` / `MAX_LIVEKIT_VIDEO_HEIGHT` in `UpdateMediaPlayerSystem`). If a video frame exceeds these dimensions, it's scaled down via `Graphics.Blit()` before being copied to the render target. This prevents GPU stalls from unexpectedly large incoming video.
+LiveKit video textures are capped at **2048x2048** (`MAX_LIVEKIT_VIDEO_WIDTH` / `MAX_LIVEKIT_VIDEO_HEIGHT` in `UpdateMediaPlayerSystem`). If a video frame exceeds these dimensions, it's scaled down via `Graphics.Blit()` before being copied to the render target. This prevents GPU stalls from unexpectedly large incoming video.
 
-When no texture is available (no stream is open), the system renders a black texture. When the current LiveKit track is muted (camera off), it renders the camera-off placeholder (avatar silhouette plus the streamer name) instead.
+When no LiveKit stream is open, the system renders a black texture. When the current camera track is muted (camera off), `LivekitPlayer.LastTexture()` returns the camera-off placeholder (avatar silhouette plus the streamer name), which the system blits like any other frame.
 
 ---
 
@@ -156,7 +156,7 @@ When no texture is available (no stream is open), the system renders a black tex
 | System | Group | Responsibility |
 |--------|-------|---------------|
 | `CreateMediaPlayerSystem` | ComponentInstantiation | Detects new `PBVideoPlayer`/`PBAudioStream` components, creates `MediaPlayerComponent` with appropriate backend |
-| `UpdateMediaPlayerSystem` | SyncedPresentation | Drives playback each frame — calls `EnsureVideoIsPlaying()`, `EnsureAudioIsPlaying()`, handles volume crossfading, texture updates, and renders the camera-off placeholder when the current track is muted |
+| `UpdateMediaPlayerSystem` | SyncedPresentation | Drives playback each frame — calls `EnsureVideoIsPlaying()`, `EnsureAudioIsPlaying()`, handles volume crossfading, and blits the texture from `LastTexture()` (live frame or camera-off placeholder) to the render target |
 | `CleanUpMediaPlayerSystem` | CleanUp | Disposes players when entities/components are removed |
 
 ### Factory
@@ -232,7 +232,7 @@ Metadata is a JSON string parsed at query time.
 | `SDKComponents/MediaStream/MultiMediaPlayer.cs` | Unified wrapper over AvPro and Livekit backends |
 | `SDKComponents/MediaStream/MediaPlayerComponent.cs` | ECS component holding the player |
 | `SDKComponents/MediaStream/Systems/UpdateMediaPlayerSystem.cs` | Per-frame system driving playback |
-| `SDKComponents/MediaStream/Systems/CameraOffScreenComposer.cs` | Composites the avatar placeholder + streamer name shown when a track is muted |
+| `SDKComponents/MediaStream/Systems/AvatarPlaceHolderTextureSource.cs` | Builds the camera-off placeholder texture (avatar + streamer name) shown when a camera track is muted |
 | `SDKComponents/MediaStream/Systems/CreateMediaPlayerSystem.cs` | System creating players from SDK components |
 | `SDKComponents/MediaStream/Systems/CleanUpMediaPlayerSystem.cs` | Disposal system |
 | `SDKComponents/MediaStream/MediaFactory.cs` | Factory choosing backend by URL |
