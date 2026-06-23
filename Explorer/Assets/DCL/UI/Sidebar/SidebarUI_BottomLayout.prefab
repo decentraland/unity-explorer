@@ -1211,7 +1211,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7928600092629092534, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_text
-      value: Nigth/Day
+      value: Night/Day
       objectReference: {fileID: 0}
     - target: {fileID: 8324093810357797912, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_Name
