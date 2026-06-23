@@ -18,7 +18,7 @@ namespace DCL.Minimap
         private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
         {
             { SceneRestrictions.CAMERA_LOCKED, "• Camera locked" },
-            { SceneRestrictions.AVATAR_HIDDEN, "• Avatars hidden"},
+            { SceneRestrictions.AVATAR_HIDDEN, "• Avatars hidden" },
             { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movement disabled" },
             { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• User Options Menu disabled" },
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences disabled" },
