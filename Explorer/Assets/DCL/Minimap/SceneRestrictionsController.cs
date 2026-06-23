@@ -17,13 +17,13 @@ namespace DCL.Minimap
         private readonly Dictionary<SceneRestrictions, GameObject> restrictionsGameObjects = new();
         private readonly Dictionary<SceneRestrictions, string> restrictionsTexts = new()
         {
-            { SceneRestrictions.CAMERA_LOCKED, "• The camera is locked" },
-            { SceneRestrictions.AVATAR_HIDDEN, "• The avatars are hidden" },
-            { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movements are blocked" },
-            { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• Passports can not be opened" },
-            { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
-            { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Skybox time controls are blocked"},
-            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby voice"},
+            { SceneRestrictions.CAMERA_LOCKED, "• Camera locked" },
+            { SceneRestrictions.AVATAR_HIDDEN, "• Avatars hidden"},
+            { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movement disabled" },
+            { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• User Options Menu disabled" },
+            { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences disabled" },
+            { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Day/Night controller disabled"},
+            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby Voice disabled"},
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
