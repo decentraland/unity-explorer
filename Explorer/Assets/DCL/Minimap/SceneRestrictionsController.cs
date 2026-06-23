@@ -23,7 +23,7 @@ namespace DCL.Minimap
             { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• User Options Menu disabled" },
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences disabled" },
             { SceneRestrictions.SKYBOX_TIME_UI_BLOCKED, "• Day/Night controller disabled"},
-            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby Voice disabled"},
+            { SceneRestrictions.NEARBY_VOICE_CHAT_BLOCKED, "• Nearby voice disabled" },
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
