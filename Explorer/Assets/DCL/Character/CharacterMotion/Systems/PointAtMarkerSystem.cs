@@ -33,7 +33,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private readonly IObjectPool<PointAtMarkerHolder> markerPool;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ObjectProxy<FriendsCache> friendsCache;
+        private readonly FriendsCache? friendsCache;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private SingleInstanceEntity camera;
@@ -43,7 +43,7 @@ namespace DCL.Character.CharacterMotion.Systems
             World world,
             IObjectPool<PointAtMarkerHolder> markerPool,
             IWeb3IdentityCache web3IdentityCache,
-            ObjectProxy<FriendsCache> friendsCache,
+            FriendsCache? friendsCache,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings
         ) : base(world)
         {
@@ -90,7 +90,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (!pointAt.IsPointing
                 || string.IsNullOrEmpty(profile.UserId)
                 || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.NONE && !isLocalPlayer)
-                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (!friendsCache.Configured || !friendsCache.StrictObject.Contains(profile.UserId))))
+                || (visibilitySetting == PointAtMarkerVisibilitySettings.VisibilitySetting.FRIENDS_ONLY && !isLocalPlayer && (friendsCache == null || !friendsCache.Contains(profile.UserId))))
                 return;
 
             float distanceSqr = (pointAt.WorldHitPoint - avatarBase.transform.position).sqrMagnitude;

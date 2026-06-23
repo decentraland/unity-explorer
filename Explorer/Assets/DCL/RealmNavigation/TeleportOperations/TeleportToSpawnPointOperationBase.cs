@@ -38,11 +38,11 @@ namespace DCL.RealmNavigation.TeleportOperations
             this.reportCategory = reportCategory;
         }
 
-        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false)
+        protected async UniTask<EnumResult<TaskError>> InternalExecuteAsync(TParams args, Vector2Int parcel, CancellationToken ct, bool allowsPositionOverride = false, bool landOnParcel = false)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
-            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride);
+            EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel, allowsPositionOverride, landOnParcel);
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
@@ -61,7 +61,8 @@ namespace DCL.RealmNavigation.TeleportOperations
             AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct,
             Vector2Int parcelToTeleport,
-            bool allowsPositionOverride = false
+            bool allowsPositionOverride = false,
+            bool landOnParcel = false
         )
         {
             bool isWorld = realmController.RealmData.IsWorld();
@@ -72,7 +73,7 @@ namespace DCL.RealmNavigation.TeleportOperations
                 if (isWorld)
                     waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, allowsPositionOverride, ct);
                 else
-                    waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+                    waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct, landOnParcel);
             }
             catch (OperationCanceledException) { return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled); }
             catch (TimeoutException e)

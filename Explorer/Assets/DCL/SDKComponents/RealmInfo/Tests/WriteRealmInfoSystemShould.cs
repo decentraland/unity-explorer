@@ -58,10 +58,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
 
             roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
 
-            ObjectProxy<IRoomHub> roomHubProxy = new ObjectProxy<IRoomHub>();
-            roomHubProxy.SetObject(roomHub);
-
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy, sceneData);
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData);
         }
 
         protected override void OnTearDown()

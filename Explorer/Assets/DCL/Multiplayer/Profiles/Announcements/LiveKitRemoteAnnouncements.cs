@@ -1,12 +1,9 @@
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using Decentraland.Kernel.Comms.Rfc4;
-using System;
 using System.Collections.Generic;
-using Utility;
 
 namespace DCL.Multiplayer.Profiles.Announcements
 {

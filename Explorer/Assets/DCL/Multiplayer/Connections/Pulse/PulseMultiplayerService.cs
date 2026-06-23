@@ -70,12 +70,12 @@ namespace DCL.Multiplayer.Connections.Pulse
             handshakeHandler = null;
         }
 
-        public async UniTask ConnectAsync(CancellationToken ct)
+        public async UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue)
         {
             if (transport.State is ITransport.TransportState.CONNECTED or ITransport.TransportState.CONNECTING)
-                return;
+                return true;
 
-            await ConnectWithRetriesAsync(ct);
+            return await ConnectWithRetriesAsync(ct, maxAttempts);
         }
 
         public UniTask DisconnectAsync()
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Pulse
             pipe.Send(outgoingMessage);
         }
 
-        private async UniTask ConnectWithRetriesAsync(CancellationToken ct)
+        private async UniTask<bool> ConnectWithRetriesAsync(CancellationToken ct, int maxAttempts)
         {
             var attempt = 1;
 
@@ -115,10 +115,16 @@ namespace DCL.Multiplayer.Connections.Pulse
                 try
                 {
                     await ConnectInternalAsync(ct);
-                    return;
+                    return true;
                 }
                 catch (TimeoutException)
                 {
+                    if (attempt >= maxAttempts)
+                    {
+                        ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection won't be restored after attempt {attempt}");
+                        return false;
+                    }
+
                     (bool canBeRepeated, TimeSpan retryDelay) = WebRequestUtils.CanBeRepeated(attempt, CONNECTION_RETRY_POLICY, true, null);
 
                     if (canBeRepeated)
@@ -132,7 +138,7 @@ namespace DCL.Multiplayer.Connections.Pulse
                     else
                     {
                         ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Pulse connection won't be restored after attempt {attempt}");
-                        return;
+                        return false;
                     }
                 }
 

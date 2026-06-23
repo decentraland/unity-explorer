@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion.Components;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -196,7 +197,12 @@ namespace DCL.Nametags
                 return;
             }
 
-            UpdateTagPositionAndRotation(nametagHolder.transform, avatarBase.GetAdaptiveNametagPosition(), cameraForward, cameraUp);
+            Vector3 nametagPosition = avatarBase.GetAdaptiveNametagPosition();
+
+            if (World.Has<GliderPropEnabled>(e))
+                nametagPosition.y += avatarBase.NametagGlideOffset;
+
+            UpdateTagPositionAndRotation(nametagHolder.transform, nametagPosition, cameraForward, cameraUp);
             UpdateTagTransparencyAndScale(nametagHolder, camera.Camera.transform.position, characterTransform.Position, fovScaleFactor);
         }
 

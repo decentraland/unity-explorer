@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.FeatureFlags;
@@ -38,8 +38,8 @@ namespace DCL.PluginSystem.World
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
-            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies, finalizeWorldSystems, sceneIsCurrentListeners);
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
+            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies, systemsDependencies.RoomHub, finalizeWorldSystems, sceneIsCurrentListeners);
 
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {

@@ -80,6 +80,7 @@ namespace DCL.FeatureFlags
         public const string AB_DEPS_DIGEST_CACHE_KEY = "alfa-ab-deps-digest-cache-key";
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
         public const string NEW_LODS = "new-lods";
+        public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
 
         public static class Endpoints
         {

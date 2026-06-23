@@ -46,7 +46,7 @@ After installing a new protocol package, always re-run `npm run build-protocol` 
 
 ## Protocol Generation
 
-> **Prerequisite:** `build-protocol` runs a Python `protoc` plugin (`protoc-gen-bitwise`, for the quantized/bit-packed Pulse network state) in addition to the Node toolchain. **Python 3** must be on `PATH` with the **`protobuf`** package installed (`python3 -m pip install protobuf`), otherwise generation fails with `ModuleNotFoundError: No module named 'google'`.
+> **Prerequisite:** Node toolchain only. `build-protocol` runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), a dependency-free Node script bundled in `@dcl/protocol` — no Python or extra packages required.
 
 To generate C# code from protocol definitions:
 ```bash

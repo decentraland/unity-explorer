@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserBlockingCache userBlockingCache;
         private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly CommunitiesDataProvider communityDataProvider;
@@ -132,7 +132,7 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider,
             CommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
@@ -170,7 +170,7 @@ namespace DCL.PluginSystem.Global
             this.friendsEventBus = friendsEventBus;
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
@@ -291,7 +291,7 @@ namespace DCL.PluginSystem.Global
                 currentChannelService,
                 chatEventBus,
                 userBlockingCache,
-                friendsServiceProxy,
+                friendsService,
                 settings.ChatSettingsAsset,
                 privacySettings,
                 friendsEventBus,
@@ -332,7 +332,7 @@ namespace DCL.PluginSystem.Global
             pluginScope.Add(communityUserStateService);
 
             var chatMemberService = new ChatMemberListService(profileRepositoryWrapper,
-                friendsServiceProxy,
+                friendsService,
                 currentChannelService,
                 chatEventBus);
 
@@ -356,7 +356,7 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 profileRepositoryWrapper,
                 thumbnailCache,
-                friendsServiceProxy,
+                friendsService,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand,
                 voiceChatOrchestrator,
