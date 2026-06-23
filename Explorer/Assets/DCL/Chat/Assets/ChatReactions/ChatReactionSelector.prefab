@@ -568,6 +568,7 @@ GameObject:
   - component: {fileID: 7442335917767621719}
   - component: {fileID: 373967224877762582}
   - component: {fileID: 3814073825938451203}
+  - component: {fileID: 7932774437599214770}
   m_Layer: 5
   m_Name: ReactionAdd
   m_TagString: Untagged
@@ -729,6 +730,21 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &7932774437599214770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7976484653988143240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0946983c1bce487d8ca44232d02836eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.Buttons.HoverableButton
+  <Button>k__BackingField: {fileID: 5193815823861275942}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &8494054749697355481
 GameObject:
   m_ObjectHideFlags: 0
