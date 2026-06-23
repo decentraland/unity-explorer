@@ -1,6 +1,7 @@
 using DCL.Profiles;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -29,12 +30,12 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public bool active;
             public int membersCount;
-            [JsonConverter(typeof(CommunitiesDTOConverters.FriendsInCommunityConverter))]
-            public Profile.CompactInfo[] friends;
+            [JsonProperty("friends")] internal string[] friendAddresses;
+            [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; } = Array.Empty<Profile.CompactInfo>();
             public string ownerName;
         }
 
-        public UserInviteRequestData[] results;
+        public UserInviteRequestData[] results = Array.Empty<UserInviteRequestData>();
         public int total;
     }
 }

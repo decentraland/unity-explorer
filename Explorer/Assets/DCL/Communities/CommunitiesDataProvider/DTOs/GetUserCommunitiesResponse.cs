@@ -1,6 +1,7 @@
 using DCL.Profiles;
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -26,8 +27,10 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public CommunityPrivacy privacy;
             public CommunityVisibility visibility;
             public CommunityMemberRole role;
-            [JsonConverter(typeof(CommunitiesDTOConverters.FriendsInCommunityConverter))]
-            public Profile.CompactInfo[] friends;
+
+            // Raw wallet ids sent by the server; hydrated into friends client-side.
+            [JsonProperty("friends")] public string[] friendAddresses;
+            [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; }
             [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
@@ -80,7 +83,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             }
         }
 
-        public CommunityData[] results;
+        public CommunityData[] results = Array.Empty<CommunityData>();
         public int total;
     }
 }

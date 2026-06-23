@@ -8,13 +8,15 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityInviteRequestResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        [JsonConverter(typeof(CommunitiesDTOConverters.CommunityInviteRequestDataConverter))]
         public class CommunityInviteRequestData : ICommunityMemberData
         {
             public string id;
 
+            // Hydrated client-side from memberAddress; the server no longer sends inner profile info.
+            [JsonIgnore]
             public Profile.CompactInfo Profile { get; internal set; }
 
+            public string memberAddress;
             public string communityId;
             public InviteRequestAction type;
             public string status;
@@ -41,7 +43,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class GetCommunityInviteRequestResponseData
         {
-            public CommunityInviteRequestData[] results;
+            public CommunityInviteRequestData[] results = Array.Empty<CommunityInviteRequestData>();
             public int total;
             public int limit;
             public int offset;

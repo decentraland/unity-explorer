@@ -1,10 +1,9 @@
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
-using DCL.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Text.RegularExpressions;
 using UnityEngine;
+
+#nullable disable
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -12,12 +11,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     public class GetCommunityMembersResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        [JsonConverter(typeof(CommunitiesDTOConverters.GetCommunityMembersResponseMemberDataConverter))]
         public class MemberData : ICommunityMemberData
         {
+            // Hydrated client-side from memberAddress; the server no longer sends inner profile info.
             [JsonIgnore]
             public Profile.CompactInfo Profile { get; internal set; }
 
+            public string memberAddress;
             public string communityId;
             public CommunityMemberRole role;
             public string joinedAt;

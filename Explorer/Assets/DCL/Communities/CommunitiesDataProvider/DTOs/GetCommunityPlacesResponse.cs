@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
@@ -5,13 +6,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class GetCommunityPlacesResponse
     {
-        public GetCommunityPlacesData data;
+        public GetCommunityPlacesData data = null!;
     }
 
     [Serializable]
     public class GetCommunityPlacesData
     {
-        public GetCommunityPlacesResult[] results;
+        public GetCommunityPlacesResult[] results = Array.Empty<GetCommunityPlacesResult>();
         public int total;
         public int limit;
         public int offset;
@@ -20,6 +21,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class GetCommunityPlacesResult
     {
-        public string id;
+        public string id = null!;
     }
 }
