@@ -112,5 +112,8 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                     announcedWallets[walletId] = currentSource;
             }
         }
+
+        public void Clear() =>
+            announcedWallets.Clear();
     }
 }

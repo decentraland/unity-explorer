@@ -42,7 +42,10 @@ namespace DCL.Multiplayer.Profiles.Announcements
                 broadcaster.Remove(removeIntention.WalletId, removeIntention.FromRoom);
         }
 
-        public void Clear() =>
+        public void Clear()
+        {
             list.Clear();
+            broadcaster.Clear();
+        }
     }
 }
