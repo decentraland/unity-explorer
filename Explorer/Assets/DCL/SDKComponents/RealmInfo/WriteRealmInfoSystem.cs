@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.PortableExperiences;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using ECS;
@@ -22,13 +23,13 @@ namespace DCL.SDKComponents.RealmInfo
 
         private bool initialized;
 
-        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub, ISceneData sceneData)
+        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub, ISceneData sceneData, PortableExperienceWorldComms portableExperienceWorldComms)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.realmData = realmData;
 
-            commsRoomInfo = new CommsRoomInfo(roomHub, sceneData);
+            commsRoomInfo = new CommsRoomInfo(roomHub, sceneData, portableExperienceWorldComms);
         }
 
         public override void Initialize()
@@ -71,15 +72,17 @@ namespace DCL.SDKComponents.RealmInfo
         {
             private readonly IRoomHub roomHub;
             private readonly ISceneData sceneData;
+            private readonly PortableExperienceWorldComms portableExperienceWorldComms;
 
             public string IslandSid { get; private set; }
 
             public bool IsConnectedSceneRoom { get; private set; }
 
-            public CommsRoomInfo(IRoomHub roomHub, ISceneData sceneData)
+            public CommsRoomInfo(IRoomHub roomHub, ISceneData sceneData, PortableExperienceWorldComms portableExperienceWorldComms)
             {
                 this.roomHub = roomHub;
                 this.sceneData = sceneData;
+                this.portableExperienceWorldComms = portableExperienceWorldComms;
             }
 
             /// <summary>
@@ -89,7 +92,11 @@ namespace DCL.SDKComponents.RealmInfo
             public bool TryFetchNewInfo()
             {
                 IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                bool isConnectedToSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
+
+                // A Portable Experience scene is connected through its own scene room (not the host's current scene room),
+                // so the SDK only initiates the CRDT handshake when this reflects the PX room's connection.
+                bool isConnectedToSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id)
+                                              || portableExperienceWorldComms.IsConnected(sceneData.SceneEntityDefinition.id);
 
                 string room = roomHub.IslandRoom().Info.Sid ?? string.Empty;
 

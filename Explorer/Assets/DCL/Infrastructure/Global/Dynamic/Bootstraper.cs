@@ -256,7 +256,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.ProfileRepository,
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.MvcManager,
-                dynamicWorldContainer.MessagePipesHub,
+                dynamicWorldContainer.SceneCommunicationPipe,
                 dynamicWorldContainer.RemoteMetadata,
                 webJsSources,
                 bootstrapContainer.Environment,

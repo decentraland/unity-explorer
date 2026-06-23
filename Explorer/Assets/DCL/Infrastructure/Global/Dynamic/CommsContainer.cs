@@ -1,5 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.LiveKit.Public;
@@ -12,6 +13,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Multiplayer.Connections.PortableExperiences;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
@@ -68,6 +70,10 @@ namespace Global.Dynamic
 
         public CurrentSceneInfo CurrentSceneInfo { get; }
 
+        public PortableExperienceWorldComms PortableExperienceWorldComms { get; }
+
+        public SceneCommunicationPipe SceneCommunicationPipe { get; }
+
         private CommsContainer(
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
@@ -83,7 +89,9 @@ namespace Global.Dynamic
             RemoteEntities remoteEntities,
             IRemoteMetadata remoteMetadata,
             IHealthCheck livekitHealthCheck,
-            CurrentSceneInfo currentSceneInfo)
+            CurrentSceneInfo currentSceneInfo,
+            PortableExperienceWorldComms portableExperienceWorldComms,
+            SceneCommunicationPipe sceneCommunicationPipe)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -100,6 +108,8 @@ namespace Global.Dynamic
             RemoteMetadata = remoteMetadata;
             LivekitHealthCheck = livekitHealthCheck;
             CurrentSceneInfo = currentSceneInfo;
+            PortableExperienceWorldComms = portableExperienceWorldComms;
+            SceneCommunicationPipe = sceneCommunicationPipe;
         }
 
         public static CommsContainer Create(
@@ -201,6 +211,15 @@ namespace Global.Dynamic
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics.Controller)
                 : livekitHealthCheck;
 
+            var portableExperienceWorldComms = new PortableExperienceWorldComms(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                identityCache,
+                bootstrapContainer.DecentralandUrlsSource,
+                MultiPoolFactory(),
+                new ArrayMemoryPool(ArrayPool<byte>.Shared!));
+
+            var sceneCommunicationPipe = new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom());
+
             return new CommsContainer(
                 archipelagoIslandRoom,
                 gateKeeperSceneRoom,
@@ -216,7 +235,9 @@ namespace Global.Dynamic
                 remoteEntities,
                 remoteMetadata,
                 livekitHealthCheck,
-                new CurrentSceneInfo());
+                new CurrentSceneInfo(),
+                portableExperienceWorldComms,
+                sceneCommunicationPipe);
         }
 
         public MultiplayerPlugin CreateMultiplayerPlugin(
@@ -259,6 +280,7 @@ namespace Global.Dynamic
         public void Dispose()
         {
             MessagePipesHub.Dispose();
+            PortableExperienceWorldComms.Dispose();
         }
 
         private static IMultiPool MultiPoolFactory() =>

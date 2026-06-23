@@ -58,7 +58,14 @@ namespace DCL.SDKComponents.RealmInfo.Tests
 
             roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
 
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData);
+            var portableExperienceWorldComms = new DCL.Multiplayer.Connections.PortableExperiences.PortableExperienceWorldComms(
+                Substitute.For<DCL.WebRequests.IWebRequestController>(),
+                Substitute.For<DCL.Web3.Identities.IWeb3IdentityCache>(),
+                Substitute.For<DCL.Multiplayer.Connections.DecentralandUrls.IDecentralandUrlsSource>(),
+                Substitute.For<global::LiveKit.Internal.FFIClients.Pools.IMultiPool>(),
+                Substitute.For<global::LiveKit.Internal.FFIClients.Pools.Memory.IMemoryPool>());
+
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData, portableExperienceWorldComms);
         }
 
         protected override void OnTearDown()

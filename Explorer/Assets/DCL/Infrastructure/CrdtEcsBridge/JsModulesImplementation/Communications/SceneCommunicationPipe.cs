@@ -1,7 +1,8 @@
-﻿using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using DCL.LiveKit.Public;
@@ -24,11 +25,53 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         private readonly IGateKeeperSceneRoom sceneRoom;
         private readonly IMessagePipe messagePipe;
 
+        // Additional per-scene rooms (e.g. authoritative Portable Experience scene rooms) keyed by sceneId. When a
+        // sceneId has an entry here, its comms are routed to/from that room instead of the host's current scene room.
+        private readonly Dictionary<string, RoomChannel> extraRoomsBySceneId = new ();
+        private readonly List<string> staleSceneIdsBuffer = new ();
+
         public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, IGateKeeperSceneRoom sceneRoom)
         {
             this.sceneRoom = sceneRoom;
             messagePipe = messagePipesHub.ScenePipe();
             messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
+        }
+
+        /// <summary>
+        ///     Routes the given scene's comms to a dedicated room (its own message pipe) instead of the host's current
+        ///     scene room. Idempotent. The caller owns the room and pipe lifecycle; <see cref="RetainOnlyRooms" /> only
+        ///     stops routing.
+        /// </summary>
+        public void RegisterSceneRoom(string sceneId, IConnectiveRoom room, IMessagePipe roomPipe)
+        {
+            lock (extraRoomsBySceneId)
+            {
+                if (extraRoomsBySceneId.ContainsKey(sceneId)) return;
+                extraRoomsBySceneId[sceneId] = new RoomChannel(room, roomPipe);
+            }
+
+            roomPipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
+        }
+
+        /// <summary>
+        ///     Stops routing for any registered scene room whose sceneId is no longer present in
+        ///     <paramref name="liveSceneIds" />. Disposing the underlying room/pipe is the caller's responsibility.
+        /// </summary>
+        public void RetainOnlyRooms(ICollection<string> liveSceneIds)
+        {
+            lock (extraRoomsBySceneId)
+            {
+                if (extraRoomsBySceneId.Count == 0) return;
+
+                staleSceneIdsBuffer.Clear();
+
+                foreach (string sceneId in extraRoomsBySceneId.Keys)
+                    if (!liveSceneIds.Contains(sceneId))
+                        staleSceneIdsBuffer.Add(sceneId);
+
+                foreach (string sceneId in staleSceneIdsBuffer)
+                    extraRoomsBySceneId.Remove(sceneId);
+            }
         }
 
         private void InvokeSubscriber(ReceivedMessage<Scene> message)
@@ -44,7 +87,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 // TODO: If the room is connected but the scene is not connected **yet** the message will be skipped and forgotten
 
-                if (!sceneRoom.IsSceneConnected(message.Payload.SceneId)) return;
+                if (!IsSceneConnected(message.Payload.SceneId)) return;
 
                 SubscriberKey key = new (message.Payload.SceneId, msgType);
 
@@ -108,9 +151,23 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
         {
-            if (!sceneRoom.IsSceneConnected(sceneId)) return;
+            IMessagePipe pipe;
 
-            MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
+            lock (extraRoomsBySceneId)
+            {
+                if (extraRoomsBySceneId.TryGetValue(sceneId, out RoomChannel channel))
+                {
+                    if (!IsRoomConnected(channel.Room)) return;
+                    pipe = channel.Pipe;
+                }
+                else
+                {
+                    if (!sceneRoom.IsSceneConnected(sceneId)) return;
+                    pipe = messagePipe;
+                }
+            }
+
+            MessageWrap<Scene> sceneMessage = pipe.NewMessage<Scene>();
 
             if (!string.IsNullOrEmpty(specialRecipient))
                 sceneMessage.AddSpecialRecipient(specialRecipient);
@@ -119,6 +176,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             sceneMessage.Payload.SceneId = sceneId;
             sceneMessage.SendAndDisposeAsync(ct, LKDataPacketKind.KindReliable).Forget();
         }
+
+        private bool IsSceneConnected(string sceneId)
+        {
+            lock (extraRoomsBySceneId)
+                if (extraRoomsBySceneId.TryGetValue(sceneId, out RoomChannel channel))
+                    return IsRoomConnected(channel.Room);
+
+            return sceneRoom.IsSceneConnected(sceneId);
+        }
+
+        private static bool IsRoomConnected(IConnectiveRoom room) =>
+            room.CurrentState() == IConnectiveRoom.State.Running
+            && room.Room().Info.ConnectionState == LKConnectionState.ConnConnected;
 
         private readonly struct SubscriberKey : IEquatable<SubscriberKey>
         {
@@ -139,6 +209,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             public override int GetHashCode() =>
                 HashCode.Combine(SceneId, (int)MsgType);
+        }
+
+        private readonly struct RoomChannel
+        {
+            public readonly IConnectiveRoom Room;
+            public readonly IMessagePipe Pipe;
+
+            public RoomChannel(IConnectiveRoom room, IMessagePipe pipe)
+            {
+                Room = room;
+                Pipe = pipe;
+            }
         }
     }
 }

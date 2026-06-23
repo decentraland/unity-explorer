@@ -48,8 +48,10 @@ using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.Global.PortableExperienceComms;
 using DCL.PluginSystem.SmartWearables;
 using DCL.PluginSystem.World;
 using DCL.PrivateWorlds;
@@ -129,6 +131,8 @@ namespace Global.Dynamic
         public IRemoteMetadata RemoteMetadata => commsContainer.RemoteMetadata;
 
         public IRoomHub RoomHub => commsContainer.RoomHub;
+
+        public SceneCommunicationPipe SceneCommunicationPipe => commsContainer.SceneCommunicationPipe;
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
@@ -442,7 +446,7 @@ namespace Global.Dynamic
             {
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
-                new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+                new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub, commsContainer.PortableExperienceWorldComms),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
@@ -521,6 +525,7 @@ namespace Global.Dynamic
                 new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
                 new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
                 commsContainer.CreateMultiplayerPlugin(staticContainer, assetsProvisioner, debugBuilder, multiplayerContainer),
+                new PortableExperienceCommsPlugin(commsContainer.PortableExperienceWorldComms, commsContainer.SceneCommunicationPipe),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
                 new CharacterMotionPlugin(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry,
