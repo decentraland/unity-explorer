@@ -2,6 +2,7 @@
 using Sentry;
 using Sentry.Unity;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine.Device;
@@ -83,6 +84,26 @@ namespace DCL.Diagnostics
             {
                 stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Probe(decentralandUrl));
             }
+            AppendFooter(stringBuilder);
+
+            ReportHub.LogProductionInfo(stringBuilder.ToString());
+        }
+
+        public static void LogFeatureFlags(IEnumerable<string> enabledFlags)
+        {
+            var stringBuilder = new StringBuilder();
+            AppendHeader(stringBuilder, "ENABLED FEATURE FLAGS");
+
+            var count = 0;
+            foreach (string flag in enabledFlags)
+            {
+                stringBuilder.AppendFormat("{0} ", flag);
+                count++;
+            }
+
+            if (count == 0)
+                stringBuilder.AppendLine("<none>");
+
             AppendFooter(stringBuilder);
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());

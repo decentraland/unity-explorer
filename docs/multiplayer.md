@@ -27,7 +27,7 @@ Two transports are active at the same time: **LiveKit** (Archipelago Island room
 
 Both transports send the same `NetworkMovementMessage` / emote / profile-announcement payloads. On the receive side, incoming items from both transports are de-duplicated by wallet ID so the rest of the ECS pipeline is transport-oblivious.
 
-Pulse is gated by the `FeatureId.PULSE` feature flag. When it is off, Pulse is replaced with no-op dummies and only LiveKit carries traffic. LiveKit also reads the same flag and switches its broadcaster into a `backwardCompatibilityMode` when Pulse is live. See [Transport Selection & Wiring](#transport-selection--wiring) below.
+Pulse is gated by the `FeatureId.PULSE` feature flag, resolved once into a shared `PulseActivation`. When inactive, Pulse is replaced with no-op dummies and only LiveKit carries traffic, with `LiveKitMessagesBroadcaster` broadcasting to all peers. When active, the broadcaster sends only to peers that announced over LiveKit (the rest receive over Pulse). If the Pulse server is unreachable at start-up, the client falls back fully to LiveKit. See [Transport Selection & Wiring](#transport-selection--wiring) below.
 
 ---
 
@@ -67,11 +67,12 @@ All transport-neutral interfaces live under `Explorer/Assets/DCL/Multiplayer/`. 
 
 ### Feature flag decision points
 
-Pulse is gated by `FeatureId.PULSE`:
+Pulse is gated by `FeatureId.PULSE`, read once in `MultiplayerContainer.CreateAsync` into a shared `PulseActivation` (the session-wide "is Pulse the active transport" flag):
 
-- `Movement/Systems/PulseContainer.cs` reads the flag in its constructor and, during init, chooses between the real `PulseMultiplayerService` / `PulseProfilePropagationBus` and their `Dummy` counterparts.
-- `Movement/Systems/LiveKitMultiplayerContainer.cs` also reads the flag and passes `backwardCompatibilityMode` to `LiveKitMessagesBroadcaster`. When Pulse is live, the LiveKit broadcaster adjusts its behavior to avoid redundancy.
-- The `--pulse` program argument flips the flag at launch.
+- `Movement/Systems/PulseContainer.cs` receives the `PulseActivation` and, during init, chooses between the real `PulseMultiplayerService` / `PulseProfilePropagationBus` and their `Dummy` counterparts based on `IsActive`.
+- `Movement/Systems/LiveKitMultiplayerContainer.cs` passes the same `PulseActivation` to `LiveKitMessagesBroadcaster`, which reads `IsActive` live: when active it targets only LiveKit-announced peers, when inactive it broadcasts to all.
+- `StartPulseMultiplayerStartupOperation` calls `PulseActivation.Deactivate()` if Pulse is unreachable at start-up (full fallback to LiveKit). Runtime reconnection failures never deactivate.
+- The `--pulse true` / `--pulse false` program argument overrides the remote flag at launch; when absent, the remote flag drives it.
 
 ### Construction order
 

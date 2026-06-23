@@ -40,8 +40,8 @@ namespace DCL.UI
 
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly IMVCManager mvcManager;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -75,23 +75,23 @@ namespace DCL.UI
         private UniTaskCompletionSource closeContextMenuTask = new ();
 
         public CommunityPlayerEntryContextMenu(
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             CommunityVoiceChatContextMenuConfiguration voiceChatContextMenuSettings,
             IVoiceChatOrchestrator voiceChatOrchestrator, CommunitiesDataProvider communityDataProvider,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.voiceChatContextMenuSettings = voiceChatContextMenuSettings;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communityDataProvider = communityDataProvider;
@@ -146,14 +146,14 @@ namespace DCL.UI
             UniTask closeTask = UniTask.WhenAny(closeContextMenuTask.Task, closeMenuTask);
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
-            if (!targetIsLocalParticipant && friendServiceProxy.Configured)
+            if (!targetIsLocalParticipant && friendsService != null)
             {
-                FriendshipStatus friendshipStatus = await friendServiceProxy.Object!.GetFriendshipStatusAsync(targetProfile.UserId, ct);
+                FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(targetProfile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
                 jumpInButtonControlSettings.SetData(targetProfile.UserId);
 
-                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND && friendOnlineStatusCacheProxy.Configured &&
-                                                  friendOnlineStatusCacheProxy.Object!.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
+                jumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND && friendOnlineStatusCache != null &&
+                                                  friendOnlineStatusCache.GetFriendStatus(targetProfile.UserId) != OnlineStatus.OFFLINE;
             }
 
             userProfileControlSettings.SetInitialData(targetProfile, contextMenuFriendshipStatus);
@@ -235,9 +235,9 @@ namespace DCL.UI
 
         private void CancelFriendRequest(string userAddress)
         {
-            if (!friendServiceProxy.Configured) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService;
             cts = cts.SafeRestart();
             CancelFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
             return;
@@ -266,7 +266,7 @@ namespace DCL.UI
         private void AcceptFriendship(string userAddress)
         {
             cts = cts.SafeRestart();
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService!;
 
             AcceptFriendRequestThenChangeInteractionStatusAsync(cts.Token).Forget();
             return;

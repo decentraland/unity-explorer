@@ -135,9 +135,10 @@ namespace DCL.PluginSystem.Global
         private readonly HttpEventsApiService eventsApiService;
         private readonly GoogleUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
-        private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
+        private readonly INavmapBus navmapBus;
+        private readonly NavmapCommandFactory navmapCommandFactory;
         private readonly IAppArgs appArgs;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
@@ -158,7 +159,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunityDataService communityDataService;
         private readonly ILoadingStatus loadingStatus;
         private readonly ImageControllerProvider imageControllerProvider;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
@@ -222,9 +223,10 @@ namespace DCL.PluginSystem.Global
             HttpEventsApiService eventsApiService,
             GoogleUserCalendar userCalendar,
             ISystemClipboard clipboard,
-            ObjectProxy<INavmapBus> explorePanelNavmapBus,
+            INavmapBus navmapBus,
+            NavmapCommandFactory navmapCommandFactory,
             IAppArgs appArgs,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
@@ -244,7 +246,7 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             IDonationsService donationsService,
             IRealmNavigator realmNavigator,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             PublishIpfsEntityCommand publishIpfsEntityCommand,
             IWorldPermissionsService worldPermissionsService,
             IRendererFeaturesCache rendererFeaturesCache,
@@ -292,9 +294,10 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
-            this.explorePanelNavmapBus = explorePanelNavmapBus;
+            this.navmapBus = navmapBus;
+            this.navmapCommandFactory = navmapCommandFactory;
             this.appArgs = appArgs;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
@@ -315,7 +318,7 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.donationsService = donationsService;
             this.realmNavigator = realmNavigator;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.publishIpfsEntityCommand = publishIpfsEntityCommand;
             this.worldPermissionsService = worldPermissionsService;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -362,12 +365,7 @@ namespace DCL.PluginSystem.Global
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
                 dclInput.Shortcuts.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
 
-            INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
-                CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
-
-            explorePanelNavmapBus.SetObject(navmapBus);
-
-            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider);
+            var outfitsRepository = new OutfitsRepository(publishIpfsEntityCommand, nftNamesProvider, selfProfile);
 
             backpackSubPlugin = new BackpackSubPlugin(
                 assetsProvisioner,
@@ -454,6 +452,9 @@ namespace DCL.PluginSystem.Global
                 searchBarController, searchResultPanelController, placeInfoPanelController, eventInfoPanelController,
                 zoomController);
 
+            navmapCommandFactory.AttachUiControllers(placesAndEventsPanelController, searchResultPanelController,
+                searchBarController, placeInfoPanelController, eventInfoPanelController);
+
             IMapRenderer mapRenderer = mapRendererContainer.MapRenderer;
 
             SatelliteController satelliteController = new (navmapView.GetComponentInChildren<SatelliteView>(),
@@ -480,21 +481,15 @@ namespace DCL.PluginSystem.Global
                 settings.SettingsMenuConfiguration,
                 qualitySettingsController,
                 generalAudioMixer.Value,
-                settings.RealmPartitionSettings,
                 settings.VideoPrioritizationSettings,
-                landscapeData.Value,
-                settings.QualitySettingsAsset,
-                settings.SkyboxSettingsAsset,
                 settings.ControlsSettingsAsset,
                 systemMemoryCap,
                 settings.ChatSettingsAsset,
-                userBlockingCacheProxy,
+                userBlockingCache,
                 sceneLoadingLimit,
                 volumeBus,
-                upscalingController,
                 assetsProvisioner,
                 eventBus,
-                appArgs,
                 settings.pointAtMarkerVisibilitySettings);
 
             await settingsController.InitializeAsync();
@@ -560,7 +555,7 @@ namespace DCL.PluginSystem.Global
             var placesThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             PlacesView placesView = explorePanelView.GetComponentInChildren<PlacesView>();
             placesController = new PlacesController(placesView, cursor, placesAPIService, placeCategoriesSO.Value, inputBlock, selfProfile, webBrowser,
-                friendServiceProxy, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, worldPermissionsService, eventsApiService);
+                friendsService, profileRepositoryWrapper, mvcManager, placesThumbnailLoader, placesCardSocialActionsController, homePlaceEventBus, worldPermissionsService, eventsApiService);
 
             PlaceDetailPanelView placeDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PlaceDetailPanelPrefab, ct: ct)).GetComponent<PlaceDetailPanelView>();
             var placeDetailPanelViewFactory = PlaceDetailPanelController.CreateLazily(placeDetailPanelViewAsset, null);
@@ -572,7 +567,7 @@ namespace DCL.PluginSystem.Global
             var eventsThumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
             EventsView eventsView = explorePanelView.GetComponentInChildren<EventsView>();
             eventsController = new EventsController(eventsView, cursor, eventsApiService, placesAPIService, webBrowser, decentralandUrlsSource, mvcManager,
-                eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendServiceProxy, communitiesDataProvider);
+                eventsThumbnailLoader, eventCardActionsController, profileRepositoryWrapper, friendsService, communitiesDataProvider);
 
             EventDetailPanelView eventDetailPanelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventDetailPanelView>();
             var eventInfoViewFactory = EventDetailPanelController.CreateLazily(eventDetailPanelViewAsset, null);
@@ -694,19 +689,6 @@ namespace DCL.PluginSystem.Global
                 return placeElementView;
             }
         }
-
-        private INavmapCommand CreateSearchPlaceCommand(INavmapBus.SearchPlaceResultDelegate callback, INavmapBus.SearchPlaceParams @params) =>
-            new SearchForPlaceAndShowResultsCommand(placesAPIService, eventsApiService, placesAndEventsPanelController!,
-                searchResultPanelController!, searchBarController!, callback,
-                @params);
-
-        private INavmapCommand<AdditionalParams> CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
-            new ShowPlaceInfoCommand(placeInfo, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
-                searchBarController!);
-
-        private INavmapCommand CreateShowEventCommand(EventDTO @event, PlacesData.PlaceInfo? place = null) =>
-            new ShowEventInfoCommand(@event, eventInfoPanelController!, placesAndEventsPanelController!,
-                searchBarController!, placesAPIService, place);
 
         [Serializable]
         public class ExplorePanelSettings : IDCLPluginSettings

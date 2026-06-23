@@ -28,52 +28,45 @@ const bitwisePluginDir = normalizePath(
   path.resolve(nodeModulesPath, '@dcl/protocol', 'protoc-gen-bitwise'),
 )
 const bitwisePluginScript = normalizePath(
-  path.resolve(bitwisePluginDir, 'plugin.py'),
+  path.resolve(bitwisePluginDir, 'plugin.js'),
 )
 const quantizeRuntimeSrc = normalizePath(
   path.resolve(bitwisePluginDir, 'runtime', 'cs', 'Quantize.cs'),
 )
 
-// Python interpreter the bitwise wrapper delegates to (must match createPluginWrapper).
-const pythonCommand = isWin ? 'py' : 'python3'
-
 /**
- * Verifies the Python interpreter used by the protoc-gen-bitwise plugin is present
- * and has the `protobuf` package, so the build fails here with an actionable message
- * instead of an opaque protoc plugin stack trace mid-generation.
+ * Verifies the installed @dcl/protocol ships the Node protoc-gen-bitwise plugin,
+ * so the build fails here with an actionable message instead of an opaque protoc
+ * plugin error mid-generation. (Node itself is always present — this script runs
+ * under it.)
  */
-async function checkPythonProtobuf() {
-  try {
-    await execAsync(
-      `${pythonCommand} -c "import google.protobuf.compiler.plugin_pb2"`,
-      { cwd: workingDirectory },
-    )
-  } catch {
+function checkBitwisePlugin() {
+  if (!fs.existsSync(bitwisePluginScript)) {
     throw new Error(
-      `The protoc-gen-bitwise plugin requires Python 3 with the 'protobuf' package, but '${pythonCommand}' could not import it.\n` +
-        `Install it with: ${pythonCommand} -m pip install protobuf`,
+      `protoc-gen-bitwise plugin not found at ${bitwisePluginScript}.\n` +
+        `Update the @dcl/protocol dependency to a version that ships the Node plugin (protoc-gen-bitwise/plugin.js).`,
     )
   }
 }
 
 /**
  * Creates a platform-specific wrapper script that protoc can invoke as
- * --plugin=protoc-gen-bitwise=<path>.  The wrapper delegates to the Python
- * plugin.py shipped inside @dcl/protocol.
+ * --plugin=protoc-gen-bitwise=<path>.  The wrapper delegates to the Node
+ * plugin.js shipped inside @dcl/protocol.
  */
 function createPluginWrapper(dir: string): string {
   if (isWin) {
     const wrapper = path.resolve(dir, 'protoc-gen-bitwise.cmd')
     fs.writeFileSync(
       wrapper,
-      `@echo off\r\npy "${bitwisePluginScript}" %*\r\n`,
+      `@echo off\r\nnode "${bitwisePluginScript}" %*\r\n`,
     )
     return normalizePath(wrapper)
   } else {
     const wrapper = path.resolve(dir, 'protoc-gen-bitwise')
     fs.writeFileSync(
       wrapper,
-      `#!/usr/bin/env bash\nexec python3 "${bitwisePluginScript}" "$@"\n`,
+      `#!/usr/bin/env bash\nexec node "${bitwisePluginScript}" "$@"\n`,
     )
     fs.chmodSync(wrapper, 0o755)
     return normalizePath(wrapper)
@@ -105,7 +98,7 @@ async function main() {
 
   await execute(`${protocPath} --version`, workingDirectory)
 
-  await checkPythonProtobuf()
+  checkBitwisePlugin()
 
   await buildProtocol()
 
@@ -210,7 +203,7 @@ async function buildProtocol() {
       .filter((value) => !value.endsWith('v2/comms.proto'))
       .filter((value) => !value.endsWith('v3/comms.proto'))
 
-  // Create a platform-specific wrapper so protoc can invoke the Python plugin
+  // Create a platform-specific wrapper so protoc can invoke the Node plugin
   const pluginWrapper = createPluginWrapper(protocolInputPath)
 
   // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)

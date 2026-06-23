@@ -83,9 +83,6 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
-        public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
-        public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
-        public readonly ObjectProxy<IEmotesMessageBus> EmotesMessageBusProxy = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
         public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
 
@@ -224,7 +221,7 @@ namespace Global
             container.AssetPreLoadCache = new AssetPreLoadCache(container.GltfContainerAssetsCache);
             container.GltfContainerAssetsCache.SetAssetLoadCache(container.AssetPreLoadCache);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
-            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.RoomHubProxy, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
+            container.MediaContainer = new MediaPlayerContainer(assetsProvisioner, webRequestsContainer.WebRequestController, volumeBus, sharedDependencies.FrameTimeBudget, container.CacheCleaner, container.AssetPreLoadCache, analyticsContainer.Controller);
             container.EmotesContainer = new EmotesContainer(assetsProvisioner);
             container.ProfilesContainer = new ProfilesContainer(webRequestsContainer.WebRequestController, decentralandUrlsSource, container.PublishIpfsEntityCommand, analyticsContainer);
 
@@ -300,8 +297,6 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles),
-                new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy, exposedPlayerTransform),
-                new SceneMaskedEmotePlugin(globalWorld, container.PlayerEntity, container.MainPlayerAvatarBaseProxy, container.EmotesContainer.EmotePlayer, container.EmoteStorage, container.EmotesMessageBusProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
@@ -326,7 +321,6 @@ namespace Global
                 new PointerInputAudioPlugin(container.assetsProvisioner),
                 new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(globalWorld, playerEntity, container.CharacterDataPropagationUtility),
-                new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, container.CharacterContainer.CharacterObject, globalWorld, appArgs.HasDebugFlag()),
