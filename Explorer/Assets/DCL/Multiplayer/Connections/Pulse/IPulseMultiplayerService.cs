@@ -25,7 +25,19 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void UnregisterAllHandlers();
 
-        public UniTask ConnectAsync(CancellationToken ct);
+        /// <summary>
+        ///     Connects and authenticates against the Pulse server.
+        /// </summary>
+        /// <param name="maxAttempts">
+        ///     Upper bound on connection attempts before giving up on an unreachable server. The start-up
+        ///     operation passes a small bound so it can fall back to LiveKit; runtime reconnection uses the
+        ///     default to keep retrying.
+        /// </param>
+        /// <returns>
+        ///     <c>true</c> once connected and authenticated; <c>false</c> when the server stays unreachable
+        ///     after <paramref name="maxAttempts" /> attempts. Handshake/authentication failures throw instead.
+        /// </returns>
+        public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue);
 
         public UniTask DisconnectAsync();
 
@@ -45,8 +57,8 @@ namespace DCL.Multiplayer.Connections.Pulse
 
             public void UnregisterAllHandlers() { }
 
-            public UniTask ConnectAsync(CancellationToken ct) =>
-                UniTask.CompletedTask;
+            public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue) =>
+                UniTask.FromResult(true);
 
             public UniTask DisconnectAsync() =>
                 UniTask.CompletedTask;
