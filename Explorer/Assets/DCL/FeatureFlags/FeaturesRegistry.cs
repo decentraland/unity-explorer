@@ -65,7 +65,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.POINT_AT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.POINT_AT, featureFlags.IsEnabled(FeatureFlagsStrings.POINT_AT) || Application.isEditor),
                 [FeatureId.AVATAR_CONTEXT_MENU] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
-                [FeatureId.PULSE] = (appArgs.HasFlag(AppArgsFlags.PULSE_MULTIPLAYER) || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE)) && !localSceneDevelopment,
+                [FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
                 [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
