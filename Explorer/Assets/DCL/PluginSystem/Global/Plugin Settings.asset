@@ -9,13 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51436ed3f6d6419fbffde48f5d096965, type: 3}
-  m_Name: Global Plugins Settings
+  m_Script: {fileID: 11500000, guid: 1e7669db769f7224e94ce1be19e8677e, type: 3}
+  m_Name: Plugin Settings
   m_EditorClassIdentifier: 
   settings:
   - rid: 8449516130764587014
   - rid: 1709771761983946845
   - rid: 758312859982102531
+  - rid: 758312499805421571
   - rid: 5190442831932031144
   - rid: 5215741520409264128
   - rid: 2306906494740202818
@@ -30,8 +31,10 @@ MonoBehaviour:
   - rid: 648265872610426982
   - rid: 6478896861045588059
   - rid: 657752310186246267
+  - rid: 1045841226745774107
   - rid: 2563261270153757000
   - rid: 1154744868092248158
+  - rid: 892605770607624196
   - rid: 6697045322133929986
   - rid: 2410810641358782727
   - rid: 8121969354881106021
@@ -45,26 +48,42 @@ MonoBehaviour:
   - rid: 1268264176566403074
   - rid: 6849204606292983808
   - rid: 4132209997426458630
+  - rid: 1268264040174714880
   - rid: 8428018503705165926
+  - rid: 1045841258647388162
   - rid: 3022170012058910723
+  - rid: 3414978285727645699
   - rid: 4107643854440628226
+  - rid: 1970080267461197826
+  - rid: 634089542387236867
   - rid: 8813103964372074592
+  - rid: 6784895267130048515
   - rid: 6169970366055448665
+  - rid: 4769369655026384898
   - rid: 1221415613651484787
   - rid: 6156380652633325570
   - rid: 2872862648882692099
+  - rid: 892605770607624195
   - rid: 3836309668583964676
   - rid: 3601421940623147010
+  - rid: 4938242198007709791
   - rid: 2872862648882692098
+  - rid: 3414978285727645698
   - rid: 5034765029205082208
   - rid: 2008243996523495520
+  - rid: 250124815058075745
   - rid: 2174542042650378245
   - rid: 3601422141625466883
+  - rid: 847852733734322176
+  - rid: 4753057106328551424
   - rid: 3601422469352914947
   - rid: 6144113899072913496
+  - rid: 6144113899072913497
   - rid: 3821626543930605662
   - rid: 6784895264912310272
   - rid: 7162477752737071106
+  - rid: 857448815798779906
+  - rid: 7493825610294857301
   - rid: 3511243270148325472
   - rid: 1709771649487732831
   - rid: 1095376790733193218
@@ -72,6 +91,26 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: 250124815058075745
+      type: {class: PulseContainer/Settings, ns: DCL.Multiplayer.Movement, asm: DCL.Plugins}
+      data:
+        <ENetTransportOptions>k__BackingField:
+          <ConnectTimeoutMs>k__BackingField: 10000
+          <ServiceTimeoutMs>k__BackingField: 1
+          <BufferSize>k__BackingField: 4096
+        <ReconnectionSettings>k__BackingField:
+          <DefaultRetryDelayMs>k__BackingField: 3000
+          <AuthExhaustionRetryDelayMs>k__BackingField: 10000
+          <ServerFullRetryDelayMs>k__BackingField: 60000
+    - rid: 634089542387236867
+      type: {class: MapRendererContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <MapRendererSettings>k__BackingField:
+          m_AssetGUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 648265872610426982
       type: {class: ConfirmationDialogPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -190,6 +229,16 @@ MonoBehaviour:
             m_SubObjectType: 
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
+    - rid: 758312499805421571
+      type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        GeneralAudioMixer:
+          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        FadeSpeed: 1
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -207,6 +256,109 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <WorldAudioPlaybackControllerReference>k__BackingField:
           m_AssetGUID: d9a7adc162dc338449107a4654a26d50
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 847852733734322176
+      type: {class: SDKEntityTriggerAreaSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        TriggerAreaPrefab:
+          m_AssetGUID: 8c2fa120406894778bdb7d4e45135d3b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 857448815798779906
+      type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField:
+          m_AssetGUID: 353f2294734a94b57b061c9b83eb275d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 892605770607624195
+      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
+    - rid: 892605770607624196
+      type: {class: DynamicWorldSettings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data: 
+    - rid: 1045841226745774107
+      type: {class: DefaultTexturesContainer/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <DefaultMain256>k__BackingField:
+          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultMain512>k__BackingField:
+          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultNormal256>k__BackingField:
+          m_AssetGUID: 2df144b808932744487656f89a42fb11
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultNormal512>k__BackingField:
+          m_AssetGUID: 4428c33e669492748afd75828965504b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultEmmisive256>k__BackingField:
+          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultEmmisive512>k__BackingField:
+          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultMouthBrowMask256>k__BackingField:
+          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultMouthBrowMask512>k__BackingField:
+          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultEyesMask256>k__BackingField:
+          m_AssetGUID: b0989591ebd3293419eece13d705a1e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <DefaultEyesMask512>k__BackingField:
+          m_AssetGUID: b7201c2efeb480b4293d5baae77973d6
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 1045841258647388162
+      type: {class: LODContainer/LODContainerSettings, ns: DCL.LOD.Systems, asm: DCL.Plugins}
+      data:
+        <RoadData>k__BackingField:
+          m_AssetGUID: d7baa85a7da60ef4b8b5252d78fa1b3d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <LODSettingAsset>k__BackingField:
+          m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -243,6 +395,19 @@ MonoBehaviour:
       type: {class: MinimapPlugin/MinimapPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         MinimapContextMenuSettings: {fileID: 11400000, guid: 4446926af4de8324abba0e06e90f3399, type: 2}
+    - rid: 1268264040174714880
+      type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        Data:
+          m_AssetGUID: ea1f7da7c78c3d74bac70064dcc265a7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <RaycastBucketThreshold>k__BackingField: 3
+        <RaycastFrameBudgetMs>k__BackingField: 3
+        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
+        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -458,6 +623,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
+    - rid: 1970080267461197826
+      type: {class: MainCameraPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        VirtualCameraPrefab:
+          m_AssetGUID: 4f24a591312ba473ab5ac65d6658cb94
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2008243996523495520
       type: {class: ProfilesContainer/ProfilesPlugin/Settings, ns: DCL.Profiles, asm: DCL.Plugins}
       data:
@@ -616,6 +790,30 @@ MonoBehaviour:
         realmPartitionSettings: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
         landscapeData:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 3414978285727645698
+      type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <InteractionsAudioConfigsReference>k__BackingField:
+          m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 3414978285727645699
+      type: {class: LightSourcePlugin/LightSourcePluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        LightSourcePrefab:
+          m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        LightSourceSettings:
+          m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -798,6 +996,24 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 4753057106328551424
+      type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <ScenesUIDocument>k__BackingField:
+          m_AssetGUID: e0f5a4ab5d8f74640ae94adb6824bd45
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <FontSansSerif>k__BackingField: {fileID: 12800000, guid: 05befaedcb2db4303a48d552554db836, type: 3}
+        <FontSerif>k__BackingField: {fileID: 12800000, guid: 7a0ca548bf4cd42fa9f1c58db4332466, type: 3}
+        <FontMonospace>k__BackingField: {fileID: 12800000, guid: 73ed2f04eda7b4677b5c6e9d73681b0e, type: 3}
+    - rid: 4769369655026384898
+      type: {class: MediaPlayerPlugin/MediaPlayerPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FadeSpeed>k__BackingField: 1
+        <FlipMaterial>k__BackingField: {fileID: 2100000, guid: d08e60223593f4abe8863c64316f3476, type: 2}
+        VideoPrioritizationSettings: {fileID: 11400000, guid: 12f48d0297bd3f746b92a97878478086, type: 2}
     - rid: 4782308287844188162
       type: {class: GenericContextMenuPlugin/GenericContextMenuSettings, ns: DCL.PluginSystem, asm: DCL.Plugins}
       data:
@@ -885,6 +1101,17 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 4938242198007709791
+      type: {class: ParticleSystemPlugin/ParticleSystemPluginSettings, ns: DCL.SDKComponents.ParticleSystem.Systems, asm: DCL.Plugins}
+      data:
+        <ParticleSystemPrefab>k__BackingField:
+          m_AssetGUID: cb23ae366d31146bf85b403f6149419b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <ParticleMaterial>k__BackingField: {fileID: 2100000, guid: 3f2e1d0c4b5a6978abcdef0123456789, type: 2}
+        <MaxSceneParticles>k__BackingField: 1000
     - rid: 5034765029205082208
       type: {class: PrivateWorldsPlugin/PrivateWorldsSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -993,16 +1220,14 @@ MonoBehaviour:
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
+    - rid: 6144113899072913497
+      type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 495d936d8dfe78444abfd5ff3e260159, type: 2}
-        <LandscapeData>k__BackingField:
-          m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
     - rid: 6169970366055448665
       type: {class: MediaPlayerContainer/Settings, ns: DCL.SDKComponents.MediaStream, asm: DCL.Plugins}
       data:
@@ -1118,6 +1343,14 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6784895267130048515
+      type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        basicMaterial: {fileID: 2100000, guid: 60d3d51407bdce5449781acd4ee86781, type: 2}
+        pbrMaterial: {fileID: 2100000, guid: 0009549658aa1be40bbed401477fbd48, type: 2}
+        <LoadingAttemptsCount>k__BackingField: 6
+        <PoolInitialCapacity>k__BackingField: 256
+        <PoolMaxSize>k__BackingField: 2048
     - rid: 6849204606292983808
       type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -1203,6 +1436,27 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         ColorTogglePrefab:
           m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 7493825610294857301
+      type: {class: UIShellContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <CursorSettings>k__BackingField:
+          m_AssetGUID: 7382805fd18299d41925547efbad99f0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <PopupCloserView>k__BackingField:
+          m_AssetGUID: dbfb7e67a438449f9a887f820f733868
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <MainUIView>k__BackingField:
+          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
