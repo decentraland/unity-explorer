@@ -405,8 +405,9 @@ GameObject:
   - component: {fileID: 2126447010231208479}
   - component: {fileID: 3633068619696292472}
   - component: {fileID: 8273076807335735701}
+  - component: {fileID: -5507012444215283631}
   m_Layer: 5
-  m_Name: EmojiButton_V2
+  m_Name: EmojiButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -527,7 +528,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c4c40d4469d4eeba2b674b92ea1a9ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Tooltip>k__BackingField: {fileID: 2670631012757381177}
-  <TooltipText>k__BackingField: {fileID: 7219194762255021708}
   <EmojiImage>k__BackingField: {fileID: 5358203644665676509}
   <Button>k__BackingField: {fileID: 3633068619696292472}
+--- !u!114 &-5507012444215283631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4810700335855760454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0946983c1bce487d8ca44232d02836eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UI::DCL.UI.Buttons.HoverableButton
+  <Button>k__BackingField: {fileID: 3633068619696292472}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoveredAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}

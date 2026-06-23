@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -188,6 +189,7 @@ namespace DCL.Multiplayer.Movement
         public readonly IRemoteAnnouncements RemoteAnnouncements;
         public readonly IEmotesMessageBus EmotesMessageBus;
         public readonly IRemoveIntentions RemoveIntentions;
+        public readonly PulseActivation PulseActivation;
 
         public IProfileBroadcast ProfileBroadcast => liveKitContainer.ProfileBroadcast;
         public IProfilePropagation ProfilePropagation => pulseContainer.pulseProfilePropagationBus!;
@@ -197,11 +199,12 @@ namespace DCL.Multiplayer.Movement
         public PulseMultiplayerBus PulseMultiplayerBus => pulseContainer.pulseMultiplayerBus!;
         public ITransport PulseTransport => pulseContainer.transport!;
 
-        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile)
+        private MultiplayerContainer(PulseContainer pulseContainer, LiveKitMultiplayerContainer liveKitContainer, ISelfProfile selfProfile, PulseActivation pulseActivation)
         {
             this.pulseContainer = pulseContainer;
             this.liveKitContainer = liveKitContainer;
             this.selfProfile = selfProfile;
+            PulseActivation = pulseActivation;
 
             // Create Proxies to expose them to consumers
             MovementMessageBus = new MovementMessageBusProxy(pulseContainer.pulseMultiplayerBus!, liveKitContainer.MovementMessageBus);
@@ -224,12 +227,17 @@ namespace DCL.Multiplayer.Movement
             MultiplayerDebugSettings multiplayerDebugSettings,
             IUserBlockingCache userBlockingCache,
             ISelfProfile selfProfile,
-            CancellationToken ct) =>
-            new (
-                await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, ct),
-                new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings),
-                selfProfile
-            );
+            CancellationToken ct)
+        {
+            // Single session-wide source of truth for whether Pulse is the active transport.
+            // Shared with the Pulse container, the LiveKit broadcaster, and the start-up operation that may deactivate it on fallback.
+            var pulseActivation = new PulseActivation(FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE));
+
+            PulseContainer pulseContainer = await PulseContainer.CreateAsync(pluginSettingsContainer, identityCache, movementInbox, landscapeData, urlsSource, selfProfile, realmData, pulseActivation, ct);
+            var liveKitContainer = new LiveKitMultiplayerContainer(roomHub, messagePipesHub, movementInbox, selfProfile, userBlockingCache, multiplayerDebugSettings, pulseActivation);
+
+            return new MultiplayerContainer(pulseContainer, liveKitContainer, selfProfile, pulseActivation);
+        }
 
         public MultiplayerMovementPlugin CreatePlugin(
             StaticContainer staticContainer,
@@ -255,8 +263,11 @@ namespace DCL.Multiplayer.Movement
                 commsContainer.RemoteMetadata,
                 ParcelEncoder);
 
-        private void OnSelfProfilePropagated(Profile profile) =>
-            ProfilePropagation.Propagate(profile);
+        private void OnSelfProfilePropagated(Profile profile)
+        {
+            if (PulseActivation.IsActive)
+                ProfilePropagation.Propagate(profile);
+        }
 
         public void Dispose()
         {
