@@ -89,37 +89,51 @@ namespace DCL.WebRequests
                 return UniTask.FromResult(texture);
             }
 
-            private async UniTask<Texture2D?> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<Texture2D> ExecuteKtxAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
+                // TODO: .data creates an array
+                var data = webRequest.UnityWebRequest.downloadHandler?.data;
+
+                if (data == null)
+                    throw new Exception($"Texture content is empty: {webRequest.url}");
+
+                using var bufferWrapped = new ManagedNativeArray(data);
+
                 var ktxTexture = new KtxTexture();
 
-                // TODO: .data creates an array
-                using var bufferWrapped = new ManagedNativeArray(webRequest.UnityWebRequest.downloadHandler.data);
-
+                // Open() can throw before allocating native state; keep it outside the try so Dispose only runs once that state exists.
                 var openResult = ktxTexture.Open(bufferWrapped.nativeArray.AsReadOnly());
 
-                if (openResult != ErrorCode.Success)
-                    throw new Exception($"Failed to open ktx texture from data: {webRequest.url}");
+                try
+                {
+                    if (openResult != ErrorCode.Success)
+                        throw new Exception($"Failed to open ktx texture from data ({openResult}): {webRequest.url}");
 
-                // readable: true keeps the texture CPU-readable (Texture.isReadable == true), matching the
-                // behaviour of the previously embedded KTX package.
-                var result = await ktxTexture.LoadTexture2D(
-                    webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
-                    readable: true
-                );
+                    // readable: true keeps the decoded texture CPU-readable.
+                    var result = await ktxTexture.LoadTexture2D(
+                        webRequest.textureType != TextureType.Albedo, // BaseColour or any colour image should be non-linear; Metallic-roughness, normals or any data based textures should be linear
+                        readable: true
+                    );
 
-                ktxTexture.Dispose();
+                    if (result.errorCode != ErrorCode.Success)
+                    {
+                        // LoadTexture2D can allocate the Texture2D before failing (e.g. Apply/upload throws); destroy it so it doesn't leak.
+                        UnityObjectUtils.SafeDestroy(result.texture);
+                        throw new Exception($"Failed to load ktx texture from data ({result.errorCode}): {webRequest.url}");
+                    }
 
-                if (result.errorCode != ErrorCode.Success)
-                    throw new Exception($"Failed to load ktx texture from data: {webRequest.url}");
+                    var finalTex = result.texture;
 
-                var finalTex = result.texture;
-
-                finalTex.wrapMode = wrapMode;
-                finalTex.filterMode = filterMode;
-                finalTex.SetDebugName(webRequest.url);
-                ProfilingCounters.TexturesAmount.Value++;
-                return finalTex;
+                    finalTex.wrapMode = wrapMode;
+                    finalTex.filterMode = filterMode;
+                    finalTex.SetDebugName(webRequest.url);
+                    ProfilingCounters.TexturesAmount.Value++;
+                    return finalTex;
+                }
+                finally
+                {
+                    ktxTexture.Dispose();
+                }
             }
         }
     }
