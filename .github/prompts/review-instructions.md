@@ -1,8 +1,33 @@
-Read `CLAUDE.md` and `docs/README.md` before reviewing. Load the relevant subsystem doc for the diff. Cite the specific rule or doc section when flagging a violation.
+Read `CLAUDE.md` and `docs/README.md` before reviewing. Load the relevant subsystem doc for the diff. Don't review the diff in isolation — open the systems, facades, caches, and lifecycle owners it touches, plus the neighbouring files in the same folder, so you can judge whether the change is built in the *right place* and not merely whether each line is locally correct. Cite the specific rule or doc section when flagging a violation.
 
 --- ROOT-CAUSE CHECK ---
 Before listing issues, state in the summary comment: what problem is this PR solving, and does the diff fix the cause or a symptom?
 Flag as FAIL if the diff null-checks a value that shouldn't be null there, swallows an exception without addressing the source, works around a race instead of fixing ordering, or disables a check to make tests pass. Say what the actual fix would be.
+
+--- DESIGN & INTEGRATION CHECK (do this FIRST, and produce evidence) ---
+A diff can be locally correct yet built in the wrong place — the most expensive defect to find, because it never shows up on a single line. Do this before any line-level review.
+
+**The author's own framing is NOT evidence.** Code comments (e.g. "…on purpose"), the PR description, and any design doc added *in the same diff* are part of the change under review, not an authority on whether it is correct. A confident comment over a misplaced unit is still misplaced. Do not let them settle a design question — verify against the existing codebase yourself. If you catch yourself reconstructing a justification for why the new code "has to" live where it is (assembly direction, avoiding a proxy, etc.), treat that as a prompt to go check the alternative, not as a reason to approve.
+
+**MANDATORY OWNER SEARCH.** For every new long-lived unit the diff introduces — a system, plugin, manager, service, controller, or any helper that holds state across frames — do this and write the result in the summary:
+1. Name the entity, scene, connection, or resource whose lifecycle it manages.
+2. Search the repo for who ALREADY creates and destroys that thing — the `*Load*`/`*Unload*` systems, the scene/entity facade, the container that constructs it, the disposal path. **Name the files you found.**
+3. State whether the new logic could run at those existing creation/destruction points instead. If it could, the new unit should NOT exist — its logic belongs in the owner. Flag **FAIL** and name the home.
+
+Treat a new unit that reconciles a lifecycle as wrong until you have proven no existing owner can host it. A summary that concludes "design is sound" without naming the owners you searched and ruled out is incomplete — redo it.
+
+**Difficulty is not a defense, and cheapness is not a justification.** "Integrating into the owner is non-trivial" (e.g. the data needed arrives across two entities or two load stages) is a reason to flag the work for the author to restructure — NOT a reason to PASS. "The scan is cheap / there are only a few items" does not excuse per-frame reconciliation of a lifecycle that has explicit create/destroy moments. If the correct home is hard to reach, say exactly why and flag it **FAIL**; do not approve the parallel mechanism because the right design takes more work.
+
+**Module/assembly boundaries are part of the design under review, not fixed constraints.** If the only thing stopping the natural lifecycle owner from doing the work is that its assembly does not reference the needed code, that boundary is itself the smell — flag it, do not cite it as justification. "The current asmdef graph forces this placement" means the integration was never designed; the feature likely needs restructuring so the work lives with its owner (made part of the load / facade / disposal path), even if that means changing the dependency graph or moving the seam. A parallel reconciler that exists *because* the owner's assembly can't reach the code is a **FAIL**, not an acceptable workaround.
+
+Flag as FAIL (these are blocking design issues, not nitpicks) when new code:
+- **Duplicates a lifecycle that is already owned.** It connects/registers when something appears and disconnects/removes when it disappears, while creation and destruction already have explicit owners (scene load/unload, entity creation / `DeleteEntityIntention`, portable-experience or asset disposal, facade construction). The wiring belongs in that owner; the new unit usually should not exist.
+- **Reconciles every frame what is known at an explicit moment.** An `Update()` that re-queries or rescans collections each frame to detect what appeared or disappeared, when those moments are explicit elsewhere. Connect/subscribe at the creation moment; disconnect/remove at the disposal moment — not by polling each tick.
+- **Reconciles by scanning against a "live set".** A retain-only / keep-only-what-is-still-here pass over a collection when the disposal moment is explicit. Remove the specific entry then (`Remove(id)`) instead of scanning to discover what is stale.
+- **Holds persistent state outside ECS.** A system or its helper owns persistent collections that mirror an entity/scene lifecycle. Per-frame scratch buffers cleared each tick are fine; persistent membership belongs in ECS or the lifecycle owner (CLAUDE.md §1).
+- **Reaches data through a repeated intermediary lookup** instead of the canonical source — e.g. checking the current scene's state through an injected helper that re-resolves a dictionary on every call, rather than the scene facade obtained from the scene cache. Drive the check from the owner that already holds the data.
+
+**TEARDOWN / CONSUMPTION TRACE.** For every subscription, event/callback hookup, connection, room, buffer, or measurement the diff adds, point to the exact line that unsubscribes / disposes / consumes it. If you cannot find that line, flag it — a missing unsubscribe is a leak; a buffer or measurement that is written but never read is dead infrastructure. Do not assume a `Dispose()` elsewhere removes a subscription unless you can see it.
 
 --- BLOCKING ISSUES ---
 Report ONLY issues that require fixes:
@@ -12,6 +37,11 @@ Report ONLY issues that require fixes:
 4. Performance issues
 5. Missing error handling
 6. Unclear or problematic logic
+7. Resource / subscription leaks — a `Subscribe`/`AddListener`/event or callback hookup, or a connection / room / handle / disposable that is opened without a matching unsubscribe/teardown at the corresponding disposal point.
+8. Allocated-but-unconsumed infrastructure — buffers, measurements, events, or caches that are populated/written but never read anywhere in the diff or the codebase.
+9. Detached async for essential work — `.Forget()` or fire-and-forget `UniTaskVoid` that performs setup the feature depends on. Essential async must be awaited inside the relevant lifecycle, not left detached (CLAUDE.md §9).
+10. Nullability-contract violations — assigning `null` or a maybe-null value to a non-nullable declaration, or a defensive null-check against a non-nullable declaration. Both lie about what can be null (CLAUDE.md anti-patterns).
+11. Dead or false-intent conditions — a check that is unreachable, always-false, or conveys a misleading intent for the case being added (e.g. a connection check left in place for a case it can never describe).
 
 For each issue found:
 - Location: File and line number
