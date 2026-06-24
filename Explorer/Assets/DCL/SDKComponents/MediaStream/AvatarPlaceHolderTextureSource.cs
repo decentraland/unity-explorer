@@ -1,4 +1,5 @@
 using System;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -91,6 +92,12 @@ namespace DCL.SDKComponents.MediaStream
             var labelObject = new GameObject("Label", typeof(TextMeshProUGUI)) { layer = UI_LAYER };
             labelObject.transform.SetParent(canvasObject.transform, false);
             label = labelObject.GetComponent<TextMeshProUGUI>();
+
+            // The project always ships a default TMP font; warn (rather than silently rendering no name
+            // text) if a headless/test setup is missing one.
+            if (TMP_Settings.defaultFontAsset == null)
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"{nameof(AvatarPlaceHolderTextureSource)}: no default TMP font configured — the camera-off placeholder will show no streamer name.");
+
             label.font = TMP_Settings.defaultFontAsset;
             label.color = LABEL_COLOR;
             label.fontSize = LABEL_FONT_SIZE;

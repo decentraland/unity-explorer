@@ -226,10 +226,9 @@ namespace DCL.SDKComponents.MediaStream
                     return;
             }
 
-            // When the current LiveKit track is muted (camera off), LastTexture returns the camera-off
-            // placeholder (avatar + streamer name) in place of the frozen frame; the blit path below then
-            // copies it like any other source. See LivekitPlayer.LastTexture / AvatarPlaceHolderTextureSource.
-            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer) && !livekitPlayer.IsVideoOpened)
+            // No active LiveKit stream — render black. A muted camera does NOT reach this branch: the
+            // track stays open (IsVideoOpened is true) and LastTexture returns the placeholder instead.
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer) && livekitPlayer is { IsVideoOpened: false })
             {
                 RenderBlackTexture(ref assignedTexture);
                 return;
@@ -238,6 +237,8 @@ namespace DCL.SDKComponents.MediaStream
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
 
+            // LastTexture returns the live frame, or the camera-off placeholder (avatar + streamer name)
+            // when the camera track is muted — see LivekitPlayer.LastTexture / AvatarPlaceHolderTextureSource.
             Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
