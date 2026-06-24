@@ -62,12 +62,20 @@ Construction & dependency injection
 
 Naming & comments
 - A type/member name that describes a mechanism or a moment rather than the responsibility it owns (e.g. a `...Composer` / `...Helper` / `...Manager` that is really the source of one specific thing). Flag names that don't match what the class actually provides.
-- Comments that state the obvious, narrate caller/external behavior, or read as AI scaffolding (e.g. "must be verified in the editor — cannot be validated headlessly"). A comment must explain only what the annotated code itself does or guarantees.
+- A name that hides a precondition the member actually depends on (e.g. a flag that only applies to camera video, not screenshare, named `IsCurrentVideoMuted` instead of `IsCurrentCameraVideoMuted`). The implicit condition belongs in the name.
+- Comments that state the obvious, restate what a well-named member already says, narrate caller/external behavior, assume things about code outside this scope's responsibility, or read as AI scaffolding (e.g. "must be verified in the editor — cannot be validated headlessly"). A comment must explain only what the annotated code itself does or guarantees; over-explanation is a defect, not thoroughness.
 
 Encapsulation & responsibility
 - Behavior implemented in class A out of data that belongs to class B (e.g. a system composing/blitting a texture the owning player should provide). Move the behavior to the owner.
 - Public state exposed only so another class can replicate logic that belongs with that state — once the behavior moves to the owner, the exposed property is redundant. Flag the leak.
 - A method that mutates a shared field as a side effect (e.g. sets a `...Failed` flag) when it could just return the result. Prefer returning a value over hidden state changes.
+
+Predicates, accessors & single-use members
+**MANDATORY MEMBER AUDIT.** For every public property or accessor the diff adds or changes, find its consumers (a member is usually called within its own class) and state the count in your summary. Then test it against the three failure modes below — a member you list as touched but do not audit is an incomplete review.
+- **Single-use → merge or inline.** A property used by exactly one consumer, or one that re-validates state its sole caller already guarantees, should be merged into that consumer and named by intent (e.g. an `IsCurrentVideoMuted` used only inside `IsShowingPlaceholder` → a single `ShouldShowPlaceholder`), or made a private method that takes the already-validated non-null instance. Don't keep a single-use intermediate that re-checks invariants (CLAUDE.md §11 "Extracting when you should merge"). This targets *derived* predicates that combine or re-check state — NOT a thin forwarding accessor that centralizes access to one field of an owned object (e.g. `fromIdentity => key.identity`); those are legitimate encapsulation even when single-use, and callers should route through them rather than reach past them.
+- **Absent ≠ false/null.** A predicate or accessor that returns a default (`false`, `null`) for the absent / not-applicable case conflates "no" with "undefined" (e.g. `IsMuted` returning `false` when there is no video to be muted at all, so the question is meaningless rather than answered "no"). Make it a method taking the required non-null state (`IsMuted(VideoStreamInfo video)`) so the absent case is handled by the caller at the one place it is known.
+- **Don't re-derive what already exists.** If an existing property/method already yields the value or does the same lookup, call it — don't open-code the condition again (e.g. reuse `IsShowingPlaceholder` instead of repeating its check; use the dedicated `fromIdentity` accessor instead of re-reading the field).
+- A guard that repeats a condition already guaranteed earlier in the same flow is redundant — remove it (see blocking issue 11).
 
 Constants & magic values
 - Inline numeric / color / position literals that should be named constants declared at the top of the type (member-ordering: consts first).
