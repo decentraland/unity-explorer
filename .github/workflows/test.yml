@@ -36,8 +36,54 @@ concurrency:
 
 jobs:
 
-  lint:
+  changes:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
+    name: Detect C# changes
+    runs-on: ubuntu-latest
+    outputs:
+      cs: ${{ steps.detect.outputs.cs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Detect changed C# files
+        id: detect
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT" = "pull_request" ]; then
+            base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA" 2>/dev/null || true)
+            if [ -z "$base" ]; then
+              echo "merge-base with origin/$BASE_REF unavailable - linting to be safe."
+              echo "cs=true" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            range="$base $HEAD_SHA"
+          elif [ "$EVENT" = "push" ] && [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            range="$BEFORE_SHA ${{ github.sha }}"
+          else
+            echo "Cannot determine a diff base for event '$EVENT' - linting to be safe."
+            echo "cs=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+
+          if git diff --name-only $range -- '*.cs' | grep -q .; then
+            echo "C# files changed - lint will run."
+            echo "cs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No C# files changed - skipping lint."
+            echo "cs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  lint:
+    needs: changes
+    if: needs.changes.outputs.cs == 'true' || github.event.label.name == 'force-lint'
 
     name: Lint
     runs-on: ubuntu-latest
@@ -244,7 +290,7 @@ jobs:
           BYPASS: ${{ contains(github.event.pull_request.labels.*.name, 'no-warning-ratchet') }}
         run: |
           if [ -z "$BASELINE" ]; then
-            echo "No baseline established yet — passing. The first push to dev will seed it."
+            echo "No baseline established yet - passing. The first push to dev will seed it."
             exit 0
           fi
           if [ "$COUNT" -lt "$BASELINE" ]; then
@@ -252,7 +298,7 @@ jobs:
             exit 0
           fi
           if [ "$BYPASS" = "true" ]; then
-            echo "::warning::Warnings not reduced ($COUNT >= $BASELINE) but 'no-warning-ratchet' label present — bypassing."
+            echo "::warning::Warnings not reduced ($COUNT >= $BASELINE) but 'no-warning-ratchet' label present - bypassing."
             exit 0
           fi
           echo "::error::Compilation warnings ($COUNT) must be strictly LESS than the baseline ($BASELINE). Remove at least one warning to merge (or apply the 'no-warning-ratchet' label)."
