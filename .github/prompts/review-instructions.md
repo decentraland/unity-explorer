@@ -51,7 +51,38 @@ For each issue found:
 
 Use mcp__github_inline_comment__create_inline_comment for specific line issues.
 Use Bash(gh pr comment) for a top-level summary comment.
-Do NOT include praise, style preferences, or nice-to-have suggestions.
+Do NOT include praise or subjective style opinions. But a violation of a project standard is NOT a "nice-to-have": naming, magic numbers, member ordering, encapsulation, and resource ownership are required by CLAUDE.md / the code-standards skill / `docs/code-style-guidelines.md`. Report them as blocking and cite the rule — do not soften them into optional suggestions or skip them as nitpicks.
+
+--- CONSTRUCTION, ENCAPSULATION & RESOURCE CHECKLIST ---
+Zooms in from the DESIGN & INTEGRATION CHECK above (which asks whether the unit belongs at all) to how the units the diff touches are built, named, and manage memory. Each item looks minor in isolation, so a shallow pass misses it, but the project treats these as required fixes — cite CLAUDE.md, the code-standards skill, or `docs/code-style-guidelines.md`.
+
+Construction & dependency injection
+- A class that takes raw materials and `new`s up its own collaborator instead of receiving the built dependency. Collaborators are constructed at the composition root and injected; constructors take dependencies, not ingredients.
+- One invariant spread across a lazy `Ensure...()` plus null-guards on the fields it sets, so the instance can exist partially initialized. Establish the invariant in the constructor or a factory so the object is never half-built.
+
+Naming & comments
+- A type/member name that describes a mechanism or a moment rather than the responsibility it owns (e.g. a `...Composer` / `...Helper` / `...Manager` that is really the source of one specific thing). Flag names that don't match what the class actually provides.
+- Comments that state the obvious, narrate caller/external behavior, or read as AI scaffolding (e.g. "must be verified in the editor — cannot be validated headlessly"). A comment must explain only what the annotated code itself does or guarantees.
+
+Encapsulation & responsibility
+- Behavior implemented in class A out of data that belongs to class B (e.g. a system composing/blitting a texture the owning player should provide). Move the behavior to the owner.
+- Public state exposed only so another class can replicate logic that belongs with that state — once the behavior moves to the owner, the exposed property is redundant. Flag the leak.
+- A method that mutates a shared field as a side effect (e.g. sets a `...Failed` flag) when it could just return the result. Prefer returning a value over hidden state changes.
+
+Constants & magic values
+- Inline numeric / color / position literals that should be named constants declared at the top of the type (member-ordering: consts first).
+- A hand-rolled value that duplicates an existing shared constant (e.g. a far-away "parking" position when `MordorConstants` already defines one). Reuse it.
+
+Nullability & thread-safety
+- A `T?` dependency with a null-handling branch: confirm absence is a legitimate runtime state, not a wiring bug that should make the field non-nullable (pairs with blocking issue 10).
+- A stateful class with caches or mutable fields whose XML summary omits its threading contract. Require an explicit note (e.g. "not thread-safe").
+
+Resource lifecycle & memory (GPU textures, pools, caches)
+Distinct from the leak / teardown checks above (which catch opened-but-never-closed); these catch resources destroyed while still referenced, or that cost more than they save:
+- Ownership / lifetime: a method that returns a reference to a resource it later `Release()`/`Destroy()`s on its own schedule, with no ownership or refcount contract, is a use-after-destroy hazard — it survives only because today's single caller consumes the result the same frame. Flag references a caller might hold past their valid lifetime.
+- Cost vs. benefit: estimate what a cache holds (e.g. N × width × height × bytes-per-pixel of VRAM) against what recomputation costs. A cache that holds significant memory but buys little (cheap to recompute, result copied immediately) should be a single reusable target or recomputed on change, not a per-key cache.
+- Eviction: clearing the whole cache when it fills (all-or-nothing) instead of bounded LRU / single-slot reuse.
+- Per-frame expense: a GPU/CPU-heavy op (`Blit`, `Render`, allocation) run every frame for a result that changes only on an event — move it to the event.
 
 --- COMPLEXITY ASSESSMENT ---
 After reviewing the diff, classify the PR complexity as SIMPLE or COMPLEX.
