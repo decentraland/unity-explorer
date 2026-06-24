@@ -31,7 +31,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
             if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out URLAddress tryGetContentUrlResult))
             {
-                if (isBaseGltfFetch) acquiredBudget.Release();
+                if (isBaseGltfFetch) acquiredBudget?.Release();
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {originalFilePath}): NOT FOUND");
             }
 
