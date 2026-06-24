@@ -535,6 +535,45 @@ jobs:
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
 
+      - name: Dump Unity Editor log on failure
+        if: always() && steps.testRunner.outcome != 'success'
+        env:
+          ARTIFACTS_PATH: ${{ steps.testRunner.outputs.artifactsPath }}
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          echo "::group::Unity Editor log (last 200 lines)"
+          # game-ci runs the test editor with `-logFile <artifactsPath>/<mode>.log`,
+          # where artifactsPath resolves to "artifacts" at the workspace root
+          # (NOT Explorer/artifacts — projectPath does not prefix it). Prefer the
+          # action's own resolved output (matches the Report/Upload steps), but
+          # fall back to the literal path because on a hard timeout kill the action
+          # is killed before exporting its outputs (the Report step then fails with
+          # "Input required and not supplied: path"). Values are passed via env
+          # rather than interpolated into the shell directly.
+          LOG=""
+          for candidate in \
+            "$ARTIFACTS_PATH/$TEST_MODE.log" \
+            "artifacts/$TEST_MODE.log"; do
+            if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+              LOG="$candidate"
+              break
+            fi
+          done
+          if [ -n "$LOG" ]; then
+            echo "Showing last 200 lines of: $LOG"
+            tail -200 "$LOG"
+          else
+            echo "No $TEST_MODE.log found in known locations."
+            echo "Searching workspace for any Unity logs (depth-bounded to skip Library/):"
+            matches=$(find . -maxdepth 3 -name "*.log" 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "$matches" | head -50
+            else
+              echo "No .log files found"
+            fi
+          fi
+          echo "::endgroup::"
+
       - name: Report test results
         if: always()
         uses: dorny/test-reporter@v2.1.1
