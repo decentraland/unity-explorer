@@ -27,12 +27,295 @@ env:
   UNITY_IMAGE_FLAVOR: linux-il2cpp
   UNITY_IMAGE_VERSION: 3.2.0
   GHCR_IMAGE_NAME: unityci-editor
-  
+  INSPECT_REPORT_JSON_FILE_NAME: InspectCodeReport.json
+  WARNINGS_BASELINE_S3_KEY: '@dcl/unity-explorer/ci/warnings-baseline.json'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+
+  lint:
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
+
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Move Docker data-root to /mnt/docker
+        run: |
+          sudo systemctl stop docker
+          sudo mkdir -p /mnt/docker
+          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+          for i in {1..10}; do
+            docker info >/dev/null 2>&1 && break
+            sleep 3
+          done
+          docker info | sed -n '1,40p'
+          df -h /mnt /mnt/docker
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+          submodules: recursive
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v4
+        id: lfs-cache-lint
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add GitHub to the SSH known hosts file
+        run: |
+          mkdir -p -m 0700 /home/runner/.ssh
+          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
+          chmod 600 /home/runner/.ssh/known_hosts
+
+      - name: Prepare SSH for Unity
+        run: |
+          rm -rf /tmp/ssh-unity
+          mkdir -p -m 0700 /tmp/ssh-unity
+          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
+          cp /home/runner/.ssh/key-* /tmp/ssh-unity/ 2>/dev/null || true
+          chmod 600 /tmp/ssh-unity/*
+
+      - name: Prepare Unity writable dirs
+        run: |
+          mkdir -p /tmp/unity-home/.local/share/unity3d
+          mkdir -p /tmp/unity-home/.cache/unity3d
+          mkdir -p /tmp/unity-home/.config/unity3d
+          chmod -R 777 /tmp/unity-home
+
+      - name: Read Unity version from ProjectVersion.txt
+        id: unity-version-lint
+        run: |
+          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
+          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
+          echo "version=$ver" >> $GITHUB_OUTPUT
+
+      - name: Set image names
+        id: img-lint
+        run: |
+          version="${{ steps.unity-version-lint.outputs.version }}"
+          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
+          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
+          tag="ubuntu-$version-$flavor-$imgVer"
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          upstream="unityci/editor:$tag"
+          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "upstream=$upstream" >> $GITHUB_OUTPUT
+          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          for i in 1 2 3; do
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin && exit 0
+            echo "GHCR login failed, retry $i/3"
+            sleep $((i * 10))
+          done
+          exit 1
+
+      - name: Restore Unity image from GHCR or seed from Docker Hub
+        run: |
+          set -o pipefail
+          ghcr="${{ steps.img-lint.outputs.ghcr }}"
+          upstream="${{ steps.img-lint.outputs.upstream }}"
+
+          if docker pull "$ghcr" 2>&1 | tee /tmp/ghcr-pull.log; then
+            exit 0
+          fi
+
+          if grep -qiE 'manifest unknown|not found' /tmp/ghcr-pull.log; then
+            echo "GHCR image missing, trying upstream..."
+            docker pull "$upstream"
+            docker tag "$upstream" "$ghcr"
+            docker push "$ghcr"
+          else
+            echo "GHCR pull failed, but not because the image is missing."
+            cat /tmp/ghcr-pull.log
+            exit 1
+          fi
+
+      # - name: Activate Unity license
+      #   run: |
+      #     docker run --rm \
+      #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
+      #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
+      #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
+      #       -e UNITY_EMAIL="$UNITY_EMAIL" \
+      #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+      #       -e UNITY_LICENSE="$UNITY_LICENSE" \
+      #       ${{ steps.img-lint.outputs.ghcr }} \
+      #       /bin/bash -lc 'source /opt/unity/activate.sh 2>/dev/null || true; unity-editor -batchmode -nographics -quit -logFile /dev/stdout'
+
+      # # C# Linting using JetBrains ReSharper CLI
+
+      # - name: Generate solution inside Unity Docker container
+      #   run: |
+      #     docker run --rm \
+      #       -v "${{ github.workspace }}:/workspace" \
+      #       -v $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+      #       -v /tmp/ssh-unity:/root/.ssh:ro \
+      #       -v /tmp/unity-home/.local/share/unity3d:/root/.local/share/unity3d \
+      #       -v /tmp/unity-home/.cache/unity3d:/root/.cache/unity3d \
+      #       -v /tmp/unity-home/.config/unity3d:/root/.config/unity3d \
+      #       -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+      #       -e UNITY_EMAIL="$UNITY_EMAIL" \
+      #       -e UNITY_PASSWORD="$UNITY_PASSWORD" \
+      #       -e UNITY_LICENSE="$UNITY_LICENSE" \
+      #       -w /workspace \
+      #       ${{ steps.img-lint.outputs.ghcr }} \
+      #       unity-editor \
+      #       -batchmode \
+      #       -nographics \
+      #       -projectPath /workspace/Explorer \
+      #       -executeMethod UnityEditor.SyncVS.SyncSolution \
+      #       -quit \
+      #       -logFile -
+
+      - name: Rewrite GitHub SSH URLs to HTTPS
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.REPOS_READ_ONLY_TOKEN }}@github.com/".insteadOf "git@github.com:"
+          git config --global url."https://x-access-token:${{ secrets.REPOS_READ_ONLY_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Generate solution with GameCI Builder
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          GIT_PRIVATE_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
+          # GIT_CONFIG_EXTENSIONS: true
+        with:
+          projectPath: Explorer
+          customImage: ${{ steps.img-lint.outputs.ghcr }}
+          targetPlatform: StandaloneLinux64
+          buildMethod: Packages.Rider.Editor.RiderScriptEditor.SyncSolution
+
+      - name: Download ReSharper Command Line Tools
+        run: bash scripts/lint/download-resharper.sh rsharp
+
+      - name: Run ReSharper InspectCode (static analysis)
+        run: bash scripts/lint/run-inspectcode.sh Explorer/Explorer.sln "$INSPECT_REPORT_JSON_FILE_NAME"
+
+      # Filter false positives ('.CSharpErrors'/'.CppCompilerErrors' from '--no-build') and count.
+      - name: Count warnings
+        id: warnings
+        uses: ./.github/actions/count-warnings
+        with:
+          report: ${{ env.INSPECT_REPORT_JSON_FILE_NAME }}
+          filtered_output: filtered.json
+
+      - name: Read warnings baseline from S3
+        id: baseline
+        run: |
+          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
+          baseline=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
+          echo "Baseline warnings: ${baseline:-<none>}"
+
+      # Hard gate: a PR may only merge if it strictly reduces the warning count.
+      # No baseline yet -> pass (the first dev push seeds it). Add the 'no-warning-ratchet'
+      # label to bypass on a PR that legitimately cannot touch warnings.
+      - name: Enforce warning reduction (PR)
+        if: github.event_name == 'pull_request'
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
+          BYPASS: ${{ contains(github.event.pull_request.labels.*.name, 'no-warning-ratchet') }}
+        run: |
+          if [ -z "$BASELINE" ]; then
+            echo "No baseline established yet — passing. The first push to dev will seed it."
+            exit 0
+          fi
+          if [ "$COUNT" -lt "$BASELINE" ]; then
+            echo "Warnings reduced: $COUNT < $BASELINE"
+            exit 0
+          fi
+          if [ "$BYPASS" = "true" ]; then
+            echo "::warning::Warnings not reduced ($COUNT >= $BASELINE) but 'no-warning-ratchet' label present — bypassing."
+            exit 0
+          fi
+          echo "::error::Compilation warnings ($COUNT) must be strictly LESS than the baseline ($BASELINE). Remove at least one warning to merge (or apply the 'no-warning-ratchet' label)."
+          exit 1
+
+      # Lower the baseline on merge to dev. Only ever decreases it.
+      - name: Update warnings baseline on S3 (dev)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' 
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
+          cur=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          if [ -n "$cur" ] && [ "$COUNT" -ge "$cur" ]; then
+            echo "No update: current count ($COUNT) is not less than existing baseline ($cur)."
+            exit 0
+          fi
+          echo "Updating baseline: ${cur:-<none>} => $COUNT"
+          jq -n --argjson c "$COUNT" \
+            '{count: $c, comment: "read and modified by CI/CD of explorer repo"}' > baseline.json
+          aws s3 cp baseline.json "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" \
+            --content-type application/json --cache-control no-cache
+
+      # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
+      - name: Write warning result for PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          COUNT: ${{ steps.warnings.outputs.count }}
+          BASELINE: ${{ steps.baseline.outputs.baseline }}
+        run: |
+          jq -n \
+            --argjson pr "${{ github.event.pull_request.number }}" \
+            --argjson count "$COUNT" \
+            --arg baseline "$BASELINE" \
+            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end)}' \
+            > warning-result.json
+          cat warning-result.json
+
+      - name: Upload warning result
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: warning-result
+          path: warning-result.json
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: csharp-lint-reports
+          path: |
+            ${{ env.INSPECT_REPORT_JSON_FILE_NAME }}
+            filtered.json
+            # CodeStyleReport.xml
+
+      # END: C# Linting using JetBrains ReSharper CLI
+
+
   test:
     # Skip when PR has 'perf_test' label (performance tests run in separate workflow)
     if: |
@@ -224,3 +507,12 @@ jobs:
           name: Test results (${{ matrix.testMode }})
           path: ${{ steps.testRunner.outputs.artifactsPath }}
           if-no-files-found: error
+
+  watchdog:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: |
+      needs.lint.result == 'failure' ||
+      needs.test.result == 'failure'
+    steps:
+      - run: exit 1
