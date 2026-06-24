@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Utility;
 
@@ -31,14 +30,21 @@ namespace DCL.Optimization.Pools
 
             if (onRelease != null) this.onRelease += onRelease;
             if (onGet != null) this.onGet += onGet;
-            gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
+
+            gameObjectPool = new ExtendedObjectPool<T>(
+                creationHandler ?? HandleCreation,
+                actionOnGet: HandleGet,
+                actionOnRelease: HandleRelease,
+                actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject,
+                defaultCapacity: maxSize / 4,
+                maxSize: maxSize);
         }
 
         public void Dispose() =>
             Clear();
 
         public PooledObject<T> Get(out T v) =>
-            gameObjectPool.Get(out v);
+            new (v = Get(), this);
 
         public void Release(T element)
         {
@@ -54,8 +60,19 @@ namespace DCL.Optimization.Pools
             gameObjectPool.Release(element);
         }
 
-        public T Get() =>
-            gameObjectPool.Get();
+        public T Get()
+        {
+            T component = gameObjectPool.Get();
+
+            while (component == null && !UnityObjectUtils.IsQuitting)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE,
+                    $"{typeof(T).Name} has been destroyed while in the pool.");
+                component = gameObjectPool.Get();
+            }
+
+            return component!;
+        }
 
         public void Clear() =>
             gameObjectPool.Clear();
@@ -77,6 +94,9 @@ namespace DCL.Optimization.Pools
                 ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
                 return;
             }
+
+            if (component == null)
+                return;
 
             component.gameObject.SetActive(true);
             onGet?.Invoke(component);

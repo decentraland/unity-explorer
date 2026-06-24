@@ -171,7 +171,7 @@ public void Send(NetworkMovementMessage message)
 
 Both compressed (`MovementCompressed` via `NetworkMessageEncoder`) and uncompressed (`Decentraland.Kernel.Comms.Rfc4.Movement`) schemas are supported. The `UseCompression` setting on `MultiplayerMovementSettings` controls which schema is used for outgoing messages; incoming messages of either type are accepted.
 
-> **Note:** When `FeatureId.PULSE` is enabled, `LiveKitMessagesBroadcaster` runs in `backwardCompatibilityMode` — this affects how profile announcements and other control messages are serialized to stay interoperable with Pulse-enabled peers.
+> **Note:** `LiveKitMessagesBroadcaster` reads the shared `PulseActivation` live on every send. When Pulse is active it sends movement / emotes / profile announcements only to the peers that announced over LiveKit (the rest receive them over Pulse, avoiding double-delivery); when Pulse is absent (disabled or fallen back) it broadcasts to every peer in the rooms.
 
 ---
 
