@@ -267,33 +267,6 @@ cmake -S . -B build-mac \
 cmake --build build-mac --config Release
 ```
 
-**Universal binary — directly with clang (no CMake):**
-
-```bash
-clang -arch arm64 -arch x86_64 -O2 -dynamiclib \
-  -DENET_NO_PRAGMA_LINK -DENET_DLL \
-  -ISource/Native Source/Native/enet.c \
-  -o libenet.dylib
-```
-
-**Separate single-architecture binaries — directly with clang** (this is how the two macOS slices currently in `runtimes/` were produced):
-
-```bash
-# x86_64 only
-clang -arch x86_64 -O2 -dynamiclib \
-  -DENET_NO_PRAGMA_LINK -DENET_DLL \
-  -ISource/Native Source/Native/enet.c \
-  -o libenet-x86_64.dylib
-
-# arm64 only
-clang -arch arm64 -O2 -dynamiclib \
-  -DENET_NO_PRAGMA_LINK -DENET_DLL \
-  -ISource/Native Source/Native/enet.c \
-  -o libenet-arm64.dylib
-```
-
-Check any resulting binary with `file libenet.dylib` or `lipo -archs libenet.dylib`.
-
 ### Windows & Linux libraries
 
 The Windows (`runtimes/win-x64/native/enet.dll`) and Linux (`runtimes/linux-x64/native/libenet.so`) binaries were not built locally — they were taken directly from the upstream prebuilt release: https://github.com/SoftwareGuy/ENet-CSharp/releases/tag/autobuild-14c4dc5
