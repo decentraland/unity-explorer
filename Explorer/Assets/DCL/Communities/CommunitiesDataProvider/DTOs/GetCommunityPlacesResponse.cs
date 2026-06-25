@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
@@ -6,7 +5,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class GetCommunityPlacesResponse
     {
-        public GetCommunityPlacesData data = null!;
+        public GetCommunityPlacesData? data;
     }
 
     [Serializable]
@@ -21,6 +20,6 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class GetCommunityPlacesResult
     {
-        public string id = null!;
+        public string id;
     }
 }

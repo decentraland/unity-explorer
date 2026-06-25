@@ -3,8 +3,6 @@ using Newtonsoft.Json;
 using System;
 using UnityEngine;
 
-#nullable disable
-
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
     [Serializable]
@@ -73,7 +71,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class GetCommunityMembersResponseData
         {
-            public MemberData[] results;
+            public MemberData[] results = Array.Empty<MemberData>();
             public int total;
             public int page;
             public int pages;

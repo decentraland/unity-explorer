@@ -323,7 +323,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 name = userInviteRequestData.name,
                 description = userInviteRequestData.description,
                 ownerAddress = userInviteRequestData.ownerAddress,
-                ownerName = userInviteRequestData.ownerName,
+                OwnerName = userInviteRequestData.OwnerName,
                 membersCount = userInviteRequestData.membersCount,
                 privacy = userInviteRequestData.privacy,
                 role = userInviteRequestData.role,

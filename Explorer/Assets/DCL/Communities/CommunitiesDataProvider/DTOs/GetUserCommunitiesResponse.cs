@@ -22,15 +22,16 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public string name;
             public string description;
             public string ownerAddress;
-            public string ownerName;
             public int membersCount;
             public CommunityPrivacy privacy;
             public CommunityVisibility visibility;
-            public CommunityMemberRole role;
+            public CommunityMemberRole role = CommunityMemberRole.none;
 
-            // Raw wallet ids sent by the server; hydrated into friends client-side.
-            [JsonProperty("friends")] public string[] friendAddresses;
-            [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; }
+            [JsonIgnore] public string OwnerName { get; internal set; } = string.Empty;
+
+            // Raw wallet ids sent by the server (optional, present only when signed in); hydrated into friends client-side.
+            [JsonProperty("friends")] public string[]? friendAddresses;
+            [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; } = Array.Empty<Profile.CompactInfo>();
             [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 

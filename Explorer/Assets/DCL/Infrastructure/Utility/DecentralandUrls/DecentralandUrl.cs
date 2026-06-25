@@ -156,6 +156,10 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         LodGeneratorCDN = 94,
 
+        // v2 social-service endpoints (address-only payloads, profiles resolved client-side).
+        CommunitiesV2 = 95,
+        MembersV2 = 96,
+
         Pulse = 100,
     }
 }

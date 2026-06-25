@@ -65,7 +65,9 @@ namespace DCL.Browser
 
             // The following requires signed fetch
             DecentralandUrl.Communities,
+            DecentralandUrl.CommunitiesV2,
             DecentralandUrl.Members,
+            DecentralandUrl.MembersV2,
             DecentralandUrl.ActiveCommunityVoiceChats,
         };
 

@@ -32,7 +32,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public int membersCount;
             [JsonProperty("friends")] internal string[] friendAddresses;
             [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; } = Array.Empty<Profile.CompactInfo>();
-            public string ownerName;
+            [JsonIgnore] public string OwnerName { get; internal set; } = string.Empty;
         }
 
         public UserInviteRequestData[] results = Array.Empty<UserInviteRequestData>();
