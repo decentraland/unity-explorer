@@ -5,10 +5,11 @@ using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunitiesV2200OkResponse
     [Serializable]
     public class GetUserCommunitiesResponse
     {
-        public GetUserCommunitiesData data;
+        public GetUserCommunitiesData data = null!;
     }
 
     [Serializable]
@@ -17,11 +18,11 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class CommunityData
         {
-            public string id;
-            public string thumbnailUrl;
-            public string name;
-            public string description;
-            public string ownerAddress;
+            public string id = null!;
+            public string thumbnailUrl = null!;
+            public string name = null!;
+            public string description = null!;
+            public string ownerAddress = null!;
             public int membersCount;
             public CommunityPrivacy privacy;
             public CommunityVisibility visibility;

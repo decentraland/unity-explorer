@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityMembersV2200OkResponse (also reused for GetBannedMembersV2200OkResponse).
     [Serializable]
     public class GetCommunityMembersResponse : ICommunityMemberPagedResponse
     {
@@ -15,10 +16,10 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             [JsonIgnore]
             public Profile.CompactInfo Profile { get; internal set; }
 
-            public string memberAddress;
-            public string communityId;
+            public string memberAddress = null!;
+            public string communityId = null!;
             public CommunityMemberRole role;
-            public string joinedAt;
+            public string joinedAt = null!;
             public int mutualFriends;
 
             public FriendshipStatus friendshipStatus
@@ -78,7 +79,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             public int limit;
         }
 
-        public GetCommunityMembersResponseData data;
+        public GetCommunityMembersResponseData data = null!;
         public ICommunityMemberData[] members => data.results;
         public int total => data.total;
     }

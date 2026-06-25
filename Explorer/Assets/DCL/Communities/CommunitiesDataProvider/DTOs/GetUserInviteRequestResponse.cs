@@ -5,10 +5,11 @@ using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetMemberRequestsV2200OkResponse
     [Serializable]
     public class GetUserInviteRequestResponse
     {
-        public GetUserInviteRequestData data;
+        public GetUserInviteRequestData data = null!;
     }
 
     [Serializable]
@@ -17,20 +18,20 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class UserInviteRequestData
         {
-            public string id;
-            public string communityId;
-            public string thumbnailUrl;
-            public string memberAddress;
+            public string id = null!;
+            public string communityId = null!;
+            public string thumbnailUrl = null!;
+            public string memberAddress = null!;
             public InviteRequestAction type;
-            public string status;
-            public string name;
-            public string description;
-            public string ownerAddress;
+            public string status = null!;
+            public string name = null!;
+            public string description = null!;
+            public string ownerAddress = null!;
             public CommunityMemberRole role;
             public CommunityPrivacy privacy;
             public bool active;
             public int membersCount;
-            [JsonProperty("friends")] internal string[] friendAddresses;
+            [JsonProperty("friends")] internal string[] friendAddresses = null!;
             [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; } = Array.Empty<Profile.CompactInfo>();
             [JsonIgnore] public string OwnerName { get; internal set; } = string.Empty;
         }
