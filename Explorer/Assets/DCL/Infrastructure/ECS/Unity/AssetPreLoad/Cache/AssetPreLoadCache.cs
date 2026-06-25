@@ -78,7 +78,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 return true;
             }
 
-            data = default(VideoTemplateData);
+            data = default;
             return false;
         }
 

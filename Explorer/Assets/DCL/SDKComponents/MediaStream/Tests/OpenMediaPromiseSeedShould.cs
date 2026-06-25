@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private static readonly MediaAddress RESOLVED = MediaAddress.New("https://cdn.example/direct.mp4");
 
         private static VideoTemplateData Template() =>
-            new (RESOLVED, ORIGINAL, isReachable: true, isLiveStream: true, resolvedUrlExpiresAt: 1234.5f, isFromContentServer: true);
+            new (RESOLVED, ORIGINAL, isReachable: true, isLiveStream: true, resolvedUrlExpiresAt: 1234.5f);
 
         [Test]
         public void LeaveResolvedNotConsumed_SoConsumerStillOpensItsOwnStream()
@@ -45,14 +45,13 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var promise = new OpenMediaPromise();
             promise.SeedResolved(original);
 
-            VideoTemplateData roundTripped = promise.ToTemplateData(original.IsFromContentServer);
+            VideoTemplateData roundTripped = promise.ToTemplateData();
 
             Assert.AreEqual(original.ResolvedAddress.ToString(), roundTripped.ResolvedAddress.ToString());
             Assert.AreEqual(original.OriginalAddress.ToString(), roundTripped.OriginalAddress.ToString());
             Assert.AreEqual(original.IsReachable, roundTripped.IsReachable);
             Assert.AreEqual(original.IsLiveStream, roundTripped.IsLiveStream);
             Assert.AreEqual(original.ResolvedUrlExpiresAt, roundTripped.ResolvedUrlExpiresAt);
-            Assert.AreEqual(original.IsFromContentServer, roundTripped.IsFromContentServer);
         }
     }
 }
