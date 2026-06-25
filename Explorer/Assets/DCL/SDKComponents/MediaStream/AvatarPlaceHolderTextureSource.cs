@@ -125,8 +125,6 @@ namespace DCL.SDKComponents.MediaStream
 
             label.text = streamerName ?? string.Empty;
 
-            // Rebuild only this rig's layout/graphics. The world-space canvas has an explicit size, so it
-            // needs no global Canvas.ForceUpdateCanvases() (which would flush every canvas in the scene).
             LayoutRebuilder.ForceRebuildLayoutImmediate(canvasRect);
             label.ForceMeshUpdate();
 

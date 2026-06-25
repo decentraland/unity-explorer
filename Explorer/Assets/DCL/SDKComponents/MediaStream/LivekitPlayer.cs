@@ -38,9 +38,6 @@ namespace DCL.SDKComponents.MediaStream
         private const float AUDIO_RESCAN_INTERVAL_SECONDS = 2.0f;
 
         private readonly IRoom room;
-
-        // Supplied only by the media-player factory; null for factories that never show a camera-off
-        // placeholder (then a muted camera falls back to the live, possibly frozen, frame).
         private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private PlayerState playerState;
 
@@ -71,48 +68,11 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsVideoOpened => cvs.HasValue && cvs.Value.videoStream.Resource.Has;
 
-        // Vertical orientation of the texture currently returned by LastTexture: live LiveKit frames are
-        // flipped, but the camera-off placeholder is rendered upright. Consumed by MultiMediaPlayer.GetTexureScale.
-        public Vector2 CurrentTextureScale => IsShowingPlaceholder ? Vector2.one : new Vector2(1f, -1f);
-
-        // True when LastTexture returns the camera-off placeholder rather than a live (or frozen) frame.
-        private bool IsShowingPlaceholder => placeholderSource != null && IsCurrentVideoMuted;
-
-        // True when the currently-shown camera track is muted (e.g. the streamer turned their camera off).
-        // The track stays subscribed while muted, so DecodeLastFrame would otherwise return a frozen frame.
-        private bool IsCurrentVideoMuted
-        {
-            get
-            {
-                if (!cvs.HasValue) return false;
-
-                StreamKey key = cvs.Value.key;
-                var participant = room.Participants.RemoteParticipant(key.identity);
-
-                if (participant == null || !participant.Tracks.TryGetValue(key.sid, out TrackPublication track))
-                    return false;
-
-                // Screen-share tracks are not cameras; the camera-off placeholder doesn't apply to them.
-                if (track.Source == TrackSource.SourceScreenshare) return false;
-
-                return track.Muted;
-            }
-        }
-
-        // Display name of the participant whose video is currently shown, or null when unknown
-        // (no current stream, or the participant has no display name — the wallet identity is not shown).
-        private string? CurrentStreamerName
-        {
-            get
-            {
-                if (!cvs.HasValue) return null;
-
-                var participant = room.Participants.RemoteParticipant(cvs.Value.key.identity);
-                if (participant == null) return null;
-
-                return string.IsNullOrEmpty(participant.Name) ? null : participant.Name;
-            }
-        }
+        // Live LiveKit frames are vertically flipped; the camera-off placeholder is upright.
+        public Vector2 CurrentTextureScale =>
+            placeholderSource != null && cvs.HasValue && IsCameraVideoMuted(cvs.Value)
+                ? Vector2.one
+                : new Vector2(1f, -1f);
 
         private bool isAudioOpened => audioSources.Count > 0;
 
@@ -412,12 +372,30 @@ namespace DCL.SDKComponents.MediaStream
             if (!cvs.HasValue || !cvs.Value.videoStream.Resource.Has)
                 return null;
 
-            // Camera off: the track stays subscribed but muted, so DecodeLastFrame would return a frozen
-            // frame. Show the camera-off placeholder (avatar + streamer name) instead, like a video call.
-            if (placeholderSource != null && IsCurrentVideoMuted)
-                return placeholderSource.TextureFor(CurrentStreamerName);
+            CurrentVideoStreamInfo videoInfo = cvs.Value;
+            return CameraOffPlaceholder(videoInfo) ?? videoInfo.videoStream.Resource.Value.DecodeLastFrame();
+        }
 
-            return cvs.Value.videoStream.Resource.Value.DecodeLastFrame();
+        private Texture? CameraOffPlaceholder(CurrentVideoStreamInfo videoInfo) =>
+            placeholderSource != null && IsCameraVideoMuted(videoInfo)
+                ? placeholderSource.TextureFor(StreamerName(videoInfo))
+                : null;
+
+        // Screen-shares are not cameras, so they keep their live frame and never show the placeholder.
+        private bool IsCameraVideoMuted(CurrentVideoStreamInfo videoInfo)
+        {
+            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
+
+            if (participant == null || !participant.Tracks.TryGetValue(videoInfo.key.sid, out TrackPublication track))
+                return false;
+
+            return track.Source != TrackSource.SourceScreenshare && track.Muted;
+        }
+
+        private string? StreamerName(CurrentVideoStreamInfo videoInfo)
+        {
+            var participant = room.Participants.RemoteParticipant(videoInfo.fromIdentity);
+            return participant == null || string.IsNullOrEmpty(participant.Name) ? null : participant.Name;
         }
 
         public void Dispose()

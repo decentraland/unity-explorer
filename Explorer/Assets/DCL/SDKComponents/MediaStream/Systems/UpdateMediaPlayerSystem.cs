@@ -237,8 +237,6 @@ namespace DCL.SDKComponents.MediaStream
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
 
-            // LastTexture returns the live frame, or the camera-off placeholder (avatar + streamer name)
-            // when the camera track is muted — see LivekitPlayer.LastTexture / AvatarPlaceHolderTextureSource.
             Texture? avText = playerComponent.MediaPlayer.LastTexture();
             if (avText == null) return;
 
