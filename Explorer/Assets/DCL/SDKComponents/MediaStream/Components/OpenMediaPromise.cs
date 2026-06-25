@@ -25,6 +25,23 @@ namespace DCL.SDKComponents.MediaStream
 
         public bool IsConsumed => status == Status.Consumed;
 
+        /// <summary>
+        ///     Pre-fills the resolved state from preload metadata to avoid re-resolving the URL. Stays
+        ///     <see cref="Status.Resolved" /> (not Consumed) so this player still opens its own stream.
+        /// </summary>
+        public void SeedResolved(in VideoTemplateData tpl)
+        {
+            status = Status.Resolved;
+            isReachable = tpl.IsReachable;
+            isLiveStream = tpl.IsLiveStream;
+            resolvedUrlExpiresAt = tpl.ResolvedUrlExpiresAt;
+            mediaAddress = tpl.ResolvedAddress;
+            originalAddress = tpl.OriginalAddress;
+        }
+
+        public VideoTemplateData ToTemplateData(bool isFromContentServer) =>
+            new (mediaAddress, originalAddress, isReachable, isLiveStream, resolvedUrlExpiresAt, isFromContentServer);
+
         public async UniTask UrlReachabilityResolveAsync(MediaAddress newMediaAddress, ReportData reportData, CancellationToken ct,
             IUrlResolverService urlResolverService)
         {

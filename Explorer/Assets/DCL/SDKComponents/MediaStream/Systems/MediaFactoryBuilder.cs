@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.MediaStream
             this.assetPreLoadCache = assetPreLoadCache;
             this.analyticsController = analyticsController;
 
-            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab, assetPreLoadCache);
+            mediaPlayerCustomPool = new MediaPlayerCustomPool(mediaPlayerPrefab);
         }
 
         public MediaFactory CreateForScene(World world, in ECSWorldInstanceSharedDependencies sceneDeps, IRoomHub roomHub) =>

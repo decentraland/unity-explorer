@@ -108,8 +108,10 @@ namespace ECS.Unity.AssetLoad.Systems
                 || !capBudget.TrySpendBudget())
                 return;
 
-            if (!mediaPlayerComponent.HasFailed)
-                assetPreLoadCache.TryAdd(mediaPlayerComponent.MediaAddress.ToString(), mediaPlayerComponent);
+            // Cache only the resolved metadata, not the player, so consumers never share one instance.
+            if (!mediaPlayerComponent.HasFailed && mediaPlayerComponent.OpenMediaPromise is { } promise)
+                assetPreLoadCache.TryAddVideo(mediaPlayerComponent.MediaAddress.ToString(),
+                    promise.ToTemplateData(mediaPlayerComponent.IsFromContentServer));
 
             MarkForUpdate(mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, ref assetPreLoadLoadingStateComponent);
         }

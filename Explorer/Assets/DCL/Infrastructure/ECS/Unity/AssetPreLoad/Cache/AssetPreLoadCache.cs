@@ -63,6 +63,28 @@ namespace ECS.Unity.AssetLoad.Cache
             instance.Dispose();
         }
 
+        /// <summary>
+        ///     Stores resolved-URL metadata only — no live player is retained, so there is nothing to
+        ///     ref-count or dispose on teardown.
+        /// </summary>
+        public bool TryAddVideo(string key, in VideoTemplateData data) =>
+            cache.TryAdd(key, data);
+
+        public bool ContainsVideo(string key) =>
+            cache.TryGetValue(key, out object? value) && value is VideoTemplateData;
+
+        public bool TryGetVideoTemplate(string key, out VideoTemplateData data)
+        {
+            if (cache.TryGetValue(key, out object? value) && value is VideoTemplateData typedValue)
+            {
+                data = typedValue;
+                return true;
+            }
+
+            data = default(VideoTemplateData);
+            return false;
+        }
+
         public bool TryAdd<T>(string key, T asset)
         {
             if (cache.TryAdd(key, asset))
@@ -70,7 +92,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 switch (asset)
                 {
                     // AudioClipData and TextureData are reference counted, so we need to acquire a reference when adding them to the cache so that they are not disposed while cached and not being used.
-                    // GltfContainerAsset and MediaPlayerComponent are handled differently as they are not ref counted
+                    // GltfContainerAsset is handled differently as it is not ref counted
                     case AudioClipData audioClipData:
                         audioClipData.AcquireRef();
                         break;
@@ -116,9 +138,6 @@ namespace ECS.Unity.AssetLoad.Cache
                         break;
                     case TextureData textureData:
                         textureData.Dereference();
-                        break;
-                    case MediaPlayerComponent mediaPlayerComponent:
-                        mediaPlayerComponent.Dispose();
                         break;
                 }
 

@@ -166,29 +166,32 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             var address = MediaAddress.New(url);
-            MediaPlayerComponent component;
 
-            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent cachedComponent))
-            {
-                component = cachedComponent;
-                component.Cts = new CancellationTokenSource();
-            }
-            else
-            {
-                MultiMediaPlayer player = address.Match(
-                    (streamingRoom, mediaPlayerPool),
-                    onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
-                );
+            // Fresh player per call: a shared MediaPlayer caused the use-after-destroy crash (UNITY-EXPLORER-MV2).
+            MultiMediaPlayer player = address.Match(
+                (streamingRoom, mediaPlayerPool),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+            );
 
-                component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
-                {
-                    MediaAddress = address,
-                    LastPropagatedVideoState = VideoState.VsPaused,
-                    LastPropagatedVideoTime = 0,
-                    Cts = new CancellationTokenSource(),
-                    OpenMediaPromise = new OpenMediaPromise(),
-                };
+            var component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))
+            {
+                MediaAddress = address,
+                LastPropagatedVideoState = VideoState.VsPaused,
+                LastPropagatedVideoTime = 0,
+                Cts = new CancellationTokenSource(),
+                OpenMediaPromise = new OpenMediaPromise(),
+            };
+
+            // Seed from the cached resolved URL so this player skips re-resolution.
+            var seededFromCache = false;
+
+            if (!address.IsLivekitAddress(out _) && assetPreLoadCache.TryGetVideoTemplate(url, out VideoTemplateData template))
+            {
+                component.OpenMediaPromise.SeedResolved(template);
+                component.IsLiveStream = template.IsLiveStream;
+                component.ResolvedUrlExpiresAt = template.ResolvedUrlExpiresAt;
+                seededFromCache = true;
             }
 
             component.MarkAsFailed(!isValidStreamUrl && !isValidLocalPath && !string.IsNullOrEmpty(url));
@@ -197,7 +200,7 @@ namespace DCL.SDKComponents.MediaStream
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent ? targetVolume : 0f);
 
             //only check the URL reachability if the URL is valid and not empty, otherwise we would cause a malformed url exception in the web request controller
-            if (component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
+            if (!seededFromCache && component.State != VideoState.VsError && (isValidStreamUrl || isValidLocalPath))
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(component.MediaAddress, ReportCategory.MEDIA_STREAM, component.Cts.Token, urlResolverService).SuppressCancellationThrow().Forget();
 
             component.UpdateSpatialAudio(isSpatialAudio, spatialMinDistance, spatialMaxDistance);
