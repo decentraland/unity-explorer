@@ -84,7 +84,15 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
+            foreach (string wallet in tempRemoveAll) ForceRemove(wallet, world);
+        }
+
+        private void ForceRemove(string walletId, World world)
+        {
+            IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(walletId);
+
+            entityParticipantTable.ForceRelease(walletId);
+            CleanUpEntity(walletId, entry.Entity, world);
         }
 
         public void TryRemove(string walletId, RoomSource roomSource, World world)
@@ -102,6 +110,11 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (!entityParticipantTable.Release(walletId, roomSource))
                 return;
 
+            CleanUpEntity(walletId, entry.Entity, world);
+        }
+
+        private void CleanUpEntity(string walletId, Entity entity, World world)
+        {
             movementInbox.RemovePending(walletId);
 
             if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
@@ -111,7 +124,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 collidersByWalletId.Remove(walletId);
             }
 
-            world.AddOrGet(entry.Entity, new DeleteEntityIntention());
+            world.AddOrGet(entity, new DeleteEntityIntention());
         }
 
         public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
