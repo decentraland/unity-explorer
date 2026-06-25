@@ -20,7 +20,7 @@ jobs:
       tag_version: ${{ steps.get_version.outputs.next_tag_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           ref: 'main'
@@ -37,7 +37,7 @@ jobs:
     needs: get-info
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           ref: 'main'
@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
         with:
           run_id: ${{ github.event.workflow_run.id }}
           name: Decentraland_.*
@@ -61,7 +61,7 @@ jobs:
           skip_unpack: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           generate_release_notes: true
           draft: true # Swap to auto-release!

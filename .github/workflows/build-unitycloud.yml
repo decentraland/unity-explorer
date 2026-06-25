@@ -172,6 +172,10 @@ concurrency:
   # Otherwise an incidental pull_request event (e.g. converted_to_draft race, non-override label change)
   # would cancel a real in-progress build and let the new run skip prebuild/build, leaving the
   # Build Gate falsely green.
+  # Removing 'force-build'/'clean-build' is in that incidental category: on a draft PR the new
+  # run skips prebuild entirely, so cancelling would kill a legitimate in-flight build and
+  # replace it with nothing. Removing a platform filter still cancels - the replacing run
+  # builds both targets.
   cancel-in-progress: >-
     ${{
       github.event_name == 'push' ||
@@ -185,10 +189,17 @@ concurrency:
           github.event.action == 'synchronize' ||
           github.event.action == 'ready_for_review' ||
           (
-            (github.event.action == 'labeled' || github.event.action == 'unlabeled') &&
+            github.event.action == 'labeled' &&
             (
               github.event.label.name == 'force-build' ||
               github.event.label.name == 'clean-build' ||
+              github.event.label.name == 'windows-only' ||
+              github.event.label.name == 'macos-only'
+            )
+          ) ||
+          (
+            github.event.action == 'unlabeled' &&
+            (
               github.event.label.name == 'windows-only' ||
               github.event.label.name == 'macos-only'
             )
@@ -248,13 +259,13 @@ jobs:
       targets: ${{ steps.get_targets.outputs.targets }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
       - name: Detect changes under Explorer/**
         id: changed_explorer
-        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        uses: step-security/changed-files@2e07db73e5ccdb319b9a6c7766bd46d39d304bad # v47.0.5
         with:
           files: |
             Explorer/**
@@ -289,12 +300,14 @@ jobs:
             fi
           fi
 
+          skip_reason=""
           if [ "$should_build" = "false" ]; then
             # If still draft and no override => do not build
             is_draft="${{ github.event.pull_request.draft }}"
             echo "[check draft] is_draft='$is_draft'"
             if [ "$is_draft" = "true" ]; then
               echo "[draft] TRUE -> should_build=false"
+              skip_reason="draft PR (add the force-build label to build)"
             else
               explorer_changed="${{ steps.changed_explorer.outputs.any_changed }}"
               echo "[check explorer_changed] explorer_changed='$explorer_changed'"
@@ -303,19 +316,22 @@ jobs:
                 should_build=true
               else
                 echo "[explorer_changed] FALSE -> should_build=false"
+                skip_reason="no Explorer/ changes detected"
               fi
             fi
           fi
 
           echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
-          echo "Final decision: should_build=$should_build"
+          echo "skip_reason=$skip_reason" >> "$GITHUB_OUTPUT"
+          echo "Final decision: should_build=$should_build${skip_reason:+ ($skip_reason)}"
 
       - name: Skip build and test checks
         if: steps.decide.outputs.should_build == 'false' && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const sha = context.payload.pull_request.head.sha;
+            const reason = ${{ toJSON(steps.decide.outputs.skip_reason) }} || 'no build required';
             const checks = [
               'Build (macos)',
               'Build (windows64)',
@@ -329,10 +345,10 @@ jobs:
                 sha,
                 state: 'success',
                 context: check,
-                description: 'Skipped — no Explorer/ changes detected'
+                description: `Skipped — ${reason}`
               });
             }
-            console.log(`Posted success statuses for: ${checks.join(', ')}`);
+            console.log(`Posted success statuses for: ${checks.join(', ')} (${reason})`);
 
       - name: Get commit SHA
         if: steps.decide.outputs.should_build == 'true'
@@ -538,13 +554,13 @@ jobs:
         target: ${{ fromJSON(needs.prebuild.outputs.targets) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.12.3
 
@@ -554,7 +570,7 @@ jobs:
           pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         with:
           # Wraps QUEUE_TIMEOUT (240m) + BUILD_TIMEOUT (180m) + buffer.
           timeout_minutes: 450
@@ -654,7 +670,7 @@ jobs:
       - name: Upload artifact for macOS
         id: upload-macos-artifact
         if: matrix.target == 'macos'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}
           path: build.tar
@@ -663,7 +679,7 @@ jobs:
       - name: Upload artifact for Windows
         id: upload-windows-artifact
         if: matrix.target == 'windows64'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}
           path: |
@@ -824,7 +840,7 @@ jobs:
 
       - name: Upload size report
         if: always() && steps.size_check.outputs.result != ''
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: size_report_${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}
           path: size_report/
@@ -878,7 +894,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ env.artifact_name }}_debug_symbols
           path: |
@@ -899,25 +915,64 @@ jobs:
             --project "$SENTRY_PROJECT" \
             "build"
 
+      # The poll loop only downloads the log on completion; when the runner is
+      # cancelled mid-build, fetch the partial log so the artifact still exists.
+      - name: Fetch cloud log after cancellation
+        if: cancelled()
+        env:
+          API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+        run: python -u scripts/cloudbuild/build.py --fetch-log || true
+
       # Will run always (even if failing)
       - name: Upload cloud logs
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_unity_log
           path: unity_cloud_log.log
-          if-no-files-found: error
+          # Absence is expected when the run is cancelled before the build starts.
+          if-no-files-found: warn
 
-      # Will run always (even if failing)
+      # The full log is huge (20k+ lines) and always available as an artifact,
+      # so only dump it inline when something went wrong.
       - name: Print cloud logs
-        if: always()
+        if: failure()
         run: cat unity_cloud_log.log
 
       - name: Extract and display errors
         if: always()
         run: |
           echo "=== Extracted Errors for ${{ matrix.target }} ${{ needs.prebuild.outputs.install_source }} ==="
-          grep -iE "error c|fatal" unity_cloud_log.log | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/' || echo "No 'error c' or 'fatal' errors found in ${{ matrix.target }} log."
+
+          if [ ! -f unity_cloud_log.log ]; then
+            echo "No unity_cloud_log.log present (run cancelled before the build started?)."
+            exit 0
+          fi
+
+          PATTERN="error CS[0-9]|FATAL|fatal|Player export failed|Failed to find entry-points|BuildFailedException"
+          ERRORS=$(grep -B2 -A15 -E "$PATTERN" unity_cloud_log.log || true)
+
+          if [ -z "$ERRORS" ]; then
+            echo "No errors matched in ${{ matrix.target }} log."
+            exit 0
+          fi
+
+          echo "$ERRORS" | sed 's/^/\x1b[31m/' | sed 's/$/\x1b[0m/'
+
+          # Surface the root cause on the run page, but only when the job is
+          # actually failing - successful Unity builds still log benign matches.
+          if [ "${{ job.status }}" != "success" ]; then
+            REASON=$(grep -m1 -E "Player export failed\. Reason: .*|error CS[0-9].*" unity_cloud_log.log || true)
+            [ -n "$REASON" ] && echo "::error::${REASON:0:400}"
+            {
+              echo "### Unity errors (${{ matrix.target }})"
+              echo '```'
+              echo "$ERRORS" | head -200
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Generate Shader Compilation Report
         shell: pwsh
@@ -925,7 +980,7 @@ jobs:
           ./scripts/Generate-ShaderReport.ps1 -InputLog "unity_cloud_log.log" -OutputReport "shader_compilation_report.log"
 
       - name: Upload Shader Compilation Report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target }}_${{ needs.prebuild.outputs.install_source }}_shader_compilation_report
           path: shader_compilation_report.log
@@ -938,7 +993,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-        run: python -u scripts/cloudbuild/build.py --cancel || true
+        run: python -u scripts/cloudbuild/build.py --cancel || echo "::warning::Failed to cancel the Unity Cloud build - it may still be holding a build slot. Check cloud.unity.com -> Build Automation."
 
   build-gate:
     name: Build Gate (Windows + macOS)
@@ -954,9 +1009,10 @@ jobs:
           should_build='${{ needs.prebuild.outputs.should_build }}'
           prebuild_result='${{ needs.prebuild.result }}'
 
-          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes).
-          # The Prebuild job's "Skip build and test checks" step already posts per-target success
-          # statuses for this case, so the gate can safely pass.
+          # Legit no-op: prebuild ran and decided no build is needed (no Explorer/ changes,
+          # or a draft PR without an override label). The Prebuild job's "Skip build and test
+          # checks" step already posts per-target statuses stating the reason, so the gate can
+          # safely pass; drafts get a real build on ready_for_review.
           if [ "$prebuild_result" = "success" ] && [ "$should_build" != "true" ]; then
             echo "Gate not applicable (prebuild ran, no Explorer/ changes). Passing."
             exit 0
@@ -981,10 +1037,13 @@ jobs:
           fi
 
           build_result='${{ needs.build.result }}'
+          if [ "$build_result" = "cancelled" ]; then
+            echo "::error::Build was cancelled - usually superseded by a newer run for this PR (cancel-in-progress). This red gate is expected; the replacing run's gate is the one that counts."
+            exit 1
+          fi
           if [ "$build_result" != "success" ]; then
-            echo "::error::Build matrix did not succeed (result: $build_result)"
+            echo "::error::Build matrix did not succeed (result: $build_result). Check the Build job's 'Extract and display errors' step for the root cause."
             exit 1
           fi
 
           echo "Both Windows and macOS builds passed."
-# Test change
