@@ -280,8 +280,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
         run: |
-          # Read straight from S3 (authenticated), NOT the public CDN URL: Cloudflare/CloudFront in
-          # front of the bucket can serve a stale baseline, producing inconsistent ratchet results.
+          # Read directly from s3 to avoid cache stales 
           baseline=$(aws s3 cp "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" - 2>/dev/null | jq -r '.count' 2>/dev/null || echo "")
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
           echo "Baseline warnings: ${baseline:-<none>}"
@@ -323,7 +322,7 @@ jobs:
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
         run: |
           set -euo pipefail
-          # Read straight from S3 (authenticated) to avoid stale CDN reads when deciding whether to lower.
+          # Read directly from s3 to avoid cache stales 
           cur=$(aws s3 cp "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" - 2>/dev/null | jq -r '.count' 2>/dev/null || echo "")
           if [ -n "$cur" ] && [ "$COUNT" -ge "$cur" ]; then
             echo "No update: current count ($COUNT) is not less than existing baseline ($cur)."
@@ -337,7 +336,7 @@ jobs:
 
       # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
       # Runs even when the gate above failed (!cancelled), so a failing run still refreshes the comment
-      # instead of leaving a stale "reduced" message from an earlier passing run.
+      # instead of leaving a stale message.
       - name: Write warning result for PR comment
         if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
