@@ -1,3 +1,4 @@
+using DCL.Utilities.Extensions;
 using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
@@ -8,8 +9,8 @@ namespace DCL.DebugUtilities.Views
     [UxmlElement]
     public partial class DebugControl : VisualElement
     {
-        public VisualElement Left => this.Q<VisualElement>("Left");
+        public VisualElement Left => this.Q<VisualElement>("Left").EnsureNotNull();
 
-        public VisualElement Right => this.Q<VisualElement>("Right");
+        public VisualElement Right => this.Q<VisualElement>("Right").EnsureNotNull();
     }
 }
