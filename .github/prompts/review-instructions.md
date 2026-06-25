@@ -7,6 +7,7 @@ Cite the specific rule or doc section (CLAUDE.md, the code-standards skill, `doc
 --- STEP 1 — Load context & set scope ---
 - Read `CLAUDE.md` and `docs/README.md`; load the relevant subsystem doc(s) for the diff.
 - Get the diff (`gh pr diff`) and the changed-file list.
+- The PR head is checked out in the working tree and you have `Read`, `Glob`, and `Grep` (ripgrep) over the whole repo — use them. `Grep` is how you run the repo searches later steps require: lifecycle owners in Step 3, leak-opener mirrors in Step 5. Raw shell is limited to the listed `gh` commands, so search with the `Grep` tool, not `Bash(rg)`/`Bash(grep)`.
 - Don't review the diff in isolation: open the systems, facades, caches, and lifecycle owners it touches, plus the neighbouring files in the same folder. Steps 2–3 judge whether the change is built in the *right place*, which the diff alone can't show.
 
 --- STEP 2 — Root-cause check ---
@@ -55,7 +56,7 @@ Report ONLY issues that require fixes. Make two passes over the changed lines.
 4. Performance issues
 5. Missing error handling
 6. Unclear or problematic logic
-7. Resource / subscription leaks — an acquisition without a matching teardown at the corresponding disposal point. Scan for the concrete openers and confirm each has its mirror: `Subscribe(`→`Unsubscribe`, `AddListener(`→`RemoveListener`, `+=` on an event/`Action`→`-=`, a pool `Get(`/`Rent(`→`Release`/`Return`, `new CancellationTokenSource(`→`Cancel`+`Dispose`, a `Connect`/room/handle/`IDisposable` open→`Dispose`.
+7. Resource / subscription leaks — an acquisition without a matching teardown at the corresponding disposal point. Scan for the concrete openers and confirm each has its mirror: `Subscribe(`→`Unsubscribe`, `AddListener(`→`RemoveListener`, `+=` on an event/`Action`→`-=`, a pool `Get(`/`Rent(`→`Release`/`Return`, `new CancellationTokenSource(`→`Cancel`+`Dispose`, a `Connect`/room/handle/`IDisposable` open→`Dispose`. Do this with `Grep`: search each changed `*.cs` file for the openers, then grep the same file/type for the matching mirror, and flag any opener whose mirror is missing.
 8. Allocated-but-unconsumed infrastructure — buffers, measurements, events, or caches that are populated/written but never read anywhere in the diff or the codebase.
 9. Detached async for essential work — `.Forget()` or fire-and-forget `UniTaskVoid` that performs setup the feature depends on. Essential async must be awaited inside the relevant lifecycle, not left detached (CLAUDE.md §9).
 10. Nullability-contract violations — assigning `null` or a maybe-null value to a non-nullable declaration, or a defensive null-check against a non-nullable declaration. Both lie about what can be null (CLAUDE.md anti-patterns).

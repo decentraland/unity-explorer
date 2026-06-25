@@ -107,7 +107,7 @@ jobs:
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
             --model claude-sonnet-4-6
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*),Read,Glob,Grep"
             --max-turns 40
             
       - name: Upload Claude execution output
@@ -441,7 +441,7 @@ jobs:
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
             --model ${{ steps.model.outputs.model }}
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*),Read,Glob,Grep"
             --max-turns ${{ steps.model.outputs.max_turns }}
 
       - name: Upload Claude execution output
