@@ -1,0 +1,45 @@
+name: 'Setup Docker Disk'
+description: 'Move Docker data-root to /mnt, free disk space if /mnt is not a separate mount, and fail fast if less than 30GB available.'
+inputs:
+  min-free-gb:
+    description: 'Minimum free GB required on the Docker data-root'
+    required: false
+    default: '30'
+runs:
+  using: "composite"
+  steps:
+    - name: Free disk space (if /mnt is not a separate mount)
+      shell: bash
+      run: |
+        if ! mountpoint -q /mnt; then
+          echo "::warning::/mnt is not a separate mount — freeing root disk space"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
+          sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/* || true
+          sudo docker image prune -af || true
+        fi
+
+    - name: Move Docker data-root to /mnt/docker
+      shell: bash
+      run: |
+        sudo systemctl stop docker
+        sudo mkdir -p /mnt/docker
+        echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
+        sudo systemctl start docker
+        for i in {1..10}; do
+          docker info >/dev/null 2>&1 && break
+          sleep 3
+        done
+        docker info | sed -n '1,40p'
+        df -h /mnt /mnt/docker
+
+    - name: Verify minimum disk space
+      shell: bash
+      run: |
+        avail_kb=$(df --output=avail /mnt/docker | tail -1)
+        avail_gb=$((avail_kb / 1048576))
+        echo "Available space on Docker data-root: ${avail_gb}GB"
+        if [ "$avail_gb" -lt "${{ inputs.min-free-gb }}" ]; then
+          echo "::error::Docker data-root has only ${avail_gb}GB free (need ≥${{ inputs.min-free-gb }}GB). Re-run the job to get a runner with more disk space."
+          exit 1
+        fi

@@ -89,32 +89,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Move Docker data-root to /mnt/docker
-        run: |
-          if ! mountpoint -q /mnt; then
-            echo "::warning::/mnt is not a separate mount — freeing root disk space"
-            sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
-            sudo apt-get clean || true
-            sudo rm -rf /var/lib/apt/lists/* || true
-            sudo docker image prune -af || true
-          fi
-          sudo systemctl stop docker
-          sudo mkdir -p /mnt/docker
-          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
-          sudo systemctl start docker
-          for i in {1..10}; do
-            docker info >/dev/null 2>&1 && break
-            sleep 3
-          done
-          docker info | sed -n '1,40p'
-          df -h /mnt /mnt/docker
-          avail_kb=$(df --output=avail /mnt/docker | tail -1)
-          avail_gb=$((avail_kb / 1048576))
-          echo "Available space on Docker data-root: ${avail_gb}GB"
-          if [ "$avail_gb" -lt 30 ]; then
-            echo "::error::Docker data-root has only ${avail_gb}GB free (need ≥30GB). Re-run the job to get a runner with more disk space."
-            exit 1
-          fi
+      - name: Checkout CI actions
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Docker disk
+        uses: ./.github/actions/setup-docker-disk
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -405,37 +387,14 @@ jobs:
         testMode: [playmode, editmode]
     steps:
 
-      - name: Move Docker data-root to /mnt/docker
-        run: |
-          if ! mountpoint -q /mnt; then
-            echo "::warning::/mnt is not a separate mount — freeing root disk space"
-          fi
-          sudo systemctl stop docker
-          sudo mkdir -p /mnt/docker
-          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
-          sudo systemctl start docker
-          docker info | sed -n '1,40p'
-          df -h /mnt /mnt/docker
+      - name: Checkout CI actions
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
 
-      - name: Free disk space (runner)
-        run: |
-          set -euxo pipefail
-          df -h
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /usr/local/lib/android || true
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /opt/hostedtoolcache || true
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo docker image prune -af || true
-          df -h
-          avail_kb=$(df --output=avail /mnt/docker | tail -1)
-          avail_gb=$((avail_kb / 1048576))
-          echo "Available space on Docker data-root: ${avail_gb}GB"
-          if [ "$avail_gb" -lt 30 ]; then
-            echo "::error::Docker data-root has only ${avail_gb}GB free (need ≥30GB). Re-run the job to get a runner with more disk space."
-            exit 1
-          fi
+      - name: Setup Docker disk
+        uses: ./.github/actions/setup-docker-disk
 
       - name: Checkout code
         uses: actions/checkout@v6
