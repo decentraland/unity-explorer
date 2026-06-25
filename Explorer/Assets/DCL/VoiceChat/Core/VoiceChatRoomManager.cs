@@ -167,9 +167,10 @@ namespace DCL.VoiceChat
                                                         voiceChatOrchestrator.CurrentConnectionUrl)
                                                    .SuppressToResultAsync();
 
-                if (!result.Success)
+                // A failed connect (e.g. revoked token → 401) returns false without throwing, so Success (exception-only) must be paired with Value.
+                if (!result.Success || !result.Value)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatOrchestrator.CurrentConnectionUrl}: {result.ErrorMessage}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Initial connection failed: {(result.Success ? "room did not reach a connected state" : result.ErrorMessage)}");
                     roomHub.VoiceChatRoom().DeactivateAsync().Forget();
                     voiceChatOrchestrator.HandleConnectionError();
                 }
