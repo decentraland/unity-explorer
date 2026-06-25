@@ -56,7 +56,13 @@ namespace SceneRunner
             sceneCommunicationPipe.RegisterSceneRoom(authoritativeSceneId, authoritativeRoom, authoritativeRoomPipe);
 
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Portable Experience comms: connecting scene '{authoritativeSceneId}' of world '{portableExperienceRealm.RealmName}'");
-            await authoritativeRoom.StartAsync().AttachExternalCancellation(ct);
+
+            // The connection is a precondition of loading the PX: joining the room is what makes the server spawn,
+            // so a failed join must fail the load (the caller disposes this facade, tearing the room down).
+            bool connected = await authoritativeRoom.StartAsync().AttachExternalCancellation(ct);
+
+            if (!connected)
+                throw new Exception($"Could not connect the authoritative scene room for Portable Experience '{authoritativeSceneId}'");
         }
 
         protected override void DisposeInternal()
