@@ -461,6 +461,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
 
+            await HydratePostAuthorsAsync(response.data.posts, ct);
+
             return response;
         }
 
@@ -597,6 +599,14 @@ namespace DCL.Communities.CommunitiesDataProvider
                 GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, ct);
 
             return UniTask.WhenAll(requests.Select(HydrateAsync));
+        }
+
+        private UniTask HydratePostAuthorsAsync(CommunityPost[] posts, CancellationToken ct)
+        {
+            UniTask HydrateAsync(CommunityPost element) =>
+                GetProfileAsync(element, element.authorAddress, static (data, profile) => data.Profile = profile, ct);
+
+            return UniTask.WhenAll(posts.Select(HydrateAsync));
         }
 
         private async UniTask GetProfilesAsync<TTarget>(TTarget target, IReadOnlyList<string>? addresses, Action<TTarget, IReadOnlyList<Profile.CompactInfo>> assignList, CancellationToken ct)

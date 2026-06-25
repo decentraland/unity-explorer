@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DCL.Profiles;
+using Newtonsoft.Json;
+using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
@@ -23,10 +25,9 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public string communityId = null!;
         public string authorAddress = null!;
 
-        // Optional: CommunityPostV2 carries only authorAddress, so these profile fields are absent under v2 — left nullable, no non-null initialization.
-        public string? authorName;
-        public string? authorProfilePictureUrl;
-        public bool authorHasClaimedName;
+        // Hydrated client-side from authorAddress; CommunityPostV2 sends only the address.
+        [JsonIgnore] public Profile.CompactInfo Profile { get; internal set; }
+
         public string content = null!;
         public string createdAt = null!;
         public int likesCount;
