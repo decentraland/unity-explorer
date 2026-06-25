@@ -27,41 +27,55 @@ See [multiplayer.md → Transport Selection & Wiring](multiplayer.md#transport-s
 
 ## Feature flag and program arg
 
-Pulse is toggled by a single logical flag, evaluated by `FeaturesRegistry` as either a launch arg **or** a remote feature flag:
+Pulse is toggled by a single logical flag, evaluated by `FeaturesRegistry` as a remote feature flag with an optional launch-arg override:
 
 | Source | Symbol | Where |
 |---|---|---|
-| Program arg | `--pulse` | `AppArgsFlags.PULSE_MULTIPLAYER = "pulse"` |
+| Program arg (override) | `--pulse true` / `--pulse false` | `AppArgsFlags.PULSE_MULTIPLAYER = "pulse"` |
 | Remote flag | `"pulse"` | `FeatureFlagsStrings.PULSE = "pulse"` |
 | Registry key | `FeatureId.PULSE` | Final boolean exposed to code |
 
 From `DCL/FeatureFlags/FeaturesRegistry.cs`:
 
 ```csharp
-[FeatureId.PULSE] = appArgs.HasFlag(AppArgsFlags.PULSE_MULTIPLAYER)
-                 || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE),
+[FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false)
+                    && !localSceneDevelopment,
 ```
 
-`OR` semantics: passing `--pulse` at launch enables it regardless of the remote flag, useful for local development and integration testing.
+Override semantics: when `--pulse` is **specified** its value wins over the remote flag (`--pulse true` force-enables, `--pulse false` force-disables — useful for local development, integration testing, and ops kill-switching); when it is **not specified**, Pulse is driven by the remote feature flag. Local scene development always forces Pulse off.
 
 ### Where the flag is consumed
 
-- **`PulseContainer`** — reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.PULSE)` in its constructor and stores it as `FeatureEnabled`. During `InitializeInternalAsync`:
-  - `pulseMultiplayerService` is either a real `PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource)` or `new IPulseMultiplayerService.Dummy()`.
+The flag is read **once** in `MultiplayerContainer.CreateAsync`, which seeds a single shared `PulseActivation` (`Connections/Pulse/PulseActivation.cs`) — the session-wide source of truth for "is Pulse the active transport". Consumers read `PulseActivation.IsActive` rather than the flag:
+
+- **`PulseContainer`** — receives the `PulseActivation`. During `InitializeInternalAsync`, from `pulseActivation.IsActive`:
+  - `pulseMultiplayerService` is either a real `PulseMultiplayerService(transport, messagePipe, urlsSource)` or `new IPulseMultiplayerService.Dummy()`.
   - `pulseProfilePropagationBus` is either a real `PulseProfilePropagationBus(...)` or `new IProfilePropagation.Dummy()`.
-  - The `PulseMultiplayerBus`, `PulseIncomingProfileAnnouncements`, `PulseRemoveIntentions`, and `ENetTransport` are **always** constructed; the flag only swaps the Service and ProfilePropagation paths. The bus and incoming collectors simply never receive traffic when the service is a dummy.
-- **`LiveKitMultiplayerContainer`** — reads the same flag and passes `backwardCompatibilityMode = true` to `LiveKitMessagesBroadcaster`. This adjusts how LiveKit serializes certain control messages so Pulse-enabled peers interoperate with LiveKit-only peers without double-delivery or format drift.
+  - The `PulseMultiplayerBus`, `PulseIncomingProfileAnnouncements`, `PulseRemoveIntentions`, and `ENetTransport` are **always** constructed; activation only swaps the Service and ProfilePropagation paths. The bus and incoming collectors simply never receive traffic when the service is a dummy (or the real service is disconnected).
+- **`LiveKitMessagesBroadcaster`** — holds the `PulseActivation` and reads `IsActive` **live** on every send (movement, emotes, and profiles all route through it). When Pulse is active it sends only to the peers that announced over LiveKit (the rest receive over Pulse); when Pulse is absent it broadcasts to every peer in the rooms.
+
+> `PulseActivation.IsActive` starts equal to `FeatureId.PULSE`. It flips to `false` exactly once — when the start-up connection is unreachable (see [Start-up fallback](#start-up-fallback)). It never flips at runtime.
 
 ### Disabling behavior
 
-When the flag is off:
+When Pulse is inactive (`FeatureId.PULSE` off, `--pulse false`, local scene development, or after a start-up fallback):
 
-- All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against `pulseMultiplayerService.Dummy`.
+- All four proxies in `MultiplayerContainer` still fan out to Pulse, but the Pulse side is a no-op — `PulseMultiplayerBus` methods early-return against a `Dummy` (or disconnected) service.
 - Incoming proxies' `Fill(...)` / `Bunch()` calls include empty Pulse lists.
-- `IProfilePropagation.Dummy` makes the main self-profile-propagation call a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`).
-- `LiveKitMessagesBroadcaster.backwardCompatibilityMode = false` — LiveKit runs in its original serialization mode.
+- `IProfilePropagation` is a no-op (the profile still propagates over LiveKit via `IProfileBroadcast`); `MultiplayerContainer.OnSelfProfilePropagated` also gates on `IsActive`.
+- `LiveKitMessagesBroadcaster` broadcasts to all peers (its original serialization mode).
 
 The effective runtime cost of Pulse when disabled is a few dummy virtual calls per frame.
+
+### Start-up fallback
+
+`StartPulseMultiplayerStartupOperation` connects to Pulse during login, passing a bounded attempt count (`5`) to `IPulseMultiplayerService.ConnectAsync(ct, maxAttempts)`:
+
+- If Pulse is **unreachable** (the connection keeps timing out across all 5 attempts), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
+- Handshake/authentication failures are **not** treated as unreachable; they propagate as a normal start-up error.
+- If Pulse is already inactive (disabled / `--pulse false`), the operation is a no-op.
+
+Runtime reconnection failures (after a successful initial connect) do **not** fall back — the `StartRouting` / `HandleDisconnect` reconnection loop keeps retrying without flipping `PulseActivation`.
 
 ---
 
@@ -226,6 +240,36 @@ A plain `ScriptableObject` / serializable config with three fields:
 | `BufferSize` | 4 096 | Size of the fixed send/receive byte buffers. Must exceed the largest expected Protobuf payload. |
 
 Serialized into `PulseContainer.Settings` so the options can be tuned per build without code changes.
+
+---
+
+## ENet native libraries — build provenance
+
+The native ENet libraries that back the managed `ENet.cs` P/Invoke wrapper (shipped by the `com.decentraland.pulse.transport` package) live in the repo at `Explorer/Assets/Plugins/ENet/runtimes/`. The bindings expect the native symbol library to resolve to the name `enet` (Windows) / `libenet` (macOS, Linux) — see the `[DllImport]` declarations in that package's `Runtime/ENet.cs`.
+
+Keep this section in sync whenever any binary under `runtimes/` is rebuilt or swapped, so the exact source and flags behind each slice stay auditable.
+
+**Upstream source:** https://github.com/SoftwareGuy/ENet-CSharp
+
+### Building the macOS libraries
+
+All commands run from the **upstream repository root**.
+
+> **Note (CMake 4.x):** Homebrew's CMake 4.x removed support for the `cmake_minimum_required(VERSION 3.1)` this project declares. Pass `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` to configure anyway (shown below). It does not affect the output.
+
+**Universal binary (arm64 + x86_64 in one file) — via CMake:**
+
+```bash
+cmake -S . -B build-mac \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build build-mac --config Release
+```
+
+### Windows & Linux libraries
+
+The Windows (`runtimes/win-x64/native/enet.dll`) and Linux (`runtimes/linux-x64/native/libenet.so`) binaries were not built locally — they were taken directly from the upstream prebuilt release: https://github.com/SoftwareGuy/ENet-CSharp/releases/tag/autobuild-14c4dc5
 
 ---
 
@@ -783,13 +827,21 @@ Key facts:
 ```csharp
 protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
 {
-    await service.ConnectAsync(ct);
+    if (!pulseActivation.IsActive) return;                        // disabled / --pulse false
+
+    if (!await service.ConnectAsync(ct, maxAttempts: 5))          // unreachable after 5 attempts
+    {
+        pulseActivation.Deactivate();                            // full fallback to LiveKit-only
+        return;
+    }
+
     Profile? profile = await selfProfile.ProfileAsync(ct);
     profilePropagation.Propagate(profile!);
+    await UniTask.SwitchToMainThread();
 }
 ```
 
-On startup, connect to Pulse, fetch the host's profile, and announce its version. This is a **one-shot** at connect — there's no debounce mechanism like `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously. (LiveKit's broadcast runs on every profile change; Pulse only fires at connect time today.)
+On startup, connect to Pulse, fetch the host's profile, and announce its version. The connect is bounded to 5 attempts; if the server is unreachable the operation deactivates Pulse (full fallback to LiveKit) and lets login continue — see [Start-up fallback](#start-up-fallback). The propagate is a **one-shot** at connect — there's no debounce mechanism like `DebounceLiveKitProfileBroadcast` watching `ISelfProfile.ProfilePropagated` continuously. (LiveKit's broadcast runs on every profile change; Pulse only fires at connect time today.)
 
 `MultiplayerContainer` does also subscribe to `ISelfProfile.ProfilePropagated` and invoke `ProfilePropagation.Propagate(profile)` for later updates — so subsequent profile changes do reach Pulse. But there's no timer-based throttle wrapping that call, so the cadence is whatever `ISelfProfile` chooses to fire at.
 
@@ -885,15 +937,15 @@ Ordered construction of the internal stack:
 
 ```csharp
 transport = new ENetTransport(settings.ENetTransportOptions, messagePipe);
-pulseMultiplayerService = FeatureEnabled
-    ? new PulseMultiplayerService(transport, messagePipe, identityCache, urlsSource)
+pulseMultiplayerService = pulseActivation.IsActive
+    ? new PulseMultiplayerService(transport, messagePipe, urlsSource)
     : new IPulseMultiplayerService.Dummy();
 
-pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache,
-    movementInbox, parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache);
+pulseMultiplayerBus = new PulseMultiplayerBus(pulseMultiplayerService, peerIdCache, movementInbox,
+    parcelEncoder, IncomingProfiles, RemoveIntentions, identityCache, settings.ReconnectionSettings, selfProfile, realmData);
 pulseMultiplayerBus.SubscribeToIncomingMessages();
 
-pulseProfilePropagationBus = FeatureEnabled
+pulseProfilePropagationBus = pulseActivation.IsActive
     ? new PulseProfilePropagationBus(pulseMultiplayerService)
     : new IProfilePropagation.Dummy();
 ```

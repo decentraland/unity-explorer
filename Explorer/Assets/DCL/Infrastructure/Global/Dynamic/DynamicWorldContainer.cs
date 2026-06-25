@@ -378,6 +378,7 @@ namespace Global.Dynamic
                 moderationDataProvider,
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
+                multiplayerContainer.PulseActivation,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
@@ -588,7 +589,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     commsContainer.RoomHub,
                     realmNavigatorContainer.WorldPermissionsService,
-                    realmNavigatorContainer.WorldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
