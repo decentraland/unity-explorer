@@ -70,30 +70,42 @@ never spawns.
 
 ## Client architecture
 
-All client code lives in `DCL.Multiplayer` (the comms primitives), `SceneRuntime`
-(the scene comms pipe), and `DCL.Plugins` (the system and plugin). No new
-assembly was introduced.
+The PX room is **owned by the scene's lifecycle**: connected as a blocking step
+of the scene load and disposed when the scene's facade is disposed. There is no
+global system polling scene state. Client code lives in `DCL.Multiplayer` (the
+comms primitives), `SceneRuntime` (the scene comms pipe), and the scene-loading /
+facade code in `SceneLifeCycle` and `SceneRunner`. No new assembly was introduced.
 
 | Component | Assembly | Responsibility |
 |---|---|---|
 | `PortableExperienceSceneRoom` | `DCL.Multiplayer` | A `ConnectiveRoom` that connects to `worlds/<realm>/scenes/<sceneId>/comms` with the `sceneId` in the handshake metadata. Always targets the scene endpoint. |
-| `PortableExperienceWorldComms` | `DCL.Multiplayer` | Owns one `PortableExperienceSceneRoom` plus a `MessagePipe` per authoritative PX scene, keyed by sceneId. Exposes `EnsureConnected`, `TryGetRoom`, `IsConnected`, `RetainOnly`. |
-| `SceneCommunicationPipe` (extended) | `SceneRuntime` | Gained multi-room routing: `RegisterSceneRoom` / `RetainOnlyRooms`. Outbound, inbound, and `IsSceneConnected` for a registered sceneId route to that scene's PX room instead of the host's current scene room. The host-room path is unchanged. |
-| `PortableExperienceWorldCommsSystem` + `PortableExperienceCommsPlugin` | `DCL.Plugins` | Global-world system that, each frame, connects the room for every authoritative PX scene, registers the room with the pipe, and reconciles rooms whose scene unloaded. |
-| `WriteRealmInfoSystem` (extended) | `DCL.Plugins` | Reports `RealmInfo.isConnectedSceneRoom == true` when the PX room is connected (not only the host scene room). |
+| `PortableExperienceRoomFactory` | `DCL.Multiplayer` | Stateless builder of a `PortableExperienceSceneRoom` plus its `MessagePipe` for a given realm and sceneId. Holds the LiveKit pools the message pipe needs. |
+| `PortableExperienceSceneFacade` | `SceneRunner` | Owns the room and pipe for its PX scene. Connects during load (`StartAuthoritativeRoomAsync`), exposes `IsConnectedSceneRoom`, and removes routing from the pipe + stops/disposes the room in `DisposeInternal`. |
+| `LoadSceneSystemLogicBase` (extended) | `SceneLifeCycle` | After the facade is built, awaits the PX room connect as a load precondition — a failed connect fails the load (block-on-load). |
+| `SceneCommunicationPipe` (extended) | `SceneRuntime` | Gained per-scene room routing: `RegisterSceneRoom` / `RemoveSceneRoom`. Outbound, inbound, and `IsSceneConnected` for a registered sceneId route to that scene's PX room instead of the host's current scene room. The host-room path is unchanged. |
+| `WriteRealmInfoSystem` (extended) | `Assembly-CSharp` | For a PX, reports `RealmInfo.isConnectedSceneRoom` from the scene's own facade (looked up via `IScenesCache`), omitting the host-room check entirely. |
 
 ### Wiring and ownership
 
 The shared `SceneCommunicationPipe` is created once in `CommsContainer` (hoisted
-out of `SceneSharedContainer` so both the scene factory and the PX plugin share
-one instance, avoiding an `ObjectProxy`). `PortableExperienceWorldComms` is also
-created in `CommsContainer`, which already has the LiveKit pools the per-room
-message pipes need.
+out of `SceneSharedContainer` so both the scene factory and the scene-loading
+flow share one instance, avoiding an `ObjectProxy`). `SceneFactory` builds a
+`PortableExperienceRoomFactory` and hands it — plus the shared pipe — to every
+`PortableExperienceSceneFacade` it creates.
 
-The `DCL.Plugins` system is the only place that legally sees both sides: the
-rooms (in `DCL.Multiplayer`) and the pipe (in `SceneRuntime`). The dependency
-direction is `SceneRuntime → DCL.Multiplayer`, never the reverse, so the service
-never references the pipe — the system registers rooms with the pipe instead.
+The room is thus owned by the facade cradle-to-grave. It is connected as an
+awaited step of `LoadSceneSystemLogicBase.FlowAsync` (joining the room triggers
+the server spawn, so the PX is not considered loaded until connected) and torn
+down — routing removed from the pipe, room stopped and disposed — when the facade
+is disposed by the normal unload path (`UnloadSceneSystem`). No global system
+reconciles scene state every frame.
+
+The PX `RealmData` the room needs reaches the load flow on the scene entity's
+`PortableExperienceComponent` (set by `ECSPortableExperiencesController` where the
+realm is created), which `ResolveSceneStateByIncreasingRadiusSystem` reads into
+`GetSceneFacadeIntention.PortableExperienceRealm` for authoritative PX scenes.
+The dependency direction stays `SceneRuntime → DCL.Multiplayer`; the pipe never
+references the rooms — the facade registers its room with the pipe instead.
 
 ## Constraints that shaped the design
 
@@ -116,18 +128,9 @@ These are the non-obvious rules that ruled out simpler approaches.
   scene endpoint when `IsWorld() && !SingleScene`, so reusing `GateKeeperSceneRoom`
   for a PX would hit the wrong (world-level) endpoint. `PortableExperienceSceneRoom`
   bypasses this by always building the scene-level URL.
-- **Assembly direction.** Systems must compile into `DCL.Plugins` (they reference
-  many assemblies). `SceneRuntime` may reference `DCL.Multiplayer`, never the
-  reverse. These rules dictated where each piece lives.
-
-<!-- prettier-ignore -->
-> [!NOTE]
-> A namespace gotcha: code under `DCL.PluginSystem.*` cannot use the unqualified
-> `World` type, because the `DCL.PluginSystem.World` namespace shadows
-> `Arch.Core.World` and the Arch query source generator emits `World` unqualified.
-> `PortableExperienceWorldCommsSystem` therefore lives in the
-> `DCL.Multiplayer.Connections.PortableExperiences` namespace even though its
-> file sits under `PluginSystem/Global/`.
+- **Assembly direction.** `SceneRuntime` may reference `DCL.Multiplayer`, never
+  the reverse. The pipe (in `SceneRuntime`) never references the rooms (in
+  `DCL.Multiplayer`); the facade registers its room with the pipe instead.
 
 ## The three problems we solved
 
@@ -137,9 +140,10 @@ gaps, each surfaced by a different symptom.
 ### 1. No spawn trigger
 
 By default a PX never joins any scene comms room, so the server side never sees
-a user and never spawns. The fix is `PortableExperienceWorldComms` plus its
-driving system: when an authoritative PX scene is running, the client opens a
-data-only LiveKit connection to that world's comms.
+a user and never spawns. The fix wires the room into the scene's own lifecycle:
+when an authoritative PX scene loads, `PortableExperienceSceneFacade` opens a
+data-only LiveKit connection (`PortableExperienceSceneRoom`) to that world's
+scene comms, awaited as a load precondition.
 
 ### 2. Wrong room — the join carried no sceneId
 
@@ -177,9 +181,10 @@ The client writes `RealmInfo` through `WriteRealmInfoSystem`, which computed
 never connected to a PX scene, so always `false`. The SDK therefore never
 requested state.
 
-The fix makes `WriteRealmInfoSystem` also report `true` when the PX room is
-connected, via `PortableExperienceWorldComms.IsConnected(sceneId)`. When the PX
-room finishes connecting, the flag flips, `RealmInfo.onChange` fires,
+The fix makes `WriteRealmInfoSystem` branch for a PX: instead of the host scene
+room (always `false`, a false signal), it reads `IsConnectedSceneRoom` from the
+scene's own `PortableExperienceSceneFacade`, looked up via `IScenesCache`. When
+the PX room finishes connecting, the flag flips, `RealmInfo.onChange` fires,
 `requestState()` runs, and `REQ_CRDT_STATE` finally reaches `authoritative-server`,
 which responds with `RES_CRDT_STATE` and ongoing CRDT deltas.
 
@@ -230,13 +235,6 @@ These cost real time during development; keep them in mind when debugging comms.
 4. In the Unity Console, confirm the scene room connects, the SDK emits a
    `REQ_CRDT_STATE` (`firstByte=2`), and the client receives `RES_CRDT_STATE`
    from the server.
-
-<!-- prettier-ignore -->
-> [!NOTE]
-> Temporary `[PX-COMMS]` diagnostic logs were added to `SceneCommunicationPipe`,
-> `PortableExperienceWorldComms`, and `CommunicationsControllerAPIImplementationBase`
-> to trace the connect → register → send → receive chain. Remove them once the
-> feature is verified.
 
 ## See also
 

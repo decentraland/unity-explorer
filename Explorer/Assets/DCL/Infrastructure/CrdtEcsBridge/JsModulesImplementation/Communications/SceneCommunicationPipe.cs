@@ -28,7 +28,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         // Additional per-scene rooms (e.g. authoritative Portable Experience scene rooms) keyed by sceneId. When a
         // sceneId has an entry here, its comms are routed to/from that room instead of the host's current scene room.
         private readonly Dictionary<string, RoomChannel> extraRoomsBySceneId = new ();
-        private readonly List<string> staleSceneIdsBuffer = new ();
 
         public SceneCommunicationPipe(IMessagePipesHub messagePipesHub, IGateKeeperSceneRoom sceneRoom)
         {
@@ -39,38 +38,35 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         /// <summary>
         ///     Routes the given scene's comms to a dedicated room (its own message pipe) instead of the host's current
-        ///     scene room. Idempotent. The caller owns the room and pipe lifecycle; <see cref="RetainOnlyRooms" /> only
-        ///     stops routing.
+        ///     scene room. Idempotent. The caller owns the room and pipe lifecycle; <see cref="RemoveSceneRoom" /> only
+        ///     stops routing and unsubscribes from the pipe.
         /// </summary>
         public void RegisterSceneRoom(string sceneId, IConnectiveRoom room, IMessagePipe roomPipe)
         {
             lock (extraRoomsBySceneId)
             {
                 if (extraRoomsBySceneId.ContainsKey(sceneId)) return;
+
+                // Subscribe before publishing the entry so the inbound subscription is active the moment SendMessage
+                // (called from the scene thread) can find the entry and route outbound to this pipe. The pipe is
+                // freshly created for and exclusively owned by this scene, so the single subscription MessagePipe
+                // allows per message type always succeeds here.
+                roomPipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
                 extraRoomsBySceneId[sceneId] = new RoomChannel(room, roomPipe);
             }
-
-            roomPipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
         }
 
         /// <summary>
-        ///     Stops routing for any registered scene room whose sceneId is no longer present in
-        ///     <paramref name="liveSceneIds" />. Disposing the underlying room/pipe is the caller's responsibility.
+        ///     Stops routing for a previously registered scene room and unsubscribes <see cref="InvokeSubscriber" />
+        ///     from its pipe. Disposing the underlying room/pipe is the caller's responsibility. No-op if not registered.
         /// </summary>
-        public void RetainOnlyRooms(ICollection<string> liveSceneIds)
+        public void RemoveSceneRoom(string sceneId)
         {
             lock (extraRoomsBySceneId)
             {
-                if (extraRoomsBySceneId.Count == 0) return;
+                if (!extraRoomsBySceneId.Remove(sceneId, out RoomChannel channel)) return;
 
-                staleSceneIdsBuffer.Clear();
-
-                foreach (string sceneId in extraRoomsBySceneId.Keys)
-                    if (!liveSceneIds.Contains(sceneId))
-                        staleSceneIdsBuffer.Add(sceneId);
-
-                foreach (string sceneId in staleSceneIdsBuffer)
-                    extraRoomsBySceneId.Remove(sceneId);
+                channel.Pipe.Unsubscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber);
             }
         }
 

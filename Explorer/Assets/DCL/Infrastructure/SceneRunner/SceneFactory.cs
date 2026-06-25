@@ -12,6 +12,7 @@ using DCL.Clipboard;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.PortableExperiences;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
@@ -69,6 +70,7 @@ namespace SceneRunner
         private readonly DecentralandEnvironment dclEnvironment;
         private readonly ISystemClipboard systemClipboard;
         private readonly string installSource;
+        private readonly PortableExperienceRoomFactory portableExperienceRoomFactory;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -119,6 +121,8 @@ namespace SceneRunner
             this.remoteMetadata = remoteMetadata;
             this.dclEnvironment = dclEnvironment;
             this.installSource = installSource;
+
+            portableExperienceRoomFactory = new PortableExperienceRoomFactory(webRequestController, identityCache, decentralandUrlsSource);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct, string id = "")
@@ -277,7 +281,9 @@ namespace SceneRunner
             {
                 return new PortableExperienceSceneFacade(
                     sceneData,
-                    runtimeDeps
+                    runtimeDeps,
+                    portableExperienceRoomFactory,
+                    messagePipesHub
                 );
             }
 
