@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         private readonly ISceneData sceneData;
 
         public GltFastSceneDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData,
-            IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
+            IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget)
             : base(world, partitionComponent, reportData, webRequestController, acquiredBudget)
         {
             this.sceneData = sceneData;

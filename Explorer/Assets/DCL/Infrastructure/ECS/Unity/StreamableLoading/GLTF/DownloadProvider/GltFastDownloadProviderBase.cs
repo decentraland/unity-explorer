@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         protected readonly IWebRequestController webRequestController;
         protected readonly ReportData reportData;
 
-        protected GltFastDownloadProviderBase(World world, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
+        protected GltFastDownloadProviderBase(World world, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget)
         {
             this.world = world;
             this.partitionComponent = partitionComponent;
