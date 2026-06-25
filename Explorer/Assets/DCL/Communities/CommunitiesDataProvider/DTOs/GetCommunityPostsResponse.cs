@@ -12,7 +12,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
     [Serializable]
     public class CommunityPostsData
     {
-        public CommunityPost[] posts = null!;
+        public CommunityPost[] posts = Array.Empty<CommunityPost>();
         public int total;
     }
 
@@ -22,8 +22,10 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public string id = null!;
         public string communityId = null!;
         public string authorAddress = null!;
-        public string authorName;
-        public string authorProfilePictureUrl;
+
+        // Optional: CommunityPostV2 carries only authorAddress, so these profile fields are absent under v2 — left nullable, no non-null initialization.
+        public string? authorName;
+        public string? authorProfilePictureUrl;
         public bool authorHasClaimedName;
         public string content = null!;
         public string createdAt = null!;

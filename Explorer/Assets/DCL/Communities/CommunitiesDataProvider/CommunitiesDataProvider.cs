@@ -14,7 +14,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Pool;
 using Random = System.Random;
 
 namespace DCL.Communities.CommunitiesDataProvider
@@ -92,7 +91,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             if (response?.data?.results == null)
                 return response;
 
-            foreach (GetUserCommunitiesData.CommunityData community in response.data.results) { community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id); }
+            foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
+                community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
 
             await UniTask.WhenAll(HydrateFriendsAsync(response.data.results, ct),
                 HydrateOwnerNamesAsync(response.data.results, ct));
@@ -623,8 +623,8 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             Profile.CompactInfo? compactProfile = await profileRepository.GetCompactAsync(address, ct);
 
-            if (compactProfile.HasValue)
-                assignName(target, compactProfile.Value.Name);
+            // Fall back to the raw address when the profile can't be resolved, mirroring GetProfileAsync for members.
+            assignName(target, compactProfile?.Name ?? address);
         }
     }
 }
