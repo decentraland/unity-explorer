@@ -70,9 +70,6 @@ namespace ECS.Unity.AssetLoad.Cache
         public bool TryAddVideo(string key, in VideoTemplateData data) =>
             cache.TryAdd(key, data);
 
-        public bool ContainsVideo(string key) =>
-            cache.TryGetValue(key, out object? value) && value is VideoTemplateData;
-
         public bool TryGetVideoTemplate(string key, out VideoTemplateData data)
         {
             if (cache.TryGetValue(key, out object? value) && value is VideoTemplateData typedValue)

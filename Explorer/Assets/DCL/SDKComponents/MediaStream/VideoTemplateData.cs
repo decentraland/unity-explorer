@@ -9,23 +9,21 @@ namespace DCL.SDKComponents.MediaStream
         /// <summary>Post-resolution direct URL that OpenMedia consumes.</summary>
         public readonly MediaAddress ResolvedAddress;
 
-        /// <summary>Pre-resolution address; <see cref="OpenMediaPromise.IsReachableConsume" /> compares against it.</summary>
+        /// <summary>Pre-resolution address, unchanged by URL redirection.</summary>
         public readonly MediaAddress OriginalAddress;
 
         public readonly bool IsReachable;
         public readonly bool IsLiveStream;
         public readonly float ResolvedUrlExpiresAt;
-        public readonly bool IsFromContentServer;
 
         public VideoTemplateData(MediaAddress resolvedAddress, MediaAddress originalAddress, bool isReachable,
-            bool isLiveStream, float resolvedUrlExpiresAt, bool isFromContentServer)
+            bool isLiveStream, float resolvedUrlExpiresAt)
         {
             ResolvedAddress = resolvedAddress;
             OriginalAddress = originalAddress;
             IsReachable = isReachable;
             IsLiveStream = isLiveStream;
             ResolvedUrlExpiresAt = resolvedUrlExpiresAt;
-            IsFromContentServer = isFromContentServer;
         }
     }
 }
