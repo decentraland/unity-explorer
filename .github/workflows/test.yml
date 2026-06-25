@@ -90,7 +90,7 @@ jobs:
     steps:
 
       - name: Checkout CI actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: .github/actions
           sparse-checkout-cone-mode: false
@@ -99,7 +99,7 @@ jobs:
         uses: ./.github/actions/setup-docker-disk
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           lfs: true
