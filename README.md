@@ -92,6 +92,7 @@ Please follow our [Branch & PR Standards](docs/branch-and-pr-standards.md) and [
 - [Discord Server](https://discord.gg/decentraland)
 - [Forum](https://forum.decentraland.org/)
 - [Twitter](https://twitter.com/decentraland)
+- [Contact Support](https://decentraland.org/help)
 
 ## 📜 License
 
