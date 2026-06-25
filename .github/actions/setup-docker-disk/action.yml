@@ -5,18 +5,25 @@ inputs:
     description: 'Minimum free GB required on the Docker data-root'
     required: false
     default: '30'
+  free-root-disk:
+    description: 'Always free root disk space (dotnet, Android SDK, GHC, hostedtoolcache), even when /mnt is a separate mount'
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
-    - name: Free disk space (if /mnt is not a separate mount)
+    - name: Free disk space
       shell: bash
       run: |
         if ! mountpoint -q /mnt; then
           echo "::warning::/mnt is not a separate mount — freeing root disk space"
+        fi
+        if [ "${{ inputs.free-root-disk }}" = "true" ] || ! mountpoint -q /mnt; then
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache || true
           sudo apt-get clean || true
           sudo rm -rf /var/lib/apt/lists/* || true
           sudo docker image prune -af || true
+          df -h
         fi
 
     - name: Move Docker data-root to /mnt/docker
