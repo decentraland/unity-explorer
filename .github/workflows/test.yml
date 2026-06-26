@@ -89,21 +89,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Move Docker data-root to /mnt/docker
-        run: |
-          sudo systemctl stop docker
-          sudo mkdir -p /mnt/docker
-          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
-          sudo systemctl start docker
-          for i in {1..10}; do
-            docker info >/dev/null 2>&1 && break
-            sleep 3
-          done
-          docker info | sed -n '1,40p'
-          df -h /mnt /mnt/docker
+      - name: Checkout CI actions
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Docker disk
+        uses: ./.github/actions/setup-docker-disk
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           lfs: true
@@ -391,26 +387,14 @@ jobs:
         testMode: [playmode, editmode]
     steps:
 
-      - name: Move Docker data-root to /mnt/docker
-        run: |
-          sudo systemctl stop docker
-          sudo mkdir -p /mnt/docker
-          echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
-          sudo systemctl start docker
-          docker info | sed -n '1,40p'
-          df -h /mnt /mnt/docker
+      - name: Checkout CI actions
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
 
-      - name: Free disk space (runner)
-        run: |
-          set -euxo pipefail
-          df -h
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /usr/local/lib/android || true
-          sudo rm -rf /opt/ghc || true
-          sudo rm -rf /opt/hostedtoolcache || true
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          df -h
+      - name: Setup Docker disk
+        uses: ./.github/actions/setup-docker-disk
 
       - name: Checkout code
         uses: actions/checkout@v6
