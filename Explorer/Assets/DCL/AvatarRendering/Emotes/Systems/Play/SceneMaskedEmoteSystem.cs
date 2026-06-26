@@ -203,10 +203,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
-            {
-                if (emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote) && emote.IsLooping())
-                    ReplayMaskedEmote(ref masked, ec);
-            }
+                ReplayMaskedEmote(ref masked, ec);
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
                 TryStopMaskedEmote(ref masked);
         }
@@ -215,6 +212,8 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
             if (emote.IsLoading) return;
+
+            if (!emote.IsLooping()) return;
 
             if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShape)) return;
 
