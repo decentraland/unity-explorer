@@ -26,13 +26,14 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
     {
         protected const int ATTEMPTS_COUNT = 6;
 
-        protected readonly IAcquiredBudget acquiredBudget;
+        // Nullable: StreamableLoadingState can null its budget on teardown/cancellation.
+        protected readonly IAcquiredBudget? acquiredBudget;
         protected readonly World world;
         protected readonly IPartitionComponent partitionComponent;
         protected readonly IWebRequestController webRequestController;
         protected readonly ReportData reportData;
 
-        protected GltFastDownloadProviderBase(World world, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
+        protected GltFastDownloadProviderBase(World world, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget)
         {
             this.world = world;
             this.partitionComponent = partitionComponent;
@@ -43,7 +44,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 
         public void Dispose()
         {
-            acquiredBudget.Release();
+            acquiredBudget?.Release();
         }
 
         public virtual void SetContentMappings(ContentDefinition[] contentMappings)
@@ -84,7 +85,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             finally
             {
                 if (ShouldReleaseBudget(uri))
-                    acquiredBudget.Release();
+                    acquiredBudget?.Release();
                 success = string.IsNullOrEmpty(error);
                 downloadHandler?.Dispose();
             }

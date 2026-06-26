@@ -273,9 +273,15 @@ jobs:
 
       - name: Read warnings baseline from S3
         id: baseline
+        env:
+          AWS_MAX_ATTEMPTS: 3
+          AWS_RETRY_MODE: standard
+          AWS_ACCESS_KEY_ID: ${{ secrets.EXPLORER_TEAM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
+          EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
         run: |
-          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
-          baseline=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          # Read directly from s3 to avoid cache stales 
+          baseline=$(aws s3 cp "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" - 2>/dev/null | jq -r '.count' 2>/dev/null || echo "")
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
           echo "Baseline warnings: ${baseline:-<none>}"
 
@@ -316,8 +322,8 @@ jobs:
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
         run: |
           set -euo pipefail
-          url="${{ vars.EXPLORER_TEAM_S3_BUCKET_PUBLIC_URL }}/${{ env.WARNINGS_BASELINE_S3_KEY }}"
-          cur=$(curl -fsSL "$url" | jq -r '.count' 2>/dev/null || echo "")
+          # Read directly from s3 to avoid cache stales 
+          cur=$(aws s3 cp "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" - 2>/dev/null | jq -r '.count' 2>/dev/null || echo "")
           if [ -n "$cur" ] && [ "$COUNT" -ge "$cur" ]; then
             echo "No update: current count ($COUNT) is not less than existing baseline ($cur)."
             exit 0
@@ -329,12 +335,18 @@ jobs:
             --content-type application/json --cache-control no-cache
 
       # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
+      # Runs even when the gate above failed (!cancelled), so a failing run still refreshes the comment
+      # instead of leaving a stale message.
       - name: Write warning result for PR comment
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           BASELINE: ${{ steps.baseline.outputs.baseline }}
         run: |
+          if [ -z "$COUNT" ]; then
+            echo "No warning count computed (lint produced no result) - skipping comment payload."
+            exit 0
+          fi
           jq -n \
             --argjson pr "${{ github.event.pull_request.number }}" \
             --argjson count "$COUNT" \
@@ -344,11 +356,12 @@ jobs:
           cat warning-result.json
 
       - name: Upload warning result
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: warning-result
           path: warning-result.json
+          if-no-files-found: ignore
 
       - name: Upload lint reports
         uses: actions/upload-artifact@v4
@@ -534,6 +547,45 @@ jobs:
           customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
           githubToken: ${{ env.GITHUB_TOKEN }}
+
+      - name: Dump Unity Editor log on failure
+        if: always() && steps.testRunner.outcome != 'success'
+        env:
+          ARTIFACTS_PATH: ${{ steps.testRunner.outputs.artifactsPath }}
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          echo "::group::Unity Editor log (last 200 lines)"
+          # game-ci runs the test editor with `-logFile <artifactsPath>/<mode>.log`,
+          # where artifactsPath resolves to "artifacts" at the workspace root
+          # (NOT Explorer/artifacts — projectPath does not prefix it). Prefer the
+          # action's own resolved output (matches the Report/Upload steps), but
+          # fall back to the literal path because on a hard timeout kill the action
+          # is killed before exporting its outputs (the Report step then fails with
+          # "Input required and not supplied: path"). Values are passed via env
+          # rather than interpolated into the shell directly.
+          LOG=""
+          for candidate in \
+            "$ARTIFACTS_PATH/$TEST_MODE.log" \
+            "artifacts/$TEST_MODE.log"; do
+            if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+              LOG="$candidate"
+              break
+            fi
+          done
+          if [ -n "$LOG" ]; then
+            echo "Showing last 200 lines of: $LOG"
+            tail -200 "$LOG"
+          else
+            echo "No $TEST_MODE.log found in known locations."
+            echo "Searching workspace for any Unity logs (depth-bounded to skip Library/):"
+            matches=$(find . -maxdepth 3 -name "*.log" 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "$matches" | head -50
+            else
+              echo "No .log files found"
+            fi
+          fi
+          echo "::endgroup::"
 
       - name: Report test results
         if: always()

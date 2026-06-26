@@ -47,10 +47,13 @@ namespace DCL.SDKComponents.AudioSources
         [Query]
         private void HandleMediaPlayerComponent(
             CRDTEntity entity,
-            ref MediaPlayerComponent mediaPlayerComponent, 
+            ref MediaPlayerComponent mediaPlayerComponent,
             ref PBAudioAnalysis sdkComponent
         )
         {
+            // Skip players whose AVPro object was destroyed; UpdateMediaPlayerSystem tears them down.
+            if (!mediaPlayerComponent.MediaPlayer.IsValid) return;
+
             HandleComponent(entity, ref mediaPlayerComponent, ref sdkComponent);
         }
 
