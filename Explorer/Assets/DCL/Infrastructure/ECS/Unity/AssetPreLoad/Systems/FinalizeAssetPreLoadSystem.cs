@@ -52,16 +52,14 @@ namespace ECS.Unity.AssetLoad.Systems
             if (!capBudget.TrySpendBudget())
                 return;
 
-            if (component.State == LoadingState.Loading
-                && !component.Promise.IsConsumed
-                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
-            {
-                if (result.Succeeded)
-                    // Hash is stored alongside the key because the AB clone needs the bare hash, not the composed CacheKey.
-                    assetPreLoadCache.TryAddGltf(component.CacheKey, component.Hash, result.Asset);
+            if (component is not { State: LoadingState.Loading, Promise: { IsConsumed: false } }
+                || !component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result)) return;
 
-                MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
-            }
+            if (result.Succeeded)
+                // Hash is stored alongside the key because the AB clone needs the bare hash, not the composed CacheKey.
+                assetPreLoadCache.TryAddGltf(component.CacheKey, component.Hash, result.Asset!);
+
+            MarkForUpdate(result.Succeeded ? LoadingState.Finished : LoadingState.FinishedWithError, ref assetPreLoadLoadingStateComponent);
         }
 
         [Query]
@@ -116,7 +114,7 @@ namespace ECS.Unity.AssetLoad.Systems
             MarkForUpdate(mediaPlayerComponent.HasFailed ? LoadingState.FinishedWithError : LoadingState.Finished, ref assetPreLoadLoadingStateComponent);
         }
 
-        private void MarkForUpdate(LoadingState loadingState, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
+        private static void MarkForUpdate(LoadingState loadingState, ref AssetPreLoadLoadingStateComponent loadingStateComponent)
         {
             loadingStateComponent.LoadingState = loadingState;
             loadingStateComponent.IsDirty = true;

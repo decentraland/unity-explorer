@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
 using RenderHeads.Media.AVProVideo;

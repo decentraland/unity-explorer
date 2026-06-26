@@ -38,7 +38,6 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly IWebRequestController webRequestController;
         private readonly IPerformanceBudget frameBudget;
         private readonly World world;
         private readonly AssetPreLoadCache assetPreLoadCache;
@@ -56,7 +55,6 @@ namespace DCL.SDKComponents.MediaStream
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
             this.world = world;
-            this.webRequestController = webRequestController;
             this.frameBudget = frameBudget;
             this.sceneStateProvider = sceneStateProvider;
             this.mediaVolume = mediaVolume;

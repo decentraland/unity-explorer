@@ -46,11 +46,11 @@ namespace DCL.SDKComponents.MediaStream
 
             #if UNITY_EDITOR
                 if (UnityEditorInternal.RenderDoc.IsLoaded())
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.MediaFoundation;
+                    mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.MediaFoundation;
                 else
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
+                    mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
             #else
-                mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
+                mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
             #endif
             mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
             mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;

@@ -87,13 +87,10 @@ namespace DCL.SDKComponents.MediaStream
                 return false;
             }
 
-            if (!isReachable)
-            {
-                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.mediaAddress}>");
-                return false;
-            }
+            if (isReachable) return true;
 
-            return true;
+            ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.mediaAddress}>");
+            return false;
         }
     }
 }
