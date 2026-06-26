@@ -5,15 +5,12 @@ using UnityEngine;
 namespace DCL.Multiplayer.Connections.HardwareFingerprint
 {
     /// <summary>
-    ///     Computes the device fingerprint as a SHA-256 hash of Unity's
-    ///     <see cref="SystemInfo.deviceUniqueIdentifier" />. The hash is computed once and cached for the
-    ///     lifetime of the instance.
+    ///     SHA-256 hash of <see cref="SystemInfo.deviceUniqueIdentifier" />, computed once at construction.
     /// </summary>
     public sealed class HardwareFingerprintProvider : IHardwareFingerprintProvider
     {
-        // Versioned domain-separation prefix. Public by design (open-source client) and not a secret:
-        // it provides no confidentiality, only a way to rotate the hash format later. Must stay constant
-        // across installs so the same machine maps to the same fingerprint regardless of wallet or reinstall.
+        // Versioned prefix so the hash format can be rotated later. Not a secret; must stay constant
+        // so the same machine maps to the same fingerprint across wallets and reinstalls.
         private const string DOMAIN_PREFIX = "dcl:explorer:hwfp:v1:";
 
         public string Fingerprint { get; }
@@ -24,9 +21,7 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprint
         }
 
         /// <summary>
-        ///     Hashes a raw device identifier into the wire fingerprint. Returns an empty string when the
-        ///     identifier is missing or unsupported, so machines without a stable id are not all collapsed
-        ///     onto a single shared hash.
+        ///     Returns empty for a missing/unsupported id so those machines aren't collapsed onto one hash.
         /// </summary>
         public static string ComputeFingerprint(string rawDeviceId)
         {

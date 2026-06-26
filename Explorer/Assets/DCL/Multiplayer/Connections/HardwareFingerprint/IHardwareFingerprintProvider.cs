@@ -1,10 +1,8 @@
 namespace DCL.Multiplayer.Connections.HardwareFingerprint
 {
     /// <summary>
-    ///     Exposes an opaque, session-stable hash of the local machine identifier. The hash is sent to
-    ///     the comms-gatekeeper alongside LiveKit token requests so the backend can associate a device
-    ///     with the wallets that connect from it for anti-abuse purposes. The raw hardware identifier
-    ///     never leaves the machine: only the one-way SHA-256 hash is exposed.
+    ///     Opaque one-way hash of the local machine id, sent to comms-gatekeeper with LiveKit token
+    ///     requests for device-level anti-abuse. The raw identifier never leaves the machine.
     /// </summary>
     public interface IHardwareFingerprintProvider
     {
@@ -13,9 +11,6 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprint
         static readonly IHardwareFingerprintProvider EMPTY = new EmptyHardwareFingerprintProvider();
     }
 
-    /// <summary>
-    ///     Always yields an empty fingerprint (no-op provider).
-    /// </summary>
     public sealed class EmptyHardwareFingerprintProvider : IHardwareFingerprintProvider
     {
         public string Fingerprint => string.Empty;
