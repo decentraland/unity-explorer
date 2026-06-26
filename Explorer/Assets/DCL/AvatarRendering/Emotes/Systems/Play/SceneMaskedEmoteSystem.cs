@@ -203,7 +203,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
-                ReplayMaskedEmote(ref masked, ec);
+            {
+                if (emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote) && emote.IsLooping())
+                    ReplayMaskedEmote(ref masked, ec);
+            }
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
                 TryStopMaskedEmote(ref masked);
         }
