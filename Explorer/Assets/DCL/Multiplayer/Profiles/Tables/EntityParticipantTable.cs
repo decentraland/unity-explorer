@@ -65,10 +65,9 @@ namespace DCL.Multiplayer.Profiles.Tables
 
         public void ForceRelease(string walletId)
         {
-            if (!walletIdToEntity.TryGetValue(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
+            if (!walletIdToEntity.Remove(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
                 return;
 
-            walletIdToEntity.Remove(walletId);
             entityToWalletId.Remove(entry.Entity);
         }
     }

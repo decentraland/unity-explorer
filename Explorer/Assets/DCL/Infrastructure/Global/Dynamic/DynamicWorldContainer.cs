@@ -905,7 +905,6 @@ namespace Global.Dynamic
                 ));
 
             if (includeMarketplaceCredits)
-            {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     uiShellContainer.MainUIView,
                     assetsProvisioner,
@@ -920,7 +919,6 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
                     staticContainer.ImageControllerProvider));
-            }
 
             if (communitiesContainer.IncludeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(

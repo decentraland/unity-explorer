@@ -25,9 +25,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
@@ -37,8 +35,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
