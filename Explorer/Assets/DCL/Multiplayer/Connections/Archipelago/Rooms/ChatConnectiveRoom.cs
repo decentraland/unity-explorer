@@ -88,7 +88,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             string metadata = new FixedMetadata
             {
                 signer = "dcl:explorer",
-                hardwareFingerprint = hardwareFingerprintProvider.Fingerprint,
+                deviceIdentifier = hardwareFingerprintProvider.Fingerprint,
             }.ToJson();
 
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
@@ -100,7 +100,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private struct FixedMetadata
         {
             public string signer;
-            public string hardwareFingerprint;
+            public string deviceIdentifier;
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;
