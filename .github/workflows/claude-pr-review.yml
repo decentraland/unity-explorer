@@ -383,7 +383,7 @@ jobs:
           if grep -qiE '\bopus\b' <<< "$COMMENT_BODY"; then
             MODEL="claude-opus-4-6"
             LABEL="opus"
-            MAX_TURNS=30
+            MAX_TURNS=50
           fi
           echo "model=$MODEL" >> "$GITHUB_OUTPUT"
           echo "label=$LABEL" >> "$GITHUB_OUTPUT"
