@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -10,6 +11,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -123,11 +125,16 @@ namespace Global.Dynamic
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
+            IHardwareFingerprintProvider hardwareFingerprintProvider = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)
+                ? new HardwareFingerprintProvider()
+                : IHardwareFingerprintProvider.EMPTY;
+
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                hardwareFingerprintProvider);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
@@ -144,7 +151,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData
             );
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 

@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
@@ -18,13 +19,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
+        private readonly IHardwareFingerprintProvider hardwareFingerprintProvider;
 
         public bool Activated { get; private set; }
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
+        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, IHardwareFingerprintProvider hardwareFingerprintProvider)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
+            this.hardwareFingerprintProvider = hardwareFingerprintProvider;
         }
 
         public async UniTask ActivateAsync()
@@ -82,7 +85,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
-            string metadata = FixedMetadata.Default.ToJson();
+            string metadata = new FixedMetadata
+            {
+                signer = "dcl:explorer",
+                hardwareFingerprint = hardwareFingerprintProvider.Fingerprint,
+            }.ToJson();
+
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             return response.adapter;
@@ -91,12 +99,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         [Serializable]
         private struct FixedMetadata
         {
-            public static FixedMetadata Default = new ()
-            {
-                signer = "dcl:explorer",
-            };
-
             public string signer;
+            public string hardwareFingerprint;
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;

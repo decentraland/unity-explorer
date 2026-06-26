@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Time;
 using DCL.Utility;
 using DCL.Web3.Accounts.Factory;
@@ -49,7 +50,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var realmData = new IRealmData.Fake();
 
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false, urlsSource));
-            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData());
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource, new RealmData(), IHardwareFingerprintProvider.EMPTY);
 
             new GateKeeperSceneRoom(
                     webRequests,
