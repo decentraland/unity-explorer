@@ -83,15 +83,14 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) ForceRemove(wallet, world);
-        }
 
-        private void ForceRemove(string walletId, World world)
-        {
-            IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(walletId);
+            foreach (string wallet in tempRemoveAll)
+            {
+                IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(wallet);
 
-            entityParticipantTable.ForceRelease(walletId);
-            CleanUpEntity(walletId, entry.Entity, world);
+                entityParticipantTable.ForceRelease(wallet);
+                CleanUpEntity(wallet, entry.Entity, world);
+            }
         }
 
         public void TryRemove(string walletId, RoomSource roomSource, World world)
