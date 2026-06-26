@@ -65,7 +65,7 @@ namespace ECS.StreamableLoading.GLTF
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
             // Cannot inject DownloadProvider from outside, because it needs the AcquiredBudget and PartitionComponent
-            using IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget!);
+            using IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget);
             gltFastDownloadProvider.SetContentMappings(intention.ContentMappings);
 
             GltfImport? gltfImport = null;

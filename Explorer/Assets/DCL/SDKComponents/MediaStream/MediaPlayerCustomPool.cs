@@ -95,6 +95,9 @@ namespace DCL.SDKComponents.MediaStream
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
 
+            // Already destroyed (pool eviction / scene teardown): nothing left to stop or re-pool.
+            if (mediaPlayer == null) return;
+
             mediaPlayer.Stop();
             mediaPlayer.CloseMedia();
             mediaPlayer.AudioVolume = 0f;
