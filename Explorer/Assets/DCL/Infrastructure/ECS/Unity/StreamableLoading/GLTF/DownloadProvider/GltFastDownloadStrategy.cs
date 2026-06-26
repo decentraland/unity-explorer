@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
     public interface IGltFastDownloadStrategy
     {
-        IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget);
+        IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget);
     }
 
     public struct GltFastSceneDownloadStrategy : IGltFastDownloadStrategy
@@ -21,7 +21,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.sceneData = sceneData;
         }
 
-        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget) =>
+        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastSceneDownloadProvider(world, sceneData, partitionComponent, intention.Name!, reportData, webRequestController, acquiredBudget);
     }
 
@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.contentDownloadUrl = contentDownloadUrl;
         }
 
-        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget) =>
+        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastGlobalDownloadProvider(world, contentDownloadUrl, partitionComponent, reportData, webRequestController, acquiredBudget);
     }
 
@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             this.realmData = realmData;
         }
 
-        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget) =>
+        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget? acquiredBudget) =>
             new GltFastGlobalDownloadProvider(world, realmData.Ipfs.ContentBaseUrl.Value, partitionComponent, reportData, webRequestController, acquiredBudget);
     }
 }

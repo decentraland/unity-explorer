@@ -10,6 +10,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -65,6 +66,7 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
+            RemoveDeadMediaPlayersQuery(World);
             UpdateMediaPlayerPositionQuery(World);
             UpdateAudioStreamQuery(World, t);
             UpdateVideoStreamQuery(World, t);
@@ -75,6 +77,17 @@ namespace DCL.SDKComponents.MediaStream
         public void OnSceneIsCurrentChanged(bool enteredScene)
         {
             ToggleCurrentStreamsStateQuery(World, enteredScene);
+        }
+
+        // Drops players whose AVPro object was destroyed under them (pool eviction / scene teardown). Runs first so no
+        // later query dereferences the stale ref; recreated from the SDK component next frame.
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void RemoveDeadMediaPlayers(Entity entity, ref MediaPlayerComponent mediaPlayer)
+        {
+            if (mediaPlayer.MediaPlayer.IsValid) return;
+
+            RemoveAndForceReInitialization(ref mediaPlayer, entity);
         }
 
         [Query]
