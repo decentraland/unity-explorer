@@ -52,8 +52,6 @@ namespace DCL.WebRequests
             {
                 await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
                 {
-                    // Prevent reading after shutting down
-
                     ct.ThrowIfCancellationRequested();
 
                     if (UnityObjectUtils.IsQuitting)
@@ -61,8 +59,6 @@ namespace DCL.WebRequests
 
                     return (Delay.Value, Enable.Value);
                 }
-                }
-            }
             }
 
             public void ApplyValues(bool enable, float delay)
