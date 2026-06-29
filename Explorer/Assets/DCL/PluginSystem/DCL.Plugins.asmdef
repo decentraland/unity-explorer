@@ -72,7 +72,8 @@
         "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
         "GUID:f8127c6ac263abf468221dcbccbde182",
         "GUID:63cde67b4a5d47449392dfc49fc0c3ed",
-        "GUID:267f743eefeddd44982a713909628102"
+        "GUID:267f743eefeddd44982a713909628102",
+        "GUID:839d16b917532fb4d9050bbc00e77cfd"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -90,7 +91,7 @@
             "define": "GPUI_PRO_PRESENT"
         },
         {
-            "name": "com.renderheads.avpro.video-ultra",
+            "name": "org.unitedav",
             "expression": "",
             "define": "AV_PRO_PRESENT"
         }

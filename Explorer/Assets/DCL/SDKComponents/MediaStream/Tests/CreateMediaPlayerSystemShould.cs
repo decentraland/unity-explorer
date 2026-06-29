@@ -1,4 +1,4 @@
-﻿#if AV_PRO_PRESENT
+#if AV_PRO_PRESENT
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -9,7 +9,7 @@ using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using RenderHeads.Media.AVProVideo;
+using UnitedAV;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
