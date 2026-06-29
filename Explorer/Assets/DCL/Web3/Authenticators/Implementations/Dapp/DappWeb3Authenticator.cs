@@ -140,6 +140,9 @@ namespace DCL.Web3.Authenticators
             return await SendWithConfirmationAsync(request, ct);
         }
 
+        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
+            await LoginViaDeeplinkAsync(payload, ct);
+
         /// <summary>
         ///     1. An authentication request is sent to the server
         ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
@@ -147,7 +150,7 @@ namespace DCL.Web3.Authenticators
         /// </summary>
         /// <param name="payload">Login payload containing the authentication method</param>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
+        public async UniTask<IWeb3Identity> LoginAsync2(LoginPayload payload, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
