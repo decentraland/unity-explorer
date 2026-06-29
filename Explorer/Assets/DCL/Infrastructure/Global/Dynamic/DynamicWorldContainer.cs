@@ -316,7 +316,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, commsContainer.RemoteProfiles, multiplayerContainer.RemoteAnnouncements, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -378,6 +378,7 @@ namespace Global.Dynamic
                 moderationDataProvider,
                 multiplayerContainer.PulseMultiplayerService,
                 multiplayerContainer.ProfilePropagation,
+                multiplayerContainer.PulseActivation,
                 realmNavigatorContainer.WorldPermissionsService,
                 chatContainer.ChatHistory);
 
@@ -590,7 +591,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     commsContainer.RoomHub,
                     realmNavigatorContainer.WorldPermissionsService,
-                    realmNavigatorContainer.WorldAccessGate,
                     staticContainer.InputBlock,
                     staticContainer.RealmData,
                     realmNavigator,
@@ -907,7 +907,6 @@ namespace Global.Dynamic
                 ));
 
             if (includeMarketplaceCredits)
-            {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     uiShellContainer.MainUIView,
                     assetsProvisioner,
@@ -922,7 +921,6 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
                     staticContainer.ImageControllerProvider));
-            }
 
             if (communitiesContainer.IncludeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(

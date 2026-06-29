@@ -709,6 +709,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8560551636243942814}
     m_Modifications:
+    - target: {fileID: 130164485738605825, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 227.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 33.49
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 133.97
+      objectReference: {fileID: 0}
+    - target: {fileID: 162791604548862370, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -80.235
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428548558468840848, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 106.98001
+      objectReference: {fileID: 0}
     - target: {fileID: 2721464714637945809, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -789,9 +821,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 227.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 33.49
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 133.97
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964971545722342576, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -26.745
+      objectReference: {fileID: 0}
     - target: {fileID: 5616128972703710051, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
       propertyPath: m_Name
       value: SidebarSmartWearablesButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 5993323615684905883, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8939868728897447488, guid: aec59bee9aa6494488250d1482177f7e, type: 3}
       propertyPath: m_SortingLayer
@@ -1055,11 +1115,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3602465701220384369, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 50.25
+      value: 68.2
       objectReference: {fileID: 0}
     - target: {fileID: 3602465701220384369, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_SizeDelta.y
       value: 16.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232477118523331780, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 4784418755748895035, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_SortingLayer
@@ -1144,6 +1208,10 @@ PrefabInstance:
     - target: {fileID: 7879593658233976032, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7928600092629092534, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
+      propertyPath: m_text
+      value: Night/Day
       objectReference: {fileID: 0}
     - target: {fileID: 8324093810357797912, guid: 53ce7f45f04b0cc418487148f7408bce, type: 3}
       propertyPath: m_Name
@@ -1497,6 +1565,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NearbyVoice.Button
       objectReference: {fileID: 0}
+    - target: {fileID: 1550531280301721178, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2153679925950332305, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1532,6 +1604,18 @@ PrefabInstance:
     - target: {fileID: 4231357072560745345, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
       propertyPath: m_SortingLayer
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4783281124849591934, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 114
+      objectReference: {fileID: 0}
+    - target: {fileID: 5270302430523034827, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 91.47
+      objectReference: {fileID: 0}
+    - target: {fileID: 5270302430523034827, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.75
       objectReference: {fileID: 0}
     - target: {fileID: 7164262004761224720, guid: fe2f559772e16c1458f7f7ab5d6b23ca, type: 3}
       propertyPath: m_Pivot.x
@@ -1657,7 +1741,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 316943827265484356, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 32.410004
+      value: 83.4
       objectReference: {fileID: 0}
     - target: {fileID: 316943827265484356, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1669,7 +1753,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1091069918824160497, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 50
+      value: 108
       objectReference: {fileID: 0}
     - target: {fileID: 3326313828584758431, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_Pivot.x
@@ -1761,7 +1845,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597929629550690435, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_text
-      value: Chat
+      value: Chat <color=#716B7C>[Enter]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 8646117775654031630, guid: ccbe1f2a7bf57d74aa2269267ed55d44, type: 3}
       propertyPath: m_SortingLayer

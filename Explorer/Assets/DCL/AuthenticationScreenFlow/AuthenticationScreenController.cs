@@ -155,8 +155,6 @@ namespace DCL.AuthenticationScreenFlow
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
-            // PR 1 branch point: when on, the Dapp methods route through the deep-link state instead of the socket-outcome
-            // state. This is the single conditional PR 2 will delete (along with IdentityVerificationDappAuthState).
             bool enableDeeplinkFlow = FeaturesRegistry.Instance.IsEnabled(FeatureId.AUTH_DEEPLINK_FLOW);
 
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
@@ -170,8 +168,8 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP, enableDeeplinkFlow),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
-                new IdentityVerificationDeeplinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
-                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
+                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
             );
 
             if (enableEmailOTP)
@@ -180,10 +178,7 @@ namespace DCL.AuthenticationScreenFlow
                 otpVerificationState.OTPVerified += (email, success) => OTPVerified?.Invoke(email, success);
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
-                fsm.AddStates(
-                    otpVerificationState,
-                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
-                );
+                fsm.AddStates(otpVerificationState);
             }
 
             fsm.Enter<InitAuthState>();
@@ -196,11 +191,9 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
-
             // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
             // getting the identity expired while in-world, provoking signed-fetch requests to fail
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
-
             if (storedIdentity is { IsExpired: false } && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
                 CancelLoginProcess();
@@ -208,7 +201,10 @@ namespace DCL.AuthenticationScreenFlow
 
                 TryAutoLoginAndProceedAsync(storedIdentity, loginCancellationTokenSource.Token).Forget();
             }
-            else { fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true); }
+            else
+            {
+                fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+            }
         }
 
         private async UniTaskVoid TryAutoLoginAndProceedAsync(IWeb3Identity storedIdentity, CancellationToken ct)
@@ -219,7 +215,10 @@ namespace DCL.AuthenticationScreenFlow
 
                 if (autoLoginSuccess)
                     fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
-                else { fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true); }
+                else
+                {
+                    fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
+                }
             }
             catch (OperationCanceledException)
             { /* Expected on cancellation */
