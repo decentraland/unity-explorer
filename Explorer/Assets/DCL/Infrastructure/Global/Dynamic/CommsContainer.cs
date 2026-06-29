@@ -20,6 +20,7 @@ using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
@@ -62,6 +63,8 @@ namespace Global.Dynamic
 
         public RemoteEntities RemoteEntities { get; }
 
+        public RemoteProfiles RemoteProfiles { get; }
+
         public IRemoteMetadata RemoteMetadata { get; }
 
         public IHealthCheck LivekitHealthCheck { get; }
@@ -81,6 +84,7 @@ namespace Global.Dynamic
             EntityParticipantTable entityParticipantTable,
             MovementInbox movementInbox,
             RemoteEntities remoteEntities,
+            RemoteProfiles remoteProfiles,
             IRemoteMetadata remoteMetadata,
             IHealthCheck livekitHealthCheck,
             CurrentSceneInfo currentSceneInfo)
@@ -97,6 +101,7 @@ namespace Global.Dynamic
             EntityParticipantTable = entityParticipantTable;
             MovementInbox = movementInbox;
             RemoteEntities = remoteEntities;
+            RemoteProfiles = remoteProfiles;
             RemoteMetadata = remoteMetadata;
             LivekitHealthCheck = livekitHealthCheck;
             CurrentSceneInfo = currentSceneInfo;
@@ -148,18 +153,14 @@ namespace Global.Dynamic
             IRoomHub roomHub;
 
             if (appArgs.HasFlag(AppArgsFlags.NO_LIVEKIT_MODE))
-            {
                 roomHub = NullRoomHub.INSTANCE;
-            }
             else
-            {
                 roomHub = new RoomHub(
-                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                        gateKeeperSceneRoom,
-                        chatRoom,
-                        voiceChatRoom
-                        );
-            }
+                    localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    chatRoom,
+                    voiceChatRoom
+                );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -193,6 +194,8 @@ namespace Global.Dynamic
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
+            var remoteProfiles = new RemoteProfiles(staticContainer.ProfilesContainer.Repository, remoteMetadata);
+
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails()
                 : new StartLiveKitRooms(roomHub);
@@ -214,6 +217,7 @@ namespace Global.Dynamic
                 entityParticipantTable,
                 movementInbox,
                 remoteEntities,
+                remoteProfiles,
                 remoteMetadata,
                 livekitHealthCheck,
                 new CurrentSceneInfo());
@@ -231,7 +235,7 @@ namespace Global.Dynamic
                 chatRoom,
                 RoomHub,
                 RoomsStatus,
-                staticContainer.ProfilesContainer.Repository,
+                RemoteProfiles,
                 multiplayerContainer.ProfileBroadcast,
                 debugBuilder,
                 staticContainer.LoadingStatus,
