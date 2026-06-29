@@ -27,6 +27,17 @@ namespace DCL.Communities.CommunitiesDataProvider
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
 
+        // Per-element hydration delegates are built once (capturing only 'this') so each UniTask.WhenAll(...Select(...)) allocates no closure per call.
+        // hydrateCt carries the current batch's token; it is set synchronously right before WhenAll materializes the Select on the single-threaded UniTask loop.
+        private readonly Func<GetCommunityMembersResponse.MemberData, UniTask> hydrateMemberProfile;
+        private readonly Func<GetCommunityInviteRequestResponse.CommunityInviteRequestData, UniTask> hydrateRequestProfile;
+        private readonly Func<GetUserCommunitiesData.CommunityData, UniTask> hydrateCommunityFriends;
+        private readonly Func<GetUserInviteRequestData.UserInviteRequestData, UniTask> hydrateRequestFriends;
+        private readonly Func<GetUserCommunitiesData.CommunityData, UniTask> hydrateCommunityOwnerName;
+        private readonly Func<GetUserInviteRequestData.UserInviteRequestData, UniTask> hydrateRequestOwnerName;
+        private readonly Func<CommunityPost, UniTask> hydratePostAuthor;
+        private CancellationToken hydrateCt;
+
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
         private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
 
@@ -57,6 +68,14 @@ namespace DCL.Communities.CommunitiesDataProvider
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
+
+            hydrateMemberProfile = element => GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, hydrateCt);
+            hydrateRequestProfile = element => GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, hydrateCt);
+            hydrateCommunityFriends = element => GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, hydrateCt);
+            hydrateRequestFriends = element => GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, hydrateCt);
+            hydrateCommunityOwnerName = element => GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, hydrateCt);
+            hydrateRequestOwnerName = element => GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, hydrateCt);
+            hydratePostAuthor = element => GetProfileAsync(element, element.authorAddress, static (data, profile) => data.Profile = profile, hydrateCt);
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
@@ -552,61 +571,46 @@ namespace DCL.Communities.CommunitiesDataProvider
             if (members == null)
                 return UniTask.CompletedTask;
 
-            UniTask HydrateAsync(GetCommunityMembersResponse.MemberData element) =>
-                GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, ct);
-
-            return UniTask.WhenAll(members.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(members.Select(hydrateMemberProfile));
         }
 
         private UniTask HydrateMemberProfilesAsync(GetCommunityInviteRequestResponse.CommunityInviteRequestData[] requests, CancellationToken ct)
         {
-            UniTask HydrateAsync(GetCommunityInviteRequestResponse.CommunityInviteRequestData element) =>
-                GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, ct);
-
-            return UniTask.WhenAll(requests.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestProfile));
         }
 
         private UniTask HydrateFriendsAsync(GetUserCommunitiesData.CommunityData[] communities, CancellationToken ct)
         {
-            UniTask HydrateAsync(GetUserCommunitiesData.CommunityData element) =>
-                GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, ct);
-
-            return UniTask.WhenAll(communities.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(communities.Select(hydrateCommunityFriends));
         }
 
         private UniTask HydrateFriendsAsync(GetUserInviteRequestData.UserInviteRequestData[] requests, CancellationToken ct)
         {
             // We don't need to "group" or "batch" data manually, it's already done in RealmProfileRepository
-
-            UniTask HydrateAsync(GetUserInviteRequestData.UserInviteRequestData element) =>
-                GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, ct);
-
-            return UniTask.WhenAll(requests.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestFriends));
         }
 
         private UniTask HydrateOwnerNamesAsync(GetUserCommunitiesData.CommunityData[] communities, CancellationToken ct)
         {
             // The v2 endpoints send only the owner address; the display name is resolved client-side.
-            UniTask HydrateAsync(GetUserCommunitiesData.CommunityData element) =>
-                GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, ct);
-
-            return UniTask.WhenAll(communities.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(communities.Select(hydrateCommunityOwnerName));
         }
 
         private UniTask HydrateOwnerNamesAsync(GetUserInviteRequestData.UserInviteRequestData[] requests, CancellationToken ct)
         {
-            UniTask HydrateAsync(GetUserInviteRequestData.UserInviteRequestData element) =>
-                GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, ct);
-
-            return UniTask.WhenAll(requests.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestOwnerName));
         }
 
         private UniTask HydratePostAuthorsAsync(CommunityPost[] posts, CancellationToken ct)
         {
-            UniTask HydrateAsync(CommunityPost element) =>
-                GetProfileAsync(element, element.authorAddress, static (data, profile) => data.Profile = profile, ct);
-
-            return UniTask.WhenAll(posts.Select(HydrateAsync));
+            hydrateCt = ct;
+            return UniTask.WhenAll(posts.Select(hydratePostAuthor));
         }
 
         private async UniTask GetProfilesAsync<TTarget>(TTarget target, IReadOnlyList<string>? addresses, Action<TTarget, IReadOnlyList<Profile.CompactInfo>> assignList, CancellationToken ct)
