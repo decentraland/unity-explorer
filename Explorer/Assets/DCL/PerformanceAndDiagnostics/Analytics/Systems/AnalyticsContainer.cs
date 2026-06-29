@@ -51,7 +51,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         ct);
 
                     var analyticsController = new AnalyticsController(service, appArgs, container.settings.AnalyticsConfig, launcherTraits, installSource, dclVersion, identityCache?.Identity);
-                    CrashDetector.Initialize(analyticsController);
                     LaunchCounter.Increment();
 
                     container.Controller = analyticsController;
