@@ -23,7 +23,7 @@ namespace DCL.RuntimeDeepLink.Tests
         [Test]
         public void RouteSigninToTheDispatcher()
         {
-            DeepLink deeplink = DeepLink.FromRaw("decentraland://signin=identity-1").Value;
+            DeepLink deeplink = DeepLink.FromRaw("decentraland://open?signin=identity-1").Value;
 
             DCL.Utility.Types.Result result = handle.HandleDeepLink(deeplink);
 
@@ -34,7 +34,7 @@ namespace DCL.RuntimeDeepLink.Tests
         [Test]
         public void PreferSigninOverRealm()
         {
-            DeepLink deeplink = DeepLink.FromRaw("decentraland://signin=identity-1&realm=https://my.realm").Value;
+            DeepLink deeplink = DeepLink.FromRaw("decentraland://open?signin=identity-1&realm=https://my.realm").Value;
 
             DCL.Utility.Types.Result result = handle.HandleDeepLink(deeplink);
 
@@ -47,7 +47,7 @@ namespace DCL.RuntimeDeepLink.Tests
         {
             // A deep link with no routable params hits the "no matches" branch without touching any concrete dep,
             // so the null! deps stay safe while we assert the dispatcher was never invoked.
-            DeepLink deeplink = DeepLink.FromRaw("decentraland://foo=bar").Value;
+            DeepLink deeplink = DeepLink.FromRaw("decentraland://open?foo=bar").Value;
 
             DCL.Utility.Types.Result result = handle.HandleDeepLink(deeplink);
 

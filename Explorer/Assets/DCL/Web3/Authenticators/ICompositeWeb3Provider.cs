@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3.Identities;
+using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -19,6 +21,13 @@ namespace DCL.Web3.Authenticators
         /// Currently selected authentication method
         /// </summary>
         AuthProvider CurrentProvider { set; }
+
+        /// <summary>
+        ///     Identity-based deep-link sign-in (Dapp path, gated by AUTH_DEEPLINK_FLOW). Delegates to the Dapp
+        ///     authenticator's <c>LoginViaDeeplinkAsync</c> and performs the same identity-cache/analytics side effects
+        ///     as <see cref="IWeb3Authenticator.LoginAsync" />.
+        /// </summary>
+        UniTask<IWeb3Identity> LoginViaDeeplinkAsync(LoginPayload payload, CancellationToken ct);
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected

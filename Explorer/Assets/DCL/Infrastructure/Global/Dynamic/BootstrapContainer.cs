@@ -11,6 +11,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Time;
 using DCL.Utility;
@@ -48,6 +49,14 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
+
+        /// <summary>
+        ///     Shared single-slot signin deep-link bus. Created here (the first container, before any consumer) so the
+        ///     SAME instance is injected into both the Dapp authenticator (which awaits it during the deep-link login)
+        ///     and the runtime <c>DeepLinkHandle</c> in <c>DynamicWorldContainer</c> (which dispatches into it). It also
+        ///     reads the <c>signin</c> app-arg on construction to cover the cold-start race.
+        /// </summary>
+        public IDeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; }
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -92,6 +101,7 @@ namespace Global.Dynamic
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
+
             var bootstrapContainer = new BootstrapContainer
             {
                 IdentityCache = identityCache,
@@ -129,7 +139,8 @@ namespace Global.Dynamic
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController);
+                container.DeeplinkSigninDispatcher = new DeeplinkSigninDispatcher(applicationParametersParser);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninDispatcher);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -173,8 +184,6 @@ namespace Global.Dynamic
             return coreBootstrap;
         }
 
-
-
         private static ICompositeWeb3Provider CreateWeb3Dependencies(
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IWeb3AccountFactory web3AccountFactory,
@@ -184,7 +193,8 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment dclEnvironment,
             IAppArgs appArgs,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IDeeplinkSigninDispatcher deeplinkSigninDispatcher)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)
@@ -213,6 +223,8 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 dclEnvironment,
                 new AuthCodeVerificationFeatureFlag(),
+                webRequestController,
+                deeplinkSigninDispatcher,
                 identityExpirationDuration
             );
 
@@ -240,10 +252,7 @@ namespace Global.Dynamic
                     ReportHub.LogProductionInfo($"Applying log matrix override from: {logMatrixFileName}");
                     finalSettings = new ReportsHandlingSettingsWithOverride(baseSettings, jsonOverride);
                 }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to load log matrix override, falling back to base settings");
-                }
+                else { ReportHub.LogWarning(ReportCategory.ENGINE, $"Failed to load log matrix override, falling back to base settings"); }
             }
 
             return new RuntimeReportsHandlingSettings(finalSettings);

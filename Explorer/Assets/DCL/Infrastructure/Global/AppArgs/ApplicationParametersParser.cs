@@ -90,6 +90,12 @@ namespace Global.AppArgs
         {
             var output = new Dictionary<string, string>();
 
+            // The auth website emits the real sign-in format with an 'open' host segment before the query
+            // (decentraland://open?signin={identityId}, per ADR-288 / auth PR #218). Strip that host so it
+            // collapses onto the already-working host-less form (decentraland://?signin=...). The regex requires
+            // the literal 'open?' segment, so host-less links (realm/position/community) are left untouched.
+            deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+open\?", "decentraland://?");
+
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 
@@ -139,6 +145,7 @@ namespace Global.AppArgs
                 sb.Append("Arg ").Append(count).Append(": ").Append(key).Append(" = ").Append(value).Append("\n");
                 count++;
             }
+
             sb.AppendLine("==================\n");
 
             ReportHub.LogProductionInfo(sb.ToString());

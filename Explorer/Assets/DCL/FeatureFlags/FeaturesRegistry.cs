@@ -55,6 +55,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.COMMUNITIES_ANNOUNCEMENTS] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_ANNOUNCEMENTS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.COMMUNITIES_ANNOUNCEMENTS)) || isEditor,
                 [FeatureId.COMMUNITIES_MEMBERS_COUNTER] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 [FeatureId.EMAIL_OTP_AUTH] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.EMAIL_OTP_AUTH, featureFlags.IsEnabled(FeatureFlagsStrings.EMAIL_OTP_AUTH)),
+                [FeatureId.AUTH_DEEPLINK_FLOW] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AUTH_DEEPLINK_FLOW, featureFlags.IsEnabled(FeatureFlagsStrings.AUTH_DEEPLINK_FLOW)),
                 [FeatureId.CHECK_DISK_SPACE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHECK_DISK_SPACE, featureFlags.IsEnabled(FeatureFlagsStrings.CHECK_DISK_SPACE)),
                 [FeatureId.AVATAR_HIGHLIGHT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_HIGHLIGHT, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_HIGHLIGHT) || isEditor, requireDebug: false),
                 [FeatureId.DOUBLE_JUMP] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_JUMP, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_JUMP) || Application.isEditor),
@@ -68,6 +69,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.PULSE] = (appArgs.HasFlag(AppArgsFlags.PULSE_MULTIPLAYER) || featureFlags.IsEnabled(FeatureFlagsStrings.PULSE)) && !localSceneDevelopment,
                 [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
+
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -201,5 +203,6 @@ namespace DCL.FeatureFlags
         AB_DEPS_DIGEST_CACHE_KEY = 63,
         BYTE_WEIGHTED_LOADING_PROGRESS = 64,
         PULSE = 65,
+        AUTH_DEEPLINK_FLOW = 66,
     }
 }

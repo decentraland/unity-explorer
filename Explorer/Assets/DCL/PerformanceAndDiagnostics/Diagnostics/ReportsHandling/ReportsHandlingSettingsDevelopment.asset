@@ -238,6 +238,10 @@ MonoBehaviour:
       Severity: 0
     - Category: RUNTIME_DEEPLINKS
       Severity: 0
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 3
+    - Category: RUNTIME_DEEPLINKS
+      Severity: 2
     - Category: SCENE_ADMINS
       Severity: 0
     - Category: SCENE_FACTORY

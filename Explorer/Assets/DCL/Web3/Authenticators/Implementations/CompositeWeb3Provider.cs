@@ -73,6 +73,17 @@ namespace DCL.Web3.Authenticators
             return identity;
         }
 
+        public async UniTask<IWeb3Identity> LoginViaDeeplinkAsync(LoginPayload payload, CancellationToken ct)
+        {
+            IWeb3Identity identity = await dappAuth.LoginViaDeeplinkAsync(payload, ct);
+            identityCache.Identity = identity;
+            analytics.Identify(identity);
+
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
+            return identity;
+        }
+
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             analytics.Identify(null);
@@ -106,7 +117,8 @@ namespace DCL.Web3.Authenticators
                 return thirdWebAuth.TryAutoLoginAsync(ct);
             }
 
-            bool OtpIsDisabled() => !FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
+            bool OtpIsDisabled() =>
+                !FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
         }
 
         // IEthereumApi

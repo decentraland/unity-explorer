@@ -1,4 +1,6 @@
 using DCL.RuntimeDeepLink;
+using Global.AppArgs;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -62,6 +64,40 @@ namespace DCL.RuntimeDeepLink.Tests
             dispatcher.Subscribe(nextAttempt.Add);
 
             Assert.That(nextAttempt, Is.Empty);
+        }
+
+        [Test]
+        public void BufferTheSigninAppArgOnColdStartConstruction()
+        {
+            var appArgs = Substitute.For<IAppArgs>();
+
+            appArgs.TryGetValue(AppArgsFlags.SIGNIN, out Arg.Any<string?>())
+                   .Returns(call =>
+                    {
+                        call[1] = "identity-cold";
+                        return true;
+                    });
+
+            var coldStarted = new DeeplinkSigninDispatcher(appArgs);
+
+            var replayed = new List<string>();
+            coldStarted.Subscribe(replayed.Add);
+
+            Assert.That(replayed, Is.EqualTo(new[] { "identity-cold" }));
+        }
+
+        [Test]
+        public void NotBufferWhenNoSigninAppArgIsPresent()
+        {
+            var appArgs = Substitute.For<IAppArgs>();
+            appArgs.TryGetValue(AppArgsFlags.SIGNIN, out Arg.Any<string?>()).Returns(false);
+
+            var coldStarted = new DeeplinkSigninDispatcher(appArgs);
+
+            var replayed = new List<string>();
+            coldStarted.Subscribe(replayed.Add);
+
+            Assert.That(replayed, Is.Empty);
         }
 
         [Test]
