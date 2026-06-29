@@ -1,7 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Prefs;
+using System;
+using System.Threading;
 using UnityEngine;
+using Utility;
 using Utility.Storage;
 using Utility.Multithreading;
 
@@ -45,10 +48,20 @@ namespace DCL.WebRequests
                 Delay = new PersistentElementBinding<float>(delaySetting);
             }
 
-            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
+            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct)
             {
                 await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
+                {
+                    // Prevent reading after shutting down
+
+                    ct.ThrowIfCancellationRequested();
+
+                    if (UnityObjectUtils.IsQuitting)
+                        throw new OperationCanceledException(nameof(UnityObjectUtils.IsQuitting));
+
                     return (Delay.Value, Enable.Value);
+                }
+
             }
 
             public void ApplyValues(bool enable, float delay)
