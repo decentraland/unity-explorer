@@ -61,7 +61,8 @@ namespace DCL.WebRequests
 
                     return (Delay.Value, Enable.Value);
                 }
-
+                }
+            }
             }
 
             public void ApplyValues(bool enable, float delay)
