@@ -98,6 +98,8 @@ jobs:
 
       - name: Setup Docker disk
         uses: ./ci-actions/.github/actions/setup-docker-disk
+        with:
+          free-root-disk: 'false'
 
       - name: Checkout code
         uses: actions/checkout@v6
