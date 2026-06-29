@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.RuntimeDeepLink;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -81,9 +82,9 @@ namespace DCL.Web3.Authenticators
 
                 // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId};
                 // the OS routes it to DeepLinkHandle, which dispatches it here. We do not listen to socket "outcome".
-                string identityId = await WaitForSigninAsync(ct);
+                string identityId = await WaitForSigninAsync(deeplinkSigninDispatcher, ct);
 
-                IWeb3Identity identity = await FetchIdentityByIdAsync(identityId, IWeb3Identity.Web3IdentitySource.Deeplink, ct);
+                IWeb3Identity identity = await FetchIdentityByIdAsync(webRequestController, identityId, IWeb3Identity.Web3IdentitySource.Dapp, ct);
 
                 await DisconnectFromAuthApiAsync();
 
@@ -114,11 +115,11 @@ namespace DCL.Web3.Authenticators
         ///     cancellation. Disposing the subscription on completion clears the dispatcher buffer so a deep link consumed
         ///     (or cancelled) by one attempt does not bleed into the next.
         /// </summary>
-        private async UniTask<string> WaitForSigninAsync(CancellationToken ct)
+        private async UniTask<string> WaitForSigninAsync(IDeeplinkSigninDispatcher dispatcher, CancellationToken ct)
         {
             var completionSource = new UniTaskCompletionSource<string>();
 
-            using IDisposable subscription = deeplinkSigninDispatcher!.Subscribe(identityId => completionSource.TrySetResult(identityId));
+            using IDisposable subscription = dispatcher.Subscribe(identityId => completionSource.TrySetResult(identityId));
 
             // Realtime, not the default DeltaTime: the wait spans the user switching to the browser and back, during
             // which the app is backgrounded and game time stalls. Only wall-clock measures the deadline correctly.
@@ -129,7 +130,7 @@ namespace DCL.Web3.Authenticators
         ///     Fetches a stored identity by its opaque id via <c>GET {authApiUrl}/identities/{id}</c> and reconstructs a
         ///     fully-formed <see cref="DecentralandIdentity" />.
         /// </summary>
-        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
+        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(IWebRequestController requestController, string identityId, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
         {
             urlBuilder.Clear();
 
@@ -138,8 +139,8 @@ namespace DCL.Web3.Authenticators
 
             var commonArguments = new CommonArguments(urlBuilder.Build());
 
-            IdentityAuthResponseDto json = await webRequestController!.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
-                                                                     .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>();
+            IdentityAuthResponseDto json = await requestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
+                                                                  .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>();
 
             var authChain = AuthChain.Create();
 
