@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("AuthenticationScreenFlow.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
