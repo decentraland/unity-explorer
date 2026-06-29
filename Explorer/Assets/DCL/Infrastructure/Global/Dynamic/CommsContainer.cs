@@ -125,7 +125,7 @@ namespace Global.Dynamic
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
-            IHardwareFingerprintProvider hardwareFingerprintProvider = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)
+            IHardwareFingerprintProvider hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HARDWARE_FINGERPRINT)
                 ? new HardwareFingerprintProvider()
                 : IHardwareFingerprintProvider.EMPTY;
 

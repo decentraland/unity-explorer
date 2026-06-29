@@ -79,7 +79,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public string ToJson() =>
             JsonUtility.ToJson(this)!;
 
-        public string BuildWithSecret(string secret, string deviceInformation)
+        public string BuildWithSecret(string secret, string deviceIdentifier)
         {
             var metadata = new SceneCommsHandshakeMetadata
             {
@@ -91,7 +91,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 signer = CommsHandshakeMetadata.SIGNER,
                 isGuest = false,
                 secret = secret,
-                deviceInformation = deviceInformation,
+                deviceIdentifier = deviceIdentifier,
             };
 
             return JsonUtility.ToJson(metadata);
@@ -120,7 +120,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             public string signer;
             public bool isGuest;
             public string secret;
-            public string deviceInformation;
+            public string deviceIdentifier;
         }
     }
 }
