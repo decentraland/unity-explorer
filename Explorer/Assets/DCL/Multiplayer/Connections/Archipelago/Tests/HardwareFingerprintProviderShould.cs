@@ -53,11 +53,5 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprintTests
             Assert.That(HardwareFingerprintProvider.ComputeFingerprint(null), Is.Empty);
             Assert.That(HardwareFingerprintProvider.ComputeFingerprint(string.Empty), Is.Empty);
         }
-
-        [Test]
-        public void ExposeEmptyFingerprintFromNullObject()
-        {
-            Assert.That(IHardwareFingerprintProvider.EMPTY.Fingerprint, Is.Empty);
-        }
     }
 }

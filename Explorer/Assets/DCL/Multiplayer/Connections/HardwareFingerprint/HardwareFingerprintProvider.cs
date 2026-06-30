@@ -7,7 +7,7 @@ namespace DCL.Multiplayer.Connections.HardwareFingerprint
     /// <summary>
     ///     SHA-256 hash of <see cref="SystemInfo.deviceUniqueIdentifier" />, computed once at construction.
     /// </summary>
-    public sealed class HardwareFingerprintProvider : IHardwareFingerprintProvider
+    public sealed class HardwareFingerprintProvider
     {
         // Versioned prefix so the hash format can be rotated later. Not a secret; must stay constant
         // so the same machine maps to the same fingerprint across wallets and reinstalls.

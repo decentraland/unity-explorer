@@ -26,6 +26,7 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -125,9 +126,9 @@ namespace Global.Dynamic
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
-            IHardwareFingerprintProvider hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HARDWARE_FINGERPRINT)
-                ? new HardwareFingerprintProvider()
-                : IHardwareFingerprintProvider.EMPTY;
+            Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HARDWARE_FINGERPRINT)
+                ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
+                : Option<HardwareFingerprintProvider>.None;
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
                 bootstrapContainer.DecentralandUrlsSource,
