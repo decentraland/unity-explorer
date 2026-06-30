@@ -117,17 +117,10 @@ def clone_current_target(use_cache):
     # Append the install source to the target name only if it's not 'launcher'
     install_suffix = f"-{install_source}" if install_source and install_source != 'launcher' else ''
 
-    # The shared release cache pool is keyed on the BRANCH, not IS_RELEASE_BUILD: release builds
-    # run with IS_RELEASE_BUILD unset and carry the branch in the target name (e.g.
-    # 'release/2026-06-29'), so the release flag can't identify them. release/*, hotfix/* and main
-    # all share the pool; dev and feature branches do not.
+    # Release/hotfix/main share a single stable pool target; all other branches use branch-derived names.
     is_release_pool = branch_name == 'main' or branch_name.startswith(('release/', 'hotfix/'))
 
     if is_release_pool:
-        # Release/hotfix branches and main share ONE stable cache target per (platform, install
-        # source), independent of the specific branch/date, so the Library + shader cache is
-        # maintained and reused across releases. dev and feature branches use the branch-derived
-        # name below and never reference this target, keeping the release cache isolated from them.
         new_target_name = f"{platform}-release{install_suffix}".lower()
     else:
         # Branch-derived target (one cache per branch), without commit SHA.
@@ -156,7 +149,7 @@ def clone_current_target(use_cache):
             # release cache lineage stays fully isolated from dev/feature branches. The first
             # release compiles cold but populates the library cache; later releases reuse it via
             # the existing-target branch below (buildTargetCopyCache = the pool target itself).
-            print(f"Release pool: cold genesis, not seeding cache from another target")
+            print("Release pool: cold genesis, not seeding cache from another target")
         elif use_cache:
             cache_source = resolve_cache_source(template_target)
             body['settings']['buildTargetCopyCache'] = cache_source
