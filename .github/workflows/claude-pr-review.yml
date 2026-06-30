@@ -107,7 +107,7 @@ jobs:
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
             --model claude-sonnet-4-6
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*),Read,Glob,Grep"
             --max-turns 40
             
       - name: Upload Claude execution output
@@ -118,6 +118,17 @@ jobs:
           path: /home/runner/work/_temp/claude-execution-output.json
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Report review cost
+        if: steps.check-type.outputs.is-auto-review == 'true' && always() && steps.claude.outcome != 'skipped'
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          MODEL: claude-sonnet-4-6
+        with:
+          script: |
+            const reportCost = require('./.github/scripts/report-review-cost.js');
+            await reportCost({ github, context });
 
       - name: Set status and approve if eligible
         if: steps.check-type.outputs.is-auto-review == 'true' && always()
@@ -356,6 +367,29 @@ jobs:
             core.setOutput('base_sha', pr.data.base.sha);
             core.setOutput('is_draft', pr.data.draft);
 
+      - name: Resolve review model
+        id: model
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          # Default to Sonnet; opt into Opus by including "opus" in the comment
+          # (e.g. "@claude review opus" or "@claude re-review --model opus").
+          # max-turns is a cost ceiling. Opus costs ~5x/turn but reaches a verdict in
+          # fewer turns, so it gets a tighter cap. Raise a cap if reviews start failing
+          # with "reached maximum number of turns" (a truncated run is paid-for but wasted).
+          MODEL="claude-sonnet-4-6"
+          LABEL="sonnet"
+          MAX_TURNS=50
+          if grep -qiE '\bopus\b' <<< "$COMMENT_BODY"; then
+            MODEL="claude-opus-4-6"
+            LABEL="opus"
+            MAX_TURNS=50
+          fi
+          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "max_turns=$MAX_TURNS" >> "$GITHUB_OUTPUT"
+          echo "Selected review model: $MODEL ($LABEL), max-turns: $MAX_TURNS"
+
       - name: Set status to pending
         uses: actions/github-script@v8
         with:
@@ -366,7 +400,7 @@ jobs:
               sha: '${{ steps.pr.outputs.sha }}',
               state: 'pending',
               context: 'Claude Review',
-              description: 'Claude review in progress...'
+              description: 'Claude review in progress (${{ steps.model.outputs.label }})...'
             });
 
       - name: Checkout repository
@@ -406,9 +440,9 @@ jobs:
 
             ${{ steps.prompt.outputs.instructions }}
           claude_args: |
-            --model claude-sonnet-4-6
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
-            --max-turns 40
+            --model ${{ steps.model.outputs.model }}
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*),Read,Glob,Grep"
+            --max-turns ${{ steps.model.outputs.max_turns }}
 
       - name: Upload Claude execution output
         if: always()
@@ -418,6 +452,17 @@ jobs:
           path: /home/runner/work/_temp/claude-execution-output.json
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Report review cost
+        if: always() && steps.claude.outcome != 'skipped'
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          MODEL: ${{ steps.model.outputs.model }}
+        with:
+          script: |
+            const reportCost = require('./.github/scripts/report-review-cost.js');
+            await reportCost({ github, context });
 
       - name: Set final commit status
         if: always()

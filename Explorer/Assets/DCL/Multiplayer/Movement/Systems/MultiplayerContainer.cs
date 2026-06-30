@@ -22,7 +22,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using Global;
@@ -82,6 +81,12 @@ namespace DCL.Multiplayer.Movement
             {
                 pulseAnnouncements.Remove(removeIntentions);
                 liveKitAnnouncements.Remove(removeIntentions);
+            }
+
+            public void Clear()
+            {
+                pulseAnnouncements.Clear();
+                liveKitAnnouncements.Clear();
             }
         }
 

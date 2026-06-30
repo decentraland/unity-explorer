@@ -25,9 +25,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
-using DCL.Profiles;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utility;
 using ECS;
 using ECS.LifeCycle.Systems;
@@ -37,8 +35,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -52,7 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IProfileBroadcast profileBroadcast;
-        private readonly IProfileRepository profileRepository;
+        private readonly RemoteProfiles remoteProfiles;
         private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
@@ -77,7 +73,7 @@ namespace DCL.PluginSystem.Global
             IActivatableConnectiveRoom chatRoom,
             IRoomHub roomHub,
             RoomsStatus roomsStatus,
-            IProfileRepository profileRepository,
+            RemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
             IDebugContainerBuilder debugContainerBuilder,
             ILoadingStatus realFlowLoadingStatus,
@@ -103,7 +99,7 @@ namespace DCL.PluginSystem.Global
             this.chatRoom = chatRoom;
             this.roomHub = roomHub;
             this.roomsStatus = roomsStatus;
-            this.profileRepository = profileRepository;
+            this.remoteProfiles = remoteProfiles;
             this.profileBroadcast = profileBroadcast;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
@@ -157,7 +153,7 @@ namespace DCL.PluginSystem.Global
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 remoteAnnouncements,
                 removeIntentions,
-                new RemoteProfiles(profileRepository, remoteMetadata),
+                remoteProfiles,
                 profileBroadcast,
                 remoteEntities,
                 remoteMetadata,

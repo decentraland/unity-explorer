@@ -13,5 +13,10 @@ namespace DCL.Multiplayer.Profiles.Tables
         ///     Returns true if the entity is no longer connected to any room
         /// </summary>
         bool Release(string walletId, RoomSource fromRoom);
+
+        /// <summary>
+        ///     Removes the entry regardless of which rooms it is connected to
+        /// </summary>
+        void ForceRelease(string walletId);
     }
 }
