@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.Optimization.Pools.Tests
 {
@@ -9,7 +10,8 @@ namespace DCL.Optimization.Pools.Tests
         [SetUp]
         public void SetUp()
         {
-            gameObjectPool = new GameObjectPool<Transform>(null, null, null, 1000);
+            onGetCallCount = 0;
+            gameObjectPool = new GameObjectPool<Transform>(null, null, null, 1000, _ => onGetCallCount++);
         }
 
         [TearDown]
@@ -19,6 +21,7 @@ namespace DCL.Optimization.Pools.Tests
         }
 
         private GameObjectPool<Transform> gameObjectPool;
+        private int onGetCallCount;
 
         [Test]
         public void GetGameObject()
@@ -55,6 +58,30 @@ namespace DCL.Optimization.Pools.Tests
             //Assert
             Assert.IsTrue(component == null);
             Assert.AreEqual(0, gameObjectPool.CountInactive);
+        }
+
+        [Test]
+        public void SkipDestroyedObjectAndReturnValidComponent()
+        {
+            // Arrange: place a component in the pool, then destroy its GameObject while it sits inactive
+            Transform pooled = gameObjectPool.Get();
+            gameObjectPool.Release(pooled);
+            Assert.AreEqual(1, gameObjectPool.CountInactive);
+
+            Object.DestroyImmediate(pooled.gameObject);
+
+            // Act: Get() must skip the destroyed entry (logging the error is expected) and return a live component
+            LogAssert.Expect(LogType.Error, "Transform has been destroyed while in the pool.");
+            Transform result = gameObjectPool.Get();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsTrue(result.gameObject.activeSelf);
+
+            // onGet callback must have fired for the valid component (twice total: first Get + this Get)
+            Assert.AreEqual(2, onGetCallCount);
+
+            gameObjectPool.Release(result);
         }
     }
 }

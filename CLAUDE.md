@@ -6,6 +6,10 @@ At the start of every conversation, read [`docs/README.md`](docs/README.md) to l
 
 Before writing or modifying any code, follow the code-standards skill for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
 
+## Linting in the AI flow
+
+A `Stop` hook (`.claude/settings.json` → [`scripts/lint/lint-changed.sh`](scripts/lint/lint-changed.sh)) runs ReSharper InspectCode over the C# files changed in the session **using the exact same scripts, flags, and `.editorconfig` rules as CI** (`scripts/lint/{download-resharper,run-inspectcode,filter-warnings}.sh`, shared with `.github/workflows/test.yml`). Resolve any issues it reports in files you changed before finishing — they are real CI lint findings. If the ReSharper CLI isn't installed it prints how to get it (`bash scripts/lint/download-resharper.sh`) and does not block. It only inspects when `.cs` files changed.
+
 ---
 
 ## Project Code Standards for Claude Reviews
@@ -99,7 +103,7 @@ Before writing or modifying any code, follow the code-standards skill for naming
   * Ignore `OperationCanceledException`
   * Log/report all others via `ReportHub.LogException`
 * Use `SuppressToResultAsync()` to simplify exception handling.
-* Handle cancellation with `ct.IsCancellationRequested`, never `ThrowIfCancellationRequested()`.
+* In exception-free flows (detached UniTask, `.Forget()`, fire-and-forget, returning boolean, returning Result or Result<T>), handle cancellation with `ct.IsCancellationRequested` — do not use `ThrowIfCancellationRequested()`. In flows that already handle exceptions (awaited async methods, `SuppressToResultAsync`), `ThrowIfCancellationRequested()` is acceptable.
 
 ### 10. **Testing Systems**
 
