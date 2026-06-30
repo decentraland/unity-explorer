@@ -45,10 +45,7 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             #if UNITY_EDITOR
-                if (UnityEditorInternal.RenderDoc.IsLoaded())
-                    mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.MediaFoundation;
-                else
-                    mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
+                mediaPlayer.PlatformOptionsWindows.videoApi = UnityEditorInternal.RenderDoc.IsLoaded() ? Windows.VideoApi.MediaFoundation : Windows.VideoApi.WinRT;
             #else
                 mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
             #endif
