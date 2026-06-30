@@ -35,12 +35,15 @@ namespace DCL.VoiceChat.Nearby.Audio
     ///         <b>Immutability contract.</b> Per-identity <c>string[]</c> arrays are copy-on-write
     ///         (every mutation publishes a new reference); the dictionary itself is swapped atomically on rehydrate / disconnect.
     ///         Do <b>not</b> reintroduce in-place mutation (array resize, pooled buffers, dict <c>Clear()</c>+rebuild) —
-    ///         the bridge's <c>ReferenceEquals</c> freshness check and the cleanup system's "stream gone" detection both rely on these invariants.
+    ///         <see cref="GetActiveSid"/> iterates the array assuming snapshot semantics; in-place edits would race the resolver.
     ///     </para>
     /// </summary>
     public sealed class NearbyAudioStreamsRegistry : INearbyAudioStreamRegistry
     {
         private readonly IRoom room;
+
+        // delegate is the only injectable shape for tests.
+        private readonly Func<StreamKey, Option<int>> getLastFrameReceivedAt;
 
         // Immutability contract — see class XML. Swappable via Interlocked.Exchange / Volatile.Read. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
         // concurrencyLevel: 1 — FFI dispatch is serial, only one writer ever; saves the per-instance lock array (default = Environment.ProcessorCount).
@@ -53,8 +56,12 @@ namespace DCL.VoiceChat.Nearby.Audio
         public int RebuildEpoch => DCLVolatile.Read(ref rebuildEpoch);
 
         public NearbyAudioStreamsRegistry(IRoom room)
+            : this(room, key => room.AudioStreams.GetLastFrameReceivedAt(key)) { }
+
+        internal NearbyAudioStreamsRegistry(IRoom room, Func<StreamKey, Option<int>> getLastFrameReceivedAt)
         {
             this.room = room;
+            this.getLastFrameReceivedAt = getLastFrameReceivedAt;
 
             room.ConnectionUpdated += OnConnectionUpdated;
 
@@ -119,19 +126,43 @@ namespace DCL.VoiceChat.Nearby.Audio
         public bool HasAudioStream(string walletId) =>
             DCLVolatile.Read(ref streamsByIdentity).ContainsKey(walletId);
 
-        // ReSharper disable once CanSimplifyDictionaryTryGetValueWithGetValueOrDefault
-        public string[]? GetAudioSidsArray(string walletId) =>
-            DCLVolatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? arr) ? arr : null;
-
         public Weak<AudioStream> GetActiveStream(StreamKey key) =>
             room.AudioStreams.ActiveStream(key);
 
-        public bool IsStreamGone(StreamKey key)
+        public string? GetActiveSid(string walletId)
         {
-            if (!DCLVolatile.Read(ref streamsByIdentity).TryGetValue(key.identity, out string[]? sids))
-                return true;
+            if (!DCLVolatile.Read(ref streamsByIdentity).TryGetValue(walletId, out string[]? sids) || sids.Length == 0)
+                return null;
 
-            return Array.IndexOf(sids, key.sid) < 0;
+            // Hot path: a single candidate is the active sid by definition; do not consult the frame oracle.
+            if (sids.Length == 1) return sids[0];
+
+            int bestTick = 0;
+            string? bestSid = null;
+
+            foreach (string sid in sids)
+            {
+                Option<int> lastFrame = getLastFrameReceivedAt(new StreamKey(walletId, sid));
+
+                // Option.None: AudioStream missing or never decoded a frame.
+                if (!lastFrame.Has) continue;
+
+                int t = lastFrame.Value;
+
+                if (bestSid is null || unchecked(t - bestTick) > 0)
+                {
+                    bestTick = t;
+                    bestSid = sid;
+                }
+            }
+
+            return bestSid;
+        }
+
+        public bool IsActiveSid(StreamKey key)
+        {
+            string? active = GetActiveSid(key.identity);
+            return active is not null && string.Equals(active, key.sid, StringComparison.Ordinal);
         }
 
         private void OnConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
@@ -216,10 +247,9 @@ namespace DCL.VoiceChat.Nearby.Audio
         }
 
         // Publishes a NEW filtered array on every successful update; never mutates 'prev'.
-        // Required by the immutability contract in the class XML: NearbyLivekitBridgeSystem
-        // uses ReferenceEquals(observed, current) for its per-frame freshness check, so any
-        // in-place mutation of a published array would silently hide the change from the bridge.
-        // Single-writer assumption (serial FFI dispatch) — no CAS retry needed.
+        // Required by the immutability contract in the class XML: GetActiveSid iterates the
+        // array assuming snapshot semantics — in-place edits would race the resolver mid-pick.
+        // Single-writer assumption (serial FFI dispatch).
         private void RemoveAudioSid(string identity, string sid)
         {
             DCLConcurrentDictionary<string, string[]> snap = DCLVolatile.Read(ref streamsByIdentity);

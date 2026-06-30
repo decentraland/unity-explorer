@@ -197,7 +197,7 @@ namespace DCL.VoiceChat.Nearby.Systems
             ulong audioSourceCount = 0;
             if (isConnected)
                 foreach (KeyValuePair<string, LKParticipant> entry in islandRoom.Participants.RemoteParticipantIdentities())
-                    audioSourceCount += (ulong)(streamRegistry.GetAudioSidsArray(entry.Key)?.Length ?? 0);
+                    audioSourceCount += streamRegistry.HasAudioStream(entry.Key) ? 1ul : 0ul;
             activeAudioSourcesBinding.Value = audioSourceCount;
 
             ulong componentCount = (ulong)World.CountEntities(in COMPONENT_QUERY);
@@ -237,7 +237,7 @@ namespace DCL.VoiceChat.Nearby.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ApplySettings(ref NearbyAudioSourceComponent nearbyAudio)
+        private void ApplySettings(in NearbyAudioSourceComponent nearbyAudio)
         {
             nearbyAudio.LivekitAudioSource.ApplySpatialSettings(configuration);
         }

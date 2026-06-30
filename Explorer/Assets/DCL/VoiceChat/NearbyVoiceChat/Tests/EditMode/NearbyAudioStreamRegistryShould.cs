@@ -5,10 +5,12 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
+using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Hub;
 using NSubstitute;
 using NUnit.Framework;
+using RichTypes;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -29,6 +31,8 @@ namespace DCL.VoiceChat.Nearby.Tests
         private IRoom room = null!;
         private IParticipantsHub participantsHub = null!;
         private FakeActiveSpeakers activeSpeakers = null!;
+        private IAudioStreams audioStreams = null!;
+        private FrameOracleStub frameOracle = null!;
         private NearbyAudioStreamsRegistry registry = null!;
 
         [SetUp]
@@ -39,7 +43,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             room.Participants.Returns(participantsHub);
             activeSpeakers = new FakeActiveSpeakers();
             room.ActiveSpeakers.Returns(activeSpeakers);
-            registry = new NearbyAudioStreamsRegistry(room);
+            audioStreams = Substitute.For<IAudioStreams>();
+            room.AudioStreams.Returns(audioStreams);
+            frameOracle = new FrameOracleStub();
+            registry = new NearbyAudioStreamsRegistry(room, frameOracle.Get);
         }
 
         [TearDown]
@@ -153,14 +160,14 @@ namespace DCL.VoiceChat.Nearby.Tests
             RaiseTrackUnsubscribed(WALLET_A, SID_1);
 
             Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
-            Assert.That(registry.GetAudioSidsArray(WALLET_A), Is.Null);
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.Null);
         }
 
         [Test]
         public void ReturnNullForUnknownWallet()
         {
             Assert.That(registry.HasAudioStream("0xUNKNOWN"), Is.False);
-            Assert.That(registry.GetAudioSidsArray("0xUNKNOWN"), Is.Null);
+            Assert.That(registry.GetActiveSid("0xUNKNOWN"), Is.Null);
         }
 
         [Test]
@@ -337,26 +344,25 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void ReaderNeverObservesPartialSnapshotDuringConcurrentReconnect()
         {
-            // Atomic-publish invariant: a main-thread reader polling GetAudioSidsArray for an identity
-            // that is present both before and after rehydrate must never observe null mid-rehydrate.
-            // With in-place Clear()+rebuild the reader would see a transient null window; with
-            // Interlocked.Exchange-based snapshot swap it sees only pre-state or post-state references.
+            // Atomic-publish invariant: a main-thread reader polling HasAudioStream for an identity
+            // that is present both before and after rehydrate must never observe a transient false
+            // mid-rehydrate. With in-place Clear()+rebuild the reader would see a "wallet missing"
+            // window; with Interlocked.Exchange-based snapshot swap it only sees pre- or post-state.
             SetupRemoteParticipants((WALLET_A, new[] { (SID_1, TrackKind.KindAudio) }));
             RaiseConnectionUpdated(ConnectionUpdate.Connected);
 
             const int RECONNECT_ITERATIONS = 500;
             using var cts = new CancellationTokenSource();
-            string? observedNullAt = null;
+            string? observedMissingAt = null;
 
             Task reader = Task.Run(() =>
             {
                 int loops = 0;
                 while (!cts.IsCancellationRequested)
                 {
-                    string[]? arr = registry.GetAudioSidsArray(WALLET_A);
-                    if (arr == null)
+                    if (!registry.HasAudioStream(WALLET_A))
                     {
-                        observedNullAt = "loop " + loops;
+                        observedMissingAt = "loop " + loops;
                         return;
                     }
                     loops++;
@@ -373,8 +379,8 @@ namespace DCL.VoiceChat.Nearby.Tests
             cts.Cancel();
             Assert.That(reader.Wait(millisecondsTimeout: 5000), Is.True, "reader must terminate within timeout");
 
-            Assert.That(observedNullAt, Is.Null,
-                $"WALLET_A is present pre- and post-rehydrate; reader observed transient null at {observedNullAt}");
+            Assert.That(observedMissingAt, Is.Null,
+                $"WALLET_A is present pre- and post-rehydrate; reader observed transient absence at {observedMissingAt}");
         }
 
         [Test]
@@ -397,57 +403,110 @@ namespace DCL.VoiceChat.Nearby.Tests
             {
                 for (int i = 0; i < ITERATIONS && !cts.IsCancellationRequested; i++)
                 {
-                    string[]? snapshot = registry.GetAudioSidsArray(WALLET_A);
-                    if (snapshot == null) continue;
-                    // Iterate the snapshot — the reference is immutable by COW contract,
-                    // so no torn state is observable even while writer is pushing new versions.
-                    for (int j = 0; j < snapshot.Length; j++) { _ = snapshot[j]; }
+                    // Pull-based reader: the resolver iterates a COW array internally; any snapshot
+                    // it touches is immutable post-publication, so no torn state is observable even
+                    // while writer is pushing new versions. Discard the result — we only care that
+                    // the call returns cleanly under contention.
+                    _ = registry.GetActiveSid(WALLET_A);
                 }
             });
 
             Assert.DoesNotThrow(() => Task.WaitAll(new[] { writer, reader }, millisecondsTimeout: 5000));
         }
 
-        // ── B2.1: COW reference-equality contract ───────────────────
-
         [Test]
-        public void SubscribingThenUnsubscribingSameSidProducesDistinctArrayReferences()
-        {
-            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
-            string[] ref1 = registry.GetAudioSidsArray(WALLET_A)!;
-
-            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
-            string[] ref2 = registry.GetAudioSidsArray(WALLET_A)!;
-
-            RaiseTrackUnsubscribed(WALLET_A, SID_1);
-            string[] ref3 = registry.GetAudioSidsArray(WALLET_A)!;
-
-            Assert.That(ReferenceEquals(ref1, ref2), Is.False, "subscribe must publish a NEW array reference");
-            Assert.That(ReferenceEquals(ref2, ref3), Is.False, "unsubscribe must publish a NEW array reference");
-            Assert.That(ReferenceEquals(ref1, ref3), Is.False, "no path may reuse a prior reference");
-        }
-
-        [Test]
-        public void SameSidSetObservedTwiceReturnsSameReference()
-        {
-            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
-
-            string[]? a = registry.GetAudioSidsArray(WALLET_A);
-            string[]? b = registry.GetAudioSidsArray(WALLET_A);
-
-            Assert.That(a, Is.Not.Null);
-            Assert.That(ReferenceEquals(a, b), Is.True,
-                "two reads with no intervening event must return the same reference — Bridge's no-op invariant");
-        }
-
-        [Test]
-        public void IsStreamGoneReturnsTrueAfterLastSidUnsubscribed()
+        public void HasAudioStreamReturnsFalseAfterLastSidUnsubscribed()
         {
             RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
             RaiseTrackUnsubscribed(WALLET_A, SID_1);
 
-            Assert.That(registry.IsStreamGone(new StreamKey(WALLET_A, SID_1)), Is.True);
             Assert.That(registry.HasAudioStream(WALLET_A), Is.False);
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.Null);
+        }
+
+        // ── Active-sid resolver (frame-activity oracle) ──────────────
+
+        [Test]
+        public void ReturnNullActiveSidForUnknownWallet()
+        {
+            Assert.That(registry.GetActiveSid("0xUNKNOWN"), Is.Null);
+        }
+
+        [Test]
+        public void ReturnSingleSidAsActiveWithoutConsultingFrameOracle()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_1));
+            Assert.That(frameOracle.Calls, Is.Zero, "single-sid hot path must not consult the frame oracle");
+        }
+
+        [Test]
+        public void ReturnNullActiveSidWhenAllCandidatesAreGhosts()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+            // Both stay at the default Option.None — none have ever decoded a frame.
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.Null);
+        }
+
+        [Test]
+        public void PickTheOnlyCandidateWithFrameActivity()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 100);
+            // SID_1 keeps the default Option.None (ghost).
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
+        }
+
+        [Test]
+        public void PickTheNewestCandidateWhenSeveralAreLive()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            frameOracle.Set(new StreamKey(WALLET_A, SID_1), 100);
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 200);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2));
+        }
+
+        [Test]
+        public void TreatTickCounterWrapAroundAsNewerNotOlder()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            // Pre-wrap (older), positive end of the range.
+            frameOracle.Set(new StreamKey(WALLET_A, SID_1), int.MaxValue - 50);
+            // Post-wrap (newer in unchecked arithmetic), negative end of the range.
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), int.MinValue + 50);
+
+            Assert.That(registry.GetActiveSid(WALLET_A), Is.EqualTo(SID_2),
+                "unchecked(SID_2_tick - SID_1_tick) == 101 > 0 — resolver must prefer the post-wrap candidate");
+        }
+
+        [Test]
+        public void IsActiveSidTrueForWinnerFalseForGhostLoser()
+        {
+            RaiseTrackSubscribed(WALLET_A, SID_1, TrackKind.KindAudio);
+            RaiseTrackSubscribed(WALLET_A, SID_2, TrackKind.KindAudio);
+
+            frameOracle.Set(new StreamKey(WALLET_A, SID_2), 500);
+            // SID_1 keeps Option.None (ghost).
+
+            Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_2)), Is.True);
+            Assert.That(registry.IsActiveSid(new StreamKey(WALLET_A, SID_1)), Is.False);
+        }
+
+        [Test]
+        public void IsActiveSidFalseWhenWalletHasNoSids()
+        {
+            Assert.That(registry.IsActiveSid(new StreamKey("0xUNKNOWN", SID_1)), Is.False);
         }
 
         [Test]
@@ -474,11 +533,13 @@ namespace DCL.VoiceChat.Nearby.Tests
             }
         }
 
-        private bool ContainsSid(string walletId, string sid)
-        {
-            string[]? arr = registry.GetAudioSidsArray(walletId);
-            return arr != null && Array.IndexOf(arr, sid) >= 0;
-        }
+        // Post-dedup the registry no longer exposes the underlying sid array. For tests that
+        // subscribe a single sid, IsActiveSid is an equivalent presence probe (single candidate
+        // is automatically the active pick by hot-path contract). Multi-sid tests that depended
+        // on per-sid index probing were either deleted (reference-equality on the array) or were
+        // already updated to use the resolver semantics directly.
+        private bool ContainsSid(string walletId, string sid) =>
+            registry.IsActiveSid(new StreamKey(walletId, sid));
 
         private void RaiseTrackSubscribed(string identity, string sid, TrackKind kind, TrackSource source = TrackSource.SourceMicrophone)
         {
@@ -563,6 +624,24 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(TrackPublication).GetField("info", BindingFlags.Instance | BindingFlags.NonPublic)!
                                     .SetValue(publication, info);
             return publication;
+        }
+
+        // Replaces NSubstitute stubs for the frame-activity oracle: the production seam is a
+        // Func<StreamKey, Option<int>> because the LiveKit helper is an extension method (not on the
+        // interface) and AudioStream itself is FFI-bound and non-virtual.
+        private sealed class FrameOracleStub
+        {
+            private readonly Dictionary<StreamKey, int> values = new ();
+            public int Calls { get; private set; }
+
+            public void Set(StreamKey key, int tick) =>
+                values[key] = tick;
+
+            public Option<int> Get(StreamKey key)
+            {
+                Calls++;
+                return values.TryGetValue(key, out int v) ? Option<int>.Some(v) : Option<int>.None;
+            }
         }
 
         private sealed class FakeActiveSpeakers : IActiveSpeakers

@@ -18,11 +18,8 @@ using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
-using LiveKit.Rooms.Streaming;
-using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using DCL.UI;
 using DCL.Utilities;
@@ -78,7 +75,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatPanelPresenter? voiceChatPanelPresenter;
         private VoiceChatDebugContainer? voiceChatDebugContainer;
         private NearbyAudioStreamsRegistry? nearbyAudioStreamRegistry;
-        private HashSet<StreamKey>? nearbyAudioBindings;
         private NearbyAudioSourceFactory? nearbyAudioSourceFactory;
         private NearbyVoiceChatSuppressor? nearbyVoiceChatSuppressor;
         private NearbyMicrophoneHandler? nearbyMicrophoneHandler;
@@ -156,9 +152,9 @@ namespace DCL.PluginSystem.Global
 
                 NearbyLivekitBridgeSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!);
                 NearbyAudibleRangeSystem.InjectToWorld(ref builder, voiceChatConfiguration, listenerState);
-                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
+                NearbyAudioBindingSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyAudioPositionSystem.InjectToWorld(ref builder, nearbyMuteService!, listenerState);
-                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, nearbyAudioBindings!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
+                NearbyAudioCleanupSystem.InjectToWorld(ref builder, nearbyAudioStreamRegistry!, userBlockingCache, nearbyStateModel!, nearbyAudioSourceFactory!, RoomMetadataCurrentScene.Instance);
                 NearbyVoiceChatNametagSystem.InjectToWorld(ref builder, playerEntity, nearbyAudioStreamRegistry!, nearbyStateModel!, nearbyMuteService!);
 
                 NearbyVoiceChatDebugSystem.InjectToWorld(ref builder, voiceChatConfiguration, debugContainer, roomHub.IslandRoom(), nearbyStateModel!, nearbyAudioStreamRegistry!, entityParticipantTable);
@@ -221,7 +217,6 @@ namespace DCL.PluginSystem.Global
                 nearbyAudioStreamRegistry = new NearbyAudioStreamsRegistry(islandRoom);
                 pluginScope.Add(nearbyAudioStreamRegistry);
 
-                nearbyAudioBindings = new HashSet<StreamKey>(32);
                 nearbyAudioSourceFactory = new NearbyAudioSourceFactory(voiceChatConfiguration);
 
                 // State model is created in DynamicWorldContainer so analytics can subscribe to it.

@@ -19,20 +19,27 @@ namespace DCL.VoiceChat.Nearby.Audio
         bool HasAudioStream(string walletId);
 
         /// <summary>
-        /// Raw reference to the registry's copy-on-write sid array. <c>null</c> when the wallet is not indexed.
-        /// Used by <see cref="LiveKit.Rooms.IRoom"/>-driven systems that need to compare snapshots via
-        /// <see cref="object.ReferenceEquals(object,object)"/> — a different reference ↔ content changed.
-        /// <b>Never mutate.</b> Treat the returned array as immutable from the caller's perspective.
-        /// </summary>
-        string[]? GetAudioSidsArray(string walletId);
-
-        /// <summary>
         /// Resolves a stream lazily. Must be called from the main thread — <see cref="AudioStream"/>'s constructor
         /// reads Unity audio settings and performs a synchronous FFI request.
         /// </summary>
         Weak<AudioStream> GetActiveStream(StreamKey key);
 
-        bool IsStreamGone(StreamKey key);
+        /// <summary>
+        /// <b>Call-site discipline.</b> Main-thread only — the multi-candidate branch performs one FFI hop per sid.
+        /// The single active sid for an identity. Returns <c>null</c> if the identity has no sids.
+        /// Single-candidate fast path: returned eagerly without consulting the frame oracle (a lone candidate is active by definition).
+        /// Multi-candidate: picks the sid that most recently emitted a media frame; returns <c>null</c> if none of the candidates has
+        /// ever emitted a frame — a transient "not-yet-decided" window that the bridge re-polls next tick and self-heals.
+        /// </summary>
+        string? GetActiveSid(string walletId);
+
+        /// <summary>
+        /// <c>true</c> when <paramref name="key"/>.sid is the resolver's current pick for <paramref name="key"/>.identity.
+        /// Cleanup uses this in place of "sid disappeared from snapshot" — it also reaps demoted ghost sids that
+        /// still exist in the registry but lost to a fresher candidate.
+        /// Shares the cost profile and main-thread discipline of <see cref="GetActiveSid"/>: same resolver call underneath.
+        /// </summary>
+        bool IsActiveSid(StreamKey key);
 
         /// <summary>
         /// Returns <c>true</c> if <paramref name="walletId"/> was present in the latest

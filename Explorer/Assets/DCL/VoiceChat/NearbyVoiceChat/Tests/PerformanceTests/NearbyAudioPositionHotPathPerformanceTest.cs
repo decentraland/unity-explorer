@@ -114,7 +114,11 @@ namespace DCL.VoiceChat.Nearby
                 gameObjects.Add(source.gameObject);
                 audioSources[i] = source;
 
-                world.Create(new NearbyAudioSourceComponent(new StreamKey(id, "sid"), avatarEntity, source));
+                // Slice 4: NearbyAudioSourceComponent is co-located on the avatar entity. PositionSystem's
+                // query is now [All(AvatarBase, NearbyAudioStreamerComponent)] [None(DeleteEntityIntention)],
+                // so add NearbyAudioStreamerComponent here too so the benchmark exercises the hot path.
+                world.Add(avatarEntity, new NearbyAudioStreamerComponent("sid"));
+                world.Add(avatarEntity, new NearbyAudioSourceComponent(new StreamKey(id, "sid"), source));
             }
         }
 

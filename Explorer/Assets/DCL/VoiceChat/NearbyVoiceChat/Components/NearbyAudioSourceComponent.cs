@@ -1,17 +1,12 @@
-using Arch.Core;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using UnityEngine;
 
 namespace DCL.VoiceChat
 {
-    /// <summary>
-    /// Lives on a dedicated audio-source entity. Bound 1:1 to a (participant, sid) pair.
-    /// </summary>
     public struct NearbyAudioSourceComponent
     {
         public readonly StreamKey Key;
-        public readonly Entity AvatarEntity;
         public readonly LivekitAudioSource LivekitAudioSource;
 
         public uint LastSeenMuteVersion;
@@ -19,10 +14,9 @@ namespace DCL.VoiceChat
         public bool LastInactive;
         public Vector3 LastWrittenPos;
 
-        public NearbyAudioSourceComponent(StreamKey key, Entity avatarEntity, LivekitAudioSource livekitAudioSource)
+        public NearbyAudioSourceComponent(StreamKey key, LivekitAudioSource livekitAudioSource)
         {
             Key = key;
-            AvatarEntity = avatarEntity;
             LivekitAudioSource = livekitAudioSource;
 
             LastSeenMuteVersion = 0;

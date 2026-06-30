@@ -22,16 +22,17 @@ using Object = UnityEngine.Object;
 namespace DCL.VoiceChat.Nearby.Tests
 {
     /// <summary>
-    /// Documents <see cref="NearbyAudioCleanupSystem"/> contract:
+    /// Documents <see cref="NearbyAudioCleanupSystem"/> contract (slice 4 — co-located component):
     ///
-    /// - Detection marks doomed audio entities with <see cref="DeleteEntityIntention"/>; physical destruction is delegated to
-    ///   <see cref="ECS.LifeCycle.Systems.DestroyEntitiesSystem"/> (deliberately not in this test rig).
-    /// - Pull-based detection: per tick, four triggers per entity — avatar gone, stream gone, identity blocked, listening gate.
-    /// - Teardown reacts to <see cref="DeleteEntityIntention"/>: disposes the <see cref="LivekitAudioSource"/>
-    ///   (Stop → Free → SafeDestroyGameObject) and removes the <c>(walletId, sid) → entity</c> binding.
-    /// - Tests assert the system's own contribution: the entity is marked + the source is disposed + the binding is removed.
-    ///   They deliberately do NOT assert <see cref="World.IsAlive"/>, since this system no longer owns entity destruction.
-    /// - <see cref="NearbyAudioCleanupSystem.Dispose"/> disposes any survivors and clears bindings.
+    /// - Detection collects doomed avatars (lost streamer marker / out of range / sid demoted / blocked /
+    ///   scene-banned), disposes their <see cref="LivekitAudioSource"/>, then removes the
+    ///   <see cref="NearbyAudioSourceComponent"/> from the avatar entity (avatar itself stays alive).
+    /// - Listening-gate / device-change paths bulk-remove the component from every live entity.
+    /// - Avatars carrying <see cref="DeleteEntityIntention"/> get only their source disposed — the
+    ///   component goes away with the entity when DestroyEntitiesSystem runs.
+    /// - Tests assert the system's own contribution: component removed (live triggers) / source disposed.
+    ///   They do NOT assert avatar-entity destruction (out of scope).
+    /// - <see cref="NearbyAudioCleanupSystem.Dispose"/> disposes any survivors.
     /// </summary>
     public class NearbyAudioCleanupSystemShould : UnitySystemTestBase<NearbyAudioCleanupSystem>
     {
@@ -45,7 +46,6 @@ namespace DCL.VoiceChat.Nearby.Tests
             typeof(AvatarBase).GetField("<HeadAnchorPoint>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
         private FakeStreamRegistry registry = null!;
-        private HashSet<StreamKey> bindings = null!;
         private IUserBlockingCache userBlockingCache = null!;
         private NearbyVoiceChatStateModel stateModel = null!;
         private VoiceChatConfiguration configuration = null!;
@@ -58,13 +58,12 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.SetUpFeaturesRegistry();
 
             registry = new FakeStreamRegistry();
-            bindings = new HashSet<StreamKey>();
             userBlockingCache = Substitute.For<IUserBlockingCache>();
             stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             sourceFactory = new NearbyAudioSourceFactory(configuration);
 
-            system = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
+            system = new NearbyAudioCleanupSystem(world, registry, userBlockingCache, stateModel, sourceFactory, RoomMetadataCurrentScene.CreateForTest());
         }
 
         protected override void OnTearDown()
@@ -73,7 +72,6 @@ namespace DCL.VoiceChat.Nearby.Tests
                 if (go != null) Object.DestroyImmediate(go);
 
             gameObjects.Clear();
-            bindings.Clear();
             stateModel.Dispose();
 
             if (configuration != null) Object.DestroyImmediate(configuration);
@@ -81,28 +79,24 @@ namespace DCL.VoiceChat.Nearby.Tests
             EcsTestsUtils.TearDownFeaturesRegistry();
         }
 
-        // ── Trigger #1: avatar gone ─────────────────────────────────
+        // ── Trigger #7: avatar dying ────────────────────────────────
+        // Slice 4 collapsed the audio entity onto the avatar. The "hard-destroy the avatar"
+        // premise from the old test is no longer reachable in practice (avatar destruction
+        // is gated through DeleteEntityIntention → DestroyEntitiesSystem) — and the legacy
+        // separate-audio-entity test would have nothing to clean up either. The
+        // DeleteEntityIntention path below is the only meaningful "avatar gone" scenario now.
 
         [Test]
-        public void DeadAvatarEntityCausesCleanup()
+        public void AvatarWithDeleteEntityIntentionDisposesSource()
         {
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Destroy(avatarEntity);
-
-            system.Update(0);
-
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
-        }
-
-        [Test]
-        public void AvatarWithDeleteEntityIntentionCausesCleanup()
-        {
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Add<DeleteEntityIntention>(avatarEntity);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            // Trigger #7 disposes the source but does NOT World.Remove the component — the dying avatar
+            // will take it down on physical destruction.
+            AssertSourceTornDown(source);
         }
 
         // ── Trigger #2: stream gone ─────────────────────────────────
@@ -110,24 +104,24 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void RegistryMissingWalletCausesCleanup()
         {
-            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             registry.RemoveAll(PARTICIPANT_A);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
         public void RegistryMissingSidCausesCleanup()
         {
-            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             registry.Add(PARTICIPANT_A, "sid-other"); // wallet still in registry, but bound sid is gone
             registry.RemoveSid(PARTICIPANT_A, SID_1);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         // ── Trigger #3: blocked identity ────────────────────────────
@@ -135,51 +129,52 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void BlockedIdentityCausesCleanup()
         {
-            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             userBlockingCache.UserIsBlocked(PARTICIPANT_A).Returns(true);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         // ── Trigger #4: listening gate ──────────────────────────────
 
         [Test]
-        public void SuppressedStateTearsDownAllAudioEntities()
+        public void SuppressedStateTearsDownAllAudioSources()
         {
             const int COUNT = 3;
-            var seeded = new List<(Entity audioEntity, LivekitAudioSource source, string wallet)>(COUNT);
+            var seeded = new List<(Entity avatarEntity, LivekitAudioSource source, string wallet)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                seeded.Add((audioEntity, source, $"wallet-{i}"));
+                (Entity avatarEntity, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((avatarEntity, source, $"wallet-{i}"));
             }
 
             stateModel.Suppress(SuppressionReason.CALL);
 
             system.Update(0);
 
-            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0), "all audio entities must be marked");
-            Assert.That(bindings, Is.Empty);
-            foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
+            Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0), "all audio components must be removed");
+            foreach ((Entity avatarEntity, LivekitAudioSource source, _) in seeded)
             {
-                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
+                Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False,
+                    "listening-gate bulk path removes the component from every live entity");
+                Assert.That(world.IsAlive(avatarEntity), Is.True, "avatar itself must stay alive");
                 AssertSourceTornDown(source);
             }
         }
 
         [Test]
-        public void DisabledStateTearsDownAllAudioEntities()
+        public void DisabledStateTearsDownAllAudioSources()
         {
             const int COUNT = 3;
-            var seeded = new List<(Entity audioEntity, LivekitAudioSource source, string wallet)>(COUNT);
+            var seeded = new List<(Entity avatarEntity, LivekitAudioSource source, string wallet)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                seeded.Add((audioEntity, source, $"wallet-{i}"));
+                (Entity avatarEntity, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((avatarEntity, source, $"wallet-{i}"));
             }
 
             stateModel.Disable();
@@ -187,10 +182,10 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0));
-            Assert.That(bindings, Is.Empty);
-            foreach ((Entity audioEntity, LivekitAudioSource source, _) in seeded)
+            foreach ((Entity avatarEntity, LivekitAudioSource source, _) in seeded)
             {
-                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
+                Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False);
+                Assert.That(world.IsAlive(avatarEntity), Is.True);
                 AssertSourceTornDown(source);
             }
         }
@@ -200,25 +195,27 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void BothTriggersPresentResultInSingleTeardown()
         {
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
-            world.Destroy(avatarEntity);
+            // Compound trigger — registry drops the identity AND user gets blocked in the same frame.
+            // Both clauses dock onto the same per-entity collect pass; the result is one teardown, not two.
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             registry.RemoveAll(PARTICIPANT_A);
+            userBlockingCache.UserIsBlocked(PARTICIPANT_A).Returns(true);
 
             Assert.DoesNotThrow(() => system.Update(0));
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
         public void MassCleanupOnDisconnected()
         {
             const int COUNT = 10;
-            var seeded = new List<(Entity audioEntity, LivekitAudioSource source)>(COUNT);
+            var seeded = new List<(Entity avatarEntity, LivekitAudioSource source)>(COUNT);
 
             for (int i = 0; i < COUNT; i++)
             {
-                (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
-                seeded.Add((audioEntity, source));
+                (Entity avatarEntity, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                seeded.Add((avatarEntity, source));
             }
 
             registry.ClearAll();
@@ -226,9 +223,9 @@ namespace DCL.VoiceChat.Nearby.Tests
             system.Update(0);
 
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(0));
-            foreach ((Entity audioEntity, LivekitAudioSource source) in seeded)
+            foreach ((Entity avatarEntity, LivekitAudioSource source) in seeded)
             {
-                Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True);
+                Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False);
                 AssertSourceTornDown(source);
             }
         }
@@ -242,71 +239,77 @@ namespace DCL.VoiceChat.Nearby.Tests
             // its StreamingAudioComponent (Bridge dropped it because the registry no longer reports
             // sids for that walletId), the audio entity must be doomed without consulting the
             // registry or the blocking cache.
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Remove<NearbyAudioStreamerComponent>(avatarEntity);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
-        public void KeepsAudioEntityWhenMarkerPresentAndRegistryAlive()
+        public void KeepsAudioComponentWhenMarkerPresentAndRegistryAlive()
         {
             // Steady state — marker on, registry has the sid, not blocked, avatar alive.
-            // The cleanup query must not flag this entity. This is the dominant per-frame path.
-            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            // The cleanup query must not touch this entity. This is the dominant per-frame path.
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
 
             system.Update(0);
 
-            Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.False,
-                "healthy steady-state entity must not be flagged");
-            Assert.That(world.IsAlive(audioEntity), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.True,
+                "healthy steady-state entity must keep its audio-source component");
+            Assert.That(world.IsAlive(avatarEntity), Is.True);
             Assert.That(source == null, Is.False, "LivekitAudioSource must remain alive");
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
         }
 
+        // FlagsLosingSidAudioEntityWhenResolverPicksSibling — DELETED.
+        // Premise required two NearbyAudioSourceComponent instances on the same avatar (one per sid).
+        // After slice-4 co-location, the component lives on the avatar entity and Arch allows at most one
+        // instance of a given component type per entity. The resolver-dedup contract collapsed multi-sid
+        // state into a single CurrentSid, and GhostSidLosingResolverPickCausesCleanup below covers the
+        // single-sid ghost-demotion case.
+
         [Test]
-        public void FlagsAudioEntityWhenOneOfNSidsGoneButMarkerPresent()
+        public void GhostSidLosingResolverPickCausesCleanup()
         {
-            // Multi-sid granularity — the marker is per-walletId, so removing one sid leaves
-            // the marker and the other sid's audio entity in place. Per-sid doom must arrive
-            // through the registry.IsStreamGone(comp.Key) fallback, not the marker shortcut.
-            const string SID_2 = "sid-2";
-            (Entity audioEntity1, Entity avatarEntity, LivekitAudioSource source1) = SeedBinding(PARTICIPANT_A, SID_1);
-            registry.Add(PARTICIPANT_A, SID_2);
+            // Test 9 from the spec — the audio entity's sid is no longer the resolver's pick.
+            // Distinct from RegistryMissingSidCausesCleanup: here the sid still EXISTS in the registry
+            // (HasAudioStream=true), it just lost the active-pick race. The !IsActiveSid predicate
+            // must reap it regardless of whether the registry still indexes the sid.
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
 
-            // Sid-2 entity coexists; both audio entities share the same avatar (and its marker).
-            var key2 = new StreamKey(PARTICIPANT_A, SID_2);
-            LivekitAudioSource source2 = CreateLivekitAudioSource(key2);
-            Entity audioEntity2 = world.Create(new NearbyAudioSourceComponent(key2, avatarEntity, source2));
-            bindings.Add(key2);
+            // Resolver demotes sid-1 in favour of a fresher candidate; HasAudioStream stays true
+            // (registry still holds candidates for the identity).
+            const string SID_FRESH = "sid-fresh";
+            registry.SetActiveSid(PARTICIPANT_A, SID_FRESH);
 
-            // Drop only sid-1 from the registry. Marker stays (sid-2 still present).
-            registry.RemoveSid(PARTICIPANT_A, SID_1);
+            // Sanity-check the precondition the test depends on.
+            Assert.That(registry.HasAudioStream(PARTICIPANT_A), Is.True,
+                "precondition: identity still indexed (only the active pick changed)");
+            Assert.That(registry.IsActiveSid(new StreamKey(PARTICIPANT_A, SID_1)), Is.False,
+                "precondition: bound sid is no longer the active one");
+            // The Asserts above bumped IsActiveSidCallCount via the precondition; reset before the system tick.
+            registry.ResetCallCounters();
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity1, source1, PARTICIPANT_A, SID_1);
-            Assert.That(world.Has<DeleteEntityIntention>(audioEntity2), Is.False,
-                "sibling sid must remain alive — multi-sid is the case the registry fallback exists for");
-            Assert.That(source2 == null, Is.False);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
-        public void FlagsAudioEntityWhenAvatarHasDeleteIntentionButMarkerRemains()
+        public void DisposesSourceWhenAvatarHasDeleteIntentionButMarkerRemains()
         {
             // F1-deliberate invariant: NearbyLivekitBridgeSystem.UpdateStreaming filters with
             // [None<DeleteEntityIntention>], so a doomed avatar keeps its marker until physical
-            // destruction. Cleanup must catch this via the World.Has<DeleteEntityIntention>(avatar)
-            // clause, not the marker-absence clause.
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            // destruction. The dying-avatar trigger #7 must dispose the source regardless of marker state;
+            // it does NOT World.Remove the audio-source component (the entity itself is on its way out).
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Add<DeleteEntityIntention>(avatarEntity);
             // marker intentionally NOT removed — F1 contract
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertSourceTornDown(source);
             Assert.That(world.Has<NearbyAudioStreamerComponent>(avatarEntity), Is.True,
                 "Bridge's [None<DeleteEntityIntention>] filter prevents component removal on a doomed avatar");
         }
@@ -315,15 +318,15 @@ namespace DCL.VoiceChat.Nearby.Tests
         public void DoesNotQueryRegistryWhenMarkerAbsentPathDoomsEntity()
         {
             // Optional sanity — proves the cheap shortcut actually short-circuits the registry call.
-            // If the marker-absence clause fires, registry.IsStreamGone must NOT be invoked.
-            (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
+            // If the marker-absence clause fires, registry.IsActiveSid must NOT be invoked.
+            (Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Remove<NearbyAudioStreamerComponent>(avatarEntity);
 
             registry.ResetCallCounters();
 
             system.Update(0);
 
-            Assert.That(registry.IsStreamGoneCallCount, Is.EqualTo(0),
+            Assert.That(registry.IsActiveSidCallCount, Is.EqualTo(0),
                 "marker-absence must short-circuit before the registry lookup");
             Assert.That(userBlockingCache.ReceivedCalls(), Is.Empty,
                 "marker-absence must short-circuit before the blocking cache lookup");
@@ -337,12 +340,12 @@ namespace DCL.VoiceChat.Nearby.Tests
             // A1 adds a fourth clause to the cheap-shortcut chain — when AudibleRangeMarker drops
             // InAudibleRangeTag (avatar crossed 22 m outward) Cleanup must doom the audio entity
             // in the same frame, before the registry / blocking-cache fallbacks fire.
-            (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Remove<InAudibleRangeTag>(avatarEntity);
 
             system.Update(0);
 
-            AssertCleanedUp(audioEntity, source, PARTICIPANT_A, SID_1);
+            AssertCleanedUp(avatarEntity, source, PARTICIPANT_A, SID_1);
         }
 
         [Test]
@@ -350,14 +353,14 @@ namespace DCL.VoiceChat.Nearby.Tests
         {
             // Cost-shortcut semantics — the marker-absence clause must short-circuit before the
             // registry lookup fires. Mirrors the streaming-tag short-circuit guard from A5.2.
-            (_, Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, _) = SeedBinding(PARTICIPANT_A, SID_1);
             world.Remove<InAudibleRangeTag>(avatarEntity);
 
             registry.ResetCallCounters();
 
             system.Update(0);
 
-            Assert.That(registry.IsStreamGoneCallCount, Is.EqualTo(0),
+            Assert.That(registry.IsActiveSidCallCount, Is.EqualTo(0),
                 "InAudibleRangeTag absence must short-circuit before the registry lookup");
             Assert.That(userBlockingCache.ReceivedCalls(), Is.Empty,
                 "InAudibleRangeTag absence must short-circuit before the blocking cache lookup");
@@ -368,15 +371,14 @@ namespace DCL.VoiceChat.Nearby.Tests
         [Test]
         public void IdleTickWithNoTriggersDoesNotMutateWorld()
         {
-            (Entity audioEntity, _, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
+            (Entity avatarEntity, LivekitAudioSource source) = SeedBinding(PARTICIPANT_A, SID_1);
 
             system.Update(0);
             system.Update(0);
 
-            Assert.That(world.IsAlive(audioEntity), Is.True);
-            Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.False);
+            Assert.That(world.IsAlive(avatarEntity), Is.True);
+            Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.True);
             Assert.That(source == null, Is.False);
-            Assert.That(bindings.Contains(new StreamKey(PARTICIPANT_A, SID_1)), Is.True);
             Assert.That(world.CountEntities(in LIVE_AUDIO_QUERY), Is.EqualTo(1));
         }
 
@@ -390,7 +392,7 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             for (int i = 0; i < COUNT; i++)
             {
-                (_, _, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
+                (_, LivekitAudioSource source) = SeedBinding($"wallet-{i}", SID_1);
                 sources.Add(source);
             }
 
@@ -399,18 +401,19 @@ namespace DCL.VoiceChat.Nearby.Tests
 
             foreach (LivekitAudioSource source in sources)
                 AssertSourceTornDown(source);
-
-            Assert.That(bindings, Is.Empty);
         }
 
         // ── Helpers ─────────────────────────────────────────────────
 
-        private void AssertCleanedUp(Entity audioEntity, LivekitAudioSource source, string walletId, string sid)
+        // Slice 4: cleanup contract for the LIVE doom path — component removed from the avatar entity,
+        // source torn down. The avatar entity itself stays alive (it's the avatar; it just no longer
+        // carries an audio-source pair).
+        private void AssertCleanedUp(Entity avatarEntity, LivekitAudioSource source, string walletId, string sid)
         {
-            Assert.That(world.IsAlive(audioEntity), Is.True, "entity destruction is delegated to DestroyEntitiesSystem and is out of scope here");
-            Assert.That(world.Has<DeleteEntityIntention>(audioEntity), Is.True, "audio entity must be marked for deletion");
+            Assert.That(world.IsAlive(avatarEntity), Is.True, "avatar entity destruction is out of scope here");
+            Assert.That(world.Has<NearbyAudioSourceComponent>(avatarEntity), Is.False,
+                "audio-source component must be removed from the avatar");
             AssertSourceTornDown(source, "LivekitAudioSource must be torn down (destroyed in legacy path, parked inactive in pool path)");
-            Assert.That(bindings.Contains(new StreamKey(walletId, sid)), Is.False, "binding must be removed");
         }
 
         // A2 made source teardown reference-stable: the pool keeps the GO alive after Dispose. Both
@@ -425,25 +428,23 @@ namespace DCL.VoiceChat.Nearby.Tests
             Assert.That(source.gameObject.activeSelf, Is.False, message ?? "pooled source must be inactive");
         }
 
-        private (Entity audioEntity, Entity avatarEntity, LivekitAudioSource source) SeedBinding(string walletId, string sid)
+        // Slice 4: audio-source component is co-located on the avatar — there is no separate audio entity.
+        // Callers that previously needed an "audioEntity" alias should just reuse avatarEntity; AssertCleanedUp
+        // takes the same entity for both the liveness check and the component-removed check.
+        private (Entity avatarEntity, LivekitAudioSource source) SeedBinding(string walletId, string sid)
         {
             Entity avatarEntity = CreateAvatarEntity(walletId);
-            // After A5.2 the cleanup shortcut treats streaming-marker absence as a doom signal;
-            // A1 adds InAudibleRangeTag absence as a fourth shortcut clause. Realistic state for
-            // a live audio entity is both markers present — Bridge applied StreamingAudioComponent
-            // and AudibleRangeMarker applied InAudibleRangeTag before Binding spawned the entity.
-            // Pair all three in the seed so existing trigger tests exercise the intended fallbacks
-            // (IsStreamGone / UserIsBlocked / lifecycle), not the marker-absence shortcuts by accident.
-            world.Add(avatarEntity, new NearbyAudioStreamerComponent(new[] { sid }));
+            // Realistic state for a live audio component: streamer marker + audible range tag both present.
+            // Trigger tests that want the !IsActiveSid / UserIsBlocked / lifecycle fallbacks rely on this baseline.
+            world.Add(avatarEntity, new NearbyAudioStreamerComponent(sid));
             world.Add<InAudibleRangeTag>(avatarEntity);
             registry.Add(walletId, sid);
 
             var key = new StreamKey(walletId, sid);
             LivekitAudioSource source = CreateLivekitAudioSource(key);
-            Entity audioEntity = world.Create(new NearbyAudioSourceComponent(key, avatarEntity, source));
-            bindings.Add(key);
+            world.Add(avatarEntity, new NearbyAudioSourceComponent(key, source));
 
-            return (audioEntity, avatarEntity, source);
+            return (avatarEntity, source);
         }
 
         private Entity CreateAvatarEntity(string walletId)
@@ -475,61 +476,79 @@ namespace DCL.VoiceChat.Nearby.Tests
 
         private sealed class FakeStreamRegistry : INearbyAudioStreamRegistry
         {
-            // Per-wallet sid set as a HashSet — cleanup tests only need point-lookup semantics
-            // (IsStreamGone), not COW reference identity. Bridge tests are the place that
-            // exercises reference-equality contract.
-            private readonly Dictionary<string, HashSet<string>> sidsByIdentity = new ();
+            // Per-wallet active sid map. Cleanup interrogates the registry via IsActiveSid;
+            // the resolver-dedup contract guarantees at most one active sid per identity, so a
+            // plain wallet → sid map suffices.
+            private readonly Dictionary<string, string> activeSidByIdentity = new ();
+
+            // Per-wallet "registry has at least one sid for this identity" flag, decoupled from
+            // active-pick state so tests can model the all-zeros window (HasAudioStream=true,
+            // GetActiveSid=null) and ghost-demotion (sid exists in the registry but lost the pick).
+            private readonly HashSet<string> hasAudioStreamByIdentity = new ();
 
             // Call counters for asserting short-circuit behaviour. NSubstitute is overkill here —
             // INearbyAudioStreamRegistry has a hand-rolled fake to drive trigger combinations,
             // and a single counter keeps the cleanup-shortcut test honest.
-            public int IsStreamGoneCallCount { get; private set; }
+            public int IsActiveSidCallCount { get; private set; }
 
-            public void ResetCallCounters() => IsStreamGoneCallCount = 0;
+            public void ResetCallCounters() => IsActiveSidCallCount = 0;
 
             public void Add(string walletId, string sid)
             {
-                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
-                {
-                    sids = new HashSet<string>();
-                    sidsByIdentity[walletId] = sids;
-                }
-
-                sids.Add(sid);
+                // Mirrors production: an Add publishes a new active pick. Tests that need to model
+                // ghost-vs-winner can use SetActiveSid / DemoteToGhost directly.
+                hasAudioStreamByIdentity.Add(walletId);
+                activeSidByIdentity[walletId] = sid;
             }
 
-            public void RemoveAll(string walletId) =>
-                sidsByIdentity.Remove(walletId);
+            public void RemoveAll(string walletId)
+            {
+                hasAudioStreamByIdentity.Remove(walletId);
+                activeSidByIdentity.Remove(walletId);
+            }
 
             public void RemoveSid(string walletId, string sid)
             {
-                if (sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids))
-                    sids.Remove(sid);
+                // Mirrors production semantics — when the registry drops the sid that was the active
+                // pick, the identity has no winner anymore. If it was not the active pick (i.e. a
+                // ghost), HasAudioStream stays unchanged.
+                if (activeSidByIdentity.TryGetValue(walletId, out string? active) && active == sid)
+                {
+                    activeSidByIdentity.Remove(walletId);
+                    hasAudioStreamByIdentity.Remove(walletId);
+                }
             }
 
-            public void ClearAll() =>
-                sidsByIdentity.Clear();
+            /// <summary>
+            /// Promotes a different sid to the active pick for <paramref name="walletId"/>, leaving the
+            /// previous one as a "ghost" — it still exists in the registry (HasAudioStream=true) but
+            /// <see cref="IsActiveSid"/> returns false for it. Models the resolver flipping winners.
+            /// </summary>
+            public void SetActiveSid(string walletId, string sid)
+            {
+                hasAudioStreamByIdentity.Add(walletId);
+                activeSidByIdentity[walletId] = sid;
+            }
+
+            public void ClearAll()
+            {
+                hasAudioStreamByIdentity.Clear();
+                activeSidByIdentity.Clear();
+            }
 
             public bool HasAudioStream(string walletId) =>
-                sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) && sids.Count > 0;
-
-            public string[]? GetAudioSidsArray(string walletId)
-            {
-                if (!sidsByIdentity.TryGetValue(walletId, out HashSet<string>? sids) || sids.Count == 0)
-                    return null;
-
-                var arr = new string[sids.Count];
-                sids.CopyTo(arr);
-                return arr;
-            }
+                hasAudioStreamByIdentity.Contains(walletId);
 
             public Weak<AudioStream> GetActiveStream(StreamKey key) =>
                 Weak<AudioStream>.Null;
 
-            public bool IsStreamGone(StreamKey key)
+            public string? GetActiveSid(string walletId) =>
+                activeSidByIdentity.TryGetValue(walletId, out string? sid) ? sid : null;
+
+            public bool IsActiveSid(StreamKey key)
             {
-                IsStreamGoneCallCount++;
-                return !sidsByIdentity.TryGetValue(key.identity, out HashSet<string>? sids) || !sids.Contains(key.sid);
+                IsActiveSidCallCount++;
+                return activeSidByIdentity.TryGetValue(key.identity, out string? active) && active == key.sid;
             }
 
             public bool IsActiveSpeaker(string walletId) => false;

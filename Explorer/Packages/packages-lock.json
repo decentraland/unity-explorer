@@ -98,7 +98,7 @@
         "com.nickkhalow.richtypes": "https://github.com/NickKhalow/RichTypesUnity.git?path=/Packages/RichTypes",
         "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git"
       },
-      "hash": "dc6e479148106b1f8a68f0fbdba475bf7b96693e"
+      "hash": "9caeba7fb88547062f227b2e246b18b6927e4435"
     },
     "com.decentraland.pulse.transport": {
       "version": "https://github.com/decentraland/Pulse.git?path=src/DCLPulse.Transport.Shared#536d308a96cd5dce1011b012e7d0b39c27b01993",
