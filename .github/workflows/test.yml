@@ -94,9 +94,12 @@ jobs:
         with:
           sparse-checkout: .github/actions
           sparse-checkout-cone-mode: false
+          path: ci-actions
 
       - name: Setup Docker disk
-        uses: ./.github/actions/setup-docker-disk
+        uses: ./ci-actions/.github/actions/setup-docker-disk
+        with:
+          keep-dotnet: 'true'
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -392,9 +395,10 @@ jobs:
         with:
           sparse-checkout: .github/actions
           sparse-checkout-cone-mode: false
+          path: ci-actions
 
       - name: Setup Docker disk
-        uses: ./.github/actions/setup-docker-disk
+        uses: ./ci-actions/.github/actions/setup-docker-disk
 
       - name: Checkout code
         uses: actions/checkout@v6
