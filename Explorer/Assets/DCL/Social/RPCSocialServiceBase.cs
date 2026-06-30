@@ -22,6 +22,18 @@ namespace DCL.SocialService
         /// </summary>
         private const int BASE_RETRY_DELAY_SECONDS = 2;
 
+        /// <summary>
+        ///     Maximum delay in seconds between retry attempts (caps the exponential backoff so it
+        ///     cannot grow without bound).
+        /// </summary>
+        private const int MAX_RETRY_DELAY_SECONDS = 60;
+
+        /// <summary>
+        ///     A stream that stayed open at least this long is treated as a genuine, established
+        ///     subscription rather than an immediate server-side rejection, so its backoff is reset.
+        /// </summary>
+        private const int STABLE_STREAM_SECONDS = 30;
+
         public class ServerStreamReportsDebouncer : FrameDebouncer
         {
             public ServerStreamReportsDebouncer() : base(1)
@@ -67,7 +79,22 @@ namespace DCL.SocialService
                 {
                     // It's an endless [background] loop
                     await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+
+                    DateTime streamOpenedAt = DateTime.UtcNow;
                     await openStreamFunc().AttachExternalCancellation(ct);
+
+                    // Reaching this point means the stream completed WITHOUT throwing. For a
+                    // long-lived subscription that is not normal: the social service completes the
+                    // stream immediately when the subscription is a duplicate for this connection,
+                    // so re-opening with no delay hot-loops and hammers the server with
+                    // re-subscribes (the "Duplicate subscription detected" flood). Back off here
+                    // just like the error paths. If the stream actually stayed open for a meaningful
+                    // time, reset the backoff so a genuine reconnect is still prompt.
+                    if (DateTime.UtcNow - streamOpenedAt >= TimeSpan.FromSeconds(STABLE_STREAM_SECONDS))
+                        retryAttempt = 0;
+
+                    retryAttempt++;
+                    await WaitNextRetryAsync(retryAttempt, ct);
                 }
                 catch (OperationCanceledException) { break; }
                 catch (WebSocketException e)
@@ -98,6 +125,8 @@ namespace DCL.SocialService
                 }
                 catch (Exception e)
                 {
+                    retryAttempt++;
+
                     ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
                     try { await WaitNextRetryAsync(retryAttempt, ct); }
@@ -108,8 +137,9 @@ namespace DCL.SocialService
 
         private async UniTask WaitNextRetryAsync(int retryAttempt, CancellationToken ct)
         {
-            // Calculate exponential backoff delay
-            int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
+            // Exponential backoff, capped so it cannot grow without bound (computed in double to
+            // avoid int overflow once retryAttempt gets large).
+            int delaySeconds = (int)Math.Min(BASE_RETRY_DELAY_SECONDS * Math.Pow(2, retryAttempt - 1), MAX_RETRY_DELAY_SECONDS);
             ReportHub.Log(reportCategory, $"Retrying connection in {delaySeconds} seconds...");
 
             await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
