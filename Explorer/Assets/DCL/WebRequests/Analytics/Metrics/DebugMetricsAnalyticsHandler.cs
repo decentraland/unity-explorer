@@ -49,8 +49,9 @@ namespace DCL.WebRequests.Analytics.Metrics
             {
 #if ENABLE_PROFILER
                 return Profiler.enabled && Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY);
-#endif
+#else
                 return false;
+#endif
             }
         }
 
