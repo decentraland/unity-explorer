@@ -16,6 +16,10 @@ import utils
 
 RETRYABLE_EXIT_CODE = 99  # nick-fields/retry only retries on this code
 
+# All install sources used in build-release-main.yml's matrix. Used to build the set of
+# protected release-pool target names in delete_current_target.
+_RELEASE_INSTALL_SOURCES = ['launcher', 'epic']
+
 from zipfile import ZipFile, ZipInfo
 
 class ZipFileWithPermissions(zipfile.ZipFile):
@@ -497,10 +501,11 @@ def delete_current_target():
     # List of targets to delete
     targets = ['macos', 'windows64']
     
-    # Shared release/main cache pool targets. pr-closure calls this on every PR close, so it must
-    # never delete these — doing so would wipe the cross-release cache. Kept in sync with the pool
-    # naming in clone_current_target ({platform}-release[-{install_source}]).
-    protected = {f'{t}-release' for t in targets} | {f'{t}-release-epic' for t in targets}
+    protected = set()
+    for t in targets:
+        for src in _RELEASE_INSTALL_SOURCES:
+            suffix = f'-{src}' if src != 'launcher' else ''
+            protected.add(f'{t}-release{suffix}')
 
     # Loop through each target
     for target in targets:
