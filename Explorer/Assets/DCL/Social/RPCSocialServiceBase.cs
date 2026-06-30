@@ -2,6 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Sentry;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility.Networking;
 
@@ -123,5 +125,31 @@ namespace DCL.SocialService
             e.Message.Contains("Transport", StringComparison.OrdinalIgnoreCase)
             || e.Message.Contains("Identity is not found", StringComparison.OrdinalIgnoreCase)
             || e.Message.Contains("RPC", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        ///     Enumerates a server stream while honoring cancellation. A bare <c>await foreach</c> over
+        ///     an RPC server stream cannot be cancelled (the stream's enumerator ignores the token), so
+        ///     when a subscription loop is superseded the stream is abandoned WITHOUT being disposed: no
+        ///     CloseStream message is sent and the server keeps the (now duplicate) subscription alive,
+        ///     which is what drives the client into a re-subscribe loop. Driving <c>MoveNextAsync</c>
+        ///     ourselves and disposing in a <c>finally</c> guarantees <c>DisposeAsync</c> runs on
+        ///     cancellation, which sends the CloseStream message so the server tears the subscription down.
+        /// </summary>
+        protected static async IAsyncEnumerable<T> EnumerateWithCancellationAsync<T>(
+            IUniTaskAsyncEnumerable<T> stream,
+            [EnumeratorCancellation] CancellationToken ct)
+        {
+            IUniTaskAsyncEnumerator<T> enumerator = stream.GetAsyncEnumerator(ct);
+
+            try
+            {
+                while (await enumerator.MoveNextAsync().AttachExternalCancellation(ct))
+                    yield return enumerator.Current;
+            }
+            finally
+            {
+                await enumerator.DisposeAsync();
+            }
+        }
     }
 }

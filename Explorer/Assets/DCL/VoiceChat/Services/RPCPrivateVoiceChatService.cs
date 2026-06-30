@@ -206,7 +206,7 @@ namespace DCL.VoiceChat.Services
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 
-                await foreach (PrivateVoiceChatUpdate? response in stream)
+                await foreach (PrivateVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
 

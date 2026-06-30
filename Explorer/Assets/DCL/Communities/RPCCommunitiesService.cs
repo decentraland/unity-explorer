@@ -77,8 +77,7 @@ namespace DCL.Communities
                 IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream =
                     socialServiceRPC.Module().CallServerStream<CommunityMemberConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
 
-                // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (CommunityMemberConnectivityUpdate? response in stream)
+                await foreach (CommunityMemberConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
