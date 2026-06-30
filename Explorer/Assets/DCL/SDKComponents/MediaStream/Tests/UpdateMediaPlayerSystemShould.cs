@@ -1,4 +1,4 @@
-﻿#if AV_PRO_PRESENT
+#if AV_PRO_PRESENT
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -7,7 +7,7 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using RenderHeads.Media.AVProVideo;
+using UnitedAV;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;

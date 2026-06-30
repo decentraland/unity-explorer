@@ -6,7 +6,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS.Unity.AssetLoad.Cache;
-using RenderHeads.Media.AVProVideo;
+using UnitedAV;
 using UnityEngine;
 using UnityEngine.Pool;
 

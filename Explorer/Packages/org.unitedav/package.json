@@ -1,0 +1,35 @@
+{
+  "name": "org.unitedav",
+  "version": "0.0.1",
+  "displayName": "UnitedAV",
+  "description": "UnitedAV — an open-source (Apache-2.0) FFmpeg-based audio/video plugin for Unity. A C# API (namespace UnitedAV) wrapping a native libav backend (P/Invoke into the 'UnitedAV' native plugin): CPU + hardware video decode, audio, and an upstream sender (UnitedAV.Streaming).",
+  "unity": "2021.3",
+  "keywords": [
+    "video",
+    "audio",
+    "streaming",
+    "media",
+    "ffmpeg"
+  ],
+  "author": {
+    "name": "UnitedAV"
+  },
+  "license": "Apache-2.0",
+  "samples": [
+    {
+      "displayName": "Basic Playback",
+      "description": "A minimal MonoBehaviour that opens a URL and shows the video on a material.",
+      "path": "Samples~/BasicPlayback"
+    },
+    {
+      "displayName": "End To End",
+      "description": "A scene that displays a MediaPlayer onto a RawImage and runs a headless self-test battery (open/play/pause/seek/loop/volume/mute/events/texture/HW-backend). The standalone Player writes a JSON report and sets its exit code, so it self-tests when launched.",
+      "path": "Samples~/EndToEnd"
+    },
+    {
+      "displayName": "Showcase (video gallery)",
+      "description": "A ring of screens, each playing a different video stream through its own MediaPlayer, with a camera orbiting around them. Procedurally built; supports headless frame capture for a recorded fly-through (UAV_SHOWCASE_CAPTURE).",
+      "path": "Samples~/Showcase"
+    }
+  ]
+}

@@ -186,13 +186,6 @@
       "dependencies": {},
       "hash": "00cbf100acd16a024c6fb1acd2ba9a439dfa358b"
     },
-    "com.renderheads.avpro.video-ultra": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f79125eff7607f6d0e2665cb31eb313779908d55"
-    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
@@ -557,6 +550,12 @@
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
       "hash": "5f385df93c2d1e4a9aed3dd0aad62c247c684a4b"
+    },
+    "org.unitedav": {
+      "version": "file:org.unitedav",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
