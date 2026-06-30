@@ -68,7 +68,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
                 [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
-                [FeatureId.HARDWARE_FINGERPRINT] = featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT),
+                [FeatureId.HARDWARE_FINGERPRINT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
