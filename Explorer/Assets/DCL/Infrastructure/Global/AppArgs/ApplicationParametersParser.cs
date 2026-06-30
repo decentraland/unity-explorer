@@ -90,6 +90,11 @@ namespace Global.AppArgs
         {
             var output = new Dictionary<string, string>();
 
+            // Drop the optional host segment (e.g. "open" in decentraland://open?signin=...) so only the query remains;
+            // otherwise the host fuses into the first key (e.g. "open?signin"). Legacy host-less links such as
+            // decentraland://realm=...&position=... are untouched ('=' follows the word, not '?').
+            deepLinkString = Regex.Replace(deepLinkString, @"^(decentraland:/+)[A-Za-z][A-Za-z0-9_-]*\?", "$1?");
+
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 

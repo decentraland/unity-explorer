@@ -16,19 +16,34 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
+        private readonly IDeeplinkSigninDispatcher deeplinkSigninDispatcher;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IDeeplinkSigninDispatcher deeplinkSigninDispatcher)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
+            this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
         }
 
         public string Name => "Real Implementation";
 
         public Result HandleDeepLink(DeepLink deeplink)
         {
+            // Signin takes precedence over realm/position/community routing and returns before any teleport or
+            // community notification is triggered.
+            string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
+
+            Debug.Log($"[DLDBG] HandleDeepLink received: {deeplink} | extracted signin='{signin}'");
+
+            if (!string.IsNullOrEmpty(signin))
+            {
+                Debug.Log($"[DLDBG] HandleDeepLink dispatching signin='{signin}'");
+                deeplinkSigninDispatcher.Dispatch(signin);
+                return Result.SuccessResult();
+            }
+
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);

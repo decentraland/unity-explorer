@@ -36,6 +36,8 @@ namespace DCL.RuntimeDeepLink
         /// </summary>
         public static async UniTaskVoid StartListenForDeepLinksAsync(this IDeepLinkHandle handle, CancellationToken token)
         {
+            Debug.Log($"[DLDBG] Sentinel STARTED by '{handle.Name}'. Watching: {DEEP_LINK_BRIDGE_PATH}");
+
             while (token.IsCancellationRequested == false)
             {
                 bool cancelled = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
@@ -44,8 +46,12 @@ namespace DCL.RuntimeDeepLink
                 // File.Exists method is lightweight and can be used in this loop
                 if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
 
+                Debug.Log($"[DLDBG] Sentinel: bridge file FOUND at {DEEP_LINK_BRIDGE_PATH}");
+
                 Result<string> contentResult = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!.SuppressToResultAsync<string>(ReportCategory.RUNTIME_DEEPLINKS);
                 if (contentResult.Success == false) continue;
+
+                Debug.Log($"[DLDBG] Sentinel: raw content = {contentResult.Value}");
 
                 // Notify emitter that file has been consumed
                 File.Delete(DEEP_LINK_BRIDGE_PATH);

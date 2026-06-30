@@ -84,7 +84,7 @@ namespace DCL.Web3.Authenticators
                 // the OS routes it to DeepLinkHandle, which dispatches it here. We do not listen to socket "outcome".
                 string identityId = await WaitForSigninAsync(deeplinkSigninDispatcher, ct);
 
-                IWeb3Identity identity = await FetchIdentityByIdAsync(webRequestController, identityId, IWeb3Identity.Web3IdentitySource.Dapp, ct);
+                IWeb3Identity identity = await FetchIdentityByIdAsync(webRequestController, identityId, IWeb3Identity.Web3IdentitySource.Deeplink, ct);
 
                 await DisconnectFromAuthApiAsync();
 
@@ -130,7 +130,7 @@ namespace DCL.Web3.Authenticators
         ///     Fetches a stored identity by its opaque id via <c>GET {authApiUrl}/identities/{id}</c> and reconstructs a
         ///     fully-formed <see cref="DecentralandIdentity" />.
         /// </summary>
-        private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(IWebRequestController requestController, string identityId, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
+        public async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(IWebRequestController requestController, string identityId, IWeb3Identity.Web3IdentitySource source, CancellationToken ct)
         {
             urlBuilder.Clear();
 
