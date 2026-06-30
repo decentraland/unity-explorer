@@ -6,13 +6,13 @@ The Unity project is built automatically on certain triggers by a combination of
 
 There are two main workflows that handle all major builds:
 - `build-unitycloud`
-- `build-release-weekly`
+- `build-release-main`
 
-The main workflow is `build-unitycloud`, which will be automatically triggered by commits and PRs to `main`, or by a manual workflow dispatch call.
+The main workflow is `build-unitycloud`, which is automatically triggered by pushes to `dev`, by pull requests, by the merge queue, or by a manual workflow dispatch call.
 By default, PRs marked as draft will not trigger the build. If this is something you want, you need to add a label `force-build` to this PR.
 
-The `build-release-weekly` workflow mostly wraps & handles `build-unitycloud` for release, and currently it's triggered manually with a workflow dispatch call.
-The release build would create a new target based on the version, which means that this does not block `main` branch and merging to main can continue.
+The `build-release-main` workflow wraps `build-unitycloud` for releases; it is triggered by pushes to `main` and by manual workflow dispatch.
+Release, hotfix, and `main` builds share a single stable cache target per platform — the *release pool* — instead of a per-version target, so the cache is reused across releases without blocking `main`. See [Cache](#cache).
 
 ## GitHub Workflow
 
@@ -35,7 +35,7 @@ These are all currently set by the workflow:
 - `TARGET`: Template build config to use for builds
 - `BRANCH_NAME`: Name of the branch that triggered this build
 - `CLEAN_BUILD`: Triggers a clean build that forces a reimport of library folder, and not using any caching
-- `CACHE_STRATEGY`: Defines what strategy we want to use for caching (available options: `none`, `library`, `workspace`, `inherit`). This affects the speed of next build. By default it's set to `workspace`
+- `CACHE_STRATEGY`: Sets the target's `remoteCacheStrategy` — whether a target reuses **its own** cache between builds (options: `none`, `library`, `workspace`, `inherit`). The `build-unitycloud` workflow defaults it to `library`; release builds use `library`. See [Cache](#cache)
 - `COMMIT_SHA`: The SHA value of the commit that this build is triggered on
 - `BUILD_OPTIONS`: Any Unity BuildOptions to define for the build
 - `PARAM_<NAME>`: Any ENV variables starting with `PARAM_` will be passed to Unity without the prefix to be used with `Editor.CloudBuild.Parameters[]`
@@ -67,8 +67,9 @@ The Unity Cloud Build (Unity Cloud DevOps) is the environment where builds execu
 
 Only one build config can run at the same time. Therefore a "template" config build (named `@T_<TARGET_NAME>`) must be created for each target.
 
-Each build currently clones this template and renames it using the format `TARGET_NAME-BRANCH`.
-If a build is already triggered for the same target and a new commit is applied, it will cancel the previous build automatically.
+Each build clones this template and renames it based on the branch (see [Cache](#cache) for the full naming scheme). If a build is already running for the same target and a new commit is applied, the previous build is cancelled automatically.
+
+Because `main`, `release/*`, and `hotfix/*` builds all share one *release pool* target per platform, builds on those branches serialize against each other — a new one cancels a pending one on the same target. This is fine for the sequential release/hotfix cadence, but two of them running at once on the same platform will contend.
 
 ### Storage
 
@@ -76,8 +77,59 @@ All build artefacts are stored in the GitHub workflow run after the build is fin
 
 ### Cache
 
-Cache usage and level can be controlled by the template config build or by the `CACHE_STRATEGY` param.
-To update the cache or change settings of the template, the template itself must be run manually in the Unity Cloud Build UI.
+Caching is what keeps build times down: the bulk of a cold build is shader-variant compilation (historically ~55 min of an ~82 min release build). Two **independent** Unity Cloud mechanisms control it — don't confuse them:
+
+| Mechanism | Scope | What it does |
+|---|---|---|
+| `remoteCacheStrategy` (set via `CACHE_STRATEGY`) | one target, across its own builds | Whether a target keeps and reuses **its own** Library/shader cache between consecutive builds. Options: `none`, `library`, `workspace`, `inherit`. |
+| `buildTargetCopyCache` | one-time copy **from another target** | The **only** way cache crosses targets: a one-shot copy of a source target's cache into a target when it is created/updated. Not a live mirror — after the copy the two targets diverge. |
+
+**There is no implicit cross-target sharing.** Targets do not share cache because they have the same Unity version, the same platform, or belong to the same Unity Cloud **build-target group** (groups are organizational only — they carry no cache semantics). The single cross-target channel is the explicit `buildTargetCopyCache` copy in `build.py`.
+
+#### Target naming *is* cache identity
+
+Cache lives per target, so the target a build uses determines the cache it uses. `clone_current_target` derives the name from the branch:
+
+| Branch | Target name | Cache source |
+|---|---|---|
+| `dev` | `{platform}-dev` (e.g. `windows64-dev`) | its own |
+| feature / PR | `{platform}-{sanitized-branch}` | seeded once from `{platform}-dev` |
+| `main`, `release/*`, `hotfix/*` | `{platform}-release[-{install_source}]` — the **shared release pool** | its own, shared across all release/hotfix/main builds |
+
+`{install_source}` is appended only when it is not `launcher` (e.g. `-epic`), so each distinct artifact gets its own pool: `windows64-release`, `windows64-release-epic`, `macos-release`, …
+
+#### The shared release pool
+
+`main`, `release/*`, and `hotfix/*` builds all resolve to **one stable target per platform + install source**, so the Library + shader cache is **maintained and reused across releases** instead of compiled cold every time. Properties:
+
+- **Keyed on the branch, not on `IS_RELEASE_BUILD`.** Release builds run with that flag unset, so the branch name is the reliable discriminator. dev and feature branches are deliberately *not* in the pool.
+- **Cold genesis, isolated from dev.** The pool target is created with **no** `buildTargetCopyCache`, so it never copies dev's cache. Its first build is cold (and populates the cache); every later release reuses the pool's own cache. dev/feature targets keep their own caches and never reference the pool — isolation is bidirectional.
+- **Protected from deletion.** `pr-closure.yml` runs `build.py --delete` on every closed PR; `delete_current_target` refuses to delete the pool targets so the cross-release cache is never wiped.
+
+Turned on from `build-release-main.yml` via `cache_strategy: library` + `clean_build: false`.
+
+#### Where `buildTargetCopyCache` is applied
+
+`generate_body` strips it from every request body first; `clone_current_target` then re-adds it in only two cases — and only one of those copies from a *different* target:
+
+| Situation | `buildTargetCopyCache` |
+|---|---|
+| New target, release pool (cold genesis) | *not set* — no copy |
+| New target, dev / feature | `{platform}-dev` — **copy from dev** (the only cross-target copy) |
+| Existing target (any branch) | the target **itself** — a self-reference ("reuse my own"), not a cross-target pull |
+
+So the one line that copies *from another target* is the dev seed for a fresh dev/feature target; the release pool never reaches it.
+
+#### Confirming cache behavior from CI
+
+Two signals per build, no extra tooling:
+
+- **Which pool a build used** — `build.py` logs `Updated name for target: <target>` in the *Execute Unity Cloud build* step. The same target name across branches means the same cache.
+- **Whether cache was actually reused** — the *Generate Shader Compilation Report* step (and its uploaded artifact) prints `Remote Cache Hits: N` and `Total Variants Compiled: N`. Non-zero hits with ~0 variants compiled = warm; `0` hits with many variants = cold.
+
+A new pool target whose **first** build shows `Remote Cache Hits: 0` and whose **next** build shows non-zero hits is simultaneously the proof of reuse and the proof of isolation (it can only reuse what it built itself).
+
+To change the template defaults, run the template config (`@T_<TARGET_NAME>`) manually in the Unity Cloud Build UI.
 
 ### Rebuilding
 
