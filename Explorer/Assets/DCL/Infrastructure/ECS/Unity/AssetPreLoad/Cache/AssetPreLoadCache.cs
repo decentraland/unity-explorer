@@ -29,6 +29,7 @@ namespace ECS.Unity.AssetLoad.Cache
 
         private readonly IGltfContainerAssetsCache gltfCache;
         private readonly Dictionary<string, object> cache = new ();
+        private readonly Dictionary<string, VideoTemplateData> videoCache = new ();
 
         public AssetPreLoadCache(IGltfContainerAssetsCache gltfCache)
         {
@@ -63,24 +64,11 @@ namespace ECS.Unity.AssetLoad.Cache
             instance.Dispose();
         }
 
-        /// <summary>
-        ///     Stores resolved-URL metadata only — no live player is retained, so there is nothing to
-        ///     ref-count or dispose on teardown.
-        /// </summary>
         public bool TryAddVideo(string key, in VideoTemplateData data) =>
-            cache.TryAdd(key, data);
+            videoCache.TryAdd(key, data);
 
-        public bool TryGetVideoTemplate(string key, out VideoTemplateData data)
-        {
-            if (cache.TryGetValue(key, out object? value) && value is VideoTemplateData typedValue)
-            {
-                data = typedValue;
-                return true;
-            }
-
-            data = default;
-            return false;
-        }
+        public bool TryGetVideoTemplate(string key, out VideoTemplateData data) =>
+            videoCache.TryGetValue(key, out data);
 
         public bool TryAdd<T>(string key, T asset)
         {
@@ -139,6 +127,7 @@ namespace ECS.Unity.AssetLoad.Cache
                 }
 
             cache.Clear();
+            videoCache.Clear();
         }
     }
 }

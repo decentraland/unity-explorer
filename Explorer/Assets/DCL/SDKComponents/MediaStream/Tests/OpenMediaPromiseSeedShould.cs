@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
         private static readonly MediaAddress RESOLVED = MediaAddress.New("https://cdn.example/direct.mp4");
 
         private static VideoTemplateData Template() =>
-            new (RESOLVED, ORIGINAL, isReachable: true, isLiveStream: true, resolvedUrlExpiresAt: 1234.5f);
+            new (RESOLVED, ORIGINAL, new ResolvedMediaUrl("https://cdn.example/direct.mp4", isReachable: true, isLiveStream: true, expiresAtRealtimeSinceStartup: 1234.5f));
 
         [Test]
         public void LeaveResolvedNotConsumed_SoConsumerStillOpensItsOwnStream()
@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
             var promise = new OpenMediaPromise();
             promise.SeedResolved(Template());
 
-            // IsReachableConsume compares against the pre-resolution address (what the component stores).
+            // consume matches against the pre-resolution address, not the resolved one
             Assert.IsTrue(promise.IsReachableConsume(ORIGINAL));
             Assert.IsTrue(promise.IsConsumed);
         }
@@ -49,9 +49,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
 
             Assert.AreEqual(original.ResolvedAddress.ToString(), roundTripped.ResolvedAddress.ToString());
             Assert.AreEqual(original.OriginalAddress.ToString(), roundTripped.OriginalAddress.ToString());
-            Assert.AreEqual(original.IsReachable, roundTripped.IsReachable);
-            Assert.AreEqual(original.IsLiveStream, roundTripped.IsLiveStream);
-            Assert.AreEqual(original.ResolvedUrlExpiresAt, roundTripped.ResolvedUrlExpiresAt);
+            Assert.AreEqual(original.Resolved.IsReachable, roundTripped.Resolved.IsReachable);
+            Assert.AreEqual(original.Resolved.IsLiveStream, roundTripped.Resolved.IsLiveStream);
+            Assert.AreEqual(original.Resolved.ExpiresAtRealtimeSinceStartup, roundTripped.Resolved.ExpiresAtRealtimeSinceStartup);
         }
     }
 }

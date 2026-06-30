@@ -187,8 +187,8 @@ namespace DCL.SDKComponents.MediaStream
             if (!address.IsLivekitAddress(out _) && assetPreLoadCache.TryGetVideoTemplate(url, out VideoTemplateData template))
             {
                 component.OpenMediaPromise.SeedResolved(template);
-                component.IsLiveStream = template.IsLiveStream;
-                component.ResolvedUrlExpiresAt = template.ResolvedUrlExpiresAt;
+                component.IsLiveStream = template.Resolved.IsLiveStream;
+                component.ResolvedUrlExpiresAt = template.Resolved.ExpiresAtRealtimeSinceStartup;
                 seededFromCache = true;
             }
 

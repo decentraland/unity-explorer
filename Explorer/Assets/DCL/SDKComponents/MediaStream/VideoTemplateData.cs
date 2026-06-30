@@ -6,24 +6,15 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public readonly struct VideoTemplateData
     {
-        /// <summary>Post-resolution direct URL that OpenMedia consumes.</summary>
         public readonly MediaAddress ResolvedAddress;
-
-        /// <summary>Pre-resolution address, unchanged by URL redirection.</summary>
         public readonly MediaAddress OriginalAddress;
+        public readonly ResolvedMediaUrl Resolved;
 
-        public readonly bool IsReachable;
-        public readonly bool IsLiveStream;
-        public readonly float ResolvedUrlExpiresAt;
-
-        public VideoTemplateData(MediaAddress resolvedAddress, MediaAddress originalAddress, bool isReachable,
-            bool isLiveStream, float resolvedUrlExpiresAt)
+        public VideoTemplateData(MediaAddress resolvedAddress, MediaAddress originalAddress, ResolvedMediaUrl resolved)
         {
             ResolvedAddress = resolvedAddress;
             OriginalAddress = originalAddress;
-            IsReachable = isReachable;
-            IsLiveStream = isLiveStream;
-            ResolvedUrlExpiresAt = resolvedUrlExpiresAt;
+            Resolved = resolved;
         }
     }
 }
