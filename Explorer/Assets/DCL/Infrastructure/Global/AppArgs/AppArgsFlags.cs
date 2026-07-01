@@ -31,6 +31,8 @@ namespace Global.AppArgs
         /// </summary>
         public const string COMMUNITY = "community";
 
+        public const string SIGNIN = "signin";
+
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
@@ -77,6 +79,8 @@ namespace Global.AppArgs
         public const string NAME_COLOR_CHANGE = "name-color-change";
 
         public const string EMAIL_OTP_AUTH = "email-otp-auth";
+
+        public const string AUTH_DEEPLINK_FLOW = "auth-deeplink-flow";
 
         public const string AVATAR_HIGHLIGHT = "avatar-highlight";
 

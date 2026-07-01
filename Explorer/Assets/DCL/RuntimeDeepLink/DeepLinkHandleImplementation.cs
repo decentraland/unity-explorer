@@ -16,19 +16,31 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
+        private readonly IDeeplinkSigninDispatcher deeplinkSigninDispatcher;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IDeeplinkSigninDispatcher deeplinkSigninDispatcher)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
+            this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
         }
 
         public string Name => "Real Implementation";
 
         public Result HandleDeepLink(DeepLink deeplink)
         {
+            // Signin takes precedence over realm/position/community routing and returns before any teleport or
+            // community notification is triggered.
+            string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
+
+            if (!string.IsNullOrEmpty(signin))
+            {
+                deeplinkSigninDispatcher.Dispatch(signin);
+                return Result.SuccessResult();
+            }
+
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
@@ -37,7 +49,7 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                if(position.HasValue)
+                if (position.HasValue)
                     chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token).Forget();
                 else
                     chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();

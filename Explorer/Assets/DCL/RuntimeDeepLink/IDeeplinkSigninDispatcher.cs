@@ -1,0 +1,33 @@
+using System;
+
+namespace DCL.RuntimeDeepLink
+{
+    /// <summary>
+    ///     Single-event pub/sub for <c>signin</c> deep links. Bridges the cold-start delivery (the deep link arrives
+    ///     as a command-line argument before the auth state machine subscribes) and the warm-start delivery (the deep
+    ///     link arrives at runtime via <c>DeepLinkSentinel</c>) by replaying the most recent unconsumed signin to a
+    ///     late subscriber.
+    /// </summary>
+    public interface IDeeplinkSigninDispatcher
+    {
+        /// <summary>
+        ///     Subscribes to incoming signin deep links. Replays the most recent unconsumed signin immediately if one
+        ///     is buffered. Dispose the returned handle to stop listening and clear the buffer.
+        /// </summary>
+        /// <param name="onSigninReceived">Invoked with the <c>identityId</c> carried by the deep link.</param>
+        /// <param name="expectedRequestId">
+        ///     Forward-compatible correlation key. Unused in Stage 1; in Stage 2 the dispatcher drops any dispatch
+        ///     whose <c>sourceRequestId</c> does not match.
+        /// </param>
+        IDisposable Subscribe(Action<string> onSigninReceived, string? expectedRequestId = null);
+
+        /// <summary>
+        ///     Delivers a signin deep link to the active subscriber, or buffers it for the next subscriber.
+        /// </summary>
+        /// <param name="identityId">The opaque identity id carried by the deep link.</param>
+        /// <param name="sourceRequestId">
+        ///     Forward-compatible correlation key carried by the deep link. Unused in Stage 1.
+        /// </param>
+        void Dispatch(string identityId, string? sourceRequestId = null);
+    }
+}

@@ -43,6 +43,7 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
         public const string AUTH_CODE_VALIDATION = "number-validation";
         public const string EMAIL_OTP_AUTH = "alfa-email-otp-auth";
+        public const string AUTH_DEEPLINK_FLOW = "alfa-auth-deeplink-flow";
         [Obsolete("GPU Instancer Pro terrain is no longer optional so the flag is not needed")]
         public const string GPUI_ENABLED = "alfa-gpui";
         public const string LOADING_SCREEN_TIPS = "alfa-loading-screen-tips";

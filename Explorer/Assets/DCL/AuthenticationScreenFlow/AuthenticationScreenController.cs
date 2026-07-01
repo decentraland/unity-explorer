@@ -155,6 +155,8 @@ namespace DCL.AuthenticationScreenFlow
             bool enableEmailOTP = FeaturesRegistry.Instance.IsEnabled(FeatureId.EMAIL_OTP_AUTH);
             viewInstance.LoginSelectionAuthView.EmailOTPContainer.SetActive(enableEmailOTP);
 
+            bool enableDeeplinkFlow = FeaturesRegistry.Instance.IsEnabled(FeatureId.AUTH_DEEPLINK_FLOW);
+
             viewInstance.DiscordButton.onClick.AddListener(OpenSupportUrl);
             viewInstance.ExitButton.onClick.AddListener(ExitApplication);
 
@@ -163,7 +165,7 @@ namespace DCL.AuthenticationScreenFlow
 
             fsm.AddStates(
                 new InitAuthState(viewInstance, installSource),
-                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
+                new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP, enableDeeplinkFlow),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),

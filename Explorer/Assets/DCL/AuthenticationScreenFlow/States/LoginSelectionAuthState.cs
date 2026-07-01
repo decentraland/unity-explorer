@@ -24,11 +24,12 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
         private readonly IWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
+        private readonly bool enableDeeplinkFlow;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider, IWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, IWebBrowser webBrowser, bool enableEmailOTP, bool enableDeeplinkFlow) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -39,6 +40,7 @@ namespace DCL.AuthenticationScreenFlow
             this.compositeWeb3Provider = compositeWeb3Provider;
             this.webBrowser = webBrowser;
             this.enableEmailOTP = enableEmailOTP;
+            this.enableDeeplinkFlow = enableDeeplinkFlow;
 
             // Cancel button persists in the Verification state (until code is shown)
             view.CancelLoginButton.onClick.AddListener(OnCancelBeforeVerification);
@@ -174,7 +176,11 @@ namespace DCL.AuthenticationScreenFlow
             currentState.Value = AuthStatus.LoginRequested;
 
             view.SetLoadingSpinnerVisibility(true);
-            machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
+
+            if (true || enableDeeplinkFlow)
+                machine.Enter<IdentityVerificationDeeplinkAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
+            else
+                machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
         private void OTPLogin()

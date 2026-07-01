@@ -22,7 +22,8 @@ namespace DCL.Web3.Identities
             Cached,
             TokenFile,
             Dapp,
-            OTP
+            OTP,
+            Deeplink
         }
 
         class Random : IWeb3Identity
