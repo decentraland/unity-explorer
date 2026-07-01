@@ -22,16 +22,9 @@ namespace DCL.SocialService
         /// </summary>
         private const int BASE_RETRY_DELAY_SECONDS = 2;
 
-        /// <summary>
-        ///     Maximum delay in seconds between retry attempts (caps the exponential backoff so it
-        ///     cannot grow without bound).
-        /// </summary>
         private const int MAX_RETRY_DELAY_SECONDS = 60;
 
-        /// <summary>
-        ///     A stream that stayed open at least this long is treated as a genuine, established
-        ///     subscription rather than an immediate server-side rejection, so its backoff is reset.
-        /// </summary>
+        // A stream open shorter than this was likely an instant server-side rejection (e.g. duplicate)
         private const int STABLE_STREAM_SECONDS = 30;
 
         public class ServerStreamReportsDebouncer : FrameDebouncer
@@ -83,13 +76,8 @@ namespace DCL.SocialService
                     DateTime streamOpenedAt = DateTime.UtcNow;
                     await openStreamFunc().AttachExternalCancellation(ct);
 
-                    // Reaching this point means the stream completed WITHOUT throwing. For a
-                    // long-lived subscription that is not normal: the social service completes the
-                    // stream immediately when the subscription is a duplicate for this connection,
-                    // so re-opening with no delay hot-loops and hammers the server with
-                    // re-subscribes (the "Duplicate subscription detected" flood). Back off here
-                    // just like the error paths. If the stream actually stayed open for a meaningful
-                    // time, reset the backoff so a genuine reconnect is still prompt.
+                    // A stream that completed instantly was likely rejected as a duplicate — back off.
+                    // If it stayed open long enough to be genuine, reset the backoff counter.
                     if (DateTime.UtcNow - streamOpenedAt >= TimeSpan.FromSeconds(STABLE_STREAM_SECONDS))
                         retryAttempt = 0;
 
