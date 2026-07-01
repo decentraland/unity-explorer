@@ -127,13 +127,9 @@ namespace DCL.SocialService
             || e.Message.Contains("RPC", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Enumerates a server stream while honoring cancellation. A bare <c>await foreach</c> over
-        ///     an RPC server stream cannot be cancelled (the stream's enumerator ignores the token), so
-        ///     when a subscription loop is superseded the stream is abandoned WITHOUT being disposed: no
-        ///     CloseStream message is sent and the server keeps the (now duplicate) subscription alive,
-        ///     which is what drives the client into a re-subscribe loop. Driving <c>MoveNextAsync</c>
-        ///     ourselves and disposing in a <c>finally</c> guarantees <c>DisposeAsync</c> runs on
-        ///     cancellation, which sends the CloseStream message so the server tears the subscription down.
+        ///     Drives <c>MoveNextAsync</c> directly so <c>DisposeAsync</c> always runs in a <c>finally</c> when cancelled.
+        ///     Necessary because the RPC stream's <c>GetAsyncEnumerator</c> ignores the cancellation token, so a plain
+        ///     <c>await foreach</c> abandons the enumerator without disposing it.
         /// </summary>
         protected static async IAsyncEnumerable<T> EnumerateWithCancellationAsync<T>(
             IUniTaskAsyncEnumerable<T> stream,
