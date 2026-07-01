@@ -2,8 +2,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.RealmNavigation;
-using DCL.Utility.Types;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
@@ -29,26 +29,29 @@ namespace DCL.RuntimeDeepLink
 
         public string Name => "Real Implementation";
 
-        public Result HandleDeepLink(DeepLink deeplink)
+        public bool HandleDeepLink(DeepLink deeplink)
         {
             // Signin takes precedence over realm/position/community routing and returns before any teleport or
             // community notification is triggered.
             string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
 
-            Debug.Log($"[DLDBG] HandleDeepLink received: {deeplink} | extracted signin='{signin}'");
-
             if (!string.IsNullOrEmpty(signin))
             {
-                Debug.Log($"[DLDBG] HandleDeepLink dispatching signin='{signin}'");
+                // Only consume the signin when a login flow is actively awaiting it; otherwise leave the bridge
+                // file in place so the instance that is logging in can pick it up.
+                if (!deeplinkSigninDispatcher.HasSubscriber)
+                    return false;
+
                 deeplinkSigninDispatcher.Dispatch(signin);
-                return Result.SuccessResult();
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} dispatched signin deeplink: {deeplink}");
+                return true;
             }
 
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
 
-            var result = Result.ErrorResult("no matches");
+            var handled = false;
 
             if (realm.HasValue)
             {
@@ -57,7 +60,7 @@ namespace DCL.RuntimeDeepLink
                 else
                     chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
 
-                result = Result.SuccessResult();
+                handled = true;
             }
             else if (position.HasValue)
             {
@@ -68,16 +71,22 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
-                result = Result.SuccessResult();
+                handled = true;
             }
 
             if (!string.IsNullOrEmpty(communityId))
             {
                 communityDataService.ShowCommunityDeepLinkNotification(communityId);
-                result = Result.SuccessResult();
+                handled = true;
             }
 
-            return result;
+            if (handled)
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} successfully handled deeplink: {deeplink}");
+            else
+                ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} found no actionable content in deeplink: {deeplink}");
+
+            // Non-signin deep links are always consumed: nothing awaits them, so leaving the file would re-loop.
+            return true;
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)

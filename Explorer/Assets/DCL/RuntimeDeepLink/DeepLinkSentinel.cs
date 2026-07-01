@@ -5,7 +5,6 @@ using DCL.Utility.Types;
 using System;
 using System.IO;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.RuntimeDeepLink
 {
@@ -36,8 +35,6 @@ namespace DCL.RuntimeDeepLink
         /// </summary>
         public static async UniTaskVoid StartListenForDeepLinksAsync(this IDeepLinkHandle handle, CancellationToken token)
         {
-            Debug.Log($"[DLDBG] Sentinel STARTED by '{handle.Name}'. Watching: {DEEP_LINK_BRIDGE_PATH}");
-
             while (token.IsCancellationRequested == false)
             {
                 bool cancelled = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
@@ -46,30 +43,37 @@ namespace DCL.RuntimeDeepLink
                 // File.Exists method is lightweight and can be used in this loop
                 if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
 
-                Debug.Log($"[DLDBG] Sentinel: bridge file FOUND at {DEEP_LINK_BRIDGE_PATH}");
-
                 Result<string> contentResult = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!.SuppressToResultAsync<string>(ReportCategory.RUNTIME_DEEPLINKS);
+
+                // Transient IO read failure: leave the file for the next check-in.
                 if (contentResult.Success == false) continue;
 
-                Debug.Log($"[DLDBG] Sentinel: raw content = {contentResult.Value}");
-
-                // Notify emitter that file has been consumed
-                File.Delete(DEEP_LINK_BRIDGE_PATH);
-
+                // Parse before deleting: a corrupt file is dropped, a valid one is handled.
                 Result<DeepLink> deepLinkCreateResult = DeepLink.FromJson(contentResult.Value);
 
-                if (deepLinkCreateResult.Success)
+                if (deepLinkCreateResult.Success == false)
                 {
-                    DeepLink deeplink = deepLinkCreateResult.Value;
-                    Result handleResult = handle.HandleDeepLink(deeplink);
-
-                    if (handleResult.Success)
-                        ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} successfully handled deeplink: {deeplink}");
-                    else
-                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} raised error on handle deeplink: {deeplink}, error {handleResult.ErrorMessage}");
-                }
-                else
                     ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content: {deepLinkCreateResult.ErrorMessage}");
+                    TryDeleteBridgeFile();
+                    continue;
+                }
+
+                // A false result means no login flow is awaiting the signin yet: keep the file so it can be picked up later.
+                if (handle.HandleDeepLink(deepLinkCreateResult.Value))
+                    TryDeleteBridgeFile();
+            }
+        }
+
+        private static void TryDeleteBridgeFile()
+        {
+            try
+            {
+                File.Delete(DEEP_LINK_BRIDGE_PATH);
+            }
+            catch (Exception e)
+            {
+                // Deletion can fail transiently (file locked/rewritten by the launcher). Log and keep the loop alive.
+                ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Failed to delete deeplink bridge file: {e.Message}");
             }
         }
     }

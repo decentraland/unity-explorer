@@ -70,6 +70,7 @@ namespace DCL.AuthenticationScreenFlow
             try
             {
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
+                viewInstance.LoginSelectionAuthView.Hide();
                 machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (identity, false, ct));
             }
             catch (OperationCanceledException e)
