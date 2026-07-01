@@ -96,8 +96,7 @@ namespace DCL.Communities
                         }
                     }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // No need to handle OperationCancelledException because there are no async calls
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
                 }
             }
