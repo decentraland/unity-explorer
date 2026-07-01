@@ -348,16 +348,37 @@ jobs:
             echo "is-member=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Extract Slack requester tag from PR description
+        if: steps.check-org.outputs.is-member == 'true'
+        id: extract-slack-tag
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Look for a Slack user ID pattern like (<@U0ABC123XYZ>) in the "Requested by" line
+          SLACK_TAG=$(echo "$PR_BODY" | grep -oP '(?<=Requested by ).*?(\(<@U[A-Z0-9]+>\))' | grep -oP '<@U[A-Z0-9]+>' | head -1)
+          if [ -n "$SLACK_TAG" ]; then
+            echo "Found Slack tag: $SLACK_TAG"
+            echo "slack-tag=$SLACK_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Slack tag found in PR description, will use GitHub username"
+            echo "slack-tag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post to Slack #explorer-ext-contributions
         if: steps.check-org.outputs.is-member == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
         run: |
           PR_URL="${{ github.event.pull_request.html_url }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          SLACK_TAG="${{ steps.extract-slack-tag.outputs.slack-tag }}"
+          if [ -n "$SLACK_TAG" ]; then
+            AUTHOR_REF="$SLACK_TAG"
+          else
+            AUTHOR_REF="${{ github.event.pull_request.user.login }}"
+          fi
           curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
-            -d "{\"text\": \"<@U0AJ91P1KBP> review ${PR_URL} (initiated by ${PR_AUTHOR})\"}"
+            -d "{\"text\": \"<@U0AJ91P1KBP> review ${PR_URL} (initiated by ${AUTHOR_REF})\"}"
 
   check-member:
     if: |
