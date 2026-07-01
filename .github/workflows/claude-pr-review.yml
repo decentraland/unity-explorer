@@ -335,7 +335,21 @@ jobs:
       (github.event.action == 'opened' || github.event.action == 'ready_for_review')
     runs-on: ubuntu-latest
     steps:
+      - name: Verify PR author is a decentraland org member
+        id: check-org
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if gh api "/orgs/decentraland/members/$PR_AUTHOR" --silent 2>/dev/null; then
+            echo "is-member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::PR author $PR_AUTHOR is not a member of decentraland org; Slack notification skipped"
+            echo "is-member=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post to Slack #explorer-ext-contributions
+        if: steps.check-org.outputs.is-member == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
         run: |
