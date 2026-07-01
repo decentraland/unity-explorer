@@ -148,7 +148,8 @@ namespace DCL.SocialService
             }
             finally
             {
-                await enumerator.DisposeAsync();
+                try { await enumerator.DisposeAsync(); }
+                catch (Exception) { /* best-effort — stream may already be closed */ }
             }
         }
     }
