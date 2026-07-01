@@ -9,12 +9,43 @@ on:
     types: [opened, synchronize, ready_for_review]
 
 jobs:
-  auto-review:
+  check-author:
     if: |
       github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr')
+    runs-on: ubuntu-latest
+    outputs:
+      is-team-dev: ${{ steps.check.outputs.is-team-dev }}
+    steps:
+      - name: Checkout config file
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/auto_assign_config_dev.yml
+          fetch-depth: 1
+
+      - name: Check if PR author is a team dev
+        id: check
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+          echo "Team devs:"
+          echo "$TEAM_DEVS"
+          if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+            echo "Author $PR_AUTHOR is a team dev"
+            echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Author $PR_AUTHOR is NOT a team dev"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  auto-review:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: claude-auto-review-${{ github.event.pull_request.number }}
@@ -295,6 +326,24 @@ jobs:
           echo "Re-running failed enforce-approvals workflow: $WORKFLOW_RUN_ID"
           gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
           echo "Re-run triggered successfully."
+
+  notify-ext-contribution:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'false' &&
+      (github.event.action == 'opened' || github.event.action == 'ready_for_review')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Slack #explorer-ext-contributions
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
+        run: |
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\": \"<@U0AJ91P1KBP> review ${PR_URL} (initiated by ${PR_AUTHOR})\"}"
 
   check-member:
     if: |
