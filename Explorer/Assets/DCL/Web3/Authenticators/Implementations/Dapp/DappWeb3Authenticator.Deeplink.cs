@@ -7,6 +7,7 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Nethereum.Signer;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,46 +21,35 @@ namespace DCL.Web3.Authenticators
         // deep link back to this process; this can take much longer than a socket round-trip.
         private const int DEEPLINK_TIMEOUT_SECONDS = 300;
 
-        // Deep-link sign-in collaborators. Not yet wired through the constructor: the production wiring
-        // (web request controller + signin dispatcher) is the next step.
+        // Deep-link sign-in collaborators, wired through the constructor on the production path (see BootstrapContainer).
         private readonly IWebRequestController? webRequestController;
         private readonly IDeeplinkSigninDispatcher? deeplinkSigninDispatcher;
 
         /// <summary>
-        ///     Identity-based deep-link sign-in. Same setup as <see cref="LoginAsync2" /> (mutex, socket connect, emit
-        ///     "request" to obtain a requestId, open the browser) but the URL carries <c>flow=deeplink</c> and this method
-        ///     does NOT subscribe to the socket "outcome" event. Instead it awaits the <see cref="deeplinkSigninDispatcher" />
-        ///     for the <c>identityId</c> that the browser delivers via an OS-routed deep link, then resolves the identity
-        ///     via <see cref="FetchIdentityByIdAsync" /> (GET /identities/{id}).
+        ///     Identity-based deep-link sign-in. Mints a <c>requestId</c> with a single <c>POST {authApiUrl}/requests</c>
+        ///     (body: <c>{ "method": "dcl_personal_sign", "params": [ephemeralMessage] }</c>), builds the browser URL with
+        ///     <c>flow=deeplink</c> and opens it, then awaits the <see cref="deeplinkSigninDispatcher" /> for the
+        ///     <c>identityId</c> that the browser delivers via an OS-routed deep link, and resolves the identity via
+        ///     <see cref="FetchIdentityByIdAsync" /> (GET /identities/{id}).
         ///
         ///     The browser owns the ephemeral keypair in this flow: it generates the keypair, builds the full AuthIdentity
         ///     and POSTs it to <c>/identities</c>, ignoring any ephemeral params Unity sends. The final identity is therefore
-        ///     resolved entirely from the fetcher; the local ephemeral generated below is NOT used to build it. The
-        ///     <c>dcl_personal_sign</c> "request" emit is still required: auth-app's RequestPage needs a <c>requestId</c> in
-        ///     its URL path, and the server only mints that <c>requestId</c> in response to the emit. We keep the emit's
-        ///     message byte-identical to <see cref="LoginAsync2" /> (the proven, server-accepted form).
+        ///     resolved entirely from the fetcher; the local ephemeral generated below is NOT used to build it. It only
+        ///     serves as the body of the <c>/requests</c> POST that mints the <c>requestId</c> auth-app's RequestPage needs
+        ///     in its URL path.
         /// </summary>
         public async UniTask<IWeb3Identity> LoginViaDeeplinkAsync(LoginPayload payload, CancellationToken ct)
         {
             if (webRequestController == null || deeplinkSigninDispatcher == null)
                 throw new Web3Exception($"{nameof(LoginViaDeeplinkAsync)} requires the web request controller and the signin dispatcher to be wired (production path only).");
 
+            // Serialize with other web3 operations so the shared urlBuilder is not mutated concurrently.
             await mutex.WaitAsync(ct);
-
-#if !UNITY_WEBGL
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
-#endif
 
             try
             {
-                await UniTask.SwitchToMainThread(ct);
-
-                await ConnectToAuthApiAsync();
-
-                // Emit "request" exactly like LoginAsync to mint a requestId for the browser URL. The local ephemeral is
-                // not used to build the final identity (the browser owns the real keypair; we resolve via the fetcher),
-                // but we still send the standard well-formed message so the server accepts the emit and recover(requestId)
-                // returns a valid request.
+                // The local ephemeral is not used to build the final identity (the browser owns the real keypair; we
+                // resolve via the fetcher), but it is the well-formed message the server signs into the minted request.
                 var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
                 DateTime sessionExpiration = identityExpirationDuration != null
@@ -68,46 +58,51 @@ namespace DCL.Web3.Authenticators
 
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new LoginAuthApiRequest
-                {
-                    method = "dcl_personal_sign",
-                    @params = new object[] { ephemeralMessage },
-                }, ct);
+                CreateRequestResponseDto createRequestResponse = await CreateSigninRequestAsync(webRequestController, ephemeralMessage, ct);
 
+                if (string.IsNullOrEmpty(createRequestResponse.requestId))
+                    throw new Web3Exception("Cannot solve auth request id");
+
+                // OpenUrl routes through Application.OpenURL, which must run on the main thread.
                 await UniTask.SwitchToMainThread(ct);
 
-                string url = $"{signatureWebAppUrl}/{authenticationResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
+                string url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
 
                 webBrowser.OpenUrl(url);
 
                 // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId};
-                // the OS routes it to DeepLinkHandle, which dispatches it here. We do not listen to socket "outcome".
+                // the OS routes it to DeepLinkHandle, which dispatches it here.
                 string identityId = await WaitForSigninAsync(deeplinkSigninDispatcher, ct);
 
-                IWeb3Identity identity = await FetchIdentityByIdAsync(webRequestController, identityId, IWeb3Identity.Web3IdentitySource.Deeplink, ct);
-
-                await DisconnectFromAuthApiAsync();
-
-                return identity;
-            }
-            catch (Exception)
-            {
-                await DisconnectFromAuthApiAsync();
-                throw;
+                return await FetchIdentityByIdAsync(webRequestController, identityId, IWeb3Identity.Web3IdentitySource.Deeplink, ct);
             }
             finally
             {
-#if !UNITY_WEBGL
-                if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
-                else
-                    await UniTask.SwitchToMainThread(CancellationToken.None);
-#else
-                await UniTask.SwitchToMainThread(CancellationToken.None);
-#endif
-
                 mutex.Release();
             }
+        }
+
+        /// <summary>
+        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>. The browser later recovers the
+        ///     request by that id to drive the wallet signature.
+        /// </summary>
+        private async UniTask<CreateRequestResponseDto> CreateSigninRequestAsync(IWebRequestController requestController, string ephemeralMessage, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+
+            urlBuilder.AppendDomain(URLDomain.FromString(authApiUrl))
+                      .AppendPath(new URLPath("requests"));
+
+            var commonArguments = new CommonArguments(urlBuilder.Build());
+
+            string body = JsonConvert.SerializeObject(new LoginAuthApiRequest
+            {
+                method = "dcl_personal_sign",
+                @params = new object[] { ephemeralMessage },
+            });
+
+            return await requestController.PostAsync(commonArguments, GenericPostArguments.CreateJson(body), ct, ReportCategory.AUTHENTICATION)
+                                          .CreateFromNewtonsoftJsonAsync<CreateRequestResponseDto>();
         }
 
         /// <summary>
@@ -152,6 +147,14 @@ namespace DCL.Web3.Authenticators
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain, source);
+        }
+
+        [Serializable]
+        private struct CreateRequestResponseDto
+        {
+            public string requestId;
+            public string expiration;
+            public int code;
         }
 
         [Serializable]
