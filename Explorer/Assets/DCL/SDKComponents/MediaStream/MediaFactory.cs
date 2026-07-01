@@ -34,6 +34,7 @@ namespace DCL.SDKComponents.MediaStream
 
         private readonly ISceneData sceneData;
         private readonly IRoom streamingRoom;
+        private readonly AvatarPlaceHolderTextureSource? placeholderSource;
         private readonly MediaPlayerCustomPool mediaPlayerPool;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MediaVolume mediaVolume;
@@ -48,10 +49,11 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaFactory(ISceneData sceneData, IRoom streamingRoom, MediaPlayerCustomPool mediaPlayerPool, ISceneStateProvider sceneStateProvider, MediaVolume mediaVolume,
             IObjectPool<RenderTexture> videoTexturesPool, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, World world, IWebRequestController webRequestController, IPerformanceBudget frameBudget,
-            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController)
+            AssetPreLoadCache assetPreLoadCache, IAnalyticsController analyticsController, AvatarPlaceHolderTextureSource? placeholderSource)
         {
             this.sceneData = sceneData;
             this.streamingRoom = streamingRoom;
+            this.placeholderSource = placeholderSource;
             this.mediaPlayerPool = mediaPlayerPool;
             this.videoTexturesPool = videoTexturesPool;
             this.entitiesMap = entitiesMap;
@@ -176,9 +178,9 @@ namespace DCL.SDKComponents.MediaStream
             else
             {
                 MultiMediaPlayer player = address.Match(
-                    (streamingRoom, mediaPlayerPool),
+                    (streamingRoom, mediaPlayerPool, placeholderSource),
                     onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
-                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom))
+                    onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.streamingRoom, ctx.placeholderSource))
                 );
 
                 component = new MediaPlayerComponent(player, url.Contains(CONTENT_SERVER_PREFIX))

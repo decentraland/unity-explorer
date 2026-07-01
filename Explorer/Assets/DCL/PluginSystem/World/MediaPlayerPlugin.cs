@@ -36,20 +36,32 @@ namespace DCL.PluginSystem.World
             this.mediaFactory = mediaFactory;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            mediaPlayerPluginWrapper?.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners) =>
             mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies, systemsDependencies.RoomHub, finalizeWorldSystems, sceneIsCurrentListeners);
 
         public UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
+            AvatarPlaceHolderTextureSource? placeholderSource = null;
+
+            // The placeholder builds an offscreen camera + render texture eagerly, so only create it on
+            // platforms where the LiveKit media feature is actually compiled in (see MediaPlayerPluginWrapper).
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
+            placeholderSource = new AvatarPlaceHolderTextureSource(settings.CameraOffPlaceholder);
+#endif
+
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(
                 frameTimeBudget,
                 exposedCameraData,
                 settings.FadeSpeed,
                 settings.VideoPrioritizationSettings,
                 mediaFactory,
-                settings.FlipMaterial
+                settings.FlipMaterial,
+                placeholderSource
             );
 
             return UniTask.CompletedTask;
@@ -61,6 +73,9 @@ namespace DCL.PluginSystem.World
             [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
             [field: SerializeField] public Material FlipMaterial { get; private set; }
+
+            [field: SerializeField] [field: Tooltip("Shown on LiveKit screens when the streamer turns their camera off. Falls back to black if unset.")]
+            public Texture2D CameraOffPlaceholder { get; private set; }
 
             public VideoPrioritizationSettings VideoPrioritizationSettings;
         }

@@ -239,13 +239,12 @@ namespace DCL.SDKComponents.MediaStream
                     return;
             }
 
-            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer))
+            // No active LiveKit stream — render black. A muted camera does NOT reach this branch: the
+            // track stays open (IsVideoOpened is true) and LastTexture returns the placeholder instead.
+            if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer? livekitPlayer) && livekitPlayer is { IsVideoOpened: false })
             {
-                if (!livekitPlayer.IsVideoOpened)
-                {
-                    RenderBlackTexture(ref assignedTexture);
-                    return;
-                }
+                RenderBlackTexture(ref assignedTexture);
+                return;
             }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
