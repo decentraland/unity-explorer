@@ -2,11 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.RuntimeDeepLink;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using Newtonsoft.Json;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
@@ -67,8 +65,6 @@ namespace DCL.Web3.Authenticators
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
             DecentralandEnvironment environment, ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
-            IWebRequestController? webRequestController = null,
-            IDeeplinkSigninDispatcher? deeplinkSigninDispatcher = null,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -81,8 +77,6 @@ namespace DCL.Web3.Authenticators
             this.readOnlyMethods = readOnlyMethods;
             this.environment = environment;
             this.codeVerificationFeatureFlag = codeVerificationFeatureFlag;
-            this.webRequestController = webRequestController;
-            this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -147,7 +141,7 @@ namespace DCL.Web3.Authenticators
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
-            await LoginViaDeeplinkAsync(payload, ct);
+            await LoginAsync2(payload, ct);
 
         /// <summary>
         ///     1. An authentication request is sent to the server

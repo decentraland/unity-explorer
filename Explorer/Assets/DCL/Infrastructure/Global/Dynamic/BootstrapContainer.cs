@@ -223,12 +223,22 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 dclEnvironment,
                 new AuthCodeVerificationFeatureFlag(),
+                identityExpirationDuration
+            );
+
+            // Deep-link sign-in is a self-contained authenticator; the socket-based DappWeb3Authenticator above stays
+            // responsible for the IEthereumApi signature/confirmation flow only.
+            var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
+                webBrowser,
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                web3AccountFactory,
                 webRequestController,
                 deeplinkSigninDispatcher,
                 identityExpirationDuration
             );
 
-            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, identityCache, container.Controller);
+            ICompositeWeb3Provider result = new CompositeWeb3Provider(thirdWebAuth, dappAuth, dappDeepLinkAuth, identityCache, container.Controller);
 
             return result;
         }

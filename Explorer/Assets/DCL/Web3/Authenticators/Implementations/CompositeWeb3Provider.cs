@@ -18,6 +18,7 @@ namespace DCL.Web3.Authenticators
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
         private readonly DappWeb3Authenticator dappAuth;
+        private readonly IWeb3Authenticator dappLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
@@ -38,17 +39,19 @@ namespace DCL.Web3.Authenticators
 
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappLogin;
         private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
             DappWeb3Authenticator dappAuth,
+            DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
             IAnalyticsController analytics)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
             this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
+            this.dappLogin = dappLogin ?? throw new ArgumentNullException(nameof(dappLogin));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
@@ -57,6 +60,7 @@ namespace DCL.Web3.Authenticators
         {
             thirdWebAuth.Dispose();
             dappAuth.Dispose();
+            dappLogin.Dispose();
             identityCache.Dispose();
         }
 
