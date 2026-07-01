@@ -57,13 +57,18 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 Loop = loop,
             };
 
+            MediaAddress address = MediaAddress.New(src);
+            var openMediaPromise = new OpenMediaPromise();
+            openMediaPromise.SeedResolved(new VideoTemplateData(address, address, new ResolvedMediaUrl(src, isReachable: true)));
+
             Entity entity = world.Create(pbVideoPlayer,
                 new MediaPlayerComponent
                 {
                     MediaPlayer = mediaPlayerGameObject,
                     URL = src,
+                    MediaAddress = address,
                     Cts = new CancellationTokenSource(),
-                    OpenMediaPromise = new OpenMediaPromise { url = src, status = OpenMediaPromise.Status.Resolved, isReachable = true },
+                    OpenMediaPromise = openMediaPromise,
                 },
                 PartitionComponent.TOP_PRIORITY); // Create entity
 
