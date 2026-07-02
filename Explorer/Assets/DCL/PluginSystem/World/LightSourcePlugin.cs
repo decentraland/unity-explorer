@@ -80,11 +80,12 @@ namespace DCL.PluginSystem.World
             await CreateLightSourcePoolAsync(lightSourcePrefab, ct);
         }
 
-        private async UniTask CreateLightSourcePoolAsync(Light lightSourcePrefab, CancellationToken ct)
+        private UniTask CreateLightSourcePoolAsync(Light lightSourcePrefab, CancellationToken ct)
         {
             lightPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(lightSourcePrefab, Vector3.zero, quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
 
             cacheCleaner.Register(lightPoolRegistry);
+            return UniTask.CompletedTask;
         }
 
         private void OnPoolRelease(Light light)
