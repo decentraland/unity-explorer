@@ -45,6 +45,9 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
+        private const float STUCK_EMOTE_STOP_RETRY_PERIOD = 1f;
+        private const float EMOTE_OVERRUN_GRACE = 1f;
+
         private static readonly string SCENE_EMOTE_PREFIX_WITH_COLON = GetSceneEmoteFromRealmIntention.SCENE_EMOTE_PREFIX + ":";
 
         // todo: use this to add nice Debug UI to trigger any emote?
@@ -90,6 +93,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelMaskedEmotesByDeletionQuery(World);
             UpdateEmoteTagsQuery(World);
             UpdateRemoteMaskedEmoteTagsQuery(World);
+            ForceStopStuckEmotesQuery(World, t);
             DisableCharacterControllerQuery(World);
             CleanUpQuery(World);
         }
@@ -233,10 +237,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             // Legacy emotes keep the Mecanim animator disabled while playing
             avatarView.StopLegacyAnimation();
 
-            // Create a clean slate for the animator before setting the stop trigger
-            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
-            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
-            avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+            ResetAnimatorToStopEmote(avatarView);
 
             // See https://github.com/decentraland/unity-explorer/issues/4198
             // Some emotes changes the armature rotation, we need to restore it
@@ -247,6 +248,14 @@ namespace DCL.AvatarRendering.Emotes.Play
                 messageBus.SendStop();
 
             emoteComponent.Reset();
+        }
+
+        private static void ResetAnimatorToStopEmote(IAvatarView avatarView)
+        {
+            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE);
+            avatarView.ResetAnimatorTrigger(AnimationHashes.EMOTE_RESET);
+            avatarView.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, false);
+            avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
         }
 
         /// <summary>
@@ -262,6 +271,45 @@ namespace DCL.AvatarRendering.Emotes.Play
         [None(typeof(PlayerComponent))]
         private void UpdateRemoteMaskedEmoteTags(ref CharacterMaskedEmoteComponent masked, in IAvatarView avatarView) =>
             EmotePlayer.UpdateMaskedEmoteTag(ref masked, avatarView);
+
+        // This query recovers avatars whose animator remains in an emote-tagged state after the emote should have ended
+        [Query]
+        [None(typeof(CharacterEmoteIntent), typeof(DeleteEntityIntention))]
+        private void ForceStopStuckEmotes([Data] float dt, Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            if (!emoteComponent.IsPlayingEmote)
+            {
+                emoteComponent.PlayingTime = 0f;
+                return;
+            }
+
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+
+            if (emoteReference == null)
+            {
+                emoteComponent.PlayingTime += dt;
+
+                if (emoteComponent.PlayingTime < STUCK_EMOTE_STOP_RETRY_PERIOD) return;
+
+                ReportHub.LogWarning(GetReportData(), "Animator stuck in an emote state without an emote reference, re-issuing the stop trigger");
+                ResetAnimatorToStopEmote(avatarView);
+                emoteComponent.PlayingTime = 0f;
+                return;
+            }
+
+            if (emoteComponent.EmoteLoop || emoteReference.legacy)
+            {
+                emoteComponent.PlayingTime = 0f;
+                return;
+            }
+
+            emoteComponent.PlayingTime += dt;
+
+            if (emoteComponent.PlayingTime < emoteComponent.PlayingEmoteDuration + EMOTE_OVERRUN_GRACE) return;
+
+            ReportHub.LogWarning(GetReportData(), $"Emote {emoteComponent.EmoteUrn} exceeded its expected duration, force-stopping");
+            StopEmote(entity, ref emoteComponent, avatarView);
+        }
 
         // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
