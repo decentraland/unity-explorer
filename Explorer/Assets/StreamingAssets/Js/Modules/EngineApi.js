@@ -2,9 +2,11 @@
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/engine_api.proto
 
 module.exports.crdtSendToRenderer = async function(messages) {
-    const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
+    // The returned value is already a Uint8Array created and bulk-filled on the C# side:
+    // wrapping it in `new Uint8Array(...)` would copy it byte by byte through the interop boundary
+    const data = UnityEngineApi.CrdtSendToRenderer(messages.data)
     return {
-        data: [data]
+        data: data ? [data] : []
     };
 }
 
@@ -22,9 +24,9 @@ module.exports.sendBatch = async function() {
 }
 
 module.exports.crdtGetState = async function() {
-    const data = new Uint8Array(UnityEngineApi.CrdtGetState())
+    const data = UnityEngineApi.CrdtGetState()
     return {
-        data: [data],
+        data: data ? [data] : [],
         hasEntities: true //TODO replace with actual value
     };
 }
