@@ -58,6 +58,10 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
+            // A signin id stored before this attempt minted its request cannot belong to it: drop it
+            // so a stale or foreign deep link does not complete this login with another session's identity.
+            deeplinkSigninIdentityId.Value = null;
+
             // The ephemeral address is embedded in the signed message so the server can mint a well-formed request from it.
             var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -122,12 +126,13 @@ namespace DCL.Web3.Authenticators
                         completion.TrySetResult(identityId);
                 }, ct);
 
-            string identityId = await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct);
-
-            // Consume the id so a future login does not resolve against this same signin.
-            deeplinkSigninIdentityId.Value = null;
-
-            return identityId;
+            try { return await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct); }
+            finally
+            {
+                // Consume the id on success, timeout and cancellation alike, so a later
+                // login attempt never resolves against a signin delivered for this one.
+                deeplinkSigninIdentityId.Value = null;
+            }
         }
 
         private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, CancellationToken ct)

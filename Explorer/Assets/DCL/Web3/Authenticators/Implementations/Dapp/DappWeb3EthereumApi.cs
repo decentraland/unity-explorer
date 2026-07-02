@@ -212,7 +212,11 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask DisconnectFromAuthApiAsync()
+        /// <summary>
+        ///     Drops the auth-api socket and aborts any in-flight browser signature confirmation,
+        ///     so an approval arriving later cannot complete under the previous session.
+        /// </summary>
+        public async UniTask DisconnectFromAuthApiAsync()
         {
             if (authApiWebSocket is { Connected: true })
                 await authApiWebSocket.DisconnectAsync();

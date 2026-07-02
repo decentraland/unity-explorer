@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Global.AppArgs;
@@ -17,14 +18,17 @@ namespace DCL.RuntimeDeepLink
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
+        private readonly bool routeNavigationDeepLinks;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId,
+            bool routeNavigationDeepLinks)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
+            this.routeNavigationDeepLinks = routeNavigationDeepLinks;
         }
 
         public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink)
@@ -35,6 +39,12 @@ namespace DCL.RuntimeDeepLink
             {
                 // The property retains the id, so a login flow that subscribes later still receives it.
                 deeplinkSigninIdentityId.Value = signin;
+                return DeepLinkHandleResult.Consumed;
+            }
+
+            if (!routeNavigationDeepLinks)
+            {
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
                 return DeepLinkHandleResult.Consumed;
             }
 

@@ -74,9 +74,13 @@ namespace DCL.Web3.Authenticators
         {
             analytics.Identify(null);
 
-            // ThirdWeb is the only provider holding a login session of its own; the others have nothing to release.
+            // ThirdWeb is the only provider holding a login session of its own.
             if (IsThirdWebOTP)
                 await thirdWebAuth.LogoutAsync(ct);
+            else
+                // Abort any in-flight browser signature confirmation so an approval arriving
+                // after logout cannot complete under the logged-out session.
+                await dappEthereumApi.DisconnectFromAuthApiAsync();
 
             identityCache.Clear();
         }
