@@ -5,6 +5,7 @@ using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
+using DCL.Passport.Modules.Creations;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using MVC;
@@ -47,6 +48,9 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; }
+
+        [field: SerializeField]
+        public CreationsDetails_PassportModuleView CreationsDetailsModuleView { get; private set; }
 
         [field: SerializeField]
         public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; }

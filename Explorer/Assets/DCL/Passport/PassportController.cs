@@ -46,6 +46,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Passport.Modules.Creations;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
@@ -140,6 +141,7 @@ namespace DCL.Passport
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
         private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
+        private CreationsDetails_PassportModuleController? creationsDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
@@ -333,6 +335,8 @@ namespace DCL.Passport
                 selfProfile,
                 badge3DPreviewCamera,
                 imageControllerProvider);
+
+            creationsDetailsPassportModuleController = new CreationsDetails_PassportModuleController(viewInstance.CreationsDetailsModuleView);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,
@@ -701,7 +705,20 @@ namespace DCL.Passport
                 case PassportSection.PHOTOS:
                     OpenPhotosSection();
                     break;
+                case PassportSection.CREATIONS:
+                    OpenCreationsSection();
+                    break;
             }
+        }
+
+        private void OpenCreationsSection()
+        {
+            if (currentSection == PassportSection.CREATIONS)
+                return;
+
+            currentSection = PassportSection.CREATIONS;
+            viewInstance!.OpenSection(currentSection);
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenPhotosSection()
