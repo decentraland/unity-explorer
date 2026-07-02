@@ -27,7 +27,7 @@ namespace DCL.Web3.Authenticators
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
         private readonly URLAddress signatureWebAppUrl;
         private readonly URLDomain rpcServerUrl;
@@ -49,7 +49,7 @@ namespace DCL.Web3.Authenticators
         private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
 
-        public DappWeb3EthereumApi(IWebBrowser webBrowser,
+        public DappWeb3EthereumApi(UnityAppWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             URLDomain rpcServerUrl,
@@ -424,7 +424,7 @@ namespace DCL.Web3.Authenticators
                     ? $"{signatureWebAppUrl}/{requestId}?loginMethod={method.Value}"
                     : $"{signatureWebAppUrl}/{requestId}";
 
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
             signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();

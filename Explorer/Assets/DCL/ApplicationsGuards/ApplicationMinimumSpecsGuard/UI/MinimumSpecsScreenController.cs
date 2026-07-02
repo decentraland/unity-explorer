@@ -12,7 +12,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsScreenController : ControllerBase<MinimumSpecsScreenView>
     {
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IAnalyticsController analytics;
         private readonly IReadOnlyList<SpecResult> specResult;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
@@ -21,7 +21,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private MinimumSpecsTablePresenter specsTablePresenter;
 
         public MinimumSpecsScreenController(ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IAnalyticsController analytics,
             IReadOnlyList<SpecResult> specResult) : base(viewFactory)
         {
@@ -67,7 +67,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnReadMoreClicked()
         {
-            webBrowser.OpenUrl(DecentralandUrl.MinimumSpecs);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MinimumSpecs);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -39,7 +39,7 @@ namespace DCL.Places
 
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ISystemClipboard clipboard;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly INavmapBus? navmapBus;
@@ -49,7 +49,7 @@ namespace DCL.Places
         public PlacesCardSocialActionsController(
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ISystemClipboard clipboard,
             IDecentralandUrlsSource dclUrlSource,
             INavmapBus? navmapBus,
@@ -194,7 +194,7 @@ namespace DCL.Places
             var description = string.Format(TWITTER_PLACE_DESCRIPTION, placeInfo.title);
             var twitterLink = string.Format(dclUrlSource.Url(DecentralandUrl.TwitterNewPostLink), description, "DCLPlace", GetPlaceCopyLink(placeInfo));
 
-            webBrowser.OpenUrl(twitterLink);
+            webBrowser.OpenUrlMainThreadOnly(twitterLink);
 
             PlaceShared?.Invoke(placeInfo);
         }

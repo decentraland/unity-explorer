@@ -73,7 +73,7 @@ namespace DCL.UI
         private readonly bool isCommunitiesFeatureEnabled;
         private readonly bool isUserBlockingFeatureEnabled;
         private readonly IVoiceChatOrchestratorActions voiceChatOrchestrator;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GenericUserProfileContextMenuSettings contextMenuSettings;
         private readonly ISelfProfile selfProfile;
@@ -121,7 +121,7 @@ namespace DCL.UI
             bool isCommunitiesFeatureEnabled,
             CommunitiesDataProvider communitiesDataProvider,
             IVoiceChatOrchestratorActions voiceChatOrchestrator,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile,
             NearbyMuteService? nearbyMuteService = null)

@@ -111,7 +111,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -203,7 +203,7 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IRealmData realmData,
             IProfileCache profileCache,

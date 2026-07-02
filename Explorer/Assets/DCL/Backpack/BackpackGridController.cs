@@ -43,7 +43,7 @@ namespace DCL.Backpack
         private readonly IObjectPool<BackpackItemView> gridItemsPool;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWearableStorage wearableStorage;
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
@@ -77,7 +77,7 @@ namespace DCL.Backpack
             IObjectPool<BackpackItemView> gridItemsPool,
             IThumbnailProvider thumbnailProvider,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ColorToggleView colorToggle,
             ColorPresetsSO hairColors,
             ColorPresetsSO eyesColors,
@@ -523,6 +523,6 @@ namespace DCL.Backpack
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
     }
 }

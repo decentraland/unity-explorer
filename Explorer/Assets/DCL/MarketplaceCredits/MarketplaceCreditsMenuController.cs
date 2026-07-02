@@ -46,7 +46,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly Animator sidebarCreditsButtonAnimator;
@@ -73,7 +73,7 @@ namespace DCL.MarketplaceCredits
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
@@ -274,10 +274,10 @@ namespace DCL.MarketplaceCredits
             viewInstance?.InfoLinkButtonTooltip.Show();
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrlMainThreadOnly(WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenGoShoppingLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.GoShoppingWithMarketplaceCredits);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {

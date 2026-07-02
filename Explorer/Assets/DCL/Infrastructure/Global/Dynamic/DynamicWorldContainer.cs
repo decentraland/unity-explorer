@@ -225,7 +225,7 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
-            IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
+            UnityAppWebBrowser webBrowser = bootstrapContainer.WebBrowser;
 
             IEmoteStorage emotesCache = staticContainer.EmoteStorage;
 

@@ -22,13 +22,13 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly SplashScreen splashScreen;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly bool enableEmailOTP;
 
         public LoginSelectionAuthState(MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance, AuthenticationScreenController controller,
             ReactiveProperty<AuthStatus> currentState, SplashScreen splashScreen,
-            ICompositeWeb3Provider compositeWeb3Provider, IWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
+            ICompositeWeb3Provider compositeWeb3Provider, UnityAppWebBrowser webBrowser, bool enableEmailOTP) : base(viewInstance)
         {
             view = viewInstance.LoginSelectionAuthView;
 
@@ -202,7 +202,7 @@ namespace DCL.AuthenticationScreenFlow
             view.ErrorPopupRoot.SetActive(false);
 
         private void RequestAlphaAccess() =>
-            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
+            webBrowser.OpenUrlMainThreadOnly(REQUEST_BETA_ACCESS_LINK);
     }
 
     public enum ErrorType

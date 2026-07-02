@@ -45,7 +45,7 @@ namespace DCL.Places
         private readonly IPlacesAPIService placesAPIService;
         private readonly PlacesStateService placesStateService;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly PlacesCardSocialActionsController placesCardSocialActionsController;
         private readonly IFriendsService? friendsService;
         private readonly IMVCManager mvcManager;
@@ -69,7 +69,7 @@ namespace DCL.Places
             IPlacesAPIService placesAPIService,
             PlacesStateService placesStateService,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IFriendsService? friendsService,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IMVCManager mvcManager,
@@ -140,7 +140,7 @@ namespace DCL.Places
             placesController.OpenSection(PlacesSection.BROWSE, force: true, resetCategory: true);
 
         private void GetANameClicked() =>
-            webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
 
         private void TryLoadMorePlaces()
         {

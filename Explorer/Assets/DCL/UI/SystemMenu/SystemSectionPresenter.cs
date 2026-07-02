@@ -21,7 +21,7 @@ namespace DCL.UI.SystemMenu
         public event Action? OnClosed;
 
         private readonly SystemMenuView view;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -36,7 +36,7 @@ namespace DCL.UI.SystemMenu
             SystemMenuView view,
             World world,
             Entity playerEntity,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
@@ -97,10 +97,10 @@ namespace DCL.UI.SystemMenu
         }
 
         private void ShowTermsOfService() =>
-            webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.TermsOfUse);
 
         private void ShowPrivacyPolicy() =>
-            webBrowser.OpenUrl(DecentralandUrl.PrivacyPolicy);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.PrivacyPolicy);
 
 
         private void Logout()

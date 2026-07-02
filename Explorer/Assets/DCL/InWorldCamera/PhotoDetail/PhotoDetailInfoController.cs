@@ -59,7 +59,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             ICameraReelStorageService cameraReelStorageService,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IRealmNavigator realmNavigator,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,

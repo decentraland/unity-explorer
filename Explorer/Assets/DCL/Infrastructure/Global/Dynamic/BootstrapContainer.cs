@@ -43,7 +43,7 @@ namespace Global.Dynamic
         public bool EnableAnalytics => Analytics.Enabled;
         public DiagnosticsContainer DiagnosticsContainer { get; private set; }
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
-        public IWebBrowser WebBrowser { get; private set; }
+        public UnityAppWebBrowser WebBrowser { get; private set; }
         public IWeb3AccountFactory Web3AccountFactory { get; private set; }
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
@@ -181,7 +181,7 @@ namespace Global.Dynamic
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IWeb3AccountFactory web3AccountFactory,
             IWeb3IdentityCache identityCache,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             AnalyticsContainer container,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment dclEnvironment,

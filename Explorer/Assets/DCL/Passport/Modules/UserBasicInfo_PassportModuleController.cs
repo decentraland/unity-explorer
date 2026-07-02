@@ -22,7 +22,7 @@ namespace DCL.Passport.Modules
         private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -38,7 +38,7 @@ namespace DCL.Passport.Modules
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -148,7 +148,7 @@ namespace DCL.Passport.Modules
 
         private void ClaimName()
         {
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.MarketplaceClaimName));
             NameClaimRequested?.Invoke();
         }
     }

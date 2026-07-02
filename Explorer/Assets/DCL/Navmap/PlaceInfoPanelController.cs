@@ -41,7 +41,7 @@ namespace DCL.Navmap
         private readonly HttpEventsApiService eventsApiService;
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly GalleryEventBus galleryEventBus;
         private readonly HomePlaceEventBus homePlaceEventBus;
@@ -73,7 +73,7 @@ namespace DCL.Navmap
             HttpEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IMVCManager mvcManager,
             HomePlaceEventBus homePlaceEventBus,
             IDonationsService donationsService,
@@ -373,7 +373,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void OnLikeButtonClick(bool isEnabled)
         {

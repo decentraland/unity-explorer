@@ -20,7 +20,7 @@ namespace DCL.UI.Profiles
         private readonly IWeb3IdentityCache identityCache;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
@@ -36,7 +36,7 @@ namespace DCL.UI.Profiles
             IWeb3IdentityCache identityCache,
             World world,
             Entity playerEntity,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,

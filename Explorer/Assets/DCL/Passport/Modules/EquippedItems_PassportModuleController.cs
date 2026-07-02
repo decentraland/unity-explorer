@@ -37,7 +37,7 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
@@ -57,7 +57,7 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController)
         {
@@ -197,7 +197,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
                 equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -220,7 +220,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
                 equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrlMainThreadOnly(marketPlaceLink));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;

@@ -25,7 +25,7 @@ namespace DCL.Communities.EventInfo
         
         private readonly EventCardActionsController eventCardActionsController;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
@@ -37,7 +37,7 @@ namespace DCL.Communities.EventInfo
         public EventDetailPanelController(ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController)

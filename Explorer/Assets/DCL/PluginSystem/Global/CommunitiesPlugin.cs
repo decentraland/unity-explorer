@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ChatEventBus chatEventBus;
         private readonly RPCCommunitiesService rpcCommunitiesService;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             HttpEventsApiService eventsApiService,
             ChatEventBus chatEventBus,
             GalleryEventBus galleryEventBus,

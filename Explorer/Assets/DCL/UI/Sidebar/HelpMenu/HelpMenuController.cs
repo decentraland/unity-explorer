@@ -11,7 +11,7 @@ namespace DCL.UI.Sidebar.HelpMenu
     public class HelpMenuController : ControllerBase<HelpMenuView>
     {
         private readonly IMVCManager mvcManager;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly SupportRequestService supportRequestService;
 
         private UniTaskCompletionSource? closeViewTask;
@@ -19,7 +19,7 @@ namespace DCL.UI.Sidebar.HelpMenu
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, IWebBrowser webBrowser, SupportRequestService supportRequestService)
+        public HelpMenuController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, UnityAppWebBrowser webBrowser, SupportRequestService supportRequestService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -69,7 +69,7 @@ namespace DCL.UI.Sidebar.HelpMenu
         private void OnFaqClicked()
         {
             CloseView();
-            webBrowser.OpenUrl(DecentralandUrl.Faqs);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.Faqs);
         }
 
         private void OnContactSupportClicked()
@@ -81,7 +81,7 @@ namespace DCL.UI.Sidebar.HelpMenu
         private void OnDiscordClicked()
         {
             CloseView();
-            webBrowser.OpenUrl(DecentralandUrl.Discord);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.Discord);
         }
 
         private void CloseView() => closeViewTask?.TrySetResult();

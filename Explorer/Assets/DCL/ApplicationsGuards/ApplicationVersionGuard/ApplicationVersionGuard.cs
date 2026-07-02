@@ -31,9 +31,9 @@ namespace DCL.ApplicationVersionGuard
         private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland Outdated-mac-x64.dmg";
 
         private readonly IWebRequestController webRequestController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
-        public ApplicationVersionGuard(IWebRequestController webRequestController, IWebBrowser webBrowser)
+        public ApplicationVersionGuard(IWebRequestController webRequestController, UnityAppWebBrowser webBrowser)
         {
             this.webRequestController = webRequestController;
             this.webBrowser = webBrowser;
@@ -89,7 +89,7 @@ namespace DCL.ApplicationVersionGuard
             string downloadUrl = $"{GetLauncherDownloadPath()}/{assetName}";
 
             if (!string.IsNullOrEmpty(downloadUrl))
-                webBrowser.OpenUrl(downloadUrl);
+                webBrowser.OpenUrlMainThreadOnly(downloadUrl);
             else
                 ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Failed to get launcher download URL.");
         }

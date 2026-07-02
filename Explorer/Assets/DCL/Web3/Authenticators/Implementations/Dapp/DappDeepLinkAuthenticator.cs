@@ -27,7 +27,7 @@ namespace DCL.Web3.Authenticators
         private const double IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS = 30;
         private const int DEEPLINK_TIMEOUT_SECONDS = 300;
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
         private readonly URLAddress signatureWebAppUrl;
         private readonly IWeb3AccountFactory web3AccountFactory;
@@ -37,7 +37,7 @@ namespace DCL.Web3.Authenticators
         private readonly URLBuilder urlBuilder = new ();
 
         public DappDeepLinkAuthenticator(
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             IWeb3AccountFactory web3AccountFactory,
@@ -72,12 +72,11 @@ namespace DCL.Web3.Authenticators
             if (string.IsNullOrEmpty(createRequestResponse.requestId))
                 throw new Web3Exception("Cannot solve auth request id");
 
-            // OpenUrl routes through Application.OpenURL, which must run on the main thread.
             await UniTask.SwitchToMainThread(ct);
 
             string url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
 
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
             // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId},
             // which is delivered here through the deep link pipeline.
