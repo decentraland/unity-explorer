@@ -1002,7 +1002,7 @@ namespace Global.Dynamic
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
                 bootstrapContainer.Analytics.EntitiesAnalytics,
-                commsContainer.RoomHub
+                commsContainer.RoomHub.SceneRoom()
             );
 
             var container = new DynamicWorldContainer(

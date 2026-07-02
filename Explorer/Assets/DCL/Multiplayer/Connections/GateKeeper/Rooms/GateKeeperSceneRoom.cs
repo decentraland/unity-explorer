@@ -41,7 +41,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene => origin.ConnectedScene;
-            public bool IsCommsOffline => origin.options.IsCommsOffline;
+
+            public bool IsSceneRoomSettled(string sceneId)
+            {
+                // States in which the room will never connect must not hold callers waiting
+                if (!Activated || origin.options.IsCommsOffline || AttemptToConnectState is AttemptToConnectState.FORBIDDEN_ACCESS)
+                    return true;
+
+                return IsSceneConnected(sceneId);
+            }
 
             private void OnCurrentSceneRoomConnected() =>
                 CurrentSceneRoomConnected?.Invoke();

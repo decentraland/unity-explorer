@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -35,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
-        private readonly Func<string, bool> isSceneRoomSettled;
+        private readonly ISceneRoomStatus sceneRoomStatus;
 
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
@@ -43,14 +42,14 @@ namespace ECS.SceneLifeCycle.Systems
             IScenesCache scenesCache,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IRealmData realmData,
-            Func<string, bool> isSceneRoomSettled) : base(world)
+            ISceneRoomStatus sceneRoomStatus) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.realmData = realmData;
-            this.isSceneRoomSettled = isSceneRoomSettled;
+            this.sceneRoomStatus = sceneRoomStatus;
         }
 
         protected override void Update(float t)
@@ -145,10 +144,10 @@ namespace ECS.SceneLifeCycle.Systems
 
             string sceneId = definitionComponent.Definition.id!;
 
-            if (isSceneRoomSettled(sceneId))
+            if (sceneRoomStatus.IsSceneRoomSettled(sceneId))
                 return;
 
-            try { await UniTask.WaitUntil(() => isSceneRoomSettled(sceneId), cancellationToken: destroyCancellationToken).Timeout(SCENE_ROOM_CONNECT_TIMEOUT); }
+            try { await UniTask.WaitUntil(() => sceneRoomStatus.IsSceneRoomSettled(sceneId), cancellationToken: destroyCancellationToken).Timeout(SCENE_ROOM_CONNECT_TIMEOUT); }
             catch (TimeoutException)
             {
                 ReportHub.LogWarning(GetReportData(), $"Scene '{definitionComponent.Definition.GetLogSceneName()}' started before its comms room connected");
