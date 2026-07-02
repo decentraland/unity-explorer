@@ -22,6 +22,7 @@ jobs:
       - name: Checkout config file
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: .github/auto_assign_config_dev.yml
           fetch-depth: 1
 
@@ -368,17 +369,20 @@ jobs:
         if: steps.check-org.outputs.is-member == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          SLACK_TAG: ${{ steps.extract-slack-tag.outputs.slack-tag }}
         run: |
-          PR_URL="${{ github.event.pull_request.html_url }}"
-          SLACK_TAG="${{ steps.extract-slack-tag.outputs.slack-tag }}"
           if [ -n "$SLACK_TAG" ]; then
             AUTHOR_REF="$SLACK_TAG"
           else
-            AUTHOR_REF="${{ github.event.pull_request.user.login }}"
+            AUTHOR_REF="$PR_AUTHOR_LOGIN"
           fi
+          PAYLOAD=$(jq -n --arg url "$PR_URL" --arg author "$AUTHOR_REF" \
+            '{"text": "<@U0AJ91P1KBP> review \($url) (initiated by \($author))"}')
           curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
-            -d "{\"text\": \"<@U0AJ91P1KBP> review ${PR_URL} (initiated by ${AUTHOR_REF})\"}"
+            -d "$PAYLOAD"
 
   check-member:
     if: |
