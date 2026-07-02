@@ -213,6 +213,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
             if (emote.IsLoading) return;
 
+            if (!emote.IsLooping()) return;
+
             if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShape)) return;
 
             BodyShape bodyShape = avatarShape.BodyShape;
