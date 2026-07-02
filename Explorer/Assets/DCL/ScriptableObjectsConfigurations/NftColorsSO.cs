@@ -9,8 +9,11 @@ namespace DCL.Backpack
         [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors;
         [SerializeField] private Color defaultColor;
 
-        public Color GetColor(string rarity)
+        public Color GetColor(string? rarity)
         {
+            if (string.IsNullOrEmpty(rarity))
+                return defaultColor;
+
             foreach (SerializableKeyValuePair<string, Color> color in nftColors)
             {
                 if (color.key == rarity)

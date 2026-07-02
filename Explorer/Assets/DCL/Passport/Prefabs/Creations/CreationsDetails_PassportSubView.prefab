@@ -1002,7 +1002,7 @@ MonoBehaviour:
   <EmotesLabel>k__BackingField: {fileID: 571226832578197589}
   <CreatedWearablesContainer>k__BackingField: {fileID: 7632653952658713315}
   <CreatedEmotesContainer>k__BackingField: {fileID: 7928890256818701898}
-  <equippedItemPrefab>k__BackingField: {fileID: 703957334523193357, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
+  <EquippedItemPrefab>k__BackingField: {fileID: 703957334523193357, guid: 45f39675e44fe6242a7fc3afd70698d2, type: 3}
 --- !u!1 &7649313141737711876
 GameObject:
   m_ObjectHideFlags: 0

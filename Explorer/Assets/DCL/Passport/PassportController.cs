@@ -144,7 +144,7 @@ namespace DCL.Passport
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
         private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
-        private CreationsDetails_PassportModuleController? creationsDetailsPassportModuleController;
+        private CreationsDetailsPassportModuleController? creationsDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
@@ -341,7 +341,7 @@ namespace DCL.Passport
                 badge3DPreviewCamera,
                 imageControllerProvider);
 
-            creationsDetailsPassportModuleController = new CreationsDetails_PassportModuleController(
+            creationsDetailsPassportModuleController = new CreationsDetailsPassportModuleController(
                 viewInstance.CreationsDetailsModuleView,
                 webRequestController,
                 decentralandUrlsSource,

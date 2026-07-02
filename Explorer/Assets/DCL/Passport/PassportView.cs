@@ -50,7 +50,7 @@ namespace DCL.Passport
         public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; }
 
         [field: SerializeField]
-        public CreationsDetails_PassportModuleView CreationsDetailsModuleView { get; private set; }
+        public CreationsDetailsPassportModuleView CreationsDetailsModuleView { get; private set; }
 
         [field: SerializeField]
         public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; }

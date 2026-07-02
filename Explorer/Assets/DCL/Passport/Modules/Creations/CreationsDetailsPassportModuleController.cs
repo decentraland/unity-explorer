@@ -18,14 +18,14 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Creations
 {
-    public class CreationsDetails_PassportModuleController : IPassportModuleController
+    public class CreationsDetailsPassportModuleController : IPassportModuleController
     {
         private const int ITEMS_POOL_DEFAULT_CAPACITY = 8;
         private const string WEARABLE_CATEGORY = "wearable";
         private const string EMOTE_CATEGORY = "emote";
         private const string EMOTE_CATEGORY_ICON = "emote";
 
-        private readonly CreationsDetails_PassportModuleView view;
+        private readonly CreationsDetailsPassportModuleView view;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -40,11 +40,11 @@ namespace DCL.Passport.Modules.Creations
         private readonly List<EquippedItem_PassportFieldView> instantiatedEmotes = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
 
-        private Profile currentProfile;
+        private Profile? currentProfile;
         private CancellationTokenSource? loadCreationsCts;
 
-        public CreationsDetails_PassportModuleController(
-            CreationsDetails_PassportModuleView view,
+        public CreationsDetailsPassportModuleController(
+            CreationsDetailsPassportModuleView view,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             NftTypeIconSO rarityBackgrounds,
@@ -87,7 +87,7 @@ namespace DCL.Passport.Modules.Creations
             );
 
         private EquippedItem_PassportFieldView InstantiateItemPrefab(RectTransform parent) =>
-            Object.Instantiate(view.equippedItemPrefab, parent);
+            Object.Instantiate(view.EquippedItemPrefab, parent);
 
         public void Setup(Profile profile)
         {
@@ -168,7 +168,7 @@ namespace DCL.Passport.Modules.Creations
             CancellationToken ct)
         {
             string baseUrl = decentralandUrlsSource.Url(DecentralandUrl.MarketplaceApiLink);
-            var url = URLAddress.FromString($"{baseUrl}?category={category}&creator={currentProfile.UserId}&includeSocialEmotes=false");
+            var url = URLAddress.FromString($"{baseUrl}?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false");
 
             MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
                                                                             .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
@@ -192,7 +192,7 @@ namespace DCL.Passport.Modules.Creations
             Color rarityColor = rarityColors.GetColor(item.rarity);
 
             itemView.AssetNameText.text = item.name;
-            itemView.ItemId = item.urn;
+            itemView.ItemId = item.urn ?? string.Empty;
             itemView.RarityBackground.sprite = raritySprite;
             itemView.RarityLabelText.text = item.rarity;
             itemView.RarityLabelText.color = rarityColor;
@@ -217,7 +217,7 @@ namespace DCL.Passport.Modules.Creations
             return $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}{item.url}";
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(string thumbnailUrl, EquippedItem_PassportFieldView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(string? thumbnailUrl, EquippedItem_PassportFieldView itemView, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(thumbnailUrl))
                 return;
