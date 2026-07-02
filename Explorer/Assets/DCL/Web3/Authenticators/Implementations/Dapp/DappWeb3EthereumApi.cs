@@ -135,13 +135,10 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Legacy socket-based wallet sign-in (kept for the Archipelago dev playgrounds via
         ///     <see cref="Default" />). The production wallet flow is <see cref="DappDeepLinkAuthenticator" />.
-        ///     1. An authentication request is sent to the server.
-        ///     2. Open a tab to let the user sign through the browser with his custom installed wallet.
-        ///     3. Use the signature information to generate the identity.
         /// </summary>
         /// <param name="payload">Login payload containing the authentication method</param>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
+        private async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -215,7 +212,7 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask LogoutAsync(CancellationToken ct) =>
+        private async UniTask LogoutAsync(CancellationToken ct) =>
             await DisconnectFromAuthApiAsync();
 
         private async UniTask DisconnectFromAuthApiAsync()

@@ -17,7 +17,7 @@ namespace DCL.Web3.Authenticators
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
-        private readonly DappWeb3EthereumApi dappAuth;
+        private readonly DappWeb3EthereumApi dappEthereumApi;
         private readonly IWeb3Authenticator dappLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
@@ -33,17 +33,17 @@ namespace DCL.Web3.Authenticators
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
         private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappLogin;
-        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
-            DappWeb3EthereumApi dappAuth,
+            DappWeb3EthereumApi dappEthereumApi,
             DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
             IAnalyticsController analytics)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
-            this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
+            this.dappEthereumApi = dappEthereumApi ?? throw new ArgumentNullException(nameof(dappEthereumApi));
             this.dappLogin = dappLogin ?? throw new ArgumentNullException(nameof(dappLogin));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
@@ -52,7 +52,7 @@ namespace DCL.Web3.Authenticators
         public void Dispose()
         {
             thirdWebAuth.Dispose();
-            dappAuth.Dispose();
+            dappEthereumApi.Dispose();
             dappLogin.Dispose();
             identityCache.Dispose();
         }

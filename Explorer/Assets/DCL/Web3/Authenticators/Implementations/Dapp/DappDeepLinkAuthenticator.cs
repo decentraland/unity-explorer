@@ -17,17 +17,9 @@ using System.Threading;
 namespace DCL.Web3.Authenticators
 {
     /// <summary>
-    ///     Identity-based deep-link sign-in. Mints a <c>requestId</c> with a single <c>POST {authApiUrl}/requests</c>
-    ///     (body: <c>{ "method": "dcl_personal_sign", "params": [ephemeralMessage] }</c>), builds the browser URL with
-    ///     <c>flow=deeplink</c> and opens it, then awaits the <see cref="IDeeplinkSigninDispatcher" /> for the
-    ///     <c>identityId</c> that the browser delivers via an OS-routed deep link, and resolves the identity via
-    ///     <c>GET /identities/{id}</c>.
-    ///
-    ///     The browser owns the ephemeral keypair in this flow: it generates the keypair, builds the full AuthIdentity
-    ///     and POSTs it to <c>/identities</c>, ignoring any ephemeral params Unity sends. The final identity is therefore
-    ///     resolved entirely from the fetcher; the local ephemeral generated below is NOT used to build it. It only
-    ///     serves as the body of the <c>/requests</c> POST that mints the <c>requestId</c> auth-app's RequestPage needs
-    ///     in its URL path.
+    ///     Production wallet sign-in via browser and OS deep link: initiates a sign-in request on the auth server,
+    ///     opens the browser for the user to sign with their wallet, then awaits the deep link
+    ///     (via <see cref="IDeeplinkSigninDispatcher" />) and resolves the resulting identity from the server.
     /// </summary>
     public class DappDeepLinkAuthenticator : IWeb3Authenticator
     {
