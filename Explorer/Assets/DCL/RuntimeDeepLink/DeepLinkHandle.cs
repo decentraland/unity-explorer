@@ -14,6 +14,7 @@ namespace DCL.RuntimeDeepLink
 
             private Null() { }
 
+
             public bool HandleDeepLink(DeepLink deeplink) =>
                 true;
         }

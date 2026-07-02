@@ -27,23 +27,18 @@ namespace DCL.RuntimeDeepLink
             this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
         }
 
-        public string Name => "Real Implementation";
-
         public bool HandleDeepLink(DeepLink deeplink)
         {
-            // Signin takes precedence over realm/position/community routing and returns before any teleport or
-            // community notification is triggered.
+            // Signin takes precedence over realm/position/community routing and returns before any teleport or community notification is triggered.
             string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
 
             if (!string.IsNullOrEmpty(signin))
             {
-                // Only consume the signin when a login flow is actively awaiting it; otherwise leave the bridge
-                // file in place so the instance that is logging in can pick it up.
                 if (!deeplinkSigninDispatcher.HasSubscriber)
                     return false;
 
                 deeplinkSigninDispatcher.Dispatch(signin);
-                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} dispatched signin deeplink: {deeplink}");
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"dispatched signin deeplink: {deeplink}");
                 return true;
             }
 
@@ -81,9 +76,9 @@ namespace DCL.RuntimeDeepLink
             }
 
             if (handled)
-                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} successfully handled deeplink: {deeplink}");
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deeplink}");
             else
-                ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} found no actionable content in deeplink: {deeplink}");
+                ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"found no actionable content in deeplink: {deeplink}");
 
             // Non-signin deep links are always consumed: nothing awaits them, so leaving the file would re-loop.
             return true;
