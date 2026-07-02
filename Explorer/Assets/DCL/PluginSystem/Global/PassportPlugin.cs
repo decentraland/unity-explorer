@@ -69,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCommunitiesFeatureEnabled;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ImageControllerProvider imageControllerProvider;
+        private readonly IWebRequestController? webRequestController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -102,7 +103,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider, IWebRequestController? webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -135,6 +136,7 @@ namespace DCL.PluginSystem.Global
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose()
@@ -195,7 +197,8 @@ namespace DCL.PluginSystem.Global
                 passportSettings.CameraReelGalleryMessages,
                 communitiesDataProvider,
                 imageControllerProvider,
-                nameColors
+                nameColors,
+                webRequestController
             );
 
             mvcManager.RegisterController(passportController);

@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.WebRequests;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -98,6 +99,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
+        private readonly IWebRequestController? webRequestController;
         private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -203,7 +205,8 @@ namespace DCL.Passport
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider,
             ImageControllerProvider imageControllerProvider,
-            ColorPresetsSO colorPresets) : base(viewFactory)
+            ColorPresetsSO colorPresets,
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -243,6 +246,7 @@ namespace DCL.Passport
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.imageControllerProvider = imageControllerProvider;
             this.colorPresets = colorPresets;
+            this.webRequestController = webRequestController;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -336,7 +340,9 @@ namespace DCL.Passport
                 badge3DPreviewCamera,
                 imageControllerProvider);
 
-            creationsDetailsPassportModuleController = new CreationsDetails_PassportModuleController(viewInstance.CreationsDetailsModuleView);
+            creationsDetailsPassportModuleController = new CreationsDetails_PassportModuleController(
+                viewInstance.CreationsDetailsModuleView,
+                webRequestController);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,

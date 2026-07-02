@@ -753,7 +753,8 @@ namespace Global.Dynamic
                     uiShellContainer.Clipboard,
                     communitiesContainer.DataProvider,
                     wearableContainer.ThumbnailProvider,
-                    staticContainer.ImageControllerProvider
+                    staticContainer.ImageControllerProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController
                 ),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
