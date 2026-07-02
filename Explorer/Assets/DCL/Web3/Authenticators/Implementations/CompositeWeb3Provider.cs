@@ -17,7 +17,7 @@ namespace DCL.Web3.Authenticators
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
-        private readonly DappWeb3Authenticator dappAuth;
+        private readonly DappWeb3EthereumApi dappAuth;
         private readonly IWeb3Authenticator dappLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
@@ -37,7 +37,7 @@ namespace DCL.Web3.Authenticators
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
-            DappWeb3Authenticator dappAuth,
+            DappWeb3EthereumApi dappAuth,
             DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
             IAnalyticsController analytics)

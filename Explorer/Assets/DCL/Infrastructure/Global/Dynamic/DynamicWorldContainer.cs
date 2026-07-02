@@ -475,8 +475,8 @@ namespace Global.Dynamic
             // Local scene development scenes are excluded from deeplink runtime handling logic
             if (!appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE))
             {
-                // Shared with the Dapp authenticator's deep-link login (created in BootstrapContainer): the browser
-                // delivers the signin deep link here, DeepLinkHandle dispatches it, and DappWeb3Authenticator awaits it.
+                // Shared with the deep-link login (created in BootstrapContainer): the browser delivers the signin
+                // deep link here, DeepLinkHandle dispatches it, and DappDeepLinkAuthenticator awaits it.
                 var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, bootstrapContainer.DeeplinkSigninDispatcher);
                 deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
             }

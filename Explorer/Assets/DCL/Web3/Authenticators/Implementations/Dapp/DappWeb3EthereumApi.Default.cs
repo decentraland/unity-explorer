@@ -9,11 +9,11 @@ using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator
+    public partial class DappWeb3EthereumApi
     {
         public class Default : IWeb3Authenticator, IEthereumApi
         {
-            private readonly DappWeb3Authenticator origin;
+            private readonly DappWeb3EthereumApi origin;
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -21,7 +21,7 @@ namespace DCL.Web3.Authenticators
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
                 URLDomain rpcServerUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc));
 
-                origin = new DappWeb3Authenticator(
+                origin = new DappWeb3EthereumApi(
                     new UnityAppWebBrowser(decentralandUrlsSource),
                     authApiUrl,
                     signatureUrl,

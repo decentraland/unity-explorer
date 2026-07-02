@@ -20,7 +20,7 @@ using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3Authenticator, IEthereumApi
+    public partial class DappWeb3EthereumApi : IEthereumApi
     {
         private const double IDENTITY_EXPIRATION_PERIOD = 30;
 
@@ -49,7 +49,7 @@ namespace DCL.Web3.Authenticators
         private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
 
-        public DappWeb3Authenticator(IWebBrowser webBrowser,
+        public DappWeb3EthereumApi(IWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             URLDomain rpcServerUrl,

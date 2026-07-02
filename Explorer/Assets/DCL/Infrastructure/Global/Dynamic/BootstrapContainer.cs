@@ -49,13 +49,7 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
-
-        /// <summary>
-        ///     Shared single-slot signin deep-link bus. Created here (the first container, before any consumer) so the
-        ///     SAME instance is injected into both the Dapp authenticator (which awaits it during the deep-link login)
-        ///     and the runtime <c>DeepLinkHandle</c> (which dispatches into it).
-        /// </summary>
-        public IDeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; }
+        public IDeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; } // Shared single-slot signin deep-link bus.
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -211,8 +205,17 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
-            // Create Dapp authenticator (Browser wallet)
-            var dappAuth = new DappWeb3Authenticator(
+            var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
+                webBrowser,
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                web3AccountFactory,
+                webRequestController,
+                deeplinkSigninDispatcher,
+                identityExpirationDuration
+            );
+
+            var dappAuth = new DappWeb3EthereumApi(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
@@ -222,18 +225,6 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 dclEnvironment,
-                identityExpirationDuration
-            );
-
-            // Deep-link sign-in is a self-contained authenticator; the socket-based DappWeb3Authenticator above stays
-            // responsible for the IEthereumApi signature/confirmation flow only.
-            var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
-                webBrowser,
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-                web3AccountFactory,
-                webRequestController,
-                deeplinkSigninDispatcher,
                 identityExpirationDuration
             );
 

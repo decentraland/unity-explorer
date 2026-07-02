@@ -66,14 +66,14 @@ namespace DCL.AuthenticationScreenFlow
                 view.Hide(SLIDE);
 
                 spanErrorInfo = loginException switch
-                {
-                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
-                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
-                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
-                    CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
-                    InvalidEmailException ex => new SpanErrorInfo("Invalid email provided during authentication", ex),
-                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
-                };
+                                {
+                                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
+                                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
+                                    CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
+                                    InvalidEmailException ex => new SpanErrorInfo("Invalid email provided during authentication", ex),
+                                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
+                                };
 
                 if (loginException is not OperationCanceledException && loginException is not InvalidEmailException)
                     ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));

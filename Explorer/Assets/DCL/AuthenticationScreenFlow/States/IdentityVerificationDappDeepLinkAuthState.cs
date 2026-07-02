@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -7,6 +8,7 @@ using MVC;
 using Plugins.NativeWindowManager;
 using System;
 using System.Threading;
+using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
@@ -15,6 +17,7 @@ namespace DCL.AuthenticationScreenFlow
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
         private readonly AuthenticationScreenController controller;
+        private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
         private Exception? loginException;
@@ -23,10 +26,12 @@ namespace DCL.AuthenticationScreenFlow
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
+            ReactiveProperty<AuthStatus> currentState,
             ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             this.machine = machine;
             this.controller = controller;
+            this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
         }
 
@@ -41,6 +46,7 @@ namespace DCL.AuthenticationScreenFlow
 
             controller.CurrentRequestID = string.Empty;
 
+            currentState.Value = AuthStatus.VerificationRequested;
             AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
