@@ -16,33 +16,46 @@ namespace CrdtEcsBridge.WorldSynchronizer
     /// </summary>
     public class WorldSyncCommandBuffer : IWorldSyncCommandBuffer
     {
+        private const int MERGE_MATRIX_SIZE = 5;
+
         /// <summary>
-        ///     Represents the final state of the operation on (entity, component)
+        ///     Represents the final state of the operation on (entity, component).
+        ///     Flat array indexed by (first * size) + last: it is probed for every touched (entity, component) pair per batch
+        ///     so it must stay cheaper than a dictionary lookup. Pairs never produced by <see cref="SyncCRDTMessage" /> resolve
+        ///     to the default <see cref="CRDTReconciliationEffect.NoChanges" />.
         /// </summary>
-        private static readonly Dictionary<ReconciliationState, CRDTReconciliationEffect> MERGE_MATRIX =
-            new ()
-            {
-                // if the first op is "ComponentAdded" then the component didn't exists so it should be added if not deleted
-                { (CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.ComponentAdded },
-                { (CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.ComponentAdded },
+        private static readonly CRDTReconciliationEffect[] MERGE_MATRIX = CreateMergeMatrix();
 
-                // if deleted then nothing to do as it didn't exist before
-                { (CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.NoChanges },
+        private static CRDTReconciliationEffect[] CreateMergeMatrix()
+        {
+            var matrix = new CRDTReconciliationEffect[MERGE_MATRIX_SIZE * MERGE_MATRIX_SIZE];
 
-                // if component already existed then if the component still exists it should be modified
-                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.ComponentModified },
-                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.ComponentModified },
+            static int Index(CRDTReconciliationEffect first, CRDTReconciliationEffect last) =>
+                ((int)first * MERGE_MATRIX_SIZE) + (int)last;
 
-                // if it was deleted then delete from World
-                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.ComponentDeleted },
+            // if the first op is "ComponentAdded" then the component didn't exists so it should be added if not deleted
+            matrix[Index(CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentAdded)] = CRDTReconciliationEffect.ComponentAdded;
+            matrix[Index(CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentModified)] = CRDTReconciliationEffect.ComponentAdded;
 
-                // if component already existed then if the component still exists it should be modified
-                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.ComponentModified },
-                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.ComponentModified },
+            // if deleted then nothing to do as it didn't exist before
+            matrix[Index(CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentDeleted)] = CRDTReconciliationEffect.NoChanges;
 
-                // if it was deleted then delete from World
-                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.ComponentDeleted },
-            };
+            // if component already existed then if the component still exists it should be modified
+            matrix[Index(CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded)] = CRDTReconciliationEffect.ComponentModified;
+            matrix[Index(CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentModified)] = CRDTReconciliationEffect.ComponentModified;
+
+            // if it was deleted then delete from World
+            matrix[Index(CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentDeleted)] = CRDTReconciliationEffect.ComponentDeleted;
+
+            // if component already existed then if the component still exists it should be modified
+            matrix[Index(CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentModified)] = CRDTReconciliationEffect.ComponentModified;
+            matrix[Index(CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentAdded)] = CRDTReconciliationEffect.ComponentModified;
+
+            // if it was deleted then delete from World
+            matrix[Index(CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentDeleted)] = CRDTReconciliationEffect.ComponentDeleted;
+
+            return matrix;
+        }
 
         private readonly Dictionary<CRDTEntity, Dictionary<int, BatchState>> batchStates;
         private readonly List<CRDTEntity> deletedEntities;
@@ -172,7 +185,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                 foreach (BatchState batchState in componentsBatch.Values)
                 {
-                    CRDTReconciliationEffect finalState = MERGE_MATRIX[batchState.reconciliationState];
+                    ReconciliationState reconciliationState = batchState.reconciliationState;
+                    CRDTReconciliationEffect finalState = MERGE_MATRIX[((int)reconciliationState.First * MERGE_MATRIX_SIZE) + (int)reconciliationState.Last];
 
                     // just override with the final state
                     batchState.reconciliationState = new ReconciliationState(finalState, finalState);

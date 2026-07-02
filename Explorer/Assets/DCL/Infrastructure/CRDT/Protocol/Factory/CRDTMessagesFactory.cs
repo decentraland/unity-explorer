@@ -2,7 +2,6 @@ using Collections.Pooled;
 using CRDT.Memory;
 using CRDT.Serializer;
 using System.Buffers;
-using System.Runtime.CompilerServices;
 
 namespace CRDT.Protocol.Factory
 {
@@ -14,12 +13,6 @@ namespace CRDT.Protocol.Factory
     {
         public static ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data) =>
             new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entity, componentId, timestamp, data), CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.APPEND_COMPONENT, in data));
-
-        public static ProcessedCRDTMessage CreatePutMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
-            CreateLwwMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
-
-        public static ProcessedCRDTMessage CreateDeleteMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId) =>
-            CreateLwwMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, EmptyMemoryOwner<byte>.EMPTY);
 
         /// <summary>
         ///     Fills the array with messages corresponding to the current CRDT state
@@ -84,15 +77,6 @@ namespace CRDT.Protocol.Factory
 
             index++;
             return numberOfBytes;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ProcessedCRDTMessage CreateLwwMessage(in CRDTProtocol.State state, CRDTMessageType messageType, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data)
-        {
-            var timestamp = 0;
-
-            if (state.TryGetLWWComponentState(entity, componentId, out _, out _, out CRDTProtocol.EntityComponentData storedData)) timestamp = storedData.Timestamp + 1;
-            return new ProcessedCRDTMessage(new CRDTMessage(messageType, entity, componentId, timestamp, data), CRDTMessageSerializationUtils.GetMessageDataLength(messageType, in data));
         }
     }
 }
