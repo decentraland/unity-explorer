@@ -367,7 +367,7 @@ namespace DCL.Multiplayer.Movement
                 timestamp = serverTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP,
                 parcel = parcel,
                 position = worldPosition,
-                rotationY = playerState.RotationY,
+                rotationY = playerState.RotationYQuantized,
                 velocity = vel,
                 velocitySqrMagnitude = vel.sqrMagnitude,
                 movementKind = movementKind,
