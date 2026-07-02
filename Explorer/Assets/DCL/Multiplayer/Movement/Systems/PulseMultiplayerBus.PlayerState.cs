@@ -357,7 +357,7 @@ namespace DCL.Multiplayer.Movement
 
             var vel = new Vector3(playerState.VelocityXQuantized, playerState.VelocityYQuantized, playerState.VelocityZQuantized);
 
-            float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
+            float movementBlend = Mathf.Clamp(playerState.MovementBlendQuantized, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
 
             bool isPointingAt = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.PointingAt);
@@ -389,7 +389,7 @@ namespace DCL.Multiplayer.Movement
 
                 headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
                 headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),
-                headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
+                headYawAndPitch = new Vector2(playerState.HeadYawQuantized, playerState.HeadPitchQuantized),
 
                 isPointingAt = isPointingAt,
                 pointAtWorldHitPoint = isPointingAt
