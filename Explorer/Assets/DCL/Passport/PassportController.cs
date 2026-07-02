@@ -142,7 +142,7 @@ namespace DCL.Passport
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
-        private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
+        private BadgesDetailsPassportModuleController? badgesDetailsPassportModuleController;
         private CreationsDetailsPassportModuleController? creationsDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
         private GenericContextMenuElement contextMenuSeparator;
@@ -294,7 +294,7 @@ namespace DCL.Passport
                 colorPresets);
             colorPickerController.OnColorChanged += SetNewUserNameColor;
 
-            var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
+            var userBasicInfoPassportModuleController = new UserBasicInfoPassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
                 selfProfile,
                 webBrowser,
@@ -314,7 +314,7 @@ namespace DCL.Passport
                 passportErrorsController,
                 passportProfileInfoController));
 
-            overviewPassportModules.Add(new EquippedItems_PassportModuleController(
+            overviewPassportModules.Add(new EquippedItemsPassportModuleController(
                 viewInstance.EquippedItemsModuleView,
                 world,
                 rarityBackgrounds,
@@ -325,13 +325,13 @@ namespace DCL.Passport
                 decentralandUrlsSource,
                 passportErrorsController));
 
-            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
+            overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
                 badgesAPIClient,
                 passportErrorsController,
                 imageControllerProvider));
 
-            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
+            badgesDetailsPassportModuleController = new BadgesDetailsPassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
                 badgesAPIClient,
@@ -707,7 +707,7 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
-                if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
+                if (module is BadgesDetailsPassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
                     badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
 
                 module.Setup(profile);

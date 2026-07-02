@@ -35,25 +35,25 @@ namespace DCL.Passport
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
-        public UserBasicInfo_PassportModuleView UserBasicInfoModuleView { get; private set; } = null!;
+        public UserBasicInfoPassportModuleView UserBasicInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public UserDetailedInfo_PassportModuleView UserDetailedInfoModuleView { get; private set; } = null!;
+        public UserDetailedInfoPassportModuleView UserDetailedInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public EquippedItems_PassportModuleView EquippedItemsModuleView { get; private set; } = null!;
+        public EquippedItemsPassportModuleView EquippedItemsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgesOverview_PassportModuleView BadgesOverviewModuleView { get; private set; } = null!;
+        public BadgesOverviewPassportModuleView BadgesOverviewModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; } = null!;
+        public BadgesDetailsPassportModuleView BadgesDetailsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
         public CreationsDetailsPassportModuleView CreationsDetailsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; } = null!;
+        public BadgeInfoPassportModuleView BadgeInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
         public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; } = null!;

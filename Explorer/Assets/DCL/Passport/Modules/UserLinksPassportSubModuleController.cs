@@ -13,26 +13,26 @@ using Utility;
 
 namespace DCL.Passport.Modules
 {
-    public class UserLinks_PassportSubModuleController
+    public class UserLinksPassportSubModuleController
     {
         private const string NO_LINKS_TEXT = "No links.";
         private const int LINKS_MAX_AMOUNT = 5;
 
-        private readonly UserDetailedInfo_PassportModuleView view;
+        private readonly UserDetailedInfoPassportModuleView view;
         private readonly AddLink_PassportModal addLinkModal;
         private readonly IMVCManager mvcManager;
         private readonly PassportProfileInfoController passportProfileInfoController;
 
         private Profile currentProfile;
-        private readonly IObjectPool<Link_PassportFieldView> linksPool;
-        private readonly List<Link_PassportFieldView> instantiatedLinks = new();
-        private readonly IObjectPool<Link_PassportFieldView> linksPoolForEdition;
-        private readonly List<Link_PassportFieldView> instantiatedLinksForEdition = new();
+        private readonly IObjectPool<LinkPassportFieldView> linksPool;
+        private readonly List<LinkPassportFieldView> instantiatedLinks = new();
+        private readonly IObjectPool<LinkPassportFieldView> linksPoolForEdition;
+        private readonly List<LinkPassportFieldView> instantiatedLinksForEdition = new();
 
         private CancellationTokenSource saveLinksCts;
 
-        public UserLinks_PassportSubModuleController(
-            UserDetailedInfo_PassportModuleView view,
+        public UserLinksPassportSubModuleController(
+            UserDetailedInfoPassportModuleView view,
             AddLink_PassportModal addLinkModal,
             IMVCManager mvcManager,
             PassportProfileInfoController passportProfileInfoController)
@@ -42,7 +42,7 @@ namespace DCL.Passport.Modules
             this.mvcManager = mvcManager;
             this.passportProfileInfoController = passportProfileInfoController;
 
-            linksPool = new ObjectPool<Link_PassportFieldView>(
+            linksPool = new ObjectPool<LinkPassportFieldView>(
                 InstantiateLinkPrefab,
                 defaultCapacity: LINKS_MAX_AMOUNT,
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
@@ -54,7 +54,7 @@ namespace DCL.Passport.Modules
                 }
             );
 
-            linksPoolForEdition = new ObjectPool<Link_PassportFieldView>(
+            linksPoolForEdition = new ObjectPool<LinkPassportFieldView>(
                 InstantiateLinkForEditionPrefab,
                 defaultCapacity: LINKS_MAX_AMOUNT,
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
@@ -91,15 +91,15 @@ namespace DCL.Passport.Modules
             saveLinksCts.SafeCancelAndDispose();
         }
 
-        private Link_PassportFieldView InstantiateLinkPrefab()
+        private LinkPassportFieldView InstantiateLinkPrefab()
         {
-            Link_PassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainer);
+            LinkPassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainer);
             return linkView;
         }
 
-        private Link_PassportFieldView InstantiateLinkForEditionPrefab()
+        private LinkPassportFieldView InstantiateLinkForEditionPrefab()
         {
-            Link_PassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainerForEditMode);
+            LinkPassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainerForEditMode);
             return linkView;
         }
 
@@ -111,7 +111,7 @@ namespace DCL.Passport.Modules
 
         private void ClearLinks()
         {
-            foreach (Link_PassportFieldView link in instantiatedLinks)
+            foreach (LinkPassportFieldView link in instantiatedLinks)
                 linksPool.Release(link);
 
             instantiatedLinks.Clear();
@@ -119,7 +119,7 @@ namespace DCL.Passport.Modules
 
         private void ClearLinksForEdition()
         {
-            foreach (Link_PassportFieldView linkForEdition in instantiatedLinksForEdition)
+            foreach (LinkPassportFieldView linkForEdition in instantiatedLinksForEdition)
                 linksPoolForEdition.Release(linkForEdition);
 
             instantiatedLinksForEdition.Clear();
@@ -198,7 +198,7 @@ namespace DCL.Passport.Modules
         private void CreateNewLink(string title, string url) =>
             AddLink(Guid.NewGuid().ToString(), title, url, true);
 
-        private void RemoveLink(Link_PassportFieldView linkToRemove)
+        private void RemoveLink(LinkPassportFieldView linkToRemove)
         {
             var indexToRemove = 0;
             foreach (var link in instantiatedLinksForEdition)

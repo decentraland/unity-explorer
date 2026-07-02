@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesDetails_PassportModuleView : MonoBehaviour
+    public class BadgesDetailsPassportModuleView : MonoBehaviour
     {
         [field: SerializeField]
         public ButtonWithSelectableStateView BadgesFilterButtonPrefab { get; private set; } = null!;

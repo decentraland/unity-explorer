@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport.Fields
 {
-    public class Link_PassportFieldView : MonoBehaviour
+    public class LinkPassportFieldView : MonoBehaviour
     {
         [field: SerializeField]
         public RectTransform Container { get; private set; }

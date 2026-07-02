@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgeInfo_PassportModuleView : MonoBehaviour
+    public class BadgeInfoPassportModuleView : MonoBehaviour
     {
         [field: SerializeField]
         public GameObject MainContainer { get; private set; } = null!;

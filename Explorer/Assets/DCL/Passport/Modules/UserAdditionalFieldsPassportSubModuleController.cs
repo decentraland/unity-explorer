@@ -9,36 +9,36 @@ using UnityEngine.Pool;
 
 namespace DCL.Passport.Modules
 {
-    public class UserAdditionalFields_PassportSubModuleController
+    public class UserAdditionalFieldsPassportSubModuleController
     {
         private const int ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY = 11;
         private const string EDITION_DROPDOWN_DEFAULT_OPTION = "Select";
         private const string EDITION_PLACE_HOLDER = "Write here";
         private const string EDITION_PLACE_HOLDER_FOR_DATES = "DD/MM/YYYY";
 
-        private readonly UserDetailedInfo_PassportModuleView view;
+        private readonly UserDetailedInfoPassportModuleView view;
 
         private Profile currentProfile;
-        private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
-        private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new ();
-        private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPoolForEdition;
-        private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFieldsForEdition = new ();
+        private readonly IObjectPool<AdditionalFieldPassportFieldView> additionalFieldsPool;
+        private readonly List<AdditionalFieldPassportFieldView> instantiatedAdditionalFields = new ();
+        private readonly IObjectPool<AdditionalFieldPassportFieldView> additionalFieldsPoolForEdition;
+        private readonly List<AdditionalFieldPassportFieldView> instantiatedAdditionalFieldsForEdition = new ();
 
         private readonly string[] validInputFormatsForDate = { "dd/MM/yyyy", "ddMMyyyy" };
 
         public int CurrentAdditionalFieldsCount => instantiatedAdditionalFields.Count;
 
-        public UserAdditionalFields_PassportSubModuleController(UserDetailedInfo_PassportModuleView view)
+        public UserAdditionalFieldsPassportSubModuleController(UserDetailedInfoPassportModuleView view)
         {
             this.view = view;
 
-            additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
+            additionalFieldsPool = new ObjectPool<AdditionalFieldPassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
                 defaultCapacity: ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView => buttonView.gameObject.SetActive(false));
 
-            additionalFieldsPoolForEdition = new ObjectPool<AdditionalField_PassportFieldView>(
+            additionalFieldsPoolForEdition = new ObjectPool<AdditionalFieldPassportFieldView>(
                 InstantiateAdditionalFieldForEditionPrefab,
                 defaultCapacity: ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
@@ -51,15 +51,15 @@ namespace DCL.Passport.Modules
             LoadAdditionalFields();
         }
 
-        private AdditionalField_PassportFieldView InstantiateAdditionalFieldPrefab()
+        private AdditionalFieldPassportFieldView InstantiateAdditionalFieldPrefab()
         {
-            AdditionalField_PassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainer);
+            AdditionalFieldPassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainer);
             return additionalFieldView;
         }
 
-        private AdditionalField_PassportFieldView InstantiateAdditionalFieldForEditionPrefab()
+        private AdditionalFieldPassportFieldView InstantiateAdditionalFieldForEditionPrefab()
         {
-            AdditionalField_PassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainerForEditMode);
+            AdditionalFieldPassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainerForEditMode);
             return additionalFieldView;
         }
 
@@ -71,7 +71,7 @@ namespace DCL.Passport.Modules
 
         private void ClearAdditionalInfoFields()
         {
-            foreach (AdditionalField_PassportFieldView additionalField in instantiatedAdditionalFields)
+            foreach (AdditionalFieldPassportFieldView additionalField in instantiatedAdditionalFields)
                 additionalFieldsPool.Release(additionalField);
 
             instantiatedAdditionalFields.Clear();
@@ -79,7 +79,7 @@ namespace DCL.Passport.Modules
 
         private void ClearAdditionalInfoFieldsForEdition()
         {
-            foreach (AdditionalField_PassportFieldView additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
+            foreach (AdditionalFieldPassportFieldView additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
                 additionalFieldsPoolForEdition.Release(additionalFieldForEdition);
 
             instantiatedAdditionalFieldsForEdition.Clear();

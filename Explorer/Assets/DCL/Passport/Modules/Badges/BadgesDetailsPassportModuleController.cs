@@ -15,19 +15,19 @@ using Utility;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesDetails_PassportModuleController : IPassportModuleController
+    public class BadgesDetailsPassportModuleController : IPassportModuleController
     {
         private const string ALL_FILTER = "All";
 
         public event Action<string> OnBadgeSelected;
 
-        private readonly BadgesDetails_PassportModuleView view;
+        private readonly BadgesDetailsPassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly ISelfProfile selfProfile;
-        private readonly BadgesCategories_PassportModuleSubController badgesCategoriesController;
-        private readonly BadgeInfo_PassportModuleSubController badgeInfoController;
-        private readonly BadgeDetailsCards_PassportModuleSubController badgeDetailsCardsController;
+        private readonly BadgesCategoriesPassportModuleSubController badgesCategoriesController;
+        private readonly BadgeInfoPassportModuleSubController badgeInfoController;
+        private readonly BadgeDetailsCardsPassportModuleSubController badgeDetailsCardsController;
 
         private Profile currentProfile;
         private string? currentDefaultBadgeId;
@@ -37,9 +37,9 @@ namespace DCL.Passport.Modules.Badges
         private CancellationTokenSource fetchTiersCts;
         private CancellationTokenSource checkProfileCts;
 
-        public BadgesDetails_PassportModuleController(
-            BadgesDetails_PassportModuleView view,
-            BadgeInfo_PassportModuleView badgeInfoModuleView,
+        public BadgesDetailsPassportModuleController(
+            BadgesDetailsPassportModuleView view,
+            BadgeInfoPassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             ISelfProfile selfProfile,
@@ -51,14 +51,14 @@ namespace DCL.Passport.Modules.Badges
             this.passportErrorsController = passportErrorsController;
             this.selfProfile = selfProfile;
 
-            badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
+            badgesCategoriesController = new BadgesCategoriesPassportModuleSubController(view);
             
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView,
+            badgeInfoController = new BadgeInfoPassportModuleSubController(badgeInfoModuleView,
                 badgesAPIClient,
                 passportErrorsController,
                 badge3DPreviewCamera, imageControllerProvider);
 
-            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view,
+            badgeDetailsCardsController = new BadgeDetailsCardsPassportModuleSubController(view,
                 imageControllerProvider,
                 badgesCategoriesController,
                 badgeInfoController);

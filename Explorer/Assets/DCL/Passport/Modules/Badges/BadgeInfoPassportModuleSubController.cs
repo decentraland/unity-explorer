@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgeInfo_PassportModuleSubController
+    public class BadgeInfoPassportModuleSubController
     {
         private const string ERROR_MESSAGE = "There was an error loading tiers. Please try again!";
 
@@ -23,7 +23,7 @@ namespace DCL.Passport.Modules.Badges
         private static readonly int NORMAL = Shader.PropertyToID("_normal");
         private static readonly int HRM = Shader.PropertyToID("_hrm");
 
-        private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
+        private readonly BadgeInfoPassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
@@ -43,8 +43,8 @@ namespace DCL.Passport.Modules.Badges
         private Texture2DRef? normalRef;
         private Texture2DRef? hrmRef;
 
-        public BadgeInfo_PassportModuleSubController(
-            BadgeInfo_PassportModuleView badgeInfoModuleView,
+        public BadgeInfoPassportModuleSubController(
+            BadgeInfoPassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             BadgePreviewCameraView badge3DPreviewCamera,

@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesCategories_PassportModuleSubController
+    public class BadgesCategoriesPassportModuleSubController
     {
         private const string ALL_FILTER = "All";
         private const int BADGES_CATEGORIES_POOL_DEFAULT_CAPACITY = 6;
@@ -18,12 +18,12 @@ namespace DCL.Passport.Modules.Badges
         public event Action<string>? OnBadgesFilterButtonClicked;
         public string? CurrentFilter;
 
-        private readonly BadgesDetails_PassportModuleView view;
+        private readonly BadgesDetailsPassportModuleView view;
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly IObjectPool<BadgesCategorySeparator_PassportFieldView> badgesCategorySeparatorsPool;
         private readonly IObjectPool<BadgesCategoryContainer_PassportFieldView> badgesCategoryContainersPool;
 
-        public BadgesCategories_PassportModuleSubController(BadgesDetails_PassportModuleView view)
+        public BadgesCategoriesPassportModuleSubController(BadgesDetailsPassportModuleView view)
         {
             this.view = view;
 

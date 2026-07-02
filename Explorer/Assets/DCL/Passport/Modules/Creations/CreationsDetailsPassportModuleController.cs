@@ -34,10 +34,10 @@ namespace DCL.Passport.Modules.Creations
         private readonly IWebBrowser webBrowser;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly IObjectPool<EquippedItem_PassportFieldView> wearablesItemsPool;
-        private readonly IObjectPool<EquippedItem_PassportFieldView> emotesItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedWearables = new ();
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEmotes = new ();
+        private readonly IObjectPool<EquippedItemPassportFieldView> wearablesItemsPool;
+        private readonly IObjectPool<EquippedItemPassportFieldView> emotesItemsPool;
+        private readonly List<EquippedItemPassportFieldView> instantiatedWearables = new ();
+        private readonly List<EquippedItemPassportFieldView> instantiatedEmotes = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
 
         private Profile? currentProfile;
@@ -68,8 +68,8 @@ namespace DCL.Passport.Modules.Creations
             emotesItemsPool = CreateItemsPool(view.CreatedEmotesContainer);
         }
 
-        private IObjectPool<EquippedItem_PassportFieldView> CreateItemsPool(RectTransform parent) =>
-            new ObjectPool<EquippedItem_PassportFieldView>(
+        private IObjectPool<EquippedItemPassportFieldView> CreateItemsPool(RectTransform parent) =>
+            new ObjectPool<EquippedItemPassportFieldView>(
                 () => InstantiateItemPrefab(parent),
                 defaultCapacity: ITEMS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: itemView =>
@@ -86,7 +86,7 @@ namespace DCL.Passport.Modules.Creations
                 }
             );
 
-        private EquippedItem_PassportFieldView InstantiateItemPrefab(RectTransform parent) =>
+        private EquippedItemPassportFieldView InstantiateItemPrefab(RectTransform parent) =>
             Object.Instantiate(view.EquippedItemPrefab, parent);
 
         public void Setup(Profile profile)
@@ -162,8 +162,8 @@ namespace DCL.Passport.Modules.Creations
 
         private async UniTask<int> LoadCategoryAsync(
             string category,
-            IObjectPool<EquippedItem_PassportFieldView> pool,
-            List<EquippedItem_PassportFieldView> instantiatedItems,
+            IObjectPool<EquippedItemPassportFieldView> pool,
+            List<EquippedItemPassportFieldView> instantiatedItems,
             bool isEmote,
             CancellationToken ct)
         {
@@ -178,7 +178,7 @@ namespace DCL.Passport.Modules.Creations
 
             foreach (MarketplaceCatalogItem item in response.data)
             {
-                EquippedItem_PassportFieldView itemView = pool.Get();
+                EquippedItemPassportFieldView itemView = pool.Get();
                 SetupItemView(itemView, item, isEmote, ct);
                 instantiatedItems.Add(itemView);
             }
@@ -186,7 +186,7 @@ namespace DCL.Passport.Modules.Creations
             return response.data.Length;
         }
 
-        private void SetupItemView(EquippedItem_PassportFieldView itemView, MarketplaceCatalogItem item, bool isEmote, CancellationToken ct)
+        private void SetupItemView(EquippedItemPassportFieldView itemView, MarketplaceCatalogItem item, bool isEmote, CancellationToken ct)
         {
             Sprite raritySprite = rarityBackgrounds.GetTypeImage(item.rarity);
             Color rarityColor = rarityColors.GetColor(item.rarity);
@@ -217,7 +217,7 @@ namespace DCL.Passport.Modules.Creations
             return $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}{item.url}";
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(string? thumbnailUrl, EquippedItem_PassportFieldView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(string? thumbnailUrl, EquippedItemPassportFieldView itemView, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(thumbnailUrl))
                 return;
@@ -244,9 +244,9 @@ namespace DCL.Passport.Modules.Creations
             }
         }
 
-        private static void ClearItems(IObjectPool<EquippedItem_PassportFieldView> pool, List<EquippedItem_PassportFieldView> instantiatedItems)
+        private static void ClearItems(IObjectPool<EquippedItemPassportFieldView> pool, List<EquippedItemPassportFieldView> instantiatedItems)
         {
-            foreach (EquippedItem_PassportFieldView item in instantiatedItems)
+            foreach (EquippedItemPassportFieldView item in instantiatedItems)
                 pool.Release(item);
 
             instantiatedItems.Clear();

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesOverview_PassportModuleView : MonoBehaviour
+    public class BadgesOverviewPassportModuleView : MonoBehaviour
     {
         [field: SerializeField]
         public BadgeOverviewItem_PassportFieldView BadgeOverviewItemPrefab { get; private set; } = null!;

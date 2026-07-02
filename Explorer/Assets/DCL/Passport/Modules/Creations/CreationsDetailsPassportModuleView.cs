@@ -30,7 +30,7 @@ namespace DCL.Passport.Modules.Creations
         public RectTransform CreatedEmotesContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public EquippedItem_PassportFieldView EquippedItemPrefab { get; private set; } = null!;
+        public EquippedItemPassportFieldView EquippedItemPrefab { get; private set; } = null!;
 
     }
 }

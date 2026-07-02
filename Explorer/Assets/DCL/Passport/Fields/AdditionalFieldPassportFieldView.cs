@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport.Fields
 {
-    public class AdditionalField_PassportFieldView : MonoBehaviour
+    public class AdditionalFieldPassportFieldView : MonoBehaviour
     {
         [field: SerializeField]
         public Image Logo { get; private set; }

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
-    public class UserDetailedInfo_PassportModuleView : MonoBehaviour
+    public class UserDetailedInfoPassportModuleView : MonoBehaviour
     {
         [field: Header("Info Section")]
         [field: SerializeField]
@@ -51,7 +51,7 @@ namespace DCL.Passport.Modules
 
         [field: Header("Links Section")]
         [field: SerializeField]
-        public Link_PassportFieldView LinkPrefab { get; private set; } = null!;
+        public LinkPassportFieldView LinkPrefab { get; private set; } = null!;
 
         [field: SerializeField]
         public RectTransform LinksContainer { get; private set; } = null!;
