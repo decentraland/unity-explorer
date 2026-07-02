@@ -1,12 +1,14 @@
 namespace DCL.RuntimeDeepLink
 {
+    public enum DeepLinkHandleResult
+    {
+        Consumed,
+        NoMatches,
+    }
+
     public interface IDeepLinkHandle
     {
-        /// <summary>
-        /// Returns <c>true</c> when the deep link was consumed and its bridge file may be deleted;
-        /// <c>false</c> to leave the bridge file in place for a later attempt.
-        /// </summary>
-        public bool HandleDeepLink(DeepLink deeplink);
+        DeepLinkHandleResult HandleDeepLink(DeepLink deeplink);
 
         class Null : IDeepLinkHandle
         {
@@ -15,8 +17,8 @@ namespace DCL.RuntimeDeepLink
             private Null() { }
 
 
-            public bool HandleDeepLink(DeepLink deeplink) =>
-                true;
+            public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink) =>
+                DeepLinkHandleResult.Consumed;
         }
     }
 }

@@ -58,9 +58,18 @@ namespace DCL.RuntimeDeepLink
                     continue;
                 }
 
-                // A false result means no login flow is awaiting the signin yet: keep the file so it can be picked up later.
-                if (handle.HandleDeepLink(deepLinkCreateResult.Value))
-                    TryDeleteBridgeFile();
+                switch (handle.HandleDeepLink(deepLinkCreateResult.Value))
+                {
+                    case DeepLinkHandleResult.Consumed:
+                        ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deepLinkCreateResult.Value}");
+                        break;
+                    case DeepLinkHandleResult.NoMatches:
+                        ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"found no actionable content in deeplink: {deepLinkCreateResult.Value}");
+                        break;
+                }
+
+                // Unmatched links are dropped as well: keeping the file would re-read it on every check-in.
+                TryDeleteBridgeFile();
             }
         }
 

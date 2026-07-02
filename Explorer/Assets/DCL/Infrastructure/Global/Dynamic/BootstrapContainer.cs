@@ -11,9 +11,9 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Time;
+using DCL.Utilities;
 using DCL.Utility;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -49,7 +49,7 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
-        public DeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; } // Shared single-slot signin deep-link bus.
+        public ReactiveProperty<string?> DeeplinkSigninIdentityId { get; } = new (null);
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -131,8 +131,7 @@ namespace Global.Dynamic
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.DeeplinkSigninDispatcher = new DeeplinkSigninDispatcher();
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninDispatcher);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -188,7 +187,7 @@ namespace Global.Dynamic
             DecentralandEnvironment dclEnvironment,
             IAppArgs appArgs,
             IWebRequestController webRequestController,
-            DeeplinkSigninDispatcher deeplinkSigninDispatcher)
+            ReactiveProperty<string?> deeplinkSigninIdentityId)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)
@@ -211,7 +210,7 @@ namespace Global.Dynamic
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
                 web3AccountFactory,
                 webRequestController,
-                deeplinkSigninDispatcher,
+                deeplinkSigninIdentityId,
                 identityExpirationDuration
             );
 

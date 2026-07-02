@@ -56,7 +56,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 spanErrorInfo = loginException switch
                 {
-                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                    OperationCanceledException ex => new SpanErrorInfo("Login process was cancelled by user", ex),
+                    TimeoutException ex => new SpanErrorInfo("Deep-link sign-in timed out waiting for the browser to deliver the signin deep link", ex),
                     SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during deep-link authentication", ex),
                     Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
                     Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
@@ -80,6 +81,11 @@ namespace DCL.AuthenticationScreenFlow
                 machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (identity, false, ct));
             }
             catch (OperationCanceledException e)
+            {
+                loginException = e;
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+            }
+            catch (TimeoutException e)
             {
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);

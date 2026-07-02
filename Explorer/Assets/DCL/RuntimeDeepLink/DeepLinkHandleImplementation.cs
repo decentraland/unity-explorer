@@ -2,8 +2,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.RealmNavigation;
+using DCL.Utilities;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
@@ -16,30 +16,26 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
-        private readonly DeeplinkSigninDispatcher deeplinkSigninDispatcher;
+        private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, DeeplinkSigninDispatcher deeplinkSigninDispatcher)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
-            this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
+            this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
         }
 
-        public bool HandleDeepLink(DeepLink deeplink)
+        public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink)
         {
-            // Signin takes precedence over realm/position/community routing and returns before any teleport or community notification is triggered.
             string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
 
             if (!string.IsNullOrEmpty(signin))
             {
-                if (!deeplinkSigninDispatcher.HasSubscriber)
-                    return false;
-
-                deeplinkSigninDispatcher.Dispatch(signin);
-                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"dispatched signin deeplink: {deeplink}");
-                return true;
+                // The property retains the id, so a login flow that subscribes later still receives it.
+                deeplinkSigninIdentityId.Value = signin;
+                return DeepLinkHandleResult.Consumed;
             }
 
             Vector2Int? position = PositionFrom(deeplink);
@@ -75,13 +71,7 @@ namespace DCL.RuntimeDeepLink
                 handled = true;
             }
 
-            if (handled)
-                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deeplink}");
-            else
-                ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"found no actionable content in deeplink: {deeplink}");
-
-            // Non-signin deep links are always consumed: nothing awaits them, so leaving the file would re-loop.
-            return true;
+            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)

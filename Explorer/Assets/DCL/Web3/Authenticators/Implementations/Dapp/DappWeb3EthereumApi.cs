@@ -22,7 +22,7 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3EthereumApi : IEthereumApi
     {
-        private const double IDENTITY_EXPIRATION_PERIOD = 30;
+        private const double IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS = 30;
 
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
@@ -157,7 +157,7 @@ namespace DCL.Web3.Authenticators
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = identityExpirationDuration != null
                     ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                    : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD);
+                    : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS);
 
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 

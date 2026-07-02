@@ -2,7 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
-using DCL.RuntimeDeepLink;
+using DCL.Utilities;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -19,13 +19,12 @@ namespace DCL.Web3.Authenticators
 {
     /// <summary>
     ///     Production wallet sign-in via browser and OS deep link: initiates a sign-in request on the auth server,
-    ///     opens the browser for the user to sign with their wallet, then awaits the deep link
-    ///     (via <see cref="DeeplinkSigninDispatcher" />) and resolves the resulting identity from the server.
+    ///     opens the browser for the user to sign with their wallet, then awaits the deep link identity id
+    ///     and resolves the resulting identity from the server.
     /// </summary>
     public class DappDeepLinkAuthenticator : IWeb3Authenticator
     {
-        // Fallback session length when no explicit override is provided (days).
-        private const double IDENTITY_EXPIRATION_PERIOD = 30;
+        private const double IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS = 30;
         private const int DEEPLINK_TIMEOUT_SECONDS = 300;
 
         private readonly IWebBrowser webBrowser;
@@ -33,7 +32,7 @@ namespace DCL.Web3.Authenticators
         private readonly URLAddress signatureWebAppUrl;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly IWebRequestController webRequestController;
-        private readonly DeeplinkSigninDispatcher deeplinkSigninDispatcher;
+        private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly int? identityExpirationDuration;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -43,7 +42,7 @@ namespace DCL.Web3.Authenticators
             URLAddress signatureWebAppUrl,
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
-            DeeplinkSigninDispatcher deeplinkSigninDispatcher,
+            ReactiveProperty<string?> deeplinkSigninIdentityId,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -51,7 +50,7 @@ namespace DCL.Web3.Authenticators
             this.signatureWebAppUrl = signatureWebAppUrl;
             this.web3AccountFactory = web3AccountFactory;
             this.webRequestController = webRequestController;
-            this.deeplinkSigninDispatcher = deeplinkSigninDispatcher;
+            this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -59,12 +58,12 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            // The local ephemeral is not used to build the final identity, but it is the well-formed message the server signs into the minted request.
+            // The ephemeral address is embedded in the signed message so the server can mint a well-formed request from it.
             var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
             DateTime sessionExpiration = identityExpirationDuration != null
                 ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD);
+                : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS);
 
             string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
@@ -80,8 +79,8 @@ namespace DCL.Web3.Authenticators
 
             webBrowser.OpenUrl(url);
 
-            // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId};
-            // the OS routes it to DeepLinkHandle, which dispatches it here.
+            // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId},
+            // which is delivered here through the deep link pipeline.
             string identityId = await WaitForSigninAsync(ct);
 
             return await FetchIdentityByIdAsync(identityId, ct);
@@ -114,15 +113,25 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
-        ///     Awaits the first <c>identityId</c> the dispatcher delivers
+        ///     Awaits the first non-empty <c>identityId</c>, starting from the currently stored one, and consumes it.
         /// </summary>
         private async UniTask<string> WaitForSigninAsync(CancellationToken ct)
         {
             var completionSource = new UniTaskCompletionSource<string>();
 
-            using IDisposable subscription = deeplinkSigninDispatcher.Subscribe(identityId => completionSource.TrySetResult(identityId));
+            using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
+                static (identityId, completion) =>
+                {
+                    if (!string.IsNullOrEmpty(identityId))
+                        completion.TrySetResult(identityId);
+                }, ct);
 
-            return await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct);
+            string identityId = await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct);
+
+            // Consume the id so a future login does not resolve against this same signin.
+            deeplinkSigninIdentityId.Value = null;
+
+            return identityId;
         }
 
         private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, CancellationToken ct)
@@ -175,7 +184,7 @@ namespace DCL.Web3.Authenticators
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
         [Serializable]
-        [PublicAPI]
+        [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         private struct SigninRequestDto
         {
             public string method;
