@@ -102,6 +102,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             if (attemptToConnectState.Value() is AttemptToConnectState.ERROR)
             {
+                // A failed attempt (e.g. revoked token → 401) is terminal; cancel the loop so it stops re-attempting the same credentials forever.
+                cts.SafeCancelAndDispose();
+                cts = null;
                 roomState.Set(IConnectiveRoom.State.Stopped);
                 attemptToConnectState.Set(AttemptToConnectState.NONE);
                 return false;

@@ -90,7 +90,7 @@ namespace DCL.Landscape
             if (!isInitialized) return;
 
             if (TerrainRoot != null)
-                UnityObjectUtils.SafeDestroy(TerrainRoot);
+                UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
         }
 
         public int GetChunkSize() =>
@@ -143,6 +143,12 @@ namespace DCL.Landscape
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
+
+            if (worldManifest.GetOccupiedParcels().Count == 0)
+            {
+                ReportHub.LogWarning(reportData, "Skipping genesis terrain generation: occupied parcels set is empty.");
+                return;
+            }
 
             TerrainModel = new TerrainModel(ParcelSize, worldManifest.GetOccupiedParcels(), terrainGenData.borderPadding);
 
@@ -203,7 +209,8 @@ namespace DCL.Landscape
             catch (OperationCanceledException)
             {
                 if (TerrainRoot != null)
-                    UnityObjectUtils.SafeDestroy(TerrainRoot);
+                    UnityObjectUtils.SafeDestroyGameObject(TerrainRoot);
+
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally

@@ -177,11 +177,11 @@ public class SkyboxRenderController : MonoBehaviour
 
         CancellationToken token = transitionCancellationTokenSource.Token;
         float startTime = directionalLightTimeOfDay;
-        float startTimeStamp = Time.time;
+        float startTimeStamp = UnityEngine.Time.time;
 
-        while (Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
+        while (UnityEngine.Time.time - startTimeStamp < duration && !token.IsCancellationRequested)
         {
-            float progress = (Time.time - startTimeStamp) / duration;
+            float progress = (UnityEngine.Time.time - startTimeStamp) / duration;
             float lerpedTimeOfDay = Mathf.Lerp(startTime, newTimeOfDay, progress);
 
             directionalLightTimeOfDay = lerpedTimeOfDay;

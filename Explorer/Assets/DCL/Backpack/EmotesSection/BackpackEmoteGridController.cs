@@ -8,6 +8,8 @@ using DCL.AvatarRendering.Thumbnails.Utils;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Gifting.Models;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.UI;
@@ -47,6 +49,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -69,7 +72,8 @@ namespace DCL.Backpack.EmotesSection
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
             IWebBrowser webBrowser,
-            IEmoteStorage emoteStorage)
+            IEmoteStorage emoteStorage,
+            IPendingTransferService ownedNftFilter)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -84,6 +88,7 @@ namespace DCL.Backpack.EmotesSection
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.emoteStorage = emoteStorage;
+            this.ownedNftFilter = ownedNftFilter;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
             pageSelectorController.OnSetPage += RequestAndFillEmotes;
@@ -166,6 +171,10 @@ namespace DCL.Backpack.EmotesSection
                         ct,
                         customOwnedEmotes
                     );
+
+                    // The fetch repopulated the registry — a reliable point to prune pending emote gifts that
+                    // left the wallet (or came back).
+                    ownedNftFilter.Prune(GiftableType.Emote);
 
                     int totalAmount = result.totalAmount;
                     IReadOnlyList<ITrimmedEmote> emotes;
@@ -312,6 +321,7 @@ namespace DCL.Backpack.EmotesSection
                 bool isEquipped = equippedSlot != -1;
                 backpackItemView.EquippedIcon.SetActive(isEquipped);
                 backpackItemView.IsEquipped = isEquipped;
+                backpackItemView.IsPending = IsFullyPending(emotes[i].GetUrn());
                 backpackItemView.IsCompatibleWithBodyShape = true;
                 backpackItemView.EquippedSlotLabel.gameObject.SetActive(isEquipped);
                 backpackItemView.EquippedSlotLabel.text = equippedSlot.ToString();
@@ -320,6 +330,13 @@ namespace DCL.Backpack.EmotesSection
                 WaitForThumbnailAsync(emotes[i], backpackItemView, loadElementsCancellationToken!.Token).Forget();
             }
         }
+
+        // Pending when every owned on-chain instance awaits a gift transfer; off-chain/base emotes have no
+        // registry and are never pending.
+        private bool IsFullyPending(URN itemUrn) =>
+            emoteStorage.TryGetOwnedNftRegistry(itemUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
+            && registry.Count > 0
+            && !ownedNftFilter.HasAvailableInstance(registry);
 
         private void UnEquipItem(int slot, string itemId) =>
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));

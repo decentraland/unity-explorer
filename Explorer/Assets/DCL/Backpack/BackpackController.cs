@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -86,7 +87,8 @@ namespace DCL.Backpack
             INftNamesProvider nftNamesProvider,
             IEventBus eventBus,
             Sprite deleteIcon,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IOwnedNftFilter ownedNftFilter)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -113,19 +115,22 @@ namespace DCL.Backpack
             var loadOutfitsCommand = new LoadOutfitsCommand(webController,
                 selfProfile,
                 decentralandUrlsSource,
-                outfitsLogger);
+                outfitsLogger,
+                outfitsRepository);
             var saveOutfitCommand = new SaveOutfitCommand(selfProfile,
                 outfitsRepository,
                 wearableStorage,
                 eventBus,
-                outfitsLogger);
-            var deleteOutfitCommand = new DeleteOutfitCommand(selfProfile, outfitsRepository, screenshotService, deleteIcon);
+                outfitsLogger,
+                ownedNftFilter);
+            var deleteOutfitCommand = new DeleteOutfitCommand(outfitsRepository, screenshotService, deleteIcon);
             var checkOutfitsBannerCommand = new CheckOutfitsBannerVisibilityCommand(selfProfile, nftNamesProvider);
             var previewOutfitCommand = new PreviewOutfitCommand(outfitApplier,
                 equippedWearables,
                 selfProfile,
                 wearableStorage,
-                outfitsLogger);
+                outfitsLogger,
+                ownedNftFilter);
 
             var outfitsPresenter = new OutfitsPresenter(avatarView.OutfitsView,
                 eventBus,
@@ -141,7 +146,8 @@ namespace DCL.Backpack
                 previewOutfitCommand,
                 screenshotService,
                 backpackCharacterPreviewController,
-                outfitSlotFactory);
+                outfitSlotFactory,
+                ownedNftFilter);
 
             avatarController = new AvatarController(
                 avatarView,

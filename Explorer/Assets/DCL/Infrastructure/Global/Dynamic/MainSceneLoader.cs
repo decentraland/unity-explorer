@@ -25,6 +25,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -76,8 +77,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("REFERENCES")]
-        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
-        [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
+        [SerializeField] private PluginSettingsContainer pluginSettingsContainer = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private SplashScreenRef splashScreenRef = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
@@ -96,6 +96,8 @@ namespace Global.Dynamic
         private FileStream? singleInstanceLock;
         private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
 
+        private bool canShutdown;
+
         private void Awake()
         {
             InitializeFlowAsync(destroyCancellationToken).Forget();
@@ -103,32 +105,68 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            Shutdown();
+        }
+
+        private void Shutdown()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                return;
+
+            if (canShutdown == false)
+                return;
+
+            canShutdown = false;
+
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MainSceneLoader));
+
             DisableAllSelectableTransitions();
+            stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
 
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                {
                     plugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
+
+                foreach (IDCLWorldPlugin worldPlugin in dynamicWorldContainer.WorldPlugins)
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"WorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 if (globalWorld != null)
+                {
                     dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    stopwatch.LogStep("DisposeGlobalWorld");
+                }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("dynamicWorldContainer.SafeDispose");
             }
 
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
                 foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                {
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"ECSWorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
             bootstrapContainer?.Dispose();
-            splashScreen.Dispose();
+            stopwatch.LogStep("bootstrapContainer.Dispose");
 
-            ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
+            splashScreen.Dispose();
+            stopwatch.LogStep("splashScreen.Dispose");
+
+            ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private void OnApplicationQuit()
@@ -144,6 +182,11 @@ namespace Global.Dynamic
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
+
+            ExitUtils.Configure(
+                    softShutdown: applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN),
+                    nativeShutdownStopwatch: applicationParametersParser.HasFlag(AppArgsFlags.NATIVE_SHUTDOWN_STOPWATCH)
+                    );
         }
 
         private void ParseEnvironment(string environment)
@@ -154,6 +197,9 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            canShutdown = true;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
@@ -186,9 +232,16 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var realmData = new RealmData();
-            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
-            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
+
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+
+            var decentralandUrlsSource = new GatewayUrlsSource(
+                decentralandEnvironment,
+                realmData,
+                launchSettings,
+                debugSettings.GatekeeperMode,
+                debugSettings.CustomGatekeeperUrl,
+                cliGatekeeperUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -214,7 +267,7 @@ namespace Global.Dynamic
                 decentralandUrlsSource,
                 debugContainer,
                 identityCache,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
                 splashScreen.Value,
@@ -246,6 +299,8 @@ namespace Global.Dynamic
                 bootstrap.InitializeFeaturesRegistry();
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
+                DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
+
                 // Need to ensure clock sync ASAP due to some requests may fail due this problem.
                 // Checking for clock desync after feature flags (or any other process that performs an http request)
                 // potentially saves one extra HEAD request
@@ -255,7 +310,7 @@ namespace Global.Dynamic
                 await ensureClockSyncAction.ExecuteAsync(ct);
 
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, pluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -272,7 +327,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
-                    scenePluginSettingsContainer,
+                    pluginSettingsContainer,
                     settings,
                     dynamicSettings,
                     backgroundMusic,
@@ -312,7 +367,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, pluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -417,8 +472,7 @@ namespace Global.Dynamic
         private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
-                new UnitySystemInfoProvider(),
-                new PlatformDriveInfoProvider());
+                new UnitySystemInfoProvider());
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
             bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
@@ -665,10 +719,7 @@ namespace Global.Dynamic
         {
             using var scope = new CheckingScope(ReportData.UNSPECIFIED);
 
-            await UniTask.WhenAll(
-                globalPluginSettingsContainer.EnsureValidAsync(),
-                scenePluginSettingsContainer.EnsureValidAsync()
-            );
+            await pluginSettingsContainer.EnsureValidAsync();
 
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }
@@ -845,17 +896,6 @@ namespace Global.Dynamic
             return EnsureClockSync.Result.CONTINUE;
         }
 
-        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
-            mode switch
-            {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
-
         private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
         {
             if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
@@ -869,6 +909,7 @@ namespace Global.Dynamic
             ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
             return null;
         }
+
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>

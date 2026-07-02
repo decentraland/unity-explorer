@@ -1,8 +1,9 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Utility;
+using DCL.Utility.Types;
 using ECS;
-using Global.AppArgs;
 using System;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
@@ -11,10 +12,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
     {
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; }
         public IRealmData RealmData { get; }
+        public string HardwareFingerprint { get; }
 
         public bool IsCommsOffline => RealmData.CommsAdapter.Contains("offline:offline");
 
-        private readonly string? overrideAdapterURL;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -23,11 +24,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
             IDecentralandUrlsSource decentralandUrlsSource,
             ISceneRoomMetaDataSource play,
             ISceneRoomMetaDataSource localSceneDevelopment,
-            IAppArgs appArgs,
-            IRealmData realmData
+            IRealmData realmData,
+            Option<HardwareFingerprintProvider> hardwareFingerprintProvider
         )
         {
             RealmData = realmData;
+            HardwareFingerprint = hardwareFingerprintProvider.Has ? hardwareFingerprintProvider.Value.Fingerprint : string.Empty;
             SceneRoomMetaDataSource = launchMode.CurrentMode switch
                                       {
                                           LaunchMode.Play => play,
@@ -37,19 +39,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
 
             this.launchMode = launchMode;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            if (appArgs.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? overrideUrl)
-                && !string.IsNullOrEmpty(overrideUrl))
-                overrideAdapterURL = overrideUrl;
-            else
-                overrideAdapterURL = null;
         }
 
         public string GetAdapterURL(string sceneID)
         {
-            if (!string.IsNullOrEmpty(overrideAdapterURL))
-                return overrideAdapterURL;
-
             if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
                 return decentralandUrlsSource.Url(DecentralandUrl.LocalGateKeeperSceneAdapter);
 

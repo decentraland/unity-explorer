@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using ECS.Unity.AssetLoad.Cache;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Collections.Generic;
@@ -14,18 +13,15 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaPlayer mediaPlayerPrefab;
         private readonly Dictionary<string, Queue<MediaPlayerInfo>> offlineMediaPlayers;
         private readonly Transform rootContainerTransform;
-        private readonly AssetPreLoadCache assetPreLoadCache;
 
         private readonly List<string> keysToRemove = new ();
 
         private readonly int tryCleanOfflineMediaPlayersDelayInMinutes = 2;
         private readonly float maxOfflineTimePossibleInSeconds = 300f;
 
-        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab,
-            AssetPreLoadCache assetPreLoadCache)
+        public MediaPlayerCustomPool(MediaPlayer mediaPlayerPrefab)
         {
             this.mediaPlayerPrefab = mediaPlayerPrefab;
-            this.assetPreLoadCache = assetPreLoadCache;
             rootContainerTransform = new GameObject("POOL_CONTAINER_MEDIA_PLAYER").transform;
             offlineMediaPlayers = new Dictionary<string, Queue<MediaPlayerInfo>>();
             TryUnloadAsync().Forget();
@@ -49,12 +45,9 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             #if UNITY_EDITOR
-                if (UnityEditorInternal.RenderDoc.IsLoaded())
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.MediaFoundation;
-                else
-                    mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
+                mediaPlayer.PlatformOptionsWindows.videoApi = UnityEditorInternal.RenderDoc.IsLoaded() ? Windows.VideoApi.MediaFoundation : Windows.VideoApi.WinRT;
             #else
-                mediaPlayer.PlatformOptionsWindows.videoApi = RenderHeads.Media.AVProVideo.Windows.VideoApi.WinRT;
+                mediaPlayer.PlatformOptionsWindows.videoApi = Windows.VideoApi.WinRT;
             #endif
             mediaPlayer.PlatformOptionsWindows.startWithHighestBitrate = true;
             mediaPlayer.PlatformOptionsWindows.useLowLiveLatency = false;
@@ -99,14 +92,14 @@ namespace DCL.SDKComponents.MediaStream
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
 
+            // Already destroyed (pool eviction / scene teardown): nothing left to stop or re-pool.
+            if (mediaPlayer == null) return;
+
             mediaPlayer.Stop();
             mediaPlayer.CloseMedia();
             mediaPlayer.AudioVolume = 0f;
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);
-
-            // If the MediaPlayer is cached in the asset load, avoid queuing it in the pool
-            if (assetPreLoadCache.TryGet(url, out MediaPlayerComponent _)) return;
 
             var info = new MediaPlayerInfo(mediaPlayer, UnityEngine.Time.realtimeSinceStartup);
 

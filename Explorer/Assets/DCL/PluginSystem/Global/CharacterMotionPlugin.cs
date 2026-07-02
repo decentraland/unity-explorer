@@ -13,9 +13,11 @@ using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Friends;
+using DCL.Multiplayer.Movement;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
@@ -32,6 +34,7 @@ namespace DCL.PluginSystem.Global
 {
     public class CharacterMotionPlugin : IDCLGlobalPlugin<CharacterMotionSettings>
     {
+        private readonly IRealmData realmData;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -40,7 +43,8 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ObjectProxy<FriendsCache> friendsCache;
+        private readonly FriendsCache? friendsCache;
+        private readonly IMovementMessageBus teleportBroadcast;
 
         private CharacterMotionSettings settings;
         private GliderPropView gliderPropPrefab;
@@ -48,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private GameObject destinationMarkerPrefab;
 
         public CharacterMotionPlugin(
+            IRealmData realmData,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -56,8 +61,10 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
-            ObjectProxy<FriendsCache> friendsCache)
+            FriendsCache? friendsCache,
+            IMovementMessageBus teleportBroadcast)
         {
+            this.realmData = realmData;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
             this.componentPoolsRegistry = componentPoolsRegistry;
@@ -67,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
             this.friendsCache = friendsCache;
+            this.teleportBroadcast = teleportBroadcast;
         }
 
         public void Dispose()
@@ -125,7 +133,7 @@ namespace DCL.PluginSystem.Global
                 UpdatePointAndClickInputSystem.InjectToWorld(ref builder, destinationMarkerPrefab);
             InterpolateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             TeleportPositionCalculationSystem.InjectToWorld(ref builder, landscape);
-            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+            TeleportCharacterSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, teleportBroadcast);
             MovePlayerWithDurationSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder, scenesCache);
             CharacterVelocityDebugSystem.InjectToWorld(ref builder, debugContainerBuilder);

@@ -1,5 +1,4 @@
 using Arch.Core;
-using Utility.Multithreading;
 
 namespace SceneRunner.Scene
 {

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -23,7 +24,7 @@ namespace DCL.SceneLoadingScreens.Tests
         [TestCaseSource(nameof(PossibleResults))]
         public async Task ReportResultOfOperationAsync(EnumResult<TaskError> result)
         {
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT, new LoadingStatus());
 
             var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
@@ -47,7 +48,7 @@ namespace DCL.SceneLoadingScreens.Tests
         [TestCaseSource(nameof(PossibleResults))]
         public async Task FixUpLoadingReportAsync(EnumResult<TaskError> result)
         {
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT, new LoadingStatus());
             AsyncLoadProcessReport outerReport = null;
 
             var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
@@ -75,7 +76,7 @@ namespace DCL.SceneLoadingScreens.Tests
         {
             LogAssert.ignoreFailingMessages = true;
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException(), TIMEOUT);
+            var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException(), TIMEOUT, new LoadingStatus());
             AsyncLoadProcessReport outerReport = null;
 
             var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
@@ -93,6 +94,9 @@ namespace DCL.SceneLoadingScreens.Tests
         [Test]
         public async Task TimeoutFinishAllInternalsOperationsAsync()
         {
+            // The timeout now reports LoadingScreenTimeoutException via ReportHub
+            LogAssert.ignoreFailingMessages = true;
+
             CancellationToken mvcCancellation = CancellationToken.None;
             CancellationToken opCancellation = CancellationToken.None;
             AsyncLoadProcessReport outerReport = null;
@@ -122,7 +126,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
             }
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout(TimeSpan.FromMilliseconds(200)));
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout(TimeSpan.FromMilliseconds(200)), new LoadingStatus());
             var result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             // let internal operations spin to the end
@@ -153,7 +157,7 @@ namespace DCL.SceneLoadingScreens.Tests
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, TIMEOUT);
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, TIMEOUT, new LoadingStatus());
 
             await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 

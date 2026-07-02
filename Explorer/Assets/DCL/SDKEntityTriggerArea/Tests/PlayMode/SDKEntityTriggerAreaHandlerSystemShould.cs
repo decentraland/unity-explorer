@@ -397,7 +397,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
         }
 
         [Test]
-        public async Task UseAllAvatarsPhysicsLayerWhenOnlyTargetingPlayers()
+        public async Task UseSDKAvatarTriggerAreaLayerWhenOnlyTargetingPlayers()
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -407,7 +407,7 @@ namespace DCL.SDKEntityTriggerArea.Tests
 
             system.Update(0);
 
-            Assert.AreEqual(PhysicsLayers.ALL_AVATARS, sdkEntityTriggerArea.gameObject.layer);
+            Assert.AreEqual(PhysicsLayers.SDK_AVATAR_TRIGGER_AREA, sdkEntityTriggerArea.gameObject.layer);
 
             component = new SDKEntityTriggerAreaComponent(areaSize: Vector3.one * 4, layerMask: ColliderLayer.ClPlayer | ColliderLayer.ClCustom6);
             world.Set(entity, component);

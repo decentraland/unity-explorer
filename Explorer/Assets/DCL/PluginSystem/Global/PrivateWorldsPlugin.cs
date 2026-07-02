@@ -10,6 +10,7 @@ using DCL.Utilities.Extensions;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -28,7 +29,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IRoomHub roomHub;
         private readonly IWorldPermissionsService worldPermissionsService;
-        private readonly IWorldAccessGate worldAccessGate;
         private readonly IInputBlock inputBlock;
         private readonly IRealmData realmData;
         private readonly IRealmNavigator realmNavigator;
@@ -41,7 +41,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IRoomHub roomHub,
             IWorldPermissionsService worldPermissionsService,
-            IWorldAccessGate worldAccessGate,
             IInputBlock inputBlock,
             IRealmData realmData,
             IRealmNavigator realmNavigator,
@@ -51,7 +50,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.worldPermissionsService = worldPermissionsService;
-            this.worldAccessGate = worldAccessGate;
             this.inputBlock = inputBlock;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
@@ -81,6 +79,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        [Serializable]
         public class PrivateWorldsSettings : IDCLPluginSettings
         {
             [field: Header(nameof(PrivateWorldsPlugin) + "." + nameof(PrivateWorldsSettings))]

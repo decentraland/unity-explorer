@@ -66,8 +66,6 @@ MonoBehaviour:
       Severity: 4
     - Category: BACKPACK
       Severity: 4
-    - Category: BADGES
-      Severity: 4
     - Category: CAMERA_REEL
       Severity: 4
     - Category: CHARACTER_TRIGGER_AREA
@@ -268,8 +266,6 @@ MonoBehaviour:
       Severity: 1
     - Category: BACKPACK
       Severity: 1
-    - Category: BADGES
-      Severity: 1
     - Category: CAMERA_REEL
       Severity: 1
     - Category: CHARACTER_TRIGGER_AREA
@@ -448,6 +444,10 @@ MonoBehaviour:
       Severity: 1
     - Category: ALWAYS
       Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

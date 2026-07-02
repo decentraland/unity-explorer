@@ -6,10 +6,13 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Prefs;
+using DCL.PrivateWorlds;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -17,12 +20,14 @@ using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utility.Types;
 using DCL.Web3.Identities;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
+using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -44,12 +49,15 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+        private readonly IPulseMultiplayerService pulseMultiplayerService;
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
         private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
         private readonly bool isLocalSceneDevelopment;
+        private readonly IWorldPermissionsService worldPermissionsService;
+        private readonly IChatHistory chatHistory;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -69,7 +77,10 @@ namespace DCL.UserInAppInitializationFlow
             ICharacterObject characterObject,
             ExposedTransform characterExposedTransform,
             StartParcel startParcel,
-            bool isLocalSceneDevelopment)
+            IPulseMultiplayerService pulseMultiplayerService,
+            bool isLocalSceneDevelopment,
+            IWorldPermissionsService worldPermissionsService,
+            IChatHistory chatHistory)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
@@ -79,7 +90,10 @@ namespace DCL.UserInAppInitializationFlow
             this.characterObject = characterObject;
             this.startParcel = startParcel;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.pulseMultiplayerService = pulseMultiplayerService;
             this.characterExposedTransform = characterExposedTransform;
+            this.worldPermissionsService = worldPermissionsService;
+            this.chatHistory = chatHistory;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -161,6 +175,11 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
+                            // After authentication completes, verify the user can actually access the current realm if it's a world.
+                            // The realm was set during bootstrap before the user had a chance to switch accounts, so the identity
+                            // that's now authenticated may differ from the one assumed at startup.
+                            await VerifyWorldAccessAndFallbackIfNeededAsync(ct);
+
                             //Set initial position and start async livekit connection
                             characterExposedTransform.Position.Value
                                 = characterObject.Controller.transform.position
@@ -221,17 +240,95 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
         }
 
+        private async UniTask VerifyWorldAccessAndFallbackIfNeededAsync(CancellationToken ct)
+        {
+            if (isLocalSceneDevelopment) return;
+            if (!realmController.RealmData.IsWorld()) return;
+            if (realmController.CurrentDomain == null) return;
+
+            if (!TryExtractWorldName(realmController.CurrentDomain.Value, out string worldName))
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[RealmController] Failed to extract world name from realm '{realmController.CurrentDomain.Value.ToString()}'.");
+                await GenesisFallbackAsync();
+                return;
+            }
+
+            WorldAccessCheckContext context;
+
+            try
+            {
+                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.REALM,
+                    $"[StartUp] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
+                await GenesisFallbackAsync();
+                return;
+            }
+
+            switch (context.Result)
+            {
+                case WorldAccessCheckResult.Allowed:
+                    return;
+                case WorldAccessCheckResult.CheckFailed:
+                case WorldAccessCheckResult.AccessDenied:
+                case WorldAccessCheckResult.PasswordRequired:
+                    ReportHub.LogWarning(ReportCategory.REALM,
+                        $"[StartUp] World '{worldName}' is not authorized for auto-entry, falling back to Genesis.");
+                    await GenesisFallbackAsync();
+                    return;
+                default: throw new ArgumentOutOfRangeException();
+            }
+
+            async UniTask GenesisFallbackAsync()
+            {
+                chatHistory.AddMessage(
+                    ChatChannel.NEARBY_CHANNEL_ID,
+                    ChatChannel.ChatChannelType.NEARBY,
+                    ChatMessage.NewFromSystem($"Could not enter '{worldName}' due to world permissions. You were sent to Genesis Plaza."));
+
+                await realmController.SetRealmAsync(
+                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
+            }
+        }
+
+        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
+        {
+            worldName = string.Empty;
+
+            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
+                return false;
+
+            string path = uri.AbsolutePath.Trim('/');
+
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (segments.Length == 0)
+                return false;
+
+            worldName = segments[^1];
+            return !string.IsNullOrEmpty(worldName);
+        }
+
         // TODO should be an operation
         private async UniTask DoLogoutOperationsAsync()
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         // TODO should be an operation
         private async UniTask DoRecoveryOperationsAsync()
         {
+            await pulseMultiplayerService.DisconnectAsync();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 

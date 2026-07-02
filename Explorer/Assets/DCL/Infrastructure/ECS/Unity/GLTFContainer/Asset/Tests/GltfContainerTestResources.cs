@@ -47,12 +47,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             try
             {
-                shaderAssetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(shaderAssetBundle, null, null, "", mutex, Array.Empty<AssetBundleData>(),
+                shaderAssetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(shaderAssetBundle, null, "", mutex, Array.Empty<AssetBundleData>(),
                     ReportCategory.ASSET_BUNDLES, "", "", true, false, CancellationToken.None);
 
                 shaderAssetBundleData.Asset.AddReference();
 
-                assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "", mutex, new[] { shaderAssetBundleData.Asset },
+                assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, typeof(GameObject), "", mutex, new[] { shaderAssetBundleData.Asset },
                     ReportCategory.ASSET_BUNDLES, "", "", false, false, CancellationToken.None);
                 return assetBundleData;
             }

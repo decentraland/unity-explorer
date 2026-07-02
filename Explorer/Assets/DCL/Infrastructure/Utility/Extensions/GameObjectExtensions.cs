@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Utility
 {
@@ -11,6 +12,17 @@ namespace Utility
         {
             T component = gameObject.GetComponent<T>();
             return component ? component : gameObject.AddComponent<T>();
+        }
+
+        /// <summary>
+        /// Clears EventSystem's current selection if it currently points at this GameObject.
+        /// Useful inside Button.onClick handlers so the button doesn't stay visually "Selected"
+        /// after click when the host UI keeps it on-screen.
+        /// </summary>
+        public static void DeselectIfSelected(this GameObject gameObject)
+        {
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
+                EventSystem.current.SetSelectedGameObject(null);
         }
 
         public static void ResetLocalTRS(this Transform t)

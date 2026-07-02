@@ -4,9 +4,6 @@ namespace DCL.Prefs
     {
         public const string NEW_BADGES = "NewBadges";
 
-        public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
-        public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
-
         public const string LAUNCH_COUNT = "LaunchCount";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";
@@ -57,6 +54,7 @@ namespace DCL.Prefs
         public const string PS_PLAY_CURRENT_SCENE_STREAMS_ONLY = "QS_PlayCurrentSceneStreamsOnly";
         public const string PS_SPRING_BONE_SIMULATION = "QS_SpringBoneSimulation";
         public const string PS_RESOLUTION = "QS_Resolution";
+        public const string PS_WINDOWED_RESOLUTION = "QS_WindowedResolution";
 
         public const string SETTINGS_HIDE_BLOCKED_USERS_MESSAGES = "Settings_HideBlockedUsersChatMessages";
         public const string SETTINGS_AVATAR_VOLUME = "Settings_AvatarVolume";
@@ -94,7 +92,7 @@ namespace DCL.Prefs
         public const string MAP_HOME_MARKER_DATA = "Map_HomeMarker";
         public const string MAP_HOME_WORLD_NAME = "Map_HomeWorldName";
 
-        public const string GIFTING_PENDING_GIFTS = "PendingGifts";
+        public const string GIFTING_PENDING_GIFTS = "PendingGifts_{0}";
 
         public const string SETTINGS_HEAD_SYNC_ENABLED = "Settings_HeadSync";
 

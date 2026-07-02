@@ -46,6 +46,8 @@ namespace DCL.Backpack.Slots
 
         private bool isHovered;
         private bool isForcedHover;
+        private bool isOperationBusy;
+        private bool disposed;
         private OutfitSlotState currentState;
         private OutfitItem? currentOutfitData;
         private Texture2D? currentThumbnail;
@@ -166,11 +168,24 @@ namespace DCL.Backpack.Slots
             view.SetEquipped(equipped);
         }
 
+        /// <summary>
+        ///     Marks the outfit pending; a pending outfit can't be hovered, so equip/preview buttons stay hidden.
+        /// </summary>
+        public void SetPending(bool pending) =>
+            view.SetIsPending(pending);
+
         public void SetEquipLoading(bool loading) =>
             view.SetEquipLoading(loading);
 
         public void SetHoverEnabled(bool isEnabled) =>
             view.SetHoverEnabled(isEnabled);
+
+        public void SetOperationBusy(bool busy)
+        {
+            isOperationBusy = busy;
+            view.SetActionButtonsInteractable(!busy);
+            UpdateView();
+        }
 
         public void ResetHoverState()
         {
@@ -183,31 +198,42 @@ namespace DCL.Backpack.Slots
         {
             currentState = newState;
             currentOutfitData = item;
+
+            // Pending applies only to a Full slot; clear it otherwise so a recycled slot isn't left gated.
+            if (newState != OutfitSlotState.Full)
+                view.SetIsPending(false);
+
             UpdateView();
         }
 
         private void UpdateView()
         {
-            bool effectiveHover = isHovered || isForcedHover;
+            // Save button (revealed on empty hover) is suppressed during any operation —
+            // the user cannot start a second save while one is in flight.
+            bool emptyHover = isHovered && !isOperationBusy;
+            bool emptyReadyHover = (isHovered || isForcedHover) && !isOperationBusy;
+
+            // Full-state hover stays "true" during operations so equip and the hover outline
+            // remain visible — equip is safe to run mid-save/delete (see ShowFullState).
+            bool fullHover = isHovered || isForcedHover;
 
             switch (currentState)
             {
-                case OutfitSlotState.Empty: view.ShowEmptyState(isHovered); break;
+                case OutfitSlotState.Empty: view.ShowEmptyState(emptyHover); break;
                 case OutfitSlotState.EmptyAndReadyToSave:
-                    view.ShowEmptyState(effectiveHover);
+                    view.ShowEmptyState(emptyReadyHover);
                     break;
                 case OutfitSlotState.Loading: view.ShowLoadingState(); break;
                 case OutfitSlotState.Save: view.ShowStateSaving(); break;
                 case OutfitSlotState.Full:
-
-                    view.ShowFullState(currentThumbnail, effectiveHover);
+                    view.ShowFullState(currentThumbnail, fullHover, isOperationBusy);
                     break;
             }
         }
 
         private async UniTaskVoid LoadExistingScreenshotAsync()
         {
-            if (currentOutfitData == null) return;
+            if (disposed || currentOutfitData == null) return;
 
             try
             {
@@ -252,6 +278,7 @@ namespace DCL.Backpack.Slots
 
         public void Dispose()
         {
+            disposed = true;
             cts.SafeCancelAndDispose();
             view.OnSaveClicked -= HandleSaveClicked;
             view.OnEquipClicked -= HandleEquipClicked;

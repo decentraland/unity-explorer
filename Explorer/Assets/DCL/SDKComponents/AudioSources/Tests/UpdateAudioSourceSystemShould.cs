@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateEntity()
             {
-                entity = world.Create(component, new PBAudioSource());
+                entity = world.Create(component, new PBAudioSource(), new PartitionComponent());
                 AddTransformToEntity(entity);
             }
         }
@@ -86,6 +86,40 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.AudioSource, Is.Not.Null);
             Assert.That(afterUpdate.AudioSource.clip, Is.EqualTo(TestAudioClip));
+        }
+
+        [Test]
+        public void RetriggerSameUrlWhenAlreadyPlaying()
+        {
+            // Arrange: resolve the clip promise and run one update to instantiate the Unity AudioSource.
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClipData>(new AudioClipData(TestAudioClip)));
+            system.Update(0);
+
+            ref AudioSourceComponent loaded = ref world.Get<AudioSourceComponent>(entity);
+            Assert.That(loaded.AudioSource, Is.Not.Null);
+            Assert.That(loaded.AudioSource!.clip, Is.EqualTo(TestAudioClip));
+
+            // Ensure the cached URL matches the dirty PB so HandleSDKChanges takes the same-URL branch.
+            ref PBAudioSource sdk = ref world.Get<PBAudioSource>(entity);
+            sdk.AudioClipUrl = loaded.AudioClipUrl;
+
+            // Simulate a fresh LWW PUT from the scene: same URL, Playing:true, CurrentTime rewound to 0.
+            sdk.Playing = true;
+            sdk.CurrentTime = 0f;
+            sdk.Volume = 0.5f;
+            sdk.IsDirty = true;
+
+            // Dirty the clock/cursor so we can prove the system seeked it.
+            loaded.AudioSource.time = 1.25f;
+
+            // Act
+            system.Update(0);
+
+            // Assert: same-URL retrigger seeked to CurrentTime and the dirty flag was cleared.
+            AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
+            Assert.That(afterUpdate.AudioSource, Is.Not.Null);
+            Assert.That(afterUpdate.AudioSource!.time, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(world.Get<PBAudioSource>(entity).IsDirty, Is.False);
         }
     }
 }

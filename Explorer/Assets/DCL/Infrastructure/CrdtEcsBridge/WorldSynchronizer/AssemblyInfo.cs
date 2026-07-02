@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("WorldSynchronizer.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]

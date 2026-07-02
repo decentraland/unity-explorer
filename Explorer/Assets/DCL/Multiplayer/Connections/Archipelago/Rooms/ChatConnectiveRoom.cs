@@ -1,8 +1,10 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
+using DCL.Utility.Types;
 using DCL.WebRequests;
 using LiveKit.Proto;
 using DCL.LiveKit.Public;
@@ -18,13 +20,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private readonly IWebRequestController webRequests;
         private readonly URLAddress adapterAddress;
+        private readonly string hardwareFingerprint;
 
         public bool Activated { get; private set; }
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
+        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress, Option<HardwareFingerprintProvider> hardwareFingerprintProvider)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
+            hardwareFingerprint = hardwareFingerprintProvider.Has ? hardwareFingerprintProvider.Value.Fingerprint : string.Empty;
         }
 
         public async UniTask ActivateAsync()
@@ -82,7 +86,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
-            string metadata = FixedMetadata.Default.ToJson();
+            string metadata = new FixedMetadata
+            {
+                signer = "dcl:explorer",
+                deviceIdentifier = hardwareFingerprint,
+            }.ToJson();
+
             var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             return response.adapter;
@@ -91,12 +100,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         [Serializable]
         private struct FixedMetadata
         {
-            public static FixedMetadata Default = new ()
-            {
-                signer = "dcl:explorer",
-            };
-
             public string signer;
+            public string deviceIdentifier;
 
             public string ToJson() =>
                 JsonUtility.ToJson(this)!;

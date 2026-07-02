@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.AvatarSection.Outfits.Logger;
 using DCL.Backpack.AvatarSection.Outfits.Models;
+using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles.Self;
@@ -19,20 +20,27 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private readonly ISelfProfile selfProfile;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly OutfitsLogger outfitsLogger;
+        private readonly OutfitsRepository outfitsRepository;
 
         public LoadOutfitsCommand(IWebRequestController webRequestController,
             ISelfProfile selfProfile,
             IDecentralandUrlsSource urlsSource,
-            OutfitsLogger outfitsLogger)
+            OutfitsLogger outfitsLogger,
+            OutfitsRepository outfitsRepository)
         {
             this.webRequestController = webRequestController;
             this.selfProfile = selfProfile;
             this.urlsSource = urlsSource;
             this.outfitsLogger = outfitsLogger;
+            this.outfitsRepository = outfitsRepository;
         }
 
         public async UniTask<IReadOnlyDictionary<int, OutfitItem>> ExecuteAsync(CancellationToken ct)
         {
+            // A reload is starting: block publishes until a fresh server snapshot seeds the
+            // repository, so a failed load can't leave it publishing from empty/stale state.
+            outfitsRepository.Invalidate();
+
             var profile = await selfProfile.ProfileAsync(ct);
             var empty = new Dictionary<int, OutfitItem>();
             if (profile == null)
@@ -53,12 +61,14 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 if (response == null)
                 {
                     outfitsLogger.LogInfo($"[OUTFIT_LOAD] No outfits found for user {profile?.UserId} (404). This is a normal case for new users.");
+                    outfitsRepository.Initialize(empty.Values);
                     return empty;
                 }
 
                 if (response.Metadata == null)
                 {
                     outfitsLogger.LogInfo($"[OUTFIT_LOAD] Loaded old outfits data (version {response.Timestamp}). Ignoring.");
+                    outfitsRepository.Initialize(empty.Values);
                     return empty;
                 }
 
@@ -79,6 +89,7 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
                 }
 
                 outfitsLogger.LogLoadResult(validOutfits);
+                outfitsRepository.Initialize(validOutfits.Values);
                 return validOutfits;
             }
             catch (UnityWebRequestException e)

@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape.Assets
                 if (ct.IsCancellationRequested)
                     break;
 
-                elapsed += Time.deltaTime;
+                elapsed += UnityEngine.Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / fadeDuration);
                 color.a = Mathf.Lerp(startAlpha, endAlpha, t);
                 SpriteRenderer.color = color;
