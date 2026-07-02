@@ -129,7 +129,7 @@ namespace PortableExperiences.Controller
                 ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
                 string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
                 Entity portableExperienceEntity = world.Create();
-                world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+                world.Add(portableExperienceEntity, new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens, realmData));
                 world.Add(portableExperienceEntity, new PortableExperienceMetadata
                 {
                     Type = isGlobalPortableExperience ? PortableExperienceType.GLOBAL : PortableExperienceType.LOCAL,

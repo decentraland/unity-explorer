@@ -10,6 +10,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Utilities;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.TestSuite;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Info;
@@ -26,6 +27,8 @@ namespace DCL.SDKComponents.RealmInfo.Tests
         private IECSToCRDTWriter ecsToCRDTWriter;
         private IRealmData realmData;
         private IRoomHub roomHub;
+        private ISceneData sceneData;
+        private IScenesCache scenesCache;
 
         [SetUp]
         public void Setup()
@@ -49,7 +52,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             islandRoom.Info.Returns(roomInfo);
             roomHub.IslandRoom().Returns(islandRoom);
 
-            ISceneData? sceneData = Substitute.For<ISceneData>();
+            sceneData = Substitute.For<ISceneData>();
             sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
 
             IGateKeeperSceneRoom? gateKeeperSceneRoom = Substitute.For<IGateKeeperSceneRoom>();
@@ -58,7 +61,9 @@ namespace DCL.SDKComponents.RealmInfo.Tests
 
             roomHub.SceneRoom().Returns(gateKeeperSceneRoom);
 
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData);
+            scenesCache = Substitute.For<IScenesCache>();
+
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHub, sceneData, scenesCache);
         }
 
         protected override void OnTearDown()
@@ -148,6 +153,24 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             system.Initialize();
 
             AssertPutMessageReceived();
+        }
+
+        [Test]
+        public void OmitHostSceneRoomCheckForPortableExperience()
+        {
+            // For a PX the connection state is read from the scene's own facade (via the scenes cache), not the
+            // host's scene room: with no PX facade registered the scene reports as not connected even though the
+            // host scene room ('gateKeeperSceneRoom') is connected.
+            sceneData.IsPortableExperience().Returns(true);
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "px-scene" });
+
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(
+                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>>(),
+                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
+                                Arg.Is<(IRealmData realmData, WriteRealmInfoSystem.CommsRoomInfo roomInfo)>(data => !data.roomInfo.IsConnectedSceneRoom));
         }
     }
 }

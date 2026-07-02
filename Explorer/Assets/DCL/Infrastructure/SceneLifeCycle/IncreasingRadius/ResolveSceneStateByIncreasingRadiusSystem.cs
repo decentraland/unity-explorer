@@ -112,9 +112,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             if (sceneDefinitionComponent.IsPortableExperience)
             {
+                // Authoritative-multiplayer PX scenes carry their world's realm so the load flow can join the
+                // scene-comms room (which spawns the authoritative server). The realm rides on the entity's
+                // PortableExperienceComponent; null for ordinary PX leaves the load flow untouched.
+                IRealmData? portableExperienceRealm = sceneDefinitionComponent.Definition.metadata.authoritativeMultiplayer
+                                                      && World.TryGet(entity, out PortableExperienceComponent portableExperience)
+                    ? portableExperience.RealmData
+                    : null;
+
                 //Portable experiences shouldnt be analyzed. Create straight away
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(sceneDefinitionComponent, issDescriptor), partitionComponent), SceneLoadingState.CreatePortableExperience());
+                    new GetSceneFacadeIntention(sceneDefinitionComponent, issDescriptor, portableExperienceRealm), partitionComponent), SceneLoadingState.CreatePortableExperience());
             }
             else
             {

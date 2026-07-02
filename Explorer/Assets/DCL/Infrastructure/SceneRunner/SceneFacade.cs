@@ -118,7 +118,7 @@ namespace SceneRunner
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
-        private void DisposeInternal() =>
+        protected virtual void DisposeInternal() =>
             deps.Dispose();
 
         public void SetTargetFPS(int fps)

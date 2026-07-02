@@ -8,6 +8,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
@@ -138,7 +139,7 @@ namespace Global.Tests.PlayMode
                     new CancellationTokenSource(),
                     Substitute.For<IPopupCloserView>()
                 ),
-                new IMessagePipesHub.Fake(),
+                Substitute.For<ISceneCommunicationPipe>(),
                 Substitute.For<IRemoteMetadata>(),
                 webJsSources,
                 DecentralandEnvironment.Org,

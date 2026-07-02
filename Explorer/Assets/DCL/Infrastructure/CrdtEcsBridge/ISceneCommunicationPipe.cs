@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DCL.Multiplayer.Connections.Messaging.Pipe;
+using DCL.Multiplayer.Connections.Rooms.Connective;
+using System;
 using System.Threading;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -30,6 +32,19 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         void AddSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
         void RemoveSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
+
+        /// <summary>
+        ///     Routes the given scene's comms to a dedicated room (its own message pipe) instead of the host's
+        ///     current scene room. Idempotent. The caller owns the room and pipe lifecycle; <see cref="RemoveSceneRoom" />
+        ///     only stops routing and removes this pipe's inbound subscription.
+        /// </summary>
+        void RegisterSceneRoom(string sceneId, IConnectiveRoom room, IMessagePipe roomPipe);
+
+        /// <summary>
+        ///     Stops routing for a previously registered scene room and unsubscribes from its inbound pipe. Disposing
+        ///     the underlying room/pipe is the caller's responsibility. No-op if the scene was never registered.
+        /// </summary>
+        void RemoveSceneRoom(string sceneId);
 
         void SendMessage(ReadOnlySpan<byte> message, string sceneId, ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null);
 

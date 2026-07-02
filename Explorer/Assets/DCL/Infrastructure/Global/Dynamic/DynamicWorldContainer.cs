@@ -48,6 +48,7 @@ using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.SmartWearables;
@@ -129,6 +130,8 @@ namespace Global.Dynamic
         public IRemoteMetadata RemoteMetadata => commsContainer.RemoteMetadata;
 
         public IRoomHub RoomHub => commsContainer.RoomHub;
+
+        public SceneCommunicationPipe SceneCommunicationPipe => commsContainer.SceneCommunicationPipe;
 
         public ISystemClipboard SystemClipboard => uiShellContainer.Clipboard;
 
@@ -442,7 +445,7 @@ namespace Global.Dynamic
             {
                 new AvatarAttachPlugin(globalWorld, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.ComponentsContainer.ComponentPoolsRegistry, commsContainer.EntityParticipantTable, staticContainer.CharacterContainer.Transform),
                 new SceneMaskedEmotePlugin(globalWorld, playerEntity, staticContainer.MainPlayerAvatarBaseProxy, staticContainer.EmotesContainer.EmotePlayer, staticContainer.EmoteStorage, multiplayerEmotesMessageBus),
-                new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub),
+                new RealmInfoPlugin(staticContainer.RealmData, commsContainer.RoomHub, staticContainer.ScenesCache),
             };
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
