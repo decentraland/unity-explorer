@@ -6,9 +6,6 @@ namespace DCL.Passport.Modules.Creations
     public class CreationsDetails_PassportModuleView : MonoBehaviour
     {
         [field: SerializeField]
-        public GameObject MainContainer { get; private set; }
-
-        [field: SerializeField]
         public GameObject MainLoadingSpinner { get; private set; }
 
         [field: SerializeField]
@@ -19,6 +16,12 @@ namespace DCL.Passport.Modules.Creations
 
         [field: SerializeField]
         public GameObject NoEmotesLabel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject WearablesLabel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject EmotesLabel { get; private set; }
 
         [field: SerializeField]
         public RectTransform CreatedWearablesContainer { get; private set; }

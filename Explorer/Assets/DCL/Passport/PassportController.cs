@@ -94,6 +94,7 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
+        private readonly List<IPassportModuleController> creationsPassportModules = new ();
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -342,7 +343,15 @@ namespace DCL.Passport
 
             creationsDetailsPassportModuleController = new CreationsDetails_PassportModuleController(
                 viewInstance.CreationsDetailsModuleView,
-                webRequestController);
+                webRequestController,
+                decentralandUrlsSource,
+                rarityBackgrounds,
+                rarityColors,
+                categoryIcons,
+                webBrowser,
+                imageControllerProvider,
+                passportErrorsController);
+            creationsPassportModules.Add(creationsDetailsPassportModuleController);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,
@@ -550,6 +559,9 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Clear();
 
+            foreach (IPassportModuleController module in creationsPassportModules)
+                module.Clear();
+
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
@@ -612,6 +624,9 @@ namespace DCL.Passport
                 module.Dispose();
 
             foreach (IPassportModuleController module in badgesPassportModules)
+                module.Dispose();
+
+            foreach (IPassportModuleController module in creationsPassportModules)
                 module.Dispose();
 
             if (colorPickerController == null) return;
@@ -684,7 +699,12 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Setup(profile);
 
-            List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+            List<IPassportModuleController> passportModulesToSetup = passportSection switch
+                                                                     {
+                                                                         PassportSection.OVERVIEW => overviewPassportModules,
+                                                                         PassportSection.CREATIONS => creationsPassportModules,
+                                                                         _ => badgesPassportModules,
+                                                                     };
 
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
@@ -721,6 +741,9 @@ namespace DCL.Passport
         {
             if (currentSection == PassportSection.CREATIONS)
                 return;
+
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
+            LoadPassportSectionAsync(currentUserId!, PassportSection.CREATIONS, characterPreviewLoadingCts.Token).Forget();
 
             currentSection = PassportSection.CREATIONS;
             viewInstance!.OpenSection(currentSection);
