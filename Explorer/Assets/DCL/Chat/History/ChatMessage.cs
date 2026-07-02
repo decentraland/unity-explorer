@@ -82,5 +82,29 @@ namespace DCL.Chat.History
         /// </summary>
         public static string GetId(string walletId, double timestampRaw) =>
             $"{walletId}:{timestampRaw.ToString(CultureInfo.InvariantCulture)}";
+
+        /// <summary>
+        ///     Recovers the sender wallet address from an id produced by <see cref="GetId" />.
+        ///     Returns false for ids that don't follow the composite format (e.g. system-message GUIDs).
+        /// </summary>
+        public static bool TryGetSenderWalletAddress(string? messageId, out string walletAddress)
+        {
+            if (string.IsNullOrEmpty(messageId))
+            {
+                walletAddress = string.Empty;
+                return false;
+            }
+
+            int separator = messageId.IndexOf(':');
+
+            if (separator <= 0)
+            {
+                walletAddress = string.Empty;
+                return false;
+            }
+
+            walletAddress = messageId.Substring(0, separator);
+            return true;
+        }
     }
 }

@@ -5,10 +5,12 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.Translation;
 using DCL.Utilities;
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat.ChatServices
@@ -23,7 +25,11 @@ namespace DCL.Chat.ChatServices
         private readonly ChatSettingsAsset chatSettings;
         private readonly IChatHistory chatHistory;
         private readonly ICommunityDataService communityDataService;
+        private readonly IEventBus chatEventBus;
+        private readonly ITranslationSettings translationSettings;
         private static readonly Color DEFAULT_COLOR = Color.white;
+
+        private readonly IDisposable translationSubscription;
 
         public ChatWorldBubbleService(
             World world,
@@ -33,7 +39,9 @@ namespace DCL.Chat.ChatServices
             NametagsData nametagsData,
             ChatSettingsAsset chatSettings,
             IChatHistory chatHistory,
-            ICommunityDataService communityDataService)
+            ICommunityDataService communityDataService,
+            IEventBus chatEventBus,
+            ITranslationSettings translationSettings)
         {
             this.world = world;
             this.playerEntity = playerEntity;
@@ -43,8 +51,11 @@ namespace DCL.Chat.ChatServices
             this.chatSettings = chatSettings;
             this.chatHistory = chatHistory;
             this.communityDataService = communityDataService;
+            this.chatEventBus = chatEventBus;
+            this.translationSettings = translationSettings;
 
             chatHistory.MessageAdded += OnChatMessageAdded;
+            translationSubscription = chatEventBus.Subscribe<TranslationEvents.MessageTranslated>(OnMessageTranslated);
             DCLInput.Instance.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
         }
 
@@ -120,6 +131,7 @@ namespace DCL.Chat.ChatServices
             if (!world.Has<NametagHolder>(e)) return;
 
             world.AddOrSet(e, new ChatBubbleComponent(
+                chatMessage.MessageId,
                 chatMessage.Message,
                 chatMessage.SenderValidatedName,
                 chatMessage.SenderWalletAddress,
@@ -134,10 +146,43 @@ namespace DCL.Chat.ChatServices
                 communityName ?? string.Empty));
         }
 
+        private void OnMessageTranslated(TranslationEvents.MessageTranslated evt)
+        {
+            MessageTranslation translation = evt.Translation;
+
+            if (translation.State != TranslationState.Success || string.IsNullOrEmpty(translation.TranslatedBody))
+                return;
+
+            if (!translationSettings.IsTranslationFeatureActive())
+                return;
+
+            // The message id encodes the sender wallet address, which the participant table maps to the live avatar entity.
+            if (!ChatUtils.TryGetSenderWalletAddress(evt.MessageId, out string senderWalletAddress)
+                || !entityParticipantTable.TryGet(senderWalletAddress, out var entry)
+                || !world.IsAlive(entry.Entity))
+                return;
+
+            ref ChatBubbleComponent bubble = ref world.TryGetRef<ChatBubbleComponent>(entry.Entity, out bool exists);
+
+            // Guard against the sender having since posted a newer message into the same bubble.
+            if (!exists || bubble.MessageId != evt.MessageId)
+                return;
+
+            // Mirror automatic translations only. A manual translate from the chat panel targets a conversation
+            // where auto-translate is off (or an older message whose bubble is already gone), so it is ignored here.
+            if (!translationSettings.GetAutoTranslateForConversation(bubble.ChannelId))
+                return;
+
+            bubble.ChatMessage = translation.TranslatedBody;
+            bubble.IsTranslationUpdate = true;
+            bubble.IsDirty = true;
+        }
+
         public void Dispose()
         {
             DCLInput.Instance.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             chatHistory.MessageAdded -= OnChatMessageAdded;
+            translationSubscription.Dispose();
         }
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
