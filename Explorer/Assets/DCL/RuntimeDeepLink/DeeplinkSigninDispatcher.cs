@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace DCL.RuntimeDeepLink
 {
@@ -12,8 +11,6 @@ namespace DCL.RuntimeDeepLink
 
         public IDisposable Subscribe(Action<string> onSigninReceived, string? expectedRequestId = null)
         {
-            Debug.Log("[DLDBG] Dispatcher.Subscribe"); // TODO: temporary deep-link debug log, remove.
-
             var subscription = new Subscription(this, onSigninReceived);
             current = subscription;
             return subscription;
@@ -21,8 +18,6 @@ namespace DCL.RuntimeDeepLink
 
         public void Dispatch(string identityId, string? sourceRequestId = null)
         {
-            Debug.Log($"[DLDBG] Dispatcher.Dispatch id='{identityId}' hasSubscriber={current != null}"); // TODO: temporary deep-link debug log, remove.
-
             // Stage 1: the sourceRequestId / expectedRequestId correlation is intentionally not yet applied.
             current?.Handler(identityId);
         }

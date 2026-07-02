@@ -35,19 +35,13 @@ namespace DCL.RuntimeDeepLink
             // community notification is triggered.
             string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
 
-            Debug.Log($"[DLDBG] HandleDeepLink received: {deeplink} | extracted signin='{signin}'"); // TODO: temporary deep-link debug log, remove.
-
             if (!string.IsNullOrEmpty(signin))
             {
                 // Only consume the signin when a login flow is actively awaiting it; otherwise leave the bridge
                 // file in place so the instance that is logging in can pick it up.
                 if (!deeplinkSigninDispatcher.HasSubscriber)
-                {
-                    Debug.Log("[DLDBG] HandleDeepLink deferring signin: no subscriber, leaving bridge file"); // TODO: temporary deep-link debug log, remove.
                     return false;
-                }
 
-                Debug.Log($"[DLDBG] HandleDeepLink dispatching signin='{signin}'"); // TODO: temporary deep-link debug log, remove.
                 deeplinkSigninDispatcher.Dispatch(signin);
                 ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{Name} dispatched signin deeplink: {deeplink}");
                 return true;
