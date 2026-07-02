@@ -82,6 +82,7 @@ namespace Global.Dynamic
         private readonly StartParcel startParcel;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isBuilderCollectionPreview;
+        private readonly ISceneRoomStatus sceneRoomStatus;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData,
@@ -103,7 +104,8 @@ namespace Global.Dynamic
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             StartParcel startParcel,
-            EntitiesAnalytics entitiesAnalytics)
+            EntitiesAnalytics entitiesAnalytics,
+            ISceneRoomStatus sceneRoomStatus)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -125,6 +127,7 @@ namespace Global.Dynamic
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
@@ -202,7 +205,8 @@ namespace Global.Dynamic
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue,
+                realmData, sceneRoomStatus);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);

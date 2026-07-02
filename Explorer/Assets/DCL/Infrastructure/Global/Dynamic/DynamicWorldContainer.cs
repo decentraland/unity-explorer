@@ -1001,7 +1001,8 @@ namespace Global.Dynamic
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
                 dynamicWorldParams.StartParcel,
-                bootstrapContainer.Analytics.EntitiesAnalytics
+                bootstrapContainer.Analytics.EntitiesAnalytics,
+                commsContainer.RoomHub.SceneRoom()
             );
 
             var container = new DynamicWorldContainer(

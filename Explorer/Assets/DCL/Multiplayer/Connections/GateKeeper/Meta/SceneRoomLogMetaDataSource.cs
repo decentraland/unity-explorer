@@ -37,7 +37,5 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             return result;
         }
-
-        public bool MetadataIsDirty => origin.MetadataIsDirty;
     }
 }

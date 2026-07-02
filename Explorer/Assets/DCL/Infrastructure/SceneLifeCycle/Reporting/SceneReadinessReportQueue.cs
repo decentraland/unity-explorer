@@ -54,6 +54,20 @@ namespace ECS.SceneLifeCycle.Reporting
             return false;
         }
 
+        public bool HasReport(IReadOnlyList<Vector2Int> parcels)
+        {
+            if (queue.Count == 0)
+                return false;
+
+            for (var i = 0; i < parcels.Count; i++)
+            {
+                if (queue.ContainsKey(parcels[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
         public bool TryDequeue(Vector2Int parcel, out PooledLoadReportList? report)
         {
             if (queue.TryGetValue(parcel, out PooledLoadReportList list))

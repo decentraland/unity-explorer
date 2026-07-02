@@ -26,33 +26,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         private readonly bool forceSceneIsolation;
 
-        private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
-
         public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.SingleScene;
-
-        public bool MetadataIsDirty
-        {
-            get
-            {
-                if (!realmData.Configured)
-                    return false;
-
-                CanBeDirty<Vector3> characterPosition = characterTransform.Position;
-
-                bool positionIsDirty = !realmData.SingleScene && characterPosition.IsDirty;
-
-                if (!positionIsDirty)
-                    return false;
-
-                Vector2Int parcel = characterPosition.ToParcel();
-
-                if (parcel == previousParcel)
-                    return false;
-
-                previousParcel = parcel;
-                return true;
-            }
-        }
 
         public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation, IDecentralandUrlsSource urlsSource)
         {

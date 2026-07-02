@@ -1,6 +1,8 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS;
@@ -28,6 +30,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         private ITeleportController teleportController;
         private ILoadingStatus loadingStatus;
         private IAppArgs appArgs;
+        private IRoomHub roomHub;
         private CancellationTokenSource cts;
         private CancellationTokenSource globalWorldCts;
         private WorldManifest worldManifest;
@@ -64,6 +67,10 @@ namespace DCL.UserInAppInitializationFlow.Tests
                 .Returns(UniTask.FromResult<WaitForSceneReadiness?>(null));
 
             appArgs = Substitute.For<IAppArgs>();
+
+            roomHub = Substitute.For<IRoomHub>();
+            roomHub.SceneRoom().Returns(Substitute.For<IGateKeeperSceneRoom>());
+
             cts = new CancellationTokenSource();
         }
 
@@ -174,6 +181,6 @@ namespace DCL.UserInAppInitializationFlow.Tests
 
         private TeleportStartupOperation CreateOperation(StartParcel startParcel, bool editorPositionOverrideActive = false) =>
             new TeleportStartupOperation(loadingStatus, realmController, cameraEntityProxy,
-                teleportController, new CameraSamplingData(), startParcel, appArgs, editorPositionOverrideActive);
+                teleportController, new CameraSamplingData(), startParcel, appArgs, roomHub, editorPositionOverrideActive);
     }
 }

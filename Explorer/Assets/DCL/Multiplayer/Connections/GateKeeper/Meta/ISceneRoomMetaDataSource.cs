@@ -14,8 +14,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         MetaData.Input GetMetadataInput();
 
         UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token);
-
-        bool MetadataIsDirty { get; }
     }
 
     public static class SceneRoomMetaDataSourceExtensions

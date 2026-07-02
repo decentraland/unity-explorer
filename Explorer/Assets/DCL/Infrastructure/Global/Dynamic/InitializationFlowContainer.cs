@@ -55,7 +55,7 @@ namespace DCL.UserInAppInitializationFlow
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var startPulseMultiplayerStartupOperation = new StartPulseMultiplayerStartupOperation(pulseMultiplayerService, profilePropagation, selfProfile, pulseActivation);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, dynamicWorldParams.EditorPositionOverrideActive);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel, appArgs, roomHub, dynamicWorldParams.EditorPositionOverrideActive);
 
             var loadingOperations = new List<IStartupOperation>
             {
