@@ -137,16 +137,38 @@ namespace DCL.Web3.Authenticators
             IdentityAuthResponseDto json = await webRequestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
                                                                      .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>();
 
+            string? signerAddress = null;
+            string? ephemeralPayload = null;
+
+            foreach (AuthLink authLink in json.identity.authChain)
+            {
+                if (authLink.type == AuthLinkType.SIGNER)
+                    signerAddress = authLink.payload;
+                else if (authLink.type is AuthLinkType.ECDSA_EPHEMERAL or AuthLinkType.ECDSA_EIP_1654_EPHEMERAL)
+                    ephemeralPayload = authLink.payload;
+            }
+
+            if (signerAddress is not { Length: > 0 })
+                throw new Web3Exception($"Sign-in identity {identityId} has no SIGNER link in its auth chain");
+
+            if (ephemeralPayload is not { Length: > 0 })
+                throw new Web3Exception($"Sign-in identity {identityId} has no ephemeral link in its auth chain");
+
+            IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
+
+            // Every signed request is made with this ephemeral key: if it does not match the address the wallet
+            // signed into the ephemeral link, servers reject every signature. Fail fast at login instead.
+            if (!ephemeralPayload.Contains(ephemeralAccount.Address, StringComparison.OrdinalIgnoreCase))
+                throw new Web3Exception($"Sign-in identity {identityId} is inconsistent: the ephemeral private key does not match the auth chain ephemeral address {ephemeralAccount.Address}");
+
             var authChain = AuthChain.Create();
 
             foreach (AuthLink authLink in json.identity.authChain)
                 authChain.Set(authLink);
 
-            string address = authChain.Get(AuthLinkType.SIGNER).payload;
-            IWeb3Account ephemeralAccount = web3AccountFactory.CreateAccount(new EthECKey(json.identity.ephemeralIdentity.privateKey));
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
-            return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
+            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
         }
 
         private static string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
