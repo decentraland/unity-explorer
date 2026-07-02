@@ -19,7 +19,7 @@ namespace DCL.Web3.Authenticators
     /// <summary>
     ///     Production wallet sign-in via browser and OS deep link: initiates a sign-in request on the auth server,
     ///     opens the browser for the user to sign with their wallet, then awaits the deep link
-    ///     (via <see cref="IDeeplinkSigninDispatcher" />) and resolves the resulting identity from the server.
+    ///     (via <see cref="DeeplinkSigninDispatcher" />) and resolves the resulting identity from the server.
     /// </summary>
     public class DappDeepLinkAuthenticator : IWeb3Authenticator
     {
@@ -35,7 +35,7 @@ namespace DCL.Web3.Authenticators
         private readonly URLAddress signatureWebAppUrl;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly IWebRequestController webRequestController;
-        private readonly IDeeplinkSigninDispatcher deeplinkSigninDispatcher;
+        private readonly DeeplinkSigninDispatcher deeplinkSigninDispatcher;
         private readonly int? identityExpirationDuration;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -45,7 +45,7 @@ namespace DCL.Web3.Authenticators
             URLAddress signatureWebAppUrl,
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
-            IDeeplinkSigninDispatcher deeplinkSigninDispatcher,
+            DeeplinkSigninDispatcher deeplinkSigninDispatcher,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;

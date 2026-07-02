@@ -49,7 +49,7 @@ namespace Global.Dynamic
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
-        public IDeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; } // Shared single-slot signin deep-link bus.
+        public DeeplinkSigninDispatcher DeeplinkSigninDispatcher { get; private set; } // Shared single-slot signin deep-link bus.
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -188,7 +188,7 @@ namespace Global.Dynamic
             DecentralandEnvironment dclEnvironment,
             IAppArgs appArgs,
             IWebRequestController webRequestController,
-            IDeeplinkSigninDispatcher deeplinkSigninDispatcher)
+            DeeplinkSigninDispatcher deeplinkSigninDispatcher)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)

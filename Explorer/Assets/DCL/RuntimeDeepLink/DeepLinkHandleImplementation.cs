@@ -16,9 +16,9 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
-        private readonly IDeeplinkSigninDispatcher deeplinkSigninDispatcher;
+        private readonly DeeplinkSigninDispatcher deeplinkSigninDispatcher;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IDeeplinkSigninDispatcher deeplinkSigninDispatcher)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, DeeplinkSigninDispatcher deeplinkSigninDispatcher)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
