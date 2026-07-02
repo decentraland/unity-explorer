@@ -55,13 +55,13 @@ namespace DCL.AuthenticationScreenFlow
             if (loginException != null)
             {
                 spanErrorInfo = loginException switch
-                                {
-                                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
-                                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during deep-link authentication", ex),
-                                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
-                                    Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
-                                    Exception ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
-                                };
+                {
+                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
+                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during deep-link authentication", ex),
+                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
+                    Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
+                    Exception ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
+                };
 
                 if (loginException is not OperationCanceledException)
                     ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
