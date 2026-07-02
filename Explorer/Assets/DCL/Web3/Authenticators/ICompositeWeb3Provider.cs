@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -19,6 +20,12 @@ namespace DCL.Web3.Authenticators
         /// Currently selected authentication method
         /// </summary>
         AuthProvider CurrentProvider { set; }
+
+        /// <summary>
+        ///     Clears the local session (identity cache, analytics identity) and releases
+        ///     provider-side login resources where the current provider holds any.
+        /// </summary>
+        UniTask LogoutAsync(CancellationToken ct);
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected

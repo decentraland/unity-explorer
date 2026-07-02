@@ -22,7 +22,7 @@ namespace DCL.UI.SystemMenu
 
         private readonly SystemMenuView view;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
@@ -37,7 +37,7 @@ namespace DCL.UI.SystemMenu
             World world,
             Entity playerEntity,
             UnityAppWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,

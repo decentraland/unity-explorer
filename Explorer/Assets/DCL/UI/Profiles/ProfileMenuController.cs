@@ -21,7 +21,7 @@ namespace DCL.UI.Profiles
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly IPassportBridge passportBridge;
@@ -37,7 +37,7 @@ namespace DCL.UI.Profiles
             World world,
             Entity playerEntity,
             UnityAppWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IPassportBridge passportBridge,

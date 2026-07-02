@@ -73,7 +73,11 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             analytics.Identify(null);
-            await currentAuthenticator.LogoutAsync(ct);
+
+            // ThirdWeb is the only provider holding a login session of its own; the others have nothing to release.
+            if (IsThirdWebOTP)
+                await thirdWebAuth.LogoutAsync(ct);
+
             identityCache.Clear();
         }
 

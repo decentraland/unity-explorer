@@ -85,9 +85,6 @@ namespace DCL.Web3.Authenticators
             return await FetchIdentityByIdAsync(identityId, ct);
         }
 
-        public UniTask LogoutAsync(CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         /// <summary>
         ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
         ///     The browser later recovers the request by that id to drive the wallet signature.

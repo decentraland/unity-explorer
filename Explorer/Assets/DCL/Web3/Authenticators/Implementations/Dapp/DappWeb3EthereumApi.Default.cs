@@ -65,9 +65,6 @@ namespace DCL.Web3.Authenticators
             // IWeb3Authenticator
             public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
                 origin.LoginAsync(payload, ct);
-
-            public UniTask LogoutAsync(CancellationToken ct) =>
-                origin.LogoutAsync(ct);
         }
     }
 }

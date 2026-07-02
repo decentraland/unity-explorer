@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly UnityAppWebBrowser webBrowser;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly Arch.Core.World globalWorld;
@@ -92,7 +92,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
             UnityAppWebBrowser webBrowser,
-            IWeb3Authenticator web3Authenticator,
+            ICompositeWeb3Provider web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             Arch.Core.World globalWorld,

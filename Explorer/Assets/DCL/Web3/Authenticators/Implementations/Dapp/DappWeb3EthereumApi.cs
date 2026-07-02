@@ -212,9 +212,6 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        private async UniTask LogoutAsync(CancellationToken ct) =>
-            await DisconnectFromAuthApiAsync();
-
         private async UniTask DisconnectFromAuthApiAsync()
         {
             if (authApiWebSocket is { Connected: true })
