@@ -20,7 +20,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -69,7 +68,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCommunitiesFeatureEnabled;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ImageControllerProvider imageControllerProvider;
-        private readonly IWebRequestController? webRequestController;
+        private readonly IWebRequestController webRequestController;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -103,7 +102,8 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard,
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
-            ImageControllerProvider imageControllerProvider, IWebRequestController? webRequestController)
+            ImageControllerProvider imageControllerProvider,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -214,15 +214,15 @@ namespace DCL.PluginSystem.Global
         public class PassportSettings : IDCLPluginSettings
         {
             [field: Space]
-            [field: SerializeField] public AssetReferenceGameObject PassportPrefab;
-            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera;
+            [field: SerializeField] public AssetReferenceGameObject PassportPrefab = null!;
+            [field: SerializeField] public AssetReferenceGameObject Badges3DCamera = null!;
             [field: SerializeField] public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; } = null!;
             [field: SerializeField] public int GridLayoutFixedColumnCount { get; private set; }
             [field: SerializeField] public int ThumbnailHeight { get; private set; }
             [field: SerializeField] public int ThumbnailWidth { get; private set; }
-            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab;
+            [field: SerializeField] public AssetReferenceGameObject NameEditorPrefab = null!;
             [field: SerializeField] public AssetReferenceT<ColorPresetsSO> NameColors { get; private set; } = null!;
             [field: SerializeField] public CameraReelGalleryMessagesConfiguration CameraReelGalleryMessages { get; private set; } = null!;
         }

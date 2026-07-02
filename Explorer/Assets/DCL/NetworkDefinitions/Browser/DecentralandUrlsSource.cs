@@ -35,7 +35,6 @@ namespace DCL.Browser.DecentralandUrls
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
-        private readonly DecentralandEnvironment environment;
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
@@ -50,7 +49,6 @@ namespace DCL.Browser.DecentralandUrls
             string? cliGatekeeperUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
-            this.environment = environment;
             this.realmData = realmData;
             this.launchMode = launchMode;
             this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);

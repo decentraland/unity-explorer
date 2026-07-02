@@ -11,83 +11,80 @@ namespace DCL.Passport.Modules
     {
         [field: Header("Info Section")]
         [field: SerializeField]
-        public TMP_Text Description { get; private set; }
+        public TMP_Text Description { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_InputField DescriptionForEditMode { get; private set; }
+        public TMP_InputField DescriptionForEditMode { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text DescriptionCharacterCounter { get; private set; }
+        public TMP_Text DescriptionCharacterCounter { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject DescriptionEditOutline { get; private set; }
+        public GameObject DescriptionEditOutline { get; private set; } = null!;
 
         [field: SerializeField]
-        public PassportAdditionalFieldsConfigurationSO AdditionalFieldsConfiguration { get; private set; }
+        public PassportAdditionalFieldsConfigurationSO AdditionalFieldsConfiguration { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform AdditionalInfoContainer { get; private set; }
+        public RectTransform AdditionalInfoContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform AdditionalInfoContainerForEditMode { get; private set; }
+        public RectTransform AdditionalInfoContainerForEditMode { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button InfoEditionButton { get; private set; }
+        public Button InfoEditionButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button SaveInfoButton { get; private set; }
+        public Button SaveInfoButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject SaveInfoButtonLoading { get; private set; }
+        public GameObject SaveInfoButtonLoading { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CancelInfoButton { get; private set; }
+        public Button CancelInfoButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public List<GameObject> InfoReadOnlyObjects { get; private set; }
+        public List<GameObject> InfoReadOnlyObjects { get; private set; } = null!;
 
         [field: SerializeField]
-        public List<GameObject> InfoEditionObjects { get; private set; }
+        public List<GameObject> InfoEditionObjects { get; private set; } = null!;
 
         [field: Header("Links Section")]
         [field: SerializeField]
-        public Link_PassportFieldView LinkPrefab { get; private set; }
+        public Link_PassportFieldView LinkPrefab { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform LinksContainer { get; private set; }
+        public RectTransform LinksContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform LinksContainerForEditMode { get; private set; }
+        public RectTransform LinksContainerForEditMode { get; private set; } = null!;
 
         [field: SerializeField]
-        public TMP_Text NoLinksLabel { get; private set; }
+        public TMP_Text NoLinksLabel { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button LinksEditionButton { get; private set; }
+        public Button LinksEditionButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button SaveLinksButton { get; private set; }
+        public Button SaveLinksButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button AddNewLinkButton { get; private set; }
+        public Button AddNewLinkButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject SaveLinksButtonLoading { get; private set; }
+        public GameObject SaveLinksButtonLoading { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CancelLinksButton { get; private set; }
+        public Button CancelLinksButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public List<GameObject> LinksReadOnlyObjects { get; private set; }
+        public List<GameObject> LinksReadOnlyObjects { get; private set; } = null!;
 
         [field: SerializeField]
-        public List<GameObject> LinksEditionObjects { get; private set; }
+        public List<GameObject> LinksEditionObjects { get; private set; } = null!;
 
         [field: Header("Others")]
         [field: SerializeField]
-        public RectTransform MainContainer { get; private set; }
-
-        [field: SerializeField]
-        public List<Button> ButtonsToDisableWhileSaving { get; private set; }
+        public List<Button> ButtonsToDisableWhileSaving { get; private set; } = null!;
     }
 }

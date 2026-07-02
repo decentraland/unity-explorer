@@ -30,7 +30,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -100,7 +99,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
-        private readonly IWebRequestController? webRequestController;
+        private readonly IWebRequestController webRequestController;
         private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -891,10 +890,10 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? myOwnProfile = await selfProfile.ProfileAsync(ct);
 
                     // Dont show any interaction for our own user
-                    if (ownProfile == null || ownProfile.UserId == inputData.UserId) return;
+                    if (myOwnProfile == null || myOwnProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled);
 

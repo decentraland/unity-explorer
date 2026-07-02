@@ -1,6 +1,5 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using DCL.UI;
@@ -15,7 +14,7 @@ namespace DCL.Passport.Modules.Badges
         private const int GRID_ITEMS_PER_ROW = 6;
 
         public readonly Dictionary<string,List<BadgeDetailCard_PassportFieldView>> InstantiatedBadgeDetailCards = new ();
-        public event Action<string> OnBadgeSelected;
+        public event Action<string>? OnBadgeSelected;
 
         private readonly BadgesDetails_PassportModuleView view;
         private readonly BadgesCategories_PassportModuleSubController badgesCategoriesController;

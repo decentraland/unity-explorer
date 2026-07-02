@@ -20,128 +20,125 @@ namespace DCL.Passport
     public class PassportView : ViewBase, IView
     {
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public Button CloseButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public ScrollRect MainScroll { get; private set; }
+        public ScrollRect MainScroll { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button BackgroundButton { get; private set; }
+        public Button BackgroundButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image BackgroundImage { get; private set; }
+        public Image BackgroundImage { get; private set; } = null!;
 
         [field: SerializeField]
-        public CharacterPreviewView CharacterPreviewView { get; private set; }
+        public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
         [field: SerializeField]
-        public UserBasicInfo_PassportModuleView UserBasicInfoModuleView { get; private set; }
+        public UserBasicInfo_PassportModuleView UserBasicInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public UserDetailedInfo_PassportModuleView UserDetailedInfoModuleView { get; private set; }
+        public UserDetailedInfo_PassportModuleView UserDetailedInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public EquippedItems_PassportModuleView EquippedItemsModuleView { get; private set; }
+        public EquippedItems_PassportModuleView EquippedItemsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgesOverview_PassportModuleView BadgesOverviewModuleView { get; private set; }
+        public BadgesOverview_PassportModuleView BadgesOverviewModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; }
+        public BadgesDetails_PassportModuleView BadgesDetailsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public CreationsDetailsPassportModuleView CreationsDetailsModuleView { get; private set; }
+        public CreationsDetailsPassportModuleView CreationsDetailsModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; }
+        public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; }
+        public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; } = null!;
 
         [field: SerializeField]
-        public CameraReelOptionButtonView CameraReelGalleryContextMenuView { get; private set; }
+        public CameraReelOptionButtonView CameraReelGalleryContextMenuView { get; private set; } = null!;
 
         [field: SerializeField]
-        public RectTransform MainContainer { get; private set; }
+        public AddLink_PassportModal AddLinkModal { get; private set; } = null!;
 
         [field: SerializeField]
-        public AddLink_PassportModal AddLinkModal { get; private set; }
+        public WarningNotificationView ErrorNotification { get; private set; } = null!;
 
         [field: SerializeField]
-        public WarningNotificationView ErrorNotification { get; private set; }
+        public List<SectionData> Sections = null!;
 
         [field: SerializeField]
-        public List<SectionData> Sections;
+        public SoftMask ViewportSoftMask { get; private set; } = null!;
 
         [field: SerializeField]
-        public SoftMask ViewportSoftMask { get; private set; }
+        public Image ViewportMaskGraphic { get; private set; } = null!;
 
         [field: SerializeField]
-        public Image ViewportMaskGraphic { get; private set; }
+        public GameObject FriendInteractionContainer { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject FriendInteractionContainer { get; private set; }
+        public Button AddFriendButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button AddFriendButton { get; private set; }
+        public Button AcceptFriendButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button AcceptFriendButton { get; private set; }
+        public Button RemoveFriendButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button RemoveFriendButton { get; private set; }
+        public Button CancelFriendButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CancelFriendButton { get; private set; }
-
-        [field: SerializeField]
-        public Button UnblockFriendButton { get; private set; }
+        public Button UnblockFriendButton { get; private set; } = null!;
 
         [field: SerializeField]
         public MutualFriendsConfig MutualFriends { get; private set; }
 
         [field: SerializeField]
-        public Button JumpInButton { get; private set; }
+        public Button JumpInButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button ChatButton { get; private set; }
+        public Button ChatButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button CallButton { get; private set; }
+        public Button CallButton { get; private set; } = null!;
 
         [field: Header("Context menu")]
         [field: SerializeField]
-        public Button ContextMenuButton { get; private set; }
+        public Button ContextMenuButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Sprite BlockSprite { get; private set; }
+        public Sprite BlockSprite { get; private set; } = null!;
 
         [field: SerializeField]
         public string BlockText { get; private set; } = "Block";
 
         [field: SerializeField]
-        public Sprite ReportOptionSprite { get; private set; }
+        public Sprite ReportOptionSprite { get; private set; } = null!;
 
         [field: SerializeField]
-        public Sprite ReportSprite { get; private set; }
+        public Sprite ReportSprite { get; private set; } = null!;
 
         [field: SerializeField]
         public string ReportText { get; private set; } = "Report";
 
         [field: SerializeField]
-        public Sprite JumpInSprite { get; private set; }
+        public Sprite JumpInSprite { get; private set; } = null!;
 
         [field: SerializeField]
         public string JumpInText { get; private set; } = "Jump to Location";
 
         [field: SerializeField]
-        public Sprite GiftSprite { get; private set; }
+        public Sprite GiftSprite { get; private set; } = null!;
 
         [field: SerializeField]
         public string GiftText { get; private set; } = "Gift";
 
         [field: SerializeField]
-        public Sprite InviteToCommunitySprite { get; private set; }
+        public Sprite InviteToCommunitySprite { get; private set; } = null!;
 
         [field: SerializeField]
         public string InviteToCommunityText { get; private set; } = "Invite to Community";
@@ -165,8 +162,8 @@ namespace DCL.Passport
         public class SectionData
         {
             public PassportSection PassportSection;
-            public ButtonWithSelectableStateView ButtonWithState;
-            public GameObject Panel;
+            public ButtonWithSelectableStateView ButtonWithState = null!;
+            public GameObject Panel = null!;
         }
 
 #if UNITY_EDITOR

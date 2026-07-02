@@ -15,7 +15,7 @@ namespace DCL.Passport.Modules.Badges
         public readonly List<ButtonWithSelectableStateView> InstantiatedBadgesFilterButtons = new ();
         public readonly List<BadgesCategorySeparator_PassportFieldView> InstantiatedBadgesCategorySeparators = new ();
         public readonly List<BadgesCategoryContainer_PassportFieldView> InstantiatedBadgesCategoryContainers = new ();
-        public event Action<string> OnBadgesFilterButtonClicked;
+        public event Action<string>? OnBadgesFilterButtonClicked;
         public string? CurrentFilter;
 
         private readonly BadgesDetails_PassportModuleView view;
@@ -59,7 +59,7 @@ namespace DCL.Passport.Modules.Badges
             var badgeFilterButton = badgesFilterButtonsPool.Get();
             badgeFilterButton.SetSelected(badgeCategory == ALL_FILTER);
             badgeFilterButton.Text.text = badgeCategory;
-            badgeFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked.Invoke(badgeCategory));
+            badgeFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked?.Invoke(badgeCategory));
             InstantiatedBadgesFilterButtons.Add(badgeFilterButton);
         }
 

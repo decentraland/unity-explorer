@@ -9,6 +9,6 @@ namespace DCL.Passport.Modules
         public EquippedItem_PassportFieldView equippedItemPrefab;
 
         [field: SerializeField]
-        public RectTransform EquippedItemsContainer { get; private set; }
+        public RectTransform EquippedItemsContainer { get; private set; } = null!;
     }
 }

@@ -1,5 +1,4 @@
 using DCL.Profiles;
-using System;
 
 namespace DCL.Passport.Modules
 {
