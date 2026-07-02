@@ -321,7 +321,7 @@ namespace DCL.Multiplayer.Movement
             state.VelocityYQuantized = message.velocity.y;
             state.VelocityZQuantized = message.velocity.z;
             state.RotationYQuantized = message.rotationY;
-            state.MovementBlendQuantized = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
+            state.MovementBlendQuantized = Mathf.Clamp(message.animState.MovementBlendValue, MovementBlend.MIN, MovementBlend.MAX);
             state.SlideBlendQuantized = message.animState.SlideBlendValue;
             state.StateFlags = BuildStateFlags(message);
             state.GlideState = (GlideState)message.animState.GlideState;
@@ -357,7 +357,7 @@ namespace DCL.Multiplayer.Movement
 
             var vel = new Vector3(playerState.VelocityXQuantized, playerState.VelocityYQuantized, playerState.VelocityZQuantized);
 
-            float movementBlend = Mathf.Clamp(playerState.MovementBlendQuantized, 0, 3);
+            float movementBlend = Mathf.Clamp(playerState.MovementBlendQuantized, MovementBlend.MIN, MovementBlend.MAX);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
 
             bool isPointingAt = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.PointingAt);
