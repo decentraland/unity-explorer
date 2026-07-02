@@ -206,12 +206,11 @@ namespace DCL.VoiceChat.Services
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 
-                await foreach (PrivateVoiceChatUpdate? response in stream)
+                await foreach (PrivateVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // It is not needed to handle OperationCancelledException nor WebSocketException because it is an internal sync call
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
                 }
             }
