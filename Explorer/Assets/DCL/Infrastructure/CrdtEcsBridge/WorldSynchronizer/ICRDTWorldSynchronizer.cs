@@ -23,5 +23,11 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// </summary>
         /// <param name="syncCommandBuffer"></param>
         void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
+
+        /// <summary>
+        ///     Finalizes the command buffer without applying it (nothing to apply) and allows to rent it again.
+        ///     Unlike <see cref="ApplySyncCommandBuffer" /> it does not touch the World so no synchronization with the main thread is needed
+        /// </summary>
+        void ReleaseSyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer);
     }
 }
