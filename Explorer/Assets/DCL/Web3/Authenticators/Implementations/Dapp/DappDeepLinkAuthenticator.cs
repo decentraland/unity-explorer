@@ -7,6 +7,7 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using Nethereum.Signer;
 using Newtonsoft.Json;
 using System;
@@ -25,9 +26,6 @@ namespace DCL.Web3.Authenticators
     {
         // Fallback session length when no explicit override is provided (days).
         private const double IDENTITY_EXPIRATION_PERIOD = 30;
-
-        // The deep-link flow waits for the user to sign in their browser and for the OS to route the resulting
-        // deep link back to this process; this can take much longer than a socket round-trip.
         private const int DEEPLINK_TIMEOUT_SECONDS = 300;
 
         private readonly IWebBrowser webBrowser;
@@ -61,8 +59,7 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            // The local ephemeral is not used to build the final identity (the browser owns the real keypair; we
-            // resolve via the fetcher), but it is the well-formed message the server signs into the minted request.
+            // The local ephemeral is not used to build the final identity, but it is the well-formed message the server signs into the minted request.
             var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
             DateTime sessionExpiration = identityExpirationDuration != null
@@ -94,8 +91,8 @@ namespace DCL.Web3.Authenticators
             UniTask.CompletedTask;
 
         /// <summary>
-        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>. The browser later recovers the
-        ///     request by that id to drive the wallet signature.
+        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
+        ///     The browser later recovers the request by that id to drive the wallet signature.
         /// </summary>
         private async UniTask<CreateRequestResponseDto> CreateSigninRequestAsync(string ephemeralMessage, CancellationToken ct)
         {
@@ -117,9 +114,7 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
-        ///     Awaits the first <c>identityId</c> the dispatcher delivers, applying a timeout and honoring external
-        ///     cancellation. Disposing the subscription on completion clears the dispatcher buffer so a deep link consumed
-        ///     (or cancelled) by one attempt does not bleed into the next.
+        ///     Awaits the first <c>identityId</c> the dispatcher delivers
         /// </summary>
         private async UniTask<string> WaitForSigninAsync(CancellationToken ct)
         {
@@ -127,15 +122,9 @@ namespace DCL.Web3.Authenticators
 
             using IDisposable subscription = deeplinkSigninDispatcher.Subscribe(identityId => completionSource.TrySetResult(identityId));
 
-            // Realtime, not the default DeltaTime: the wait spans the user switching to the browser and back, during
-            // which the app is backgrounded and game time stalls. Only wall-clock measures the deadline correctly.
             return await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct);
         }
 
-        /// <summary>
-        ///     Fetches a stored identity by its opaque id via <c>GET {authApiUrl}/identities/{id}</c> and reconstructs a
-        ///     fully-formed <see cref="DecentralandIdentity" />.
-        /// </summary>
         private async UniTask<DecentralandIdentity> FetchIdentityByIdAsync(string identityId, CancellationToken ct)
         {
             urlBuilder.Clear();
@@ -160,10 +149,11 @@ namespace DCL.Web3.Authenticators
             return new DecentralandIdentity(new Web3Address(address), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
         }
 
-        private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
+        private static string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
         [Serializable]
+        [PublicAPI]
         private struct SigninRequestDto
         {
             public string method;
