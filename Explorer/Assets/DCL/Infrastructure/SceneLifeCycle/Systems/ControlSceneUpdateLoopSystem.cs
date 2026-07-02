@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -25,22 +26,31 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(ResolveStaticPointersSystem))]
     public partial class ControlSceneUpdateLoopSystem : BaseUnityLoopSystem
     {
+        // Fallback so a scene whose comms room never connects still starts; the normal release is the room connecting
+        private static readonly TimeSpan SCENE_ROOM_CONNECT_TIMEOUT = TimeSpan.FromSeconds(15);
+
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly CancellationToken destroyCancellationToken;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private readonly IScenesCache scenesCache;
+        private readonly IRealmData realmData;
+        private readonly Func<string, bool> isSceneRoomSettled;
 
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
             CancellationToken destroyCancellationToken,
             IScenesCache scenesCache,
-            ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IRealmData realmData,
+            Func<string, bool> isSceneRoomSettled) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.realmData = realmData;
+            this.isSceneRoomSettled = isSceneRoomSettled;
         }
 
         protected override void Update(float t)
@@ -102,6 +112,9 @@ namespace ECS.SceneLifeCycle.Systems
                 else
                     scenesCache.Add(scene, definitionComponent.Parcels);
 
+                // Peer CRDT state must land before the scene runs: local state produced first wins the CRDT merge and the synced entities are dropped
+                await WaitForSceneRoomIfWorldAsync(definitionComponent);
+
                 ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition.GetLogSceneName()}' started");
 
                 await DCLTask.SwitchToThreadPool();
@@ -118,6 +131,28 @@ namespace ECS.SceneLifeCycle.Systems
             }
             catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
+        }
+
+        private async UniTask WaitForSceneRoomIfWorldAsync(SceneDefinitionComponent definitionComponent)
+        {
+            // Genesis exploration shouldn't pay comms-connect latency on every scene
+            if (definitionComponent.IsPortableExperience || !realmData.Configured || !realmData.IsWorld())
+                return;
+
+            // Only the teleport destination (marked by a pending readiness report) is gated: the room targets the player's scene only, so other scenes of the world would wait in vain
+            if (!sceneReadinessReportQueue.HasReport(definitionComponent.Parcels))
+                return;
+
+            string sceneId = definitionComponent.Definition.id!;
+
+            if (isSceneRoomSettled(sceneId))
+                return;
+
+            try { await UniTask.WaitUntil(() => isSceneRoomSettled(sceneId), cancellationToken: destroyCancellationToken).Timeout(SCENE_ROOM_CONNECT_TIMEOUT); }
+            catch (TimeoutException)
+            {
+                ReportHub.LogWarning(GetReportData(), $"Scene '{definitionComponent.Definition.GetLogSceneName()}' started before its comms room connected");
+            }
         }
     }
 }

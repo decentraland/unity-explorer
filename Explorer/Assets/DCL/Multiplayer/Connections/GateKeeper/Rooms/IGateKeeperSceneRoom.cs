@@ -26,6 +26,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public MetaData? ConnectedScene { get; }
 
         /// <summary>
+        ///     True when the realm declares no comms adapter ("offline:offline"): the room will never connect.
+        /// </summary>
+        public bool IsCommsOffline { get; }
+
+        /// <summary>
         ///     Tells if no communication channel is attached to the given scene.
         /// </summary>
         /// <param name="sceneId"></param>
@@ -38,6 +43,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input());
+
+            public bool IsCommsOffline => true;
 
             public bool Activated => true;
 

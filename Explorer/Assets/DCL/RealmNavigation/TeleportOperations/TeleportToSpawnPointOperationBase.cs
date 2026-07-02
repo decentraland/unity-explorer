@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using DCL.Utility.Types;
@@ -26,15 +28,17 @@ namespace DCL.RealmNavigation.TeleportOperations
         private readonly CameraSamplingData cameraSamplingData;
         private readonly string reportCategory;
         private readonly ITeleportController teleportController;
+        private readonly IRoomHub roomHub;
 
         protected TeleportToSpawnPointOperationBase(ILoadingStatus loadingStatus, IGlobalRealmController realmController, ObjectProxy<Entity> cameraEntity, ITeleportController teleportController, CameraSamplingData cameraSamplingData,
-            string reportCategory = ReportCategory.SCENE_LOADING)
+            IRoomHub roomHub, string reportCategory = ReportCategory.SCENE_LOADING)
         {
             this.loadingStatus = loadingStatus;
             this.realmController = realmController;
             this.cameraEntity = cameraEntity;
             this.teleportController = teleportController;
             this.cameraSamplingData = cameraSamplingData;
+            this.roomHub = roomHub;
             this.reportCategory = reportCategory;
         }
 
@@ -90,6 +94,11 @@ namespace DCL.RealmNavigation.TeleportOperations
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
+
+            // The destination scene gates its start on this room (see ControlSceneUpdateLoopSystem) and the readiness wait below needs the scene running, so the connection must be kicked off first
+            if (isWorld)
+                roomHub.SceneRoom().StartIfNotAsync().Forget();
+
             return await waitForSceneReadiness.ToUniTask();
         }
 

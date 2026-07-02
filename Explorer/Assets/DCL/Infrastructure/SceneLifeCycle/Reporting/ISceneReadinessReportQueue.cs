@@ -11,5 +11,10 @@ namespace ECS.SceneLifeCycle.Reporting
         bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out PooledLoadReportList? report);
 
         bool TryDequeue(Vector2Int parcel, out PooledLoadReportList? report);
+
+        /// <summary>
+        ///     Non-consuming check: true when someone is waiting to land on any of the given parcels
+        /// </summary>
+        bool HasReport(IReadOnlyList<Vector2Int> parcels);
     }
 }
