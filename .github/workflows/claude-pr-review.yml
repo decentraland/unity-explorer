@@ -366,8 +366,25 @@ jobs:
       github.event.action == 'labeled' &&
       github.event.label.name == 'ext-contribution'
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
+      - name: Check for existing Slack notification marker
+        id: dedup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MARKER="<!-- ext-contribution-slack-sent -->"
+          COMMENTS=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" --jq '.[].body')
+          if echo "$COMMENTS" | grep -qF "$MARKER"; then
+            echo "Slack notification already sent for this PR — skipping"
+            echo "already-sent=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already-sent=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Verify PR author is a decentraland org member
+        if: steps.dedup.outputs.already-sent != 'true'
         id: check-org
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
@@ -381,12 +398,11 @@ jobs:
           fi
 
       - name: Extract Slack requester tag from PR description
-        if: steps.check-org.outputs.is-member == 'true'
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
         id: extract-slack-tag
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          # Look for a Slack user ID pattern like (<@U0ABC123XYZ>) in the "Requested by" line
           SLACK_TAG=$(echo "$PR_BODY" | grep -oP '(?<=Requested by ).*?(\(<@U[A-Z0-9]+>\))' | grep -oP '<@U[A-Z0-9]+>' | head -1)
           if [ -n "$SLACK_TAG" ]; then
             echo "Found Slack tag: $SLACK_TAG"
@@ -397,7 +413,7 @@ jobs:
           fi
 
       - name: Post to Slack #explorer-ext-contributions
-        if: steps.check-org.outputs.is-member == 'true'
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -414,6 +430,16 @@ jobs:
           curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
             -d "$PAYLOAD"
+
+      - name: Post dedup marker comment
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -f body="<!-- ext-contribution-slack-sent -->
+          Slack notification sent to #explorer-ext-contributions for external review.
+          To re-send, delete this comment and re-add the \`ext-contribution\` label."
 
   check-member:
     if: |
