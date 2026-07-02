@@ -60,6 +60,7 @@ namespace DCL.AuthenticationScreenFlow
                     TimeoutException ex => new SpanErrorInfo("Deep-link sign-in timed out waiting for the browser to deliver the signin deep link", ex),
                     SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during deep-link authentication", ex),
                     Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
+                    DeeplinkSigninRetrievalException ex => new SpanErrorInfo($"Signin identity retrieval failed: {ex.Reason}", ex),
                     Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
                     Exception ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
                 };

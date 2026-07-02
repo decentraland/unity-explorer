@@ -96,7 +96,7 @@ namespace DCL.Web3.Authenticators
             urlBuilder.AppendDomain(URLDomain.FromString(authApiUrl))
                       .AppendPath(new URLPath("requests"));
 
-            var commonArguments = new CommonArguments(urlBuilder.Build());
+            var commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
 
             string body = JsonConvert.SerializeObject(new SigninRequestDto
             {
@@ -140,7 +140,14 @@ namespace DCL.Web3.Authenticators
             var commonArguments = new CommonArguments(urlBuilder.Build());
 
             IdentityAuthResponseDto json = await webRequestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
-                                                                     .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>();
+                                                                     .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>()
+                                                                     .WithCustomExceptionAsync(e => e.ResponseCode switch
+                                                                      {
+                                                                          404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NOT_FOUND, identityId),
+                                                                          410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.EXPIRED, identityId),
+                                                                          403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IP_MISMATCH, identityId),
+                                                                          _ => (Exception)e,
+                                                                      });
 
             string? signerAddress = null;
             string? ephemeralPayload = null;
