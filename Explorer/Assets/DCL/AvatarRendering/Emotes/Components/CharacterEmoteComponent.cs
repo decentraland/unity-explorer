@@ -13,6 +13,8 @@ namespace DCL.AvatarRendering.Emotes
         public bool StopEmote;
         public AvatarEmoteMask Mask;
 
+        public float PlayingTime;
+
         private int currentAnimationTag;
 
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
@@ -35,6 +37,7 @@ namespace DCL.AvatarRendering.Emotes
             CurrentEmoteReference = null;
             StopEmote = false;
             Mask = AvatarEmoteMask.AemFullBody;
+            PlayingTime = 0f;
         }
     }
 }

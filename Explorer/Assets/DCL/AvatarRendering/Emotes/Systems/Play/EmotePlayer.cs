@@ -72,6 +72,8 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             emotesInUse.Add(emoteReferences, pools[mainAsset]);
             emoteComponent.CurrentEmoteReference = emoteReferences;
+
+            emoteComponent.PlayingTime = 0f;
             return true;
         }
 
