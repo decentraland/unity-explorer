@@ -75,7 +75,7 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Parses the realm and teleports the player to it, with an optional target position.
         /// </summary>
-        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct, bool landOnParcel = false)
         {
             ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
@@ -83,9 +83,9 @@ namespace DCL.Chat.Commands
                 return errorMessage;
 
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
-                return await TeleportToParcelAsync(targetPosition, true, ct);
+                return await TeleportToParcelAsync(targetPosition, true, ct, landOnParcel);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false, landOnParcel);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -154,9 +154,9 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Teleports the player to a parcel.
         /// </summary>
-        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
+        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, bool landOnParcel = false)
         {
-            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
+            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, landOnParcel);
 
             if (result.Success)
                 return $"🟢 You teleported to {targetPosition.x},{targetPosition.y}.";

@@ -22,6 +22,12 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
+
+        /// <summary>
+        /// When present (with value "true"), a position/realm deep link lands the avatar at the requested
+        /// parcel itself instead of the scene's spawn point (e.g. jumping into an event at a specific parcel).
+        /// </summary>
+        public const string LAND_ON_PARCEL = "land-on-parcel";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";
