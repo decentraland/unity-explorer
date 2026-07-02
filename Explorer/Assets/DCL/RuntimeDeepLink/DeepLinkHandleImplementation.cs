@@ -37,7 +37,7 @@ namespace DCL.RuntimeDeepLink
 
             if (!string.IsNullOrEmpty(signin))
             {
-                // The property retains the id, so a login flow that subscribes later still receives it.
+                // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
                 return DeepLinkHandleResult.Consumed;
             }
