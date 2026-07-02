@@ -36,7 +36,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly PhotoDetailStringMessages photoDetailStringMessages;
         private readonly GalleryEventBus galleryEventBus;
 
@@ -58,7 +58,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             ICameraReelStorageService cameraReelStorageService,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             PhotoDetailStringMessages photoDetailStringMessages,
             GalleryEventBus galleryEventBus)
             : base(viewFactory)

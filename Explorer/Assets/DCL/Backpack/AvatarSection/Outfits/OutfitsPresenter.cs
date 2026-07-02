@@ -33,7 +33,7 @@ namespace DCL.Backpack
         private readonly IEventBus eventBus;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedWearables equippedWearables;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly OutfitApplier outfitApplier;
         private readonly OutfitBannerPresenter outfitBannerPresenter;
         private readonly OutfitsCollection outfitsCollection;
@@ -58,7 +58,7 @@ namespace DCL.Backpack
             IBackpackEventBus backpackEventBus,
             OutfitApplier outfitApplier,
             OutfitsCollection outfitsCollection,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEquippedWearables equippedWearables,
             LoadOutfitsCommand loadOutfitsCommand,
             SaveOutfitCommand saveOutfitCommand,
@@ -519,13 +519,13 @@ namespace DCL.Backpack
 
         private void OnLinkClicked(string url)
         {
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
         }
 
 
         private void OnGetANameClicked()
         {
-            webBrowser.OpenUrl("https://decentraland.org/marketplace/names/claim");
+            webBrowser.OpenUrlMainThreadOnly("https://decentraland.org/marketplace/names/claim");
             eventBus.Publish(new OutfitsEvents.ClaimExtraOutfitsEvent());
         }
 

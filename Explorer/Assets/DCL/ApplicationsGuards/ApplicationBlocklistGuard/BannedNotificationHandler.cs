@@ -20,7 +20,7 @@ namespace DCL.ApplicationBlocklistGuard
         private readonly IWeb3IdentityCache identityCache;
         private readonly ModerationDataProvider moderationDataProvider;
         private readonly IMVCManager mvcManager;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         private CancellationTokenSource cts = new ();
 
@@ -30,7 +30,7 @@ namespace DCL.ApplicationBlocklistGuard
             IWeb3IdentityCache identityCache,
             ModerationDataProvider moderationDataProvider,
             IMVCManager mvcManager,
-            IWebBrowser webBrowser)
+            UnityAppWebBrowser webBrowser)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
@@ -47,7 +47,7 @@ namespace DCL.ApplicationBlocklistGuard
             cts.SafeCancelAndDispose();
 
         private void OnBanWarningNotificationClicked(object[] parameters) =>
-            webBrowser.OpenUrl(urlsSource.Url(DecentralandUrl.SupportLink));
+            webBrowser.OpenUrlMainThreadOnly(urlsSource.Url(DecentralandUrl.SupportLink));
 
         private void OnBannedNotificationClicked(object[] parameters)
         {

@@ -4,23 +4,16 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator
+    public partial class DappWeb3EthereumApi
     {
-        public class Default : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
+        public class Default : IWeb3Authenticator, IEthereumApi
         {
-            private readonly DappWeb3Authenticator origin;
-
-            public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-            {
-                add => origin.VerificationRequired += value;
-                remove => origin.VerificationRequired -= value;
-            }
+            private readonly DappWeb3EthereumApi origin;
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -28,7 +21,7 @@ namespace DCL.Web3.Authenticators
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
                 URLDomain rpcServerUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc));
 
-                origin = new DappWeb3Authenticator(
+                origin = new DappWeb3EthereumApi(
                     new UnityAppWebBrowser(decentralandUrlsSource),
                     authApiUrl,
                     signatureUrl,
@@ -58,8 +51,7 @@ namespace DCL.Web3.Authenticators
                         "eth_getTransactionCount",
                         "eth_getBlockByNumber", "eth_getCode"
                     },
-                    environment,
-                    new InvalidAuthCodeVerificationFeatureFlag()
+                    environment
                 );
             }
 
@@ -73,18 +65,6 @@ namespace DCL.Web3.Authenticators
             // IWeb3Authenticator
             public UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct) =>
                 origin.LoginAsync(payload, ct);
-
-            public UniTask LogoutAsync(CancellationToken ct) =>
-                origin.LogoutAsync(ct);
-
-            // IDappVerificationHandler
-            public void CancelCurrentWeb3Operation() =>
-                origin.CancelCurrentWeb3Operation();
-
-            private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
-            {
-                public bool ShouldWaitForCodeVerificationFromServer => false;
-            }
         }
     }
 }

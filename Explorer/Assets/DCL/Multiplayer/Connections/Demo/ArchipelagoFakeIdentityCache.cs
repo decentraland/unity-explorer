@@ -27,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             if (identityCache.Identity is null)
             {
-                IWeb3Identity? identity = await new DappWeb3Authenticator.Default(identityCache, decentralandUrlsSource, web3AccountFactory, dclEnvironment)
+                IWeb3Identity? identity = await new DappWeb3EthereumApi.Default(identityCache, decentralandUrlsSource, web3AccountFactory, dclEnvironment)
                    .LoginAsync(LoginPayload.ForDappFlow(LoginMethod.ANY), CancellationToken.None);
 
                 identityCache.Identity = identity;

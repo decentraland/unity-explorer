@@ -20,14 +20,14 @@ using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
+    public partial class DappWeb3EthereumApi : IEthereumApi
     {
-        private const double IDENTITY_EXPIRATION_PERIOD = 30;
+        private const double IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS = 30;
 
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
         private readonly URLAddress signatureWebAppUrl;
         private readonly URLDomain rpcServerUrl;
@@ -36,7 +36,6 @@ namespace DCL.Web3.Authenticators
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
         private readonly DecentralandEnvironment environment;
-        private readonly ICodeVerificationFeatureFlag codeVerificationFeatureFlag;
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
@@ -49,14 +48,8 @@ namespace DCL.Web3.Authenticators
         private SocketIO? authApiWebSocket;
         private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
-        private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
 
-        public delegate void VerificationDelegate(int code, DateTime expiration);
-        private VerificationDelegate? signatureVerificationCallback;
-
-        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired;
-
-        public DappWeb3Authenticator(IWebBrowser webBrowser,
+        public DappWeb3EthereumApi(UnityAppWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
             URLDomain rpcServerUrl,
@@ -64,7 +57,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
             HashSet<string> readOnlyMethods,
-            DecentralandEnvironment environment, ICodeVerificationFeatureFlag codeVerificationFeatureFlag,
+            DecentralandEnvironment environment,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -76,7 +69,6 @@ namespace DCL.Web3.Authenticators
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
             this.environment = environment;
-            this.codeVerificationFeatureFlag = codeVerificationFeatureFlag;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -141,13 +133,12 @@ namespace DCL.Web3.Authenticators
         }
 
         /// <summary>
-        ///     1. An authentication request is sent to the server
-        ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
-        ///     3. Use the signature information to generate the identity
+        ///     Legacy socket-based wallet sign-in (kept for the Archipelago dev playgrounds via
+        ///     <see cref="Default" />). The production wallet flow is <see cref="DappDeepLinkAuthenticator" />.
         /// </summary>
         /// <param name="payload">Login payload containing the authentication method</param>
         /// <exception cref="Web3Exception"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
+        private async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
             await mutex.WaitAsync(ct);
 
@@ -166,7 +157,7 @@ namespace DCL.Web3.Authenticators
                 // 1 week expiration day, just like unity-renderer
                 DateTime sessionExpiration = identityExpirationDuration != null
                     ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                    : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD);
+                    : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS);
 
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
@@ -182,11 +173,6 @@ namespace DCL.Web3.Authenticators
                     signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
 
                 await UniTask.SwitchToMainThread(ct);
-
-                if (codeVerificationFeatureFlag.ShouldWaitForCodeVerificationFromServer)
-                    WaitForCodeVerificationAsync(authenticationResponse.requestId, authenticationResponse.code, signatureExpiration, ct).Forget();
-                else
-                    VerificationRequired?.Invoke((authenticationResponse.code, signatureExpiration, authenticationResponse.requestId));
 
                 LoginAuthApiResponse response = await RequestSignatureAsync<LoginAuthApiResponse>(authenticationResponse.requestId, payload.Method,
                     signatureExpiration, ct);
@@ -226,24 +212,15 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask LogoutAsync(CancellationToken ct) =>
-            await DisconnectFromAuthApiAsync();
-
-        public void CancelCurrentWeb3Operation()
-        {
-            // Cancel the task waiting for the browser signature
-            signatureOutcomeTask?.TrySetCanceled();
-
-            // Also cancel code verification if that's what was hanging (during Login)
-            codeVerificationTask?.TrySetCanceled();
-        }
-
-        private async UniTask DisconnectFromAuthApiAsync()
+        /// <summary>
+        ///     Drops the auth-api socket and aborts any in-flight browser signature confirmation,
+        ///     so an approval arriving later cannot complete under the previous session.
+        /// </summary>
+        public async UniTask DisconnectFromAuthApiAsync()
         {
             if (authApiWebSocket is { Connected: true })
                 await authApiWebSocket.DisconnectAsync();
 
-            codeVerificationTask?.TrySetCanceled();
             signatureOutcomeTask?.TrySetCanceled();
         }
 
@@ -375,8 +352,6 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
-
                 MethodResponse response = await RequestSignatureAsync<MethodResponse>(authenticationResponse.requestId, null, signatureExpiration, ct);
 
                 if (authApiPendingOperations <= 1)
@@ -443,9 +418,6 @@ namespace DCL.Web3.Authenticators
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response) =>
             signatureOutcomeTask?.TrySetResult(response);
 
-        private void ProcessCodeVerificationStatus(SocketIOResponse response) =>
-            codeVerificationTask?.TrySetResult(response);
-
         private async UniTask<T> RequestSignatureAsync<T>(string requestId, LoginMethod? method, DateTime expiration, CancellationToken ct)
         {
             string url =
@@ -453,7 +425,7 @@ namespace DCL.Web3.Authenticators
                     ? $"{signatureWebAppUrl}/{requestId}?loginMethod={method.Value}"
                     : $"{signatureWebAppUrl}/{requestId}";
 
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
             signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();
@@ -506,7 +478,6 @@ namespace DCL.Web3.Authenticators
                 authApiWebSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
 
                 authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
-                authApiWebSocket.On("request-validation-status", ProcessCodeVerificationStatus);
                 authApiWebSocket.OnDisconnected += OnWebSocketDisconnected;
                 authApiWebSocket.OnError += OnWebSocketError;
             }
@@ -521,13 +492,11 @@ namespace DCL.Web3.Authenticators
         private void OnWebSocketError(object sender, string error)
         {
             signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
-            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.Faulted, error));
         }
 
         private void OnWebSocketDisconnected(object sender, string reason)
         {
             signatureOutcomeTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
-            codeVerificationTask?.TrySetException(new WebSocketException(WebSocketError.ConnectionClosedPrematurely, reason));
         }
 
         private bool IsReadOnly(EthApiRequest request)
@@ -537,33 +506,6 @@ namespace DCL.Web3.Authenticators
                     return true;
 
             return false;
-        }
-
-        /// <summary>
-        /// Waits until we receive the verification status from the server
-        /// So then we raise the VerificationRequired event
-        /// </summary>
-        private async UniTask WaitForCodeVerificationAsync(string requestId, int code, DateTime expiration, CancellationToken ct)
-        {
-            codeVerificationTask?.TrySetCanceled(ct);
-            codeVerificationTask = new UniTaskCompletionSource<SocketIOResponse>();
-
-            TimeSpan duration = expiration - DateTime.UtcNow;
-
-            try
-            {
-                SocketIOResponse response = await codeVerificationTask.Task.Timeout(duration).AttachExternalCancellation(ct);
-
-                CodeVerificationStatus validation = response.GetValue<CodeVerificationStatus>();
-
-                if (validation.requestId == requestId)
-                {
-                    await UniTask.SwitchToMainThread(ct);
-                    VerificationRequired?.Invoke((code, expiration, requestId));
-                }
-            }
-            catch (TimeoutException e) { throw new CodeVerificationException($"Code verification expired: {expiration}", e); }
-            catch (WebSocketException e) { throw new CodeVerificationException("An error occurred while verifying the code: unable to complete the operation due to a WebSocket issue", e); }
         }
     }
 }

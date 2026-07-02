@@ -12,14 +12,14 @@ namespace DCL.ExternalUrlPrompt
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;
         private readonly List<string> trustedDomains = new ();
         private Action<ExternalUrlPromptResultType> resultCallback;
 
         public ExternalUrlPromptController(
             ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ICursor cursor) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
@@ -40,7 +40,7 @@ namespace DCL.ExternalUrlPrompt
 
             if (trustedDomains.Contains(inputData.Uri.Host))
             {
-                webBrowser.OpenUrl(inputData.Uri.OriginalString);
+                webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
                 viewInstance.CloseButton.OnClickAsync(CancellationToken.None).Forget();
                 return;
             }
@@ -53,10 +53,10 @@ namespace DCL.ExternalUrlPrompt
                     case ExternalUrlPromptResultType.ApprovedTrusted:
                         if (!trustedDomains.Contains(inputData.Uri.Host))
                             trustedDomains.Add(inputData.Uri.Host);
-                        webBrowser.OpenUrl(inputData.Uri.OriginalString);
+                        webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
                         break;
                     case ExternalUrlPromptResultType.Approved:
-                        webBrowser.OpenUrl(inputData.Uri.OriginalString);
+                        webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
                         break;
                 }
             });

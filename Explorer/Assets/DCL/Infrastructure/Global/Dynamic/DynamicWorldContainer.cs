@@ -225,7 +225,7 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
-            IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
+            UnityAppWebBrowser webBrowser = bootstrapContainer.WebBrowser;
 
             IEmoteStorage emotesCache = staticContainer.EmoteStorage;
 
@@ -472,12 +472,12 @@ namespace Global.Dynamic
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
-            // Local scene development scenes are excluded from deeplink runtime handling logic
-            if (!appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE))
-            {
-                var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService);
-                deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
-            }
+            // Deep link listening stays alive in every mode so browser sign-in can complete; local scene
+            // development only opts out of navigation routing (teleports would break the scene under test).
+            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, bootstrapContainer.DeeplinkSigninIdentityId,
+                routeNavigationDeepLinks: !appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE));
+
+            deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 uiShellContainer.MvcManager,

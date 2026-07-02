@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IProfileRepository profileRepository;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWearableStorage wearableStorage;
@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
-            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser,
+            ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, UnityAppWebBrowser webBrowser,
             IProfileRepository profileRepository,
             IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,

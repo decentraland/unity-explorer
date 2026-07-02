@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Browser
 {
-    public class UnityAppWebBrowser : IWebBrowser
+    public class UnityAppWebBrowser
     {
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -13,14 +13,14 @@ namespace DCL.Browser
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public void OpenUrl(string url)
+        public void OpenUrlMainThreadOnly(string url)
         {
             Application.OpenURL(Uri.EscapeUriString(url));
         }
 
-        public void OpenUrl(DecentralandUrl url)
+        public void OpenUrlMainThreadOnly(DecentralandUrl url)
         {
-            OpenUrl(decentralandUrlsSource.Url(url));
+            OpenUrlMainThreadOnly(decentralandUrlsSource.Url(url));
         }
 
         public string GetUrl(DecentralandUrl url) =>

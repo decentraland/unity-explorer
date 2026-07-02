@@ -26,7 +26,7 @@ namespace DCL.Navmap
         private readonly ObjectPool<EventScheduleElementView> scheduleElementPool;
         private readonly GoogleUserCalendar userCalendar;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ImageController thumbnailController;
         private readonly MultiStateButtonController interestedButtonController;
@@ -43,7 +43,7 @@ namespace DCL.Navmap
             ObjectPool<EventScheduleElementView> scheduleElementPool,
             GoogleUserCalendar userCalendar,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ImageControllerProvider imageControllerProvider)
         {
@@ -128,7 +128,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
         private void AddRecurrentEvents(EventDTO @event)
         {

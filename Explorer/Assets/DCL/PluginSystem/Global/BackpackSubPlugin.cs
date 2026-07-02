@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly ProfileChangesBus profileChangesBus;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             IAppArgs appArgs,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             WarningNotificationView inWorldWarningNotificationView,
             IThumbnailProvider thumbnailProvider,
             ProfileChangesBus profileChangesBus,

@@ -52,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private readonly ICompositeWeb3Provider web3Authenticator;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly SplashScreen splashScreen;
@@ -99,7 +99,7 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             ICompositeWeb3Provider web3Authenticator,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             SplashScreen splashScreen,
@@ -165,7 +165,7 @@ namespace DCL.AuthenticationScreenFlow
                 new InitAuthState(viewInstance, installSource),
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
-                new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
+                new IdentityVerificationDappDeepLinkAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
                 new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
                 new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
             );
@@ -289,7 +289,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenSupportUrl()
         {
-            webBrowser.OpenUrl(DecentralandUrl.SupportLink);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.SupportLink);
             DiscordButtonClicked?.Invoke();
         }
 

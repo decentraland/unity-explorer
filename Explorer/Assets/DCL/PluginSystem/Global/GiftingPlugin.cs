@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly IEventBus eventBus;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IThumbnailProvider thumbnailProvider,
             IEventBus eventBus,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ICompositeWeb3Provider web3Provider,
             IDecentralandUrlsSource decentralandUrlsSource,
             ImageControllerProvider imageControllerProvider)

@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
@@ -14,17 +13,16 @@ using static DCL.UI.UIAnimationHashes;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class IdentityVerificationDappAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
+    public class IdentityVerificationDappDeepLinkAuthState : AuthStateBase, IPayloadedState<(LoginMethod method, CancellationToken ct)>
     {
         private readonly MVCStateMachine<AuthStateBase> machine;
-        private readonly VerificationDappAuthView view;
         private readonly AuthenticationScreenController controller;
         private readonly ReactiveProperty<AuthStatus> currentState;
         private readonly ICompositeWeb3Provider compositeWeb3Provider;
 
         private Exception? loginException;
 
-        public IdentityVerificationDappAuthState(
+        public IdentityVerificationDappDeepLinkAuthState(
             MVCStateMachine<AuthStateBase> machine,
             AuthenticationScreenView viewInstance,
             AuthenticationScreenController controller,
@@ -32,7 +30,6 @@ namespace DCL.AuthenticationScreenFlow
             ICompositeWeb3Provider compositeWeb3Provider) : base(viewInstance)
         {
             this.machine = machine;
-            view = viewInstance.VerificationDappAuthView;
             this.controller = controller;
             this.currentState = currentState;
             this.compositeWeb3Provider = compositeWeb3Provider;
@@ -49,33 +46,23 @@ namespace DCL.AuthenticationScreenFlow
 
             controller.CurrentRequestID = string.Empty;
 
+            currentState.Value = AuthStatus.VerificationRequested;
             AuthenticateAsync(payload.method, payload.ct).Forget();
         }
 
         public override void Exit()
         {
-            if (loginException == null)
+            if (loginException != null)
             {
-                view.Hide(OUT);
-
-                // Hide login selection view if still visible (social logins skip the verification step,
-                // so ShowVerification is never called and the login selection view remains active)
-                if (viewInstance.LoginSelectionAuthView.gameObject.activeSelf)
-                    viewInstance.LoginSelectionAuthView.Hide();
-            }
-            else
-            {
-                if (currentState.Value == AuthStatus.VerificationRequested)
-                    view.Hide(SLIDE);
-
                 spanErrorInfo = loginException switch
                 {
-                    OperationCanceledException => new SpanErrorInfo("Login process was cancelled by user"),
-                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during authentication", ex),
-                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed", ex),
-                    CodeVerificationException ex => new SpanErrorInfo("Code verification failed during authentication", ex),
-                    Web3Exception ex => new SpanErrorInfo("Connection error during authentication flow", ex),
-                    Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
+                    OperationCanceledException ex => new SpanErrorInfo("Login process was cancelled by user", ex),
+                    TimeoutException ex => new SpanErrorInfo("Deep-link sign-in timed out waiting for the browser to deliver the signin deep link", ex),
+                    SignatureExpiredException ex => new SpanErrorInfo("Web3 signature expired during deep-link authentication", ex),
+                    Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
+                    DeeplinkSigninRetrievalException ex => new SpanErrorInfo($"Signin identity retrieval failed: {ex.Reason}", ex),
+                    Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
+                    Exception ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
                 };
 
                 if (loginException is not OperationCanceledException)
@@ -83,7 +70,6 @@ namespace DCL.AuthenticationScreenFlow
             }
 
             NativeWindowManager.ReleaseTemporaryWindowMode();
-            view.BackButton.onClick.RemoveListener(controller.CancelLoginProcess);
             base.Exit();
         }
 
@@ -91,11 +77,16 @@ namespace DCL.AuthenticationScreenFlow
         {
             try
             {
-                compositeWeb3Provider.VerificationRequired += ShowVerification;
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForDappFlow(method), ct);
+                viewInstance.LoginSelectionAuthView.Hide();
                 machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (identity, false, ct));
             }
             catch (OperationCanceledException e)
+            {
+                loginException = e;
+                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
+            }
+            catch (TimeoutException e)
             {
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
@@ -110,11 +101,6 @@ namespace DCL.AuthenticationScreenFlow
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, int>(SLIDE);
             }
-            catch (CodeVerificationException e)
-            {
-                loginException = e;
-                machine.Enter<LoginSelectionAuthState, int>(SLIDE);
-            }
             catch (Web3Exception e)
             {
                 loginException = e;
@@ -125,32 +111,6 @@ namespace DCL.AuthenticationScreenFlow
                 loginException = e;
                 machine.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
             }
-            finally
-            {
-                compositeWeb3Provider.VerificationRequired -= ShowVerification;
-            }
-        }
-
-        private void ShowVerification((int code, DateTime expiration, string requestId) data)
-        {
-            compositeWeb3Provider.VerificationRequired -= ShowVerification;
-
-            controller.CurrentRequestID = data.requestId;
-            currentState.Value = AuthStatus.VerificationRequested;
-
-            SentryTransactionNameMapping.Instance.StartSpan(LOADING_TRANSACTION_NAME, new SpanData
-            {
-                SpanName = "CodeVerification",
-                SpanOperation = "auth.code_verification",
-                Depth = STATE_SPAN_DEPTH + 1,
-            });
-
-            // Hide non-interactable Login Screen
-            viewInstance.LoginSelectionAuthView.Hide();
-
-            // Show Verification Screen
-            view.Show(data.code, data.expiration);
-            view.BackButton.onClick.AddListener(controller.CancelLoginProcess);
         }
     }
 }

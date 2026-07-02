@@ -5,18 +5,18 @@ namespace DCL.Browser
 {
     public class SupportRequestService
     {
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         public event Action? SupportRequested;
 
-        public SupportRequestService(IWebBrowser webBrowser)
+        public SupportRequestService(UnityAppWebBrowser webBrowser)
         {
             this.webBrowser = webBrowser;
         }
 
         public void OpenSupport()
         {
-            webBrowser.OpenUrl(DecentralandUrl.Help);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.Help);
             SupportRequested?.Invoke();
         }
     }

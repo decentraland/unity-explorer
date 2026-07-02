@@ -18,7 +18,7 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         internal event Action MarketClicked;
         internal readonly EquippedWearableView view;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly NftTypeIconSO rarityBackgrounds;
@@ -28,7 +28,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private IWearable currentWearable;
 
 		public EquippedWearableController(EquippedWearableView view,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
             NftTypeIconSO rarityBackgrounds,
@@ -63,7 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 await UniTask.Delay((int)(view.buyButtonAnimationDuration * 1000));
-                webBrowser.OpenUrl(currentWearable.GetMarketplaceLink(decentralandUrlsSource));
+                webBrowser.OpenUrlMainThreadOnly(currentWearable.GetMarketplaceLink(decentralandUrlsSource));
                 MarketClicked?.Invoke();
             }
 

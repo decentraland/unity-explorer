@@ -69,7 +69,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IProfileRepository profileRepository,
             IDecentralandUrlsSource dclUrlSource,
             HomePlaceEventBus homePlaceEventBus,

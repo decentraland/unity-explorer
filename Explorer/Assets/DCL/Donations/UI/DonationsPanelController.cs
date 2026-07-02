@@ -35,7 +35,7 @@ namespace DCL.Donations.UI
         private readonly decimal[] recommendedDonationAmount;
         private readonly Entity playerEntity;
         private readonly World world;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
         private readonly ICompositeWeb3Provider web3Provider;
@@ -50,7 +50,7 @@ namespace DCL.Donations.UI
             IProfileRepository profileRepository,
             World world,
             Entity playerEntity,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IInputBlock inputBlock,
             ICompositeWeb3Provider web3Provider,
@@ -90,10 +90,10 @@ namespace DCL.Donations.UI
         }
 
         private void OnBuyMoreRequested() =>
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.Account));
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.Account));
 
         private void OnContactSupportRequested() =>
-            webBrowser.OpenUrl(decentralandUrlsSource.Url(DecentralandUrl.Help));
+            webBrowser.OpenUrlMainThreadOnly(decentralandUrlsSource.Url(DecentralandUrl.Help));
 
         protected override void OnBeforeViewShow()
         {

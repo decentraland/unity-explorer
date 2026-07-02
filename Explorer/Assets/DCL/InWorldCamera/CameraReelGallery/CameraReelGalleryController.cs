@@ -68,7 +68,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IDecentralandUrlsSource? decentralandUrlsSource;
         private readonly ISystemClipboard? systemClipboard;
-        private readonly IWebBrowser? webBrowser;
+        private readonly UnityAppWebBrowser? webBrowser;
         private readonly GalleryEventBus galleryEventBus;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
@@ -100,7 +100,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             bool useSignedRequest,
             GalleryEventBus galleryEventBus,
             CameraReelOptionButtonView? optionButtonView = null,
-            IWebBrowser? webBrowser = null,
+            UnityAppWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             ISystemClipboard? systemClipboard = null,
             CameraReelGalleryMessagesConfiguration? reelGalleryStringMessages = null,

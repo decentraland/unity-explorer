@@ -40,7 +40,7 @@ namespace DCL.Events
         private readonly EventsView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -56,7 +56,7 @@ namespace DCL.Events
             ICursor cursor,
             HttpEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ThumbnailLoader thumbnailLoader,
@@ -200,7 +200,7 @@ namespace DCL.Events
 
         public void GoToCreateEventPage(bool fromHeader)
         {
-            webBrowser.OpenUrl($"{decentralandUrlsSource.Url(DecentralandUrl.WhatsOnNewEventLink)}?utm_source=explorer&utm_campaign=discover");
+            webBrowser.OpenUrlMainThreadOnly($"{decentralandUrlsSource.Url(DecentralandUrl.WhatsOnNewEventLink)}?utm_source=explorer&utm_campaign=discover");
             CreateEventButtonClicked?.Invoke(fromHeader);
         }
     }

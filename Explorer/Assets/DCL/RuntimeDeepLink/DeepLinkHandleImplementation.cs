@@ -2,8 +2,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.RealmNavigation;
-using DCL.Utility.Types;
+using DCL.Utilities;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
@@ -16,24 +17,42 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
+        private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
+        private readonly bool routeNavigationDeepLinks;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId,
+            bool routeNavigationDeepLinks)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
+            this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
+            this.routeNavigationDeepLinks = routeNavigationDeepLinks;
         }
 
-        public string Name => "Real Implementation";
-
-        public Result HandleDeepLink(DeepLink deeplink)
+        public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink)
         {
+            string? signin = deeplink.ValueOf(AppArgsFlags.SIGNIN);
+
+            if (!string.IsNullOrEmpty(signin))
+            {
+                // The property retains the id, so a login flow that subscribes later still receives it.
+                deeplinkSigninIdentityId.Value = signin;
+                return DeepLinkHandleResult.Consumed;
+            }
+
+            if (!routeNavigationDeepLinks)
+            {
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
+                return DeepLinkHandleResult.Consumed;
+            }
+
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
 
-            var result = Result.ErrorResult("no matches");
+            var handled = false;
 
             if (realm.HasValue)
             {
@@ -42,7 +61,7 @@ namespace DCL.RuntimeDeepLink
                 else
                     chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
 
-                result = Result.SuccessResult();
+                handled = true;
             }
             else if (position.HasValue)
             {
@@ -53,16 +72,16 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
-                result = Result.SuccessResult();
+                handled = true;
             }
 
             if (!string.IsNullOrEmpty(communityId))
             {
                 communityDataService.ShowCommunityDeepLinkNotification(communityId);
-                result = Result.SuccessResult();
+                handled = true;
             }
 
-            return result;
+            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)

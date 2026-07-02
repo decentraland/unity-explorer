@@ -1,15 +1,14 @@
-using DCL.Utility.Types;
-
 namespace DCL.RuntimeDeepLink
 {
+    public enum DeepLinkHandleResult
+    {
+        Consumed,
+        NoMatches,
+    }
+
     public interface IDeepLinkHandle
     {
-        public string Name { get; }
-
-        /// <summary>
-        /// Implementations of the method must be exception free.
-        /// </summary>
-        public Result HandleDeepLink(DeepLink deeplink);
+        DeepLinkHandleResult HandleDeepLink(DeepLink deeplink);
 
         class Null : IDeepLinkHandle
         {
@@ -17,10 +16,9 @@ namespace DCL.RuntimeDeepLink
 
             private Null() { }
 
-            public string Name => "Null Implementation";
 
-            public Result HandleDeepLink(DeepLink deeplink) =>
-                Result.SuccessResult();
+            public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink) =>
+                DeepLinkHandleResult.Consumed;
         }
     }
 }

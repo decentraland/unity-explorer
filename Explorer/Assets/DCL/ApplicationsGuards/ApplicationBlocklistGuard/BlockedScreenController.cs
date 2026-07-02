@@ -14,12 +14,12 @@ namespace DCL.ApplicationBlocklistGuard
     {
         private const string DEFAULT_INFO_TEXT = "Contact Support for more information.";
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly StringBuilder infoTextBuilder = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
 
-        public BlockedScreenController(ViewFactoryMethod viewFactory, IWebBrowser webBrowser) : base(viewFactory)
+        public BlockedScreenController(ViewFactoryMethod viewFactory, UnityAppWebBrowser webBrowser) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
         }
@@ -66,7 +66,7 @@ namespace DCL.ApplicationBlocklistGuard
 
         private void OnSupportClicked()
         {
-            webBrowser.OpenUrl(DecentralandUrl.Help);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.Help);
         }
 
         private static string FormatRemainingBanTime(string expiresAt)
