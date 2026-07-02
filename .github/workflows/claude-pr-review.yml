@@ -6,15 +6,77 @@ on:
   pull_request_review_comment:
     types: [created]
   pull_request:
-    types: [opened, synchronize, ready_for_review]
+    types: [opened, synchronize, ready_for_review, labeled]
 
 jobs:
-  auto-review:
+  check-author:
     if: |
       github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
-      !contains(github.event.pull_request.labels.*.name, 'auto-pr')
+      !contains(github.event.pull_request.labels.*.name, 'auto-pr') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ext-contribution')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      is-team-dev: ${{ steps.check.outputs.is-team-dev }}
+    steps:
+      - name: Check for ext-contribution label
+        id: label-check
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'ext-contribution') }}" == "true" ]]; then
+            echo "has-label=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-label=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout config file
+        if: steps.label-check.outputs.has-label != 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/auto_assign_config_dev.yml
+          fetch-depth: 1
+
+      - name: Check if PR author is a team dev
+        id: check
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [[ "${{ steps.label-check.outputs.has-label }}" == "true" ]]; then
+            echo "Author $PR_AUTHOR has ext-contribution label — treating as external"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+          echo "Team devs:"
+          echo "$TEAM_DEVS"
+          if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+            echo "Author $PR_AUTHOR is a team dev"
+            echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Author $PR_AUTHOR is NOT a team dev"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add ext-contribution label for non-team PRs
+        if: |
+          steps.check.outputs.is-team-dev == 'false' &&
+          steps.label-check.outputs.has-label != 'true' &&
+          (github.event.action == 'opened' || github.event.action == 'ready_for_review')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label ext-contribution --repo ${{ github.repository }}
+          echo "Added ext-contribution label to PR #${{ github.event.pull_request.number }}"
+
+  auto-review:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: claude-auto-review-${{ github.event.pull_request.number }}
@@ -295,6 +357,89 @@ jobs:
           echo "Re-running failed enforce-approvals workflow: $WORKFLOW_RUN_ID"
           gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
           echo "Re-run triggered successfully."
+
+  notify-ext-contribution:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'false' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'ext-contribution'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check for existing Slack notification marker
+        id: dedup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MARKER="<!-- ext-contribution-slack-sent -->"
+          COMMENTS=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" --jq '.[].body')
+          if echo "$COMMENTS" | grep -qF "$MARKER"; then
+            echo "Slack notification already sent for this PR — skipping"
+            echo "already-sent=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already-sent=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify PR author is a decentraland org member
+        if: steps.dedup.outputs.already-sent != 'true'
+        id: check-org
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if gh api "/orgs/decentraland/members/$PR_AUTHOR" --silent 2>/dev/null; then
+            echo "is-member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::PR author $PR_AUTHOR is not a member of decentraland org; Slack notification skipped"
+            echo "is-member=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract Slack requester tag from PR description
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        id: extract-slack-tag
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          SLACK_TAG=$(echo "$PR_BODY" | grep -oP '(?<=Requested by ).*?(\(<@U[A-Z0-9]+>\))' | grep -oP '<@U[A-Z0-9]+>' | head -1)
+          if [ -n "$SLACK_TAG" ]; then
+            echo "Found Slack tag: $SLACK_TAG"
+            echo "slack-tag=$SLACK_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Slack tag found in PR description, will use GitHub username"
+            echo "slack-tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post to Slack #explorer-ext-contributions
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          SLACK_TAG: ${{ steps.extract-slack-tag.outputs.slack-tag }}
+        run: |
+          if [ -n "$SLACK_TAG" ]; then
+            AUTHOR_REF="$SLACK_TAG"
+          else
+            AUTHOR_REF="$PR_AUTHOR_LOGIN"
+          fi
+          PAYLOAD=$(jq -n --arg url "$PR_URL" --arg author "$AUTHOR_REF" \
+            '{"text": "<@U0AJ91P1KBP> review \($url) (initiated by \($author))"}')
+          curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
+
+      - name: Post dedup marker comment
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -f body="<!-- ext-contribution-slack-sent -->
+          Slack notification sent to #explorer-ext-contributions for external review.
+          To re-send, delete this comment and re-add the \`ext-contribution\` label."
 
   check-member:
     if: |
