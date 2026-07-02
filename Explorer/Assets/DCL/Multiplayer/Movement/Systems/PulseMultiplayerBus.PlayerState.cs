@@ -314,23 +314,32 @@ namespace DCL.Multiplayer.Movement
             );
 
             state.ParcelIndex = parcelEncoder.Encode(parcelIndex);
-            state.Position = relativePosition.ToProtoVector();
-            state.Velocity = message.velocity.ToProtoVector();
-            state.RotationY = message.rotationY;
-            state.MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
-            state.SlideBlend = message.animState.SlideBlendValue;
+            state.PositionXQuantized = relativePosition.x;
+            state.PositionYQuantized = relativePosition.y;
+            state.PositionZQuantized = relativePosition.z;
+            state.VelocityXQuantized = message.velocity.x;
+            state.VelocityYQuantized = message.velocity.y;
+            state.VelocityZQuantized = message.velocity.z;
+            state.RotationYQuantized = message.rotationY;
+            state.MovementBlendQuantized = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
+            state.SlideBlendQuantized = message.animState.SlideBlendValue;
             state.StateFlags = BuildStateFlags(message);
             state.GlideState = (GlideState)message.animState.GlideState;
             state.JumpCount = message.animState.JumpCount;
 
             if (message.headIKYawEnabled)
-                state.HeadYaw = message.headYawAndPitch[0];
+                state.HeadYawQuantized = message.headYawAndPitch[0];
 
             if (message.headIKPitchEnabled)
-                state.HeadPitch = message.headYawAndPitch[1];
+                state.HeadPitchQuantized = message.headYawAndPitch[1];
 
             if (message.isPointingAt)
-                state.PointAt = message.pointAtWorldHitPoint.ToProtoVector();
+            {
+                state.PointAtXQuantized = message.pointAtWorldHitPoint.x;
+                state.PointAtYQuantized = message.pointAtWorldHitPoint.y;
+                state.PointAtZQuantized = message.pointAtWorldHitPoint.z;
+            }
+
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
@@ -341,12 +350,12 @@ namespace DCL.Multiplayer.Movement
             Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
 
             var worldPosition = new Vector3(
-                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.X,
-                playerState.Position.Y,
-                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.Z
+                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + playerState.PositionXQuantized,
+                playerState.PositionYQuantized,
+                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + playerState.PositionZQuantized
             );
 
-            Vector3 vel = playerState.Velocity.ToUnityVector();
+            var vel = new Vector3(playerState.VelocityXQuantized, playerState.VelocityYQuantized, playerState.VelocityZQuantized);
 
             float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
@@ -383,8 +392,8 @@ namespace DCL.Multiplayer.Movement
                 headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
 
                 isPointingAt = isPointingAt,
-                pointAtWorldHitPoint = isPointingAt && playerState.PointAt != null
-                    ? playerState.PointAt.ToUnityVector()
+                pointAtWorldHitPoint = isPointingAt
+                    ? new Vector3(playerState.PointAtXQuantized, playerState.PointAtYQuantized, playerState.PointAtZQuantized)
                     : Vector3.zero,
             };
 

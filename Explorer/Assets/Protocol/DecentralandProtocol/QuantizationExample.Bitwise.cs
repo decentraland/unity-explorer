@@ -77,6 +77,41 @@ namespace Decentraland.Common
         }
     }
 
+    public partial class VelocityState
+    {
+        private float? _vx;
+        /// <summary>Float accessor for <see cref="Vx"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VxQuantized
+        {
+            get => _vx ??= Quantize.DecodePower(Vx, 50.0f, 2.0f, 8);
+            set { _vx = value; Vx = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
+        }
+
+        private float? _vy;
+        /// <summary>Float accessor for <see cref="Vy"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VyQuantized
+        {
+            get => _vy ??= Quantize.DecodePower(Vy, 50.0f, 2.0f, 8);
+            set { _vy = value; Vy = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
+        }
+
+        private float? _vz;
+        /// <summary>Float accessor for <see cref="Vz"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
+        public float VzQuantized
+        {
+            get => _vz ??= Quantize.DecodePower(Vz, 50.0f, 2.0f, 8);
+            set { _vz = value; Vz = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
+        }
+
+        /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
+        public void ResetDecodedCache()
+        {
+            _vx = null;
+            _vy = null;
+            _vz = null;
+        }
+    }
+
     public partial class AvatarStateSnapshot
     {
         private float? _x;

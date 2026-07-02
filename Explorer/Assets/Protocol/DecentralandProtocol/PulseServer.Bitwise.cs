@@ -34,27 +34,27 @@ namespace Decentraland.Pulse
         }
 
         private float? _velocityX;
-        /// <summary>Float accessor for <see cref="VelocityX"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Float accessor for <see cref="VelocityX"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityXQuantized
         {
-            get => _velocityX ??= Quantize.Decode(VelocityX, -50.0f, 50.0f, 8);
-            set { _velocityX = value; VelocityX = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => _velocityX ??= Quantize.DecodePower(VelocityX, 50.0f, 2.0f, 8);
+            set { _velocityX = value; VelocityX = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
         }
 
         private float? _velocityY;
-        /// <summary>Float accessor for <see cref="VelocityY"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Float accessor for <see cref="VelocityY"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityYQuantized
         {
-            get => _velocityY ??= Quantize.Decode(VelocityY, -50.0f, 50.0f, 8);
-            set { _velocityY = value; VelocityY = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => _velocityY ??= Quantize.DecodePower(VelocityY, 50.0f, 2.0f, 8);
+            set { _velocityY = value; VelocityY = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
         }
 
         private float? _velocityZ;
-        /// <summary>Float accessor for <see cref="VelocityZ"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Float accessor for <see cref="VelocityZ"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityZQuantized
         {
-            get => _velocityZ ??= Quantize.Decode(VelocityZ, -50.0f, 50.0f, 8);
-            set { _velocityZ = value; VelocityZ = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => _velocityZ ??= Quantize.DecodePower(VelocityZ, 50.0f, 2.0f, 8);
+            set { _velocityZ = value; VelocityZ = Quantize.EncodePower(value, 50.0f, 2.0f, 8); }
         }
 
         private float? _rotationY;
