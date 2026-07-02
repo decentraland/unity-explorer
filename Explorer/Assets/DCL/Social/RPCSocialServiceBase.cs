@@ -24,6 +24,11 @@ namespace DCL.SocialService
         /// </summary>
         private const int BASE_RETRY_DELAY_SECONDS = 2;
 
+        private const int MAX_RETRY_DELAY_SECONDS = 60;
+
+        // A stream open shorter than this was likely an instant server-side rejection (e.g. duplicate)
+        private const int STABLE_STREAM_SECONDS = 30;
+
         public class ServerStreamReportsDebouncer : FrameDebouncer
         {
             public ServerStreamReportsDebouncer() : base(1)
@@ -69,7 +74,17 @@ namespace DCL.SocialService
                 {
                     // It's an endless [background] loop
                     await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+
+                    DateTime streamOpenedAt = DateTime.UtcNow;
                     await openStreamFunc().AttachExternalCancellation(ct);
+
+                    // A stream that completed instantly was likely rejected as a duplicate — back off.
+                    // If it stayed open long enough to be genuine, reset the backoff counter.
+                    if (DateTime.UtcNow - streamOpenedAt >= TimeSpan.FromSeconds(STABLE_STREAM_SECONDS))
+                        retryAttempt = 0;
+
+                    retryAttempt++;
+                    await WaitNextRetryAsync(retryAttempt, ct);
                 }
                 catch (OperationCanceledException) { break; }
                 catch (WebSocketException e)
@@ -100,6 +115,8 @@ namespace DCL.SocialService
                 }
                 catch (Exception e)
                 {
+                    retryAttempt++;
+
                     ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
                     try { await WaitNextRetryAsync(retryAttempt, ct); }
@@ -110,8 +127,9 @@ namespace DCL.SocialService
 
         private async UniTask WaitNextRetryAsync(int retryAttempt, CancellationToken ct)
         {
-            // Calculate exponential backoff delay
-            int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
+            // Exponential backoff, capped so it cannot grow without bound (computed in double to
+            // avoid int overflow once retryAttempt gets large).
+            int delaySeconds = (int)Math.Min(BASE_RETRY_DELAY_SECONDS * Math.Pow(2, retryAttempt - 1), MAX_RETRY_DELAY_SECONDS);
             ReportHub.Log(reportCategory, $"Retrying connection in {delaySeconds} seconds...");
 
             await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
