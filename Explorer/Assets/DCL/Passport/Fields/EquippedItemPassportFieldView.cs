@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.Passport.Fields
 {
-    public class EquippedItem_PassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class EquippedItemPassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
         private const float ANIMATION_TIME = 0.1f;

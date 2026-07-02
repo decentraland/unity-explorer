@@ -25,13 +25,13 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules
 {
-    public class EquippedItems_PassportModuleController : IPassportModuleController
+    public class EquippedItemsPassportModuleController : IPassportModuleController
     {
         private const int EQUIPPED_ITEMS_POOL_DEFAULT_CAPACITY = 28;
         private const int LOADING_ITEMS_POOL_DEFAULT_CAPACITY = 12;
         private const int GRID_ITEMS_PER_ROW = 6;
 
-        private readonly EquippedItems_PassportModuleView view;
+        private readonly EquippedItemsPassportModuleView view;
         private readonly World world;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -40,18 +40,18 @@ namespace DCL.Passport.Modules
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
-        private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new ();
-        private readonly IObjectPool<EquippedItem_PassportFieldView> emptyItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new ();
+        private readonly IObjectPool<EquippedItemPassportFieldView> loadingItemsPool;
+        private readonly List<EquippedItemPassportFieldView> instantiatedLoadingItems = new ();
+        private readonly IObjectPool<EquippedItemPassportFieldView> equippedItemsPool;
+        private readonly List<EquippedItemPassportFieldView> instantiatedEquippedItems = new ();
+        private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
+        private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
 
-        public EquippedItems_PassportModuleController(
-            EquippedItems_PassportModuleView view,
+        public EquippedItemsPassportModuleController(
+            EquippedItemsPassportModuleView view,
             World world,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
@@ -71,7 +71,7 @@ namespace DCL.Passport.Modules
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
 
-            loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
+            loadingItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
                 InstantiateEquippedItemPrefab,
                 defaultCapacity: LOADING_ITEMS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: loadingItemView =>
@@ -87,7 +87,7 @@ namespace DCL.Passport.Modules
                 }
             );
 
-            equippedItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
+            equippedItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
                 InstantiateEquippedItemPrefab,
                 defaultCapacity: EQUIPPED_ITEMS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: equippedItemView =>
@@ -101,7 +101,7 @@ namespace DCL.Passport.Modules
                     equippedItemView.BuyButton.onClick.RemoveAllListeners();
                 });
 
-            emptyItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
+            emptyItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
                 InstantiateEquippedItemPrefab,
                 defaultCapacity: GRID_ITEMS_PER_ROW - 1,
                 actionOnGet: emptyItemView =>
@@ -131,9 +131,9 @@ namespace DCL.Passport.Modules
         public void Dispose() =>
             Clear();
 
-        private EquippedItem_PassportFieldView InstantiateEquippedItemPrefab()
+        private EquippedItemPassportFieldView InstantiateEquippedItemPrefab()
         {
-            EquippedItem_PassportFieldView equippedItemView = Object.Instantiate(view.equippedItemPrefab, view.EquippedItemsContainer);
+            EquippedItemPassportFieldView equippedItemView = Object.Instantiate(view.equippedItemPrefab, view.EquippedItemsContainer);
             return equippedItemView;
         }
 
@@ -266,7 +266,7 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, EquippedItem_PassportFieldView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, EquippedItemPassportFieldView itemView, CancellationToken ct)
         {
             try
             {
@@ -283,7 +283,7 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IEmote itemEmote, EquippedItem_PassportFieldView itemView, CancellationToken ct)
+        private async UniTaskVoid WaitForThumbnailAsync(IEmote itemEmote, EquippedItemPassportFieldView itemView, CancellationToken ct)
         {
             try
             {
@@ -302,7 +302,7 @@ namespace DCL.Passport.Modules
 
         private void ClearLoadingItems()
         {
-            foreach (EquippedItem_PassportFieldView loadingItem in instantiatedLoadingItems)
+            foreach (EquippedItemPassportFieldView loadingItem in instantiatedLoadingItems)
                 loadingItemsPool.Release(loadingItem);
 
             instantiatedLoadingItems.Clear();
@@ -310,7 +310,7 @@ namespace DCL.Passport.Modules
 
         private void ClearEquippedItems()
         {
-            foreach (EquippedItem_PassportFieldView equippedItem in instantiatedEquippedItems)
+            foreach (EquippedItemPassportFieldView equippedItem in instantiatedEquippedItems)
                 equippedItemsPool.Release(equippedItem);
 
             instantiatedEquippedItems.Clear();
@@ -318,7 +318,7 @@ namespace DCL.Passport.Modules
 
         private void ClearEmptyItems()
         {
-            foreach (EquippedItem_PassportFieldView emptyItem in instantiatedEmptyItems)
+            foreach (EquippedItemPassportFieldView emptyItem in instantiatedEmptyItems)
                 emptyItemsPool.Release(emptyItem);
 
             instantiatedEmptyItems.Clear();

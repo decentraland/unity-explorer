@@ -35,7 +35,6 @@ namespace DCL.Browser.DecentralandUrls
         private const string SCENE_ADAPTER_PATH = "/get-scene-adapter";
 
         private readonly Dictionary<DecentralandUrl, UrlData> cache = new ();
-        private readonly DecentralandEnvironment environment;
         private readonly IRealmData realmData;
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
@@ -50,7 +49,6 @@ namespace DCL.Browser.DecentralandUrls
             string? cliGatekeeperUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
-            this.environment = environment;
             this.realmData = realmData;
             this.launchMode = launchMode;
             this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
@@ -192,6 +190,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
+                DecentralandUrl.MarketplaceApiLink => $"https://marketplace-api.decentraland.{ENV}/v2/catalog",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ContentPolicy => $"https://decentraland.{ENV}/content",

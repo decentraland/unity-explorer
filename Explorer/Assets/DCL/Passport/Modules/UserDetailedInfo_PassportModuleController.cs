@@ -12,12 +12,12 @@ namespace DCL.Passport.Modules
 {
     public class UserDetailedInfo_PassportModuleController : IPassportModuleController
     {
-        private readonly UserDetailedInfo_PassportModuleView view;
+        private readonly UserDetailedInfoPassportModuleView view;
         private readonly ISelfProfile selfProfile;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly UserAdditionalFields_PassportSubModuleController additionalFieldsController;
+        private readonly UserAdditionalFieldsPassportSubModuleController additionalFieldsController;
         private readonly UserDescription_PassportSubModuleController descriptionController;
-        private readonly UserLinks_PassportSubModuleController linksController;
+        private readonly UserLinksPassportSubModuleController linksController;
         private readonly PassportProfileInfoController passportProfileInfoController;
 
         private Profile currentProfile;
@@ -25,7 +25,7 @@ namespace DCL.Passport.Modules
         private CancellationTokenSource saveInfoCts;
 
         public UserDetailedInfo_PassportModuleController(
-            UserDetailedInfo_PassportModuleView view,
+            UserDetailedInfoPassportModuleView view,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             AddLink_PassportModal addLinkModal,
@@ -37,9 +37,9 @@ namespace DCL.Passport.Modules
             this.passportErrorsController = passportErrorsController;
             this.passportProfileInfoController = passportProfileInfoController;
 
-            additionalFieldsController = new UserAdditionalFields_PassportSubModuleController(view);
+            additionalFieldsController = new UserAdditionalFieldsPassportSubModuleController(view);
             descriptionController = new UserDescription_PassportSubModuleController(view, additionalFieldsController);
-            linksController = new UserLinks_PassportSubModuleController(view, addLinkModal, mvcManager, passportProfileInfoController);
+            linksController = new UserLinksPassportSubModuleController(view, addLinkModal, mvcManager, passportProfileInfoController);
 
             view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
             view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));

@@ -157,5 +157,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         LodGeneratorCDN = 94,
 
         Pulse = 100,
+
+        MarketplaceApiLink = 101,
     }
 }

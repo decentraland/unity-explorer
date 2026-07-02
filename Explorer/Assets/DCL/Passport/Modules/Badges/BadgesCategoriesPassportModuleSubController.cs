@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesCategories_PassportModuleSubController
+    public class BadgesCategoriesPassportModuleSubController
     {
         private const string ALL_FILTER = "All";
         private const int BADGES_CATEGORIES_POOL_DEFAULT_CAPACITY = 6;
@@ -15,15 +15,15 @@ namespace DCL.Passport.Modules.Badges
         public readonly List<ButtonWithSelectableStateView> InstantiatedBadgesFilterButtons = new ();
         public readonly List<BadgesCategorySeparator_PassportFieldView> InstantiatedBadgesCategorySeparators = new ();
         public readonly List<BadgesCategoryContainer_PassportFieldView> InstantiatedBadgesCategoryContainers = new ();
-        public event Action<string> OnBadgesFilterButtonClicked;
+        public event Action<string>? OnBadgesFilterButtonClicked;
         public string? CurrentFilter;
 
-        private readonly BadgesDetails_PassportModuleView view;
+        private readonly BadgesDetailsPassportModuleView view;
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly IObjectPool<BadgesCategorySeparator_PassportFieldView> badgesCategorySeparatorsPool;
         private readonly IObjectPool<BadgesCategoryContainer_PassportFieldView> badgesCategoryContainersPool;
 
-        public BadgesCategories_PassportModuleSubController(BadgesDetails_PassportModuleView view)
+        public BadgesCategoriesPassportModuleSubController(BadgesDetailsPassportModuleView view)
         {
             this.view = view;
 
@@ -59,7 +59,7 @@ namespace DCL.Passport.Modules.Badges
             var badgeFilterButton = badgesFilterButtonsPool.Get();
             badgeFilterButton.SetSelected(badgeCategory == ALL_FILTER);
             badgeFilterButton.Text.text = badgeCategory;
-            badgeFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked.Invoke(badgeCategory));
+            badgeFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked?.Invoke(badgeCategory));
             InstantiatedBadgesFilterButtons.Add(badgeFilterButton);
         }
 
