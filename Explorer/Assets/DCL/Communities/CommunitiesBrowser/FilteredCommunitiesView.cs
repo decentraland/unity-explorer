@@ -168,7 +168,7 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = communityData.role != CommunityMemberRole.none;
 
             // Setup card data
-            cardView.SetCommunityData(communityData.id, communityData.name, communityData.ownerName, communityData.description, isMember);
+            cardView.SetCommunityData(communityData.id, communityData.name, communityData.OwnerName, communityData.description, isMember);
 
             // Setup card data
             cardView.SetPrivacy(communityData.privacy);

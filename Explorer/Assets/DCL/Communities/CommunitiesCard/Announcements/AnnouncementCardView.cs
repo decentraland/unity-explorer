@@ -48,7 +48,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] private Color unlikeColor = Color.white;
 
         private string currentAnnouncementId = null!;
-        private string currentProfileThumbnailUrl = null!;
+        private string currentAuthorAddress = null!;
         private Sequence likeMarkAnimationSequence = null!;
 
         private CancellationTokenSource confirmationDialogCts = null!;
@@ -83,17 +83,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             currentAnnouncementId = announcementInfo.id;
 
             announcementContent.text = announcementInfo.content;
-            authorName.text = announcementInfo.authorName;
+            authorName.text = announcementInfo.Profile.Name;
             profileTag.text = $"#{announcementInfo.authorAddress[^4..]}";
-            profileTag.gameObject.SetActive(!announcementInfo.authorHasClaimedName);
-            verifiedMark.SetActive(announcementInfo.authorHasClaimedName);
+            profileTag.gameObject.SetActive(!announcementInfo.Profile.HasClaimedName);
+            verifiedMark.SetActive(announcementInfo.Profile.HasClaimedName);
             officialMark.SetActive(OfficialWalletsHelper.Instance.IsOfficialWallet(announcementInfo.authorAddress));
             postDate.text = TimestampUtilities.GetRelativeTimeForPosts(announcementInfo.createdAt);
 
-            if (currentProfileThumbnailUrl != announcementInfo.authorProfilePictureUrl)
+            if (currentAuthorAddress != announcementInfo.authorAddress)
             {
-                profilePicture.Setup(profileDataProvider, NameColorHelper.GetNameColor(announcementInfo.authorName), announcementInfo.authorProfilePictureUrl);
-                currentProfileThumbnailUrl = announcementInfo.authorProfilePictureUrl;
+                profilePicture.Setup(profileDataProvider, announcementInfo.Profile);
+                currentAuthorAddress = announcementInfo.authorAddress;
             }
 
             likeAnnouncementButton.gameObject.SetActive(!announcementInfo.isLikedByUser);

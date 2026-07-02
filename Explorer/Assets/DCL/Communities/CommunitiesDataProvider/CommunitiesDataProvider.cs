@@ -3,7 +3,9 @@ using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PrivateWorlds;
+using DCL.Profiles;
 using DCL.Utilities.Extensions;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -18,42 +20,67 @@ namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider : ICommunityMembershipChecker
     {
-        public event Action<CreateOrUpdateCommunityResponse.CommunityData> CommunityCreated;
-        public event Action<string> CommunityUpdated;
-        public event Action<string> CommunityDeleted;
-        public event Action<string, bool> CommunityJoined;
-        public event Action<string, bool> CommunityLeft;
-        public event Action<string> CommunityUserRemoved;
-        public event Action<string, string> CommunityUserBanned;
-        public event Action<string, string, bool> CommunityRequestedToJoin;
-        public event Action<string, bool> CommunityInviteRequestCancelled;
-        public event Action<string, string, bool> CommunityInviteRequestAccepted;
-        public event Action<string, string, bool> CommunityInviteRequestRejected;
-        public event Action<string> CommunityOwnershipTransferred;
+        private const string CHECK_NOTIFICATIONS_OPT_OUT_URL = "{0}/subscription/opt-outs/community/{1}";
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileRepository profileRepository;
 
-        private const string CHECK_NOTIFICATIONS_OPT_OUT_URL = "{0}/subscription/opt-outs/community/{1}";
+        // Per-element hydration delegates are built once (capturing only 'this') so each UniTask.WhenAll(...Select(...)) allocates no closure per call.
+        // hydrateCt carries the current batch's token; it is set synchronously right before WhenAll materializes the Select on the single-threaded UniTask loop.
+        private readonly Func<GetCommunityMembersResponse.MemberData, UniTask> hydrateMemberProfile;
+        private readonly Func<GetCommunityInviteRequestResponse.CommunityInviteRequestData, UniTask> hydrateRequestProfile;
+        private readonly Func<GetUserCommunitiesData.CommunityData, UniTask> hydrateCommunityFriends;
+        private readonly Func<GetUserInviteRequestData.UserInviteRequestData, UniTask> hydrateRequestFriends;
+        private readonly Func<GetUserCommunitiesData.CommunityData, UniTask> hydrateCommunityOwnerName;
+        private readonly Func<GetUserInviteRequestData.UserInviteRequestData, UniTask> hydrateRequestOwnerName;
+        private readonly Func<CommunityPost, UniTask> hydratePostAuthor;
+        private CancellationToken hydrateCt;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
         private string membersBaseUrl => urlsSource.Url(DecentralandUrl.Members);
+
+        // v2 carries the read endpoints whose payloads were stripped of profile info; writes/places/invites remain on v1.
+        private string communitiesV2BaseUrl => urlsSource.Url(DecentralandUrl.CommunitiesV2);
+        private string membersV2BaseUrl => urlsSource.Url(DecentralandUrl.MembersV2);
         private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Notifications);
+        public event Action<CreateOrUpdateCommunityResponse.CommunityData>? CommunityCreated;
+        public event Action<string>? CommunityUpdated;
+        public event Action<string>? CommunityDeleted;
+        public event Action<string, bool>? CommunityJoined;
+        public event Action<string, bool>? CommunityLeft;
+        public event Action<string>? CommunityUserRemoved;
+        public event Action<string, string>? CommunityUserBanned;
+        public event Action<string, string, bool>? CommunityRequestedToJoin;
+        public event Action<string, bool>? CommunityInviteRequestCancelled;
+        public event Action<string, string, bool>? CommunityInviteRequestAccepted;
+        public event Action<string, string, bool>? CommunityInviteRequestRejected;
+        public event Action<string>? CommunityOwnershipTransferred;
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileRepository = profileRepository;
+
+            hydrateMemberProfile = element => GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, hydrateCt);
+            hydrateRequestProfile = element => GetProfileAsync(element, element.memberAddress, static (data, profile) => data.Profile = profile, hydrateCt);
+            hydrateCommunityFriends = element => GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, hydrateCt);
+            hydrateRequestFriends = element => GetProfilesAsync(element, element.friendAddresses, static (data, list) => data.Friends = list, hydrateCt);
+            hydrateCommunityOwnerName = element => GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, hydrateCt);
+            hydrateRequestOwnerName = element => GetProfileNameAsync(element, element.ownerAddress, static (data, name) => data.OwnerName = name, hydrateCt);
+            hydratePostAuthor = element => GetProfileAsync(element, element.authorAddress, static (data, profile) => data.Profile = profile, hydrateCt);
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}";
+            var url = $"{communitiesV2BaseUrl}/{communityId}";
 
             GetCommunityResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                       .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft);
@@ -69,12 +96,13 @@ namespace DCL.Communities.CommunitiesDataProvider
             return response.data.role != CommunityMemberRole.none;
         }
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct, bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct,
+            bool includeRequestsReceivedPerCommunity = false, bool isStreaming = false)
         {
-            var url = $"{communitiesBaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
-            if (isStreaming) //TODO FRAN & DAVIDE: Fix this, we should be paginating results here.
-                url = $"{communitiesBaseUrl}?onlyWithActiveVoiceChat={isStreaming}";//&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesV2BaseUrl}?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
+            if (isStreaming) //TODO FRAN & DAVIDE: Fix this, we should be paginating results here.
+                url = $"{communitiesV2BaseUrl}?onlyWithActiveVoiceChat={isStreaming}"; //&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                             .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
@@ -83,9 +111,10 @@ namespace DCL.Communities.CommunitiesDataProvider
                 return response;
 
             foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
-            {
                 community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
-            }
+
+            await UniTask.WhenAll(HydrateFriendsAsync(response.data.results, ct),
+                HydrateOwnerNamesAsync(response.data.results, ct));
 
             if (includeRequestsReceivedPerCommunity)
             {
@@ -103,12 +132,12 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<int> GetCommunityRequestsAmountAsync(string communityId, CancellationToken cancellationToken)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/requests";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/requests";
 
             GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, cancellationToken)
                                                                                    .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
 
-            int totalRequests = 0;
+            var totalRequests = 0;
 
             foreach (GetCommunityInviteRequestResponse.CommunityInviteRequestData request in response.data.results)
             {
@@ -119,7 +148,8 @@ namespace DCL.Communities.CommunitiesDataProvider
             return totalRequests;
         }
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility, CancellationToken ct)
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands,
+            List<string> worlds, CommunityPrivacy? privacy, CommunityVisibility? visibility, CancellationToken ct)
         {
             CreateOrUpdateCommunityResponse response;
 
@@ -142,21 +172,27 @@ namespace DCL.Communities.CommunitiesDataProvider
                 lands ??= new List<string>();
                 worlds ??= new List<string>();
 
-                StringBuilder placeIdsJsonString = new StringBuilder("[");
+                var placeIdsJsonString = new StringBuilder("[");
+
                 for (var i = 0; i < lands.Count; i++)
                 {
                     placeIdsJsonString.Append($"\"{lands[i]}\"");
+
                     if (i < lands.Count - 1)
                         placeIdsJsonString.Append(", ");
                 }
+
                 if (lands.Count > 0 && worlds.Count > 0)
                     placeIdsJsonString.Append(", ");
+
                 for (var i = 0; i < worlds.Count; i++)
                 {
                     placeIdsJsonString.Append($"\"{worlds[i]}\"");
+
                     if (i < worlds.Count - 1)
                         placeIdsJsonString.Append(", ");
                 }
+
                 placeIdsJsonString.Append("]");
                 formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
             }
@@ -192,37 +228,47 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         public async UniTask<ICommunityMemberPagedResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+                                                                             .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+
+            await HydrateMemberProfilesAsync(response?.data?.results, ct);
+
             return response;
         }
 
         public async UniTask<ICommunityMemberPagedResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                              .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+
+            await HydrateMemberProfilesAsync(response.data?.results, ct);
+
             return response;
         }
 
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+                                                                             .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+
+            await HydrateMemberProfilesAsync(response.data?.results, ct);
+
             return response;
         }
 
         public async UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=0&onlyOnline=true";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/members?offset=0&limit=0&onlyOnline=true";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+                                                                             .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+
             return response.data.total;
         }
 
@@ -235,7 +281,7 @@ namespace DCL.Communities.CommunitiesDataProvider
 
             List<string> placesIds = new ();
 
-            if (response is { data: { results: not null } })
+            if (response?.data?.results != null)
             {
                 foreach (GetCommunityPlacesResult placeResult in response.data.results)
                     placesIds.Add(placeResult.id);
@@ -251,9 +297,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
 
-            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
                 CommunityUserBanned?.Invoke(communityId, userId);
@@ -265,9 +311,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
@@ -276,9 +322,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (web3IdentityCache.Identity?.Address == userId)
                 CommunityLeft?.Invoke(communityId, result.Success);
@@ -295,9 +341,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members";
 
-            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             CommunityJoined?.Invoke(communityId, result.Success);
 
@@ -308,9 +354,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                      .WithNoOpAsync()
-                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
                 CommunityDeleted?.Invoke(communityId);
@@ -322,9 +368,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success && newRole == CommunityMemberRole.owner)
                 CommunityOwnershipTransferred?.Invoke(communityId);
@@ -336,16 +382,16 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/places/{placeId}";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
         public async UniTask<GetUserInviteRequestResponse> GetUserInviteRequestAsync(InviteRequestAction action, CancellationToken ct)
         {
-            var url = $"{membersBaseUrl}/{web3IdentityCache.Identity?.Address}/requests?type={action.ToString()}";
+            var url = $"{membersV2BaseUrl}/{web3IdentityCache.Identity?.Address}/requests?type={action.ToString()}";
 
             GetUserInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                               .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
@@ -353,15 +399,20 @@ namespace DCL.Communities.CommunitiesDataProvider
             foreach (GetUserInviteRequestData.UserInviteRequestData inviteRequest in response.data.results)
                 inviteRequest.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inviteRequest.communityId);
 
+            await UniTask.WhenAll(HydrateFriendsAsync(response.data.results, ct),
+                HydrateOwnerNamesAsync(response.data.results, ct));
+
             return response;
         }
 
         public async UniTask<ICommunityMemberPagedResponse> GetCommunityInviteRequestAsync(string communityId, InviteRequestAction action, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/{communityId}/requests?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}&type={action}";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/requests?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}&type={action}";
 
             GetCommunityInviteRequestResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                                    .CreateFromJson<GetCommunityInviteRequestResponse>(WRJsonParser.Newtonsoft);
+
+            await HydrateMemberProfilesAsync(response.data.results, ct);
 
             return response;
         }
@@ -370,9 +421,9 @@ namespace DCL.Communities.CommunitiesDataProvider
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests/{requestId}";
 
-            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPatchAsync(url, GenericPostArguments.CreateJson($"{{\"intention\": \"{intention.ToString()}\"}}"), string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             switch (intention)
             {
@@ -393,17 +444,18 @@ namespace DCL.Communities.CommunitiesDataProvider
         public async UniTask<string> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests";
+
             string jsonBody = JsonUtility.ToJson(new SendInviteOrRequestToJoinBody
             {
                 targetedAddress = targetedUserAddress,
                 type = action.ToString(),
             });
 
-            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                   .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<SendInviteOrRequestToJoinAsyncResponse> result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                                              .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
+                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            string inviteOrRequestIdResult = result.Success ? result.Value.data.id : null;
+            string inviteOrRequestIdResult = result.Success ? result.Value.data.id : null!;
 
             if (action == InviteRequestAction.request_to_join)
                 CommunityRequestedToJoin?.Invoke(communityId, inviteOrRequestIdResult, result.Success);
@@ -416,104 +468,177 @@ namespace DCL.Communities.CommunitiesDataProvider
             var url = $"{membersBaseUrl}/{userAddress}/invites";
 
             GetInvitableCommunityListResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                    .CreateFromJson<GetInvitableCommunityListResponse>(WRJsonParser.Newtonsoft);
+                                                                                   .CreateFromJson<GetInvitableCommunityListResponse>(WRJsonParser.Newtonsoft);
 
             return response;
         }
 
         public async UniTask<GetCommunityPostsResponse> GetCommunityPostsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesV2BaseUrl}/{communityId}/posts?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityPostsResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityPostsResponse>(WRJsonParser.Newtonsoft);
+
+            await HydratePostAuthorsAsync(response.data.posts, ct);
 
             return response;
         }
 
         public async UniTask<CreateCommunityPostResponse> CreateCommunityPostAsync(string communityId, string content, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts";
+            var url = $"{communitiesBaseUrl}/{communityId}/posts";
             string jsonBody = JsonUtility.ToJson(new CreateCommunityPostBody { content = content });
 
-            var response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                     .CreateFromJson<CreateCommunityPostResponse>(WRJsonParser.Newtonsoft);
+            CreateCommunityPostResponse response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                             .CreateFromJson<CreateCommunityPostResponse>(WRJsonParser.Newtonsoft);
 
             return response;
         }
 
         public async UniTask<bool> DeleteCommunityPostAsync(string communityId, string postId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}";
+            var url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
         public async UniTask<bool> LikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+            var url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
 
-            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
         public async UniTask<bool> UnlikeCommunityPostAsync(string communityId, string postId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
+            var url = $"{communitiesBaseUrl}/{communityId}/posts/{postId}/like";
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                                                   .WithNoOpAsync()
-                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
         public async UniTask<CheckCommunityNotificationOptOutResponse> CheckCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
         {
-            string url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
+            var url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
 
-            var response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                .CreateFromJson<CheckCommunityNotificationOptOutResponse>(WRJsonParser.Newtonsoft);
+            CheckCommunityNotificationOptOutResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                          .CreateFromJson<CheckCommunityNotificationOptOutResponse>(WRJsonParser.Newtonsoft);
 
             return response;
         }
 
         public async UniTask<bool> DeleteCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
         {
-            string url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
+            var url = string.Format(CHECK_NOTIFICATIONS_OPT_OUT_URL, subscriptionsBaseUrl, communityId);
 
-            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
-                .WithNoOpAsync()
-                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
         public async UniTask<bool> CreateCommunityNotificationOptOutAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{subscriptionsBaseUrl}/subscription/opt-outs";
+            var url = $"{subscriptionsBaseUrl}/subscription/opt-outs";
+
             string jsonBody = JsonUtility.ToJson(new CreateCommunityNotificationOptOutPostBody
             {
-                scope = "community", scopeId = communityId
+                scope = "community", scopeId = communityId,
             });
 
-            var result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                .WithNoOpAsync()
-                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            EnumResult<TaskError> result = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                     .WithNoOpAsync()
+                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             return result.Success;
         }
 
-        // TODO: Pending to implement these methods:
-        //       public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
-        //       public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
-        //       public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct)
+        private UniTask HydrateMemberProfilesAsync(GetCommunityMembersResponse.MemberData[]? members, CancellationToken ct)
+        {
+            if (members == null)
+                return UniTask.CompletedTask;
+
+            hydrateCt = ct;
+            return UniTask.WhenAll(members.Select(hydrateMemberProfile));
+        }
+
+        private UniTask HydrateMemberProfilesAsync(GetCommunityInviteRequestResponse.CommunityInviteRequestData[] requests, CancellationToken ct)
+        {
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestProfile));
+        }
+
+        private UniTask HydrateFriendsAsync(GetUserCommunitiesData.CommunityData[] communities, CancellationToken ct)
+        {
+            hydrateCt = ct;
+            return UniTask.WhenAll(communities.Select(hydrateCommunityFriends));
+        }
+
+        private UniTask HydrateFriendsAsync(GetUserInviteRequestData.UserInviteRequestData[] requests, CancellationToken ct)
+        {
+            // We don't need to "group" or "batch" data manually, it's already done in RealmProfileRepository
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestFriends));
+        }
+
+        private UniTask HydrateOwnerNamesAsync(GetUserCommunitiesData.CommunityData[] communities, CancellationToken ct)
+        {
+            // The v2 endpoints send only the owner address; the display name is resolved client-side.
+            hydrateCt = ct;
+            return UniTask.WhenAll(communities.Select(hydrateCommunityOwnerName));
+        }
+
+        private UniTask HydrateOwnerNamesAsync(GetUserInviteRequestData.UserInviteRequestData[] requests, CancellationToken ct)
+        {
+            hydrateCt = ct;
+            return UniTask.WhenAll(requests.Select(hydrateRequestOwnerName));
+        }
+
+        private UniTask HydratePostAuthorsAsync(CommunityPost[] posts, CancellationToken ct)
+        {
+            hydrateCt = ct;
+            return UniTask.WhenAll(posts.Select(hydratePostAuthor));
+        }
+
+        private async UniTask GetProfilesAsync<TTarget>(TTarget target, IReadOnlyList<string>? addresses, Action<TTarget, IReadOnlyList<Profile.CompactInfo>> assignList, CancellationToken ct)
+        {
+            if (addresses == null || addresses.Count == 0)
+            {
+                assignList(target, Array.Empty<Profile.CompactInfo>());
+                return;
+            }
+
+            assignList(target, await profileRepository.GetCompactAsync(addresses, ct));
+        }
+
+        private async UniTask GetProfileAsync<TTarget>(TTarget target, string address, Action<TTarget, Profile.CompactInfo> assignProfile, CancellationToken ct)
+        {
+            // The v2 community endpoints keep members whose profile cannot be resolved; fall back to an address-only profile instead of failing the whole batch.
+            Profile.CompactInfo compactProfile = await profileRepository.GetCompactAsync(address, ct)
+                                                 ?? new Profile.CompactInfo(address);
+
+            assignProfile(target, compactProfile);
+        }
+
+        private async UniTask GetProfileNameAsync<TTarget>(TTarget target, string address, Action<TTarget, string> assignName, CancellationToken ct)
+        {
+            Profile.CompactInfo? compactProfile = await profileRepository.GetCompactAsync(address, ct);
+
+            // Fall back to the raw address when the profile can't be resolved, mirroring GetProfileAsync for members.
+            assignName(target, compactProfile?.Name ?? address);
+        }
     }
 }

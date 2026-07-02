@@ -4,20 +4,23 @@ using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityRequestsV2200OkResponse
     [Serializable]
     public class GetCommunityInviteRequestResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        [JsonConverter(typeof(CommunitiesDTOConverters.CommunityInviteRequestDataConverter))]
         public class CommunityInviteRequestData : ICommunityMemberData
         {
-            public string id;
+            public string id = null!;
 
+            // Hydrated client-side from memberAddress; the server no longer sends inner profile info.
+            [JsonIgnore]
             public Profile.CompactInfo Profile { get; internal set; }
 
-            public string communityId;
+            public string memberAddress = null!;
+            public string communityId = null!;
             public InviteRequestAction type;
-            public string status;
+            public string status = null!;
             public FriendshipStatus friendshipStatus;
 
             public string Id => id;
@@ -41,13 +44,13 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class GetCommunityInviteRequestResponseData
         {
-            public CommunityInviteRequestData[] results;
+            public CommunityInviteRequestData[] results = Array.Empty<CommunityInviteRequestData>();
             public int total;
             public int limit;
             public int offset;
         }
 
-        public GetCommunityInviteRequestResponseData data;
+        public GetCommunityInviteRequestResponseData data = null!;
         public ICommunityMemberData[] members => data.results;
         public int total => data.total;
     }

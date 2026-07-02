@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityByIdV2200OkResponse
     [Serializable]
     public class GetCommunityResponse
     {

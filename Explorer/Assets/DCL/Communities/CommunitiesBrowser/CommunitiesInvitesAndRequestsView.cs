@@ -358,7 +358,7 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = community.role != CommunityMemberRole.none;
 
             // Setup card data
-            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
+            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.OwnerName, community.description, isMember);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
@@ -437,7 +437,7 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = community.role != CommunityMemberRole.none;
 
             // Setup card data
-            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
+            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.OwnerName, community.description, isMember);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);

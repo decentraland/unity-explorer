@@ -1,26 +1,25 @@
 using DCL.Profiles;
-using DCL.Profiles.Helpers;
-using DCL.Utilities;
 using Newtonsoft.Json;
 using System;
-using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityMembersV2200OkResponse (also reused for GetBannedMembersV2200OkResponse).
     [Serializable]
     public class GetCommunityMembersResponse : ICommunityMemberPagedResponse
     {
         [Serializable]
-        [JsonConverter(typeof(CommunitiesDTOConverters.GetCommunityMembersResponseMemberDataConverter))]
         public class MemberData : ICommunityMemberData
         {
+            // Hydrated client-side from memberAddress; the server no longer sends inner profile info.
             [JsonIgnore]
             public Profile.CompactInfo Profile { get; internal set; }
 
-            public string communityId;
+            public string memberAddress = null!;
+            public string communityId = null!;
             public CommunityMemberRole role;
-            public string joinedAt;
+            public string joinedAt = null!;
             public int mutualFriends;
 
             public FriendshipStatus friendshipStatus
@@ -73,14 +72,14 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class GetCommunityMembersResponseData
         {
-            public MemberData[] results;
+            public MemberData[] results = Array.Empty<MemberData>();
             public int total;
             public int page;
             public int pages;
             public int limit;
         }
 
-        public GetCommunityMembersResponseData data;
+        public GetCommunityMembersResponseData data = null!;
         public ICommunityMemberData[] members => data.results;
         public int total => data.total;
     }
