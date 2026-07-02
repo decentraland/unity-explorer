@@ -11,8 +11,8 @@ namespace DCL.Web3.Authenticators
     /// <summary>
     ///     Composite provider that wraps both authentication methods (ThirdWeb OTP and Dapp Wallet)
     ///     and delegates calls to the currently selected method.
-    ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi,
-    ///     IDappVerificationHandler and IOtpAuthenticator to provide a single entry point for all Web3 needs.
+    ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi
+    ///     and IOtpAuthenticator to provide a single entry point for all Web3 needs.
     /// </summary>
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
@@ -23,13 +23,6 @@ namespace DCL.Web3.Authenticators
         private readonly IAnalyticsController analytics;
 
         public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
-
-        // IDappVerificationHandler - delegates to dappAuth
-        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-        {
-            add => dappAuth.VerificationRequired += value;
-            remove => dappAuth.VerificationRequired -= value;
-        }
 
         public event Action<string>? OTPSendSucceeded
         {

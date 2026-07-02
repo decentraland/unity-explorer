@@ -222,7 +222,6 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 dclEnvironment,
-                new AuthCodeVerificationFeatureFlag(),
                 identityExpirationDuration
             );
 
@@ -270,11 +269,6 @@ namespace Global.Dynamic
 
             return new RuntimeReportsHandlingSettings(finalSettings);
         }
-    }
-
-    internal class AuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
-    {
-        public bool ShouldWaitForCodeVerificationFromServer => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION);
     }
 
     [Serializable]

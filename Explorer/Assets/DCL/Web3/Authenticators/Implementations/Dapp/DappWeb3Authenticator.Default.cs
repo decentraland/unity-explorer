@@ -4,7 +4,6 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -12,15 +11,9 @@ namespace DCL.Web3.Authenticators
 {
     public partial class DappWeb3Authenticator
     {
-        public class Default : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler
+        public class Default : IWeb3Authenticator, IEthereumApi
         {
             private readonly DappWeb3Authenticator origin;
-
-            public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-            {
-                add => origin.VerificationRequired += value;
-                remove => origin.VerificationRequired -= value;
-            }
 
             public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory, DecentralandEnvironment environment)
             {
@@ -58,8 +51,7 @@ namespace DCL.Web3.Authenticators
                         "eth_getTransactionCount",
                         "eth_getBlockByNumber", "eth_getCode"
                     },
-                    environment,
-                    new InvalidAuthCodeVerificationFeatureFlag()
+                    environment
                 );
             }
 
@@ -76,15 +68,6 @@ namespace DCL.Web3.Authenticators
 
             public UniTask LogoutAsync(CancellationToken ct) =>
                 origin.LogoutAsync(ct);
-
-            // IDappVerificationHandler
-            public void CancelCurrentWeb3Operation() =>
-                origin.CancelCurrentWeb3Operation();
-
-            private class InvalidAuthCodeVerificationFeatureFlag : ICodeVerificationFeatureFlag
-            {
-                public bool ShouldWaitForCodeVerificationFromServer => false;
-            }
         }
     }
 }

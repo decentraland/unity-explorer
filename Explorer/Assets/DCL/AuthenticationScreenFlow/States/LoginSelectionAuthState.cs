@@ -174,7 +174,6 @@ namespace DCL.AuthenticationScreenFlow
             currentState.Value = AuthStatus.LoginRequested;
 
             view.SetLoadingSpinnerVisibility(true);
-            // machine.Enter<IdentityVerificationDappAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
             machine.Enter<IdentityVerificationDappDeepLinkAuthState, (LoginMethod, CancellationToken)>((method, controller.GetRestartedLoginToken()));
         }
 
