@@ -9,7 +9,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -171,7 +170,7 @@ namespace DCL.Multiplayer.Movement
                 float dampTime = time - linearTime;
 
                 anim.States.MovementBlendValue = Mathf.Max(MovementBlend.MIN, Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration));
-                anim.States.SlideBlendValue = Mathf.Max(MovementBlend.MIN, Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration));
+                anim.States.SlideBlendValue = Mathf.Max(0, Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration));
             }
 
             UpdateLocalBlends(view, anim.States);

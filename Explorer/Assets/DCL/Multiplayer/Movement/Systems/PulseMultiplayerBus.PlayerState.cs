@@ -375,7 +375,7 @@ namespace DCL.Multiplayer.Movement
                 animState = new AnimationStates
                 {
                     MovementBlendValue = movementBlend,
-                    SlideBlendValue = playerState.SlideBlend,
+                    SlideBlendValue = playerState.SlideBlendQuantized,
                     IsGrounded = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Grounded),
                     IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
                     IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
