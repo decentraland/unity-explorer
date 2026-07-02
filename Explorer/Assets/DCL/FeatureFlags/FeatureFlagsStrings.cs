@@ -81,6 +81,7 @@ namespace DCL.FeatureFlags
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "alfa-byte-weighted-loading-progress";
         public const string NEW_LODS = "new-lods";
         public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
+        public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
 
         public static class Endpoints
         {

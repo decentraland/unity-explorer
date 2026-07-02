@@ -108,6 +108,8 @@ namespace Global.AppArgs
 
         public const string BYTE_WEIGHTED_LOADING_PROGRESS = "byte-weighted-loading-progress";
 
+        public const string HARDWARE_FINGERPRINT = "hardware-fingerprint";
+
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
