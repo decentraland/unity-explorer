@@ -1,6 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
+using CrdtEcsBridge.Components;
 using DCL.Billboard.Extensions;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
@@ -8,6 +10,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Billboard.System
@@ -18,10 +21,12 @@ namespace DCL.Billboard.System
     {
         private const float MINIMUM_DISTANCE_TO_ROTATE_SQR = 0.25f * 0.25f;
         private readonly IExposedCameraData exposedCameraData;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
+        public BillboardSystem(World world, IExposedCameraData exposedCameraData, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap) : base(world)
         {
             this.exposedCameraData = exposedCameraData;
+            this.entitiesMap = entitiesMap;
         }
 
         protected override void Update(float t)
@@ -52,6 +57,7 @@ namespace DCL.Billboard.System
         private void UpdateRotation(
             [Data] in Vector3 cameraPosition,
             [Data] in Quaternion cameraRotationAxisZ,
+            Entity entity,
             ref TransformComponent transform,
             in PBBillboard billboard
         )
@@ -67,17 +73,26 @@ namespace DCL.Billboard.System
             if (billboardMode == BILLBOARD_NONE)
                 return;
 
+            Vector3 sourcePosition = cameraPosition;
+            Quaternion sourceRotationAxisZ = cameraRotationAxisZ;
+
+            if (billboard.HasTargetEntity && billboard.TargetEntity != SpecialEntitiesID.CAMERA_ENTITY)
+            {
+                if (!TryResolveTargetSource(entity, billboard.TargetEntity, ref sourcePosition, ref sourceRotationAxisZ))
+                    return; // target set but unresolved or self → billboard disabled this frame
+            }
+
             Transform billboardT = transform.Transform;
             Vector3 billboardForward = billboardT.forward;
             Vector3 billboardPos = billboardT.position;
 
-            if ((cameraPosition - billboardPos).sqrMagnitude < MINIMUM_DISTANCE_TO_ROTATE_SQR)
+            if ((sourcePosition - billboardPos).sqrMagnitude < MINIMUM_DISTANCE_TO_ROTATE_SQR)
                 return;
 
             // either or both X and Y are set
             if ((billboardMode & BILLBOARD_XY) != 0)
             {
-                billboardForward = billboardPos - cameraPosition;
+                billboardForward = billboardPos - sourcePosition;
 
                 if ((billboardMode & BILLBOARD_Y) == 0) billboardForward.x = 0;
                 if ((billboardMode & BILLBOARD_X) == 0) billboardForward.y = 0;
@@ -89,9 +104,23 @@ namespace DCL.Billboard.System
 
             // apply Z axis rotation
             if ((billboardMode & BILLBOARD_Z) != 0)
-                rotation *= cameraRotationAxisZ;
+                rotation *= sourceRotationAxisZ;
 
             billboardT.rotation = rotation;
+        }
+
+        private bool TryResolveTargetSource(Entity selfEntity, uint targetCrdtId,
+            ref Vector3 sourcePosition, ref Quaternion sourceRotationAxisZ)
+        {
+            if (!entitiesMap.TryGetValue(new CRDTEntity((int)targetCrdtId), out Entity targetEntity)
+                || targetEntity == selfEntity
+                || !World.TryGet(targetEntity, out TransformComponent targetTransform))
+                return false;
+
+            Transform t = targetTransform.Transform;
+            sourcePosition = t.position;
+            sourceRotationAxisZ = Quaternion.Euler(0f, 0f, t.rotation.eulerAngles.z);
+            return true;
         }
     }
 }
