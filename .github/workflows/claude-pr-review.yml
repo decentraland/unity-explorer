@@ -367,6 +367,7 @@ jobs:
       github.event.label.name == 'ext-contribution'
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       issues: write
     steps:
       - name: Check for existing Slack notification marker
