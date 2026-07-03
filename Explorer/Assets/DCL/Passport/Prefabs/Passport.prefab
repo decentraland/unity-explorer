@@ -4176,7 +4176,7 @@ MonoBehaviour:
   - PassportSection: 4
     ButtonWithState: {fileID: 5178114501700794038}
     Panel: {fileID: 3391748916552129337}
-  - PassportSection: 6
+  - PassportSection: 8
     ButtonWithState: {fileID: 8488307998886818123}
     Panel: {fileID: 4856054538642605833}
   <ViewportSoftMask>k__BackingField: {fileID: 8361280252339374889}
