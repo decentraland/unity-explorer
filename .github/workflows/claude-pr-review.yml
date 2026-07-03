@@ -64,12 +64,12 @@ jobs:
       - name: Add ext-contribution label for non-team PRs
         if: |
           steps.check.outputs.is-team-dev == 'false' &&
-          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          steps.label-check.outputs.has-label != 'true' &&
           (github.event.action == 'opened' || github.event.action == 'ready_for_review')
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label ext-contribution --repo ${{ github.repository }}
+          gh pr edit ${{ github.event.pull_request.number }} --add-label ext-contribution --repo ${{ github.repository }} || echo "::warning::Could not add label (expected for fork PRs)"
           echo "Added ext-contribution label to PR #${{ github.event.pull_request.number }}"
 
   auto-review:
