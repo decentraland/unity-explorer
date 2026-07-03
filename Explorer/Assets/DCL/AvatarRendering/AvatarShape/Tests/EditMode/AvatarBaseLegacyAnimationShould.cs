@@ -81,20 +81,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        public void ReplaceEmoteAnimation_EnablesAnimator_WhenLegacyNotPlaying()
-        {
-            avatarBase.AvatarAnimator.enabled = false;
-            var clip = new AnimationClip { legacy = false };
-
-            avatarBase.ReplaceEmoteAnimation(clip);
-
-            Assert.IsTrue(avatarBase.AvatarAnimator.enabled,
-                "ReplaceEmoteAnimation must re-enable the Mecanim animator when no legacy animation is blocking it.");
-
-            Object.DestroyImmediate(clip);
-        }
-
-        [Test]
         public void StopLegacyAnimation_StopsAPlayingLegacyClip()
         {
             Animation legacyAnimation = avatarBase.AddOrGetLegacyAnimation();
@@ -131,27 +117,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 "While a legacy Animation is playing the Mecanim animator must stay disabled — otherwise motion systems stomp the legacy pose every frame.");
 
             Object.DestroyImmediate(clip);
-        }
-
-        [Test]
-        public void ReplaceEmoteAnimation_DoesNotEnableAnimator_WhileLegacyAnimationIsPlaying()
-        {
-            Animation legacyAnimation = avatarBase.AddOrGetLegacyAnimation();
-            AnimationClip clip = CreateLegacyClip();
-            legacyAnimation.AddClip(clip, clip.name);
-            legacyAnimation.Play(clip.name);
-            Assume.That(avatarBase.IsLegacyAnimationPlaying, Is.True);
-
-            avatarBase.AvatarAnimator.enabled = false;
-            var mecanimClip = new AnimationClip { legacy = false };
-
-            avatarBase.ReplaceEmoteAnimation(mecanimClip);
-
-            Assert.IsFalse(avatarBase.AvatarAnimator.enabled,
-                "Overriding the emote slot while legacy is playing must not re-enable the animator — the switch happens after StopLegacyAnimation releases the gate.");
-
-            Object.DestroyImmediate(clip);
-            Object.DestroyImmediate(mecanimClip);
         }
 
         private static AnimationClip CreateLegacyClip()

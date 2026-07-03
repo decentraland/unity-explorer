@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.MediaStream
         private readonly IYouTubeUrlResolver youTubeResolver;
 
         public UrlResolverService(IWebRequestController webRequestController)
-            : this(webRequestController, new YouTubeUrlResolver()) { }
+            : this(webRequestController, new YouTubeUrlResolver(webRequestController)) { }
 
         internal UrlResolverService(IWebRequestController webRequestController, IYouTubeUrlResolver youTubeResolver)
         {

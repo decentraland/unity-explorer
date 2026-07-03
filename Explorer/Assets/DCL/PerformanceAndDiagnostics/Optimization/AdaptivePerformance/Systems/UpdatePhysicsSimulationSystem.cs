@@ -40,7 +40,7 @@ namespace DCL.Optimization.AdaptivePerformance.Systems
                 case PhysSimulationMode.ADAPTIVE:
                 default:
                 {
-                    if (loadingStatus.CurrentStage == LoadingStatus.LoadingStage.Completed)
+                    if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed)
                         profiler.PhysicsSimulationInFrame++;
 
                     break;

@@ -147,8 +147,11 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     if (sdkComponent is {HasPlaying: true, Playing: true })
                     {
-                        if (!audioSource.isPlaying)
-                            audioSource.Play();
+                        // LWW PUT with playing:true is an explicit retrigger — seek first so the cursor is correct.
+                        if (sdkComponent.HasCurrentTime)
+                            audioSource.time = sdkComponent.CurrentTime;
+
+                        audioSource.Play();
                     }
                     else
                         audioSource.Stop();

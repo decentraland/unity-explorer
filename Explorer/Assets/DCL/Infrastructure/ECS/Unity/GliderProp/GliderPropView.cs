@@ -19,6 +19,9 @@ namespace ECS.Unity.GliderProp
 
         private float smoothedEngineLevel;
 
+        private Renderer[] cachedRenderers = Array.Empty<Renderer>();
+        private bool hidden;
+
         // How smoothly the 'engine level' is interpolated between idle and full speed
         // (see UpdateEngineState)
         [field: Header("General Settings")] [field: SerializeField] public float EngineLevelSmoothness { get; private set; } = 1;
@@ -69,6 +72,26 @@ namespace ECS.Unity.GliderProp
 
             IdleAudioSource.volume = 0;
             MovingAudioSource.volume = 0;
+
+            cachedRenderers = GetComponentsInChildren<Renderer>(true);
+        }
+
+        public void SetHidden(bool isHidden)
+        {
+            if (hidden == isHidden) return;
+
+            hidden = isHidden;
+
+            foreach (Renderer propRenderer in cachedRenderers)
+                propRenderer.enabled = !isHidden;
+
+            if (isHidden)
+            {
+                IdleAudioSource.volume = 0;
+                MovingAudioSource.volume = 0;
+                smoothedEngineLevel = 0;
+                overallEngineVolume = 0;
+            }
         }
 
         private void SetTrailRenderingEnabled(bool value)
@@ -99,9 +122,9 @@ namespace ECS.Unity.GliderProp
 
         private void UpdateEngineVolume(bool engineEnabled, float dt)
         {
-            if (!Settings.AudioEnabled)
+            if (hidden || !Settings.AudioEnabled)
             {
-                // Intended immediate cutoff if audio is disabled by the settings, no interpolation
+                // Intended immediate cutoff if audio is disabled by the settings or the prop is hidden by an avatar modifier area / block / ban
                 IdleAudioSource.volume = 0;
                 MovingAudioSource.volume = 0;
                 return;
@@ -120,13 +143,14 @@ namespace ECS.Unity.GliderProp
         {
             OpenAnimationCompleted = false;
             CloseAnimationCompleted = false;
+            SetHidden(false);
         }
 
         #region Animation Events
 
         private void OnOpenAnimationStarted()
         {
-            if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
+            if (hidden || !PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
             PlayOneShotDetached(OpenGliderAudioSource);
         }
@@ -136,7 +160,7 @@ namespace ECS.Unity.GliderProp
 
         private void OnCloseAnimationStarted()
         {
-            if (!PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
+            if (hidden || !PlayOpenAndCloseSounds || !Settings.AudioEnabled) return;
 
             PlayOneShotDetached(CloseGliderAudioSource);
         }

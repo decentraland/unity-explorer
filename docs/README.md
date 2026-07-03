@@ -33,10 +33,13 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 
 ## Core Systems
 - **[Asset Promises](asset-promises.md)** — Asynchronous asset loading with ECS promises
+- **[Disk Cache](disk-cache.md)** — Persistent asset cache: architecture, atomic writes, corruption self-healing, and eviction
 - **[Asset Bundles Conversion](asset-bundles-conversion.md)** — GLTF to Asset Bundle conversion pipeline
 - **[Web Requests Framework](web-requests-framework.md)** — Allocation-free web requests with retry policies
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
-- **[Network Synchronization](network-synchronization.md)** — LiveKit dual-room architecture, movement encoding/interpolation, profile sync, entity availability
+- **[Multiplayer](multiplayer.md)** — Transport-agnostic multiplayer hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation, dual-transport wiring
+- **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
+- **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 
 ## Avatar System
@@ -68,7 +71,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 ## Testing & Debugging
 - **[Debug Container & Widgets](debug-container-and-widgets.md)** — Runtime debug panel architecture, widget builder API, bindings, and integration patterns
 - **[Testing Guide](testing-guide.md)** — UnitySystemTestBase, ECS test utilities, mocking, EditMode/PlayMode, async test patterns
-- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor
+- **[Automation Testing](automation-testing.md)** — AltTester SDK setup, writing UI automation tests, running against instrumented builds and in-Editor, triggering visual regression on PRs via `/visual-tests`
 - **[Connect to Local Scene](how-to-connect-to-a-local-scene.md)** — Running and connecting to local SDK7 scenes
 - **[Master of Bots](master-of-bots.md)** — Simulating multiple bot users for load testing
 - **[Override Debug Log Matrix](override-debug-log-matrix.md)** — Runtime log severity overrides

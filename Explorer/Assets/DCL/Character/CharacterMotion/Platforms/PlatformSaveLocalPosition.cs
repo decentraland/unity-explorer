@@ -20,9 +20,8 @@ namespace DCL.CharacterMotion.Platforms
 
             platformComponent.LastAvatarRelativePosition = platform.InverseTransformPoint(characterPosition);
 
-            // We only update the changed flag if a scene tick happened since last update
             // We are assuming that to hit something, that game object must be part of the current scene
-            // if (currentScene != null && currentScene.SceneStateProvider.TickNumber > platformComponent.LastUpdateTick)
+            if (currentScene != null && currentScene.SceneStateProvider.State == SceneState.Running)
             {
                 Vector3 updatedPosition = platform.position;
 

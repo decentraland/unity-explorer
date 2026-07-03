@@ -407,3 +407,145 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     border-left-width: 4px;
     border-left-style: solid;
 }
+
+.line-chart {
+    flex-direction: column;
+    width: 100%;
+    padding: 4px 6px;
+    background-color: rgba(20, 20, 20, 0.7);
+    border-radius: 4px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.line-chart__header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.line-chart__title {
+    color: rgb(220, 220, 220);
+    font-size: 11px;
+    -unity-text-align: middle-left;
+}
+
+.line-chart__value {
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-right;
+}
+
+.line-chart__plot {
+    height: 48px;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* ---- Maximize toggle ---- */
+
+.debug-panel-header-button {
+    width: 18px;
+    height: 18px;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    align-self: center;
+    -unity-background-image-tint-color: rgb(220, 220, 220);
+}
+
+.debug-panel-header-button--square {
+    background-image: url("project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/min-max.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+#Panel.debug-panel--maximized {
+    width: 450px;
+    max-height: 90%;
+    /* Clears the connection (wi-fi) button: top:10 + pad:6 + 30 + pad:6 = 52, plus an 8px buffer. */
+    margin-top: 60px;
+}
+
+.debug-panel--maximized .line-chart__plot {
+    height: 72px;
+}
+
+/* Scale non-header text by ~30% in the maximized panel. */
+.debug-panel--maximized .unity-text-element {
+    font-size: 16px;
+}
+
+/* Re-pin headers (panel title + widget category foldouts + inner foldouts) to their original size. */
+.debug-panel--maximized .debug-text--header,
+.debug-panel--maximized .unity-foldout__text {
+    font-size: 12px;
+}
+
+/* Give labels more room when maximized (values are mostly short numbers); allow long labels to wrap rather than clip. */
+.debug-panel--maximized DebugControl > #Left {
+    flex-basis: 65%;
+}
+
+.debug-panel--maximized DebugControl > #Right {
+    flex-basis: 35%;
+}
+
+.debug-panel--maximized DebugControl > #Left .unity-text-element {
+    white-space: normal;
+}
+
+/* Resize handle: hidden by default, shown only when maximized.
+   Centered vertically on the left edge, 100px tall, outstanding 3px to the left. */
+.debug-panel-resize-handle {
+    display: none;
+    position: absolute;
+    left: -3px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 6px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    cursor: url("project://database/Assets/DCL/Input/Assets/CursorResize.png?fileID=2800000&guid=0f32fb9eae40ca7468cfe79a566e9f92&type=3#CursorResize") 16 16;
+}
+
+#Panel.debug-panel--maximized > .debug-panel-resize-handle {
+    display: flex;
+}
+
+.debug-panel-resize-handle:hover {
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+/* 2-column widget layout — driven by the C# threshold (1.5× baselineMaximizedWidth). */
+.debug-panel--wide #Parent {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+/* Use flex-basis instead of width so the wrap calculator treats each widget as a fixed 50% slot.
+   Vertical separator: every widget gets a right border + paired padding. Right-column widgets'
+   border sits flush against the panel inner edge as a subtle outline; left-column widgets'
+   border is the visible column divider down the middle. */
+.debug-panel--wide #Parent > DebugWidget {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 50%;
+    min-width: 0;
+    border-right-width: 1px;
+    border-right-color: rgba(255, 255, 255, 0.18);
+    padding-left: 6px;
+    padding-right: 6px;
+}

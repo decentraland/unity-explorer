@@ -39,7 +39,7 @@ namespace DCL.SceneLoadingScreens.SplashScreen
         {
             const float FPS = 30f;
 
-            timer += Time.deltaTime;
+            timer += UnityEngine.Time.deltaTime;
 
             if (timer >= 1f / FPS)
             {

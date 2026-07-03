@@ -38,7 +38,7 @@ namespace DCL.Chat.ChatReactions.Simulation.UI
 
         private Rect GetLaneScreenRect()
         {
-            int frame = Time.frameCount;
+            int frame = UnityEngine.Time.frameCount;
             if (frame == cachedFrame)
                 return cachedLaneRect;
 

@@ -17,7 +17,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
-using SceneRunner.Admins;
+using RichTypes;
+using DCL.SceneBannedUsers;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Tests
 {
@@ -53,11 +54,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             jsOperations.GetTempUint8Array().Returns(_ => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
 
             api = new CommunicationsControllerAPIImplementation(
-                    sceneData, 
+                    sceneData,
                     sceneCommunicationPipe,
-                    jsOperations, 
-                    InstancePoolsProvider.Create(),
-                    SceneAdmins.NewTestInstance()
+                    jsOperations,
+                    InstancePoolsProvider.Create()
                     );
         }
 
@@ -95,9 +95,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
         {
             const string WALLET_ID = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
 
+            RoomMetadataCurrentScene.InitializeTest();
+
             byte[] data = GetRandomBytes(50).Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray();
 
-            sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID));
+            sceneCommunicationPipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(data.AsSpan()[1..], WALLET_ID, isTrustedSource: true));
 
             byte[] walletBytes = Encoding.UTF8.GetBytes(WALLET_ID);
 

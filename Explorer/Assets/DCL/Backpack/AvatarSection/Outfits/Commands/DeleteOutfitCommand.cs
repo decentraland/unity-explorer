@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.AvatarSection.Outfits.Services;
 using DCL.Diagnostics;
-using DCL.Profiles.Self;
 using DCL.UI.ConfirmationDialog.Opener;
 using MVC;
 using UnityEngine;
@@ -31,26 +27,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
         private const string OUTFIT_POPUP_DELETE_CANCEL_TEXT = "CANCEL";
         private const string OUTFIT_POPUP_DELETE_CONFIRM_TEXT = "YES";
 
-        private readonly ISelfProfile selfProfile;
         private readonly OutfitsRepository outfitsRepository;
         private readonly IAvatarScreenshotService screenshotService;
         private readonly Sprite deleteIcon;
 
-        public DeleteOutfitCommand(ISelfProfile selfProfile,
-            OutfitsRepository outfitsRepository,
+        public DeleteOutfitCommand(OutfitsRepository outfitsRepository,
             IAvatarScreenshotService screenshotService,
             Sprite deleteIcon)
         {
-            this.selfProfile = selfProfile;
             this.outfitsRepository = outfitsRepository;
             this.screenshotService = screenshotService;
             this.deleteIcon = deleteIcon;
         }
 
-        public async UniTask<DeleteOutfitOutcome> ExecuteAsync(
-            int slotIndex,
-            IReadOnlyCollection<OutfitItem> currentOutfits,
-            CancellationToken ct)
+        public async UniTask<DeleteOutfitOutcome> ExecuteAsync(int slotIndex, CancellationToken ct)
         {
             ConfirmationResult decision;
             try
@@ -75,26 +65,20 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
 
             try
             {
-                var profile = await selfProfile.ProfileAsync(ct);
-                if (profile == null)
-                {
-                    ReportHub.LogError(ReportCategory.OUTFITS, "Delete failed: user profile not found.");
-                    return DeleteOutfitOutcome.Failed;
-                }
+                await outfitsRepository.DeleteSlotAsync(slotIndex, ct);
 
-                // Create the new state without the deleted outfit
-                List<OutfitItem> updatedOutfits = currentOutfits.Where(o => o.slot != slotIndex).ToList();
-
-                // First, deploy the metadata change. This is the most likely to fail.
-                await outfitsRepository.SetAsync(profile, updatedOutfits, ct);
-
-                // If server update succeeds, delete the local screenshot.
-                await screenshotService.DeleteScreenshotAsync(slotIndex, ct);
+                // Once DeleteSlotAsync returns we know the publish completed (it's
+                // intentionally non-cancellable inside PublishAsync). Use None for the file
+                // delete so a panel-close mid-deploy still cleans up the local thumbnail.
+                await screenshotService.DeleteScreenshotAsync(slotIndex, CancellationToken.None);
 
                 return DeleteOutfitOutcome.Success;
             }
             catch (OperationCanceledException)
             {
+                // Cancellation here means the deploy-window wait was aborted before any
+                // network call — the server still has the slot, so the slot is correctly
+                // reported as Canceled and the presenter restores the prior UI.
                 return DeleteOutfitOutcome.Cancelled;
             }
             catch (Exception e)
@@ -104,13 +88,11 @@ namespace DCL.Backpack.AvatarSection.Outfits.Commands
             }
         }
 
-        private ConfirmationDialogParameter BuildDialogParams()
-        {
-            return new ConfirmationDialogParameter(OUTFIT_POPUP_DELETE_TEXT,
+        private ConfirmationDialogParameter BuildDialogParams() =>
+            new (OUTFIT_POPUP_DELETE_TEXT,
                 OUTFIT_POPUP_DELETE_CANCEL_TEXT,
                 OUTFIT_POPUP_DELETE_CONFIRM_TEXT, deleteIcon,
                 false,
                 false);
-        }
     }
 }

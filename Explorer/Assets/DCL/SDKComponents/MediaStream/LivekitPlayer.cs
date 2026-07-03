@@ -1,11 +1,14 @@
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Optimization.ThreadSafePool;
 using DCL.SDKComponents.MediaStream;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.VideoStreaming;
 using RichTypes;
 using System;
@@ -47,6 +50,13 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool disposed;
 
+        // Set from LiveKit FFI callbacks (off main thread); consumed by EnsureVideoIsPlaying / EnsureAudioIsPlaying
+        // on the main thread. Forces immediate re-discovery so we don't wait for the polling cycle in cases
+        // where the streamer was already publishing before we joined (TrackPublication visible, but
+        // trackPublication.Track stays null until subscription completes — see LiveKit Streams.ActiveStream).
+        private volatile bool pendingVideoRediscovery;
+        private volatile bool pendingAudioRediscovery;
+
         public bool MediaOpened =>
             // TODO: this is not precise and might introduce inconsistencies depending on the kind of stream needed
             IsVideoOpened || isAudioOpened;
@@ -62,12 +72,23 @@ namespace DCL.SDKComponents.MediaStream
         public LivekitPlayer(IRoom streamingRoom)
         {
             room = streamingRoom;
+
+            room.ConnectionUpdated += OnRoomConnectionUpdated;
+            room.TrackSubscribed += OnRoomTrackSubscribed;
+            room.TrackUnsubscribed += OnRoomTrackUnsubscribed;
+            room.Participants.UpdatesFromParticipant += OnRoomParticipantUpdate;
         }
 
         public void EnsureVideoIsPlaying()
         {
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
+
+            // Consume the flag even when IsVideoOpened: prevents stale-flag pile-up while the stream is healthy.
+            // We deliberately do NOT re-open an established stream here — TryFollowVideoStreamToActiveSpeaker
+            // already handles "look for a better source" safely, and re-allocating cvs while a subscription
+            // is mid-flight can stomp the in-flight Weak<IVideoStream> and stall playback (observed on Windows).
+            pendingVideoRediscovery = false;
 
             if (IsVideoOpened)
             {
@@ -91,6 +112,9 @@ namespace DCL.SDKComponents.MediaStream
             if (State != PlayerState.PLAYING) return;
             if (playingAddress == null) return;
 
+            bool forceRediscover = pendingAudioRediscovery;
+            if (forceRediscover) pendingAudioRediscovery = false;
+
             using var _ = ListPool<StreamKey>.Get(out List<StreamKey> deadKeys);
 
             foreach (var kvp in audioSources)
@@ -102,9 +126,9 @@ namespace DCL.SDKComponents.MediaStream
 
             foreach (StreamKey k in deadKeys) audioSources.Remove(k);
 
-            // When a stream died, rescan immediately to replace it.
+            // When a stream died OR a room event signaled a change, rescan immediately.
             // Otherwise, throttle rescans to discover new participants without per-frame lock acquisition.
-            if (deadKeys.Count == 0 && UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
+            if (!forceRediscover && deadKeys.Count == 0 && UnityEngine.Time.realtimeSinceStartup - lastAudioScanTime < AUDIO_RESCAN_INTERVAL_SECONDS)
                 return;
 
             lastAudioScanTime = UnityEngine.Time.realtimeSinceStartup;
@@ -323,7 +347,64 @@ namespace DCL.SDKComponents.MediaStream
             }
 
             disposed = true;
+
+            room.ConnectionUpdated -= OnRoomConnectionUpdated;
+            room.TrackSubscribed -= OnRoomTrackSubscribed;
+            room.TrackUnsubscribed -= OnRoomTrackUnsubscribed;
+            room.Participants.UpdatesFromParticipant -= OnRoomParticipantUpdate;
+
             CloseCurrentStream();
+        }
+
+        // The four handlers below are invoked from LiveKit's FFI thread. The class is otherwise
+        // main-thread only, so the handlers MUST NOT touch any field other than the volatile rediscovery
+        // flags. Consumption happens on the main thread inside EnsureVideoIsPlaying / EnsureAudioIsPlaying.
+        private void OnRoomConnectionUpdated(IRoom _, ConnectionUpdate update, LKDisconnectReason? __)
+        {
+            if (update is ConnectionUpdate.Connected or ConnectionUpdate.Reconnected)
+            {
+                pendingVideoRediscovery = true;
+                pendingAudioRediscovery = true;
+            }
+        }
+
+        private void OnRoomTrackSubscribed(ITrack _, TrackPublication publication, LKParticipant __)
+        {
+            // Fixes the deep-link case: streamer published before we joined, so participant.Tracks held
+            // the publication but trackPublication.Track was null until subscription completed. The
+            // poll-based retry kept getting Weak.Null from VideoStreams.ActiveStream — this event fires
+            // precisely when ActiveStream becomes resolvable.
+            switch (publication.Kind)
+            {
+                case TrackKind.KindVideo:
+                    pendingVideoRediscovery = true;
+                    break;
+                case TrackKind.KindAudio:
+                    pendingAudioRediscovery = true;
+                    break;
+            }
+        }
+
+        private void OnRoomTrackUnsubscribed(ITrack _, TrackPublication publication, LKParticipant __)
+        {
+            switch (publication.Kind)
+            {
+                case TrackKind.KindVideo:
+                    pendingVideoRediscovery = true;
+                    break;
+                case TrackKind.KindAudio:
+                    pendingAudioRediscovery = true;
+                    break;
+            }
+        }
+
+        private void OnRoomParticipantUpdate(LKParticipant _, UpdateFromParticipant update)
+        {
+            if (update == UpdateFromParticipant.Disconnected)
+            {
+                pendingVideoRediscovery = true;
+                pendingAudioRediscovery = true;
+            }
         }
 
         public void Play()

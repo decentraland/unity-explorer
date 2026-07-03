@@ -42,7 +42,7 @@ namespace DCL.Events
         private readonly ICursor cursor;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider communitiesDataProvider;
 
         private bool isSectionActivated;
@@ -62,7 +62,7 @@ namespace DCL.Events
             ThumbnailLoader thumbnailLoader,
             EventCardActionsController eventCardActionsController,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider communitiesDataProvider)
         {
             this.view = view;
@@ -70,7 +70,7 @@ namespace DCL.Events
             this.cursor = cursor;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             EventCardActionsController = eventCardActionsController;
 
@@ -148,10 +148,10 @@ namespace DCL.Events
 
         private async UniTask GetAllFriendsAsync(CancellationToken ct)
         {
-            if (!friendServiceProxy.Configured)
+            if (friendsService == null)
                 return;
 
-            var result = await friendServiceProxy.StrictObject
+            var result = await friendsService
                                                  .GetFriendsAsync(0, 1000, ct)
                                                  .SuppressToResultAsync(ReportCategory.EVENTS);
 

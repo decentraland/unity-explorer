@@ -16,7 +16,7 @@ using ECS.Abstract;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     internal class NetworkMessageBindings
     {

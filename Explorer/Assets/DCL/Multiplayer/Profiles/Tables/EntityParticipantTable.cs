@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace DCL.Multiplayer.Profiles.Tables
 {
     /// <summary>
-    ///     NOT Thread-safe
+    ///     NOT Threadsafe
     /// </summary>
     public class EntityParticipantTable : IEntityParticipantTable
     {
@@ -61,6 +61,14 @@ namespace DCL.Multiplayer.Profiles.Tables
 
             walletIdToEntity[walletId] = entry;
             return false;
+        }
+
+        public void ForceRelease(string walletId)
+        {
+            if (!walletIdToEntity.Remove(walletId, out IReadOnlyEntityParticipantTable.Entry entry))
+                return;
+
+            entityToWalletId.Remove(entry.Entity);
         }
     }
 }

@@ -111,7 +111,7 @@ namespace SceneRuntime.Tests
 
             // Simulate receive: SceneCommunicationPipe.DecodeMessage strips byte[0] (MsgType).
             ReadOnlySpan<byte> afterMsgType = wireBytes.AsSpan(1);
-            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(afterMsgType, senderIdentity));
+            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(afterMsgType, senderIdentity, isTrustedSource: true));
 
             //Assert — ConsumeMessages returns JSON; inner data string is JSON-escaped by JsonTextWriter.
             string json = commsApi.ConsumeMessages(topic);
@@ -248,7 +248,7 @@ namespace SceneRuntime.Tests
             System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(encoded, (ushort)topicBytes.Length);
             topicBytes.CopyTo(encoded, 2);
             dataBytes.CopyTo(encoded, 2 + topicBytes.Length);
-            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(encoded, senderIdentity));
+            pipe.onSceneMessage.Invoke(new ISceneCommunicationPipe.DecodedMessage(encoded, senderIdentity, isTrustedSource: true));
         }
 
         /// <summary>

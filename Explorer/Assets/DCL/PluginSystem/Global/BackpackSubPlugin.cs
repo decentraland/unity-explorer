@@ -1,14 +1,16 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Loading;
+using DCL.Backpack.Gifting.Services.PendingTransfers;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Repository;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
@@ -28,7 +30,6 @@ using Global.AppArgs;
 using MVC;
 using Runtime.Wearables;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly SmartWearableCache smartWearableCache;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IPendingTransferService ownedNftFilter;
 
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
@@ -106,7 +108,8 @@ namespace DCL.PluginSystem.Global
             IEventBus eventBus,
             SmartWearableCache smartWearableCache,
             IMVCManager mvcManager,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPendingTransferService ownedNftFilter)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -139,6 +142,7 @@ namespace DCL.PluginSystem.Global
             this.smartWearableCache = smartWearableCache;
             this.mvcManager = mvcManager;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.ownedNftFilter = ownedNftFilter;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -158,7 +162,8 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteStorage,
                 wearablesProvider,
-                emoteProvider);
+                emoteProvider,
+                new CacheOutfitWearablesCommand(wearablesProvider, wearableStorage));
 
             var deleteIcon = await assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.DeleteOutfitIcon, ct);
 
@@ -233,11 +238,12 @@ namespace DCL.PluginSystem.Global
                 bodyshapeColors,
                 wearableStorage,
                 smartWearableCache,
-                mvcManager
+                mvcManager,
+                ownedNftFilter
             );
 
             var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping, equippedEmotes,
-                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage);
+                sortController, pageButtonView, emoteGridPool, emoteProvider, this.thumbnailProvider, webBrowser, emoteStorage, ownedNftFilter);
 
             var emotesController = new EmotesController(emoteView,
                 new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping, thumbnailProvider), emoteGridController);
@@ -258,7 +264,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 appArgs,
                 inWorldWarningNotificationView,
-                profileChangesBus
+                profileChangesBus,
+                ownedNftFilter
             );
 
             backpackController = new BackpackController(
@@ -286,11 +293,11 @@ namespace DCL.PluginSystem.Global
                 webController,
                 equippedWearables,
                 wearableStorage,
-                wearablesProvider,
                 nftNamesProvider,
                 eventBus,
                 deleteIcon,
-                decentralandUrlsSource
+                decentralandUrlsSource,
+                ownedNftFilter
             );
         }
 

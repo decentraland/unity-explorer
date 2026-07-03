@@ -1,18 +1,28 @@
-﻿using System.Collections.Generic;
-using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables.Components;
+using System;
+using DCL.AvatarRendering.Loading;
+using DCL.Backpack.Gifting.Models;
 
 namespace DCL.Backpack.Gifting.Services.PendingTransfers
 {
-    public interface IPendingTransferService
+    public interface IPendingTransferService : IOwnedNftFilter
     {
-        void AddPending(string fullUrn);
+        /// <param name="fullUrn">Full URN (token instance) that has been gifted away.</param>
+        /// <param name="baselineTransferredAt">
+        ///     The gifted copy's transfer-in timestamp at gift time. Lets <see cref="Prune" /> tell an indexer
+        ///     that hasn't caught up from an item that left and was later transferred back.
+        /// </param>
+        /// <param name="kind">Whether the gifted item is a wearable or an emote.</param>
+        void AddPending(string fullUrn, DateTime baselineTransferredAt, GiftableType kind);
+
         bool IsPending(string fullUrn);
         int GetPendingCount(string baseUrn);
 
-        void Prune(
-            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> wearableRegistry,
-            IReadOnlyDictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> emoteRegistry);
+        /// <summary>
+        ///     Drops pending transfers of <paramref name="kind" /> that the matching owned-NFT registry confirms
+        ///     left the wallet or came back. Call right after that inventory was (re)fetched, so a missing entry
+        ///     reads as "left the wallet" rather than "not loaded yet".
+        /// </summary>
+        void Prune(GiftableType kind);
 
         void LogPendingTransfers();
     }

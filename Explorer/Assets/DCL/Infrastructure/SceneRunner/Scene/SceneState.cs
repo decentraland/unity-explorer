@@ -12,6 +12,8 @@
         /// </summary>
         Running,
 
+        Starting,
+
         /// <summary>
         ///     Scene communication has broken
         /// </summary>

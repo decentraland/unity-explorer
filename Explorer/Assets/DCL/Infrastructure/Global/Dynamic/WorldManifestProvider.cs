@@ -11,7 +11,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Scripting;
@@ -58,7 +57,7 @@ namespace Global.Dynamic
             }
         }
 
-        private async Task<WorldManifest> FetchNonGenesisManifestAsync(URLDomain assetBundleRegistry, string worldURL, CancellationToken ct)
+        private async UniTask<WorldManifest> FetchNonGenesisManifestAsync(URLDomain assetBundleRegistry, string worldURL, CancellationToken ct)
         {
             try
             {

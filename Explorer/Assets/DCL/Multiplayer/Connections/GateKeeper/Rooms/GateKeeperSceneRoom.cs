@@ -155,11 +155,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 }
                 else
                 {
-                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
+                    if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                     {
                         string connectionString = await ConnectionStringAsync(meta, token);
 
-                        if (Room().Info.ConnectionState == LKConnectionState.ConnDisconnected)
+                        if (Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                             currentMetaData = null;
 
                         // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
@@ -212,7 +212,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
 
             AdapterResponse response = await webRequests
-                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret), token)
+                                            .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.HardwareFingerprint), token)
                                             .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             
             string connectionString = string.IsNullOrEmpty(response.adapter) ? response.fixedAdapter : response.adapter;

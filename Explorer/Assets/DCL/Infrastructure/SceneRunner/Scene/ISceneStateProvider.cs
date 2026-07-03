@@ -15,7 +15,7 @@ namespace SceneRunner.Scene
 
         ref readonly SceneEngineStartInfo EngineStartInfo { get; }
 
-        void SetRunning(SceneEngineStartInfo startInfo);
+        void Start(SceneEngineStartInfo startInfo);
     }
 
     public static class SceneStateProviderExtensions

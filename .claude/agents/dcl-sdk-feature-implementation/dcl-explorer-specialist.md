@@ -46,6 +46,8 @@ After installing a new protocol package, always re-run `npm run build-protocol` 
 
 ## Protocol Generation
 
+> **Prerequisite:** Node toolchain only. `build-protocol` runs the `protoc-gen-bitwise` plugin (for the quantized/bit-packed Pulse network state), a dependency-free Node script bundled in `@dcl/protocol` — no Python or extra packages required.
+
 To generate C# code from protocol definitions:
 ```bash
 cd scripts

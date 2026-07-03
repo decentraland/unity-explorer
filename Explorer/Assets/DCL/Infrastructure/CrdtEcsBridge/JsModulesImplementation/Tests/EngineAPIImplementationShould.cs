@@ -8,6 +8,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
+using DCL.Profiling;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -78,7 +79,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
-                new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"));
+                new MultiThreadSync(new SceneShortInfo()), new MultiThreadSync.Owner("TEST"),
+                new SceneRuntimeMetrics());
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))
                             .Do(c =>

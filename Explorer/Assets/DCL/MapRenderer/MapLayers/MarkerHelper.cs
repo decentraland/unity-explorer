@@ -5,9 +5,8 @@ using DG.Tweening.Plugins.Options;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
+using System.Threading;
 
 namespace DCL.MapRenderer.MapLayers
 {
@@ -39,7 +38,10 @@ namespace DCL.MapRenderer.MapLayers
 
             TweenerCore<Vector3, Vector3, VectorOptions> tween = transform.DOScale(targetScale, duration).SetEase(ease);
 
-            try { await tween.AsyncWaitForCompletion().WithCancellation(cancellationToken); }
+            try
+            { 
+                await tween.AwaitForComplete(cancellationToken: cancellationToken);
+            }
             catch (OperationCanceledException)
             {
                 if (resetToScale != null)
@@ -110,18 +112,18 @@ namespace DCL.MapRenderer.MapLayers
 
             try
             {
-                var spriteTasks = new Task[spriteTweens.Count];
+                var spriteTasks = new UniTask[spriteTweens.Count];
 
                 for (var i = 0; i < spriteTweens.Count; i++)
-                    spriteTasks[i] = spriteTweens[i].AsyncWaitForCompletion().WithCancellation(cancellationToken);
+                    spriteTasks[i] = spriteTweens[i].AwaitForComplete(cancellationToken: cancellationToken);
 
-                var textTasks = new Task[textTweens.Count];
+                var textTasks = new UniTask[textTweens.Count];
 
                 for (var i = 0; i < textTweens.Count; i++)
-                    textTasks[i] = textTweens[i].AsyncWaitForCompletion().WithCancellation(cancellationToken);
+                    textTasks[i] = textTweens[i].AwaitForComplete(cancellationToken: cancellationToken);
 
-                await Task.WhenAll(spriteTasks);
-                await Task.WhenAll(textTasks);
+                await UniTask.WhenAll(spriteTasks);
+                await UniTask.WhenAll(textTasks);
             }
             catch (OperationCanceledException)
             {
@@ -150,6 +152,5 @@ namespace DCL.MapRenderer.MapLayers
                 throw;
             }
         }
-
     }
 }

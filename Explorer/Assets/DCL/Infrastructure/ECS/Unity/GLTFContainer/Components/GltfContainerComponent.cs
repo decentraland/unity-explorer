@@ -13,6 +13,7 @@ namespace ECS.Unity.GLTFContainer.Components
     {
         public string Hash => Promise.LoadingIntention.Hash;
         public string Name => Promise.LoadingIntention.Name;
+        public string CacheKey => Promise.LoadingIntention.CacheKey;
 
         public ColliderLayer VisibleMeshesCollisionMask;
         public ColliderLayer InvisibleMeshesCollisionMask;

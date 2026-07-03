@@ -4,9 +4,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterMotion.Components;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Utilities;
@@ -16,7 +16,6 @@ using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
 
@@ -69,10 +68,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void FinalizeComponents(ref CharacterMaskedEmoteComponent masked)
         {
             if (masked.CurrentEmoteReference != null)
-            {
                 TryStopMaskedEmote(ref masked);
-                messageBus.SendStop();
-            }
 
             masked.Reset();
         }
@@ -121,68 +117,74 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!emoteStorage.TryGetElement(emoteId.Shorten(), out IEmote emote)) return;
 
-                if (emote.IsLoading)
-                    return;
+            if (emote.IsLoading)
+                return;
 
-                if (emote.Model is { IsInitialized: true, Succeeded: false })
-                {
-                    World.Remove<CharacterEmoteIntent>(entity);
-                    return;
-                }
-
-                if (emoteIntent.UpdatePlayTimeout(dt))
-                {
-                    ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
-                    World.Remove<CharacterEmoteIntent>(entity);
-                    return;
-                }
-
-                if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShapeComponent))
-                {
-                    World.Remove<CharacterEmoteIntent>(entity);
-                    return;
-                }
-
-                BodyShape bodyShape = avatarShapeComponent.BodyShape;
-
-                if (emote.AssetResults[bodyShape] == null)
-                    return;
-
-                StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
-                GameObject? mainAsset;
-
-                if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
-                {
-                    World.Remove<CharacterEmoteIntent>(entity);
-                    return;
-                }
-
-                StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
-                AudioClip? audioClip = audioAssetResult?.Asset;
-
-                // Stop any full-body emote that's playing on the global player
-                if (globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.CurrentEmoteReference != null)
-                {
-                    emoteComponent.StopEmote = true;
-                    globalWorld.Set(globalPlayerEntity, emoteComponent);
-                }
-
-                // Stop previous masked emote if one exists
-                if (masked.CurrentEmoteReference != null)
-                    TryStopMaskedEmote(ref masked);
-
-                masked.EmoteUrn = emoteId;
-                masked.Mask = emoteIntent.Mask;
-
-                if (!mainPlayerAvatarBaseProxy.Configured) return;
-
-                IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
-
-                if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarBase, ref masked))
-                    ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
-
-                messageBus.Send(emoteId, emote.IsLooping(), emoteIntent.Mask);
+            if (emote.Model is { IsInitialized: true, Succeeded: false })
+            {
                 World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
+            if (emoteIntent.UpdatePlayTimeout(dt))
+            {
+                ReportHub.LogError(GetReportData(), $"Cant play masked emote {emoteId} timeout reached.");
+                World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
+            if (!globalWorld.TryGet(globalPlayerEntity, out AvatarShapeComponent avatarShapeComponent))
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
+            BodyShape bodyShape = avatarShapeComponent.BodyShape;
+
+            if (emote.AssetResults[bodyShape] == null)
+                return;
+
+            StreamableLoadingResult<AttachmentRegularAsset> streamableAssetValue = emote.AssetResults[bodyShape]!.Value;
+            GameObject? mainAsset;
+
+            if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
+            {
+                World.Remove<CharacterEmoteIntent>(entity);
+                return;
+            }
+
+            StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
+            AudioClip? audioClip = audioAssetResult?.Asset;
+
+            // Stop any full-body emote that's playing on the global player
+            if (globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.CurrentEmoteReference != null)
+            {
+                emoteComponent.StopEmote = true;
+                globalWorld.Set(globalPlayerEntity, emoteComponent);
+            }
+
+            // Stop previous masked emote if one exists
+            if (masked.CurrentEmoteReference != null)
+                TryStopMaskedEmote(ref masked);
+
+            masked.EmoteUrn = emoteId;
+            masked.Mask = emoteIntent.Mask;
+
+            if (!mainPlayerAvatarBaseProxy.Configured) return;
+
+            IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
+
+            bool isLooping = emote.IsLooping();
+
+            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, emoteIntent.Spatial, in avatarBase, ref masked))
+                ReportHub.LogError(ReportCategory.EMOTE, $"Emote name:{emoteId} cant be played.");
+            else
+            {
+                uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+                globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = emoteId, DurationMs = durationMs, Mask = emoteIntent.Mask });
+            }
+
+            World.Remove<CharacterEmoteIntent>(entity);
         }
 
         [Query]
@@ -191,24 +193,22 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (masked.EmoteUrn.IsNullOrEmpty()) return;
 
             bool isInScene = sceneStateProvider.IsCurrent;
+
             bool fullBodyIsPlaying = globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent ec)
-                && ec.CurrentEmoteReference != null;
+                                     && ec.CurrentEmoteReference != null;
 
             bool isGliding = globalWorld.TryGet(globalPlayerEntity, out GlideState glideState)
-                && glideState.Value is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
+                             && glideState.Value is GlideStateValue.OPENING_PROP or GlideStateValue.GLIDING;
 
             bool shouldPlay = isInScene && !fullBodyIsPlaying && !isGliding;
 
             if (shouldPlay && masked.CurrentEmoteReference == null)
-                ReplayMaskedEmote(ref masked);
+                ReplayMaskedEmote(ref masked, ec);
             else if (!shouldPlay && masked.CurrentEmoteReference != null)
-            {
                 TryStopMaskedEmote(ref masked);
-                messageBus.SendStop();
-            }
         }
 
-        private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked)
+        private void ReplayMaskedEmote(ref CharacterMaskedEmoteComponent masked, CharacterEmoteComponent emoteComponent)
         {
             if (!emoteStorage.TryGetElement(masked.EmoteUrn.Shorten(), out IEmote emote)) return;
             if (emote.IsLoading) return;
@@ -231,14 +231,17 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             IAvatarView avatarBase = mainPlayerAvatarBaseProxy.Object!;
 
-            if (!emotePlayer.PlayMasked(mainAsset, audioClip, emote.IsLooping(), true, in avatarBase, ref masked))
+            bool isLooping = emote.IsLooping();
+
+            if (!emotePlayer.PlayMasked(mainAsset, audioClip, isLooping, true, in avatarBase, ref masked))
                 return;
 
             // Reset stored tag so CancelMaskedEmotes doesn't fire on the next frame
             // before UpdateMaskedEmoteTags has a chance to set the real animator state.
             masked.SetAnimationTag(0);
 
-            messageBus.Send(masked.EmoteUrn, emote.IsLooping(), masked.Mask);
+            uint durationMs = !isLooping ? (uint)(emoteComponent.PlayingEmoteDuration * 1000) : 0;
+            globalWorld.Add(globalPlayerEntity, new EmotePendingToBroadcast { EmoteId = masked.EmoteUrn, DurationMs = durationMs, Mask = masked.Mask });
         }
 
         /// <summary>
@@ -247,6 +250,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// Mirrors ReplicateLoopingEmotes in CharacterEmoteSystem for full-body emotes.
         /// Must run before UpdateMaskedEmoteTags so it can detect the tag transition.
         /// </summary>
+        // TODO: we can safely remove this propagation for pulse multiplayer as it is no longer needed (based on emote start/emote stop events)
         [Query]
         [None(typeof(CharacterEmoteIntent))]
         private void ReplicateLoopingMaskedEmotes(ref CharacterMaskedEmoteComponent masked)
@@ -274,10 +278,20 @@ namespace DCL.AvatarRendering.Emotes.Play
         /// </summary>
         private void TryStopMaskedEmote(ref CharacterMaskedEmoteComponent masked, bool permanent = false)
         {
+            // If a full-body emote is already playing on the local player, its EmoteStart has
+            // already superseded this masked emote on the server (EmoteStop carries no emote id,
+            // so sending it now would clear that emote instead).
+            bool anotherEmoteIsBroadcast = globalWorld.TryGet(globalPlayerEntity, out CharacterEmoteComponent emoteComponent)
+                                           && emoteComponent.CurrentEmoteReference != null;
+
+            if (!anotherEmoteIsBroadcast)
+                messageBus.SendStop();
+
             if (masked.CurrentEmoteReference == null)
             {
                 if (permanent)
                     masked.Reset();
+
                 return;
             }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
@@ -33,10 +34,11 @@ namespace DCL.Backpack.Gifting.Services.GiftingInventory
             this.pendingTransferService = pendingTransferService;
         }
 
-        public bool TryGetBestTransferableToken(string itemUrn, string itemType, out string tokenId, out string instanceUrn)
+        public bool TryGetBestTransferableToken(string itemUrn, string itemType, out string tokenId, out string instanceUrn, out DateTime transferredAt)
         {
             tokenId = "0";
             instanceUrn = string.Empty;
+            transferredAt = default;
 
             URN baseUrnObj;
 
@@ -84,6 +86,7 @@ namespace DCL.Backpack.Gifting.Services.GiftingInventory
             {
                 tokenId = bestCandidate.Value.TokenId;
                 instanceUrn = bestCandidate.Value.Urn;
+                transferredAt = bestCandidate.Value.TransferredAt;
                 return true;
             }
 

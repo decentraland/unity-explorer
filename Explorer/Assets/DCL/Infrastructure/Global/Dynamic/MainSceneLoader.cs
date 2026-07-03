@@ -1,3 +1,4 @@
+using AltTester.AltTesterUnitySDK.Commands;
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using CRDT;
@@ -24,11 +25,12 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Prefs;
-using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Quality.Runtime;
-using DCL.Settings.Utils;
-using DCL.UI;
+using DCL.SceneLoadingScreens.SplashScreen;
+using DCL.Time;
+using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
@@ -36,30 +38,25 @@ using DCL.Utility.Types;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
-using DCL.WebRequests.ChromeDevtool;
+using DG.Tweening;
+using ECS;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
-using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Newtonsoft.Json.Linq;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
-using Global.Dynamic.RealmUrl;
-using Global.Dynamic.RealmUrl.Names;
 using Global.Versioning;
 using MVC;
+using Newtonsoft.Json.Linq;
+using Plugins.NativeWindowManager;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
-using DCL.UI.ErrorPopup;
-using DG.Tweening;
-using ECS;
-using System.IO;
-using Plugins.NativeWindowManager;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
@@ -80,8 +77,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugSettings.DebugSettings debugSettings = new ();
 
         [Header("REFERENCES")]
-        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
-        [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
+        [SerializeField] private PluginSettingsContainer pluginSettingsContainer = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private SplashScreenRef splashScreenRef = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
@@ -89,6 +85,7 @@ namespace Global.Dynamic
         [SerializeField] private WorldInfoTool worldInfoTool = null!;
         [SerializeField] private AssetReferenceGameObject untrustedRealmConfirmationPrefab = null!;
         [SerializeField] private AssetReferenceGameObject singleInstanceRunningPopupPrefab = null!;
+        [SerializeField] private ErrorPopupWithRetryRef clockDesyncPopupRef = null!;
         [SerializeField] private GameObject altTesterPrefab = null!;
 
         private BootstrapContainer? bootstrapContainer;
@@ -97,6 +94,9 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private ProvidedInstance<SplashScreen> splashScreen;
         private FileStream? singleInstanceLock;
+        private ErrorPopupWithRetryView? clockDesyncPopupPrefab;
+
+        private bool canShutdown;
 
         private void Awake()
         {
@@ -105,32 +105,68 @@ namespace Global.Dynamic
 
         private void OnDestroy()
         {
+            Shutdown();
+        }
+
+        private void Shutdown()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                return;
+
+            if (canShutdown == false)
+                return;
+
+            canShutdown = false;
+
+            var stopwatch = ShutdownStopwatch.StartNew(nameof(MainSceneLoader));
+
             DisableAllSelectableTransitions();
+            stopwatch.LogStep(nameof(DisableAllSelectableTransitions));
 
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
+                {
                     plugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"GlobalPlugin {plugin.GetType().Name}");
+                }
+
+                foreach (IDCLWorldPlugin worldPlugin in dynamicWorldContainer.WorldPlugins)
+                {
+                    worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"WorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 if (globalWorld != null)
+                {
                     dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    stopwatch.LogStep("DisposeGlobalWorld");
+                }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("dynamicWorldContainer.SafeDispose");
             }
 
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
                 foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                {
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
+                    stopwatch.LogStep($"ECSWorldPlugin {worldPlugin.GetType().Name}");
+                }
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
+                stopwatch.LogStep("staticContainer.SafeDispose");
             }
 
             bootstrapContainer?.Dispose();
-            splashScreen.Dispose();
+            stopwatch.LogStep("bootstrapContainer.Dispose");
 
-            ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
+            splashScreen.Dispose();
+            stopwatch.LogStep("splashScreen.Dispose");
+
+            ReportHub.LogProductionInfo($"[MainSceneLoader] OnDestroy successfully finished in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         private void OnApplicationQuit()
@@ -146,6 +182,11 @@ namespace Global.Dynamic
         {
             if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
+
+            ExitUtils.Configure(
+                    softShutdown: applicationParametersParser.HasFlag(AppArgsFlags.SOFT_SHUTDOWN),
+                    nativeShutdownStopwatch: applicationParametersParser.HasFlag(AppArgsFlags.NATIVE_SHUTDOWN_STOPWATCH)
+                    );
         }
 
         private void ParseEnvironment(string environment)
@@ -156,6 +197,9 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            canShutdown = true;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(MainSceneLoader), Shutdown));
+
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
                 debugSettings.AppParameters
@@ -183,14 +227,21 @@ namespace Global.Dynamic
             NativeWindowManager.Initialize(
                 applicationParametersParser.HasFlag(AppArgsFlags.DISABLE_WINDOW_RESTRICTIONS),
                 applicationParametersParser.HasFlag(AppArgsFlags.WINDOWED_MODE),
-                applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE));
+                GetResolutionFromAppArgs(applicationParametersParser));
 
             World world = World.Create();
 
             var realmData = new RealmData();
-            string? gatekeeperBaseOverride = ResolveGatekeeperBaseOverride(debugSettings.GatekeeperMode, debugSettings.CustomGatekeeperUrl);
-            ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper mode: {debugSettings.GatekeeperMode}, base override: {gatekeeperBaseOverride ?? "(default)"}");
-            var decentralandUrlsSource = new GatewayUrlsSource(decentralandEnvironment, realmData, launchSettings, gatekeeperBaseOverride);
+
+            applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+
+            var decentralandUrlsSource = new GatewayUrlsSource(
+                decentralandEnvironment,
+                realmData,
+                launchSettings,
+                debugSettings.GatekeeperMode,
+                debugSettings.CustomGatekeeperUrl,
+                cliGatekeeperUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -216,7 +267,7 @@ namespace Global.Dynamic
                 decentralandUrlsSource,
                 debugContainer,
                 identityCache,
-                globalPluginSettingsContainer,
+                pluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
                 splashScreen.Value,
@@ -246,11 +297,20 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, ct);
 
                 bootstrap.InitializeFeaturesRegistry();
-
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
 
+                DiagnosticInfoUtils.LogFeatureFlags(FeatureFlagsConfiguration.Instance.AllEnabledFlags);
+
+                // Need to ensure clock sync ASAP due to some requests may fail due this problem.
+                // Checking for clock desync after feature flags (or any other process that performs an http request)
+                // potentially saves one extra HEAD request
+                var ensureClockSyncAction = new EnsureClockSync(bootstrapContainer.RealmClock, bootstrapContainer.WebRequestsContainer.WebRequestController,
+                    ShowClockDesyncPopupAsync, bootstrapContainer.DecentralandUrlsSource);
+
+                await ensureClockSyncAction.ExecuteAsync(ct);
+
                 bool isLoaded;
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, pluginSettingsContainer, debugContainer.Builder, realmData, playerEntity, memoryCap, applicationParametersParser, ct);
 
                 if (!isLoaded)
                 {
@@ -267,7 +327,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
                     staticContainer!,
-                    scenePluginSettingsContainer,
+                    pluginSettingsContainer,
                     settings,
                     dynamicSettings,
                     backgroundMusic,
@@ -289,7 +349,7 @@ namespace Global.Dynamic
 
                 var specResults = await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics.Controller, ct);
 
-                if(FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
+                if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHECK_DISK_SPACE))
                     await BlockOnInsufficientDiskSpaceAsync(specResults, applicationParametersParser, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
@@ -307,7 +367,7 @@ namespace Global.Dynamic
 
                 DisableInputs();
 
-                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, pluginSettingsContainer, bootstrapContainer.Analytics.Controller, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
@@ -388,9 +448,9 @@ namespace Global.Dynamic
                 string lockPath = Path.Combine(Application.persistentDataPath, "instance.lock");
 
                 // Note that FileShare.None should lock the file to other processes, and it does,
-                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
                 singleInstanceLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                singleInstanceLock.Lock(0, 0);
+                singleInstanceLock.Lock(0, 0); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
             }
             catch (IOException) { return true; }
             catch (Exception e) { ReportHub.LogException(e, ReportCategory.STARTUP); }
@@ -412,16 +472,14 @@ namespace Global.Dynamic
         private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
-                new UnitySystemInfoProvider(),
-                new PlatformDriveInfoProvider());
+                new UnitySystemInfoProvider());
 
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+            bool skipScreen = applicationParametersParser.HasFlag(AppArgsFlags.SKIP_MINIMUM_SPECS_SCREEN) && !forceShow;
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs() && !forceShow;
 
-            if (!hasMinimumSpecs)
-            {
+            if (!hasMinimumSpecs && !skipScreen)
                 SavedQualitySettingsApplier.EnforceLowPreset();
-            }
 
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
 
@@ -447,7 +505,7 @@ namespace Global.Dynamic
 
             analytics.Track(AnalyticsEvents.General.MEETS_MINIMUM_REQUIREMENTS, specsProperties);
 
-            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+            bool shouldShowScreen = forceShow || (!skipScreen && !userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
                 return minimumSpecsGuard.Results;
@@ -661,10 +719,7 @@ namespace Global.Dynamic
         {
             using var scope = new CheckingScope(ReportData.UNSPECIFIED);
 
-            await UniTask.WhenAll(
-                globalPluginSettingsContainer.EnsureValidAsync(),
-                scenePluginSettingsContainer.EnsureValidAsync()
-            );
+            await pluginSettingsContainer.EnsureValidAsync();
 
             ReportHub.Log(ReportData.UNSPECIFIED, "Success checking");
         }
@@ -735,6 +790,7 @@ namespace Global.Dynamic
         private void InstantiateAltTester(IAppArgs appArgs)
         {
 #if ALTTESTER
+
             // Temporary parent needed because AltTester's Awake method relies on the name being
             // AltTesterPrefab (and not AltTesterPrefab(Clone))
             var tempParent = new GameObject("AltTesterParent");
@@ -746,7 +802,7 @@ namespace Global.Dynamic
 
             if (appArgs.TryGetValue(AppArgsFlags.ALTTESTER, out var endpoint) && !string.IsNullOrEmpty(endpoint))
             {
-                var runner = instance.GetComponent<AltTester.AltTesterUnitySDK.Commands.AltRunner>();
+                var runner = instance.GetComponent<AltRunner>();
 
                 var split = endpoint.Split(':');
 
@@ -805,21 +861,66 @@ namespace Global.Dynamic
             }
         }
 
-        private static string? ResolveGatekeeperBaseOverride(GatekeeperMode mode, string customUrl) =>
-            mode switch
+        private async UniTask<EnsureClockSync.Result> ShowClockDesyncPopupAsync(CancellationToken ct)
+        {
+            if (clockDesyncPopupPrefab == null)
+                clockDesyncPopupPrefab = (await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(clockDesyncPopupRef, ct)).Value;
+
+            ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.ViewFactoryMethod viewFactory =
+                ControllerBase<ErrorPopupWithRetryView, ErrorPopupWithRetryController.Input>.Preallocate(clockDesyncPopupPrefab, null, out ErrorPopupWithRetryView viewInstance);
+
+            using var controller = new ErrorPopupWithRetryController(viewFactory);
+
+            var input = new ErrorPopupWithRetryController.Input(
+                title: "Time sync needed",
+                description: "Your clock may be out of sync. Turn on “Set time automatically” in Date & Time settings and try again.",
+                iconType: ErrorPopupWithRetryController.IconType.CLOCK);
+
+            var ordering = new CanvasOrdering(controller.Layer, splashScreen.Value.GetComponent<Canvas>().sortingOrder + 1);
+
+            // Cant use the MVC here, it doesn't exist at this point
+            await controller.LaunchViewLifeCycleAsync(ordering, input, ct);
+            await controller.HideViewAsync(ct);
+
+            Destroy(viewInstance.gameObject);
+
+            switch (input.SelectedOption)
             {
-                GatekeeperMode.Org => null,
-                GatekeeperMode.Zone => "https://comms-gatekeeper.decentraland.zone",
-                GatekeeperMode.Today => "https://comms-gatekeeper.decentraland.today",
-                GatekeeperMode.Localhost => "http://localhost:3000",
-                GatekeeperMode.Custom => string.IsNullOrEmpty(customUrl) ? null : customUrl,
-                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-            };
+                case ErrorPopupWithRetryController.Result.EXIT:
+                    // The error popup will automatically request application exit
+                    return EnsureClockSync.Result.CONTINUE;
+                case ErrorPopupWithRetryController.Result.RESTART:
+                    return EnsureClockSync.Result.RESTART;
+            }
+
+            return EnsureClockSync.Result.CONTINUE;
+        }
+
+        private static Vector2Int? GetResolutionFromAppArgs(IAppArgs appArgs)
+        {
+            if (!appArgs.TryGetValue(AppArgsFlags.RESOLUTION, out string resolutionArg) || string.IsNullOrEmpty(resolutionArg))
+                return null;
+
+            string[] parts = resolutionArg.Split('x');
+
+            if (parts.Length == 2 && int.TryParse(parts[0], out int w) && int.TryParse(parts[1], out int h))
+                return new Vector2Int(w, h);
+
+            ReportHub.LogWarning(ReportCategory.STARTUP, $"Invalid --{AppArgsFlags.RESOLUTION} value '{resolutionArg}'. Expected format: WxH (e.g. 1920x1080)");
+            return null;
+        }
+
 
         [Serializable]
         public class SplashScreenRef : ComponentReference<SplashScreen>
         {
             public SplashScreenRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ErrorPopupWithRetryRef : ComponentReference<ErrorPopupWithRetryView>
+        {
+            public ErrorPopupWithRetryRef(string guid) : base(guid) { }
         }
     }
 }

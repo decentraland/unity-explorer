@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -17,7 +16,7 @@ namespace DCL.WebRequests
             SizeInBytes = sizeInBytes;
         }
 
-        public static async Task<WebContentInfo> FetchAsync(string url, CancellationToken ct = default)
+        public static async UniTask<WebContentInfo> FetchAsync(string url, CancellationToken ct = default)
         {
             var request = UnityWebRequest.Head(url);
             await request.SendWebRequest().WithCancellation(ct);
@@ -25,12 +24,12 @@ namespace DCL.WebRequests
             return await FetchAsync(request);
         }
 
-        public static Task<WebContentInfo> FetchAsync(UnityWebRequest request)
+        public static UniTask<WebContentInfo> FetchAsync(UnityWebRequest request)
         {
             if (request.result != UnityWebRequest.Result.Success)
                 throw new Exception("Failed to fetch web content info: " + request.error);
 
-            return Task.FromResult(new WebContentInfo(
+            return UniTask.FromResult(new WebContentInfo(
                 GetContentType(request),
                 GetSizeInBytes(request)
             ));

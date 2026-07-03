@@ -92,8 +92,12 @@ namespace DCL.SDKEntityTriggerArea.Components
                     break;
             }
 
-            // Optimization to use an avatars specific physics layer if the trigger only cares about avatars
-            monoBehaviour!.gameObject.layer = LayerMask == ColliderLayer.ClPlayer ? PhysicsLayers.ALL_AVATARS : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
+            // Route purely-avatar masks (CL_PLAYER and/or CL_MAIN_PLAYER, no other bits) to
+            // SDK_AVATAR_TRIGGER_AREA. Any mixed mask falls back to SDK_ENTITY_TRIGGER_AREA so
+            // the trigger box's matrix cells also reach the non-avatar layers the mask targets.
+            monoBehaviour!.gameObject.layer = PhysicsLayers.IsAvatarOnlyMask(LayerMask)
+                ? PhysicsLayers.SDK_AVATAR_TRIGGER_AREA
+                : PhysicsLayers.SDK_ENTITY_TRIGGER_AREA;
         }
 
         public void UpdateAreaSize(Vector3 size)

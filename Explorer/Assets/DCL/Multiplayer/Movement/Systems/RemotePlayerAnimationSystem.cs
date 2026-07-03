@@ -18,7 +18,7 @@ using UnityEngine;
 using Utility.Animations;
 using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]

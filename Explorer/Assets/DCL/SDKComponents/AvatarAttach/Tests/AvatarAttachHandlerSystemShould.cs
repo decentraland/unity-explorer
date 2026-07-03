@@ -40,7 +40,6 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         private ISceneStateProvider sceneStateProvider;
         private AvatarAttachHandlerSetupSystem setupSystem;
         private IReadOnlyEntityParticipantTable entityParticipantTable;
-        private ObjectProxy<IReadOnlyEntityParticipantTable> entityParticipantTableProxy;
         private ExposedTransform exposedPlayerTransform;
         private IECSToCRDTWriter ecsToCRDTWriter;
 
@@ -68,8 +67,6 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
             // Create a mock EntityParticipantTable
             entityParticipantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
-            entityParticipantTableProxy = new ObjectProxy<IReadOnlyEntityParticipantTable>();
-            entityParticipantTableProxy.SetObject(entityParticipantTable);
 
             // Create exposed player transform and CRDT writer
             exposedPlayerTransform = new ExposedTransform
@@ -84,14 +81,14 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 mainPlayerAvatarBase,
                 exposedPlayerTransform,
                 sceneStateProvider,
-                entityParticipantTableProxy,
+                entityParticipantTable,
                 ecsToCRDTWriter);
 
             setupSystem = new AvatarAttachHandlerSetupSystem(world,
                 globalWorld,
                 mainPlayerAvatarBase,
                 sceneStateProvider,
-                entityParticipantTableProxy);
+                entityParticipantTable);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);

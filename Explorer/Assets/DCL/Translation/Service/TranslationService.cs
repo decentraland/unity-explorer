@@ -9,6 +9,7 @@ using DCL.Translation.Processors;
 using DCL.Translation.Processors.DCL.Translation.Service.Processing;
 using DCL.Utilities;
 using Utility;
+using Utility.Multithreading;
 
 namespace DCL.Translation.Service
 {
@@ -73,7 +74,7 @@ namespace DCL.Translation.Service
         }
 
         // Global cap: at most 10 translations in-flight across all senders.
-        private readonly SemaphoreSlim globalThrottle = new(10, 10);
+        private readonly DCLSemaphoreSlim globalThrottle = new(10, 10);
 
         // Per-sender leader/follower gate (UniTaskCompletionSource)
         // At most ONE “leader” per sender runs TranslateInternalAsync at a time
@@ -140,14 +141,14 @@ namespace DCL.Translation.Service
             }
         }
 
-        // // Per-sender locks: one SemaphoreSlim (1 slot) per senderWalletId
-        // private readonly Dictionary<string, SemaphoreSlim> perSenderLocks = new();
+        // // Per-sender locks: one DCLSemaphoreSlim (1 slot) per senderWalletId
+        // private readonly Dictionary<string, DCLSemaphoreSlim> perSenderLocks = new();
         //
         // // Translation concurrency policy
         // // Per-sender serialization: only ONE translation per senderWalletId at a time
         // // Global throttle: at most N translations across ALL senders (N = globalThrottle initialCount)
         // // Async-friendly: uses WaitAsync so the Unity main thread never blocks
-        // // Lock order (important): acquire per-sender FIRST, global SECOND; release in reverse order
+        // // Lockorder (important): acquire per-sender FIRST, global SECOND; release in reverse order
         // // Safety: try/finally always releases both semaphores on success, exception, or cancellation
         // // Assumptions: perSenderLocks is accessed from the main thread; if not, guard GetSenderLock with a lock
         // private async UniTask TranslateAsync(string messageId, string senderWalletId, CancellationToken ct)
@@ -179,7 +180,7 @@ namespace DCL.Translation.Service
         //
         // }
         //
-        // private SemaphoreSlim GetSenderLock(string senderId)
+        // private DCLSemaphoreSlim GetSenderLock(string senderId)
         // {
         //     if (!perSenderLocks.TryGetValue(senderId, out var sem))
         //     {
@@ -187,7 +188,7 @@ namespace DCL.Translation.Service
         //         // NOTE: If this might be touched off-main, wrap in `lock`.
         //
         //         // 1 slot
-        //         sem = new SemaphoreSlim(1, 1);
+        //         sem = new DCLSemaphoreSlim(1, 1);
         //         perSenderLocks[senderId] = sem;
         //     }
         //     return sem;

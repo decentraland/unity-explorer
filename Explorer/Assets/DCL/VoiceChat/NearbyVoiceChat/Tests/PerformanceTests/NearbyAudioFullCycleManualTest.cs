@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Character.Components;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
+using DCL.SceneBannedUsers;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -117,13 +118,9 @@ namespace DCL.VoiceChat.Nearby
 
             // PositionSystem reads NearbyListenerState (produced by NearbyAudibleRangeSystem in
             // production). This testbed runs PositionSystem without RangeSystem, so we seed the
-            // state manually with FirstPerson defaults.
-            var listenerState = new NearbyListenerState
-            {
-                PlayerHeadPosition = playerGo.transform.position,
-                IsFirstPerson = true,
-            };
-            listenerState.BindListener(camera.transform);
+            // state manually with the player head position.
+            var listenerState = new NearbyListenerState();
+            listenerState.BindListener(camera.transform, playerGo.transform);
 
             registry = new FakeStreamRegistry();
             bindings = new HashSet<StreamKey>();
@@ -134,10 +131,12 @@ namespace DCL.VoiceChat.Nearby
             IUserBlockingCache userBlockingCache = Substitute.For<IUserBlockingCache>();
             var muteService = new NearbyMuteService(Substitute.For<INearbyMuteCache>(), Substitute.For<INearbyMuteRepository>());
 
-            bindingSystem = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            RoomMetadataCurrentScene roomMetadataCurrentScene = RoomMetadataCurrentScene.CreateForTest();
+
+            bindingSystem = new NearbyAudioBindingSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
             positionSystem = new NearbyAudioPositionSystem(world, muteService, listenerState);
             positionSystem.Initialize();
-            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory);
+            cleanupSystem = new NearbyAudioCleanupSystem(world, registry, bindings, userBlockingCache, stateModel, sourceFactory, roomMetadataCurrentScene);
         }
 
         private void Update()

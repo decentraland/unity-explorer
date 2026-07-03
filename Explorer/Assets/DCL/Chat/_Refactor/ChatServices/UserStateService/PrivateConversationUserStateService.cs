@@ -55,7 +55,7 @@ namespace DCL.Chat.ChatServices
         private const int TIMEOUT_FRIENDS_CONTAINER_MINUTES = 2;
 
         private readonly IUserBlockingCache userBlockingCache;
-        private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly IFriendsService? friendsService;
 
         private readonly ChatSettingsAsset settingsAsset;
         private readonly RPCChatPrivacyService rpcChatPrivacyService;
@@ -80,7 +80,7 @@ namespace DCL.Chat.ChatServices
             CurrentChannelService currentChannelService,
             ChatEventBus eventBus,
             IUserBlockingCache userBlockingCache,
-            ObjectProxy<IFriendsService> friendsService,
+            IFriendsService? friendsService,
             ChatSettingsAsset settingsAsset,
             RPCChatPrivacyService rpcChatPrivacyService,
             IFriendsEventBus friendsEventBus,
@@ -175,7 +175,7 @@ namespace DCL.Chat.ChatServices
         {
             string lowerUserId = userId.ToLower();
 
-            FriendshipStatus friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct);
+            FriendshipStatus friendshipStatus = await friendsService!.GetFriendshipStatusAsync(userId, ct);
             bool isUserConnected = UserIsConsideredAsOnline(userId);
 
             //If it's a friend we just return its connection status

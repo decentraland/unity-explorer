@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+using Arch.Core;
+using DCL.SceneRunner.Scene;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
@@ -14,6 +15,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -45,7 +47,7 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
-        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ref SceneLoadingState sceneState)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, ref SceneLoadingState sceneState)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel && not quality reducted
             {
@@ -62,28 +64,26 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
-                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, issDescriptor, lodForAcquisition);
             }
         }
 
-        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, ISSDescriptor issDescriptor, byte level)
         {
             sceneLODInfo.ForgetAllLoadings(World);
 
-            if (level == 0 && sceneDefinitionComponent.Definition.SupportInitialSceneState()
-                           && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
+            if (level == 0 && sceneLODInfo.InitialSceneStateLOD.CurrentState != InitialSceneStateLOD.State.FAILED)
             {
-                var initialSceneState = GetAssetBundleIntention.FromHash(
-                    GetAssetBundleIntention.BuildInitialSceneStateURL(sceneDefinitionComponent.Definition.id),
-                    typeof(GameObject),
-                    permittedSources: AssetSource.WEB,
-                    assetBundleManifestVersion: sceneDefinitionComponent.Definition.assetBundleManifestVersion,
-                    parentEntityID: sceneDefinitionComponent.Definition.id
-                );
-                sceneLODInfo.InitialSceneStateLOD.AssetBundlePromise = Promise.Create(World, initialSceneState, partitionComponent);
-                sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
-                sceneLODInfo.CurrentLODLevelPromise = level;
-                return;
+                // ResolveSceneStateByIncreasingRadiusSystem gates SHOWING_LOD/SHOWING_SCENE transitions on
+                // descriptor resolution, so by the time we reach this point the descriptor is guaranteed to
+                // be either None (no ISS for this scene) or a resolved Bundle/Descriptor.
+                if (issDescriptor.SupportsDescriptor())
+                {
+                    sceneLODInfo.InitialSceneStateLOD.CurrentState = InitialSceneStateLOD.State.PROCESSING;
+                    sceneLODInfo.CurrentLODLevelPromise = level;
+                    return;
+                }
+                // descriptor in None state — no ISS for this scene; fall through to legacy LOD.
             }
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";

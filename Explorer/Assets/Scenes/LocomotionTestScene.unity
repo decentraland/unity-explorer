@@ -3916,8 +3916,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa1edce87d5d4c41bbc1550b42e82900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
-  scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
+  pluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
   debugUiRoot: {fileID: 946305963}
   StartPosition: {x: 0, y: 0}

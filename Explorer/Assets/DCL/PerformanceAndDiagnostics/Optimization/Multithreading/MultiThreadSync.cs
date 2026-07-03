@@ -1,13 +1,18 @@
+// TRUST_WEBGL_THREAD_SAFETY_FLAG
+
 using DCL.Diagnostics;
 using System;
 using System.Threading;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using Unity.Profiling;
+using Utility.Multithreading;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
+#if !UNITY_WEBGL
     public class MultiThreadSync : IDisposable
     {
         internal readonly struct AcquisitionInfo
@@ -25,6 +30,16 @@ namespace Utility.Multithreading
         private static readonly ProfilerMarker COMMON_SAMPLER;
 
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        ///     Maps each <see cref="MultiThreadSync" /> instance (by its <see cref="syncId" />) to the managed thread id
+        ///     that currently owns it. Used to surface ownership in timeout diagnostics. A missing key means unowned.
+        /// </summary>
+        private static readonly DCLConcurrentDictionary<int, int> SYNC_OWNERSHIP = new ();
+
+        private static int nextSyncId;
+
+        private readonly int syncId;
 
         private readonly object monitor = new ();
 
@@ -46,6 +61,7 @@ namespace Utility.Multithreading
 
         public MultiThreadSync(SceneShortInfo sceneInfo)
         {
+            syncId = Interlocked.Increment(ref nextSyncId);
             syncLogsBuffer = new SyncLogsBuffer(sceneInfo, 20);
             perSceneSampler = CustomSampler.Create("MultithreadSync.Wait " + sceneInfo.BaseParcel);
         }
@@ -65,6 +81,8 @@ namespace Utility.Multithreading
                     owner.Dispose();
 
                 queue.Clear();
+
+                SYNC_OWNERSHIP.TryRemove(syncId, out _);
             }
         }
 
@@ -96,8 +114,11 @@ namespace Utility.Multithreading
                         AcquisitionInfo current = currentAcquisitionInfo!.Value;
                         TimeSpan difference = time - current.AcquiredAt;
 
+                        int requestingThreadId = NativeThread.CurrentId;
+                        int owningThreadId = SYNC_OWNERSHIP.TryGetValue(syncId, out int ownerThread) ? ownerThread : -1;
+
                         syncLogsBuffer.Print();
-                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}");
+                        throw new TimeoutException($"{nameof(MultiThreadSync)} timeout, cannot acquire for: {owner.Name}, current owner: \"{current.Owner!.Name}\" takes too long: {difference.TotalSeconds}. Owning thread: {owningThreadId}, requesting thread: {requestingThreadId}");
                     }
                 }
             }
@@ -105,6 +126,7 @@ namespace Utility.Multithreading
             lock (monitor)
             {
                 currentAcquisitionInfo = new AcquisitionInfo(owner, DateTime.Now);
+                SYNC_OWNERSHIP[syncId] = NativeThread.CurrentId;
 
 #if SYNC_DEBUG
                 syncLogsBuffer.Report("MultithreadSync Acquire finished for:", owner.Name);
@@ -150,6 +172,7 @@ namespace Utility.Multithreading
 #endif
 
                 currentAcquisitionInfo = null;
+                SYNC_OWNERSHIP.TryRemove(syncId, out _);
             }
         }
 
@@ -168,6 +191,22 @@ namespace Utility.Multithreading
             }
 
             return scope;
+        }
+
+        public static void AppendOwnershipTable(StringBuilder sb)
+        {
+            sb.Append("MultiThreadSync: ");
+
+            var any = false;
+
+            foreach (KeyValuePair<int, int> entry in SYNC_OWNERSHIP)
+            {
+                sb.Append(entry.Key).Append("=").Append(entry.Value).Append("|");
+                any = true;
+            }
+
+            if (!any)
+                sb.Append("(none owned)");
         }
 
         public class OwnerMismatchException : Exception
@@ -251,7 +290,7 @@ namespace Utility.Multithreading
                 multiThreadSync.Release(source);
 
                 if (DateTime.Now - start > TIMEOUT)
-                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}");
+                    throw new TimeoutException($"{nameof(MultiThreadSync)} source {source.Name} took too much time! cannot release for: {source.Name}. Releasing thread: {NativeThread.CurrentId}");
             }
         }
 
@@ -284,4 +323,5 @@ namespace Utility.Multithreading
             }
         }
     }
+#endif
 }

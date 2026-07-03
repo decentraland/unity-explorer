@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatReactions.Networking
         {
             if (cts.IsCancellationRequested) return;
 
-            float timestamp = overrideTimestamp > 0f ? overrideTimestamp : Time.unscaledTime;
+            float timestamp = overrideTimestamp > 0f ? overrideTimestamp : UnityEngine.Time.unscaledTime;
             int sendCount = Mathf.Max(1, count);
 
             SendReactionTo(emojiIndex, sendCount, timestamp, messagePipesHub.IslandPipe());
@@ -139,7 +139,7 @@ namespace DCL.Chat.ChatReactions.Networking
 
                 float timestamp = receivedMessage.Payload.Timestamp != 0f
                     ? receivedMessage.Payload.Timestamp
-                    : Time.unscaledTime;
+                    : UnityEngine.Time.unscaledTime;
 
                 if (!situationalDedup.TryPass(receivedMessage.FromWalletId, timestamp))
                     return;

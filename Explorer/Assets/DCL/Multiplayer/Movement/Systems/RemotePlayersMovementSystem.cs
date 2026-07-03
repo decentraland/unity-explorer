@@ -17,7 +17,7 @@ using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility.PriorityQueue;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Movement.Systems
             ref ExtrapolationComponent extComp,
             ref HandPointAtComponent handPointAt)
         {
-            SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
+            SimplePriorityQueue<NetworkMovementMessage, double>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -118,7 +118,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp,
-            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             remotePlayerMovement.UpdateHeadIK(remote);
@@ -150,9 +150,9 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
         {
-            float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
+            double minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
             // Filter all messages that are behind in time (otherwise we will run back)
             for (var i = 0; i < RemotePlayerUtils.BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp; i++)
@@ -189,7 +189,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement,
-            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            SimplePriorityQueue<NetworkMovementMessage, double> playerInbox)
         {
             // Filter messages with the same position and rotation
             if (settings.InterpolationSettings.UseSpeedUp)
@@ -294,7 +294,8 @@ namespace DCL.Multiplayer.Movement.Systems
             float speed = MovementSpeedLimitHelper.GetMovementSpeedLimit(characterControllerSettings, movementKind);
 
             intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
-            intComp.UseMessageRotation = false;
+
+            // intComp.UseMessageRotation = false;
 
             intComp.Start.movementKind = movementKind;
             intComp.Start.animState.MovementBlendValue = (uint)movementKind;

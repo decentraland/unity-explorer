@@ -96,7 +96,6 @@ namespace DCL.AvatarRendering.Loading.Assets
 
                 foreach (Renderer renderer in cachedAttachment.Renderers)
                     renderer.enabled = true;
-
                 cachedAttachment.Instance.transform.SetParent(parentContainer);
             }
         }
@@ -120,5 +119,6 @@ namespace DCL.AvatarRendering.Loading.Assets
 
             ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;
         }
+
     }
 }

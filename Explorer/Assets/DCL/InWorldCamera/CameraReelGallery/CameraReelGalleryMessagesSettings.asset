@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da7a65211f804d0090f8b5e4c353ed31, type: 3}
   m_Name: CameraReelGalleryMessagesSettings
   m_EditorClassIdentifier: 
-  <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland right
-    now and join me!
+  <ShareToXMessage>k__BackingField: "Happening right now in @decentraland. \\n\\nCome
+    hang out \U0001F44B\\n\\n"
   <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
   <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
   <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded

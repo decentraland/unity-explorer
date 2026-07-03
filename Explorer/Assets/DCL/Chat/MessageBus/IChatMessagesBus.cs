@@ -29,7 +29,7 @@ namespace DCL.Chat.MessageBus
             messagesBus.Send(channel, message, origin, timestamp);
         }
 
-        public static IChatMessagesBus WithSelfResend(this MultiplayerChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
+        public static IChatMessagesBus WithSelfResend(this LiveKitChatMessagesBus messagesBus, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory) =>
             new SelfResendChatMessageBus(messagesBus, web3IdentityCache, messageFactory);
 
         public static IChatMessagesBus WithDebugPanel(this IChatMessagesBus messagesBus, IDebugContainerBuilder debugContainerBuilder)

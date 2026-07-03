@@ -163,9 +163,7 @@ namespace DCL.PluginSystem.Global
                 loadThumbnailCommand,
                 wearableCatalog,
                 pendingTransferService,
-                equippedStatusProvider,
-                wearableStorage,
-                emoteStorage);
+                equippedStatusProvider);
 
             var componentFactory = new GiftSelectionComponentFactory(profileRepository,
                 inputBlock,

@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.Utilities;
+using DCL.Utility;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -37,7 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
             cts = new CancellationTokenSource();
             SubscribeToPlayerStepAsync(cts.Token).Forget();
 
-            Application.quitting += Dispose;
+            ExitUtils.RegisterCleanUpCandidate(new OnQuittingCleanUpCandidate(nameof(WalkedDistanceAnalytics), Dispose));
             AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
         }
 

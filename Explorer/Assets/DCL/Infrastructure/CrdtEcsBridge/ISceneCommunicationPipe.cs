@@ -40,11 +40,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             /// </summary>
             public readonly ReadOnlySpan<byte> Data;
             public readonly string FromWalletId;
+            public readonly bool IsTrustedSource;
 
-            public DecodedMessage(ReadOnlySpan<byte> data, string fromWalletId)
+            public DecodedMessage(ReadOnlySpan<byte> data, string fromWalletId, bool isTrustedSource)
             {
                 Data = data;
                 FromWalletId = fromWalletId;
+                IsTrustedSource = isTrustedSource;
             }
         }
     }

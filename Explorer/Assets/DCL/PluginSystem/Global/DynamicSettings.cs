@@ -16,13 +16,10 @@ namespace DCL.PluginSystem.Global
     [Serializable]
     public class DynamicSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceGameObject PopupCloserView { get; private set; }
         [field: SerializeField] public Light DirectionalLight { get; private set; }
         [field: SerializeField] public NametagsData NametagsData { get; private set; }
-        [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<GenericUserProfileContextMenuSettings> GenericUserProfileContextMenuSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<CommunityVoiceChatContextMenuConfiguration> CommunityVoiceChatContextMenuSettings { get; private set; }
-        [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public MultiplayerDebugSettings MultiplayerDebugSettings { get; private set; }
         [field: SerializeField] public AdaptivePhysicsSettings AdaptivePhysicsSettings { get; private set; }

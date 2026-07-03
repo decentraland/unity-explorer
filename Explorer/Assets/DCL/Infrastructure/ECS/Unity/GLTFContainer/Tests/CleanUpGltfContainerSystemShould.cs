@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -29,7 +30,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY);
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), PartitionComponent.TOP_PRIORITY, null);
         }
 
         [Test]

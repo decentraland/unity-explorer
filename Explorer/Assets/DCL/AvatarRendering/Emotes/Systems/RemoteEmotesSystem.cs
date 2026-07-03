@@ -1,16 +1,12 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
-using System;
-using UnityEngine;
 using UnityEngine.Pool;
-using Utility.PriorityQueue;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -52,23 +48,28 @@ namespace DCL.AvatarRendering.Emotes
                         continue;
                     }
 
-                    ref readonly RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
-                    ref readonly InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
-                    if (interpolationExists && IsInPresentOrPast(intComp.Time, replicaMovement.PastMessage.timestamp, remoteEmoteIntention.Timestamp, t))
+                    if (interpolationExists && !EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
+                        savedIntentions.Add(remoteEmoteIntention);
+                    else
                     {
                         ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                         intention.Mask = remoteEmoteIntention.Mask;
                     }
-                    else
-                        savedIntentions.Add(remoteEmoteIntention);
                 }
             }
 
             foreach (RemoteEmoteIntention savedIntention in savedIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
+
+            return;
+
+            bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
+                intComp.Present + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
 
         private void ProcessRemoteStopIntentions(float t)
@@ -126,7 +127,7 @@ namespace DCL.AvatarRendering.Emotes
                     ref readonly InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
                     ref readonly RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
 
-                    if (!interpolationExists || IsInPresentOrPast(intComp.Time, replicaMovement.PastMessage.timestamp, stopIntention.Timestamp, t))
+                    if (!interpolationExists || IsInPresentOrPast(intComp.Present, replicaMovement.PastMessage.timestamp, stopIntention.Timestamp, t))
                         continue;
 
                     savedStopIntentions!.Add(stopIntention);
@@ -137,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes
                 emotesMessageBus.SaveForRetry(savedStopIntention);
         }
 
-        private static bool IsInPresentOrPast(float interpolationTime, float pastMessageTimestamp, float intentionTimestamp, float deltaTime) =>
-            interpolationTime + deltaTime >= intentionTimestamp || pastMessageTimestamp >= intentionTimestamp;
+        private static bool IsInPresentOrPast(double interpolationPresent, double pastMessageTimestamp, double intentionTimestamp, float deltaTime) =>
+            interpolationPresent + deltaTime >= intentionTimestamp || pastMessageTimestamp >= intentionTimestamp;
     }
 }

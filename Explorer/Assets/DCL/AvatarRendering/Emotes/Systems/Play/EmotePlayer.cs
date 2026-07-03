@@ -2,11 +2,13 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.Renderer;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Rendering;
 using Utility.Animations;
 using Object = UnityEngine.Object;
 
@@ -24,9 +26,11 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly Transform poolRoot;
         private readonly EmoteMaskCatalog emoteMaskCatalog;
         private readonly bool legacyAnimationsEnabled;
+        private readonly bool forceBackfaceCullingEnabled;
 
-        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, bool legacyAnimationsEnabled = false)
+        public EmotePlayer(AudioSource audioSourcePrefab, EmoteMaskCatalog emoteMaskCatalog, bool legacyAnimationsEnabled = false, bool forceBackfaceCullingEnabled = false)
         {
+            this.forceBackfaceCullingEnabled = forceBackfaceCullingEnabled;
             this.emoteMaskCatalog = emoteMaskCatalog;
             this.legacyAnimationsEnabled = legacyAnimationsEnabled;
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
@@ -213,7 +217,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             if (!pools.ContainsKey(mainAsset))
             {
                 if (IsValid(mainAsset))
-                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
+                    pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, forceBackfaceCullingEnabled), onRelease: releaseEmoteReferences));
                 else
                     return null;
             }
@@ -254,7 +258,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             mainAsset.GetComponentInChildren<Animator>(true)
             || (legacyAnimationsEnabled && mainAsset.GetComponentInChildren<Animation>(true));
 
-        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
+        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool forceBackfaceCullingEnabled)
         {
             GameObject mainGameObject = Object.Instantiate(mainAsset);
 
@@ -308,7 +312,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                         // Disable the renderer too for possible performance optimizations such as shadow casting or material changes
                         renderer.enabled = false;
                         renderer.forceRenderingOff = true;
+                        continue;
                     }
+
+                    if (forceBackfaceCullingEnabled)
+                        renderer.ForceBackfaceCulling();
                 }
             }
 
@@ -321,6 +329,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             return references;
         }
+
 
         private void PlayLegacyEmote(IAvatarView avatarView, ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReferences, bool loop)
         {

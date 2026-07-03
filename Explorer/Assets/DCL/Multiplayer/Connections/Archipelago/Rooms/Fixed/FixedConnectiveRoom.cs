@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.PrivateWorlds;
@@ -36,7 +37,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             if (identityCache.Identity == null)
                 return;
 
-            if (CurrentState() is not IConnectiveRoom.State.Running)
+            if (CurrentState() is not IConnectiveRoom.State.Running // CurrentState will be != Running at start, so we need to connect
+                || Room().Info.ConnectionState != LKConnectionState.ConnConnected) // If the room was running but our connection was lost (or stuck reconnecting), we need to reconnect
             {
                 string connectionString = await ConnectionStringAsync(token);
                 await TryConnectToRoomAsync(connectionString, token);

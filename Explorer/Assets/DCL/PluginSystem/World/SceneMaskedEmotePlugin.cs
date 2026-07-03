@@ -17,7 +17,7 @@ namespace DCL.PluginSystem.World
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmoteStorage emoteStorage;
-        private readonly ObjectProxy<IEmotesMessageBus> messageBusProxy;
+        private readonly IEmotesMessageBus messageBus;
 
         public SceneMaskedEmotePlugin(
             Arch.Core.World globalWorld,
@@ -25,19 +25,19 @@ namespace DCL.PluginSystem.World
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             EmotePlayer emotePlayer,
             IEmoteStorage emoteStorage,
-            ObjectProxy<IEmotesMessageBus> messageBusProxy)
+            IEmotesMessageBus messageBus)
         {
             this.globalWorld = globalWorld;
             this.globalPlayerEntity = globalPlayerEntity;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.emotePlayer = emotePlayer;
             this.emoteStorage = emoteStorage;
-            this.messageBusProxy = messageBusProxy;
+            this.messageBus = messageBus;
         }
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             var system = SceneMaskedEmoteSystem.InjectToWorld(ref builder,
                 globalWorld,
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.World
                 mainPlayerAvatarBaseProxy,
                 emotePlayer,
                 emoteStorage,
-                messageBusProxy.Object!,
+                messageBus,
                 sharedDependencies.SceneStateProvider);
 
             finalizeWorldSystems.Add(system);

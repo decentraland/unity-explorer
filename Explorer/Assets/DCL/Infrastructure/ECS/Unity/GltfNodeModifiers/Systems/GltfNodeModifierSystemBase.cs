@@ -46,7 +46,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         /// <summary>
-        ///     Finds a renderer by path, returning null if not found
+        ///     Finds a renderer by path, returning null if not found.
+        ///     Tolerant of glTFast's optional scene-wrapper GameObject: it is created only when the model has
+        ///     more than one root node (SceneObjectCreation.WhenMultipleRootNodes), which otherwise shifts every
+        ///     path by one segment depending on the root-node count and breaks paths across model variants (#8895).
         /// </summary>
         protected static Renderer? FindRendererByPath(Transform gltfRootTransform, string path, IReadOnlyList<string>? availablePaths = null)
         {
@@ -56,10 +59,43 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             // There's always 1 child GameObject in both AB or Raw GLTF instantiated GltfContainer...
             // AB: The GO name is "AB:hash"
             // Raw GLTF: the GO name is "Scene"
-            Transform? rendererTransform = gltfRootTransform.GetChild(0).Find(path);
+            Transform anchor = gltfRootTransform.GetChild(0);
 
-            if (rendererTransform != null && rendererTransform.TryGetComponent(out Renderer renderer))
+            // 1. Exact match relative to the anchor. Preserves every path that resolves today.
+            if (TryGetRendererAt(anchor, path, out Renderer? renderer))
                 return renderer;
+
+            // 2. Wrapper present, short path authored against the un-wrapped variant: descend one level and
+            //    retry the path under each root node. Pick the first hit in sibling order, which resolves to
+            //    the same node on AB and raw builds (see #8895). One level only, to bound ambiguity.
+            Renderer? firstMatch = null;
+            var matchCount = 0;
+
+            for (var i = 0; i < anchor.childCount; i++)
+            {
+                if (TryGetRendererAt(anchor.GetChild(i), path, out Renderer? childMatch))
+                {
+                    matchCount++;
+                    firstMatch ??= childMatch;
+                }
+            }
+
+            if (firstMatch != null)
+            {
+                if (matchCount > 1)
+                    ReportHub.LogWarning(ReportCategory.GLTF_CONTAINER,
+                        $"GLTF Node path '{path}' is ambiguous: {matchCount} renderers matched it under different root nodes. Using the first one in hierarchy order.");
+
+                return firstMatch;
+            }
+
+            // 3. Wrapper absent, wrapper-prefixed path authored against the wrapped variant: drop the leading
+            //    root-node segment and retry against the anchor.
+            var separatorIndex = path.IndexOf('/');
+
+            if (separatorIndex >= 0 && separatorIndex < path.Length - 1
+                && TryGetRendererAt(anchor, path.Substring(separatorIndex + 1), out Renderer? strippedMatch))
+                return strippedMatch;
 
             ReportHub.LogError(ReportCategory.GLTF_CONTAINER,
                 $"GLTF Node path '{path}' not found.");
@@ -73,6 +109,23 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             }
 
             return null;
+        }
+
+        /// <summary>
+        ///     Resolves <paramref name="path" /> relative to <paramref name="root" /> and returns its renderer, if any.
+        /// </summary>
+        private static bool TryGetRendererAt(Transform root, string path, out Renderer? renderer)
+        {
+            Transform? found = root.Find(path);
+
+            if (found != null && found.TryGetComponent(out Renderer foundRenderer))
+            {
+                renderer = foundRenderer;
+                return true;
+            }
+
+            renderer = null;
+            return false;
         }
 
         /// <summary>

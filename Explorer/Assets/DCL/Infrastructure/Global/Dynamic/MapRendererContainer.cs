@@ -11,6 +11,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -82,6 +83,9 @@ namespace Global.Dynamic
 
             return mapRendererContainer;
         }
+
+        public MapRendererPlugin CreatePlugin() =>
+            new (MapRenderer);
 
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {

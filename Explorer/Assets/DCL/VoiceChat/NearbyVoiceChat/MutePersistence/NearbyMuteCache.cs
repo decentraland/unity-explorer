@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.VoiceChat.Nearby.MutePersistence
 {
@@ -11,10 +11,10 @@ namespace DCL.VoiceChat.Nearby.MutePersistence
         private readonly HashSet<string> sessionUnmuted = new (StringComparer.OrdinalIgnoreCase); // Addresses the user explicitly unmuted in this session.
 
         // Starts at 1 so a freshly-constructed component (LastSeenMuteVersion=0) deterministically mismatches on its first tick — guarantees the pessimistic initial recompute.
-        // All writes happen under `gate`; the lock-free Version getter uses Volatile.Read to observe the latest committed value.
+        // All writes happen under `gate`; the lock-free Version getter uses DCLVolatile.Read to observe the latest committed value.
         private uint version = 1;
 
-        public uint Version => Volatile.Read(ref version);
+        public uint Version => DCLVolatile.Read(ref version);
 
         public event Action<string, bool>? MuteStateChanged;
 

@@ -172,6 +172,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override int GetSecondCollectionCount() =>
             offlineFriends.Count;
 
+        protected override int GetSecondCollectionDisplayCount()
+        {
+            int trueOffline = totalToFetch - onlineFriends.Count;
+            return Mathf.Max(trueOffline, offlineFriends.Count);
+        }
+
         protected override void CustomiseElement(FriendListUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();

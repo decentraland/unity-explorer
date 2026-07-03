@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.BackpackBus;
 using DCL.Character;
 using DCL.Diagnostics;
@@ -25,9 +26,11 @@ using MVC;
 using PortableExperiences.Controller;
 using Runtime.Wearables;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using ScenePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention.Result, ECS.SceneLifeCycle.Systems.GetSmartWearableSceneIntention>;
 
 namespace DCL.SmartWearables
@@ -53,6 +56,8 @@ namespace DCL.SmartWearables
         ///     Promises waiting on the loading flow of a smart wearable scene.
         /// </summary>
         private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
+
+        private CancellationTokenSource outfitEquipCts = new ();
 
         private bool currentSceneDirty;
 
@@ -84,6 +89,7 @@ namespace DCL.SmartWearables
 
             backpackEventBus.EquipWearableEvent += OnEquipWearable;
             backpackEventBus.UnEquipWearableEvent += OnUnEquipWearable;
+            backpackEventBus.EquipOutfitEvent += OnEquipOutfit;
             portableExperiencesController.PortableExperienceUnloaded += OnPortableExperienceUnloaded;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusChanged;
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
@@ -125,6 +131,79 @@ namespace DCL.SmartWearables
 
         private void OnUnEquipWearable(IWearable wearable) =>
             StopSmartWearableSceneAsync(wearable).Forget();
+
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
+        {
+            outfitEquipCts = outfitEquipCts.SafeRestart();
+            HandleOutfitEquipAsync(wearables, outfitEquipCts.Token).Forget();
+        }
+
+        private async UniTaskVoid HandleOutfitEquipAsync(IReadOnlyCollection<IWearable> wearables, CancellationToken ct)
+        {
+            try
+            {
+                using var newOutfitScope = HashSetPool<string>.Get(out var newOutfitSmartIds);
+
+                foreach (IWearable wearable in wearables)
+                {
+                    if (ct.IsCancellationRequested) return;
+
+                    if (await smartWearableCache.IsSmartAsync(wearable, ct))
+                        newOutfitSmartIds.Add(SmartWearableCache.GetCacheId(wearable));
+                }
+
+                if (ct.IsCancellationRequested) return;
+
+                // Cancel pending loads for smart wearables that left the outfit
+                using var a = ListPool<string>.Get(out var pendingIds);
+                foreach (var kvp in pendingScenes)
+                    if (!newOutfitSmartIds.Contains(kvp.Key))
+                        pendingIds.Add(kvp.Key);
+
+                foreach (string id in pendingIds)
+                    if (pendingScenes.Remove(id, out var pending))
+                        pending.ForgetLoading(World);
+
+                // Unload running smart wearables that left the outfit; clear kill marker like OnUnEquipWearable does
+                using var b = ListPool<string>.Get(out var runningIds);
+                foreach (string id in smartWearableCache.RunningSmartWearables)
+                    if (!newOutfitSmartIds.Contains(id))
+                        runningIds.Add(id);
+
+                foreach (string id in runningIds)
+                {
+                    smartWearableCache.KilledPortableExperiences.Remove(id);
+                    portableExperiencesController.UnloadPortableExperienceById(id);
+                }
+
+                // Start scenes for smart wearables now in the outfit (auth flow mirrors single-equip path)
+                foreach (IWearable wearable in wearables)
+                {
+                    if (ct.IsCancellationRequested) return;
+
+                    bool isSmart = newOutfitSmartIds.Contains(SmartWearableCache.GetCacheId(wearable));
+                    if (!isSmart) continue;
+
+                    string id = SmartWearableCache.GetCacheId(wearable);
+                    bool requiresAuthorization = await smartWearableCache.RequiresAuthorizationAsync(wearable, ct);
+
+                    if (requiresAuthorization && !smartWearableCache.AuthorizedSmartWearables.Contains(id))
+                    {
+                        bool authorized = await SmartWearableAuthorizationPopupController.RequestAuthorizationAsync(mvcManager, wearable, ct);
+                        if (ct.IsCancellationRequested) return;
+
+                        if (authorized)
+                            smartWearableCache.AuthorizedSmartWearables.Add(id);
+                        else
+                            smartWearableCache.KilledPortableExperiences.Add(id);
+                    }
+
+                    await TryRunSmartWearableSceneAsync(wearable);
+                }
+            }
+            catch (OperationCanceledException) { /* expected on rapid outfit replace */ }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
+        }
 
         private async UniTask StopSmartWearableSceneAsync(IWearable wearable)
         {
@@ -313,6 +392,8 @@ namespace DCL.SmartWearables
 
         private void OnIdentityCleared()
         {
+            outfitEquipCts = outfitEquipCts.SafeRestart();
+
             UnloadAllSmartWearableScenes();
 
             // In addition to unloading the scenes also unload any cached info

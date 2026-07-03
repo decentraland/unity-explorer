@@ -96,8 +96,8 @@ namespace DCL.Passport
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly IFriendsService? friendsService;
+        private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
@@ -183,8 +183,8 @@ namespace DCL.Passport
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IFriendsService? friendsService,
+            FriendsConnectivityStatusTracker? friendOnlineStatusCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
@@ -222,8 +222,8 @@ namespace DCL.Passport
             this.remoteMetadata = remoteMetadata;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.friendServiceProxy = friendServiceProxy;
-            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.friendsService = friendsService;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
@@ -831,9 +831,9 @@ namespace DCL.Passport
         {
             DisableAllFriendInteractions();
 
-            if (!friendServiceProxy.Configured) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService;
 
             friendshipStatusCts = friendshipStatusCts.SafeRestart();
             FetchFriendshipStatusAndShowInteractionAsync(friendshipStatusCts.Token).Forget();
@@ -873,7 +873,7 @@ namespace DCL.Passport
                             break;
                     }
 
-                    bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+                    bool friendOnlineStatus = friendOnlineStatusCache!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
                     viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
 
                     //For now this button will not appear if the user is blocked
@@ -905,7 +905,7 @@ namespace DCL.Passport
 
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
-            contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+            contextMenuJumpInButton.Enabled = friendOnlineStatusCache!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && isUserBlockingFeatureEnabled;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
@@ -961,9 +961,9 @@ namespace DCL.Passport
             config.Root.SetActive(false);
 
             if (inputData.IsOwnProfile || (web3IdentityCache.Identity != null && web3IdentityCache.Identity.Address.Equals(inputData.UserId))) return;
-            if (!friendServiceProxy.Configured) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService;
 
             fetchMutualFriendsCts = fetchMutualFriendsCts.SafeRestart();
             FetchMutualFriendsAsync(fetchMutualFriendsCts.Token).Forget();
@@ -1045,9 +1045,9 @@ namespace DCL.Passport
 
         private void CancelFriendRequest()
         {
-            if (!friendServiceProxy.Configured) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService;
 
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
@@ -1082,9 +1082,9 @@ namespace DCL.Passport
 
         private void AcceptFriendship()
         {
-            if (!friendServiceProxy.Configured) return;
+            if (friendsService == null) return;
 
-            IFriendsService friendService = friendServiceProxy.Object!;
+            IFriendsService friendService = friendsService;
 
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 

@@ -21,7 +21,7 @@ namespace DCL.RealmNavigation.TeleportOperations
         {
             float finalizationProgress = args.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
-            EnumResult<TaskError> result = await teleportController.TryTeleportToSceneSpawnPointAsync(args.CurrentDestinationParcel, teleportLoadReport, ct);
+            EnumResult<TaskError> result = await teleportController.TryTeleportToSceneSpawnPointAsync(args.CurrentDestinationParcel, teleportLoadReport, ct, args.LandOnParcel);
             args.Report.SetProgress(finalizationProgress);
 
             // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors

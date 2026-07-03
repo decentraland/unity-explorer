@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using DCL.Profiling;
 using JetBrains.Annotations;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -19,8 +20,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             ISDKMessageBusCommsControllerAPI commsApi,
             IInstancePoolsProvider instancePoolsProvider,
             ISceneExceptionsHandler exceptionsHandler,
+            SceneRuntimeMetrics metrics,
             CancellationTokenSource disposeCts)
-            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, disposeCts)
+            : base(api, sceneData, instancePoolsProvider, exceptionsHandler, metrics, disposeCts)
         {
             engineApi = api;
             this.commsApi = commsApi;

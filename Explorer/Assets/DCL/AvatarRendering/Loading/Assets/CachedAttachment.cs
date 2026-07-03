@@ -6,22 +6,21 @@ using Utility;
 
 namespace DCL.AvatarRendering.Loading.Assets
 {
-    /// <summary>
-    ///     We need to store the original asset to be able to release it later
-    /// </summary>
     public readonly struct CachedAttachment : IDisposable
     {
         public readonly AttachmentRegularAsset OriginalAsset;
         public readonly GameObject Instance;
         public readonly List<Renderer> Renderers;
         public readonly bool OutlineCompatible;
+        public readonly SpringBoneData[] SpringBones;
 
-        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible)
+        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible, SpringBoneData[] springBones)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
             Renderers = new List<Renderer>();
             OutlineCompatible = outlineCompatible;
+            SpringBones = springBones;
 
             ProfilingCounters.CachedWearablesAmount.Value++;
         }

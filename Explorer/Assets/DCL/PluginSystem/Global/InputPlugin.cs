@@ -8,7 +8,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
-using DCL.Multiplayer.Emotes;
 using DCL.UI;
 using MVC;
 using System;
@@ -40,7 +39,6 @@ namespace DCL.PluginSystem.Global
 
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
-        private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly EmoteWheelShortcutHandler emoteWheelShortcutHandler;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
@@ -53,14 +51,12 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
-            MultiplayerEmotesMessageBus messageBus,
             EmoteWheelShortcutHandler emoteWheelShortcutHandler,
             IMVCManager mvcManager)
         {
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
-            this.messageBus = messageBus;
             this.emoteWheelShortcutHandler = emoteWheelShortcutHandler;
             this.mvcManager = mvcManager;
 
@@ -90,7 +86,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder);
             UpdateCameraInputSystem.InjectToWorld(ref builder);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, emoteWheelShortcutHandler);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, emoteWheelShortcutHandler);
             UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, showUIToast);
         }

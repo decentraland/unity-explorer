@@ -12,7 +12,7 @@ jobs:
       should_build: ${{ steps.check.outputs.should_build }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: dev
@@ -59,7 +59,7 @@ jobs:
       tag_version: ${{ steps.get_version.outputs.tag_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: dev

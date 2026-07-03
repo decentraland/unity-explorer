@@ -6,7 +6,7 @@ namespace DCL.VoiceChat
     public static class VoiceChatExtensions
     {
         public static void ApplySpatialSettings(this LivekitAudioSource lkSource, VoiceChatConfiguration config) =>
-            lkSource.SetSpatialSettings(config.nearbySpatialize, config.nearbyIldStrength, config.nearbySmoothPanning);
+            lkSource.SetSpatialSettings(config.nearbySpatialize, config.nearbyIldStrength);
 
         public static void Apply3dAudioSettings(this AudioSource source, AnimationCurve rolloffCurve)
         {

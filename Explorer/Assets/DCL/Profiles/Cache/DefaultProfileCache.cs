@@ -1,16 +1,15 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
+using Utility.Multithreading;
 
 namespace DCL.Profiles
 {
     public class DefaultProfileCache : IProfileCache
     {
-        private readonly ConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<string, string> userNameToIdMap = new ();
+        private readonly DCLConcurrentDictionary<string, ProfileTier> profiles = new (StringComparer.OrdinalIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, string> userNameToIdMap = new ();
 
         public ProfileTier? Get(string id) =>
             profiles.GetValueOrDefault(id);
@@ -37,7 +36,7 @@ namespace DCL.Profiles
             if (profiles.TryGetValue(id, out ProfileTier existingProfile))
             {
                 // The cached full profile can be never replaced by the compact version
-                Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
+               UnityEngine.Assertions.Assert.IsTrue(profile.GetKind() >= existingProfile.GetKind(), "profile.GetKind() >= existingProfile.GetKind()");
 
                 if (existingProfile != profile)
                 {

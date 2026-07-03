@@ -57,7 +57,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
-            // Create a new container root. It will be cached and pooled
             if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
             else

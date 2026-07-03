@@ -1144,11 +1144,11 @@ MonoBehaviour:
   <HearOthersToggle>k__BackingField: {fileID: 5975531749364629377}
   <VolumeSliderContainer>k__BackingField: {fileID: 1850643027331355941}
   <VolumeSlider>k__BackingField: {fileID: 8598501768903546571}
+  <HearText>k__BackingField: {fileID: 4740140118192889816}
   <SpeakButtonContainer>k__BackingField: {fileID: 3426060694064645244}
   <SpeakButton>k__BackingField: {fileID: 3614453859414897071}
   <SpeakStateVisuals>k__BackingField: {fileID: 4812429912670430281}
   <SpeakingStateVisuals>k__BackingField: {fileID: 5690580525799724271}
-  <HearText>k__BackingField: {fileID: 4740140118192889816}
   speakButtonImage: {fileID: 2187530246253384382}
   speakingColor: {r: 0.101960786, g: 0.7764706, b: 0.1764706, a: 1}
   speakingColorBright: {r: 0, g: 1, b: 0.11981559, a: 1}
@@ -2349,6 +2349,10 @@ PrefabInstance:
       propertyPath: <text>k__BackingField
       value: 
       objectReference: {fileID: 3947213071937203142}
+    - target: {fileID: 1437024038448806854, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: <ButtonPressedAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1437024038448806854, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: '<images>k__BackingField.Array.data[0]'
       value: 

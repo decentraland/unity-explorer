@@ -19,14 +19,6 @@ namespace DCL.Ipfs
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
 
-        public bool SupportInitialSceneState()
-        {
-            if (assetBundleManifestVersion != null)
-                return assetBundleManifestVersion.SupportsInitialSceneState();
-
-            return false;
-        }
-
         public bool Contains(int x, int y)
         {
             if(SceneLookup.HasValue)

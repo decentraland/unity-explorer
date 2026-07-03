@@ -4,6 +4,8 @@ using DCL.Utility.Extensions;
 using MVC;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
@@ -70,26 +72,36 @@ namespace DCL.AuthenticationScreenFlow
 
         public void UpdateBodyTypeUI(bool isMale)
         {
-            BodyTypeLabel.text = isMale ? GetLocalizedBodyType(true) : GetLocalizedBodyType(false);
+            BodyTypeLabel.text = isMale ? "BODY TYPE A" : "BODY TYPE B";
 
             DropdownManIcon.SetActive(isMale);
             DropdownWomanIcon.SetActive(!isMale);
 
             CheckmarkIconA.SetActive(isMale);
             CheckmarkIconB.SetActive(!isMale);
+
+            UpdateBodyTypeLabelAsync(isMale).Forget();
         }
 
-        private static string GetLocalizedBodyType(bool isMale)
+        private async UniTaskVoid UpdateBodyTypeLabelAsync(bool isMale)
         {
             string key = isMale ? "BODY_TYPE_A" : "BODY_TYPE_B";
-            string fallback = isMale ? "BODY TYPE A" : "BODY TYPE B";
+
             try
             {
-                var localized = new UnityEngine.Localization.LocalizedString("Authentication", key);
-                string result = localized.GetLocalizedString();
-                return !string.IsNullOrEmpty(result) ? result : fallback;
+                var localized = new LocalizedString("Authentication", key);
+
+                AsyncOperationHandle<string> handle = localized.GetLocalizedStringAsync();
+                await handle;
+
+                if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded
+                                     && !string.IsNullOrEmpty(handle.Result))
+                    BodyTypeLabel.text = handle.Result;
             }
-            catch { return fallback; }
+            catch
+            {
+                // keep fallback already set in UpdateBodyTypeUI
+            }
         }
 
         public void Show()

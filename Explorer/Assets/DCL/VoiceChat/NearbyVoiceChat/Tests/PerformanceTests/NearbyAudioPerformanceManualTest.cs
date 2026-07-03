@@ -24,7 +24,6 @@ namespace DCL.VoiceChat.Nearby
         [SerializeField] private bool enableSpatialization = true;
         [Range(0f, 1f)]
         [SerializeField] private float ildStrength = 0.75f;
-        [SerializeField] private bool smoothPanning;
 
         [Header("Audio")]
         [SerializeField] private bool playTestTone = true;
@@ -66,8 +65,8 @@ namespace DCL.VoiceChat.Nearby
         private LivekitAudioSource CreateSource()
         {
             LivekitAudioSource source = LivekitAudioSource.New(isSpatial: enableSpatialization);
-            source.SetSpatialSettings(enableSpatialization, ildStrength, smoothPanning);
-            source.transform.position = transform.position + Random.insideUnitSphere * spreadRadius;
+            source.SetSpatialSettings(enableSpatialization, ildStrength);
+            source.transform.position = transform.position + (Random.insideUnitSphere * spreadRadius);
             source.SetSpatialAngles(Random.Range(-Mathf.PI, Mathf.PI), Random.Range(-Mathf.PI * 0.5f, Mathf.PI * 0.5f));
 
             InjectFakeAudioStream(source);
@@ -89,7 +88,7 @@ namespace DCL.VoiceChat.Nearby
 
             foreach (LivekitAudioSource source in activeSources)
             {
-                source.SetSpatialSettings(enableSpatialization, ildStrength, smoothPanning);
+                source.SetSpatialSettings(enableSpatialization, ildStrength);
 
                 if (source.AudioSource.volume != testToneVolume)
                     source.AudioSource.volume = testToneVolume;

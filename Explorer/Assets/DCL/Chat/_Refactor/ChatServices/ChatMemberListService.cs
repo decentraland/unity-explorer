@@ -27,7 +27,7 @@ namespace DCL.Chat.ChatServices
 
         private readonly CurrentChannelService currentChannelService;
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly IEventBus eventBus;
 
         private readonly List<ChatMemberListData> membersBuffer = new ();
@@ -60,12 +60,12 @@ namespace DCL.Chat.ChatServices
         private Action<IReadOnlyList<ChatMemberListData>>? onMemberListUpdated;
 
         public ChatMemberListService(ProfileRepositoryWrapper profileRepository,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             CurrentChannelService currentChannelService,
             IEventBus eventBus)
         {
             this.profileRepository = profileRepository;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.currentChannelService = currentChannelService;
             this.eventBus = eventBus;
         }
@@ -78,7 +78,7 @@ namespace DCL.Chat.ChatServices
         /// </summary>
         public void Start()
         {
-            if (!friendsServiceProxy.Configured)
+            if (friendsService == null)
             {
                 ReportHub.LogWarning(ReportCategory.UI, "[ChatMemberListService] FriendsService is not configured. Cannot start member list service.");
                 return;

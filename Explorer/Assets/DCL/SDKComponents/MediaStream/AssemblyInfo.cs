@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("DCL.MediaStream.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]

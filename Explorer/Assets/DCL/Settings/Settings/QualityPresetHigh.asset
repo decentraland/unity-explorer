@@ -28,3 +28,4 @@ MonoBehaviour:
   maxSceneLights: 10
   shadowsQualityLevel: 2
   shadowDistance: 100
+  springBoneSimulation: 1

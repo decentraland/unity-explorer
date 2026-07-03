@@ -37,12 +37,12 @@ namespace DCL.AvatarRendering.Emotes.Tests
         }
 
         [Test]
-        public void MaskUpperBody_RequestsMecanimClips()
+        public void MaskUpperBody_AlsoRequestsLegacyClips()
         {
             GetGLTFIntention gltfIntention = CreatePromiseAndGetGLTFIntention(AvatarEmoteMask.AemUpperBody);
 
-            Assert.IsTrue(gltfIntention.MecanimAnimationClips,
-                "Masked scene emotes must load as Mecanim clips because AnimatorOverrideController + layer masks are Mecanim-only.");
+            Assert.IsFalse(gltfIntention.MecanimAnimationClips,
+                "Local scene emotes always load as Legacy regardless of mask — PR #8559 unified the path under Legacy-based mask layering for LSD.");
         }
 
         [Test]

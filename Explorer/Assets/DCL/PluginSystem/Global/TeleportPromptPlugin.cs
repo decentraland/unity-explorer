@@ -23,7 +23,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICursor cursor;
         private TeleportPromptController? teleportPromptController;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly TeleportPromptBus teleportPromptBus;
+        private readonly TeleportPromptChatBridge teleportPromptChatBridge;
 
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -37,7 +38,9 @@ namespace DCL.PluginSystem.Global
             this.imageControllerProvider = imageControllerProvider;
             this.placesAPIService = placesAPIService;
             this.cursor = cursor;
-            this.chatMessagesBus = chatMessagesBus;
+
+            teleportPromptBus = new TeleportPromptBus();
+            teleportPromptChatBridge = new TeleportPromptChatBridge(teleportPromptBus, chatMessagesBus);
         }
 
         public async UniTask InitializeAsync(TeleportPromptSettings promptSettings, CancellationToken ct)
@@ -48,7 +51,7 @@ namespace DCL.PluginSystem.Global
                 cursor,
                 imageControllerProvider,
                 placesAPIService,
-                chatMessagesBus);
+                teleportPromptBus);
 
             mvcManager.RegisterController(teleportPromptController);
         }
@@ -57,6 +60,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            teleportPromptChatBridge.Dispose();
             teleportPromptController?.Dispose();
         }
 

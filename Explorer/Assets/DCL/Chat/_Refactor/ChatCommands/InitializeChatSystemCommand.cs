@@ -21,7 +21,7 @@ namespace DCL.Chat.ChatCommands
         private readonly ChatEventBus eventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IChatHistory chatHistory;
-        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly ChatHistoryStorage? chatHistoryStorage;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ICommunityDataService communityDataService;
@@ -34,7 +34,7 @@ namespace DCL.Chat.ChatCommands
             ChatEventBus eventBus,
             IWeb3IdentityCache identityCache,
             IChatHistory chatHistory,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IFriendsService? friendsService,
             ChatHistoryStorage? chatHistoryStorage,
             CommunitiesDataProvider communitiesDataProvider,
             ICommunityDataService communityDataService,
@@ -46,7 +46,7 @@ namespace DCL.Chat.ChatCommands
             this.eventBus = eventBus;
             this.identityCache = identityCache;
             this.chatHistory = chatHistory;
-            this.friendsServiceProxy = friendsServiceProxy;
+            this.friendsService = friendsService;
             this.chatHistoryStorage = chatHistoryStorage;
             this.communitiesDataProvider = communitiesDataProvider;
             this.communityDataService = communityDataService;
@@ -94,7 +94,7 @@ namespace DCL.Chat.ChatCommands
 
             nearbyChannel.MarkAllMessagesAsRead();
 
-            if (friendsServiceProxy.Configured)
+            if (friendsService != null)
                 chatHistoryStorage?.LoadAllChannelsWithoutMessages();
         }
 

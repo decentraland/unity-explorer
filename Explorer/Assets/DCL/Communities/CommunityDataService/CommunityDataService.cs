@@ -13,6 +13,7 @@ using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using MVC;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Communities
@@ -34,6 +35,9 @@ namespace DCL.Communities
 
         void Clear();
         event Action<CommunityMetadataUpdatedEvent> CommunityMetadataUpdated;
+        event Action<string> CommunityJoined;
+        event Action<string> CommunityRemoved;
+        IReadOnlyCollection<string> JoinedCommunityIds { get; }
     }
 
     public class CommunityDataService : ICommunityDataService, IDisposable
@@ -44,11 +48,16 @@ namespace DCL.Communities
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities = new();
+        private readonly HashSet<string> joinedCommunityIds = new();
 
         private CancellationTokenSource userAllowedToUseCommunityBusCts;
         private CancellationTokenSource communitiesServiceCts = new();
         private CancellationTokenSource showCommunityDeepLinkNotificationCts;
         public event Action<CommunityMetadataUpdatedEvent>? CommunityMetadataUpdated;
+        public event Action<string>? CommunityJoined;
+        public event Action<string>? CommunityRemoved;
+
+        public IReadOnlyCollection<string> JoinedCommunityIds => joinedCommunityIds;
 
         public CommunityDataService(
             IChatHistory chatHistory,
@@ -139,6 +148,9 @@ namespace DCL.Communities
                 var channelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);
                 chatHistory.RemoveChannel(channelId);
                 communities.Remove(channelId);
+
+                if (joinedCommunityIds.Remove(userConnectivity.CommunityId))
+                    CommunityRemoved?.Invoke(userConnectivity.CommunityId);
             }
         }
 
@@ -151,6 +163,9 @@ namespace DCL.Communities
             communities.Remove(channelId);
 
             chatHistory.RemoveChannel(channelId);
+
+            if (joinedCommunityIds.Remove(communityId))
+                CommunityRemoved?.Invoke(communityId);
         }
 
         private async UniTask AddCommunityConversationAsync(string communityId, bool setAsCurrentChannel = false)
@@ -181,6 +196,9 @@ namespace DCL.Communities
                     response.data.membersCount,
                     response.data.voiceChatStatus));
 
+                if (joinedCommunityIds.Add(response.data.id))
+                    CommunityJoined?.Invoke(response.data.id);
+
                 chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
 
                 // if (setAsCurrentChannel)
@@ -205,6 +223,9 @@ namespace DCL.Communities
                 1,
                 new GetCommunityResponse.VoiceChatStatus());
 
+            if (joinedCommunityIds.Add(newCommunity.id))
+                CommunityJoined?.Invoke(newCommunity.id);
+
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
         }
 
@@ -212,22 +233,47 @@ namespace DCL.Communities
         {
             var channelId = ChatChannel.NewCommunityChannelId(communityId);
             chatHistory.RemoveChannel(channelId);
+
+            if (joinedCommunityIds.Remove(communityId))
+                CommunityRemoved?.Invoke(communityId);
         }
 
         public void SetCommunities(IEnumerable<GetUserCommunitiesData.CommunityData> newCommunities)
         {
+            using PooledObject<HashSet<string>> _ = HashSetPool<string>.Get(out HashSet<string> previouslyJoined);
+            previouslyJoined.UnionWith(joinedCommunityIds);
+
             communities.Clear();
+            joinedCommunityIds.Clear();
+
             foreach (var community in newCommunities)
             {
                 communities[ChatChannel.NewCommunityChannelId(community.id)] = community;
+                joinedCommunityIds.Add(community.id);
             }
+
+            foreach (string id in previouslyJoined)
+                if (!joinedCommunityIds.Contains(id))
+                    CommunityRemoved?.Invoke(id);
+
+            foreach (string id in joinedCommunityIds)
+                if (!previouslyJoined.Contains(id))
+                    CommunityJoined?.Invoke(id);
         }
 
         public void Clear()
         {
+            string[] previouslyJoined = joinedCommunityIds.Count == 0 ? Array.Empty<string>() : new string[joinedCommunityIds.Count];
+            if (previouslyJoined.Length > 0)
+                joinedCommunityIds.CopyTo(previouslyJoined);
+
             communities.Clear();
+            joinedCommunityIds.Clear();
             communitiesServiceCts.SafeCancelAndDispose();
             communitiesServiceCts = new CancellationTokenSource();
+
+            foreach (string id in previouslyJoined)
+                CommunityRemoved?.Invoke(id);
         }
 
         public bool TryGetCommunity(ChatChannel.ChannelId channelId, out GetUserCommunitiesData.CommunityData communityData)

@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
@@ -29,11 +30,12 @@ namespace DCL.Multiplayer.Profiles.Entities
             remoteEntities.TryCreateOrUpdate(collection, world);
         }
 
-        public static void Remove(this IRemoteEntities remoteEntities, IRemoveIntentions removeIntentions, World world)
+        public static void Remove(IRemoteEntities remoteEntities, IRemoteAnnouncements announcements, IRemoveIntentions removeIntentions, World world)
         {
             using OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch();
             IReadOnlyCollection<RemoveIntention> collection = bunch.Collection();
             remoteEntities.Remove(collection, world);
+            announcements.Remove(collection);
         }
     }
 }

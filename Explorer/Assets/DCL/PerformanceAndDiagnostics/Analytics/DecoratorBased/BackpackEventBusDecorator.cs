@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
@@ -26,7 +25,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IEmote> SelectEmoteEvent;
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string?, AvatarWearableCategoryEnum?, string?> FilterEvent;
-        public event Action<BackpackEquipOutfitCommand, IWearable[]>? EquipOutfitEvent;
+        public event Action<BackpackEquipOutfitCommand, IReadOnlyCollection<IWearable>>? EquipOutfitEvent;
+        public event Action? EquipOutfitCompletedEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
         public event Action? UnEquipAllWearablesEvent;
         public event Action<Color, string> ChangeColorEvent;
@@ -57,6 +57,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.DeactivateEvent += OnDeactivate;
             core.UnEquipAllWearablesEvent += OnUnEquipAllWearables;
             core.EquipOutfitEvent += OnEquipOutfit;
+            core.EquipOutfitCompletedEvent += OnEquipOutfitCompleted;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
@@ -79,10 +80,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.DeactivateEvent -= OnDeactivate;
             core.UnEquipAllWearablesEvent -= OnUnEquipAllWearables;
             core.EquipOutfitEvent -= OnEquipOutfit;
+            core.EquipOutfitCompletedEvent -= OnEquipOutfitCompleted;
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables) =>
             EquipOutfitEvent?.Invoke(command, wearables);
+
+        private void OnEquipOutfitCompleted() =>
+            EquipOutfitCompletedEvent?.Invoke();
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
         {
@@ -113,21 +118,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void OnChangeColor(Color color, string category) => ChangeColorEvent?.Invoke(color, category);
         private void OnUnEquipAll() => UnEquipAllEvent?.Invoke();
 
-        private void OnUnEquipAllWearables() => 
+        private void OnUnEquipAllWearables() =>
             UnEquipAllWearablesEvent?.Invoke();
 
-        private void OnPublishProfile() => 
+        private void OnPublishProfile() =>
             PublishProfileEvent?.Invoke();
-        
-        private void OnDeactivate() => 
+
+        private void OnDeactivate() =>
             DeactivateEvent?.Invoke();
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
 
-        public void SendUnEquipAllWearables() => 
+        public void SendUnEquipAllWearables() =>
             core.SendUnEquipAllWearables();
-        
+
         public void SendChangeColor(Color newColor, string category) =>
             core.SendChangeColor(newColor, category);
 
@@ -146,8 +151,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SendBackpackDeactivateEvent() =>
             core.SendBackpackDeactivateEvent();
 
-        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables) => 
+        public void SendEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables) =>
             core.SendEquipOutfit(command, wearables);
+
+        public void SendEquipOutfitCompleted() =>
+            core.SendEquipOutfitCompleted();
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
             core.SendChangedBackpackSectionEvent(backpackSections);

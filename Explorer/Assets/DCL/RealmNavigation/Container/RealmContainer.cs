@@ -1,13 +1,16 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using Global;
 using Global.Dynamic;
+using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
@@ -29,28 +32,35 @@ namespace DCL.RealmNavigation
         public TeleportController TeleportController { get; private set; }
         public IGlobalRealmController RealmController { get; private set; }
         public RealmNavigatorDebugView DebugView { get; private set; }
+        public LoadingScreenTimeout LoadingScreenTimeout { get; private set; }
+        public ILoadingScreen LoadingScreen { get; private set; }
+        public ECSReloadScene ReloadSceneController { get; private set; }
 
         public static RealmContainer Create(
             StaticContainer staticContainer,
-            IWeb3IdentityCache identityCache,
             IReadOnlyList<int2> staticLoadPositions,
             IDebugContainerBuilder debugContainerBuilder,
-            LoadingScreenTimeout loadingScreenTimeout,
-            ILoadingScreen loadingScreen,
+            IMVCManager mvcManager,
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
-            TeleportController teleportController,
             DecentralandEnvironment dclEnvironment,
-            IWorldPermissionsService worldPermissionsService)
+            World globalWorld,
+            Entity playerEntity)
         {
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
+
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment, staticContainer.CacheCleaner);
+
+            var loadingScreenTimeout = new LoadingScreenTimeout();
+            ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout, staticContainer.LoadingStatus);
+
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData, urlsSource);
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var realmController = new RealmController(
-                identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 teleportController,
                 retrieveSceneFromFixedRealm,
@@ -66,8 +76,7 @@ namespace DCL.RealmNavigation
                 appArgs,
                 urlsSource,
                 dclEnvironment,
-                staticContainer.WorldManifestProvider,
-                worldPermissionsService
+                staticContainer.WorldManifestProvider
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
@@ -77,6 +86,9 @@ namespace DCL.RealmNavigation
                 RealmController = realmController,
                 DebugView = realmNavigatorDebugView,
                 TeleportController = teleportController,
+                LoadingScreenTimeout = loadingScreenTimeout,
+                LoadingScreen = loadingScreen,
+                ReloadSceneController = reloadSceneController,
             };
         }
 

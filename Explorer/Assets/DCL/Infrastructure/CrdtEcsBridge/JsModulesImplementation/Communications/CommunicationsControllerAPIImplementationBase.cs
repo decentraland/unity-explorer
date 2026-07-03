@@ -1,5 +1,6 @@
 ﻿using CRDT;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -63,7 +64,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             // Authoritative multiplayer enforces sending messages to the special peer
             if (sceneData.SceneEntityDefinition.metadata.authoritativeMultiplayer)
-                recipient = "authoritative-server";
+                recipient = LiveKitMessagesBroadcaster.AUTH_SERVER_IDENTITY;
 
             foreach (PoolableByteArray poolable in broadcastData)
                 if (poolable.Length > 0)

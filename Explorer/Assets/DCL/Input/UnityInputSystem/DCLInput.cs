@@ -2390,6 +2390,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Support"",
+                    ""type"": ""Button"",
+                    ""id"": ""7b8c3d4e-5f6a-4b8c-9d0e-1f2a3b4c5d6e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2612,6 +2621,39 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""CameraReel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""SHIFT+H"",
+                    ""id"": ""2c9d4e1f-3a5b-4c7d-8e9f-0a1b2c3d4e5f"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Support"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""3d0e5f2a-4b6c-5d8e-9f0a-1b2c3d4e5f6a"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Support"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""4e1f6a3b-5c7d-6e9f-0a1b-2c3d4e5f6a7b"",
+                    ""path"": ""<Keyboard>/h"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Support"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         },
@@ -4018,6 +4060,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_Places = m_Shortcuts.FindAction("Places", throwIfNotFound: true);
         m_Shortcuts_Events = m_Shortcuts.FindAction("Events", throwIfNotFound: true);
         m_Shortcuts_CameraReel = m_Shortcuts.FindAction("CameraReel", throwIfNotFound: true);
+        m_Shortcuts_Support = m_Shortcuts.FindAction("Support", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -5091,6 +5134,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_Places;
     private readonly InputAction m_Shortcuts_Events;
     private readonly InputAction m_Shortcuts_CameraReel;
+    private readonly InputAction m_Shortcuts_Support;
     /// <summary>
     /// Provides access to input actions defined in input action map "Shortcuts".
     /// </summary>
@@ -5175,6 +5219,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @CameraReel => m_Wrapper.m_Shortcuts_CameraReel;
         /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/Support".
+        /// </summary>
+        public InputAction @Support => m_Wrapper.m_Shortcuts_Support;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
@@ -5254,6 +5302,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @CameraReel.started += instance.OnCameraReel;
             @CameraReel.performed += instance.OnCameraReel;
             @CameraReel.canceled += instance.OnCameraReel;
+            @Support.started += instance.OnSupport;
+            @Support.performed += instance.OnSupport;
+            @Support.canceled += instance.OnSupport;
         }
 
         /// <summary>
@@ -5319,6 +5370,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @CameraReel.started -= instance.OnCameraReel;
             @CameraReel.performed -= instance.OnCameraReel;
             @CameraReel.canceled -= instance.OnCameraReel;
+            @Support.started -= instance.OnSupport;
+            @Support.performed -= instance.OnSupport;
+            @Support.canceled -= instance.OnSupport;
         }
 
         /// <summary>
@@ -6637,6 +6691,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCameraReel(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Support" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSupport(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Emotes" which allows adding and removing callbacks.

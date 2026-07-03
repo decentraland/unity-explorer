@@ -200,13 +200,13 @@ namespace DCL.Backpack
             avatarSlot.SelectedBackground.SetActive(true);
         }
 
-        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IWearable[] wearables)
+        private void OnEquipOutfit(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables)
         {
             UnEquipAll();
 
             foreach (var w in wearables)
             {
-                if (!avatarSlots.TryGetValue(w.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView)) 
+                if (!avatarSlots.TryGetValue(w.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView))
                     continue;
 
                 equippedWearables.Add(w);
@@ -214,7 +214,7 @@ namespace DCL.Backpack
                 avatarSlotView.Item1.SlotWearableUrn = w.GetUrn();
                 avatarSlotView.Item1.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(w.GetRarity());
                 avatarSlotView.Item1.EmptyOverlay.SetActive(false);
-                
+
                 avatarSlotView.Item2 = avatarSlotView.Item2.SafeRestart();
 
                 WaitForThumbnailAsync(w, avatarSlotView.Item1, avatarSlotView.Item2.Token).Forget();
@@ -226,7 +226,7 @@ namespace DCL.Backpack
 
             CalculateHideStatus();
         }
-        
+
         public void Dispose()
         {
             backpackEventBus.EquipWearableEvent -= EquipInSlot;

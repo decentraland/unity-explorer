@@ -275,6 +275,7 @@ jobs:
           body: |-
             ![badge]  <img src="https://ui.decentraland.org/decentraland_256x256.png" width="30"> 
             
-            Build failed! Check the logs to see what went wrong
+            Build failed! Check the logs to see what went wrong.
+            If the error repeats please consider the `clean-build` tag.
 
             [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=github&style=for-the-badge

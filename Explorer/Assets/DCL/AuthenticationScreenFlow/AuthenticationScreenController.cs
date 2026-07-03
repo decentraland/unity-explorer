@@ -78,9 +78,19 @@ namespace DCL.AuthenticationScreenFlow
         public string CurrentRequestID { get; internal set; } = string.Empty;
         public LoginMethod CurrentLoginMethod { get; internal set; }
 
+        // Set by the Lobby states on Enter so analytics can tag LOGGED_IN / LOGGED_IN_CACHED with
+        // whether the session created a new account or restored an existing one. Without this flag
+        // the LOGGED_IN vs LOGGED_IN_CACHED split conflates "fresh auth" with "new account",
+        // misclassifying returning users whose cached identity expired.
+        public bool IsCurrentlyNewAccount { get; internal set; }
+
         public event Action DiscordButtonClicked;
         public event Action<string, bool> OTPVerified;
         public event Action OTPResend;
+        public event Action ProfileFinalized;
+
+        internal void RaiseProfileFinalized() =>
+            ProfileFinalized?.Invoke();
 
         private MVCStateMachine<AuthStateBase> fsm;
         private AuthenticationScreenAudio audio;
@@ -156,7 +166,8 @@ namespace DCL.AuthenticationScreenFlow
                 new LoginSelectionAuthState(fsm, viewInstance, this, CurrentState, splashScreen, web3Authenticator, webBrowser, enableEmailOTP),
                 new ProfileFetchingAuthState(fsm, viewInstance, this, CurrentState, selfProfile, storedIdentityProvider),
                 new IdentityVerificationDappAuthState(fsm, viewInstance, this, CurrentState, web3Authenticator),
-                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController)
+                new LobbyForExistingAccountAuthState(fsm, viewInstance, this, splashScreen, CurrentState, characterPreviewController),
+                new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
             );
 
             if (enableEmailOTP)
@@ -165,10 +176,7 @@ namespace DCL.AuthenticationScreenFlow
                 otpVerificationState.OTPVerified += (email, success) => OTPVerified?.Invoke(email, success);
                 otpVerificationState.OTPResend += () => OTPResend?.Invoke();
 
-                fsm.AddStates(
-                    otpVerificationState,
-                    new LobbyForNewAccountAuthState(fsm, viewInstance, this, CurrentState, characterPreviewController, selfProfile, wearablesProvider, webBrowser, webRequestController, decentralandUrlsSource, profileChangesBus)
-                );
+                fsm.AddStates(otpVerificationState);
             }
 
             fsm.Enter<InitAuthState>();

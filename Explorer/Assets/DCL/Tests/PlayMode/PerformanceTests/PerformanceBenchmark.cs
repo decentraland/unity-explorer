@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.Diagnostics.Tests;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Time;
 using DCL.Utilities.Extensions;
 using DCL.Utility;
 using DCL.Web3.Identities;
@@ -75,7 +76,7 @@ namespace DCL.Tests.PlayMode.PerformanceTests
             var hub = new RequestHub(useGateway ? GatewayUrlsSource.CreateForTest(env, ILaunchMode.PLAY) : DecentralandUrlsSource.CreateForTest(env, ILaunchMode.PLAY), disableABCache);
             hub.SetKTXEnabled(ktxEnabled);
 
-            controller = new WebRequestController(analytics, identityCache, hub, new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)));
+            controller = new WebRequestController(analytics, identityCache, hub, new WebRequestBudget(concurrency, new ElementBinding<ulong>(0)), new RealmClock());
         }
 
         protected async UniTask BenchmarkAsync<TParam>(Func<TParam, UniTask> createRequest, IReadOnlyList<TParam> loopThrough, int warmupCount, int targetRequestsCount,

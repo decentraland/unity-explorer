@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Networking;
 
-namespace DCL.CrdtEcsBridge.JsModulesImplementation
+namespace CrdtEcsBridge.JsModulesImplementation
 {
     public static class SimpleFetchAdHoc
     {

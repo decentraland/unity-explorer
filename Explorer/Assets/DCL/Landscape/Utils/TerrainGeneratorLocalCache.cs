@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
+using Utility.Multithreading;
 
 namespace DCL.Landscape.Utils
 {
@@ -108,7 +109,7 @@ namespace DCL.Landscape.Utils
         {
             await using var fileStream =
                 new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, isZone), FileMode.Open);
-            return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
+            return await DCLTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
         public async UniTask<T[]> RetrieveArrayFromFileAsync<T>(string name, string offsetX, string offsetZ,
@@ -116,7 +117,7 @@ namespace DCL.Landscape.Utils
         {
             await using var fileStream =
                 new FileStream(GetDictionaryFilePath(name, offsetX, offsetZ, layer, isZone), FileMode.Open);
-            return await UniTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
+            return await DCLTask.RunOnThreadPool(() => (T[])FORMATTER.Deserialize(fileStream));
         }
 
         private static string GetDictionaryFilePath(string name, string x, string y, bool isZone)
@@ -174,7 +175,7 @@ namespace DCL.Landscape.Utils
             TerrainLocalCache? localCache;
             await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
+                localCache = await DCLTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
             }
 
             if (localCache.checksum != parcelChecksum)

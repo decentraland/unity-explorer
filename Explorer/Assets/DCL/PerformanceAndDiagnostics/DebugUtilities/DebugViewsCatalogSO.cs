@@ -62,5 +62,8 @@ namespace DCL.DebugUtilities
 
         [field: SerializeField]
         public VisualTreeAsset OngoingRequestsWidget { get; private set; }
+
+        [field: SerializeField]
+        public VisualTreeAsset LineChart { get; private set; }
     }
 }

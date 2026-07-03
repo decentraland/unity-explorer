@@ -1,4 +1,4 @@
-﻿using DCL.Backpack.AvatarSection.Outfits.Commands;
+using DCL.Backpack.AvatarSection.Outfits.Commands;
 using DCL.Backpack.AvatarSection.Outfits.Models;
 using DCL.Backpack.BackpackBus;
 

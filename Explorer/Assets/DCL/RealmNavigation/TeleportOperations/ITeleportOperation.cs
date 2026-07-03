@@ -18,13 +18,19 @@ namespace DCL.RealmNavigation.TeleportOperations
 
         public bool AllowsWorldPositionOverride { get; private set; }
 
-        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus, bool allowsWorldPositionOverride)
+        /// <summary>
+        ///     When true, land at <see cref="CurrentDestinationParcel" /> itself instead of the scene's spawn point.
+        /// </summary>
+        public bool LandOnParcel { get; private set; }
+
+        public TeleportParams(URLDomain currentDestinationRealm, Vector2Int currentDestinationParcel, AsyncLoadProcessReport report, ILoadingStatus loadingStatus, bool allowsWorldPositionOverride, bool landOnParcel = false)
         {
             CurrentDestinationRealm = currentDestinationRealm;
             CurrentDestinationParcel = currentDestinationParcel;
             Report = report;
             LoadingStatus = loadingStatus;
             AllowsWorldPositionOverride = allowsWorldPositionOverride;
+            LandOnParcel = landOnParcel;
         }
 
         public void ChangeDestination(URLDomain newDestinationRealm, Vector2Int newDestinationParcel)

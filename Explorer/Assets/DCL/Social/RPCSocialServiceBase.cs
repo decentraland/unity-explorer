@@ -2,8 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using Sentry;
 using System;
-using System.Net.WebSockets;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
+using Utility.Networking;
 
 namespace DCL.SocialService
 {
@@ -123,5 +125,28 @@ namespace DCL.SocialService
             e.Message.Contains("Transport", StringComparison.OrdinalIgnoreCase)
             || e.Message.Contains("Identity is not found", StringComparison.OrdinalIgnoreCase)
             || e.Message.Contains("RPC", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        ///     Drives <c>MoveNextAsync</c> directly so <c>DisposeAsync</c> always runs in a <c>finally</c> when cancelled.
+        ///     Necessary because the RPC stream's <c>GetAsyncEnumerator</c> ignores the cancellation token, so a plain
+        ///     <c>await foreach</c> abandons the enumerator without disposing it.
+        /// </summary>
+        protected static async IAsyncEnumerable<T> EnumerateWithCancellationAsync<T>(
+            IUniTaskAsyncEnumerable<T> stream,
+            [EnumeratorCancellation] CancellationToken ct)
+        {
+            IUniTaskAsyncEnumerator<T> enumerator = stream.GetAsyncEnumerator(ct);
+
+            try
+            {
+                while (await enumerator.MoveNextAsync().AttachExternalCancellation(ct))
+                    yield return enumerator.Current;
+            }
+            finally
+            {
+                try { await enumerator.DisposeAsync(); }
+                catch (Exception) { /* best-effort — stream may already be closed */ }
+            }
+        }
     }
 }

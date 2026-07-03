@@ -44,6 +44,26 @@ Non-release builds created by CI (for PRs and the dev branch) include AltTester 
 
 ---
 
+## Visual Regression on PRs
+
+The visual regression suite can be triggered on any PR by leaving the following comment:
+
+```
+/visual-tests
+```
+
+The dispatcher lives in [`.github/workflows/visual-regression.yml`](../.github/workflows/visual-regression.yml) and hands off to the `run-visual-suite.yml` reusable workflow in [decentraland/explorer-automation](https://github.com/decentraland/explorer-automation).
+
+**Requirements:**
+- The commenter must have `OWNER`, `MEMBER`, or `COLLABORATOR` association on the repo. Comments from anyone else are silently ignored.
+- The PR's head commit must already have a successful **Unity Cloud Build** run triggered by the `pull_request` event. If the build is still running, failed, or was produced by a different event (push to dev, scheduled, manual dispatch), the workflow errors out — wait for the PR build to finish first.
+
+**Confirmation:** when authorized, the bot reacts to the trigger comment with 👀. No reaction means the comment was ignored (usually an author-association mismatch).
+
+**Branch matching for baselines and fixtures:** if `decentraland/explorer-automation` has a branch with the same name as the PR's head branch, that branch's visual baselines and test fixtures are used. Otherwise the workflow falls back to explorer-automation's default branch. This lets you stage matching test changes alongside Explorer changes by reusing the branch name.
+
+---
+
 ## Running Tests
 
 ### Option 1: Automated with MetaForge (Recommended)

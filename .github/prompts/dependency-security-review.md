@@ -113,6 +113,64 @@ HIGH RISK
 - suspicious mismatch between stated purpose and actual capability
 - region/platform-specific behavior with insufficient reviewability
 
+--- STEP W: WORKFLOW AND PROMPT FILE CHANGES ---
+
+Run this section if the PR modifies anything under `.github/workflows/` or `.github/prompts/`. These files run with workflow secrets and govern automated review, build, and release, so each change needs a careful read. Group findings into HIGH (treat as blockers) and MEDIUM (worth a human follow-up).
+
+### HIGH — block before merge
+
+**W.1 — Prompt loaded from the PR checkout.**
+If a workflow runs `cat .github/prompts/<file>.md` (or any other read of a PR-side file) into an LLM prompt while the job holds secrets, the prompt becomes attacker-controlled. The fix is to fetch it from base via `gh api /repos/{repo}/contents/<file>?ref=$BASE_SHA --jq '.content' | base64 -d`, where `$BASE_SHA` is the base branch SHA — never the PR head.
+
+**W.3 — TOCTOU between trigger and workflow run.**
+On `issue_comment`, `workflow_run`, or `workflow_dispatch`, the workflow typically calls `pulls.get` or `gh pr view` at run time. The scheduling gap is enough for an attacker to push a fresh commit and have the workflow review code the maintainer never saw. The check should compare `pr.head.repo.pushed_at` to the trigger timestamp (e.g. `comment.created_at`) and fail if the push is newer. Don't use `commit.committer.date` — it's set by `git` on the attacker's machine and is trivially forgeable with `git commit --date='…'`.
+
+**W.4 — Untrusted event text inside a prompt.**
+Anything like `${{ github.event.comment.body }}`, `${{ github.event.issue.title }}`, `${{ github.event.issue.body }}`, or `${{ github.event.workflow_run.head_commit.message }}` interpolated directly into an LLM prompt is a prompt-injection channel. Drop the field or wrap it with explicit markers (e.g. `<untrusted-input>…</untrusted-input>`) and have the base prompt tell the LLM to treat it as data, not instructions.
+
+**W.5a — Destructive write tools with wildcard scope.**
+In an `allowedTools` string, entries like `Bash(gh issue close:*)`, `gh issue edit:*`, `gh issue comment:*`, `gh pr review:*`, or `gh pr merge:*` let a prompt-injected LLM act on any issue or PR. Scope them to the triggering entity, e.g. `Bash(gh issue close ${{ github.event.issue.number }}:*)`.
+
+**W.6 — No actor check before invoking an LLM.**
+If `issue_comment`, `issues`, `discussion_comment`, or similar user-initiated triggers fire an LLM workflow with no membership gate, anyone on GitHub can drive it. The right pattern is a `check-member` job that calls `GET /orgs/<org>/members/<user>` with an org-scoped token (like `ORG_ACCESS_TOKEN`) and a downstream job that `needs:` it. `author_association == 'MEMBER'` is not enough — it only resolves for users whose org membership is public.
+
+**W.7a — Secret-holding actions pinned to a mutable ref.**
+`uses: org/repo@main`, `@master`, `@dev`, `@develop`, `@latest`, or any version tag is dangerous on any action that consumes `secrets.*`, signs code, or runs under `pull_request_target`. If the upstream is compromised, every run picks up the new code. Pin to a 40-character commit SHA.
+
+**W.8a — `pull_request_target` plus PR-controlled execution.**
+`on: pull_request_target` exposes secrets to fork PRs. Combined with `actions/checkout` of the PR head, or with `npm install` / `pip install` / custom hooks of PR-controlled code, it's the source of most "pwn request" CVEs. Avoid `pull_request_target` unless secrets are truly required and the job only reads metadata.
+
+### MEDIUM — worth fixing, doesn't have to block
+
+**W.2 — Static heredoc delimiter on `$GITHUB_OUTPUT`.**
+`echo "name<<EOF"` followed by content from outside the workflow (a checked-out file, a `gh api` response) lets a line that equals `EOF` close the heredoc early and define arbitrary subsequent step outputs. Use a random delimiter such as `DELIM="EOF_$(uuidgen)"`.
+
+**W.5b — Read and exfil primitives.**
+`Bash(cat:*)`, `Bash(curl:*)`, and `WebFetch` give an LLM arbitrary file reads or outbound HTTP — the primary channels for leaking `GITHUB_TOKEN`, `ACTIONS_RUNTIME_TOKEN`, and other env values. Replace `cat:*` with exact paths (`Bash(cat docs/<file>.md)`) and drop `curl` / `WebFetch` unless there's a documented network need with a domain allowlist.
+
+**W.5c — `gh label create:*` when labels gate approvals or merge.**
+If a label like `claude-approved` is part of the approval flow, a wildcard `gh label create:*` is a bypass primitive. Drop it.
+
+**W.7b — Other unpinned actions.**
+Even outside the secret-holding case, branch- and tag-pinned externals are risky. SHA-pin everything; consider Dependabot for managed bumps.
+
+**W.8b — `pull_request_target` for metadata only.**
+If the trigger is used purely to read labels/title/author and no PR code is executed, it can be acceptable, but still SHA-pin every action used and document the reason inline.
+
+**W.9 — Long-retention artifact upload from an LLM workflow.**
+`actions/upload-artifact` with `retention-days > 14` on a job that runs `anthropics/claude-code-action` (or similar) is a persistent exfil sink — the trace may contain anything the LLM was tricked into printing. Keep retention to 7 days, or skip the upload entirely if it isn't being used for debugging.
+
+**W.10 — Permissions broader than needed.**
+`permissions: write-all`, a missing top-level / per-job `permissions:` block, or write scopes the job never exercises. Set explicit, minimum scopes at the job level.
+
+### Prompt-file changes
+
+For files under `.github/prompts/`, read the diff as if you were reviewing operational instructions for an LLM with workflow secrets. Flag any new instruction that tells the LLM to read filesystem paths, run shell commands, post to issues/PRs, or make network requests beyond what the calling workflow already allows. Watch especially for instructions that could escalate a downstream tool allowlist — e.g. *"if everything looks good, run `gh pr review --approve`"*. If a prompt change implies a workflow change (or vice versa), check both sides.
+
+### Verdict
+
+Output `DEPENDENCY_REVIEW: BLOCK` if any HIGH finding from W.1–W.10 is present. Output `DEPENDENCY_REVIEW: NEEDS_ATTENTION` if any MEDIUM finding without a HIGH. Same severity scale and markers as the dependency review above.
+
 --- STEP 4: OUTPUT ---
 Produce:
 

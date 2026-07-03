@@ -88,7 +88,7 @@ namespace DCL.Chat.ChatReactions.Networking
 
             Profiler.BeginSample("ChatReactions.Network.Flush");
 
-            float baseTimestamp = Time.unscaledTime;
+            float baseTimestamp = UnityEngine.Time.unscaledTime;
             int offset = 0;
             int totalCount = 0;
 

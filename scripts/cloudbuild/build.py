@@ -8,10 +8,17 @@ import zipfile
 import requests
 import datetime
 import argparse
+import collections
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 # Local
 import utils
+
+RETRYABLE_EXIT_CODE = 99  # nick-fields/retry only retries on this code
+
+# All install sources used in build-release-main.yml's matrix. Used to build the set of
+# protected release-pool target names in delete_current_target.
+_RELEASE_INSTALL_SOURCES = ['launcher', 'epic']
 
 from zipfile import ZipFile, ZipInfo
 
@@ -33,8 +40,20 @@ is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
-POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
-GLOBAL_TIMEOUT = int(os.getenv('GLOBAL_TIMEOUT', '10800')) # Seconds
+
+POLL_TIME = int(os.getenv('POLL_TIME', '60'))
+QUEUE_POLL_TIME = int(os.getenv('QUEUE_POLL_TIME', '120'))
+STALE_THRESHOLD = int(os.getenv('STALE_POLL_THRESHOLD', '600'))
+
+# Queue time and active build time use separate budgets so a long Unity Cloud
+# queue does not eat into the actual build window.
+QUEUE_TIMEOUT = int(os.getenv('QUEUE_TIMEOUT', '14400'))
+BUILD_TIMEOUT = int(os.getenv('BUILD_TIMEOUT', '10800'))
+
+# Unity Cloud Build buildStatus enum: https://docs.unity.com/cloud-build/api.html
+QUEUE_STATUSES = {'created', 'queued', 'sentToBuilder'}
+ACTIVE_STATUSES = {'started', 'restarted'}
+TERMINAL_STATUSES = {'success', 'failure', 'canceled', 'unknown'}
 
 build_healthy = True
 
@@ -94,26 +113,23 @@ def clone_current_target(use_cache):
         
         return body
 
-    # Set target name based on branch, without commit SHA
-    base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    platform = re.sub(r'^t_', '', os.getenv('TARGET')).lower()
+    branch_name = os.getenv('BRANCH_NAME', '')
 
     # Get the install source from the environment variable
     install_source = os.getenv('PARAM_INSTALL_SOURCE', 'launcher')
+    # Append the install source to the target name only if it's not 'launcher'
+    install_suffix = f"-{install_source}" if install_source and install_source != 'launcher' else ''
 
-    # Include install_source in the target name only if it's not 'launcher'
-    if install_source and install_source != 'launcher':
-        base_target_name = f"{base_target_name}-{install_source}"
+    # Release/hotfix/main share a single stable pool target; all other branches use branch-derived names.
+    is_release_pool = branch_name == 'main' or branch_name.startswith(('release/', 'hotfix/'))
 
-    print(f"Start clone_current_target for {base_target_name}")
-
-    if is_release_workflow:
-         # Use the tag version in the target name if it's a release workflow
-        tag_version = os.getenv('TAG_VERSION', 'unknown-version')
-        # Remove dots from the tag version, as unity API does not allow . in the request
-        sanitized_tag_version = re.sub(r'\.', '-', tag_version)
-        new_target_name = f"{base_target_name}-{sanitized_tag_version}"
+    if is_release_pool:
+        new_target_name = f"{platform}-release{install_suffix}".lower()
     else:
-        new_target_name = base_target_name
+        # Branch-derived target (one cache per branch), without commit SHA.
+        sanitized_branch = re.sub('[^A-Za-z0-9]+', '-', branch_name)
+        new_target_name = f"{platform}-{sanitized_branch}{install_suffix}".lower()
 
     print(f"Updated name for target: {new_target_name}")
 
@@ -132,7 +148,13 @@ def clone_current_target(use_cache):
     if 'error' in existing_target:
         print(f"New target found")
         # Create new target with template cache
-        if use_cache:
+        if is_release_pool:
+            # Cold genesis for the shared release/main pool: never seed from another target so the
+            # release cache lineage stays fully isolated from dev/feature branches. The first
+            # release compiles cold but populates the library cache; later releases reuse it via
+            # the existing-target branch below (buildTargetCopyCache = the pool target itself).
+            print("Release pool: cold genesis, not seeding cache from another target")
+        elif use_cache:
             cache_source = resolve_cache_source(template_target)
             body['settings']['buildTargetCopyCache'] = cache_source
             print(f"Using cache from: {cache_source}")
@@ -267,6 +289,17 @@ def run_build(branch, clean):
     sys.exit(1)
     
 def cancel_build(id):
+    # Idempotent: Unity 4xx's a DELETE on a terminal build, so skip in that case.
+    try:
+        check = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS, timeout=30)
+        if check.status_code == 200:
+            current_status = check.json().get('buildStatus')
+            if current_status in TERMINAL_STATUSES:
+                print(f'Build {id} already in terminal state ({current_status}). Skipping cancel.')
+                return
+    except requests.exceptions.RequestException as e:
+        print(f'Pre-cancel status check failed ({e}); attempting cancel anyway.')
+
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 
     if response.status_code == 204:
@@ -274,7 +307,6 @@ def cancel_build(id):
     else:
         print("Build failed to cancel with status code:", response.status_code)
         print("Response body:", response.text)
-        sys.exit(1)
 
 def poll_build(id):
     if id == -1:
@@ -309,19 +341,17 @@ def poll_build(id):
     status = response_json['buildStatus']
     match status:
         case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':
-            print(f'Build status: {status}')
-            return True
+            return True, status, response_json
         case 'success':
-            print(f'Build finished successfully! | Elapsed (Unity) time: {datetime.timedelta(seconds=(response_json['totalTimeInSeconds']))}')
-            return False
+            print(f'Build finished successfully! | Elapsed (Unity) time: {datetime.timedelta(seconds=(response_json["totalTimeInSeconds"]))}')
+            return False, status, response_json
         case 'failure' | 'canceled' | 'unknown':
             print(f'Build error! Last known status: "{status}"')
             build_healthy = False
-            return False
+            return False, status, response_json
         case _:
             print(f'Build status is not known!: "{status}"')
             sys.exit(1)
-            return False
             
 def download_artifact(id):
     session = requests.Session()
@@ -471,9 +501,18 @@ def delete_current_target():
     # List of targets to delete
     targets = ['macos', 'windows64']
     
+    protected = set()
+    for t in targets:
+        for src in _RELEASE_INSTALL_SOURCES:
+            suffix = f'-{src}' if src != 'launcher' else ''
+            protected.add(f'{t}-release{suffix}')
+
     # Loop through each target
     for target in targets:
         base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}'.lower()
+        if base_target_name in protected:
+            print(f'Refusing to delete shared release cache target: "{base_target_name}"')
+            continue
         response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
         
         if response.status_code == 204:
@@ -487,13 +526,178 @@ def delete_current_target():
     
     sys.exit(0)
 
-# Entrypoint here ->
+def try_resume_build():
+    """Reattach to an in-flight build from build_info.json so the next retry attempt
+    keeps the same Unity Cloud queue position instead of POSTing a fresh build.
+
+    Returns (target, id, status, elapsed_seconds) or None.
+    """
+    info = utils.read_build_info()
+    if info is None:
+        return None
+
+    persisted_target = info.get('target')
+    persisted_id = info.get('id')
+    if not persisted_target or persisted_id is None:
+        utils.delete_build_info()
+        return None
+
+    try:
+        resp = requests.get(
+            f'{URL}/buildtargets/{persisted_target}/builds/{persisted_id}',
+            headers=HEADERS,
+            timeout=30,
+        )
+    except requests.exceptions.RequestException as e:
+        print(f'Resume probe failed ({e}). Discarding build_info.')
+        utils.delete_build_info()
+        return None
+
+    if resp.status_code != 200:
+        print(f'Resume probe returned status {resp.status_code}. Discarding build_info.')
+        utils.delete_build_info()
+        return None
+
+    body = resp.json()
+    current_status = body.get('buildStatus')
+    if current_status in QUEUE_STATUSES or current_status in ACTIVE_STATUSES:
+        elapsed = int(body.get('totalTimeInSeconds') or 0)
+        print(f'Resuming persisted build: target={persisted_target}, id={persisted_id}, status={current_status}, elapsed={datetime.timedelta(seconds=elapsed)}')
+        return persisted_target, persisted_id, current_status, elapsed
+
+    print(f'Persisted build status={current_status} - not resumable. Discarding build_info.')
+    utils.delete_build_info()
+    return None
+
+
+def write_step_summary(target, build_id, final_status, phase_durations, queue_reasons, queue_elapsed, build_elapsed):
+    """Append a phase breakdown to $GITHUB_STEP_SUMMARY (best-effort)."""
+    summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+    if not summary_path:
+        return
+
+    def fmt(seconds):
+        if not seconds:
+            return '—'
+        return str(datetime.timedelta(seconds=int(seconds)))
+
+    queue_total = sum(phase_durations.get(s, 0) for s in QUEUE_STATUSES)
+    build_total = sum(phase_durations.get(s, 0) for s in ACTIVE_STATUSES)
+
+    lines = []
+    lines.append('### Unity Cloud Build phase breakdown')
+    lines.append('')
+    lines.append(f'- Target: `{target}`')
+    lines.append(f'- Build ID: `{build_id}`')
+    lines.append(f'- Final outcome: `{final_status}`')
+    if queue_reasons:
+        lines.append(f"- Queue reasons seen: {', '.join(f'`{r}`' for r in sorted(queue_reasons))}")
+    lines.append('')
+    lines.append('| Phase | Duration | Budget |')
+    lines.append('|---|---:|---:|')
+    lines.append(f"| created | {fmt(phase_durations.get('created', 0))} | — |")
+    lines.append(f"| queued | {fmt(phase_durations.get('queued', 0))} | — |")
+    lines.append(f"| sentToBuilder | {fmt(phase_durations.get('sentToBuilder', 0))} | — |")
+    lines.append(f"| **queue subtotal** | **{fmt(queue_total or queue_elapsed)}** | {fmt(QUEUE_TIMEOUT)} |")
+    lines.append(f"| started | {fmt(phase_durations.get('started', 0))} | — |")
+    lines.append(f"| restarted | {fmt(phase_durations.get('restarted', 0))} | — |")
+    lines.append(f"| **build subtotal** | **{fmt(build_total or build_elapsed)}** | {fmt(BUILD_TIMEOUT)} |")
+    lines.append('')
+
+    try:
+        with open(summary_path, 'a') as f:
+            f.write('\n'.join(lines) + '\n')
+    except OSError as e:
+        print(f'Warning: could not write step summary: {e}')
+
+
+def run_poll_loop(id, build_already_active=False, resumed_build_elapsed=0):
+    """Polls the build, enforcing queue and build budgets separately.
+
+    On QUEUE_TIMEOUT the runner yields without cancelling so the next retry
+    attempt can reattach via try_resume_build and keep the queue position.
+    BUILD_TIMEOUT still cancels — a runaway active build should not keep
+    holding a Unity Cloud slot.
+
+    Returns (final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed).
+    """
+    phase_durations = collections.defaultdict(float)
+    queue_reasons = set()
+
+    now = time.time()
+    queue_start = now
+    build_start = (now - resumed_build_elapsed) if build_already_active else None
+    last_status = None
+    last_status_change = now
+    last_poll = now
+
+    while True:
+        now = time.time()
+
+        if last_status is not None:
+            phase_durations[last_status] += now - last_poll
+        last_poll = now
+
+        if build_start is None:
+            queue_elapsed = now - queue_start
+            if queue_elapsed > QUEUE_TIMEOUT:
+                print(
+                    f'Queue timeout exceeded ({datetime.timedelta(seconds=int(queue_elapsed))} '
+                    f'> {datetime.timedelta(seconds=QUEUE_TIMEOUT)}). '
+                    f'Yielding runner; build stays queued for the next attempt to reattach.'
+                )
+                return 'queue_timeout', phase_durations, queue_reasons, queue_elapsed, 0.0
+        else:
+            build_elapsed = now - build_start
+            if build_elapsed > BUILD_TIMEOUT:
+                print(f'Build timeout exceeded ({datetime.timedelta(seconds=int(build_elapsed))} > {datetime.timedelta(seconds=BUILD_TIMEOUT)}). Cancelling build...')
+                cancel_build(id)
+                queue_elapsed = build_start - queue_start
+                return 'build_timeout', phase_durations, queue_reasons, queue_elapsed, build_elapsed
+
+        keep_polling, status, response_json = poll_build(id)
+
+        queued_reason = response_json.get('queuedReason')
+        if queued_reason and status in QUEUE_STATUSES:
+            queue_reasons.add(queued_reason)
+
+        if build_start is None and status in ACTIVE_STATUSES:
+            build_start = now
+            print(f'Build picked up by builder after {datetime.timedelta(seconds=int(now - queue_start))} in queue.')
+
+        if status != last_status:
+            queue_elapsed = (build_start or now) - queue_start
+            build_elapsed = (now - build_start) if build_start else 0
+            reason_suffix = f', queuedReason={queued_reason}' if queued_reason and status in QUEUE_STATUSES else ''
+            print(f'Build status: {status} (queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}){reason_suffix}')
+            last_status = status
+            last_status_change = now
+        else:
+            print(f'Build status: {status}')
+
+        if not keep_polling:
+            queue_elapsed = (build_start or now) - queue_start
+            build_elapsed = (now - build_start) if build_start else 0
+            return status, phase_durations, queue_reasons, queue_elapsed, build_elapsed
+
+        if status in QUEUE_STATUSES and (now - last_status_change) > STALE_THRESHOLD:
+            poll_interval = QUEUE_POLL_TIME
+        else:
+            poll_interval = POLL_TIME
+
+        queue_elapsed = (build_start or now) - queue_start
+        build_elapsed = (now - build_start) if build_start else 0
+        print(f'Runner elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))} | Polling again in {poll_interval}s [...]')
+        time.sleep(poll_interval)
+
+
 args = parser.parse_args()
 
-# MODE: Delete
+build_already_active = False
+resumed_build_elapsed = 0
+
 if args.delete:
     delete_current_target()
-# MODE: Resume
 elif args.resume or args.cancel:
     build_info = utils.read_build_info()
     if build_info is None:
@@ -502,67 +706,67 @@ elif args.resume or args.cancel:
     os.environ['TARGET'] = build_info["target"]
     id = build_info["id"]
 
-# MODE: Cancel
     if args.cancel:
         cancel_build(id)
+        utils.delete_build_info()
+        sys.exit(0)
 
-# MODE: Create (default)
 else:
-
-    # Validate branch name before proceeding
     branch_name = os.getenv('BRANCH_NAME')
     validate_branch_name(branch_name)
 
-    # Clone current target
-    # This will clone the current $TARGET and replace the value in $TARGET with it
-    # Also sets the branch to $BRANCH_NAME
-    #
-    # If the target already exists, it will check if it has running builds on it
-    try:
-        clone_current_target(True)
-    except Exception as e:
-        print(f"Operation failed: {e}")
-
-    # Set ENVs (Parameters)
-    # This must run immediately before starting a build
-    # to avoid any race conditions with other concurrent builds*
-    #
-    # *Above warning mostly applies to shared targets, not clones
-    set_parameters(get_param_env_variables())
-
-    def get_clean_build_bool():
-        value = os.getenv('CLEAN_BUILD', 'false').lower() 
-        if value in ['true', '1']:
-            return True
-        elif value in ['false', '0']:
-            return False
-        else:
-            raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
-    # Run Build
-    id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
-
-    utils.persist_build_info(os.getenv('TARGET'), id)
-    print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
-
-# Poll the build stats every {POLL_TIME}s
-start_time = time.time()
-while True:
-    elapsed_time = time.time() - start_time
-    if elapsed_time > GLOBAL_TIMEOUT:
-        print(f'Global timeout reached: {datetime.timedelta(seconds=elapsed_time)}. Cancelling build...')
-        cancel_build(id)
-        sys.exit(1)
-
-    if poll_build(id):
-        print(f'Runner elapsed time: {datetime.timedelta(seconds=elapsed_time)} | Polling again in {POLL_TIME}s [...]')
-        time.sleep(POLL_TIME)
+    resumed = try_resume_build()
+    if resumed is not None:
+        target_name, id, resumed_status, resumed_elapsed = resumed
+        os.environ['TARGET'] = target_name
+        build_already_active = resumed_status in ACTIVE_STATUSES
+        if build_already_active:
+            resumed_build_elapsed = resumed_elapsed
     else:
-        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=elapsed_time)}')
-        break
+        try:
+            clone_current_target(True)
+        except Exception as e:
+            print(f"Operation failed: {e}")
 
-# Handle build artifact
+        # Set parameters immediately before run_build to avoid races with concurrent
+        # builds on shared targets.
+        set_parameters(get_param_env_variables())
+
+        def get_clean_build_bool():
+            value = os.getenv('CLEAN_BUILD', 'false').lower()
+            if value in ['true', '1']:
+                return True
+            elif value in ['false', '0']:
+                return False
+            else:
+                raise ValueError(f"Invalid boolean value for CLEAN_BUILD: {value}")
+
+        id = run_build(os.getenv('BRANCH_NAME'), get_clean_build_bool())
+        utils.persist_build_info(os.getenv('TARGET'), id)
+        print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+
+final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed = run_poll_loop(
+    id,
+    build_already_active=build_already_active,
+    resumed_build_elapsed=resumed_build_elapsed,
+)
+write_step_summary(os.getenv('TARGET'), id, final_outcome, phase_durations, queue_reasons, queue_elapsed, build_elapsed)
+
+if final_outcome in ('queue_timeout', 'build_timeout'):
+    if final_outcome == 'build_timeout':
+        # Build was cancelled; the persisted info points to a dead build.
+        utils.delete_build_info()
+        try:
+            download_log(id)
+        except Exception as e:
+            print(f'Warning: could not download log after timeout: {e}')
+    sys.exit(RETRYABLE_EXIT_CODE)
+
+utils.delete_build_info()
+
+print(f'Runner FINAL elapsed: queue {datetime.timedelta(seconds=int(queue_elapsed))} / build {datetime.timedelta(seconds=int(build_elapsed))}')
+
 download_artifact(id)
-# Handle build log
 download_log(id)
 
 if not build_healthy:

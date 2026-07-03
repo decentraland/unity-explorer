@@ -12,10 +12,10 @@ namespace DCL.Multiplayer.Emotes
     {
         public readonly URN EmoteId;
         public readonly string WalletId;
-        public readonly float Timestamp;
+        public readonly double Timestamp;
         public readonly AvatarEmoteMask Mask;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp, AvatarEmoteMask mask)
+        public RemoteEmoteIntention(URN emoteId, string walletId, double timestamp, AvatarEmoteMask mask)
         {
             EmoteId = emoteId;
             WalletId = walletId;
@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Emotes
         }
 
         public bool Equals(RemoteEmoteIntention other) =>
-            EmoteId.Equals(other.EmoteId) && WalletId == other.WalletId && Mathf.Approximately(Timestamp, other.Timestamp) && Mask == other.Mask;
+            EmoteId.Equals(other.EmoteId) && WalletId == other.WalletId && Math.Abs(Timestamp - other.Timestamp) < 0.001 && Mask == other.Mask;
 
         public override bool Equals(object? obj) =>
             obj is RemoteEmoteIntention other && Equals(other);

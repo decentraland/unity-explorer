@@ -1,0 +1,57 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Ipfs;
+using DCL.WebRequests;
+using ECS.Groups;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
+using System.Threading;
+
+namespace ECS.SceneLifeCycle.SceneDefinition
+{
+    /// <summary>
+    ///     Loads a single scene definition from URN
+    /// </summary>
+    [UpdateInGroup(typeof(LoadGlobalSystemGroup))]
+    [LogCategory(ReportCategory.SCENE_LOADING)]
+    public partial class LoadSceneDefinitionSystem : LoadSystemBase<SceneEntityDefinition, GetSceneDefinition>
+    {
+        private readonly IWebRequestController webRequestController;
+        private readonly bool isLocalSceneDevelopment;
+
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, bool isLocalSceneDevelopment, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+            : base(world, cache)
+        {
+            this.webRequestController = webRequestController;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+        }
+
+        protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        {
+            SceneEntityDefinition sceneEntityDefinition = await
+                webRequestController.GetAsync(intention.CommonArguments, ct, GetReportData())
+                                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+            sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
+
+
+            //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception)
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment, skipException: true);
+
+            // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
+            // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
+            await SceneAssetBundleDigestsLoader.EnsureDepsDigestsAsync(World, sceneEntityDefinition, partition, ct);
+
+            // switching back is handled by the base class
+            return new StreamableLoadingResult<SceneEntityDefinition>(sceneEntityDefinition);
+        }
+
+    }
+}

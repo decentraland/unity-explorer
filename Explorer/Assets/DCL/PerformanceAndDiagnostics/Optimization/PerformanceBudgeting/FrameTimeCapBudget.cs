@@ -38,7 +38,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         {
             //Behind loading screen we dont care about hiccups
             //Check only on frame change to avoid multiple calls per frame (checking the loading screen status can be expensive)
-            int currentFrame = Time.frameCount;
+            int currentFrame = UnityEngine.Time.frameCount;
             if (cachedFrameNumber != currentFrame)
             {
                 cachedIsLoadingScreenOn = isLoadingScreenOn.Invoke();

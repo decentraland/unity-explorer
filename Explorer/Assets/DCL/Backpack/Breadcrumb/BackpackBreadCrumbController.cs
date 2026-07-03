@@ -6,6 +6,7 @@ using DCL.UI;
 using MVC;
 using Runtime.Wearables;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
@@ -48,7 +49,7 @@ namespace DCL.Backpack.Breadcrumb
             eventBus.EquipOutfitEvent -= UpdateColorPickerColors;
         }
 
-        private void UpdateColorPickerColors(BackpackEquipOutfitCommand command, IWearable[] wearables) =>
+        private void UpdateColorPickerColors(BackpackEquipOutfitCommand command, IReadOnlyCollection<IWearable> wearables) =>
             colorPickerController.UpdateCategoriesColors(command.EyesColor, command.HairColor, command.SkinColor);
 
         private void OnAllFilter()

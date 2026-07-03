@@ -2,14 +2,17 @@
     "name": "SocketIOClient",
     "rootNamespace": "",
     "references": [
-        "GUID:702f733b4deb246808c6ce84d93b5c9c"
+        "GUID:702f733b4deb246808c6ce84d93b5c9c",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "System.Text.Json.dll"
+        "System.Text.Json.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],

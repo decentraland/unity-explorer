@@ -7,9 +7,10 @@ using rpc_csharp;
 using Sentry;
 using System;
 using System.Collections.Generic;
-using System.Net.WebSockets;
 using System.Threading;
 using RpcClient = rpc_csharp.RpcClient;
+using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.SocialService
 {
@@ -48,12 +49,12 @@ namespace DCL.SocialService
         /// <summary>
         ///     Used to ensure that only one connection establishment process is running at a time.
         /// </summary>
-        private readonly SemaphoreSlim connectionEstablishingMutex = new (1, 1);
+        private readonly DCLSemaphoreSlim connectionEstablishingMutex = new (1, 1);
 
         /// <summary>
         ///     Used to ensure that handshake and disconnection processes do not overlap.
         /// </summary>
-        private readonly SemaphoreSlim handshakeMutex = new (1, 1);
+        private readonly DCLSemaphoreSlim handshakeMutex = new (1, 1);
 
         private readonly Uri apiUrl;
         private readonly IWeb3IdentityCache identityCache;
@@ -67,7 +68,8 @@ namespace DCL.SocialService
         private WebSocketRpcTransport? transport;
         private bool isDisconnecting;
 
-        private bool isConnectionReady => transport?.State == WebSocketState.Open
+        private bool isConnectionReady => transport != null
+                                          && transport.State == WebSocketState.Open
                                           && module != null
                                           && Client != null
                                           && port != null;

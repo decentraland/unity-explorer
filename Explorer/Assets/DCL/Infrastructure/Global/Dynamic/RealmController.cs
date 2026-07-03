@@ -8,10 +8,8 @@ using DCL.Global.Dynamic;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -31,7 +29,6 @@ using ECS.SceneLifeCycle.Systems;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
-using DCL.PrivateWorlds;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using Utility;
 
@@ -54,11 +51,9 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
-        private readonly IWorldPermissionsService worldPermissionsService;
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
@@ -92,7 +87,6 @@ namespace Global.Dynamic
         }
 
         public RealmController(
-            IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
             RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm,
@@ -107,14 +101,11 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource,
             DecentralandEnvironment environment,
-            WorldManifestProvider worldManifestProvider,
-            IWorldPermissionsService worldPermissionsService)
+            WorldManifestProvider worldManifestProvider)
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
-            this.worldPermissionsService = worldPermissionsService;
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
@@ -202,50 +193,6 @@ namespace Global.Dynamic
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
-
-        public async UniTask<bool> IsUserAuthorisedToAccessWorldAsync(URLDomain realm, CancellationToken ct)
-        {
-            if (!TryExtractWorldName(realm, out string worldName))
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to extract world name from realm '{realm}'.");
-                return false;
-            }
-
-            WorldAccessCheckContext context;
-            try
-            {
-                context = await worldPermissionsService.CheckWorldAccessAsync(worldName, ct);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogWarning(ReportCategory.REALM,
-                    $"[RealmController] Failed to verify world access for '{worldName}' via world permissions: {e.Message}");
-                return false;
-            }
-
-            return context.Result == WorldAccessCheckResult.Allowed;
-        }
-
-        private static bool TryExtractWorldName(URLDomain realm, out string worldName)
-        {
-            worldName = string.Empty;
-
-            if (!Uri.TryCreate(realm.Value, UriKind.Absolute, out Uri? uri))
-                return false;
-
-            string path = uri.AbsolutePath.Trim('/');
-            if (string.IsNullOrEmpty(path))
-                return false;
-
-            string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (segments.Length == 0)
-                return false;
-
-            worldName = segments[^1];
-            return !string.IsNullOrEmpty(worldName);
-        }
 
         public async UniTask<List<SceneEntityDefinition>> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {

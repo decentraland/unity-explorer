@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
@@ -144,9 +145,17 @@ namespace MVC
             // Hide the popup closer
             await popupCloser.HideAsync(ct);
 
-            await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct), windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-            await controller.HideViewAsync(ct);
+            try
+            {
+                await UniTask.WhenAny(command.Execute(controller, overlayPushInfo.ControllerOrdering, ct),
+                    windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
+            }
+            finally
+            {
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
+                if (controller.State != ControllerState.ViewHidden)
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
+            }
         }
 
         private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
@@ -199,17 +208,12 @@ namespace MVC
                 await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
                     fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct),
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-                await controller.HideViewAsync(ct);
             }
             finally
             {
-                // If the lifecycle was aborted by cancellation before HideViewAsync completed,
-                // force a clean tear-down so State returns to ViewHidden. Otherwise, the view
-                // stays active and interactive while the controller is stuck at ViewFocused,
-                // making it unreachable on subsequent opens and breaking its close intents.
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
                 if (controller.State != ControllerState.ViewHidden)
-                    await controller.HideViewAsync(CancellationToken.None).SuppressCancellationThrow();
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
 
                 windowsStackManager.PopFullscreen(controller);
             }
@@ -231,12 +235,13 @@ namespace MVC
                     WaitForPopupCloserClickAsync(controller, ct),
                     pushPopupPush.OnClose?.Task ?? UniTask.Never(ct),
                     windowsStackManager.GetControllerClosure(controller)?.Task ?? UniTask.Never(ct));
-
-                // "Close" command has been received
-                await controller.HideViewAsync(ct);
             }
             finally
             {
+                // Teardown must always finish: None (not ct) so a cancel can't wedge the view, suppressed so it can't throw out of finally before cleanup.
+                if (controller.State != ControllerState.ViewHidden)
+                    await controller.HideViewAsync(CancellationToken.None).SuppressToResultAsync(ReportCategory.MVC);
+
                 // Pop the stack
                 PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller, windowsStackManager.GetControllerClosure(controller)?.Task.Status != UniTaskStatus.Succeeded);
 
@@ -245,7 +250,8 @@ namespace MVC
                     popupCloser.SetDrawOrder(popupPopInfo.PopupCloserOrdering);
                     popupPopInfo.NewTopMostController.Focus();
                 }
-                else { await popupCloser.HideAsync(ct); }
+                else
+                    await popupCloser.HideAsync(CancellationToken.None);
             }
         }
 

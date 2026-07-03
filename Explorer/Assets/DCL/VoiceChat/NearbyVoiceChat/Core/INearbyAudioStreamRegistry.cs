@@ -6,7 +6,7 @@ using System;
 namespace DCL.VoiceChat.Nearby.Audio
 {
     /// <summary>
-    /// Thread-safe Nearby-side index of active audio streams per participant identity.
+    /// Thread-safe Nearby-side index of active audio streams per participant identity. // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
     /// Self-bootstraps from <see cref="LiveKit.Rooms.IRoom"/> connection / subscribe events; not driven by callers.
     /// </summary>
     public interface INearbyAudioStreamRegistry : IDisposable

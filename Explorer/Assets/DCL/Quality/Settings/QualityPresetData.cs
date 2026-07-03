@@ -38,6 +38,9 @@ namespace DCL.Quality
         [Header("Other")]
         [SerializeField] internal bool playCurrentSceneStreamsOnly;
 
+        [Header("Physics")]
+        [SerializeField] internal bool springBoneSimulation;
+
         public int FpsLimit => fpsLimit;
         public bool VSyncEnabled => vSyncEnabled;
         public float ResolutionScale => resolutionScale;
@@ -55,6 +58,7 @@ namespace DCL.Quality
         public ShadowQualityLevel ShadowsQualityLevel => shadowsQualityLevel;
         public int ShadowDistance => shadowDistance;
         public bool PlayCurrentSceneStreamsOnly => playCurrentSceneStreamsOnly;
+        public bool SpringBoneSimulation => springBoneSimulation;
     }
 
     [Serializable]

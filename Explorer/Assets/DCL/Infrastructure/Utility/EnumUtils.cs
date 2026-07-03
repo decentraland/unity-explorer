@@ -100,6 +100,27 @@ namespace Utility
             }
         }
 
+        public static unsafe bool HasFlag<T>(uint x, T y) where T: unmanaged, Enum
+        {
+            switch (sizeof(T))
+            {
+                case sizeof(byte):
+                    return (x & *(byte*)&y) != 0;
+
+                case sizeof(short):
+                    return (x & *(short*)&y) != 0;
+
+                case sizeof(int):
+                    return (x & *(int*)&y) != 0;
+
+                case sizeof(long):
+                    return (x & *(long*)&y) != 0L;
+
+                default:
+                    return false;
+            }
+        }
+
         public static unsafe void RemoveFlag<T>(this ref T x, T y) where T: unmanaged, Enum
         {
             // Check if the underlying type of the enum is byte, short, int, or long

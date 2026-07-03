@@ -16,11 +16,11 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Clipboard;
-using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Profiling;
 using DCL.SDKComponents.MediaStream;
 using DCL.SkyBox;
 using DCL.Utilities;
@@ -45,7 +45,6 @@ using SceneRuntime.ScenePermissions;
 using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
-using SceneRunner.Admins;
 using RichTypes;
 
 namespace SceneRunner
@@ -64,6 +63,7 @@ namespace SceneRunner
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly ISceneExceptionsHandler ExceptionsHandler;
         public readonly ECSWorldFacade ECSWorldFacade;
+        public readonly SceneRuntimeMetrics RuntimeMetrics = new ();
 
         public readonly ICRDTWorldSynchronizer CRDTWorldSynchronizer;
         public readonly URLAddress SceneCodeUrl;
@@ -150,7 +150,7 @@ namespace SceneRunner
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, entityCollidersGlobalCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
+                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMultiThreadSync,
                 systemGroupThrottler, systemsUpdateGate);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
@@ -198,8 +198,6 @@ namespace SceneRunner
             public readonly ISceneRuntime Runtime;
             public readonly IEngineApi EngineAPI;
 
-            public readonly Option<SceneAdmins> SceneAdmins;
-
             /// <summary>
             ///     For Unit Tests only
             /// </summary>
@@ -212,8 +210,7 @@ namespace SceneRunner
                 ISimpleFetchApi simpleFetchApi,
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
-                ISceneRuntime runtime,
-                Option<SceneAdmins> sceneAdmins
+                ISceneRuntime runtime
                 )
             {
                 EngineAPI = engineAPI;
@@ -225,7 +222,6 @@ namespace SceneRunner
                 SimpleFetchApi = simpleFetchApi;
                 SyncDeps = syncDeps;
                 Runtime = runtime;
-                SceneAdmins = sceneAdmins;
             }
 
             protected WithRuntimeAndJsAPIBase(
@@ -242,7 +238,6 @@ namespace SceneRunner
                 SkyboxSettingsAsset skyboxSettings,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : this(
                     engineApi,
@@ -255,12 +250,10 @@ namespace SceneRunner
                         syncDeps.sceneData,
                         messagePipesHub,
                         jsOperations,
-                        syncDeps.PoolsProvider,
-                        sceneAdmins
+                        syncDeps.PoolsProvider
                     ),
                     syncDeps,
-                    sceneRuntime,
-                    sceneAdmins
+                    sceneRuntime
                     ) { }
 
             public void Dispose()
@@ -269,11 +262,6 @@ namespace SceneRunner
 
                 Runtime.Dispose();
                 SyncDeps.Dispose();
-
-                if (SceneAdmins.Has)
-                {
-                    SceneAdmins.Value.Dispose();
-                }
             }
         }
 
@@ -288,7 +276,6 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : base(new EngineAPIImplementation(
                         sharedPoolsProvider,
@@ -301,8 +288,9 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMultiThreadSync,
-                        syncOwner),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, sceneAdmins, installSource) { }
+                        syncOwner,
+                        syncDeps.RuntimeMetrics),
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, profileRepository, messagePipesHub, webRequestController, skyboxSettings, systemClipboard, roomHub, installSource) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -314,7 +302,6 @@ namespace SceneRunner
                 IProfileRepository profileRepository,
                 ISystemClipboard systemClipboard,
                 IRoomHub roomHub,
-                Option<SceneAdmins> sceneAdmins,
                 string installSource)
                 : base(
                         new SDKObservableEventsEngineAPIImplementation(
@@ -328,7 +315,8 @@ namespace SceneRunner
                             syncDeps.systemGroupThrottler,
                             syncDeps.ExceptionsHandler,
                             syncDeps.ecsMultiThreadSync,
-                            syncOwner
+                            syncOwner,
+                            syncDeps.RuntimeMetrics
                             ),
                     syncDeps,
                     sceneRuntime,
@@ -342,7 +330,6 @@ namespace SceneRunner
                     skyboxSettings,
                     systemClipboard,
                     roomHub,
-                    sceneAdmins,
                     installSource
                   ) { }
         }

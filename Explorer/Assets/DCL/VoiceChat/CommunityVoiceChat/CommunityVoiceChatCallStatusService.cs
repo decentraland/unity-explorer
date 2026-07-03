@@ -78,6 +78,14 @@ namespace DCL.VoiceChat
                     connectionUrl = result.Value.Ok.Credentials.ConnectionUrl;
                     SetCallId(communityId);
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+
+                    // The backend does not echo the CommunityVoiceChatStarted websocket update
+                    // back to the originator (mirrored by the asymmetric handling in EndStreamInCurrentCall),
+                    // so flip the per-community reactive flag locally for any UI that subscribes to it.
+                    if (communityVoiceChatCalls.TryGetValue(communityId, out ReactiveProperty<bool>? existingStartData))
+                        existingStartData.UpdateValue(true);
+                    else
+                        communityVoiceChatCalls[communityId] = new ReactiveProperty<bool>(true);
                     break;
                 case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                 case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:

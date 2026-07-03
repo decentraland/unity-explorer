@@ -1,4 +1,4 @@
-﻿using Arch.SystemGroups;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ECSComponents;
@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
-            in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             IComponentPool<PBRaycastResult> raycastResultPool = sharedDependencies
                                                                .ComponentPoolsRegistry
@@ -71,7 +71,7 @@ namespace DCL.PluginSystem.World
                     sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
                     raycastResultPool,
                     sceneDeps.EntityCollidersSceneCache,
-                    sceneDeps.EntityCollidersGlobalCache,
+                    systemsDependencies.EntityCollidersGlobalCache,
                     sceneDeps.EntitiesMap,
                     sceneDeps.EcsToCRDTWriter,
                     sceneDeps.SceneStateProvider

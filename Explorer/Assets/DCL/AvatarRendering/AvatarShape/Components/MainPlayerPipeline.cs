@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     internal class MainPlayerPipeline : IDisposable
     {
         private readonly int bonesArrayLength;
+        private readonly Transform[] boneArray;
 
         private bool registered;
         private TransformAccessArray bonesTA;
@@ -28,6 +29,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         internal MainPlayerPipeline(int bonesArrayLength)
         {
             this.bonesArrayLength = bonesArrayLength;
+            boneArray = new Transform[bonesArrayLength];
 
             bonesCombined = new NativeArray<float4x4>(bonesArrayLength, Allocator.Persistent);
             avatarMatrix = new NativeArray<float4x4>(1, Allocator.Persistent);
@@ -35,14 +37,24 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Job = new BoneMatrixCalculationJob(bonesArrayLength, bonesArrayLength, bonesCombined);
         }
 
-        public void Register(Transform rootTransform, Transform[] boneTransforms)
+        public void Register(Transform rootTransform, BoneArray bones, Transform dummyTransform)
         {
             updateFlag[0] = true;
 
-            var boneArray = new Transform[bonesArrayLength];
+            // bonesArrayLength is the per-avatar slot capacity (MAX_BONE_COUNT = 256).
+            // bones.Count is BASE_BONE_COUNT (62) plus appended spring bones, so it is
+            // typically smaller than bonesArrayLength — the trailing slots get padded with
+            // dummyTransform. Mathf.Min guards against a hypothetical out-of-range BoneArray.
+            int actualCount = Mathf.Min(bones.Count, bonesArrayLength);
 
-            for (int i = 0; i < bonesArrayLength; i++)
-                boneArray[i] = boneTransforms[i];
+            for (int i = 0; i < actualCount; i++)
+                boneArray[i] = bones[i];
+
+            for (int i = actualCount; i < bonesArrayLength; i++)
+                boneArray[i] = dummyTransform;
+
+            if (bonesTA.isCreated) bonesTA.Dispose();
+            if (rootTA.isCreated) rootTA.Dispose();
 
             bonesTA = new TransformAccessArray(boneArray);
             rootTA = new TransformAccessArray(new[] { rootTransform });

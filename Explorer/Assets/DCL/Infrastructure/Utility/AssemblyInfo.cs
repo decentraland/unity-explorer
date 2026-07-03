@@ -2,4 +2,3 @@
 
 [assembly: InternalsVisibleTo("SceneLifeCycle.Tests")]
 [assembly: InternalsVisibleTo("DCL.EditMode.Tests")]
-[assembly: InternalsVisibleTo("ReportsHandling.Tests")]

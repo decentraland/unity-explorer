@@ -21,6 +21,10 @@ EXPORT char* get_process_name(pid_t pid);
 
 EXPORT void free_name(char* name);
 
+// returns pid or -1
 EXPORT int start_process(char* filename, char** args, int argc);
+
+// return exit code of the process
+EXPORT int dcl_start_process_blocking(char* filename, char** args, int argc);
 
 #endif

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Utility;
+using DCL.Diagnostics;
 
 namespace DCL.Chat.MessageBus
 {
@@ -69,7 +70,11 @@ namespace DCL.Chat.MessageBus
                         string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
                         SendFromSystem(channelId, channelType, response);
                     }
-                    catch (Exception) { SendFromSystem(channelId, channelType, "🔴 Error running command."); }
+                    catch (Exception e) 
+                    { 
+                        SendFromSystem(channelId, channelType, "🔴 Error running command."); 
+                        ReportHub.LogError(ReportCategory.UNSPECIFIED, $"Error running command: {e}");
+                    }
 
                     return;
                 }

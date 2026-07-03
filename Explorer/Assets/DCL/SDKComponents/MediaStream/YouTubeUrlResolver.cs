@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.SDKComponents.MediaStream.YouTube;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,7 +27,8 @@ namespace DCL.SDKComponents.MediaStream
         private readonly Dictionary<string, ResolvedYouTubeUrl> cache = new ();
         private readonly List<string> expiredKeys = new ();
 
-        public YouTubeUrlResolver() : this(new YouTubeVideoClient(), () => UnityEngine.Time.realtimeSinceStartup) { }
+        public YouTubeUrlResolver(IWebRequestController webRequestController)
+            : this(new YouTubeVideoClient(webRequestController), () => UnityEngine.Time.realtimeSinceStartup) { }
 
         internal YouTubeUrlResolver(IYouTubeVideoClient client, Func<float> getRealtimeSinceStartup)
         {

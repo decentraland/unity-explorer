@@ -1,13 +1,13 @@
 ﻿using DCL.PerformanceAndDiagnostics.Analytics;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Concurrent;
+using Utility.Multithreading;
 
 namespace DCL.Profiles
 {
     public class ProfilesAnalytics
     {
-        private readonly ConcurrentDictionary<string, DateTime> startedRequests = new (StringComparer.CurrentCultureIgnoreCase);
+        private readonly DCLConcurrentDictionary<string, DateTime> startedRequests = new (StringComparer.CurrentCultureIgnoreCase);
 
         public readonly ProfilesDebug profilesDebug;
         private readonly IAnalyticsController analyticsController;

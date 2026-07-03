@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
@@ -12,7 +13,7 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using System;
 using System.Buffers;
-using System.Net.WebSockets;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -21,12 +22,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public class ArchipelagoIslandRoom : ConnectiveRoom
     {
+        private const int MAX_RECONNECT_ATTEMPTS_BEFORE_FRESH_HANDSHAKE = 3;
+        private static readonly TimeSpan RECONNECT_BACKOFF = TimeSpan.FromSeconds(5);
+
         private readonly IArchipelagoSignFlow signFlow;
         private readonly ICharacterObject characterObject;
 
         private readonly ICurrentAdapterAddress currentAdapterAddress;
 
-        private string? newConnectionString;
+        private readonly Mutex<ConnectionStringState> connectionState = new (ConnectionStringState.None()); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+
+        private int consecutiveConnectFailures;
+        private DateTime nextReconnectAttemptUtc = DateTime.MinValue;
 
         public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache,
             IMultiPool multiPool, IMemoryPool memoryPool, ICurrentAdapterAddress currentAdapterAddress) : this(
@@ -51,19 +58,21 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         protected override async UniTask PrewarmAsync(CancellationToken token)
         {
+            // Reset the per-session state: the room instance is reused across StopAsync/StartAsync (teleport, logout)
+            ResetConnectionState();
+
+            consecutiveConnectFailures = 0;
+            nextReconnectAttemptUtc = DateTime.MinValue;
+
             await ConnectToArchipelagoAsync(token);
             signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token).Forget();
         }
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
-            if (newConnectionString != null)
-            {
-                string connectionString = newConnectionString;
-                newConnectionString = null;
+            await TryConnectIfNeededAsync(token);
 
-                await TryConnectToRoomAsync(connectionString, token);
-            }
+            if (token.IsCancellationRequested) return;
 
             await UniTask.SwitchToMainThread(token);
             Vector3 position = characterObject.Position;
@@ -77,7 +86,99 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private void OnNewConnectionString(string connectionString)
         {
-            newConnectionString = connectionString;
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            guard.Value = ConnectionStringState.FromPendingConnection(new PendingConnection(connectionString));
+        }
+
+        private void ResetConnectionState()
+        {
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            guard.Value = ConnectionStringState.None();
+        }
+
+        // Reads the state and consumes it (Pending -> Current) atomically so a pushed string is acted on once.
+        private ConnectionStringState ReadAndConsumeConnectionState()
+        {
+            using var guard = connectionState.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            ConnectionStringState state = guard.Value;
+            guard.Value = state.Consume();
+            return state;
+        }
+
+        private async UniTask TryConnectIfNeededAsync(CancellationToken token)
+        {
+            ConnectionStringState state = ReadAndConsumeConnectionState();
+
+            if (CurrentState() is not (IConnectiveRoom.State.Starting or IConnectiveRoom.State.Running)) return;
+
+            bool roomIsDisconnected = Room().Info.ConnectionState != LKConnectionState.ConnConnected;
+
+            if (!ShouldAttemptConnection(state, roomIsDisconnected, DateTime.UtcNow, nextReconnectAttemptUtc, out string? connectionString))
+                return;
+
+            await TryConnectToRoomAsync(connectionString, token);
+
+            if (token.IsCancellationRequested) return;
+
+            if (Room().Info.ConnectionState == LKConnectionState.ConnConnected)
+            {
+                consecutiveConnectFailures = 0;
+                nextReconnectAttemptUtc = DateTime.MinValue;
+                return;
+            }
+
+            consecutiveConnectFailures++;
+            nextReconnectAttemptUtc = DateTime.UtcNow + RECONNECT_BACKOFF;
+
+            if (ShouldForceFreshHandshake(consecutiveConnectFailures))
+            {
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
+                    $"Island room connection failed {consecutiveConnectFailures} times with the cached connection string, forcing a fresh archipelago handshake");
+
+                consecutiveConnectFailures = 0;
+                await ForceFreshIslandAssignmentAsync(token);
+            }
+        }
+
+        /// <summary>
+        ///     A pending string means the server assigned a new island: always connect, even if the room
+        ///     looks healthy. A current (cached) string is only retried on disconnect once the backoff elapsed.
+        /// </summary>
+        internal static bool ShouldAttemptConnection(in ConnectionStringState state, bool roomIsDisconnected, DateTime nowUtc, DateTime nextAttemptUtc, [NotNullWhen(true)] out string? connectionString)
+        {
+            if (state.IsPendingConnection(out PendingConnection pending))
+            {
+                connectionString = pending.ConnectionString;
+                return true;
+            }
+
+            if (state.IsCurrentConnection(out CurrentConnection current) && roomIsDisconnected && nowUtc >= nextAttemptUtc)
+            {
+                connectionString = current.ConnectionString;
+                return true;
+            }
+
+            connectionString = null;
+            return false;
+        }
+
+        internal static bool ShouldForceFreshHandshake(int consecutiveFailures) =>
+            consecutiveFailures >= MAX_RECONNECT_ATTEMPTS_BEFORE_FRESH_HANDSHAKE;
+
+        /// <summary>
+        ///     The cached connection string keeps being rejected (e.g. its token expired during a long outage):
+        ///     re-handshaking with archipelago creates a new peer session, which makes the server push a fresh
+        ///     <c>IslandChangedMessage</c> after the next heartbeat.
+        /// </summary>
+        private async UniTask ForceFreshIslandAssignmentAsync(CancellationToken token)
+        {
+            ResetConnectionState();
+
+            await signFlow.DisconnectAsync(token);
+
+            if (token.IsCancellationRequested) return;
+
+            await ConnectToArchipelagoAsync(token);
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)

@@ -13,9 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using Utility.Multithreading;
+using Utility.Networking;
 
 namespace DCL.Web3.Authenticators
 {
@@ -39,14 +40,14 @@ namespace DCL.Web3.Authenticators
         private readonly int? identityExpirationDuration;
 
         // Allow only one web3 operation at a time
-        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly DCLSemaphoreSlim mutex = new (1, 1);
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
         private readonly URLBuilder urlBuilder = new ();
 
         private int authApiPendingOperations;
         private int rpcPendingOperations;
         private SocketIO? authApiWebSocket;
-        private ClientWebSocket? rpcWebSocket;
+        private DCLWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<SocketIOResponse>? codeVerificationTask;
 
@@ -150,7 +151,9 @@ namespace DCL.Web3.Authenticators
         {
             await mutex.WaitAsync(ct);
 
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             try
             {
@@ -210,10 +213,14 @@ namespace DCL.Web3.Authenticators
             }
             finally
             {
+#if !UNITY_WEBGL
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext, CancellationToken.None);
                 else
                     await UniTask.SwitchToMainThread(CancellationToken.None);
+#else
+                await UniTask.SwitchToMainThread(CancellationToken.None);
+#endif
 
                 mutex.Release();
             }
@@ -242,7 +249,9 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             try
             {
@@ -272,10 +281,14 @@ namespace DCL.Web3.Authenticators
                 // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
                 // If the token is cancelled, the await will throw an OperationCanceledException immediately.
                 // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
+#if !UNITY_WEBGL
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
                     await UniTask.SwitchToMainThread();
+#else
+                await UniTask.SwitchToMainThread();
+#endif
 
                 mutex.Release();
                 rpcPendingOperations--;
@@ -300,7 +313,7 @@ namespace DCL.Web3.Authenticators
             urlBuilder.AppendDomain(rpcServerUrl);
             urlBuilder.AppendPath(new URLPath(network));
 
-            rpcWebSocket = new ClientWebSocket();
+            rpcWebSocket = new DCLWebSocket();
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
@@ -334,7 +347,9 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
         {
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+#if !UNITY_WEBGL
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current; // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+#endif
 
             try
             {
@@ -385,10 +400,14 @@ namespace DCL.Web3.Authenticators
                 // CRITICAL: Do not pass the CancellationToken (ct) to these switches.
                 // If the token is cancelled, the await will throw an OperationCanceledException immediately.
                 // This would abort the 'finally' block before reaching mutex.Release(), causing a permanent deadlock.
+#if !UNITY_WEBGL
                 if (originalSyncContext != null)
                     await UniTask.SwitchToSynchronizationContext(originalSyncContext);
                 else
                     await UniTask.SwitchToMainThread();
+#else
+                await UniTask.SwitchToMainThread();
+#endif
 
                 mutex.Release();
                 authApiPendingOperations--;
@@ -496,7 +515,6 @@ namespace DCL.Web3.Authenticators
 
             await authApiWebSocket
                  .ConnectAsync()
-                 .AsUniTask()
                  .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
         }
 

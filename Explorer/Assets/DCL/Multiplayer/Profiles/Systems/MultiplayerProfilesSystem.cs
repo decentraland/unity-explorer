@@ -3,15 +3,14 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.Character;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using ECS;
 using ECS.Abstract;
 
@@ -28,7 +27,7 @@ namespace DCL.Multiplayer.Profiles.Systems
     [UpdateBefore(typeof(AvatarGroup))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
-        private readonly RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements;
+        private readonly IRemoteAnnouncements remoteAnnouncements;
         private readonly IRemoveIntentions removeIntentions;
         private readonly RemoteProfiles.RemoteProfiles remoteProfiles;
         private readonly IProfileBroadcast profileBroadcast;
@@ -37,10 +36,11 @@ namespace DCL.Multiplayer.Profiles.Systems
         private readonly ICharacterObject characterObject;
         private readonly ILoadingStatus realFlowLoadingStatus;
         private readonly IRealmData realmData;
+        private readonly MovementInbox movementInbox;
 
         public MultiplayerProfilesSystem(
             World world,
-            RemoteAnnouncements.RemoteAnnouncements remoteAnnouncements,
+            IRemoteAnnouncements remoteAnnouncements,
             IRemoveIntentions removeIntentions,
             RemoteProfiles.RemoteProfiles remoteProfiles,
             IProfileBroadcast profileBroadcast,
@@ -48,7 +48,8 @@ namespace DCL.Multiplayer.Profiles.Systems
             IRemoteMetadata remoteMetadata,
             ICharacterObject characterObject,
             ILoadingStatus realFlowLoadingStatus,
-            IRealmData realmData
+            IRealmData realmData,
+            MovementInbox movementInbox
         ) : base(world)
         {
             this.remoteAnnouncements = remoteAnnouncements;
@@ -60,10 +61,13 @@ namespace DCL.Multiplayer.Profiles.Systems
             this.characterObject = characterObject;
             this.realFlowLoadingStatus = realFlowLoadingStatus;
             this.realmData = realmData;
+            this.movementInbox = movementInbox;
         }
 
         protected override void Update(float t)
         {
+            movementInbox.DrainToEntities();
+
             if (realFlowLoadingStatus.CurrentStage.Value is not LoadingStatus.LoadingStage.Completed)
                 return;
 
@@ -75,7 +79,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             remoteMetadata.BroadcastSelfParcel(characterObject);
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
-            remoteEntities.Remove(removeIntentions, World!);
+            RemoteEntitiesExtensions.Remove(remoteEntities, remoteAnnouncements, removeIntentions, World!);
             profileBroadcast.NotifyRemotes();
         }
     }

@@ -6,14 +6,14 @@ namespace Utility.Multithreading
 {
     public readonly struct SlimScope : IDisposable
     {
-        private readonly SemaphoreSlim slim;
+        private readonly DCLSemaphoreSlim slim;
 
-        private SlimScope(SemaphoreSlim slim)
+        private SlimScope(DCLSemaphoreSlim slim)
         {
             this.slim = slim;
         }
 
-        public static async UniTask<SlimScope> LockAsync(SemaphoreSlim slim)
+        public static async UniTask<SlimScope> LockAsync(DCLSemaphoreSlim slim)
         {
             await slim.WaitAsync();
             return new SlimScope(slim);
@@ -27,7 +27,7 @@ namespace Utility.Multithreading
 
     public static class SlimScopeExtensions
     {
-        public static UniTask<SlimScope> LockAsync(this SemaphoreSlim slim)
+        public static UniTask<SlimScope> LockAsync(this DCLSemaphoreSlim slim)
         {
             return SlimScope.LockAsync(slim);
         }

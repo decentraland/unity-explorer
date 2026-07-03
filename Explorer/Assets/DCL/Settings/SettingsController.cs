@@ -4,20 +4,14 @@ using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
-using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Quality;
 using DCL.Quality.Runtime;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
-using DCL.SkyBox;
 using DCL.UI;
-using DCL.Utilities;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,11 +35,7 @@ namespace DCL.Settings
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
         private readonly QualitySettingsController qualitySettingsController;
         private readonly AudioMixer generalAudioMixer;
-        private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
-        private readonly LandscapeData landscapeData;
-        private readonly QualitySettingsAsset qualitySettingsAsset;
-        private readonly SkyboxSettingsAsset skyboxSettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly VolumeBus volumeBus;
@@ -53,11 +43,9 @@ namespace DCL.Settings
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly UpscalingController upscalingController;
+        private readonly IUserBlockingCache userBlockingCache;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEventBus eventBus;
-        private readonly IAppArgs appParameters;
         private readonly PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings;
 
         private readonly IReadOnlyDictionary<SettingsSection, (Transform container, ButtonWithSelectableStateView button, Sprite background, SettingsSectionConfig config)> sections;
@@ -69,42 +57,30 @@ namespace DCL.Settings
             SettingsMenuConfiguration settingsMenuConfiguration,
             QualitySettingsController qualitySettingsController,
             AudioMixer generalAudioMixer,
-            RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
-            LandscapeData landscapeData,
-            QualitySettingsAsset qualitySettingsAsset,
-            SkyboxSettingsAsset skyboxSettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
             ChatSettingsAsset chatSettingsAsset,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            IUserBlockingCache userBlockingCache,
             SceneLoadingLimit sceneLoadingLimit,
             VolumeBus volumeBus,
-            UpscalingController upscalingController,
             IAssetsProvisioner assetsProvisioner,
             IEventBus eventBus,
-            IAppArgs appParameters,
             PointAtMarkerVisibilitySettings pointAtMarkerVisibilitySettings)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
             this.qualitySettingsController = qualitySettingsController;
             this.generalAudioMixer = generalAudioMixer;
-            this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
-            this.landscapeData = landscapeData;
-            this.qualitySettingsAsset = qualitySettingsAsset;
-            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
             this.volumeBus = volumeBus;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.userBlockingCache = userBlockingCache;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.upscalingController = upscalingController;
             this.assetsProvisioner = assetsProvisioner;
             this.eventBus = eventBus;
-            this.appParameters = appParameters;
             this.pointAtMarkerVisibilitySettings = pointAtMarkerVisibilitySettings;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -206,23 +182,17 @@ namespace DCL.Settings
                             (
                                 generalGroupView.ModulesContainer,
                                 qualitySettingsController,
-                                realmPartitionSettingsAsset,
                                 videoPrioritizationSettings,
-                                landscapeData,
                                 generalAudioMixer,
-                                qualitySettingsAsset,
-                                skyboxSettingsAsset,
                                 controlsSettingsAsset,
                                 chatSettingsAsset,
                                 memoryCap,
                                 sceneLoadingLimit,
-                                userBlockingCacheProxy,
+                                userBlockingCache,
                                 this,
-                                upscalingController,
                                 assetsProvisioner,
                                 volumeBus,
                                 eventBus,
-                                appParameters,
                                 pointAtMarkerVisibilitySettings);
 
                         if (controller != null)

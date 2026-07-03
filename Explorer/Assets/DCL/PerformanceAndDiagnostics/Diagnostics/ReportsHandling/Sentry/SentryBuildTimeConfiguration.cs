@@ -24,6 +24,13 @@ namespace DCL.Diagnostics.Sentry
         {
             options.SetBeforeSend(AddUnspecifiedCategory);
 
+            // Implements custom ANR tracing with minidumps and callstack collection
+            SentryMonoBehaviour monoInstance = SentryMonoBehaviour.Instance;
+            DclAnrIntegration anrIntegration = new DclAnrIntegration(monoInstance);
+            options.AddIntegration(anrIntegration);
+
+            options.DisableAnrIntegration();
+
 #if UNITY_EDITOR
             bool isDirty = false;
 
@@ -167,6 +174,7 @@ namespace DCL.Diagnostics.Sentry
         {
             ScriptableSentryUnityOptions asset = AssetDatabase.LoadAssetAtPath<ScriptableSentryUnityOptions>(path);
             if (asset == null) return;
+            asset.Enabled = options.Enabled;
             asset.ReleaseOverride = options.Release;
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;

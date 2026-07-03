@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.RealmNavigation;
+using System;
 using UnityEngine;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
@@ -17,6 +18,22 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
         public void Set(float seconds)
         {
             Value = TimeSpan.FromSeconds(Mathf.Max(seconds, 0));
+        }
+    }
+
+    /// <summary>
+    ///     Reported to Sentry when the loading screen hits its hard timeout, so we can track
+    ///     how often users fail to load into a scene because it took too long.
+    /// </summary>
+    public class LoadingScreenTimeoutException : Exception
+    {
+        public LoadingScreenTimeoutException(TimeSpan timeout, float lastProgress, LoadingStatus.LoadingStage stage, string assetState)
+            : base("Loading screen timed out")
+        {
+            Data["timeout_seconds"] = timeout.TotalSeconds;
+            Data["last_progress"] = lastProgress;
+            Data["loading_stage"] = stage.ToString();
+            Data["asset_state"] = assetState;
         }
     }
 }

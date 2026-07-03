@@ -66,6 +66,10 @@ namespace DCL.Web3.Authenticators
             IWeb3Identity identity = await currentAuthenticator.LoginAsync(payload, ct);
             identityCache.Identity = identity;
             analytics.Identify(identity);
+
+            if (identity.Source != IWeb3Identity.Web3IdentitySource.OTP)
+                DCLPlayerPrefs.DeleteKey(DCLPrefKeys.LOGGEDIN_EMAIL, save: true);
+
             return identity;
         }
 

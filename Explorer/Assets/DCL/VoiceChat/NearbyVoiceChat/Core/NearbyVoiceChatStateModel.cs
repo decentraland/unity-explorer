@@ -15,9 +15,14 @@ namespace DCL.VoiceChat.Nearby
 
     public enum SuppressionReason
     {
-        CALL,
-        SCENE,
+        /// <summary>Initial world loading is in progress.</summary>
         LOADING,
+        /// <summary>Higher-priority Community or Private call is active.</summary>
+        CALL,
+        /// <summary>Current scene disables Nearby voice chat via feature toggles.</summary>
+        SCENE,
+        /// <summary>Local player is banned from the current scene.</summary>
+        SCENE_BAN,
     }
 
     public enum NearbyVoiceActivation

@@ -1,15 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        private readonly ConcurrentDictionary<UnityWebRequest, DateTime> pendingRequests = new ();
+        private readonly DCLConcurrentDictionary<UnityWebRequest, DateTime> pendingRequests = new ();
         private readonly List<IWebRequestAnalyticsHandler> handlers;
 
         public WebRequestsAnalyticsContainer(params IWebRequestAnalyticsHandler?[] handlers)

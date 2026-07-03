@@ -23,16 +23,16 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             Entity targetEntity = sceneFacade.PersistentEntities.Player;
 
-            CopyProfileToSceneEntity(globalWorld.Get<Profile>(globalPlayerEntity), sceneFacade.EcsExecutor, targetEntity);
+            CopyProfileToSceneEntity(globalWorld.Get<Profile>(globalPlayerEntity), sceneFacade.EcsExecutor.World, targetEntity);
             sceneFacade.EcsExecutor.World.Add(targetEntity, new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
         }
 
-        public void CopyProfileToSceneEntity(Profile profile, SceneEcsExecutor sceneEcsExecutor, Entity sceneEntity)
+        public void CopyProfileToSceneEntity(Profile profile, World sceneWorld, Entity sceneEntity)
         {
-            if (!sceneEcsExecutor.World.TryGet(sceneEntity, out SDKProfile? profileSDKSubProduct))
+            if (!sceneWorld.TryGet(sceneEntity, out SDKProfile? profileSDKSubProduct))
             {
                 profileSDKSubProduct = profileSDKSubProductPool.Get();
-                sceneEcsExecutor.World.Add(sceneEntity, profileSDKSubProduct);
+                sceneWorld.Add(sceneEntity, profileSDKSubProduct);
             }
 
             profileSDKSubProduct!.OverrideWith(profile);

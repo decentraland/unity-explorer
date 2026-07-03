@@ -94,7 +94,10 @@ namespace DCL.Events
                     isWorld: true,
                     allowsSpawnPointerOverride: true).Forget();
             else
-                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false).Forget();
+                // Land at the event's exact parcel instead of the scene's spawn point — e.g. an event at the
+                // Theatre (0,5) inside the Genesis Plaza scene should drop the player at the Theatre, not at
+                // Genesis Plaza's spawn point.
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), ct, false, landOnParcel: true).Forget();
 
             JumpedInEventPlace?.Invoke(eventData);
         }

@@ -203,6 +203,17 @@ Create a test file at a location matching the system's purpose:
 
 Look at `test/ecs/events/videoEventsSystem.spec.ts` for a reference test structure.
 
+## ColliderLayer mask semantics
+
+When generating helpers or tests for components with a `collision_mask` / `collisionMask` field of type `ColliderLayer`, keep these rules in mind (full table + examples in `unity-explorer/docs/how-to-implement-new-sdk-components.md` under "ColliderLayer mask semantics"):
+
+- **Additive avatar semantics:** main player is tagged with both `CL_PLAYER` and `CL_MAIN_PLAYER`; remote avatars only with `CL_PLAYER`.
+- **Unified main-player qualification** (Raycast + TriggerArea): the main player qualifies only when the mask contains `CL_PLAYER` or `CL_MAIN_PLAYER` (`PLAYER_QUALIFYING_BITS`). `CL_PHYSICS`, `CL_POINTER`, `CL_CUSTOM*`, and `CL_NONE` do NOT qualify the main player.
+- **`CL_PHYSICS` targets scene-mesh walls / floors**, not the character. Scenes that need to detect the player must opt in via `CL_PLAYER` or `CL_MAIN_PLAYER`.
+- **Remote avatars qualify only on `CL_PLAYER`.**
+- **`CL_MAIN_PLAYER`-only TriggerArea** is fast-pathed via `targetOnlyMainPlayer` / `TargetTransform` early-out. Any other mask must NOT enable this.
+- **Scene-mesh routing:** for `MeshCollider` / `GltfContainer`, avatar-only masks (`CL_PLAYER` / `CL_MAIN_PLAYER`, no other bits) route to the `SDKAvatarHit` Unity layer — pass-through for the player capsule, raycast- and trigger-detectable via the matrix. Mixed masks containing `CL_PHYSICS` route to `CharacterOnly` and remain solid.
+
 ## GROWN_ONLY_COMPONENTS (GOVS)
 
 For grow-only result components (not LWW), add the component name to:

@@ -70,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IFriendsService? friendsService;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -114,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ObjectProxy<IFriendsService> friendServiceProxy,
+            IFriendsService? friendsService,
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
@@ -140,7 +140,7 @@ namespace DCL.Communities.CommunitiesCard
             this.worldPermissionsService = worldPermissionsService;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.friendServiceProxy = friendServiceProxy;
+            this.friendsService = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileDataProvider;
@@ -174,6 +174,7 @@ namespace DCL.Communities.CommunitiesCard
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_POST_ADDED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_OWNERSHIP_TRANSFERRED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_DEEP_LINK, OnOpenCommunityCardFromNotification);
+            NotificationsBusController.Instance.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_INVITE_RECEIVED, OnOpenCommunityCardFromNotification);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_REQUEST_TO_JOIN_ACCEPTED, OnJoinRequestAccepted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED_CONTENT_VIOLATION, OnCommunityDeleted);
             NotificationsBusController.Instance.SubscribeToNotificationTypeReceived(NotificationType.COMMUNITY_DELETED, OnCommunityDeleted);
@@ -235,6 +236,7 @@ namespace DCL.Communities.CommunitiesCard
                                      CommunityPostAddedNotification postAddedNotification => postAddedNotification.Metadata.CommunityId,
                                      CommunityOwnershipTransferredNotification ownershipTransferredNotification => ownershipTransferredNotification.Metadata.CommunityId,
                                      CommunityDeepLinkNotification deepLinkNotification => deepLinkNotification.CommunityId,
+                                     CommunityUserInvitedNotification inviteReceivedNotification => inviteReceivedNotification.Metadata.CommunityId,
                                      _ => string.Empty,
                                  };
 
@@ -374,7 +376,7 @@ namespace DCL.Communities.CommunitiesCard
             membersListController = new MembersListController(viewInstance.MembersListView,
                 profileRepositoryWrapper,
                 mvcManager,
-                friendServiceProxy,
+                friendsService,
                 communitiesDataProvider,
                 chatEventBus,
                 web3IdentityCache,

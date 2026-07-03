@@ -16,7 +16,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public abstract AvatarCustomSkinningComponent Initialize(IList<CachedAttachment> gameObjects,
             UnityEngine.ComputeShader skinningShader, IAvatarMaterialPoolHandler avatarMaterial,
-            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture);
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeatureTexture,
+            int boneCount);
 
         private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
             AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);

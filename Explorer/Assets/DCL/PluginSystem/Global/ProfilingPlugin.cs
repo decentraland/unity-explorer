@@ -57,9 +57,13 @@ namespace DCL.PluginSystem.Global
             DebugViewProfilingSystem.InjectToWorld(ref builder, realmData, profiler, memoryBudget,
                 debugContainerBuilder, dclVersion, adaptivePhysicsSettings, sceneLoadingLimit);
 
+            DebugViewCurrentSceneSystem.InjectToWorld(ref builder, debugContainerBuilder, scenesCache, realmData);
+
+            PerfSampler.Configure(profiler);
+
             if (appArgs.HasFlag(AppArgsFlags.AUTOPILOT))
             {
-                var autoPilot = new AutoPilot(appArgs, loadingStatus, profiler);
+                var autoPilot = new AutoPilot(appArgs, loadingStatus);
                 autoPilot.RunAsync().Forget();
             }
         }

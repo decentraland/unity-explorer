@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.PluginSystem;
+using DCL.Time;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.ChromeDevtool;
@@ -91,6 +92,7 @@ namespace DCL.WebRequests.Analytics
             IDecentralandUrlsSource urlsSource,
             ChromeDevToolHandler chromeDevtoolProtocolHandler,
             SentrySampler? sentrySampler,
+            RealmClock realmClock,
             CancellationToken ct
         )
         {
@@ -132,11 +134,11 @@ namespace DCL.WebRequests.Analytics
 
                 var requestHub = new RequestHub(urlsSource);
 
-                IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget))
+                IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget), realmClock)
                                                                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                 .WithArtificialDelay(options);
 
-                IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(sceneBudget, sceneAvailableBudget))
+                IWebRequestController sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(sceneBudget, sceneAvailableBudget), realmClock)
                                                                  .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                                                  .WithArtificialDelay(options);
 

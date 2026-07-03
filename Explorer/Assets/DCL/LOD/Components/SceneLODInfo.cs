@@ -125,8 +125,8 @@ namespace DCL.LOD.Components
             for (int i = 1; i < renderersCount; i++)
                 mergedBounds.Encapsulate(lodRenderers[i].bounds);
 
-            //Object size required to be the largest of the 3 axis
-            metadata.LodGroup.size = Mathf.Max(Mathf.Max(mergedBounds.size.x, mergedBounds.size.y), mergedBounds.size.z);
+            //Object size based on the Y axis, as screen-relative height is what Unity evaluates for LODGroup transitions
+            metadata.LodGroup.size = mergedBounds.size.y;
         }
 
         private void CalculateCullRelativeHeight(float defaultFOV, float defaultLodBias, int loadingDistance)

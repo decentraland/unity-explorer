@@ -94,7 +94,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
 
-            if (result.Succeeded && entityDefinitionList.Count > 0)
+            // Don't collapse a network failure into "no scene at this position":
+            // that path parks the room until the player changes parcel.
+            if (!result.Succeeded)
+                return Result<MetaData>.ErrorResult(result.Exception?.Message ?? "Failed to fetch scene definition");
+
+            if (entityDefinitionList.Count > 0)
             {
                 SceneEntityDefinition? sceneDefinition = entityDefinitionList[0];
                 string? id = sceneDefinition.id;

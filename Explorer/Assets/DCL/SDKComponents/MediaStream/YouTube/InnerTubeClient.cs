@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace DCL.SDKComponents.MediaStream.YouTube
 {
@@ -44,7 +45,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
 
         // Cookies captured from YouTube response Set-Cookie headers (VISITOR_INFO1_LIVE, YSC, etc.)
         // and replayed on subsequent requests so we look like a persistent session instead of a
-        // fresh client. Thread-safe via <see cref="cookieLock"/>.
+        // fresh client. Threadsafe via <see cref="cookieLock"/>.
         private static readonly Dictionary<string, string> persistentCookies = new ();
         private static readonly object cookieLock = new ();
 
@@ -292,7 +293,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
             if (warmupState == 2) return;
 
             // First caller starts the warm-up; everyone else awaits the shared TCS.
-            if (System.Threading.Interlocked.CompareExchange(ref warmupState, 1, 0) == 0)
+            if (DCLInterlocked.CompareExchange(ref warmupState, 1, 0) == 0)
             {
                 bool cancelled = false;
 
@@ -305,7 +306,7 @@ namespace DCL.SDKComponents.MediaStream.YouTube
                     // Reset so the next caller can retry — do NOT mark warmupCompletion
                     // as done, and skip the finally's state advancement.
                     cancelled = true;
-                    System.Threading.Interlocked.Exchange(ref warmupState, 0);
+                    DCLInterlocked.Exchange(ref warmupState, 0);
                     throw;
                 }
                 catch (Exception ex)
