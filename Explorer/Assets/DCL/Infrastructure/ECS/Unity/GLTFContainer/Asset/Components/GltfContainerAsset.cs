@@ -94,6 +94,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
                 Renderers[i].forceRenderingOff = !newState;
         }
 
+        /// <summary>
+        ///     Restores rendering on reuse: cached assets keep whatever renderer state the previous scene left (e.g. hidden via a VisibilityComponent).
+        /// </summary>
+        public void EnableRenderers()
+        {
+            foreach (var renderer in Renderers)
+                renderer.enabled = true;
+        }
+
         public void ToggleAnimationState(bool newState)
         {
             foreach (Animation animation in Animations)

@@ -95,6 +95,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
 
+                result.Asset.EnableRenderers();
                 result.Asset.ToggleAnimationState(true);
 
                 component.State = LoadingState.Finished;
