@@ -111,6 +111,7 @@ namespace DCL.RealmNavigation.TeleportOperations
                 if (!started)
                     ReportHub.LogWarning(reportCategory, "Scene room connection attempt failed on world teleport");
             }
+            catch (OperationCanceledException) { }
             catch (Exception e) { ReportHub.LogException(e, reportCategory); }
         }
 

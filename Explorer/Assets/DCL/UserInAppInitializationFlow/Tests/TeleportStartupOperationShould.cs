@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using ECS;
@@ -176,6 +177,9 @@ namespace DCL.UserInAppInitializationFlow.Tests
             });
             realmData.WorldManifest.Returns(worldManifest);
             appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            // StartIfNotAsync is an extension NSubstitute can't intercept; from Stopped it delegates to StartAsync, which the assertion observes
+            roomHub.SceneRoom().CurrentState().Returns(IConnectiveRoom.State.Stopped);
 
             CreateOperation(new StartParcel(new Vector2Int(5, 7)))
                 .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
