@@ -147,8 +147,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             GltfContainerAsset asset = world.Get<StreamableLoadingResult<GltfContainerAsset>>(component.Promise.Entity).Asset!;
 
-            foreach (Renderer renderer in asset.Renderers)
-                renderer.enabled = false;
+            asset.SetRenderersActive(false);
 
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH });
             AddTransformToEntity(e);
