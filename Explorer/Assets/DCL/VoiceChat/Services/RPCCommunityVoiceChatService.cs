@@ -270,7 +270,7 @@ namespace DCL.VoiceChat.Services
 
                 try
                 {
-                    await foreach (CommunityVoiceChatUpdate? response in stream)
+                    await foreach (CommunityVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                     {
                         try
                         {

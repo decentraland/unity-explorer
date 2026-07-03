@@ -67,7 +67,7 @@ namespace DCL.Friends
                                     .CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
                                          new Empty());
 
-                await foreach (FriendshipUpdate? response in stream)
+                await foreach (FriendshipUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
@@ -108,8 +108,7 @@ namespace DCL.Friends
                         }
                     }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // No need to handle OperationCancelledException because there are no async calls
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.FRIENDS); }
                 }
             }
@@ -124,8 +123,7 @@ namespace DCL.Friends
                 IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
                     socialServiceRPC.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
 
-                // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (FriendConnectivityUpdate? response in stream)
+                await foreach (FriendConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
@@ -158,7 +156,7 @@ namespace DCL.Friends
                 IUniTaskAsyncEnumerable<BlockUpdate> stream =
                     socialServiceRPC.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
 
-                await foreach (BlockUpdate? response in stream)
+                await foreach (BlockUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
