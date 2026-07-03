@@ -21,6 +21,8 @@ namespace DCL.Passport.Modules.Creations
     public class CreationsDetailsPassportModuleController : IPassportModuleController
     {
         private const int ITEMS_POOL_DEFAULT_CAPACITY = 8;
+        private const int GRID_ITEMS_PER_ROW = 6;
+        private const int EMPTY_ITEMS_POOL_DEFAULT_CAPACITY = (GRID_ITEMS_PER_ROW - 1) * 2;
         private const string WEARABLE_CATEGORY = "wearable";
         private const string EMOTE_CATEGORY = "emote";
         private const string EMOTE_CATEGORY_ICON = "emote";
@@ -36,8 +38,10 @@ namespace DCL.Passport.Modules.Creations
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> wearablesItemsPool;
         private readonly IObjectPool<EquippedItemPassportFieldView> emotesItemsPool;
+        private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
         private readonly List<EquippedItemPassportFieldView> instantiatedWearables = new ();
         private readonly List<EquippedItemPassportFieldView> instantiatedEmotes = new ();
+        private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
 
         private Profile? currentProfile;
@@ -66,6 +70,16 @@ namespace DCL.Passport.Modules.Creations
 
             wearablesItemsPool = CreateItemsPool(view.CreatedWearablesContainer);
             emotesItemsPool = CreateItemsPool(view.CreatedEmotesContainer);
+
+            emptyItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
+                () => InstantiateItemPrefab(view.CreatedWearablesContainer),
+                defaultCapacity: EMPTY_ITEMS_POOL_DEFAULT_CAPACITY,
+                actionOnGet: emptyItemView =>
+                {
+                    emptyItemView.gameObject.SetActive(true);
+                    emptyItemView.SetInvisible(true);
+                },
+                actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
         }
 
         private IObjectPool<EquippedItemPassportFieldView> CreateItemsPool(RectTransform parent) =>
@@ -113,6 +127,7 @@ namespace DCL.Passport.Modules.Creations
 
             ClearItems(wearablesItemsPool, instantiatedWearables);
             ClearItems(emotesItemsPool, instantiatedEmotes);
+            ClearItems(emptyItemsPool, instantiatedEmptyItems);
 
             foreach (Texture2DRef thumbnail in loadedThumbnails)
                 thumbnail.Dispose();
@@ -158,6 +173,32 @@ namespace DCL.Passport.Modules.Creations
             view.WearablesLabel.SetActive(hasAnyCreation);
             view.NoEmotesLabel.SetActive(hasAnyCreation && !hasEmotes);
             view.EmotesLabel.SetActive(hasAnyCreation);
+
+            if (hasWearables)
+                AddEmptyItems(view.CreatedWearablesContainer, wearablesCount);
+
+            if (hasEmotes)
+                AddEmptyItems(view.CreatedEmotesContainer, emotesCount);
+        }
+
+        private void AddEmptyItems(RectTransform container, int realItemsCount)
+        {
+            int missingEmptyItems = CalculateMissingEmptyItems(realItemsCount);
+
+            for (var i = 0; i < missingEmptyItems; i++)
+            {
+                EquippedItemPassportFieldView emptyItem = emptyItemsPool.Get();
+                emptyItem.gameObject.name = "EmptyItem";
+                emptyItem.transform.SetParent(container, false);
+                emptyItem.transform.SetAsFirstSibling();
+                instantiatedEmptyItems.Add(emptyItem);
+            }
+        }
+
+        private static int CalculateMissingEmptyItems(int totalItems)
+        {
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            return remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
         }
 
         private async UniTask<int> LoadCategoryAsync(
