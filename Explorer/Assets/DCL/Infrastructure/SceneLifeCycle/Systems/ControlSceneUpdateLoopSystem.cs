@@ -142,7 +142,8 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneReadinessReportQueue.HasReport(definitionComponent.Parcels))
                 return;
 
-            string sceneId = definitionComponent.Definition.id!;
+            if (definitionComponent.Definition.id is not { } sceneId)
+                return;
 
             if (sceneRoomStatus.IsSceneRoomSettled(sceneId))
                 return;

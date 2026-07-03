@@ -45,10 +45,8 @@ namespace ECS.SceneLifeCycle.Reporting
             }
 
             for (var i = 0; i < parcels.Count; i++)
-            {
                 if (TryDequeue(parcels[i], out report))
                     return true;
-            }
 
             report = null;
             return false;
@@ -60,10 +58,8 @@ namespace ECS.SceneLifeCycle.Reporting
                 return false;
 
             for (var i = 0; i < parcels.Count; i++)
-            {
                 if (queue.ContainsKey(parcels[i]))
                     return true;
-            }
 
             return false;
         }

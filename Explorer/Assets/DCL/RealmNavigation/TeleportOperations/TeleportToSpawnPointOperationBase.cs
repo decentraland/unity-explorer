@@ -95,11 +95,23 @@ namespace DCL.RealmNavigation.TeleportOperations
             Assert.IsTrue(cameraEntity.Configured);
             realmController.GlobalWorld.EcsWorld.Add(cameraEntity.Object, cameraSamplingData);
 
-            // The destination scene gates its start on this room (see ControlSceneUpdateLoopSystem) and the readiness wait below needs the scene running, so the connection must be kicked off first
+            // Detached: connecting can take seconds and must not delay enqueueing the readiness report below
             if (isWorld)
-                roomHub.SceneRoom().StartIfNotAsync().Forget();
+                StartSceneRoomAsync().Forget();
 
             return await waitForSceneReadiness.ToUniTask();
+        }
+
+        private async UniTaskVoid StartSceneRoomAsync()
+        {
+            try
+            {
+                bool started = await roomHub.SceneRoom().StartIfNotAsync();
+
+                if (!started)
+                    ReportHub.LogWarning(reportCategory, "Scene room connection attempt failed on world teleport");
+            }
+            catch (Exception e) { ReportHub.LogException(e, reportCategory); }
         }
 
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(
@@ -128,16 +140,14 @@ namespace DCL.RealmNavigation.TeleportOperations
             }
             else
             {
-                bool isSceneContained = false;
+                var isSceneContained = false;
                 // Check if result contains the requested parcel.
                 foreach (var sceneEntityDefinition in scenes)
-                {
                     if (sceneEntityDefinition.Contains(parcelToTeleport))
                     {
                         isSceneContained = true;
                         break;
                     }
-                }
 
                 // If no parcel is present on any scene, teleport to the first Decoded Base
                 if (!isSceneContained)

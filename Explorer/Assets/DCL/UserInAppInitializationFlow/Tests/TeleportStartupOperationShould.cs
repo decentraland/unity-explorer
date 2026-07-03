@@ -22,17 +22,17 @@ namespace DCL.UserInAppInitializationFlow.Tests
     [TestFixture]
     public class TeleportStartupOperationShould
     {
-        private World world;
-        private ObjectProxy<Entity> cameraEntityProxy;
-        private GlobalWorld globalWorld;
-        private IGlobalRealmController realmController;
-        private IRealmData realmData;
-        private ITeleportController teleportController;
-        private ILoadingStatus loadingStatus;
-        private IAppArgs appArgs;
-        private IRoomHub roomHub;
-        private CancellationTokenSource cts;
-        private CancellationTokenSource globalWorldCts;
+        private World world = null!;
+        private ObjectProxy<Entity> cameraEntityProxy = null!;
+        private GlobalWorld globalWorld = null!;
+        private IGlobalRealmController realmController = null!;
+        private IRealmData realmData = null!;
+        private ITeleportController teleportController = null!;
+        private ILoadingStatus loadingStatus = null!;
+        private IAppArgs appArgs = null!;
+        private IRoomHub roomHub = null!;
+        private CancellationTokenSource cts = null!;
+        private CancellationTokenSource globalWorldCts = null!;
         private WorldManifest worldManifest;
 
         [SetUp]
@@ -165,6 +165,36 @@ namespace DCL.UserInAppInitializationFlow.Tests
             Assert.IsTrue(startParcel.IsConsumed());
         }
 
+        [Test]
+        public void StartsSceneRoomConnectionOnWorldTeleport()
+        {
+            worldManifest = WorldManifest.Create(new WorldManifestDto
+            {
+                occupied = new[] { "5,7" },
+                spawn_coordinate = new SpawnCoordinateData(5, 7),
+                total = 1,
+            });
+            realmData.WorldManifest.Returns(worldManifest);
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(5, 7)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            roomHub.SceneRoom().Received(1).StartAsync();
+        }
+
+        [Test]
+        public void DoesNotStartSceneRoomOnNonWorldTeleport()
+        {
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.GenesisCity));
+            appArgs.HasFlag(AppArgsFlags.POSITION).Returns(false);
+
+            CreateOperation(new StartParcel(new Vector2Int(10, 20)))
+                .ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+
+            roomHub.SceneRoom().DidNotReceive().StartAsync();
+        }
+
         private IStartupOperation.Params MakeParams()
         {
             Entity playerEntity = world.Create();
@@ -180,7 +210,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         private TeleportStartupOperation CreateOperation(StartParcel startParcel, bool editorPositionOverrideActive = false) =>
-            new TeleportStartupOperation(loadingStatus, realmController, cameraEntityProxy,
+            new (loadingStatus, realmController, cameraEntityProxy,
                 teleportController, new CameraSamplingData(), startParcel, appArgs, roomHub, editorPositionOverrideActive);
     }
 }

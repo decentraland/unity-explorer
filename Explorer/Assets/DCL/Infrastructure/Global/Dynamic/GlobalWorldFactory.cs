@@ -1,5 +1,4 @@
 using Arch.Core;
-using DCL.SceneRunner.Scene;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.RestrictedActions;
@@ -79,7 +78,6 @@ namespace Global.Dynamic
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneLoadingLimit sceneLoadingLimit;
-        private readonly StartParcel startParcel;
         private readonly EntitiesAnalytics entitiesAnalytics;
         private readonly bool isBuilderCollectionPreview;
         private readonly ISceneRoomStatus sceneRoomStatus;
@@ -103,7 +101,6 @@ namespace Global.Dynamic
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
-            StartParcel startParcel,
             EntitiesAnalytics entitiesAnalytics,
             ISceneRoomStatus sceneRoomStatus)
         {
@@ -135,7 +132,6 @@ namespace Global.Dynamic
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.startParcel = startParcel;
             this.isBuilderCollectionPreview = FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.entitiesAnalytics = entitiesAnalytics;
 

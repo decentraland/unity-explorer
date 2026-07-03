@@ -3,9 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.PrivateWorlds;
 using DCL.WebRequests;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
 using System;
 using System.Threading;
@@ -136,7 +134,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
-                // The waits below re-check the live input against this capture: a frame-scoped dirty flag would miss changes made while the cycle awaits, parking the room on a stale parcel
+                // Captured so the waits below can detect input changes that occur while this cycle is busy awaiting
                 MetaData.Input input = options.SceneRoomMetaDataSource.GetMetadataInput();
                 var result = await options.SceneRoomMetaDataSource.MetaDataAsync(input, token);
 
@@ -158,10 +156,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                     currentMetaData = meta;
 
-                    async UniTask WaitForMetadataInputChangedAsync(MetaData.Input usedInput, CancellationToken token)
+                    async UniTask WaitForMetadataInputChangedAsync(MetaData.Input usedInput, CancellationToken ct)
                     {
                         while (options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
-                            await UniTask.Yield(token);
+                            await UniTask.Yield(ct);
                     }
                 }
                 else
@@ -182,20 +180,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                         CurrentSceneRoomConnected?.Invoke();
 
                         if (roomSelection == RoomSelection.NEW)
-                        {
                             currentMetaData = meta;
-                        }
                     }
 
                     waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(input, token);
 
                     // Either room has disconnected or metadata has changed
-                    async UniTask WaitForReconnectionRequiredAsync(MetaData.Input usedInput, CancellationToken token)
+                    async UniTask WaitForReconnectionRequiredAsync(MetaData.Input usedInput, CancellationToken ct)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
                                && Room().Info.ConnectionState == LKConnectionState.ConnConnected
                                && options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
-                            await UniTask.Yield(token);
+                            await UniTask.Yield(ct);
                     }
                 }
 
@@ -213,7 +209,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.GetAdapterURL(meta.sceneId);
+            string url = options.GetAdapterURL(meta.sceneId!);
             
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
                 $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
