@@ -64,7 +64,7 @@ jobs:
       - name: Add ext-contribution label for non-team PRs
         if: |
           steps.check.outputs.is-team-dev == 'false' &&
-          steps.label-check.outputs.has-label != 'true' &&
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
           (github.event.action == 'opened' || github.event.action == 'ready_for_review')
         env:
           GH_TOKEN: ${{ github.token }}
