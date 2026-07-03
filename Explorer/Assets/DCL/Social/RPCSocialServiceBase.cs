@@ -79,7 +79,6 @@ namespace DCL.SocialService
                     await openStreamFunc().AttachExternalCancellation(ct);
 
                     // A stream that completed instantly was likely rejected as a duplicate — back off.
-                    // If it stayed open long enough to be genuine, reset the backoff counter.
                     if (DateTime.UtcNow - streamOpenedAt >= TimeSpan.FromSeconds(STABLE_STREAM_SECONDS))
                         retryAttempt = 0;
 
@@ -127,8 +126,7 @@ namespace DCL.SocialService
 
         private async UniTask WaitNextRetryAsync(int retryAttempt, CancellationToken ct)
         {
-            // Exponential backoff, capped so it cannot grow without bound (computed in double to
-            // avoid int overflow once retryAttempt gets large).
+            // Exponential backoff capped at MAX_RETRY_DELAY_SECONDS; computed in double to avoid int overflow.
             int delaySeconds = (int)Math.Min(BASE_RETRY_DELAY_SECONDS * Math.Pow(2, retryAttempt - 1), MAX_RETRY_DELAY_SECONDS);
             ReportHub.Log(reportCategory, $"Retrying connection in {delaySeconds} seconds...");
 
