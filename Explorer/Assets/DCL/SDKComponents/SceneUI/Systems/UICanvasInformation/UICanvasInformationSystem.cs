@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
         {
             base.Initialize();
 
-            interactableArea = new BorderRect { Bottom = 0, Left = 0, Right = 0, Top = 0 };
+            interactableArea = new BorderRect { Bottom = 0, Left = Screen.width * 0.25f, Right = 0, Top = 0 };
 
             WriteToCRDT();
         }
@@ -55,6 +55,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 
             lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
+
+            interactableArea.Left = Screen.width * 0.25f;
 
             WriteToCRDT();
         }
