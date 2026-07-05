@@ -57,7 +57,7 @@ namespace DCL.Mcp.Tools
 
             await UniTask.SwitchToMainThread(ct);
 
-            string? blockReason = TrySwitch(targetMode, out CameraMode previousMode);
+            string? blockReason = TrySwitchMode(world, targetMode, out CameraMode previousMode);
 
             if (blockReason != null)
                 return McpToolResult.Error(blockReason);
@@ -89,7 +89,7 @@ namespace DCL.Mcp.Tools
                    && !world.Has<InWorldCameraComponent>(cameraEntity);
         }
 
-        private string? TrySwitch(CameraMode targetMode, out CameraMode previousMode)
+        internal static string? TrySwitchMode(World world, CameraMode targetMode, out CameraMode previousMode)
         {
             SingleInstanceEntity cameraEntity = world.CacheCamera();
             ref CameraComponent camera = ref cameraEntity.GetCameraComponent(world);
