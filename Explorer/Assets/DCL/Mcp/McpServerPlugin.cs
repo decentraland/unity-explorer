@@ -119,6 +119,7 @@ namespace DCL.Mcp
             registry.Register(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus));
             registry.Register(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity));
             registry.Register(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData));
+            registry.Register(new SetCameraModeTool(globalWorld, exposedCameraData));
             registry.Register(new WalkTool(globalWorld, arguments.PlayerEntity));
             registry.Register(new SendChatTool(chatMessagesBus));
             registry.Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity));

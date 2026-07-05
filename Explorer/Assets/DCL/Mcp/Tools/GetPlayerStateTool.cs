@@ -57,6 +57,7 @@ namespace DCL.Mcp.Tools
                     ["position"] = McpJson.Vector(exposedCameraData.WorldPosition.Value),
                     ["rotationEuler"] = McpJson.Vector(exposedCameraData.WorldRotation.Value.eulerAngles),
                     ["mode"] = exposedCameraData.CameraMode.ToString(),
+                    ["modeChangeAllowed"] = SetCameraModeTool.IsModeChangeAllowed(world),
                     ["pointerLocked"] = exposedCameraData.PointerIsLocked.Value,
                 },
             };

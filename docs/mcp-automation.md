@@ -70,6 +70,7 @@ curl -s -X POST http://127.0.0.1:8123/mcp \
 | `move_to` | `x`, `y`, `z`, `lookAt{X,Y,Z}?`, `durationSec?` | Instant or smooth move to a world position (16 m per parcel) |
 | `walk` | `directionX`, `directionY`, `seconds?`, `kind?`, `jump?` | Holds camera-relative movement through the real locomotion pipeline (collisions apply) |
 | `look_at` | `x`, `y`, `z` | Rotates the camera to a world point (aim before a screenshot) |
+| `set_camera_mode` | `mode` (`first_person`\|`third_person`\|`drone`\|`free`) | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
 | `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
