@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+using DCL.Interaction.Utility;
 using DCL.Mcp.Protocol;
 using DCL.Mcp.Systems;
 using DCL.Mcp.Tools;
@@ -42,6 +43,7 @@ namespace DCL.Mcp
         private readonly IWorldInfoHub worldInfoHub;
         private readonly ECSReloadScene reloadSceneController;
         private readonly ExposedCameraData exposedCameraData;
+        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly ICoroutineRunner coroutineRunner;
         private readonly Arch.Core.World globalWorld;
         private readonly bool localSceneDevelopment;
@@ -62,6 +64,7 @@ namespace DCL.Mcp
             ECSReloadScene reloadSceneController,
             DiagnosticsContainer diagnosticsContainer,
             ExposedCameraData exposedCameraData,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ICoroutineRunner coroutineRunner,
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
@@ -75,6 +78,7 @@ namespace DCL.Mcp
             this.worldInfoHub = worldInfoHub;
             this.reloadSceneController = reloadSceneController;
             this.exposedCameraData = exposedCameraData;
+            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.coroutineRunner = coroutineRunner;
             this.globalWorld = globalWorld;
             this.localSceneDevelopment = localSceneDevelopment;
@@ -108,6 +112,7 @@ namespace DCL.Mcp
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
+            McpPointerClickSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
 
             var registry = new McpToolRegistry();
 
@@ -126,6 +131,7 @@ namespace DCL.Mcp
             registry.Register(new ListSceneEntitiesTool(worldInfoHub));
             registry.Register(new GetEntityDetailsTool(worldInfoHub));
             registry.Register(new TriggerEmoteTool(globalWorldActions));
+            registry.Register(new ClickEntityTool(globalWorld, arguments.PlayerEntity));
 
             var dispatcher = new McpJsonRpcDispatcher(registry, Application.version);
 

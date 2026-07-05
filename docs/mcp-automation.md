@@ -74,6 +74,7 @@ curl -s -X POST http://127.0.0.1:8123/mcp \
 | `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
+| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?` (`pointer`\|`primary`\|`secondary`), `eventType?` (`click`\|`down`\|`up`), `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
 
 ## The scene-iteration loop
 
@@ -100,9 +101,10 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 - **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/mcp/ user=Everyone` (elevated prompt), then relaunch.
 - **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).
 - **Scene entity dumps** — `list_scene_entities`/`get_entity_details` read the scene world without acquiring its sync lock (same as the existing `WorldInfoTool` debug tooling); treat results as a diagnostic snapshot.
+- **`click_entity` returns `hit:false` with `blockedBy*`** — another collider sits on the camera→target line; `move_to`/`look_at` to a clear vantage and retry. If the reason is "out of range", close within the entity's `maxDistance` (default 10 m) first. Entities whose collider sits away from the pivot (GLTF meshes) may need an explicit `x/y/z` aim point.
 
 ## Implementation map
 
-- `Explorer/Assets/DCL/Mcp/` — feature folder (folded into `DCL.Plugins` via `.asmref`): `Protocol/` (JSON-RPC dispatcher), `Transport/` (`HttpListener` server + Origin validation), `Tools/` (one class per tool), `Systems/` (`McpInputOverrideSystem` for held movement), `McpServerPlugin.cs`.
+- `Explorer/Assets/DCL/Mcp/` — feature folder (folded into `DCL.Plugins` via `.asmref`): `Protocol/` (JSON-RPC dispatcher), `Transport/` (`HttpListener` server + Origin validation), `Tools/` (one class per tool), `Systems/` (`McpInputOverrideSystem` for held movement, `McpPointerClickSystem` for synthetic entity clicks), `Tests/` (EditMode tests, folded into `DCL.EditMode.Tests`), `McpServerPlugin.cs`.
 - Registration: `DynamicWorldContainer.CreateAsync`, gated on `McpServerPlugin.IsEnabled(appArgs)`.
 - Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log category: `ReportCategory.MCP`.

@@ -857,6 +857,7 @@ namespace Global.Dynamic
                     realmContainer.ReloadSceneController,
                     bootstrapContainer.DiagnosticsContainer,
                     exposedGlobalDataContainer.ExposedCameraData,
+                    staticContainer.EntityCollidersGlobalCache,
                     coroutineRunner,
                     globalWorld,
                     localSceneDevelopment));
