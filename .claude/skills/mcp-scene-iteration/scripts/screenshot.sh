@@ -48,13 +48,22 @@ capture_one() {
     payload=$(printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"screenshot","arguments":{"maxWidth":%s,"quality":"%s","worldOnly":%s}}}' \
         "$MAX_WIDTH" "$QUALITY" "$WORLD_ONLY")
 
+    # NOTE: response must land in a file, not a pipe into `python3 - <<heredoc`:
+    # the heredoc IS python's stdin (the program), so piped data would be lost.
+    local response_file
+    response_file=$(mktemp)
+
     curl -sS --max-time 30 -X POST "http://127.0.0.1:${PORT}/mcp" \
         -H 'Content-Type: application/json' \
-        -d "$payload" \
-    | python3 - "$target_file" <<'PY'
+        -H 'Accept: application/json, text/event-stream' \
+        -o "$response_file" \
+        -d "$payload"
+
+    python3 - "$target_file" "$response_file" <<'PY'
 import base64, json, sys
 
-raw = sys.stdin.read()
+with open(sys.argv[2], encoding="utf-8") as f:
+    raw = f.read()
 
 # Tolerate SSE framing (data: lines) in case a proxy or future transport wraps the response.
 try:
@@ -88,6 +97,9 @@ with open(sys.argv[1], "wb") as f:
 
 print(f"{sys.argv[1]}  ({caption})")
 PY
+    local status=$?
+    rm -f "$response_file"
+    return $status
 }
 
 if [[ -n "$OUT" && "$COUNT" -eq 1 ]]; then
