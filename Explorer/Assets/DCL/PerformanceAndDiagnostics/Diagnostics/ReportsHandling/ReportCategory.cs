@@ -358,6 +358,11 @@ namespace DCL.Diagnostics
 
         public const string CHROME_DEVTOOL_PROTOCOL = nameof(CHROME_DEVTOOL_PROTOCOL);
 
+        /// <summary>
+        ///     Embedded MCP (Model Context Protocol) automation server.
+        /// </summary>
+        public const string MCP = nameof(MCP);
+
         public const string SCENE_PERMISSIONS = nameof(SCENE_PERMISSIONS);
         public const string MVC_STATE_MACHINE = nameof(MVC_STATE_MACHINE);
 

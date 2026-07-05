@@ -1,0 +1,138 @@
+using Arch.SystemGroups;
+using CrdtEcsBridge.RestrictedActions;
+using Cysharp.Threading.Tasks;
+using DCL.CharacterCamera;
+using DCL.Chat.MessageBus;
+using DCL.Diagnostics;
+using DCL.Mcp.Protocol;
+using DCL.Mcp.Systems;
+using DCL.Mcp.Tools;
+using DCL.Mcp.Transport;
+using DCL.PluginSystem.Global;
+using DCL.RealmNavigation;
+using DCL.UI.DebugMenu.MessageBus;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
+using Global.AppArgs;
+using SceneRunner.Debugging.Hub;
+using System.Threading;
+using UnityEngine;
+using Utility;
+
+namespace DCL.Mcp
+{
+    /// <summary>
+    ///     Hosts the embedded MCP server so external coding agents can observe and drive the client.
+    ///     Registered only when the mcp/mcp-port app arg is present (command line or deep link);
+    ///     the server binds to 127.0.0.1 exclusively and validates browser Origins.
+    /// </summary>
+    public class McpServerPlugin : IDCLGlobalPluginWithoutSettings
+    {
+        public const int DEFAULT_PORT = 8123;
+
+        private const int MIN_PORT = 1024;
+        private const int MAX_PORT = 65535;
+
+        private readonly int port;
+        private readonly IGlobalWorldActions globalWorldActions;
+        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IScenesCache scenesCache;
+        private readonly ICurrentSceneInfo currentSceneInfo;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly IWorldInfoHub worldInfoHub;
+        private readonly ECSReloadScene reloadSceneController;
+        private readonly ExposedCameraData exposedCameraData;
+        private readonly ICoroutineRunner coroutineRunner;
+        private readonly Arch.Core.World globalWorld;
+        private readonly bool localSceneDevelopment;
+        private readonly SceneLogBuffer logBuffer;
+
+        private ScreenshotTool? screenshotTool;
+        private McpHttpServer? server;
+        private CancellationTokenSource? serverCts;
+
+        public McpServerPlugin(
+            int port,
+            IGlobalWorldActions globalWorldActions,
+            IChatMessagesBus chatMessagesBus,
+            IScenesCache scenesCache,
+            ICurrentSceneInfo currentSceneInfo,
+            ILoadingStatus loadingStatus,
+            IWorldInfoHub worldInfoHub,
+            ECSReloadScene reloadSceneController,
+            DiagnosticsContainer diagnosticsContainer,
+            ExposedCameraData exposedCameraData,
+            ICoroutineRunner coroutineRunner,
+            Arch.Core.World globalWorld,
+            bool localSceneDevelopment)
+        {
+            this.port = port;
+            this.globalWorldActions = globalWorldActions;
+            this.chatMessagesBus = chatMessagesBus;
+            this.scenesCache = scenesCache;
+            this.currentSceneInfo = currentSceneInfo;
+            this.loadingStatus = loadingStatus;
+            this.worldInfoHub = worldInfoHub;
+            this.reloadSceneController = reloadSceneController;
+            this.exposedCameraData = exposedCameraData;
+            this.coroutineRunner = coroutineRunner;
+            this.globalWorld = globalWorld;
+            this.localSceneDevelopment = localSceneDevelopment;
+
+            logBuffer = new SceneLogBuffer();
+            var logEntryBus = new DebugMenuConsoleLogEntryBus();
+            logEntryBus.MessageAdded += logBuffer.Append;
+            diagnosticsContainer.AddDebugConsoleHandler(logEntryBus);
+        }
+
+        public void Dispose()
+        {
+            screenshotTool?.Dispose();
+            server?.Dispose();
+            serverCts.SafeCancelAndDispose();
+        }
+
+        public static bool IsEnabled(IAppArgs appArgs) =>
+            appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT);
+
+        public static int ResolvePort(IAppArgs appArgs)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
+                && int.TryParse(portValue, out int parsedPort)
+                && parsedPort is >= MIN_PORT and <= MAX_PORT)
+                return parsedPort;
+
+            return DEFAULT_PORT;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
+
+            var registry = new McpToolRegistry();
+
+            screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
+            registry.Register(screenshotTool);
+            registry.Register(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo));
+            registry.Register(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment));
+            registry.Register(new GetSceneLogsTool(logBuffer));
+            registry.Register(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus));
+            registry.Register(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity));
+            registry.Register(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData));
+            registry.Register(new WalkTool(globalWorld, arguments.PlayerEntity));
+            registry.Register(new SendChatTool(chatMessagesBus));
+            registry.Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity));
+            registry.Register(new ListSceneEntitiesTool(worldInfoHub));
+            registry.Register(new GetEntityDetailsTool(worldInfoHub));
+            registry.Register(new TriggerEmoteTool(globalWorldActions));
+
+            var dispatcher = new McpJsonRpcDispatcher(registry, Application.version);
+
+            server = new McpHttpServer(dispatcher, port);
+            serverCts = serverCts.SafeRestart();
+
+            if (server.TryStart())
+                server.RunAsync(serverCts.Token).Forget();
+        }
+    }
+}

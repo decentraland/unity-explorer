@@ -1,5 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
@@ -35,6 +36,7 @@ using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
+using DCL.Mcp;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
@@ -842,6 +844,22 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.LODPlugin);
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
+
+            if (McpServerPlugin.IsEnabled(appArgs))
+                globalPlugins.Add(new McpServerPlugin(
+                    McpServerPlugin.ResolvePort(appArgs),
+                    new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS)),
+                    chatContainer.ChatMessagesBus,
+                    staticContainer.ScenesCache,
+                    commsContainer.CurrentSceneInfo,
+                    staticContainer.LoadingStatus,
+                    realmNavigatorContainer.WorldInfoHub,
+                    realmContainer.ReloadSceneController,
+                    bootstrapContainer.DiagnosticsContainer,
+                    exposedGlobalDataContainer.ExposedCameraData,
+                    coroutineRunner,
+                    globalWorld,
+                    localSceneDevelopment));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT) || FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS))
                 globalPlugins.Add(new GlobalGLTFLoadingPlugin(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, wearableContainer.BuilderContentURL.Value, localSceneDevelopment, staticContainer.ComponentsContainer.ComponentPoolsRegistry.RootContainerTransform()));

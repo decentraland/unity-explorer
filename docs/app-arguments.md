@@ -311,6 +311,27 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+### `mcp`
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+
+**Usage:**
+```bash
+--mcp
+```
+
+---
+
+### `mcp-port`
+**Type:** String (integer port, 1024–65535)
+**Description:** Starts the embedded MCP server on a specific port (implies `mcp`). Use distinct ports when running multiple instances via `--multi-instance`.
+
+**Usage:**
+```bash
+--mcp-port 8124
+```
+
+---
+
 ### `launch-cdp-monitor-on-start`
 **Type:** Boolean
 **Description:** Launches the Chrome DevTools Protocol (CDP) monitor on application start. Enables remote debugging capabilities.

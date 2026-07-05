@@ -1,0 +1,67 @@
+using Cysharp.Threading.Tasks;
+using DCL.Mcp.Protocol;
+using DCL.RealmNavigation;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SceneRunner.Scene;
+using System.Threading;
+using UnityEngine;
+
+namespace DCL.Mcp.Tools
+{
+    public class GetSceneStateTool : IMcpTool
+    {
+        private readonly IScenesCache scenesCache;
+        private readonly ICurrentSceneInfo currentSceneInfo;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly bool localSceneDevelopment;
+
+        public string Name => "get_scene_state";
+
+        public string Description =>
+            "Read the state of the scene at the player's current parcel: name, base parcel, runtime state (including JavaScript/ECS errors), "
+            + "readiness, asset loading progress and the global loading-screen stage. Call this after teleporting or reloading before interacting.";
+
+        public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
+
+        internal GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
+        {
+            this.scenesCache = scenesCache;
+            this.currentSceneInfo = currentSceneInfo;
+            this.loadingStatus = loadingStatus;
+            this.localSceneDevelopment = localSceneDevelopment;
+        }
+
+        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread(ct);
+
+            Vector2Int currentParcel = scenesCache.CurrentParcel.Value;
+            ISceneFacade? scene = scenesCache.CurrentScene.Value;
+
+            var state = new JObject
+            {
+                ["currentParcel"] = McpJson.Parcel(currentParcel),
+                ["loadingStage"] = loadingStatus.CurrentStage.Value.ToString(),
+                ["loadingScreenOn"] = loadingStatus.IsLoadingScreenOn(),
+                ["localSceneDevelopment"] = localSceneDevelopment,
+                ["scene"] = scene == null
+                    ? JValue.CreateNull()
+                    : new JObject
+                    {
+                        ["name"] = scene.Info.Name,
+                        ["baseParcel"] = McpJson.Parcel(scene.Info.BaseParcel),
+                        ["sdkVersion"] = scene.Info.SdkVersion,
+                        ["state"] = scene.SceneStateProvider.State.Value().ToString(),
+                        ["isReady"] = scene.IsSceneReady(),
+                        ["assetsLoadingConcluded"] = scene.SceneData.SceneLoadingConcluded,
+                        ["runningStatus"] = currentSceneInfo.SceneStatus.Value?.ToString() ?? "Unknown",
+                    },
+            };
+
+            return McpToolResult.Text(state.ToString(Formatting.Indented));
+        }
+    }
+}
