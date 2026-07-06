@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-     - name: TEST ONLY PUSH THE BASELINE
+      - name: TEST ONLY PUSH THE BASELINE
         env:
           COUNT: 100000
           AWS_MAX_ATTEMPTS: 3
