@@ -20,6 +20,19 @@ namespace DCL.Communities.CommunitiesDataProvider
 {
     public class CommunitiesDataProvider : ICommunityMembershipChecker
     {
+        public event Action<CreateOrUpdateCommunityResponse.CommunityData>? CommunityCreated;
+        public event Action<string>? CommunityUpdated;
+        public event Action<string>? CommunityDeleted;
+        public event Action<string, bool>? CommunityJoined;
+        public event Action<string, bool>? CommunityLeft;
+        public event Action<string>? CommunityUserRemoved;
+        public event Action<string, string>? CommunityUserBanned;
+        public event Action<string, string?, bool>? CommunityRequestedToJoin;
+        public event Action<string, bool>? CommunityInviteRequestCancelled;
+        public event Action<string, string, bool>? CommunityInviteRequestAccepted;
+        public event Action<string, string, bool>? CommunityInviteRequestRejected;
+        public event Action<string>? CommunityOwnershipTransferred;
+
         private const string CHECK_NOTIFICATIONS_OPT_OUT_URL = "{0}/subscription/opt-outs/community/{1}";
 
         private readonly IWebRequestController webRequestController;
@@ -45,18 +58,6 @@ namespace DCL.Communities.CommunitiesDataProvider
         private string communitiesV2BaseUrl => urlsSource.Url(DecentralandUrl.CommunitiesV2);
         private string membersV2BaseUrl => urlsSource.Url(DecentralandUrl.MembersV2);
         private string subscriptionsBaseUrl => urlsSource.Url(DecentralandUrl.Notifications);
-        public event Action<CreateOrUpdateCommunityResponse.CommunityData>? CommunityCreated;
-        public event Action<string>? CommunityUpdated;
-        public event Action<string>? CommunityDeleted;
-        public event Action<string, bool>? CommunityJoined;
-        public event Action<string, bool>? CommunityLeft;
-        public event Action<string>? CommunityUserRemoved;
-        public event Action<string, string>? CommunityUserBanned;
-        public event Action<string, string, bool>? CommunityRequestedToJoin;
-        public event Action<string, bool>? CommunityInviteRequestCancelled;
-        public event Action<string, string, bool>? CommunityInviteRequestAccepted;
-        public event Action<string, string, bool>? CommunityInviteRequestRejected;
-        public event Action<string>? CommunityOwnershipTransferred;
 
         public CommunitiesDataProvider(
             IWebRequestController webRequestController,
@@ -441,7 +442,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<string> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
+        public async UniTask<string?> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests";
 
@@ -455,7 +456,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                                                               .CreateFromJson<SendInviteOrRequestToJoinAsyncResponse>(WRJsonParser.Newtonsoft)
                                                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            string inviteOrRequestIdResult = result.Success ? result.Value.data.id : null!;
+            string? inviteOrRequestIdResult = result.Success ? result.Value.data.id : null;
 
             if (action == InviteRequestAction.request_to_join)
                 CommunityRequestedToJoin?.Invoke(communityId, inviteOrRequestIdResult, result.Success);
@@ -589,7 +590,6 @@ namespace DCL.Communities.CommunitiesDataProvider
 
         private UniTask HydrateFriendsAsync(GetUserInviteRequestData.UserInviteRequestData[] requests, CancellationToken ct)
         {
-            // We don't need to "group" or "batch" data manually, it's already done in RealmProfileRepository
             hydrateCt = ct;
             return UniTask.WhenAll(requests.Select(hydrateRequestFriends));
         }
