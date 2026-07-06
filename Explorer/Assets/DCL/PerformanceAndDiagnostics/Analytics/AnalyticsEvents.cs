@@ -14,7 +14,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public const string PERFORMANCE_REPORT = "performance_report";
             public const string PLUGINS_INIT = "plugins_init";
             public const string ERROR = "error";
-            public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
             public const string MEETS_MINIMUM_REQUIREMENTS = "meets_minimum_requirements";
         }

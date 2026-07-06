@@ -103,7 +103,7 @@ A `Stop` hook (`.claude/settings.json` → [`scripts/lint/lint-changed.sh`](scri
   * Ignore `OperationCanceledException`
   * Log/report all others via `ReportHub.LogException`
 * Use `SuppressToResultAsync()` to simplify exception handling.
-* Handle cancellation with `ct.IsCancellationRequested`, never `ThrowIfCancellationRequested()`.
+* In exception-free flows (detached UniTask, `.Forget()`, fire-and-forget, returning boolean, returning Result or Result<T>), handle cancellation with `ct.IsCancellationRequested` — do not use `ThrowIfCancellationRequested()`. In flows that already handle exceptions (awaited async methods, `SuppressToResultAsync`), `ThrowIfCancellationRequested()` is acceptable.
 
 ### 10. **Testing Systems**
 

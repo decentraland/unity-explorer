@@ -25,6 +25,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
 
@@ -69,8 +70,9 @@ namespace ECS.Unity.GLTFContainer.Tests
 
                 usedResources = false;
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                // ignored
             }
         }
 
@@ -98,7 +100,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             LogAssert.ignoreFailingMessages = true;
 
-            system.Update(0);
+            system!.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
             Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
@@ -132,6 +134,32 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        public async Task ReEnableRenderersDisabledByPreviousScene()
+        {
+            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY))
+                {
+                    State = LoadingState.Loading,
+                };
+
+            await InstantiateAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, component.Promise.Entity);
+
+            GltfContainerAsset asset = world.Get<StreamableLoadingResult<GltfContainerAsset>>(component.Promise.Entity).Asset!;
+
+            asset.SetRenderersActive(false);
+
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH });
+            AddTransformToEntity(e);
+
+            system!.Update(0);
+
+            Assert.That(world.Get<GltfContainerComponent>(e).State, Is.EqualTo(LoadingState.Finished));
+            Assert.That(asset.Renderers, Is.Not.Empty);
+            Assert.That(asset.Renderers.All(r => r.enabled), Is.True);
+        }
+
+        [Test]
         public async Task InstantiateVisibleMeshesColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
@@ -145,7 +173,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, IsDirty = true });
             AddTransformToEntity(e);
 
-            system.Update(0);
+            system!.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
@@ -159,16 +187,17 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER_NAME, GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
-
-            component.State = LoadingState.Loading;
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER_NAME, GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY))
+                {
+                    State = LoadingState.Loading,
+                };
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, component.Promise.Entity);
 
             Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH });
             AddTransformToEntity(e);
 
-            system.Update(0);
+            system!.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
 

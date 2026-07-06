@@ -22,8 +22,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public bool ScenesCommunicationIsIsolated => false;
 
-        public bool MetadataIsDirty => false;
-
         public MetaData.Input GetMetadataInput() =>
             new ("LocalSceneDevelopment", Vector2Int.zero);
 
