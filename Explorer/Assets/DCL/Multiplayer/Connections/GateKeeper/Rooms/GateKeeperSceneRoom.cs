@@ -166,7 +166,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 {
                     if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                     {
-                        string connectionString = await ConnectionStringAsync(meta, token);
+                        string connectionString = await ConnectionStringAsync(meta.sceneId, meta, token);
 
                         if (Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                             currentMetaData = null;
@@ -207,16 +207,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
         }
 
-        private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
+        private async UniTask<string> ConnectionStringAsync(string sceneId, MetaData meta, CancellationToken token)
         {
-            string url = options.GetAdapterURL(meta.sceneId!);
-            
+            string url = options.GetAdapterURL(sceneId);
+
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
-                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
 
             if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
-                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{sceneId}'.");
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.HardwareFingerprint), token)
