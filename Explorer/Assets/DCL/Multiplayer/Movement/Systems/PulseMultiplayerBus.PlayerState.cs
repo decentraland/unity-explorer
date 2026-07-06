@@ -339,7 +339,7 @@ namespace DCL.Multiplayer.Movement
                 state.PointAtYQuantized = message.pointAtWorldHitPoint.y;
                 state.PointAtZQuantized = message.pointAtWorldHitPoint.z;
             }
-
+        }
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
