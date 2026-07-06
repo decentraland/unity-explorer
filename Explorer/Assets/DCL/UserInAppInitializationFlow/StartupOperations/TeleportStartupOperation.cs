@@ -1,12 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Ipfs;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
 using DCL.Utility.Types;
-using ECS;
 using ECS.Prioritization.Components;
 using Global.AppArgs;
 using System.Threading;
@@ -28,9 +27,10 @@ namespace DCL.UserInAppInitializationFlow
             CameraSamplingData cameraSamplingData,
             StartParcel startParcel,
             IAppArgs appArgs,
+            IRoomHub roomHub,
             bool editorPositionOverrideActive = false,
             string reportCategory = ReportCategory.SCENE_LOADING)
-            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, reportCategory)
+            : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, roomHub, reportCategory)
         {
             this.startParcel = startParcel;
             this.appArgs = appArgs;
