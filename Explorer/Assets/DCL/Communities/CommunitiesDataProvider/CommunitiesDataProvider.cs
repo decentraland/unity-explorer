@@ -111,7 +111,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                 return response;
 
             foreach (GetUserCommunitiesData.CommunityData community in response.data.results)
-                community.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
+                community.ThumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), community.id);
 
             await UniTask.WhenAll(HydrateFriendsAsync(response.data.results, ct),
                 HydrateOwnerNamesAsync(response.data.results, ct));
@@ -397,7 +397,7 @@ namespace DCL.Communities.CommunitiesDataProvider
                                                                               .CreateFromJson<GetUserInviteRequestResponse>(WRJsonParser.Newtonsoft);
 
             foreach (GetUserInviteRequestData.UserInviteRequestData inviteRequest in response.data.results)
-                inviteRequest.thumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inviteRequest.communityId);
+                inviteRequest.ThumbnailUrl = string.Format(urlsSource.Url(DecentralandUrl.CommunityThumbnail), inviteRequest.communityId);
 
             await UniTask.WhenAll(HydrateFriendsAsync(response.data.results, ct),
                 HydrateOwnerNamesAsync(response.data.results, ct));

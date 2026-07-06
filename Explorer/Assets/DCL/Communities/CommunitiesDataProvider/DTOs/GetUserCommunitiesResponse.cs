@@ -19,7 +19,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         public class CommunityData
         {
             public string id = null!;
-            public string thumbnailUrl = null!;
+            [JsonIgnore] public string ThumbnailUrl { get; internal set; } = string.Empty;
             public string name = null!;
             public string description = null!;
             public string ownerAddress = null!;
@@ -55,7 +55,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 GetCommunityResponse.VoiceChatStatus voiceChatStatus)
             {
                 this.id = id;
-                this.thumbnailUrl = thumbnailUrl;
+                this.ThumbnailUrl = thumbnailUrl;
                 this.name = name;
                 this.description = description;
                 this.privacy = privacy;

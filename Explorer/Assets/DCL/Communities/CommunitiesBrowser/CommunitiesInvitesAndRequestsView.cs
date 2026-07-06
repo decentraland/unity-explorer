@@ -365,7 +365,7 @@ namespace DCL.Communities.CommunitiesBrowser
             invitedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActionLoadingActive(false);
             invitedCommunityCardView.ConfigureListenersCount(false, 0);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.ThumbnailUrl, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             invitedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;
@@ -402,7 +402,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsReceivedGroupView.SetProfileDataProvider(profileRepositoryWrapper!);
             requestsReceivedGroupView.SetCommunitiesDataProvider(communitiesDataProvider!);
 
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.ThumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestsReceivedGroupView.CommunityButtonClicked -= OnOpenCommunityProfile;
@@ -443,7 +443,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             requestedCommunityCardView.SetActionLoadingActive(false);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.ThumbnailUrl, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;

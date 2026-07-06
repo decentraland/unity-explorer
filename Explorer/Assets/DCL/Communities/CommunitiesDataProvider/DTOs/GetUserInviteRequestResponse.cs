@@ -20,7 +20,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         {
             public string id = null!;
             public string communityId = null!;
-            public string thumbnailUrl = null!;
+            [JsonIgnore] public string ThumbnailUrl { get; internal set; } = string.Empty;
             public string memberAddress = null!;
             public InviteRequestAction type;
             public string status = null!;
