@@ -76,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             try
             {
-                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
+                Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed");
                 var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, topic, cts.Token).Forget();
             }
