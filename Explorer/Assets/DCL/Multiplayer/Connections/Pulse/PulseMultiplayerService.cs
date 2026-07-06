@@ -176,7 +176,6 @@ namespace DCL.Multiplayer.Connections.Pulse
             if (handshakeHandler != null)
                 await handshakeHandler(handshakeCompletion, ct);
             else
-            else
                 // No handshake to await — settle the completion so a later disconnect takes the
                 // reconnection path instead of the handshake-failure path.
                 handshakeCompletion.TrySetResult((true, null));
