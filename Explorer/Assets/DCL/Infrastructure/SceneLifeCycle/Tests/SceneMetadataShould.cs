@@ -16,7 +16,7 @@ namespace ECS.SceneLifeCycle.Tests
             SceneMetadata metadata = JsonConvert.DeserializeObject<SceneMetadata>(JSON)!;
 
             // Assert
-            Assert.IsNull(metadata.enableTerrain);
+            Assert.IsNull(metadata.landscapeTerrain);
         }
 
         [TestCase(true)]
@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle.Tests
             SceneMetadata metadata = JsonConvert.DeserializeObject<SceneMetadata>(json)!;
 
             // Assert
-            Assert.AreEqual(value, metadata.enableTerrain);
+            Assert.AreEqual(value, metadata.landscapeTerrain);
         }
     }
 }

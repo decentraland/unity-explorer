@@ -169,7 +169,7 @@ namespace Global.Dynamic.Landscapes
         }
 
         private static bool IsLandscapeTerrainDisabledByScene(IReadOnlyList<SceneEntityDefinition> sceneDefinitions) =>
-            sceneDefinitions.Count == 1 && sceneDefinitions[0].metadata.enableTerrain == false;
+            sceneDefinitions.Count == 1 && sceneDefinitions[0].metadata.landscapeTerrain == false;
 
         private enum WorldsTerrainResult
         {
