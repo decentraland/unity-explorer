@@ -5,6 +5,7 @@ using NUnit.Framework;
 using Pulse.Transport;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.Multiplayer.Connections.Pulse.Tests
 {
@@ -69,7 +70,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         }
 
         [Test]
-        public void ReturnFalseWhenServerDisconnectsDuringHandshake()
+        public async Task ReturnFalseWhenServerDisconnectsDuringHandshake()
         {
             // Arrange
             var disconnectHandlerCalled = false;
@@ -88,7 +89,9 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             });
 
             // Act
-            bool connected = service.ConnectAsync(cts.Token, maxAttempts: 1).GetAwaiter().GetResult();
+            // The routing loop faults the handshake completion from the thread pool, so ConnectAsync
+            // completes asynchronously — await it instead of GetResult, which cannot block on a UniTask.
+            bool connected = await service.ConnectAsync(cts.Token, maxAttempts: 1);
 
             // Assert
             Assert.IsFalse(connected);
@@ -97,7 +100,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         }
 
         [Test]
-        public void RetryWithBackoffWhenServerDisconnectsDuringHandshake()
+        public async Task RetryWithBackoffWhenServerDisconnectsDuringHandshake()
         {
             // Arrange
             service.RegisterHandshakeHandler(async (handshakeReceived, _) =>
@@ -107,7 +110,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             });
 
             // Act
-            bool connected = service.ConnectAsync(cts.Token, maxAttempts: 2).GetAwaiter().GetResult();
+            bool connected = await service.ConnectAsync(cts.Token, maxAttempts: 2);
 
             // Assert
             Assert.IsFalse(connected);
@@ -131,7 +134,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
         }
 
         [Test]
-        public void NotRetryWhenDisconnectReasonDuringHandshakeIsTerminal()
+        public async Task NotRetryWhenDisconnectReasonDuringHandshakeIsTerminal()
         {
             // Arrange
             service.RegisterHandshakeHandler(async (handshakeReceived, _) =>
@@ -141,7 +144,7 @@ namespace DCL.Multiplayer.Connections.Pulse.Tests
             });
 
             // Act
-            bool connected = service.ConnectAsync(cts.Token, maxAttempts: 3).GetAwaiter().GetResult();
+            bool connected = await service.ConnectAsync(cts.Token, maxAttempts: 3);
 
             // Assert
             Assert.IsFalse(connected);

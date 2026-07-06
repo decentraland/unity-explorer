@@ -8,6 +8,7 @@ using DCL.Utilities;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.UserInAppInitializationFlow.Tests
 {
@@ -38,14 +39,14 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
-        public void SkipConnectionWhenPulseInactive()
+        public async Task SkipConnectionWhenPulseInactive()
         {
             // Arrange
             var activation = new PulseActivation(false);
             var operation = new StartPulseMultiplayerStartupOperation(service, profilePropagation, selfProfile, activation);
 
             // Act
-            operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             service.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>(), Arg.Any<int>());
@@ -53,7 +54,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
         }
 
         [Test]
-        public void FallBackToLiveKitWhenUnreachable()
+        public async Task FallBackToLiveKitWhenUnreachable()
         {
             // Arrange
             var activation = new PulseActivation(true);
@@ -61,7 +62,7 @@ namespace DCL.UserInAppInitializationFlow.Tests
             var operation = new StartPulseMultiplayerStartupOperation(service, profilePropagation, selfProfile, activation);
 
             // Act
-            operation.ExecuteAsync(MakeParams(), cts.Token).GetAwaiter().GetResult();
+            await operation.ExecuteAsync(MakeParams(), cts.Token);
 
             // Assert
             Assert.IsFalse(activation.IsActive);
