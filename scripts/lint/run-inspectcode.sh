@@ -29,9 +29,7 @@ cli="$(find_cli)" || {
     exit 3
 }
 
-# --no-build keeps execution time down; produces a SARIF/JSON report.
 "$cli" "$solution" \
-    --no-build \
     --verbosity=INFO \
     --properties:Configuration=Debug \
     --disable-settings-layers:SolutionPersonal \
