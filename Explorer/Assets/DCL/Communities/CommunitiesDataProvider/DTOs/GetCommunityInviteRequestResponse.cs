@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
-    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityRequestsV2200OkResponse
+    // Server schema: https://github.com/decentraland/social-service-ea/blob/be255af07d5997792322d3b11b656dd66fd1d675/docs/schemas.yaml#L1169 (GetCommunityRequestsV2200OkResponse)
     [Serializable]
     public class GetCommunityInviteRequestResponse : ICommunityMemberPagedResponse
     {

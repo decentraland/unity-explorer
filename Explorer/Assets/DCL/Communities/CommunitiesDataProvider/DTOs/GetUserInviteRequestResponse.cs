@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
-    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetMemberRequestsV2200OkResponse
+    // Server schema: https://github.com/decentraland/social-service-ea/blob/be255af07d5997792322d3b11b656dd66fd1d675/docs/schemas.yaml#L1212 (GetMemberRequestsV2200OkResponse)
     [Serializable]
     public class GetUserInviteRequestResponse
     {

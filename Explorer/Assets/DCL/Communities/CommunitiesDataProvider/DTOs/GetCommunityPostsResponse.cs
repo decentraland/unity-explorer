@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
-    // Server schema: social-service-ea docs/schemas.yaml#/components/schemas/GetCommunityPostsV2200OkResponse (post items: CommunityPostV2).
+    // Server schema: https://github.com/decentraland/social-service-ea/blob/be255af07d5997792322d3b11b656dd66fd1d675/docs/schemas.yaml#L1337 (GetCommunityPostsV2200OkResponse, post items: https://github.com/decentraland/social-service-ea/blob/be255af07d5997792322d3b11b656dd66fd1d675/docs/schemas.yaml#L1302 CommunityPostV2)
     [Serializable]
     public class GetCommunityPostsResponse
     {
