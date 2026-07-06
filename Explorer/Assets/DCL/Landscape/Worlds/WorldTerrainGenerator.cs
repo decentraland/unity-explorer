@@ -68,6 +68,12 @@ namespace DCL.Landscape
                 rootGo.gameObject.SetActive(isVisible);
         }
 
+        public void Hide()
+        {
+            SwitchVisibility(false);
+            Trees?.Hide();
+        }
+
         public void GenerateTerrain(NativeHashSet<int2> ownedParcels,
             AsyncLoadProcessReport? processReport = null)
         {

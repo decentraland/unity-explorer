@@ -21,6 +21,13 @@ namespace DCL.Ipfs
         public bool isPortableExperience;
         public WorldConfiguration? worldConfiguration;
         public SkyboxConfigData? skyboxConfig;
+        /// <summary>
+        ///     Maps to the top-level scene.json field <c>landscapeTerrain</c>.
+        ///     Only honored in single-scene worlds and local scene development; absent/true = terrain shown.
+        /// </summary>
+        [JsonProperty("landscapeTerrain")]
+        public bool? enableTerrain;
+
         public bool authoritativeMultiplayer;
         public FeatureToggles featureToggles;
         public string? creator;
