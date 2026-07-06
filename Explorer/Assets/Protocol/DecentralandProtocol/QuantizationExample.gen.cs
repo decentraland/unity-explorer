@@ -33,21 +33,24 @@ namespace Decentraland.Common {
             "UGxheWVySW5wdXQSIAoGbW92ZV94GAEgASgNQhCKtRgMDQAAgL8VAACAPxgI",
             "EiAKBm1vdmVfehgCIAEoDUIQirUYDA0AAIC/FQAAgD8YCBIdCgN5YXcYAyAB",
             "KA1CEIq1GAwNAAA0wxUAADRDGAwSFwoHYnV0dG9ucxgEIAEoDUIGkrUYAggI",
-            "EhgKCHNlcXVlbmNlGAUgASgNQgaStRgCCAwikAIKE0F2YXRhclN0YXRlU25h",
-            "cHNob3QSGwoBeBgBIAEoDUIQirUYDA0AAIDFFQAAgEUYEBIbCgF5GAIgASgN",
-            "QhCKtRgMDQAAgMMVAACAQxgOEhsKAXoYAyABKA1CEIq1GAwNAACAxRUAAIBF",
-            "GBASHwoFcGl0Y2gYBCABKA1CEIq1GAwNAAC0whUAALRCGAoSHQoDeWF3GAUg",
-            "ASgNQhCKtRgMDQAANMMVAAA0QxgMEhkKCWVudGl0eV9pZBgGIAEoDUIGkrUY",
-            "AggUEh8KD2FuaW1hdGlvbl9zdGF0ZRgHIAEoDUIGkrUYAggGEhMKC2lzX2dy",
-            "b3VuZGVkGAggASgIEhEKCXRpbWVzdGFtcBgJIAEoASpkCgtCdXR0b25GbGFn",
-            "cxILCgdCRl9OT05FEAASCwoHQkZfSlVNUBABEg0KCUJGX1NQUklOVBACEg8K",
-            "C0JGX0lOVEVSQUNUEAQSDAoIQkZfRU1PVEUQCBINCglCRl9DUk9VQ0gQEGIG",
-            "cHJvdG8z"));
+            "EhgKCHNlcXVlbmNlGAUgASgNQgaStRgCCAwiaQoNVmVsb2NpdHlTdGF0ZRIc",
+            "CgJ2eBgBIAEoDUIQmrUYDA0AAEhCFQAAAEAYCBIcCgJ2eRgCIAEoDUIQmrUY",
+            "DA0AAEhCFQAAAEAYCBIcCgJ2ehgDIAEoDUIQmrUYDA0AAEhCFQAAAEAYCCKQ",
+            "AgoTQXZhdGFyU3RhdGVTbmFwc2hvdBIbCgF4GAEgASgNQhCKtRgMDQAAgMUV",
+            "AACARRgQEhsKAXkYAiABKA1CEIq1GAwNAACAwxUAAIBDGA4SGwoBehgDIAEo",
+            "DUIQirUYDA0AAIDFFQAAgEUYEBIfCgVwaXRjaBgEIAEoDUIQirUYDA0AALTC",
+            "FQAAtEIYChIdCgN5YXcYBSABKA1CEIq1GAwNAAA0wxUAADRDGAwSGQoJZW50",
+            "aXR5X2lkGAYgASgNQgaStRgCCBQSHwoPYW5pbWF0aW9uX3N0YXRlGAcgASgN",
+            "QgaStRgCCAYSEwoLaXNfZ3JvdW5kZWQYCCABKAgSEQoJdGltZXN0YW1wGAkg",
+            "ASgBKmQKC0J1dHRvbkZsYWdzEgsKB0JGX05PTkUQABILCgdCRl9KVU1QEAES",
+            "DQoJQkZfU1BSSU5UEAISDwoLQkZfSU5URVJBQ1QQBBIMCghCRl9FTU9URRAI",
+            "Eg0KCUJGX0NST1VDSBAQYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Common.ButtonFlags), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.PositionDelta), global::Decentraland.Common.PositionDelta.Parser, new[]{ "Dx", "Dy", "Dz", "EntityId", "Sequence" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.PlayerInput), global::Decentraland.Common.PlayerInput.Parser, new[]{ "MoveX", "MoveZ", "Yaw", "Buttons", "Sequence" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.VelocityState), global::Decentraland.Common.VelocityState.Parser, new[]{ "Vx", "Vy", "Vz" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Common.AvatarStateSnapshot), global::Decentraland.Common.AvatarStateSnapshot.Parser, new[]{ "X", "Y", "Z", "Pitch", "Yaw", "EntityId", "AnimationState", "IsGrounded", "Timestamp" }, null, null, null, null)
           }));
     }
@@ -827,6 +830,299 @@ namespace Decentraland.Common {
 
   /// <summary>
   /// ---------------------------------------------------------------------------
+  /// VelocityState — per-axis velocity, demonstrating the power-law quantizer.
+  ///
+  /// Velocity needs an exact zero (a stopped avatar must read 0, not a quantization
+  /// residual, or it drifts) and fine resolution at locomotion speeds, but only
+  /// coarse resolution near the ±50 m/s extremes. The linear quantizer can give
+  /// none of these from 8 bits: its codes straddle zero (±0.196) and spend uniform
+  /// resolution on speeds that never occur. quantized_power solves all three.
+  ///
+  ///  Field  | Type   | Range      | pow | bits | Wire worst-case
+  ///  -------|--------|------------|-----|------|-----------------------
+  ///  vx     | uint32 | [-50, 50]  |  2  |  8   | tag 1B + varint 1–2B = 2–3B
+  ///  vy     | uint32 | [-50, 50]  |  2  |  8   | tag 1B + varint 1–2B = 2–3B
+  ///  vz     | uint32 | [-50, 50]  |  2  |  8   | tag 1B + varint 1–2B = 2–3B
+  ///  ---------------------------------------------------------------------------
+  ///  Step: ≈ 0.003 m/s near zero, ≈ 0.78 m/s near ±50 (vs. 0.392 uniform linear)
+  ///  Wire: sign in the LSB, so |v| ≲ 12.5 m/s (magnitude code ≤ 63) costs a single
+  ///        varint byte regardless of direction; only faster axes spill to 2 bytes.
+  /// ---------------------------------------------------------------------------
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class VelocityState : pb::IMessage<VelocityState>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<VelocityState> _parser = new pb::MessageParser<VelocityState>(() => new VelocityState());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<VelocityState> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Common.QuantizationExampleReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public VelocityState() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public VelocityState(VelocityState other) : this() {
+      vx_ = other.vx_;
+      vy_ = other.vy_;
+      vz_ = other.vz_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public VelocityState Clone() {
+      return new VelocityState(this);
+    }
+
+    /// <summary>Field number for the "vx" field.</summary>
+    public const int VxFieldNumber = 1;
+    private uint vx_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Vx {
+      get { return vx_; }
+      set {
+        vx_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "vy" field.</summary>
+    public const int VyFieldNumber = 2;
+    private uint vy_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Vy {
+      get { return vy_; }
+      set {
+        vy_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "vz" field.</summary>
+    public const int VzFieldNumber = 3;
+    private uint vz_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint Vz {
+      get { return vz_; }
+      set {
+        vz_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as VelocityState);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(VelocityState other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Vx != other.Vx) return false;
+      if (Vy != other.Vy) return false;
+      if (Vz != other.Vz) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Vx != 0) hash ^= Vx.GetHashCode();
+      if (Vy != 0) hash ^= Vy.GetHashCode();
+      if (Vz != 0) hash ^= Vz.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Vx != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(Vx);
+      }
+      if (Vy != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Vy);
+      }
+      if (Vz != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Vz);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Vx != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(Vx);
+      }
+      if (Vy != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(Vy);
+      }
+      if (Vz != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(Vz);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Vx != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Vx);
+      }
+      if (Vy != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Vy);
+      }
+      if (Vz != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Vz);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(VelocityState other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Vx != 0) {
+        Vx = other.Vx;
+      }
+      if (other.Vy != 0) {
+        Vy = other.Vy;
+      }
+      if (other.Vz != 0) {
+        Vz = other.Vz;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Vx = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Vy = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            Vz = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Vx = input.ReadUInt32();
+            break;
+          }
+          case 16: {
+            Vy = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            Vz = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// ---------------------------------------------------------------------------
   /// AvatarStateSnapshot — full authoritative state, sent on Channel 0 (reliable)
   /// or on resync requests.  Demonstrates wider ranges and mixed encodings.
   ///
@@ -861,7 +1157,7 @@ namespace Decentraland.Common {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Common.QuantizationExampleReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Decentraland.Common.QuantizationExampleReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
