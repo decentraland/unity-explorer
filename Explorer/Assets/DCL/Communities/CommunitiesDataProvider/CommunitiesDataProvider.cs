@@ -442,7 +442,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             return result.Success;
         }
 
-        public async UniTask<string?> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
+        public async UniTask<Result<string>> SendInviteOrRequestToJoinAsync(string communityId, string targetedUserAddress, InviteRequestAction action, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/{communityId}/requests";
 
@@ -461,7 +461,7 @@ namespace DCL.Communities.CommunitiesDataProvider
             if (action == InviteRequestAction.request_to_join)
                 CommunityRequestedToJoin?.Invoke(communityId, inviteOrRequestIdResult, result.Success);
 
-            return inviteOrRequestIdResult;
+            return result.Success ? Result<string>.SuccessResult(inviteOrRequestIdResult!) : Result.ErrorResult(result.ErrorMessage!);
         }
 
         public async UniTask<GetInvitableCommunityListResponse> GetInvitableCommunityListAsync(string userAddress, CancellationToken ct)
