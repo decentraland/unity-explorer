@@ -52,14 +52,12 @@ namespace DCL.Profiles
             return existingValue;
         }
 
-        private void DeserializeProfileList(JToken root, Profile profile)
+        private void DeserializeProfileList(JObject root, Profile profile)
         {
             // Temporary support two schemes: from catalyst and centralized
             // TODO remove before releasing
 
-            JToken? metadata = root["metadata"];
-
-            if (metadata != null)
+            if (root["metadata"] is JObject metadata)
                 root = metadata;
 
             JToken? avatars = root["avatars"];
@@ -80,9 +78,9 @@ namespace DCL.Profiles
 
         }
 
-        private void DeserializeProfile(JToken? jObject, Profile profile)
+        private void DeserializeProfile(JToken? jToken, Profile profile)
         {
-            if (jObject == null) return;
+            if (jToken is not JObject jObject) return;
 
             profile.GetCompact() = ProfileCompactInfoConverter.ReadJson(jObject);
 
@@ -128,33 +126,37 @@ namespace DCL.Profiles
             }
         }
 
-        private LinkJsonDto DeserializeLink(JToken item, LinkJsonDto link)
+        private LinkJsonDto DeserializeLink(JToken? jToken, LinkJsonDto link)
         {
+            if (jToken is not JObject item) return new LinkJsonDto { title = "", url = "" };
+
             link.title = item["title"]?.Value<string>() ?? "";
             link.url = item["url"]?.Value<string>() ?? "";
             return link;
         }
 
-        private void DeserializeAvatar(JToken jObject, ref Profile profile)
+        private void DeserializeAvatar(JToken? jToken, ref Profile profile)
         {
+            var jObject = jToken as JObject;
+
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             Avatar avatar = profile.Avatar ??= new Avatar();
 
-            avatar.EyesColor = JsonUtils.DeserializeColor(jObject["eyes"]?["color"], Color.black);
-            avatar.HairColor = JsonUtils.DeserializeColor(jObject["hair"]?["color"], Color.black);
-            avatar.SkinColor = JsonUtils.DeserializeColor(jObject["skin"]?["color"], Color.black);
+            avatar.EyesColor = JsonUtils.DeserializeColor(jObject?["eyes"]?["color"], Color.black);
+            avatar.HairColor = JsonUtils.DeserializeColor(jObject?["hair"]?["color"], Color.black);
+            avatar.SkinColor = JsonUtils.DeserializeColor(jObject?["skin"]?["color"], Color.black);
 
-            avatar.BodyShape = BodyShape.FromStringSafe(jObject["bodyShape"]?.Value<string>() ?? "");
+            avatar.BodyShape = BodyShape.FromStringSafe(jObject?["bodyShape"]?.Value<string>() ?? "");
 
-            DeserializeArrayToHashSet(jObject["wearables"], avatar.wearables, static s => new URN(s));
-            DeserializeArrayToHashSet(jObject["forceRender"], avatar.forceRender, static s => s);
+            DeserializeArrayToHashSet(jObject?["wearables"], avatar.wearables, static s => new URN(s));
+            DeserializeArrayToHashSet(jObject?["forceRender"], avatar.forceRender, static s => s);
 
-            DeserializeEmoteList(jObject["emotes"], avatar.emotes);
+            DeserializeEmoteList(jObject?["emotes"], avatar.emotes);
 
             ref Profile.CompactInfo compactInfo = ref profile.GetCompact();
 
-            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["face256"]?.Value<string>() ?? "");
-            avatar.BodySnapshotUrl = URLAddress.FromString(jObject["snapshots"]?["body"]?.Value<string>() ?? "");
+            compactInfo.FaceSnapshotUrl = URLAddress.FromString(jObject?["snapshots"]?["face256"]?.Value<string>() ?? "");
+            avatar.BodySnapshotUrl = URLAddress.FromString(jObject?["snapshots"]?["body"]?.Value<string>() ?? "");
         }
 
         private void DeserializeEmoteList(JToken? root, URN[] equippedEmotes)

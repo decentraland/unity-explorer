@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
+using DCL.Utilities;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -12,6 +13,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -21,13 +23,21 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class ControlSceneUpdateLoopSystemShould : UnitySystemTestBase<ControlSceneUpdateLoopSystem>
     {
-        private IRealmPartitionSettings realmPartitionSettings;
+        private IRealmPartitionSettings realmPartitionSettings = null!;
+        private ISceneReadinessReportQueue sceneReadinessReportQueue = null!;
+        private IRealmData realmData = null!;
+        private ISceneRoomStatus sceneRoomStatus = null!;
 
         [SetUp]
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>(), Substitute.For<ISceneReadinessReportQueue>());
+            sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
+            realmData = Substitute.For<IRealmData>();
+            sceneRoomStatus = Substitute.For<ISceneRoomStatus>();
+
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>(), sceneReadinessReportQueue,
+                realmData, sceneRoomStatus);
         }
 
         [Test]
@@ -88,6 +98,36 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
+        public void HoldWorldSceneStartUntilSceneRoomIsSettled()
+        {
+            ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: true);
+
+            system.Update(0f);
+
+            scene.DidNotReceive().StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void StartWorldSceneWhenSceneRoomIsSettled()
+        {
+            ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: true, hasReadinessReport: true);
+
+            system.Update(0f);
+
+            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public void StartWorldSceneWithoutReadinessReportRegardlessOfSceneRoom()
+        {
+            ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: false);
+
+            system.Update(0f);
+
+            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+        }
+
+        [Test]
         public void ChangeSceneFPS()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
@@ -100,6 +140,33 @@ namespace ECS.SceneLifeCycle.Tests
             system.Update(0f);
 
             scene.Received(1).SetTargetFPS(15);
+        }
+
+        private ISceneFacade CreateWorldScenePendingStart(bool isRoomSettled, bool hasReadinessReport)
+        {
+            realmData.Configured.Returns(true);
+            realmData.RealmType.Returns(new ReactiveProperty<RealmKind>(RealmKind.World));
+            sceneReadinessReportQueue.HasReport(Arg.Any<IReadOnlyList<Vector2Int>>()).Returns(hasReadinessReport);
+            sceneRoomStatus.IsSceneRoomSettled(Arg.Any<string>()).Returns(isRoomSettled);
+
+            ISceneFacade scene = Substitute.For<ISceneFacade>();
+
+            var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
+            {
+                id = "test-scene",
+                metadata = new SceneMetadata
+                {
+                    scene = new SceneMetadataScene
+                        { DecodedParcels = new[] { Vector3.zero.ToParcel() } },
+                },
+            }, new IpfsPath());
+
+            world.Add(promise.Entity, new StreamableLoadingResult<ISceneFacade>(scene));
+            world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
+
+            return scene;
         }
     }
 }
