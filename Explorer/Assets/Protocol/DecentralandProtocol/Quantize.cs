@@ -40,11 +40,11 @@ namespace Decentraland.Networking.Bitwise
         ///     concentrates resolution near zero. Magnitudes outside [0, <paramref name="max" />] are
         ///     clamped.
         ///     <para>
-        ///         The encoded layout puts the magnitude in the high bits and the sign in the LSB
-        ///         (<c>(magnitude &lt;&lt; 1) | sign</c>). This keeps the varint cost a function of
-        ///         magnitude rather than direction — a small <c>|value|</c> of either sign stays in a
-        ///         single varint byte. Zero canonicalizes to <c>0</c> (a zero magnitude never sets the
-        ///         sign bit), so proto3 still omits a stopped field entirely.
+        ///     The encoded layout puts the magnitude in the high bits and the sign in the LSB
+        ///     (<c>(magnitude &lt;&lt; 1) | sign</c>). This keeps the varint cost a function of
+        ///     magnitude rather than direction — a small <c>|value|</c> of either sign stays in a
+        ///     single varint byte. Zero canonicalizes to <c>0</c> (a zero magnitude never sets the
+        ///     sign bit), so proto3 still omits a stopped field entirely.
         ///     </para>
         /// </summary>
         public static uint EncodePower(float value, float max, float pow, int bits)
