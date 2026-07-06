@@ -97,7 +97,13 @@ namespace DCL.Mcp.Tools
                 if (worldOnly)
                 {
                     Camera camera = world.CacheCamera().GetCameraComponent(world).Camera;
-                    worldRender = RenderTexture.GetTemporary(camera.pixelWidth, camera.pixelHeight, 24);
+
+                    // URP replaces the camera's internal color buffer with the target texture's descriptor
+                    // (CreateRenderTextureDescriptor), so an LDR target silently downgrades the whole render
+                    // to 8-bit and clamps emissives to 1.0, starving bloom and other HDR-dependent post effects.
+                    // An HDR temporary keeps the pipeline HDR end-to-end; the downscale blit into the sRGB
+                    // descriptor below performs the linear-to-sRGB conversion.
+                    worldRender = RenderTexture.GetTemporary(camera.pixelWidth, camera.pixelHeight, 24, RenderTextureFormat.DefaultHDR);
 
                     // Camera.Render() is unsupported under URP: redirect the camera's output into the
                     // render texture for exactly one frame instead, then restore it.

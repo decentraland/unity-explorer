@@ -55,7 +55,7 @@ curl -s -X POST http://127.0.0.1:8123/mcp \
 
 | Tool | Arguments | Returns |
 |---|---|---|
-| `screenshot` | `maxWidth?` (default 1280), `quality?` (`jpg`\|`png`), `worldOnly?` | Downscaled image of the current view (UI included by default) + caption |
+| `screenshot` | `maxWidth?` (default 1280), `quality?` (`jpg`\|`png`), `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
 | `get_scene_logs` | `limit?`, `severity?` (`all`\|`error`), `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
