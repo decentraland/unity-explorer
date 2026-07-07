@@ -98,6 +98,7 @@ namespace Global.Dynamic
         private readonly MultiplayerContainer multiplayerContainer;
         private readonly BannedNotificationHandler bannedNotificationHandler;
         private readonly CommunitiesContainer communitiesContainer;
+        private readonly RealmNavigationContainer realmNavigationContainer;
         private readonly VoiceChatContainer voiceChatContainer;
         private readonly CommsContainer commsContainer;
         private readonly ProfileContainer profileContainer;
@@ -149,6 +150,7 @@ namespace Global.Dynamic
             BannedNotificationHandler bannedNotificationHandler,
             MultiplayerContainer multiplayerContainer,
             CommunitiesContainer communitiesContainer,
+            RealmNavigationContainer realmNavigationContainer,
             VoiceChatContainer voiceChatContainer)
         {
             this.uiShellContainer = uiShellContainer;
@@ -167,6 +169,7 @@ namespace Global.Dynamic
             this.bannedNotificationHandler = bannedNotificationHandler;
             this.multiplayerContainer = multiplayerContainer;
             this.communitiesContainer = communitiesContainer;
+            this.realmNavigationContainer = realmNavigationContainer;
             this.voiceChatContainer = voiceChatContainer;
         }
 
@@ -177,6 +180,7 @@ namespace Global.Dynamic
             socialServicesContainer.Dispose();
             bannedNotificationHandler.Dispose();
             chatContainer.Dispose();
+            realmNavigationContainer.Dispose(); // unsubscribes the Pulse ingress recovery from RealmNavigator.RealmChangeFailed
             communitiesContainer.Dispose(); // disposes CommunityDataService
             profileBroadcast.Dispose();
             multiplayerContainer.Dispose();
@@ -1021,6 +1025,7 @@ namespace Global.Dynamic
                 bannedNotificationHandler,
                 multiplayerContainer,
                 communitiesContainer,
+                realmNavigatorContainer,
                 voiceChatContainer
             );
 

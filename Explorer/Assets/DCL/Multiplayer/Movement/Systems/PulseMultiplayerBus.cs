@@ -8,6 +8,7 @@ using DCL.Web3.Identities;
 using Decentraland.Pulse;
 using ECS;
 using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -88,13 +89,23 @@ namespace DCL.Multiplayer.Movement
         }
 
         /// <summary>
-        ///     Purges known peers and drops ingress until <see cref="BroadcastTeleport" /> announces the new realm,
-        ///     so stale previous-realm peers cannot repopulate the announcement/movement queues during loading.
+        ///     Purges known peers and drops ingress until the realm change's outcome is announced, so stale
+        ///     previous-realm peers cannot repopulate the announcement/movement queues during loading.
         /// </summary>
         public void BlockIngressUntilTeleportBroadcast()
         {
-            peerPurgePending = true;
+            // Written first so the routing thread can never observe the purge flag while ingress is still open.
             ingressBlocked = true;
+            peerPurgePending = true;
+        }
+
+        /// <summary>
+        ///     Reverts <see cref="BlockIngressUntilTeleportBroadcast" />.
+        /// </summary>
+        public void ResumeAfterFailedRealmChange(Vector3 currentPosition)
+        {
+            peerPurgePending = false;
+            BroadcastTeleport(currentPosition);
         }
 
         // The purge is deferred to here because the peer collections are routing-thread-only.

@@ -32,7 +32,7 @@ namespace DCL.Multiplayer.Movement
 
             pulseService.Send(outgoing);
 
-            // Everything the server sends after this request is scoped to the destination realm.
+            // Safe to reopen before the server re-scopes: known peers were purged, so old-realm traffic still in flight fails the peer lookup.
             ingressBlocked = false;
         }
 

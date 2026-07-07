@@ -23,14 +23,14 @@ using System;
 
 namespace DCL.RealmNavigation
 {
-    public class RealmNavigationContainer
+    public class RealmNavigationContainer : IDisposable
     {
         private static readonly TimeSpan LIVEKIT_TIMEOUT = TimeSpan.FromSeconds(10f);
 
         /// <summary>
         ///     Realm Navigator with core teleport functionality
         /// </summary>
-        public IRealmNavigator RealmNavigator { get; private init; } = null!;
+        public RealmNavigator RealmNavigator { get; private init; } = null!;
 
         public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
 
@@ -40,8 +40,13 @@ namespace DCL.RealmNavigation
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
+        private Action onRealmChangeFailed { get; init; } = null!;
+
         public RealmNavigationDebugPlugin CreatePlugin() =>
             new (widgetBuilder);
+
+        public void Dispose() =>
+            RealmNavigator.RealmChangeFailed -= onRealmChangeFailed;
 
         public static RealmNavigationContainer Create(
             StaticContainer staticContainer,
@@ -109,21 +114,27 @@ namespace DCL.RealmNavigation
             realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
             teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");
 
+            var realmNavigator = new RealmNavigator(
+                loadingScreen,
+                realmContainer.RealmController,
+                bootstrapContainer.DecentralandUrlsSource,
+                globalWorld,
+                exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData,
+                staticContainer.LoadingStatus,
+                landscape,
+                analytics,
+                realmChangeOperations,
+                teleportInSameRealmOperation,
+                worldAccessGate);
+
+            Action onRealmChangeFailed = () => pulseMultiplayerBus.ResumeAfterFailedRealmChange(staticContainer.CharacterContainer.CharacterObject.Position);
+            realmNavigator.RealmChangeFailed += onRealmChangeFailed;
+
             return new RealmNavigationContainer
             {
-                RealmNavigator = new RealmNavigator(
-                    loadingScreen,
-                    realmContainer.RealmController,
-                    bootstrapContainer.DecentralandUrlsSource,
-                    globalWorld,
-                    exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                    exposedGlobalDataContainer.CameraSamplingData,
-                    staticContainer.LoadingStatus,
-                    landscape,
-                    analytics,
-                    realmChangeOperations,
-                    teleportInSameRealmOperation,
-                    worldAccessGate),
+                RealmNavigator = realmNavigator,
+                onRealmChangeFailed = onRealmChangeFailed,
                 WorldAccessGate = worldAccessGate,
                 WorldPermissionsService = worldPermissionsService,
                 WorldInfoHub = worldInfoHub,

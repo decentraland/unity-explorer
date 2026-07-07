@@ -32,6 +32,11 @@ namespace DCL.RealmNavigation
 
         public event Action<Vector2Int>? NavigationExecuted;
 
+        /// <summary>
+        ///     Raised only after the realm-change operations ran; pre-check rejections don't raise it.
+        /// </summary>
+        public event Action? RealmChangeFailed;
+
         private readonly ILoadingScreen loadingScreen;
         private readonly IRealmController realmController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -135,6 +140,8 @@ namespace DCL.RealmNavigation
             {
                 if (!globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
+
+                RealmChangeFailed?.Invoke();
 
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
