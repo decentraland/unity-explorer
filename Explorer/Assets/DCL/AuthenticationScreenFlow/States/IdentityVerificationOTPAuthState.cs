@@ -75,7 +75,7 @@ namespace DCL.AuthenticationScreenFlow
                     Exception ex => new SpanErrorInfo("Unexpected error during authentication flow", ex),
                 };
 
-                if (loginException is not OperationCanceledException)
+                if (loginException is not OperationCanceledException && loginException is not InvalidEmailException)
                     ReportHub.LogException(loginException, new ReportData(ReportCategory.AUTHENTICATION));
             }
 
@@ -100,7 +100,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 // awaits OTP code being entered
                 IWeb3Identity identity = await compositeWeb3Provider.LoginAsync(LoginPayload.ForOtpFlow(email), ct);
-                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (email, identity, false, ct));
+                machine.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new ProfileFetchingPayload(email, identity, false, ct));
             }
             catch (OperationCanceledException e)
             {

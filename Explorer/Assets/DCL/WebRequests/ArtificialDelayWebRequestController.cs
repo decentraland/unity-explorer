@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests.RequestsHub;
 using System;
+using System.Threading;
 
 namespace DCL.WebRequests
 {
@@ -25,7 +26,7 @@ namespace DCL.WebRequests
             where TWebRequestArgs: struct
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            (float delaySeconds, bool useDelay) = await options.GetOptionsAsync();
+            (float delaySeconds, bool useDelay) = await options.GetOptionsAsync(envelope.Ct);
 
             if (useDelay)
                 await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
@@ -37,7 +38,7 @@ namespace DCL.WebRequests
 
         public interface IReadOnlyOptions
         {
-            UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync();
+            UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync(CancellationToken ct);
         }
     }
 }

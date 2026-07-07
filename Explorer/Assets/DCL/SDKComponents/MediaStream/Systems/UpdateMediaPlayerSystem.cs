@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
-using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -228,25 +227,21 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
             if (!playerComponent.IsPlaying)
-            {
-                if (playerComponent.State is VideoState.VsError or VideoState.VsNone)
+                switch (playerComponent.State)
                 {
-                    RenderBlackTexture(ref assignedTexture);
-                    return;
+                    case VideoState.VsError or VideoState.VsNone:
+                        RenderBlackTexture(ref assignedTexture);
+                        return;
+                    case VideoState.VsPaused:
+                        return;
                 }
 
-                if (playerComponent.State == VideoState.VsPaused)
-                    return;
-            }
-
             if (playerComponent.MediaPlayer.IsLivekitPlayer(out LivekitPlayer livekitPlayer))
-            {
                 if (!livekitPlayer.IsVideoOpened)
                 {
                     RenderBlackTexture(ref assignedTexture);
                     return;
                 }
-            }
 
             // Video is already playing in the background, and CopyTexture is a GPU operation,
             // so it does not make sense to budget by CPU as it can lead to much worse UX
@@ -281,13 +276,9 @@ namespace DCL.SDKComponents.MediaStream
                     Graphics.Blit(avText, assignedTexture.Texture, flipMaterial);
             }
             else if (dimensionsCapped)
-            {
                 Graphics.Blit(avText, assignedTexture.Texture);
-            }
             else
-            {
                 Graphics.CopyTexture(avText, assignedTexture.Texture);
-            }
 
             return;
 
@@ -305,11 +296,10 @@ namespace DCL.SDKComponents.MediaStream
             // Livekit streams rely on the livekit room being active for the current scene only.
             // Non-livekit streams are also stopped when PlayCurrentSceneStreamOnly is on so they can be
             // recreated fresh by CreateMediaPlayerSystem when the player re-enters the scene.
-            if (isLivekit || videoPrioritizationSettings.PlayCurrentSceneStreamOnly)
-            {
-                mediaPlayerComponent.Dispose();
-                World.Remove<MediaPlayerComponent>(entity);
-            }
+            if (!isLivekit && !videoPrioritizationSettings.PlayCurrentSceneStreamOnly) return;
+
+            mediaPlayerComponent.Dispose();
+            World.Remove<MediaPlayerComponent>(entity);
         }
 
         private bool TryReInitializeOnExpiredYouTubeUrl(in Entity entity, ref MediaPlayerComponent component)
@@ -448,11 +438,11 @@ namespace DCL.SDKComponents.MediaStream
             {
 
                 // Transfer YouTube resolution metadata from the promise to the component
-                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.resolvedUrlExpiresAt;
-                component.IsLiveStream = component.OpenMediaPromise.isLiveStream;
+                component.ResolvedUrlExpiresAt = component.OpenMediaPromise.ResolvedUrlExpiresAt;
+                component.IsLiveStream = component.OpenMediaPromise.IsLiveStream;
 
                 // Use the resolved media address (which may be a direct URL after YouTube resolution)
-                MediaAddress resolvedAddress = component.OpenMediaPromise.mediaAddress;
+                MediaAddress resolvedAddress = component.OpenMediaPromise.ResolvedAddress;
 
                 lastOpenMediaTime = currentTime;
 
@@ -481,15 +471,14 @@ namespace DCL.SDKComponents.MediaStream
 
         private void FadeVolume(ref MediaPlayerComponent component, float volume, float dt)
         {
-            if (component.State != VideoState.VsError)
-            {
-                float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
+            if (component.State == VideoState.VsError) return;
 
-                if (!sceneStateProvider.IsCurrent)
-                    targetVolume = 0f;
+            float targetVolume = volume * mediaFactory.worldVolumePercentage * mediaFactory.masterVolumePercentage;
 
-                component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
-            }
+            if (!sceneStateProvider.IsCurrent)
+                targetVolume = 0f;
+
+            component.MediaPlayer.CrossfadeVolume(targetVolume, dt * audioFadeSpeed);
         }
     }
 }

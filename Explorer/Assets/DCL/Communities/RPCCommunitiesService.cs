@@ -77,8 +77,7 @@ namespace DCL.Communities
                 IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream =
                     socialServiceRPC.Module().CallServerStream<CommunityMemberConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
 
-                // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
-                await foreach (CommunityMemberConnectivityUpdate? response in stream)
+                await foreach (CommunityMemberConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
                     {
@@ -97,8 +96,7 @@ namespace DCL.Communities
                         }
                     }
 
-                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
-                    // No need to handle OperationCancelledException because there are no async calls
+                    catch (OperationCanceledException) { }
                     catch (Exception e) { ReportHub.LogException(e, ReportCategory.COMMUNITIES); }
                 }
             }
