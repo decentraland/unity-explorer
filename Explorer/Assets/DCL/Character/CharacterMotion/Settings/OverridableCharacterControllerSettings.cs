@@ -154,6 +154,7 @@ namespace DCL.CharacterMotion.Settings
 
         public float GlideMaxGravity => GetOverrideOrValue(AvatarLocomotionOverrides.OverrideID.GLIDE_MAX_GRAVITY, impl.GlideMaxGravity);
 
+        // Not yet exposed as a per-scene override — kept as a global setting until there is a concrete use case for scene-level tuning.
         public float GlideWindResponse => impl.GlideWindResponse;
 
         public float JumpToGlideTimeInterval => impl.JumpToGlideTimeInterval;
