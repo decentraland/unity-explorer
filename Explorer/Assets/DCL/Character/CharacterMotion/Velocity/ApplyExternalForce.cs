@@ -19,7 +19,7 @@ namespace DCL.Character.CharacterMotion
             // a = F / m
             characterPhysics.ExternalAcceleration = characterPhysics.ExternalForce / settings.CharacterMass;
 
-            // An open glider catches the airflow with a larger effective area, so continuous forces (wind) act on it stronger
+            // An open glider catches the airflow with a larger effective area, so continuous external forces act on it stronger
             if (glideState.Value == GlideStateValue.GLIDING)
                 characterPhysics.ExternalAcceleration *= settings.GlideWindResponse;
 
