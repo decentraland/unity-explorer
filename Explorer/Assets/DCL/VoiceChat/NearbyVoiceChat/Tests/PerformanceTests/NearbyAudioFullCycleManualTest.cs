@@ -1,10 +1,11 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.CharacterCamera;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -22,7 +23,7 @@ using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     ///     Profiler-attachable PlayMode testbed for the full Nearby audio ECS chain.
