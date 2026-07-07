@@ -176,7 +176,7 @@ namespace DCL.Chat
 
                 UpdateAutoTranslateIndicator();
 
-                RefreshTitlebarCommunityThumbnailAsync(cd.thumbnailUrl).Forget();
+                RefreshTitlebarCommunityThumbnailAsync(cd.ThumbnailUrl).Forget();
             }
         }
 

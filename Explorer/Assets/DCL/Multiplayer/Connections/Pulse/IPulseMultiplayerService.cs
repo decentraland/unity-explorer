@@ -34,8 +34,11 @@ namespace DCL.Multiplayer.Connections.Pulse
         ///     default to keep retrying.
         /// </param>
         /// <returns>
-        ///     <c>true</c> once connected and authenticated; <c>false</c> when the server stays unreachable
-        ///     after <paramref name="maxAttempts" /> attempts. Handshake/authentication failures throw instead.
+        ///     <c>true</c> once connected and authenticated; <c>false</c> when the connection keeps
+        ///     failing transiently (unreachable, or dropped during the handshake for a retriable
+        ///     reason) across <paramref name="maxAttempts" /> attempts, or immediately when the
+        ///     handshake fails terminally (rejected, banned, or another non-retriable disconnect
+        ///     reason — see <see cref="PulseHandshakeDisconnectedException.IsRetriable" />).
         /// </returns>
         public UniTask<bool> ConnectAsync(CancellationToken ct, int maxAttempts = int.MaxValue);
 

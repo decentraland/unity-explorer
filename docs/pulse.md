@@ -71,11 +71,10 @@ The effective runtime cost of Pulse when disabled is a few dummy virtual calls p
 
 `StartPulseMultiplayerStartupOperation` connects to Pulse during login, passing a bounded attempt count (`5`) to `IPulseMultiplayerService.ConnectAsync(ct, maxAttempts)`:
 
-- If Pulse is **unreachable** (the connection keeps timing out across all 5 attempts), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
-- Handshake/authentication failures are **not** treated as unreachable; they propagate as a normal start-up error.
+- If the connection keeps failing transiently across all 5 attempts (timing out, or dropped mid-handshake for a retriable reason such as `GRACEFUL` or `SERVER_FULL`), or fails terminally on any attempt (rejected handshake, `BANNED`, or another non-retriable disconnect reason), the operation calls `PulseActivation.Deactivate()` and returns success — login continues and the client behaves as if Pulse were absent.
 - If Pulse is already inactive (disabled / `--pulse false`), the operation is a no-op.
 
-Runtime reconnection failures (after a successful initial connect) do **not** fall back — the `StartRouting` / `HandleDisconnect` reconnection loop keeps retrying without flipping `PulseActivation`.
+Runtime reconnection failures (after a successful initial connect) do **not** fall back — the `StartRouting` / `HandleDisconnect` reconnection loop keeps retrying without flipping `PulseActivation`. A terminal handshake failure during a runtime reconnect (rejection, ban) stops the loop instead of retrying forever.
 
 ---
 
@@ -480,7 +479,7 @@ for (var attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++)
 }
 ```
 
-Only `TimeoutException` is caught and retried. Other failures propagate immediately.
+Only `TimeoutException` and *retriable* `PulseHandshakeDisconnectedException`s (transport dropped before a `HandshakeResponse` for a transient reason) are caught and retried, with exponential backoff. A non-retriable handshake failure (rejection, `BANNED`, eviction, protocol violations — see `PulseHandshakeDisconnectedException.IsRetriable`) returns `false` immediately without burning the remaining attempts. Other failures propagate.
 
 **Authentication handshake** — `ConnectInternalAsync`:
 1. `transport.ConnectAsync(urlsSource.Url(DecentralandUrl.Pulse), PORT = 7777, ct)` — ENet handshake.
@@ -492,7 +491,7 @@ Only `TimeoutException` is caught and retried. Other failures propagate immediat
    handshakePacket.Message.Handshake.AuthChain = ByteString.CopyFromUtf8(BuildAuthChain());
    Send(handshakePacket);
    ```
-5. Await the handshake response. On failure, `Disconnect()` and throw `PulseException(error)`.
+5. Await the handshake response. On an explicit failure response, `Disconnect()` and throw `PulseHandshakeDisconnectedException(error)`. If the transport disconnects before any response arrives, the routing loop faults the pending completion with the same exception (instead of starting its own reconnection). `ConnectWithRetriesAsync` then retries with backoff for transient reasons, or gives up immediately for terminal ones.
 
 `BuildAuthChain()` signs `connect:/:{timestamp}:{}` with the cached Web3 identity, builds the canonical `x-identity-auth-chain-0/1/...` + `x-identity-timestamp` + `x-identity-metadata` dictionary, and JSON-serializes it. Same auth-chain shape used across the platform, just delivered inside a Protobuf `ByteString` instead of HTTP headers.
 
@@ -530,9 +529,11 @@ Important details:
 
 **Disconnect handler contract** — `RegisterDisconnectHandler(Func<DisconnectReason, bool>)` — the boolean return decides whether to reconnect. This lets `DUPLICATE_SESSION` stop the loop (another client took over, don't fight it) while transient disconnects ask for a `RECONNECTION_DELAY_MS = 10s` cooldown followed by a fresh `ConnectAsync`. `PulseMultiplayerBus` wires the handler.
 
-### `PulseException`
+### `PulseHandshakeDisconnectedException`
 
-Trivial — `public class PulseException : Exception { public PulseException(string m) : base(m) {} }`. Thrown by `ConnectInternalAsync` when the handshake fails, with the server-supplied error message (or `"Handshake failed"` if the server didn't include one). No other code path throws it today.
+The single "handshake did not complete" exception, thrown in two places: by the routing loop (faulting the pending handshake completion with the `DisconnectReason`) when the transport disconnects before a `HandshakeResponse` arrives, and by `PulseMultiplayerBus.HandshakeAsync` when the server explicitly rejects the handshake (with the server-supplied error message, or `"Handshake failed"` if none).
+
+Its `IsRetriable` flag drives `ConnectWithRetriesAsync`: transient reasons (`NONE`, `GRACEFUL`, `AUTH_TIMEOUT`, `AUTH_FAILED`, `SERVER_FULL`, `PRE_AUTH_IP_LIMIT_EXHAUSTED`, `PRE_AUTH_BUDGET_EXHAUSTED`) are retried with backoff; everything else — explicit rejections, `BANNED`, `DUPLICATE_SESSION`, replay/validation/corruption reasons, and any future unknown reason — is terminal and fails the connect attempt immediately.
 
 ---
 
