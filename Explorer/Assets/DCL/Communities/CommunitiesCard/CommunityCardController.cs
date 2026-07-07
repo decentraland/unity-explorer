@@ -30,7 +30,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using DCL.VoiceChat;
@@ -74,7 +73,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IPlacesAPIService placesAPIService;
+        private readonly IPlacesAPIService placesApiService;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
@@ -118,7 +117,7 @@ namespace DCL.Communities.CommunitiesCard
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
-            IPlacesAPIService placesAPIService,
+            IPlacesAPIService placesApiService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
@@ -144,7 +143,7 @@ namespace DCL.Communities.CommunitiesCard
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.placesAPIService = placesAPIService;
+            this.placesApiService = placesApiService;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
@@ -387,7 +386,7 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
                 communitiesDataProvider,
-                placesAPIService,
+                placesApiService,
                 realmNavigator,
                 mvcManager,
                 clipboard,
@@ -399,7 +398,7 @@ namespace DCL.Communities.CommunitiesCard
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
-                placesAPIService,
+                placesApiService,
                 thumbnailLoader,
                 mvcManager,
                 clipboard,
@@ -408,7 +407,6 @@ namespace DCL.Communities.CommunitiesCard
                 decentralandUrlsSource);
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES_ANNOUNCEMENTS))
-            {
                 announcementsSectionController = new AnnouncementsSectionController(
                     viewInstance.AnnouncementsSectionView,
                     communitiesDataProvider,
@@ -416,7 +414,6 @@ namespace DCL.Communities.CommunitiesCard
                     web3IdentityCache,
                     profileRepository,
                     inputBlock);
-            }
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -482,10 +479,8 @@ namespace DCL.Communities.CommunitiesCard
                 if (!communityData.IsAccessAllowed())
                 {
                     if (!existsInvitation)
-                    {
                         // Check if we have a pending request to join the community
                         await CheckUserInviteOrRequestAsync(InviteRequestAction.request_to_join, ct);
-                    }
                 }
                 else
                     communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(communityId, ct)).ToArray();
@@ -684,9 +679,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
-                }
 
                 communityData.SetPendingInviteOrRequestId(result.Value);
                 communityData.SetPendingAction(InviteRequestAction.request_to_join);
@@ -709,9 +702,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(CANCEL_REQUEST_TO_JOIN_COMMUNITY_ERROR_MESSAGE));
-                }
 
                 communityData.SetPendingInviteOrRequestId(null);
                 communityData.SetPendingAction(InviteRequestAction.none);
@@ -734,9 +725,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(ACCEPT_COMMUNITY_INVITATION_ERROR_MESSAGE));
-                }
 
                 if (communityData.privacy == CommunityPrivacy.@public)
                 {
@@ -768,9 +757,7 @@ namespace DCL.Communities.CommunitiesCard
                     return;
 
                 if (!result.Success || !result.Value)
-                {
                     NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(REJECT_COMMUNITY_INVITATION_ERROR_MESSAGE));
-                }
 
                 CloseController();
             }

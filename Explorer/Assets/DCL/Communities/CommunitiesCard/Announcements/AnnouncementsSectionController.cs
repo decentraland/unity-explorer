@@ -230,14 +230,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 }
 
                 foreach (CommunityPost post in currentAnnouncementsFetchData.Items)
-                {
                     if (post.id == postId)
                     {
                         post.isLikedByUser = true;
                         post.likesCount++;
                         break;
                     }
-                }
 
                 RefreshGrid(true);
             }
@@ -268,14 +266,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                 }
 
                 foreach (CommunityPost post in currentAnnouncementsFetchData.Items)
-                {
                     if (post.id == postId)
                     {
                         post.isLikedByUser = false;
                         post.likesCount--;
                         break;
                     }
-                }
 
                 RefreshGrid(true);
             }

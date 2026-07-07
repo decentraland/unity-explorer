@@ -29,7 +29,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private ProfileRepositoryWrapper profileRepositoryWrapper = null!;
         private bool isCreationAllowed;
         private CommunityMemberRole currentRole;
-        private AnnouncementCreationCardView? announcementCreationCardItem = null;
+        private AnnouncementCreationCardView? announcementCreationCardItem;
 
         private void Awake() =>
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
