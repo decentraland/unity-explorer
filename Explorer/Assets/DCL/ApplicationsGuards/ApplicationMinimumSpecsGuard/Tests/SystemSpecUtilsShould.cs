@@ -1,8 +1,9 @@
+using DCL.ApplicationMinimumSpecsGuard;
 using DCL.FeatureFlags;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace DCL.ApplicationMinimumSpecsGuard.Tests
+namespace DCL.ApplicationsGuards.ApplicationMinimumSpecsGuard.Tests
 {
     public class SystemSpecUtilsShould
     {
