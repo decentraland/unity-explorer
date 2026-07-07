@@ -70,6 +70,9 @@ jobs:
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
+          # Without a body filter this matches the FIRST bot comment of any kind
+          # (warning-ratchet, ext-contribution marker, ...) and overwrites it.
+          body-includes: 'img.shields.io/badge/Build'
 
       - name: Post skipped comment
         uses: peter-evans/create-or-update-comment@v3
@@ -200,6 +203,9 @@ jobs:
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
+          # Without a body filter this matches the FIRST bot comment of any kind
+          # (warning-ratchet, ext-contribution marker, ...) and overwrites it.
+          body-includes: 'img.shields.io/badge/Build'
 
       - name: Update Comment
         env:
@@ -265,6 +271,9 @@ jobs:
         with:
           issue-number: ${{ needs.pre-validation.outputs.pr-number }}
           comment-author: 'github-actions[bot]'
+          # Without a body filter this matches the FIRST bot comment of any kind
+          # (warning-ratchet, ext-contribution marker, ...) and overwrites it.
+          body-includes: 'img.shields.io/badge/Build'
 
       - name: Update Comment
         uses: peter-evans/create-or-update-comment@v3

@@ -9,7 +9,6 @@ on:
       - ready_for_review
       - labeled
       - unlabeled
-  merge_group: {}
   push:
     branches:
       - dev
@@ -176,7 +175,6 @@ concurrency:
     ${{
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'merge_group' ||
       (
         github.event_name == 'pull_request' &&
         (
@@ -995,4 +993,3 @@ jobs:
           fi
 
           echo "Both Windows and macOS builds passed."
-# Test change

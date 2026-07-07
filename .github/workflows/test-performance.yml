@@ -82,7 +82,10 @@ jobs:
         uses: actions/cache@v5
         with:
           path: Explorer/Library
-          key: Library-Explorer-Ubuntu
+          # Same key scheme as test.yml — cache entries are immutable, so a
+          # constant key would pin the very first Library forever.
+          key: Library-Explorer-Ubuntu-${{ hashFiles('Explorer/Packages/packages-lock.json', 'Explorer/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Explorer-Ubuntu-
 
       # --- Detect Unity version from the project ---
       - name: Read Unity version from ProjectVersion.txt
@@ -160,7 +163,6 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "Performance" -perfTestResults ./PerformanceTestResults.json -DCLBenchmarkCIPKey ${{ secrets.DCL_BENCHMARK_CIP_KEY }}
-          githubToken: ${{ env.GITHUB_TOKEN }}
 
       # Generate PDF report
       - name: Set up Python

@@ -32,12 +32,36 @@ env:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Only cancel an in-flight run when the new event will actually produce a new
+  # useful run. Otherwise an incidental 'labeled' event (bots add labels like
+  # 'new-dependency', 'claude-approved' or 'no QA needed' mid-run) would cancel
+  # real in-progress tests and replace them with a run that skips every job.
+  cancel-in-progress: >-
+    ${{
+      github.event_name != 'pull_request' ||
+      github.event.action == 'opened' ||
+      github.event.action == 'reopened' ||
+      github.event.action == 'synchronize' ||
+      github.event.action == 'ready_for_review' ||
+      (
+        github.event.action == 'labeled' &&
+        contains(fromJSON('["force-build", "clean-build", "force-lint"]'), github.event.label.name)
+      )
+    }}
 
 jobs:
 
   changes:
-    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build') || (github.event.label.name == 'force-lint')
+    # Non-PR events (push to dev, merge_group, workflow_dispatch) always run.
+    # PR events run for non-draft PRs, except 'labeled', which only counts for
+    # the trigger labels — any other label add must not start a redundant run.
+    if: |
+      github.event_name != 'pull_request' ||
+      (github.event.action != 'labeled' && github.event.pull_request.draft == false) ||
+      (
+        github.event.action == 'labeled' &&
+        contains(fromJSON('["force-build", "clean-build", "force-lint"]'), github.event.label.name)
+      )
     name: Detect C# changes
     runs-on: ubuntu-latest
     outputs:
@@ -431,13 +455,16 @@ jobs:
 
 
   test:
-    # Skip when PR has 'perf_test' label (performance tests run in separate workflow)
+    # Skip when PR has 'perf_test' label (performance tests run in separate workflow).
+    # Same event gating as the 'changes' job, minus 'force-lint' (lint-only label).
     if: |
       !contains(github.event.pull_request.labels.*.name, 'perf_test') && (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event.pull_request.draft == false) ||
-        (github.event.label.name == 'force-build') ||
-        (github.event.label.name == 'clean-build')
+        github.event_name != 'pull_request' ||
+        (github.event.action != 'labeled' && github.event.pull_request.draft == false) ||
+        (
+          github.event.action == 'labeled' &&
+          contains(fromJSON('["force-build", "clean-build"]'), github.event.label.name)
+        )
       )
     name: Test (${{ matrix.testMode }})
     runs-on: ubuntu-latest
@@ -590,7 +617,6 @@ jobs:
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           customImage: ${{ matrix.testMode == 'editmode' && steps.rg-img.outputs.image || steps.img.outputs.ghcr }}
           customParameters: -buildTarget StandaloneLinux64 -testCategory "!Performance" -burst-disable-compilation -accept-apiupdate
-          githubToken: ${{ env.GITHUB_TOKEN }}
 
       - name: Dump Unity Editor log on failure
         if: always() && steps.testRunner.outcome != 'success'
@@ -653,8 +679,13 @@ jobs:
   watchdog:
     runs-on: ubuntu-latest
     needs: [lint, test]
+    # always() is required: without a status-check function GitHub wraps the
+    # condition in an implicit success(), which is false whenever a needed job
+    # fails — the exact case this job exists for — so it never ran at all.
     if: |
-      needs.lint.result == 'failure' ||
-      needs.test.result == 'failure'
+      always() && (
+        needs.lint.result == 'failure' ||
+        needs.test.result == 'failure'
+      )
     steps:
       - run: exit 1

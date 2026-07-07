@@ -88,7 +88,16 @@ jobs:
 
           echo "🔍 Fetching PR reviews..."
           PR_REVIEWS_JSON=$(gh pr view "$PR_NUMBER" --repo "$REPO_OWNER/$REPO_NAME" --json reviews -q '.reviews')
-          PR_REVIEWS=$(jq -r '.[] | select(.state == "APPROVED") | .author.login' <<< "$PR_REVIEWS_JSON")
+          # Only the latest state-changing review per user counts: an approval
+          # later replaced by a changes-requested review (or dismissed) must not
+          # satisfy the gate. COMMENTED reviews are ignored — they do not
+          # supersede an approval.
+          PR_REVIEWS=$(jq -r '
+            [ .[] | select(.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED") ]
+            | group_by(.author.login)
+            | map(max_by(.submittedAt))
+            | .[] | select(.state == "APPROVED")
+            | .author.login' <<< "$PR_REVIEWS_JSON")
           echo "✅ Approved Reviews (before filtering): ${PR_REVIEWS:-None}"
 
           echo "🔍 Fetching pending review requests..."
