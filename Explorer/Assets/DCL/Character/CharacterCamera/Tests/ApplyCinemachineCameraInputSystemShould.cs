@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
@@ -10,7 +11,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     public class ApplyCinemachineCameraInputSystemShould : InputTestFixture
     {
