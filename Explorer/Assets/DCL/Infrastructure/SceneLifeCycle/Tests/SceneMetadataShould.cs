@@ -2,7 +2,7 @@ using DCL.Ipfs;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class SceneMetadataShould
     {

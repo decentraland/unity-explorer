@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class ParcelMathShould
