@@ -25,7 +25,6 @@ namespace DCL.Passport.Modules.Creations
         private const int EMPTY_ITEMS_POOL_DEFAULT_CAPACITY = (GRID_ITEMS_PER_ROW - 1) * 2;
         private const string WEARABLE_CATEGORY = "wearable";
         private const string EMOTE_CATEGORY = "emote";
-        private const string EMOTE_CATEGORY_ICON = "emote";
 
         private readonly CreationsDetailsPassportModuleView view;
         private readonly IWebRequestController webRequestController;
@@ -94,6 +93,11 @@ namespace DCL.Passport.Modules.Creations
                 },
                 actionOnRelease: itemView =>
                 {
+                    if (itemView.EquippedItemThumbnail.sprite != null)
+                    {
+                        Object.Destroy(itemView.EquippedItemThumbnail.sprite);
+                        itemView.EquippedItemThumbnail.sprite = null;
+                    }
                     itemView.SetAsLoading(false);
                     itemView.BuyButton.onClick.RemoveAllListeners();
                     itemView.gameObject.SetActive(false);
@@ -209,7 +213,7 @@ namespace DCL.Passport.Modules.Creations
             CancellationToken ct)
         {
             string baseUrl = decentralandUrlsSource.Url(DecentralandUrl.MarketplaceApiLink);
-            var url = URLAddress.FromString($"{baseUrl}?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false");
+            var url = URLAddress.FromString($"{baseUrl}?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false&first=100");
 
             MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
                                                                             .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
@@ -239,7 +243,7 @@ namespace DCL.Passport.Modules.Creations
             itemView.RarityLabelText.color = rarityColor;
             itemView.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, itemView.RarityBackground2.color.a);
             itemView.FlapBackground.color = rarityColor;
-            itemView.CategoryImage.sprite = categoryIcons.GetTypeImage(isEmote ? EMOTE_CATEGORY_ICON : item.data?.wearable?.category);
+            itemView.CategoryImage.sprite = categoryIcons.GetTypeImage(isEmote ? EMOTE_CATEGORY : item.data?.wearable?.category);
 
             string marketplaceLink = GetMarketplaceLink(item);
             itemView.BuyButton.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);

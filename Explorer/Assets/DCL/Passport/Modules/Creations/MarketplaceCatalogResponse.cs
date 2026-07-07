@@ -2,6 +2,7 @@ using System;
 
 namespace DCL.Passport.Modules.Creations
 {
+    // Server schema: https://marketplace-api.decentraland.{ENV}/v2/catalog (GET, response.data[])
     [Serializable]
     public class MarketplaceCatalogResponse
     {
