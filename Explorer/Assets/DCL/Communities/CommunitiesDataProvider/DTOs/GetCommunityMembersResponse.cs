@@ -3,6 +3,7 @@ using DCL.Profiles.Helpers;
 using DCL.Utilities;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -81,7 +82,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         }
 
         public GetCommunityMembersResponseData data;
-        public ICommunityMemberData[] members => data.results;
+        public IReadOnlyList<ICommunityMemberData> members => data.results;
         public int total => data.total;
     }
 }

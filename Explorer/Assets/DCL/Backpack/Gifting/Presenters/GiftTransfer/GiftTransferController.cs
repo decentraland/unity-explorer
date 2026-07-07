@@ -25,7 +25,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        private enum State { Waiting, Success, Failed }
+        private new enum State { Waiting, Success, Failed }
 
         private State currentState;
 

@@ -106,7 +106,7 @@ namespace DCL.Communities.CommunitiesBrowser
             CurrentRequestReceivedMembers.Clear();
         }
 
-        public void SetRequestReceivedMemberItems(ICommunityMemberData[] members)
+        public void SetRequestReceivedMemberItems(IReadOnlyList<ICommunityMemberData> members)
         {
             foreach (var community in members)
                 CreateAndSetupRequestReceivedMembers(community);

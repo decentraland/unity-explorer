@@ -8,7 +8,6 @@ namespace DCL.UI.Controls.Configs
     {
         internal readonly ToggleGroup toggleGroup;
         internal readonly Sprite icon;
-        internal readonly Color iconColor;
 
         /// <summary>
         ///     Settings for a toggle control that includes a checkmark and an optional icon.

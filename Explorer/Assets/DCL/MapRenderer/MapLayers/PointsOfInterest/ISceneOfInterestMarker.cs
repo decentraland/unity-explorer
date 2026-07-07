@@ -16,17 +16,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         void SetData(string title, Vector3 position, PlacesData.PlaceInfo placeInfo);
 
-        void OnBecameVisible();
-
-        void OnBecameInvisible();
-
         void SetZoom(float baseScale, float baseZoom, float zoom);
-
-        void ResetScale(float scale);
-
-        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
-
-        UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
 
         GameObject? GetGameObject();
     }

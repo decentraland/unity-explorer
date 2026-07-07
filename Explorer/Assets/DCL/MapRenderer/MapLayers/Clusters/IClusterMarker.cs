@@ -22,10 +22,6 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
         void ResetScale(float scale);
 
-        UniTaskVoid AnimateSelectionAsync(CancellationToken ct);
-
-        UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
-
         GameObject? GetGameObject();
     }
 }
