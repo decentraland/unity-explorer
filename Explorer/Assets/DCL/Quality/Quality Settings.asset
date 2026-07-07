@@ -334,33 +334,19 @@ MonoBehaviour:
         MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 20
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
-      - Distance: 30
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
+      - Distance: 100
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       PointLightsLods:
       - Distance: 10
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
-      - Distance: 20
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
+      - Distance: 100
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
@@ -385,43 +371,27 @@ MonoBehaviour:
         MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 10
-        IsCulled: 0
         Shadows: 2
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 20
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 30
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       PointLightsLods:
       - Distance: 5
-        IsCulled: 0
         Shadows: 2
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 10
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 20
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
@@ -446,43 +416,27 @@ MonoBehaviour:
         MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 10
-        IsCulled: 0
         Shadows: 2
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 20
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 30
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       PointLightsLods:
       - Distance: 5
-        IsCulled: 0
         Shadows: 2
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 10
-        IsCulled: 0
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
       - Distance: 20
-        IsCulled: 0
-        Shadows: 0
-        OverrideShadowMapResolution: 0
-        ShadowMapResolution: 128
-      - Distance: 40
-        IsCulled: 1
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
@@ -493,6 +447,7 @@ MonoBehaviour:
   - {fileID: 5175788798212861771, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -4991993260910906933, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: 8054367766033506950, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
+  - {fileID: -7900794056938074830, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
 --- !u!114 &627882838885633079
 MonoBehaviour:
   m_ObjectHideFlags: 3

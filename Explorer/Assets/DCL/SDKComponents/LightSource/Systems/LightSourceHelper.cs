@@ -49,11 +49,12 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         /// <summary>
-        /// Finds the LOD index for the given squared distance to the player. The last LOD is an unconditional fallback.
+        /// Finds the LOD index for the given squared distance to the player.
+        /// Returns -1 when the distance is beyond the last LOD, meaning the light is culled.
         /// </summary>
         public static int FindLOD(List<LightSourceSettings.LodSettings> lodSettings, float distanceToPlayerSq)
         {
-            for (var lod = 0; lod < lodSettings.Count - 1; lod++)
+            for (var lod = 0; lod < lodSettings.Count; lod++)
             {
                 float distance = lodSettings[lod].Distance;
 
@@ -61,7 +62,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     return lod;
             }
 
-            return lodSettings.Count - 1;
+            return -1;
         }
     }
 }

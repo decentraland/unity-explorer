@@ -79,9 +79,8 @@ namespace DCL.SDKComponents.LightSource
         [Serializable]
         public struct LodSettings
         {
+            [Tooltip("Distance up to which this LOD applies. Beyond the distance of the last LOD the light is culled.")]
             public float Distance;
-
-            public bool IsCulled;
 
             public LightShadows Shadows;
 

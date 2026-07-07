@@ -41,13 +41,17 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             lightSourceComponent.LOD = LightSourceHelper.FindLOD(lodSettings, lightSourceComponent.DistanceToPlayerSq);
 
+            if (lightSourceComponent.LOD < 0)
+            {
+                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLOD;
+                return;
+            }
+
             ApplyLOD(ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
         }
 
         private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LightSourceSettings.LodSettings lodSetting)
         {
-            if (lodSetting.IsCulled) lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLOD;
-
             Light light = lightSourceComponent.LightSourceInstance;
 
             light.shadows = LightSourceHelper.ClampShadowQuality(light.shadows, lodSetting.Shadows);

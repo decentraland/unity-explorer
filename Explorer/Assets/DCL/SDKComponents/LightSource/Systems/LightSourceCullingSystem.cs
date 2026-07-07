@@ -88,7 +88,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.TryGetLodSettings(settings, typeCase, out List<LightSourceSettings.LodSettings> lodSettings)) return false;
 
-            return lodSettings[LightSourceHelper.FindLOD(lodSettings, distanceToPlayerSq)].IsCulled;
+            return LightSourceHelper.FindLOD(lodSettings, distanceToPlayerSq) < 0;
         }
 
         [BurstCompile]
