@@ -78,7 +78,7 @@ namespace DCL.Web3.Authenticators
 
             await UniTask.SwitchToMainThread(ct);
 
-            string url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
+            var url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
@@ -151,19 +151,17 @@ namespace DCL.Web3.Authenticators
                                                                           404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NOT_FOUND, identityId),
                                                                           410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.EXPIRED, identityId),
                                                                           403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IP_MISMATCH, identityId),
-                                                                          _ => (Exception)e,
+                                                                          _ => e,
                                                                       });
 
             string? signerAddress = null;
             string? ephemeralPayload = null;
 
             foreach (AuthLink authLink in json.identity.authChain)
-            {
                 if (authLink.type == AuthLinkType.SIGNER)
                     signerAddress = authLink.payload;
                 else if (authLink.type is AuthLinkType.ECDSA_EPHEMERAL or AuthLinkType.ECDSA_EIP_1654_EPHEMERAL)
                     ephemeralPayload = authLink.payload;
-            }
 
             if (signerAddress is not { Length: > 0 })
                 throw new Web3Exception($"Sign-in identity {identityId} has no SIGNER link in its auth chain");
@@ -196,6 +194,7 @@ namespace DCL.Web3.Authenticators
         private struct SigninRequestDto
         {
             public string method;
+            // ReSharper disable once InconsistentNaming
             public object[] @params;
         }
 
