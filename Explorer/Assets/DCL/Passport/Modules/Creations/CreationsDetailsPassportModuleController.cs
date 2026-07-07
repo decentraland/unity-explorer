@@ -238,10 +238,10 @@ namespace DCL.Passport.Modules.Creations
             Sprite raritySprite = rarityBackgrounds.GetTypeImage(item.rarity);
             Color rarityColor = rarityColors.GetColor(item.rarity);
 
-            itemView.AssetNameText.text = item.name;
+            itemView.AssetNameText.text = item.name ?? string.Empty;
             itemView.ItemId = item.urn ?? string.Empty;
             itemView.RarityBackground.sprite = raritySprite;
-            itemView.RarityLabelText.text = item.rarity;
+            itemView.RarityLabelText.text = item.rarity ?? string.Empty;
             itemView.RarityLabelText.color = rarityColor;
             itemView.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, itemView.RarityBackground2.color.a);
             itemView.FlapBackground.color = rarityColor;
