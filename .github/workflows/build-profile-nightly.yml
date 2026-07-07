@@ -54,8 +54,8 @@ jobs:
     needs: check-commits
     if: needs.check-commits.outputs.should_build == 'true'
     outputs:
-      latest_version: ${{ steps.get_version.outputs.latest_version }}
-      full_version: ${{ steps.get_version.outputs.short_version }}
+      # short_version (no commit hash) is what the build consumes as its version
+      version: ${{ steps.get_version.outputs.short_version }}
       tag_version: ${{ steps.get_version.outputs.tag_version }}
     steps:
       - name: Checkout code
@@ -76,7 +76,7 @@ jobs:
       profile: profile
       clean_build: true
       cache_strategy: library
-      version: ${{ needs.get-info.outputs.full_version }}
+      version: ${{ needs.get-info.outputs.version }}
       sentry_enabled: true
       is_release_build: false
       install_source: launcher

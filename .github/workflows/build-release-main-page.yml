@@ -2,21 +2,20 @@ name: Create Page Weekly Release
 
 on:
   workflow_run:
+    # workflow_run matches by workflow *name* only — a file path here never
+    # matches anything.
     workflows:
       - Unity Cloud Build Release
-      - .github/workflows/build-release-main.yml
     types:
       - completed
 
-jobs:  
+jobs:
   get-info:
     name: Get Info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      latest_version: ${{ steps.get_version.outputs.latest_version }}
-      full_version: ${{ steps.get_version.outputs.next_full_version }}
       tag_version: ${{ steps.get_version.outputs.next_tag_version }}
     steps:
       - name: Checkout code
@@ -65,8 +64,11 @@ jobs:
         with:
           generate_release_notes: true
           draft: true # Swap to auto-release!
+          # No target_commitish: the tag was created and pushed on main above,
+          # so the release resolves to it. github.sha here is the DEFAULT
+          # branch head (dev) — workflow_run events run in that context — and
+          # must not be used as the release target.
           tag_name: ${{ needs.get-info.outputs.tag_version }}
-          target_commitish: ${{ github.sha }}
           files: |
             ./Decentraland_windows64.zip
             ./Decentraland_macos.zip

@@ -93,21 +93,20 @@ on:
           - macos-only
   workflow_call:
     inputs:
+      # Required inputs carry no default — a default on a required input can
+      # never be used.
       profile:
         required: true
         type: string
-        default: 'none'
       compression:
         required: false
         type: string
         default: 'LZ4HC'
       clean_build:
         required: true
-        default: true
         type: boolean
       cache_strategy:
         required: true
-        default: 'library'
         type: string
       version:
         required: true
@@ -314,6 +313,8 @@ jobs:
         with:
           script: |
             const sha = context.payload.pull_request.head.sha;
+            // Must match this workflow's "Build (<target>)" job names and the
+            // "Test (<mode>)" job names in test.yml — keep in sync on rename.
             const checks = [
               'Build (macos)',
               'Build (windows64)',

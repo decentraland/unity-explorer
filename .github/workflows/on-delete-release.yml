@@ -24,8 +24,11 @@ jobs:
           DELETED_RELEASE_TAG=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH")
           echo "Deleted Release Tag: $DELETED_RELEASE_TAG"
 
-          # Fetch the current latest release from the API
-          LATEST_RELEASE=$(curl -H "Authorization: Bearer $GITHUB_TOKEN" -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
+          # Fetch the current latest release from the API. '// empty' keeps the
+          # output blank when no release remains (the API returns 404 JSON with
+          # no tag_name) — otherwise the literal string "null" would be written
+          # to latest.json as the version.
+          LATEST_RELEASE=$(curl -H "Authorization: Bearer $GITHUB_TOKEN" -s "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name // empty')
           echo "Latest Release Tag: $LATEST_RELEASE"
 
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
