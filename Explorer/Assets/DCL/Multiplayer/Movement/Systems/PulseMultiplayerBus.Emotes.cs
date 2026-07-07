@@ -96,6 +96,8 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            if (ShouldDropIngress()) return;
+
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
             if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out Web3Address walletId))
@@ -138,6 +140,8 @@ namespace DCL.Multiplayer.Movement
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving emote stopped while disposed");
                 return;
             }
+
+            if (ShouldDropIngress()) return;
 
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
 

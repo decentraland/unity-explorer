@@ -3,6 +3,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -50,6 +51,7 @@ namespace DCL.RealmNavigation
             RemoteEntities remoteEntities,
             RemoteProfiles remoteProfiles,
             IRemoteAnnouncements remoteAnnouncements,
+            PulseMultiplayerBus pulseMultiplayerBus,
             World globalWorld,
             IRoomHub roomHub,
             ILandscape landscape,
@@ -76,6 +78,7 @@ namespace DCL.RealmNavigation
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
                 {
                     new RestartLoadingStatus(),
+                    new BlockPulseIngressTeleportOperation(pulseMultiplayerBus),
                     new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new FlushRemoteProfilesTeleportOperation(remoteProfiles, remoteAnnouncements),

@@ -15,6 +15,8 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            if (ShouldDropIngress()) return;
+
             PlayerProfileVersionsAnnounced announcement = message.Message.PlayerProfileVersionAnnounced;
 
             if (!peerIdCache.TryGetWallet(announcement.SubjectId, out Web3Address userId))

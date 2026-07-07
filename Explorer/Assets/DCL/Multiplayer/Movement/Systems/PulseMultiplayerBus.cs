@@ -27,6 +27,10 @@ namespace DCL.Multiplayer.Movement
 
         private volatile bool isDisposed;
 
+        // Pulse stays connected across realm changes, so previous-realm peers keep streaming until the server processes the teleport.
+        private volatile bool ingressBlocked;
+        private volatile bool peerPurgePending;
+
         internal long ResyncCount { get; private set; }
 
         internal long EmoteStateMismatchCount { get; private set; }
@@ -81,6 +85,28 @@ namespace DCL.Multiplayer.Movement
 
             pulseService.RegisterDisconnectHandler(HandleDisconnect);
             pulseService.RegisterHandshakeHandler(HandshakeAsync);
+        }
+
+        /// <summary>
+        ///     Purges known peers and drops ingress until <see cref="BroadcastTeleport" /> announces the new realm,
+        ///     so stale previous-realm peers cannot repopulate the announcement/movement queues during loading.
+        /// </summary>
+        public void BlockIngressUntilTeleportBroadcast()
+        {
+            peerPurgePending = true;
+            ingressBlocked = true;
+        }
+
+        // The purge is deferred to here because the peer collections are routing-thread-only.
+        private bool ShouldDropIngress()
+        {
+            if (peerPurgePending)
+            {
+                peerPurgePending = false;
+                RemoveAllPeers();
+            }
+
+            return ingressBlocked;
         }
 
         private void RemoveAllPeers()

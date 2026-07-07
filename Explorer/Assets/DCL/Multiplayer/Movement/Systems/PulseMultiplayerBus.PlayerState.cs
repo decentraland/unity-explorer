@@ -45,6 +45,8 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            if (ShouldDropIngress()) return;
+
             PlayerJoined playerJoined = message.Message.PlayerJoined;
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
@@ -66,6 +68,8 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            if (ShouldDropIngress()) return;
+
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
@@ -84,6 +88,8 @@ namespace DCL.Multiplayer.Movement
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
                 return;
             }
+
+            if (ShouldDropIngress()) return;
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
@@ -105,6 +111,8 @@ namespace DCL.Multiplayer.Movement
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed");
                 return;
             }
+
+            if (ShouldDropIngress()) return;
 
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 

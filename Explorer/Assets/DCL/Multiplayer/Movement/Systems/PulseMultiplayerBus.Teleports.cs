@@ -31,6 +31,9 @@ namespace DCL.Multiplayer.Movement
             teleport.Realm = realmData.RealmName;
 
             pulseService.Send(outgoing);
+
+            // Everything the server sends after this request is scoped to the destination realm.
+            ingressBlocked = false;
         }
 
         private void HandleTeleport(IncomingMessage message)
@@ -40,6 +43,8 @@ namespace DCL.Multiplayer.Movement
                 ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving teleport while disposed");
                 return;
             }
+
+            if (ShouldDropIngress()) return;
 
             TeleportPerformed teleport = message.Message.Teleported;
 
