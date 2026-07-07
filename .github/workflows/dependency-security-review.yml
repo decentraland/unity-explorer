@@ -126,18 +126,11 @@ jobs:
       - name: Load review prompt
         if: steps.detect.outputs.has-changes == 'true'
         id: prompt
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          DELIM="PROMPT_EOF_$(uuidgen)"
-          {
-            echo "instructions<<$DELIM"
-            gh api "repos/${{ github.repository }}/contents/.github/prompts/dependency-security-review.md?ref=$BASE_SHA" \
-              --jq '.content' | base64 -d
-            echo
-            echo "$DELIM"
-          } >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/load-prompt
+        with:
+          path: .github/prompts/dependency-security-review.md
+          ref: ${{ github.event.pull_request.base.sha }}
+          token: ${{ github.token }}
 
       - name: Claude Dependency Review
         if: steps.detect.outputs.has-changes == 'true'
@@ -158,7 +151,7 @@ jobs:
             Workflow / prompt files changed in this PR:
             ${{ steps.detect.outputs.workflow-changes || 'None' }}
 
-            ${{ steps.prompt.outputs.instructions }}
+            ${{ steps.prompt.outputs.content }}
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
             --max-turns 40
@@ -180,27 +173,12 @@ jobs:
               state = 'failure';
               description = 'Dependency detection step failed — check workflow logs';
             } else {
-              const comments = await github.paginate(github.rest.issues.listComments, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: ${{ github.event.pull_request.number }},
-              });
-
-              const claudeComments = comments.filter(c =>
-                c.user?.login === 'claude[bot]' && c.body?.includes('DEPENDENCY_REVIEW:')
-              );
+              const { fetchIssueComments, claudeMarkerComments, minimizeAllButLast } = require('./.github/scripts/claude-review-comments.js');
+              const comments = await fetchIssueComments({ github, context, prNumber: ${{ github.event.pull_request.number }} });
+              const claudeComments = claudeMarkerComments(comments, 'DEPENDENCY_REVIEW:');
               const claudeComment = claudeComments[claudeComments.length - 1];
 
-              for (const c of claudeComments.slice(0, -1)) {
-                await github.graphql(
-                  `mutation($id: ID!) {
-                    minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
-                      minimizedComment { isMinimized }
-                    }
-                  }`,
-                  { id: c.node_id }
-                ).catch(e => console.log(`minimizeComment ${c.id}: ${e.message}`));
-              }
+              await minimizeAllButLast({ github, comments: claudeComments });
 
               const output = claudeComment?.body ?? '';
               const errored = '${{ steps.claude.outcome }}' === 'failure';

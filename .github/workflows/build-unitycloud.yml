@@ -829,31 +829,20 @@ jobs:
           path: size_report/
           if-no-files-found: warn
 
-      - name: Set SHA, branch, and build prefix
-        run: |
-          echo "SHA_SHORT=$(echo ${{ needs.prebuild.outputs.commit_sha }} | cut -c1-7)" >> $GITHUB_ENV
-          echo "SAFE_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" >> $GITHUB_ENV
-
-          EVENT_NAME="${{ github.event_name }}"
-          echo "Detected event: $EVENT_NAME"
-          case "$EVENT_NAME" in
-            pull_request) echo "BUILD_PREFIX=pr" >> $GITHUB_ENV ;;
-            push) echo "BUILD_PREFIX=pu" >> $GITHUB_ENV ;;
-            merge_group) echo "BUILD_PREFIX=mg" >> $GITHUB_ENV ;;
-            workflow_dispatch) echo "BUILD_PREFIX=wd" >> $GITHUB_ENV ;;
-            workflow_call) echo "BUILD_PREFIX=wc" >> $GITHUB_ENV ;;
-            schedule) echo "BUILD_PREFIX=sc" >> $GITHUB_ENV ;;
-            *) echo "BUILD_PREFIX=gn" >> $GITHUB_ENV ;;
-          esac
-
       - name: Compute S3 destination path
         env:
-          RESOLVED_DESTINATION_PATH: "${{
-            inputs.is_release_build && format('@dcl/{0}/releases/{1}', github.event.repository.name, inputs.tag_version)
-            || format('@dcl/{0}/branch/{1}/{2}-{3}-{4}', github.event.repository.name, env.SAFE_BRANCH_NAME, env.BUILD_PREFIX, github.run_number, env.SHA_SHORT)
-          }}"
+          IS_RELEASE_BUILD: ${{ inputs.is_release_build }}
+          TAG_VERSION: ${{ inputs.tag_version }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
         run: |
-          echo "DESTINATION_PATH=${RESOLVED_DESTINATION_PATH}" >> $GITHUB_ENV
+          if [ "$IS_RELEASE_BUILD" = "true" ]; then
+            DESTINATION_PATH="@dcl/${REPO_NAME}/releases/${TAG_VERSION}"
+          else
+            DESTINATION_PATH=$(bash scripts/ci/s3-build-path.sh "${{ github.event_name }}" "$REPO_NAME" "${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" "${{ github.run_number }}" "$COMMIT_SHA")
+          fi
+          echo "Destination path: $DESTINATION_PATH"
+          echo "DESTINATION_PATH=${DESTINATION_PATH}" >> $GITHUB_ENV
 
       - name: Upload artifact to S3
         env:

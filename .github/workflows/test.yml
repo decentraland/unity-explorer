@@ -132,97 +132,19 @@ jobs:
           lfs: true
           submodules: recursive
 
-      - name: Create LFS file list
-        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
-
-      - name: Restore LFS cache
-        uses: actions/cache@v4
-        id: lfs-cache-lint
-        with:
-          path: .git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
-
-      - name: Git LFS Pull
-        run: |
-          git lfs pull
-          git add .
-          git reset --hard
-
-      - uses: webfactory/ssh-agent@v0.8.0
+      - name: Set up LFS and SSH
+        uses: ./.github/actions/unity-lfs-ssh
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add GitHub to the SSH known hosts file
-        run: |
-          mkdir -p -m 0700 /home/runner/.ssh
-          curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> /home/runner/.ssh/known_hosts
-          chmod 600 /home/runner/.ssh/known_hosts
-
-      - name: Prepare SSH for Unity
-        run: |
-          rm -rf /tmp/ssh-unity
-          mkdir -p -m 0700 /tmp/ssh-unity
-          cp /home/runner/.ssh/known_hosts /tmp/ssh-unity/known_hosts
-          cp /home/runner/.ssh/key-* /tmp/ssh-unity/ 2>/dev/null || true
-          chmod 600 /tmp/ssh-unity/*
-
-      - name: Prepare Unity writable dirs
-        run: |
-          mkdir -p /tmp/unity-home/.local/share/unity3d
-          mkdir -p /tmp/unity-home/.cache/unity3d
-          mkdir -p /tmp/unity-home/.config/unity3d
-          chmod -R 777 /tmp/unity-home
-
-      - name: Read Unity version from ProjectVersion.txt
-        id: unity-version-lint
-        run: |
-          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
-          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
-          echo "version=$ver" >> $GITHUB_OUTPUT
-
-      - name: Set image names
+      - name: Resolve Unity image
         id: img-lint
-        run: |
-          version="${{ steps.unity-version-lint.outputs.version }}"
-          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
-          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
-          tag="ubuntu-$version-$flavor-$imgVer"
-          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          upstream="unityci/editor:$tag"
-          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-          echo "upstream=$upstream" >> $GITHUB_OUTPUT
-          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
-
-      - name: Log in to GitHub Container Registry
-        run: |
-          for i in 1 2 3; do
-            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin && exit 0
-            echo "GHCR login failed, retry $i/3"
-            sleep $((i * 10))
-          done
-          exit 1
-
-      - name: Restore Unity image from GHCR or seed from Docker Hub
-        run: |
-          set -o pipefail
-          ghcr="${{ steps.img-lint.outputs.ghcr }}"
-          upstream="${{ steps.img-lint.outputs.upstream }}"
-
-          if docker pull "$ghcr" 2>&1 | tee /tmp/ghcr-pull.log; then
-            exit 0
-          fi
-
-          if grep -qiE 'manifest unknown|not found' /tmp/ghcr-pull.log; then
-            echo "GHCR image missing, trying upstream..."
-            docker pull "$upstream"
-            docker tag "$upstream" "$ghcr"
-            docker push "$ghcr"
-          else
-            echo "GHCR pull failed, but not because the image is missing."
-            cat /tmp/ghcr-pull.log
-            exit 1
-          fi
+        uses: ./.github/actions/unity-image
+        with:
+          token: ${{ github.token }}
+          flavor: ${{ env.UNITY_IMAGE_FLAVOR }}
+          image-version: ${{ env.UNITY_IMAGE_VERSION }}
+          ghcr-name: ${{ env.GHCR_IMAGE_NAME }}
 
       # BEGIN: C# Linting using JetBrains ReSharper CLI
 
@@ -407,15 +329,6 @@ jobs:
           path: warning-result.json
           if-no-files-found: ignore
 
-      - name: Upload lint reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: csharp-lint-reports
-          path: |
-            ${{ env.INSPECT_REPORT_JSON_FILE_NAME }}
-            filtered.json
-            # CodeStyleReport.xml
-
       # END: C# Linting using JetBrains ReSharper CLI
 
 
@@ -458,33 +371,10 @@ jobs:
           lfs: true
           submodules: recursive
 
-      - name: Create LFS file list
-        run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
-
-      - name: Restore LFS cache
-        uses: actions/cache@v5
-        id: lfs-cache
-        with:
-          path: .git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
-
-      - name: Git LFS Pull
-        run: |
-          git lfs pull
-          git add .
-          git reset --hard
-          
-      - uses: webfactory/ssh-agent@v0.8.0
+      - name: Set up LFS and SSH
+        uses: ./.github/actions/unity-lfs-ssh
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          mkdir -p -m 0700 ~/.ssh
-          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
-          echo 'github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=' >> ~/.ssh/known_hosts
-          echo 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZKAc/NKgzBh2bFNFMR0mVmYeeNR1cb+gZXH6N1gjEHGo2J3qjVg9rBJ0aM5st/22iqkAl7K6d9jMTi6COwJKqFHGmn7gwK+FBnfaYDwdOB8JqGz9eDNi2SegGaKie1jURLEuRPkLqlJrJ3AEdC5v7ibREzMQPGiHlIC5bE0GD/3mPN1Kul4a4EZhIC5RFxewRqDaK7be0wYMbSW7JzfLDMVtRAkKO5GjaKKv4RzGmrgVApFI/j6jJ0sTJZVgmmqODx0P+RcAfGV0RBCjMEdOPj4yr5ObHGjYCdaFEhXGTIlSGeFSEAFGFweZb9t80b8ABbeBRwx/dqI94aaFkMRkzT8VJ9B4yQvbWO7HP64Lxk6rab5Ygwypbcghmms/ATrc0CVh0zGw36VTzV2eBwboRa7G0sxgBudGrJ4BAOI/JrF4BnWcG5fvQewJ1Uc=' >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
 
       - name: Restore Library cache
         uses: actions/cache@v5
@@ -493,68 +383,14 @@ jobs:
           key: Library-Explorer-Ubuntu-${{ hashFiles('Explorer/Packages/packages-lock.json', 'Explorer/ProjectSettings/ProjectVersion.txt') }}
           restore-keys: Library-Explorer-Ubuntu-
 
-      # --- Detect Unity version from the project ---
-      - name: Read Unity version from ProjectVersion.txt
-        id: unity-version
-        run: |
-          verFile="Explorer/ProjectSettings/ProjectVersion.txt"
-          if [ ! -f "$verFile" ]; then
-            echo "File not found: $verFile"
-            exit 1
-          fi
-          ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
-          if [ -z "$ver" ]; then
-            echo "Could not parse Unity version from $verFile"
-            exit 1
-          fi
-          echo "version=$ver" >> $GITHUB_OUTPUT
-          echo "Detected Unity version: $ver"
-
-      # --- Build image references (GHCR + upstream) ---
-      - name: Set image names
+      - name: Resolve Unity image
         id: img
-        run: |
-          version="${{ steps.unity-version.outputs.version }}"
-          flavor="${{ env.UNITY_IMAGE_FLAVOR }}"
-          imgVer="${{ env.UNITY_IMAGE_VERSION }}"
-
-          # ubuntu-<unityVersion>-<flavor>-<gameciVersion>
-          tag="ubuntu-$version-$flavor-$imgVer"
-          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          upstream="unityci/editor:$tag"
-          ghcr="ghcr.io/$owner/${{ env.GHCR_IMAGE_NAME }}:$tag"
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-          echo "upstream=$upstream" >> $GITHUB_OUTPUT
-          echo "ghcr=$ghcr" >> $GITHUB_OUTPUT
-          echo "Upstream image: $upstream"
-          echo "GHCR image:     $ghcr"
-
-      # --- Log into GHCR ---
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: ./.github/actions/unity-image
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      # --- Restore Unity image from GHCR (fast path) ---
-      - name: Restore Unity image from GHCR
-        id: restore-image
-        continue-on-error: true
-        run: |
-          docker pull "${{ steps.img.outputs.ghcr }}"
-
-      # --- Seed GHCR from Docker Hub if missing (one-time per tag) ---
-      - name: Download from Docker Hub and upload to GHCR (if missing)
-        if: steps.restore-image.outcome == 'failure'
-        run: |
-          upstream="${{ steps.img.outputs.upstream }}"
-          ghcr="${{ steps.img.outputs.ghcr }}"
-          echo "GHCR miss. Pulling upstream: $upstream"
-          docker pull $upstream
-          docker tag  $upstream $ghcr
-          docker push $ghcr
-          echo "Seeded GHCR: $ghcr"
+          token: ${{ github.token }}
+          flavor: ${{ env.UNITY_IMAGE_FLAVOR }}
+          image-version: ${{ env.UNITY_IMAGE_VERSION }}
+          ghcr-name: ${{ env.GHCR_IMAGE_NAME }}
 
       - name: Install ripgrep for edit mode tests
         if: matrix.testMode == 'editmode'

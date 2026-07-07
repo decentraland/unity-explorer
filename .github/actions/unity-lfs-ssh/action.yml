@@ -1,0 +1,41 @@
+name: 'LFS and SSH setup'
+description: >
+  Restores git LFS content through the actions cache and starts an ssh-agent
+  with GitHub host keys, for jobs that need LFS assets and SSH access to
+  private repositories. Run after the full repository checkout.
+inputs:
+  ssh-private-key:
+    description: 'SSH private key loaded into the agent'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Create LFS file list
+      shell: bash
+      run: git lfs ls-files -l | awk '{print $1}' | sort > .lfs-assets-id
+
+    - name: Restore LFS cache
+      uses: actions/cache@v5
+      with:
+        path: .git/lfs
+        key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+    - name: Git LFS Pull
+      shell: bash
+      run: |
+        git lfs pull
+        git add .
+        git reset --hard
+
+    - uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    - name: Add GitHub to the SSH known hosts file
+      shell: bash
+      # Fetched from the API instead of hardcoding keys so a GitHub host-key
+      # rotation (it happened in 2023) doesn't silently break SSH access.
+      run: |
+        mkdir -p -m 0700 ~/.ssh
+        curl --silent https://api.github.com/meta | jq --raw-output '"github.com "+.ssh_keys[]' >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts

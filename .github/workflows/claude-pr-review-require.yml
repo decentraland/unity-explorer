@@ -15,6 +15,7 @@ jobs:
         with:
           script: |
             const title = context.payload.pull_request.title || '';
+            // Keep this regex in sync with claude-pr-review.yml and auto-assign.yml.
             const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
             core.setOutput('is-auto-review', isAutoReview.toString());
 

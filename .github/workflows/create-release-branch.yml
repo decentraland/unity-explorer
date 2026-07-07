@@ -100,18 +100,7 @@ jobs:
           RUN_BRANCH=$(jq -r '.head_branch' <<< "$RUN_JSON")
           BUILD_DATE=$(jq -r '.updated_at' <<< "$RUN_JSON")
 
-          # Same event -> S3 prefix mapping as build-unitycloud.yml
-          case "$RUN_EVENT" in
-            pull_request) BUILD_PREFIX="pr" ;;
-            push) BUILD_PREFIX="pu" ;;
-            merge_group) BUILD_PREFIX="mg" ;;
-            workflow_dispatch) BUILD_PREFIX="wd" ;;
-            workflow_call) BUILD_PREFIX="wc" ;;
-            schedule) BUILD_PREFIX="sc" ;;
-            *) BUILD_PREFIX="gn" ;;
-          esac
-
-          S3_PATH="@dcl/${REPO_NAME}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+          S3_PATH=$(bash scripts/ci/s3-build-path.sh "$RUN_EVENT" "$REPO_NAME" "$RUN_BRANCH" "$RUN_NUMBER" "$HEAD_SHA")
 
           WINDOWS_ARTIFACT_ID=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" \
             --jq '.artifacts[] | select(.name == "Decentraland_windows64") | .id' || true)

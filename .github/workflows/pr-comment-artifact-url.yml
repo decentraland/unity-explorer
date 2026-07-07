@@ -91,6 +91,14 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && needs.pre-validation.outputs.pr-number != '' && needs.check-build-ran.outputs.build-ran == 'true'
     runs-on: ubuntu-latest
     steps:
+      # workflow_run jobs check out the default branch (trusted), only for the
+      # shared S3 path script.
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: scripts/ci
+          sparse-checkout-cone-mode: false
+
       - name: Get Artifact and Pull request info
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -142,18 +150,7 @@ jobs:
           echo "Run number: $RUN_NUMBER"
           echo "RUN_NUMBER=$RUN_NUMBER" >> "$GITHUB_ENV"
 
-          case "$ORIGINAL_EVENT" in
-            pull_request) BUILD_PREFIX="pr" ;;
-            push) BUILD_PREFIX="pu" ;;
-            merge_group) BUILD_PREFIX="mg" ;;
-            workflow_dispatch) BUILD_PREFIX="wd" ;;
-            workflow_call) BUILD_PREFIX="wc" ;;
-            schedule) BUILD_PREFIX="sc" ;;
-            *) BUILD_PREFIX="gn" ;;
-          esac
-          echo "Build Prefix: $BUILD_PREFIX"
-
-          ARTIFACT_S3_DESTINATION_PATH="@dcl/$REPO/branch/$SAFE_BRANCH_NAME/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+          ARTIFACT_S3_DESTINATION_PATH=$(bash scripts/ci/s3-build-path.sh "$ORIGINAL_EVENT" "$REPO" "$SAFE_BRANCH_NAME" "$RUN_NUMBER" "$HEAD_SHA")
           echo "Artifact S3 Destination Path: $ARTIFACT_S3_DESTINATION_PATH"
           echo "ARTIFACT_S3_DESTINATION_PATH=$ARTIFACT_S3_DESTINATION_PATH" >> "$GITHUB_ENV"
 

@@ -23,6 +23,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Only for the shared re-run script (pull_request events run in the
+      # base-repo context, so this is trusted content).
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
       - name: Fetch PR Metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -167,53 +175,9 @@ jobs:
             -f context="QA and DEV Approvals" \
             -f description="$DESC"
 
-      - name: Search Failed "Enforce QA and DEV Approvals" Run
+      - name: Re-run failed approval check for this commit
+        if: env.APPROVAL_CHECK == 'passed' && github.event_name == 'pull_request_review'
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
-        if: env.APPROVAL_CHECK == 'passed' && github.event_name == 'pull_request_review'
-        run: |
-          echo "📦 Searching 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
-          RUNS_JSON=$(gh run list \
-            --workflow="Enforce QA and DEV Approvals" \
-            --limit 1000 \
-            --repo "$REPO_OWNER/$REPO_NAME" \
-            --json databaseId,headSha,event,conclusion,status,createdAt)
-
-          echo "$RUNS_JSON" | jq --arg HEAD_SHA "$HEAD_SHA" '
-            .[] | select(.headSha == $HEAD_SHA)
-          '
-
-          # Count in-progress runs for this SHA
-          IN_PROGRESS_COUNT=$(echo "$RUNS_JSON" | jq --arg HEAD_SHA "$HEAD_SHA" -r '
-            map(select(.headSha == $HEAD_SHA and .status == "in_progress")) | length
-          ')
-
-          echo "🔸 Number of in-progress runs for SHA $HEAD_SHA: $IN_PROGRESS_COUNT"
-          if [ "$IN_PROGRESS_COUNT" -gt 1 ]; then
-            echo "⚠️ More than 1 in-progress run detected for this SHA, skipping rerun."
-            exit 0
-          fi
-
-          echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
-          WORKFLOW_RUN_ID=$(gh run list \
-            --workflow="Enforce QA and DEV Approvals" \
-            --limit 1000 \
-            --repo "$REPO_OWNER/$REPO_NAME" \
-            --json databaseId,event,headSha,conclusion \
-            | jq -r --arg HEAD_SHA "$HEAD_SHA" '
-                .[] |
-                select(.event == "pull_request") |
-                select(.headSha == $HEAD_SHA) |
-                select(.conclusion == "failure") |
-                .databaseId
-            ' | head -n 1)
-
-          if [ -z "$WORKFLOW_RUN_ID" ]; then
-            echo "🔸 No previous failed workflow run found for this commit ($HEAD_SHA)."
-            exit 0
-          fi
-
-          echo "📌 Found matching failed run: $WORKFLOW_RUN_ID"
-          echo "🔁 Triggering re-run via GitHub CLI"
-          gh run rerun "$WORKFLOW_RUN_ID" --repo "$REPO_OWNER/$REPO_NAME"
-          echo "✅ Re-run triggered successfully!"
+          REPO: ${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}
+        run: bash .github/scripts/rerun-failed-enforce-approvals.sh
