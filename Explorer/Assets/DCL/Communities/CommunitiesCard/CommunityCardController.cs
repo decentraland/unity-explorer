@@ -677,8 +677,7 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid RequestToJoinCommunityAsync(CancellationToken ct)
             {
-                var result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct)
-                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<string> result = await communitiesDataProvider.SendInviteOrRequestToJoinAsync(communityData.id, web3IdentityCache.Identity?.Address, InviteRequestAction.request_to_join, ct);
 
                 if (ct.IsCancellationRequested)
                     return;

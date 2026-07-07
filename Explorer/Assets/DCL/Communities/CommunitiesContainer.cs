@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Global.AppArgs;
@@ -34,10 +35,11 @@ namespace DCL.Communities
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository,
             IAppArgs appArgs,
             CancellationToken ct)
         {
-            var dataProvider = new CommunitiesDataProvider.CommunitiesDataProvider(webRequestController, urlsSource, identityCache);
+            var dataProvider = new CommunitiesDataProvider.CommunitiesDataProvider(webRequestController, urlsSource, identityCache, profileRepository);
 
             CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache, appArgs));
             bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
