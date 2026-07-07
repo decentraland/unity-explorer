@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -42,6 +43,7 @@ namespace DCL.Passport.Modules.Creations
         private readonly List<EquippedItemPassportFieldView> instantiatedEmotes = new ();
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
+        private readonly Dictionary<EquippedItemPassportFieldView, UnityAction> navigationListeners = new ();
 
         private Profile? currentProfile;
         private CancellationTokenSource? loadCreationsCts;
@@ -99,7 +101,7 @@ namespace DCL.Passport.Modules.Creations
                         itemView.EquippedItemThumbnail.sprite = null;
                     }
                     itemView.SetAsLoading(false);
-                    itemView.BuyButton.onClick.RemoveAllListeners();
+                    RemoveNavigationListener(itemView);
                     itemView.gameObject.SetActive(false);
                 }
             );
@@ -248,11 +250,22 @@ namespace DCL.Passport.Modules.Creations
             string marketplaceLink = GetMarketplaceLink(item);
             itemView.BuyButton.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
             itemView.OnSaleFlap.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
-            itemView.BuyButton.onClick.RemoveAllListeners();
-            itemView.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketplaceLink));
+            RemoveNavigationListener(itemView);
+            UnityAction navigationListener = () => webBrowser.OpenUrl(marketplaceLink);
+            itemView.BuyButton.onClick.AddListener(navigationListener);
+            navigationListeners[itemView] = navigationListener;
 
             itemView.SetAsLoading(false);
             WaitForThumbnailAsync(item.thumbnail, itemView, ct).Forget();
+        }
+
+        private void RemoveNavigationListener(EquippedItemPassportFieldView itemView)
+        {
+            if (!navigationListeners.TryGetValue(itemView, out UnityAction navigationListener))
+                return;
+
+            itemView.BuyButton.onClick.RemoveListener(navigationListener);
+            navigationListeners.Remove(itemView);
         }
 
         private string GetMarketplaceLink(MarketplaceCatalogItem item)
