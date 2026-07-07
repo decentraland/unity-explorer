@@ -36,9 +36,9 @@ namespace Decentraland.Pulse {
             "EiQKCnBvc2l0aW9uX3gYBiABKA1CC4q1GAcVAACAQRgISAGIAQESJAoKcG9z",
             "aXRpb25feRgHIAEoDUILirUYBxUAAEhDGA1IAogBARIkCgpwb3NpdGlvbl96",
             "GAggASgNQguKtRgHFQAAgEEYCEgDiAEBEikKCnZlbG9jaXR5X3gYCSABKA1C",
-            "EIq1GAwNAABIwhUAAEhCGAhIBIgBARIpCgp2ZWxvY2l0eV95GAogASgNQhCK",
-            "tRgMDQAASMIVAABIQhgISAWIAQESKQoKdmVsb2NpdHlfehgLIAEoDUIQirUY",
-            "DA0AAEjCFQAASEIYCEgGiAEBEiQKCnJvdGF0aW9uX3kYDCABKA1CC4q1GAcV",
+            "EJq1GAwNAABIQhUAAABAGAhIBIgBARIpCgp2ZWxvY2l0eV95GAogASgNQhCa",
+            "tRgMDQAASEIVAAAAQBgISAWIAQESKQoKdmVsb2NpdHlfehgLIAEoDUIQmrUY",
+            "DA0AAEhCFQAAAEAYCEgGiAEBEiQKCnJvdGF0aW9uX3kYDCABKA1CC4q1GAcV",
             "AAC0QxgHSAeIAQESKAoObW92ZW1lbnRfYmxlbmQYDSABKA1CC4q1GAcVAABA",
             "QBgFSAiIAQESJQoLc2xpZGVfYmxlbmQYDiABKA1CC4q1GAcVAACAPxgESAmI",
             "AQESIgoIaGVhZF95YXcYDyABKA1CC4q1GAcVAAC0QxgHSAqIAQESJAoKaGVh",
@@ -849,6 +849,12 @@ namespace Decentraland.Pulse {
     private readonly static uint VelocityXDefaultValue = 0;
 
     private uint velocityX_;
+    /// <summary>
+    /// Power-law quantized: a sign bit + 7-bit magnitude curve over [-50, 50]. Zero is exactly
+    /// representable (a stopped peer reports an exact 0 instead of the linear quantizer's ±0.196
+    /// residual that drove foreign-avatar drift), and pow=2 concentrates resolution at the low speeds
+    /// where avatars actually move, leaving only the visually-irrelevant extremes coarse.
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public uint VelocityX {

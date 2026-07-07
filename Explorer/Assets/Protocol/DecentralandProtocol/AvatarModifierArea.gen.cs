@@ -30,9 +30,9 @@ namespace DCL.ECSComponents {
             "ZGlmaWVyQXJlYRIqCgRhcmVhGAEgASgLMhwuZGVjZW50cmFsYW5kLmNvbW1v",
             "bi5WZWN0b3IzEhMKC2V4Y2x1ZGVfaWRzGAIgAygJEkIKCW1vZGlmaWVycxgD",
             "IAMoDjIvLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5BdmF0YXJNb2Rp",
-            "ZmllclR5cGUqRQoSQXZhdGFyTW9kaWZpZXJUeXBlEhQKEEFNVF9ISURFX0FW",
-            "QVRBUlMQABIZChVBTVRfRElTQUJMRV9QQVNTUE9SVFMQAUIUqgIRRENMLkVD",
-            "U0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "ZmllclR5cGUqXAoSQXZhdGFyTW9kaWZpZXJUeXBlEhQKEEFNVF9ISURFX0FW",
+            "QVRBUlMQABIZChVBTVRfRElTQUJMRV9QQVNTUE9SVFMQARIVChFBTVRfSElE",
+            "RV9OQU1FVEFHUxACQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.AvatarModifierType), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -55,6 +55,10 @@ namespace DCL.ECSComponents {
     /// selecting (e.g. clicking) an avatar will not bring up their profile.
     /// </summary>
     [pbr::OriginalName("AMT_DISABLE_PASSPORTS")] AmtDisablePassports = 1,
+    /// <summary>
+    /// the name tag displayed above an avatar is hidden.
+    /// </summary>
+    [pbr::OriginalName("AMT_HIDE_NAMETAGS")] AmtHideNametags = 2,
   }
 
   #endregion
