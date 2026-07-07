@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesDataProvider.DTOs;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
 using DCL.Profiles;
@@ -24,6 +26,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private readonly AnnouncementsSectionView view;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider;
+        private readonly IInputBlock inputBlock;
         private readonly SectionFetchData<CommunityPost> currentAnnouncementsFetchData = new (PAGE_SIZE);
 
         protected override SectionFetchData<CommunityPost> currentSectionFetchData => currentAnnouncementsFetchData;
@@ -32,6 +35,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private bool lastFetchSucceeded;
         private bool isCreationAllowed;
         private bool isPosting;
+        private bool isCreationInputBlocking;
         private readonly HashSet<string> announcementsUpdatingLikeStatus = new();
 
         public AnnouncementsSectionController(
@@ -39,10 +43,12 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             CommunitiesDataProvider.CommunitiesDataProvider communitiesDataProvider,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository) : base (view, PAGE_SIZE)
+            IProfileRepository profileRepository,
+            IInputBlock inputBlock) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.inputBlock = inputBlock;
 
             InitializeViewAsync(identityCache, profileRepository, profileRepositoryWrapper, cancellationToken).Forget();
 
@@ -50,6 +56,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             view.LikeAnnouncementButtonClicked += LikeAnnouncement;
             view.UnlikeAnnouncementButtonClicked += UnlikeAnnouncement;
             view.DeleteAnnouncementButtonClicked += DeleteAnnouncement;
+            view.CreationInputFocusChanged += OnCreationInputFocusChanged;
         }
 
         public override void Dispose()
@@ -58,12 +65,29 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             view.LikeAnnouncementButtonClicked -= LikeAnnouncement;
             view.UnlikeAnnouncementButtonClicked -= UnlikeAnnouncement;
             view.DeleteAnnouncementButtonClicked -= DeleteAnnouncement;
+            view.CreationInputFocusChanged -= OnCreationInputFocusChanged;
+
+            OnCreationInputFocusChanged(false);
 
             base.Dispose();
         }
 
+        private void OnCreationInputFocusChanged(bool isFocused)
+        {
+            if (isFocused == isCreationInputBlocking)
+                return;
+
+            isCreationInputBlocking = isFocused;
+
+            if (isFocused)
+                inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+            else
+                inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
+        }
+
         public override void Reset()
         {
+            OnCreationInputFocusChanged(false);
             communityData = null;
             currentAnnouncementsFetchData.Reset();
             view.SetAllowCreation(false);

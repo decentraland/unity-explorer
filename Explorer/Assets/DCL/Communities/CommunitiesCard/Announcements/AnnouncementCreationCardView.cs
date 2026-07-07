@@ -36,6 +36,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         [SerializeField] internal ViewEventBus inputEventBus = null!;
 
         public event Action<string>? CreateAnnouncementButtonClicked;
+        public event Action<bool>? InputFocusChanged;
 
         private string currentProfileThumbnailUrl = null!;
         private AnnouncementEmojiController? announcementEmojiController;
@@ -104,11 +105,17 @@ namespace DCL.Communities.CommunitiesCard.Announcements
             createAnnouncementButtonLoadingSpinner.SetActive(isLoading);
         }
 
-        private void OnAnnouncementInputSelected(string _) =>
+        private void OnAnnouncementInputSelected(string _)
+        {
             createAnnouncementInputOutline.SetActive(true);
+            InputFocusChanged?.Invoke(true);
+        }
 
-        private void OnAnnouncementInputDeselected(string _) =>
+        private void OnAnnouncementInputDeselected(string _)
+        {
             createAnnouncementInputOutline.SetActive(false);
+            InputFocusChanged?.Invoke(false);
+        }
 
         private void OnAnnouncementInputValueChanged(string text)
         {

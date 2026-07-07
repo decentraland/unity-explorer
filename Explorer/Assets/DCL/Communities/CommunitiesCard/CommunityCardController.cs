@@ -414,7 +414,8 @@ namespace DCL.Communities.CommunitiesCard
                     communitiesDataProvider,
                     profileRepositoryWrapper,
                     web3IdentityCache,
-                    profileRepository);
+                    profileRepository,
+                    inputBlock);
             }
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
