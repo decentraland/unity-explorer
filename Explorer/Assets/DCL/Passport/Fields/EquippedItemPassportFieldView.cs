@@ -30,6 +30,9 @@ namespace DCL.Passport.Fields
         public Button BuyButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject OnSaleFlap { get; private set; }
+
+        [field: SerializeField]
         public Image CategoryImage { get; private set; }
 
         [field: SerializeField]

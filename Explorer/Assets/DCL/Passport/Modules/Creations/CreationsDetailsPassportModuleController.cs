@@ -243,6 +243,7 @@ namespace DCL.Passport.Modules.Creations
 
             string marketplaceLink = GetMarketplaceLink(item);
             itemView.BuyButton.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
+            itemView.OnSaleFlap.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
             itemView.BuyButton.onClick.RemoveAllListeners();
             itemView.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketplaceLink));
 
