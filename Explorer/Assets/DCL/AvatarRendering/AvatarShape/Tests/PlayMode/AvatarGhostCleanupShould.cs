@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -8,10 +5,13 @@ using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NUnit.Framework;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace DCL.AvatarRendering.AvatarShape.PlayModeTests
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarGhostCleanupShould : UnitySystemTestBase<AvatarGhostSystem>
     {

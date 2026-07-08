@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.PlayModeTests
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarBaseLegacyAnimationPlayModeShould
     {
