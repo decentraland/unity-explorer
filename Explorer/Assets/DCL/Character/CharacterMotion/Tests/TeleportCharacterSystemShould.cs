@@ -5,7 +5,6 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
 using DCL.Utilities;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.TestSuite;
@@ -20,7 +19,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Utility;
 
-namespace DCL.CharacterMotion.Tests
+namespace DCL.Character.CharacterMotion.Tests
 {
     public class TeleportCharacterSystemShould : UnitySystemTestBase<TeleportCharacterSystem>
     {

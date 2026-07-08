@@ -1,7 +1,6 @@
-using System.Collections.Generic;
-using System.Net.Mime;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests

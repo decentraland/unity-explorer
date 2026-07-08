@@ -56,9 +56,11 @@ jobs:
           fi
           count=$(jq -r '.count' warning-result.json)
           baseline=$(jq -r '.baseline // ""' warning-result.json)
+          allow_equal=$(jq -r '.allow_equal // false' warning-result.json)
           echo "found=true" >> "$GITHUB_OUTPUT"
           echo "count=$count" >> "$GITHUB_OUTPUT"
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
+          echo "allow-equal=$allow_equal" >> "$GITHUB_OUTPUT"
 
       - name: Compose comment body
         if: steps.result.outputs.found == 'true'
@@ -66,6 +68,7 @@ jobs:
         env:
           COUNT: ${{ steps.result.outputs.count }}
           BASELINE: ${{ steps.result.outputs.baseline }}
+          ALLOW_EQUAL: ${{ steps.result.outputs.allow-equal }}
         run: |
           {
             echo "body<<EOF"
@@ -74,6 +77,8 @@ jobs:
               echo "**Warnings counted: $COUNT** (no baseline established yet)"
             elif [ "$COUNT" -lt "$BASELINE" ]; then
               echo "**Warnings count reduced: $BASELINE => $COUNT**"
+            elif [ "$ALLOW_EQUAL" = "true" ] && [ "$COUNT" -eq "$BASELINE" ]; then
+              echo "**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
             else
               echo "**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
             fi
