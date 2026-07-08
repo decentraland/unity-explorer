@@ -82,6 +82,12 @@ namespace DCL.Web3.Authenticators
             await UniTask.SwitchToMainThread(ct);
 
             var url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
+            #if UNITY_EDITOR
+            // Tell the auth website to deliver the signin only by writing the bridge file,
+            // not by launching a new Explorer instance.
+            // Omitting this would spawn a build instance while the editor sits waiting for the signin.
+            url += "&bridge-only";
+            #endif
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
