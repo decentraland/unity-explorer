@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Credits;
 using DCL.FeatureFlags;
 using DCL.Diagnostics;
 using DCL.Events;
@@ -44,6 +45,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
+        private readonly CreditsPanelController creditsPanelController;
         private bool includeCommunities;
 
         private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
@@ -87,7 +89,8 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             HttpEventsApiService eventsApiService,
             IMVCManager mvcManager,
-            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker)
+            JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
+            CreditsPanelController creditsPanelController)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -104,6 +107,7 @@ namespace DCL.ExplorePanel
             this.includeDiscover = FeaturesRegistry.Instance.IsEnabled(FeatureId.DISCOVER);
             this.eventsApiService = eventsApiService;
             this.communitiesLiveTracker = communitiesLiveTracker;
+            this.creditsPanelController = creditsPanelController;
             CommunitiesBrowserController = communitiesBrowserController;
             PlacesController = placesController;
 
