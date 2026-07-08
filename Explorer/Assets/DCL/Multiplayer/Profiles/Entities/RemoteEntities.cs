@@ -6,7 +6,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
@@ -34,7 +33,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
-        private readonly Transform? remoteEntitiesParent = null;
+        private readonly Transform? remoteEntitiesParent;
 
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
@@ -84,7 +83,14 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
-            foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
+
+            foreach (string wallet in tempRemoveAll)
+            {
+                IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(wallet);
+
+                entityParticipantTable.ForceRelease(wallet);
+                CleanUpEntity(wallet, entry.Entity, world);
+            }
         }
 
         public void TryRemove(string walletId, RoomSource roomSource, World world)
@@ -102,6 +108,11 @@ namespace DCL.Multiplayer.Profiles.Entities
             if (!entityParticipantTable.Release(walletId, roomSource))
                 return;
 
+            CleanUpEntity(walletId, entry.Entity, world);
+        }
+
+        private void CleanUpEntity(string walletId, Entity entity, World world)
+        {
             movementInbox.RemovePending(walletId);
 
             if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
@@ -111,7 +122,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 collidersByWalletId.Remove(walletId);
             }
 
-            world.AddOrGet(entry.Entity, new DeleteEntityIntention());
+            world.AddOrGet(entity, new DeleteEntityIntention());
         }
 
         public Entity TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)

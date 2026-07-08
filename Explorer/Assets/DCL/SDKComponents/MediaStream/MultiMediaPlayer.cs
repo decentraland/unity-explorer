@@ -80,6 +80,12 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        // False when the AVPro MediaPlayer GameObject was destroyed (pool eviction / scene teardown). LiveKit is always valid.
+        public bool IsValid => Match(
+            static avPro => avPro.AvProMediaPlayer != null,
+            static _ => true
+        );
+
         public bool IsReady => Match(
             static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
             static _ => true

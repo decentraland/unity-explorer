@@ -14,14 +14,12 @@ using DCL.UI;
 using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
-using Runtime.Wearables;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using static DCL.AuthenticationScreenFlow.AuthenticationScreenController;
 using Avatar = DCL.Profiles.Avatar;
-using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -40,8 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
 
-        private Dictionary<string, List<URN>>? maleWearablesByCategory;
-        private Dictionary<string, List<URN>>? femaleWearablesByCategory;
+        private readonly AvatarRandomizer avatarRandomizer = new ();
 
         private BodyShape selectedBodyType = BodyShape.MALE;
 
@@ -133,8 +130,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             characterPreviewController.OnHide();
 
-            maleWearablesByCategory = null;
-            femaleWearablesByCategory = null;
+            avatarRandomizer.ClearCatalogs();
 
             // Listeners
             view.ProfileNameInputField.InputValueChanged -= OnProfileNameChanged;
@@ -174,7 +170,7 @@ namespace DCL.AuthenticationScreenFlow
                 loadedWearables ??= await LoadBaseWearablesAsync(loginCt);
 
                 if (loadedWearables != null)
-                    PopulateWearablesCatalogs(loadedWearables);
+                    avatarRandomizer.PopulateCatalogs(loadedWearables);
                 UpdateCharacterPreview(CreateRandomAvatar());
             }
             catch (OperationCanceledException)
@@ -207,41 +203,6 @@ namespace DCL.AuthenticationScreenFlow
             }
 
             return null;
-        }
-
-        private void PopulateWearablesCatalogs(IReadOnlyList<ITrimmedWearable> wearables)
-        {
-            maleWearablesByCategory = new Dictionary<string, List<URN>>();
-            femaleWearablesByCategory = new Dictionary<string, List<URN>>();
-
-            foreach (ITrimmedWearable? wearable in wearables)
-            {
-                string category = wearable.GetCategory();
-
-                // Skip body shapes
-                if (category == WearableCategories.Categories.BODY_SHAPE)
-                    continue;
-
-                // Add to male dictionary if compatible
-                if (wearable.IsCompatibleWithBodyShape(BodyShape.MALE))
-                {
-                    if (!maleWearablesByCategory.ContainsKey(category))
-                        maleWearablesByCategory[category] = new List<URN>();
-
-                    maleWearablesByCategory[category].Add(wearable.GetUrn());
-                }
-
-                // Add to female dictionary if compatible
-                if (wearable.IsCompatibleWithBodyShape(BodyShape.FEMALE))
-                {
-                    if (!femaleWearablesByCategory.ContainsKey(category))
-                        femaleWearablesByCategory[category] = new List<URN>();
-
-                    femaleWearablesByCategory[category].Add(wearable.GetUrn());
-                }
-            }
-
-            ReportHub.Log(ReportCategory.AUTHENTICATION, $"Base wearables catalogs populated: male categories: {maleWearablesByCategory.Count}, female categories: {femaleWearablesByCategory.Count}");
         }
 
         private void OnBackButtonClicked()
@@ -293,43 +254,22 @@ namespace DCL.AuthenticationScreenFlow
         {
             BodyShape bodyShape = selectedBodyType;
 
-            // If base wearables loaded from backend - use randomizer
-            if (loadedWearables != null && loadedWearables.Count > 0)
+            if (avatarRandomizer.HasCatalogs)
             {
-                Dictionary<string, List<URN>> wearablesByCategory = bodyShape.Equals(BodyShape.MALE)
-                    ? maleWearablesByCategory!
-                    : femaleWearablesByCategory!;
-
-                HashSet<URN> wearablesSet = GetRandomWearablesFromCategories(wearablesByCategory);
-
                 return new Avatar(
                     bodyShape,
-                    wearablesSet,
+                    avatarRandomizer.SelectRandomWearables(bodyShape),
                     WearablesConstants.DefaultColors.GetRandomEyesColor(),
                     WearablesConstants.DefaultColors.GetRandomHairColor(),
                     WearablesConstants.DefaultColors.GetRandomSkinColor());
             }
 
-            // Fallback to hardcoded defaults
             return new Avatar(
                 bodyShape,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(bodyShape),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
                 WearablesConstants.DefaultColors.GetRandomHairColor(),
                 WearablesConstants.DefaultColors.GetRandomSkinColor());
-        }
-
-        private static HashSet<URN> GetRandomWearablesFromCategories(Dictionary<string, List<URN>> wearablesByCategory)
-        {
-            var result = new HashSet<URN>();
-
-            foreach (List<URN>? categoryWearables in wearablesByCategory.Values)
-            {
-                if (categoryWearables.Count > 0)
-                    result.Add(categoryWearables[Random.Range(0, categoryWearables.Count)]);
-            }
-
-            return result;
         }
 
         private void FinalizeNewUser()

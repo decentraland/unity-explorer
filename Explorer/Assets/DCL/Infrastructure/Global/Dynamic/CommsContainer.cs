@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.LiveKit.Public;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -10,6 +11,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
+using DCL.Multiplayer.Connections.HardwareFingerprint;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -20,9 +22,11 @@ using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem.Global;
+using DCL.Utility.Types;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
@@ -62,6 +66,8 @@ namespace Global.Dynamic
 
         public RemoteEntities RemoteEntities { get; }
 
+        public RemoteProfiles RemoteProfiles { get; }
+
         public IRemoteMetadata RemoteMetadata { get; }
 
         public IHealthCheck LivekitHealthCheck { get; }
@@ -81,6 +87,7 @@ namespace Global.Dynamic
             EntityParticipantTable entityParticipantTable,
             MovementInbox movementInbox,
             RemoteEntities remoteEntities,
+            RemoteProfiles remoteProfiles,
             IRemoteMetadata remoteMetadata,
             IHealthCheck livekitHealthCheck,
             CurrentSceneInfo currentSceneInfo)
@@ -97,6 +104,7 @@ namespace Global.Dynamic
             EntityParticipantTable = entityParticipantTable;
             MovementInbox = movementInbox;
             RemoteEntities = remoteEntities;
+            RemoteProfiles = remoteProfiles;
             RemoteMetadata = remoteMetadata;
             LivekitHealthCheck = livekitHealthCheck;
             CurrentSceneInfo = currentSceneInfo;
@@ -118,11 +126,16 @@ namespace Global.Dynamic
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, isolateScenesCommunication, bootstrapContainer.DecentralandUrlsSource).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(staticContainer.WebRequestsContainer.WebRequestController).WithLog();
 
+            Option<HardwareFingerprintProvider> hardwareFingerprintProvider = FeaturesRegistry.Instance.IsEnabled(FeatureId.HARDWARE_FINGERPRINT)
+                ? Option<HardwareFingerprintProvider>.Some(new HardwareFingerprintProvider())
+                : Option<HardwareFingerprintProvider>.None;
+
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode,
                 bootstrapContainer.DecentralandUrlsSource,
                 playSceneMetaDataSource,
                 localDevelopmentMetaDataSource,
-                staticContainer.RealmData);
+                staticContainer.RealmData,
+                hardwareFingerprintProvider);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController,
                     gateKeeperSceneRoomOptions).AsActivatable();
@@ -139,7 +152,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData
             );
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)), hardwareFingerprintProvider);
 
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
@@ -148,18 +161,14 @@ namespace Global.Dynamic
             IRoomHub roomHub;
 
             if (appArgs.HasFlag(AppArgsFlags.NO_LIVEKIT_MODE))
-            {
                 roomHub = NullRoomHub.INSTANCE;
-            }
             else
-            {
                 roomHub = new RoomHub(
-                        localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
-                        gateKeeperSceneRoom,
-                        chatRoom,
-                        voiceChatRoom
-                        );
-            }
+                    localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                    gateKeeperSceneRoom,
+                    chatRoom,
+                    voiceChatRoom
+                );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -193,6 +202,8 @@ namespace Global.Dynamic
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData, bootstrapContainer.DecentralandUrlsSource));
 
+            var remoteProfiles = new RemoteProfiles(staticContainer.ProfilesContainer.Repository, remoteMetadata);
+
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails()
                 : new StartLiveKitRooms(roomHub);
@@ -214,6 +225,7 @@ namespace Global.Dynamic
                 entityParticipantTable,
                 movementInbox,
                 remoteEntities,
+                remoteProfiles,
                 remoteMetadata,
                 livekitHealthCheck,
                 new CurrentSceneInfo());
@@ -231,7 +243,7 @@ namespace Global.Dynamic
                 chatRoom,
                 RoomHub,
                 RoomsStatus,
-                staticContainer.ProfilesContainer.Repository,
+                RemoteProfiles,
                 multiplayerContainer.ProfileBroadcast,
                 debugBuilder,
                 staticContainer.LoadingStatus,

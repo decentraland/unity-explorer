@@ -290,10 +290,10 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             for (var i = 0; i < mutualFriends.thumbnails.Length; i++)
             {
-                bool friendExists = i < communityData.friends.Length;
+                bool friendExists = i < communityData.Friends.Count;
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
-                Profile.CompactInfo mutualFriend = communityData.friends[i];
+                Profile.CompactInfo mutualFriend = communityData.Friends[i];
                 mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, mutualFriend);
                 bool isOfficial = OfficialWalletsHelper.Instance.IsOfficialWallet(mutualFriend.UserId);
                 mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.Name, mutualFriend.HasClaimedName, isOfficial);
@@ -319,15 +319,15 @@ namespace DCL.Communities.CommunitiesBrowser
             var communityFromInviteRequestData = new CommunityData
             {
                 id = userInviteRequestData.communityId,
-                thumbnailUrl = userInviteRequestData.thumbnailUrl,
+                ThumbnailUrl = userInviteRequestData.ThumbnailUrl,
                 name = userInviteRequestData.name,
                 description = userInviteRequestData.description,
                 ownerAddress = userInviteRequestData.ownerAddress,
-                ownerName = userInviteRequestData.ownerName,
+                OwnerName = userInviteRequestData.OwnerName,
                 membersCount = userInviteRequestData.membersCount,
                 privacy = userInviteRequestData.privacy,
                 role = userInviteRequestData.role,
-                friends = userInviteRequestData.friends,
+                Friends = userInviteRequestData.Friends,
                 pendingActionType = userInviteRequestData.type,
                 inviteOrRequestId = userInviteRequestData.id,
             };

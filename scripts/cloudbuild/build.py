@@ -16,6 +16,10 @@ import utils
 
 RETRYABLE_EXIT_CODE = 99  # nick-fields/retry only retries on this code
 
+# All install sources used in build-release-main.yml's matrix. Used to build the set of
+# protected release-pool target names in delete_current_target.
+_RELEASE_INSTALL_SOURCES = ['launcher', 'epic']
+
 from zipfile import ZipFile, ZipInfo
 
 class ZipFileWithPermissions(zipfile.ZipFile):
@@ -109,26 +113,23 @@ def clone_current_target(use_cache):
         
         return body
 
-    # Set target name based on branch, without commit SHA
-    base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    platform = re.sub(r'^t_', '', os.getenv('TARGET')).lower()
+    branch_name = os.getenv('BRANCH_NAME', '')
 
     # Get the install source from the environment variable
     install_source = os.getenv('PARAM_INSTALL_SOURCE', 'launcher')
+    # Append the install source to the target name only if it's not 'launcher'
+    install_suffix = f"-{install_source}" if install_source and install_source != 'launcher' else ''
 
-    # Include install_source in the target name only if it's not 'launcher'
-    if install_source and install_source != 'launcher':
-        base_target_name = f"{base_target_name}-{install_source}"
+    # Release/hotfix/main share a single stable pool target; all other branches use branch-derived names.
+    is_release_pool = branch_name == 'main' or branch_name.startswith(('release/', 'hotfix/'))
 
-    print(f"Start clone_current_target for {base_target_name}")
-
-    if is_release_workflow:
-         # Use the tag version in the target name if it's a release workflow
-        tag_version = os.getenv('TAG_VERSION', 'unknown-version')
-        # Remove dots from the tag version, as unity API does not allow . in the request
-        sanitized_tag_version = re.sub(r'\.', '-', tag_version)
-        new_target_name = f"{base_target_name}-{sanitized_tag_version}"
+    if is_release_pool:
+        new_target_name = f"{platform}-release{install_suffix}".lower()
     else:
-        new_target_name = base_target_name
+        # Branch-derived target (one cache per branch), without commit SHA.
+        sanitized_branch = re.sub('[^A-Za-z0-9]+', '-', branch_name)
+        new_target_name = f"{platform}-{sanitized_branch}{install_suffix}".lower()
 
     print(f"Updated name for target: {new_target_name}")
 
@@ -147,7 +148,13 @@ def clone_current_target(use_cache):
     if 'error' in existing_target:
         print(f"New target found")
         # Create new target with template cache
-        if use_cache:
+        if is_release_pool:
+            # Cold genesis for the shared release/main pool: never seed from another target so the
+            # release cache lineage stays fully isolated from dev/feature branches. The first
+            # release compiles cold but populates the library cache; later releases reuse it via
+            # the existing-target branch below (buildTargetCopyCache = the pool target itself).
+            print("Release pool: cold genesis, not seeding cache from another target")
+        elif use_cache:
             cache_source = resolve_cache_source(template_target)
             body['settings']['buildTargetCopyCache'] = cache_source
             print(f"Using cache from: {cache_source}")
@@ -494,9 +501,18 @@ def delete_current_target():
     # List of targets to delete
     targets = ['macos', 'windows64']
     
+    protected = set()
+    for t in targets:
+        for src in _RELEASE_INSTALL_SOURCES:
+            suffix = f'-{src}' if src != 'launcher' else ''
+            protected.add(f'{t}-release{suffix}')
+
     # Loop through each target
     for target in targets:
         base_target_name = f'{target}-{re.sub("[^A-Za-z0-9]+", "-", os.getenv("BRANCH_NAME"))}'.lower()
+        if base_target_name in protected:
+            print(f'Refusing to delete shared release cache target: "{base_target_name}"')
+            continue
         response = requests.delete(f'{URL}/buildtargets/{base_target_name}', headers=HEADERS)
         
         if response.status_code == 204:

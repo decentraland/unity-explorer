@@ -235,17 +235,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private void GenerateStretched(MeshGenerationContext mgc)
         {
             // in local coords
-            var r = canvas.contentRect;
-
-            float left = 0;
-            float right = r.width;
-            float top = 0;
-            float bottom = r.height;
-
-            VERTICES[0].position = new Vector3(left, bottom, Vertex.nearZ);
-            VERTICES[1].position = new Vector3(left, top, Vertex.nearZ);
-            VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
-            VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
+            PopulateStretchedQuad(VERTICES, canvas.contentRect);
 
             MeshWriteData? mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture);
 
@@ -312,6 +302,19 @@ namespace DCL.SDKComponents.SceneUI.Classes
         {
             for (var i = 0; i < VERTICES.Length; i++)
                 VERTICES[i].tint = color;
+        }
+
+        internal static void PopulateStretchedQuad(Vertex[] vertices, Rect contentRect)
+        {
+            float left = contentRect.x;
+            float right = contentRect.xMax;
+            float top = contentRect.y;
+            float bottom = contentRect.yMax;
+
+            vertices[0].position = new Vector3(left, bottom, Vertex.nearZ);
+            vertices[1].position = new Vector3(left, top, Vertex.nearZ);
+            vertices[2].position = new Vector3(right, top, Vertex.nearZ);
+            vertices[3].position = new Vector3(right, bottom, Vertex.nearZ);
         }
     }
 }

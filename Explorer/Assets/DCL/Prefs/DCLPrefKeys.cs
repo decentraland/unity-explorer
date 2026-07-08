@@ -4,9 +4,6 @@ namespace DCL.Prefs
     {
         public const string NEW_BADGES = "NewBadges";
 
-        public const string CRASH_DETECTOR_FLAG = "CrashDetector.flag";
-        public const string CRASH_DETECTOR_SESSION_ID = "CrashDetector.sessionID";
-
         public const string LAUNCH_COUNT = "LaunchCount";
 
         public const string PREVIOUS_SEARCHES = "previous_searches";

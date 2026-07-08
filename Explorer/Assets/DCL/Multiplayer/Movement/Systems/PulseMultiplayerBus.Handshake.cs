@@ -25,8 +25,10 @@ namespace DCL.Multiplayer.Movement
         ///     Runs the post-transport-connect handshake exchange. Registers a one-shot response
         ///     handler, sends a <c>HandshakeRequest</c> (with auth chain + optional
         ///     <c>PlayerInitialState</c> on reconnect), and awaits the matching
-        ///     <c>HandshakeResponse</c>. Throws <see cref="PulseException" /> on failure — the
-        ///     service then propagates it out of <c>ConnectAsync</c>.
+        ///     <c>HandshakeResponse</c>. Throws <see cref="PulseHandshakeDisconnectedException" /> on a
+        ///     rejected handshake — a terminal (non-retriable) failure for the service's retry loop.
+        ///     The awaited completion is faulted by the service with the same exception when the
+        ///     transport disconnects before the response arrives.
         /// </summary>
         private async UniTask HandshakeAsync(UniTaskCompletionSource<(bool success, string? error)> handshakeReceived, CancellationToken ct)
         {
@@ -38,12 +40,14 @@ namespace DCL.Multiplayer.Movement
 
             pulseService.Send(handshakePacket);
 
-            (bool success, string? error) = await handshakeReceived.Task;
+            // AttachExternalCancellation: the completion is settled by the message routing loop,
+            // which dies silently on cancellation — without it this await would hang forever.
+            (bool success, string? error) = await handshakeReceived.Task.AttachExternalCancellation(ct);
 
             if (!success)
             {
                 await pulseService.DisconnectAsync();
-                throw new PulseException(error ?? "Handshake failed");
+                throw new PulseHandshakeDisconnectedException(error ?? "Handshake failed");
             }
         }
 

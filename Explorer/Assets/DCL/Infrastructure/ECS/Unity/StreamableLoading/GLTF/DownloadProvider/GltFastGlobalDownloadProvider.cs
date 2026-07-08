@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             IPartitionComponent partitionComponent,
             ReportData reportData,
             IWebRequestController webRequestController,
-            IAcquiredBudget acquiredBudget)
+            IAcquiredBudget? acquiredBudget)
             : base(world, partitionComponent, reportData, webRequestController, acquiredBudget)
         {
             this.contentSourceUrl = contentSourceUrl;

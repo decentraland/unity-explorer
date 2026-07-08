@@ -25,7 +25,9 @@ namespace DCL.Multiplayer.Movement
 
             TeleportRequest teleport = outgoing.Message.Teleport;
             teleport.ParcelIndex = parcelEncoder.Encode(parcelIndex);
-            teleport.Position = relativePosition.ToProtoVector();
+            teleport.PositionXQuantized = relativePosition.x;
+            teleport.PositionYQuantized = relativePosition.y;
+            teleport.PositionZQuantized = relativePosition.z;
             teleport.Realm = realmData.RealmName;
 
             pulseService.Send(outgoing);

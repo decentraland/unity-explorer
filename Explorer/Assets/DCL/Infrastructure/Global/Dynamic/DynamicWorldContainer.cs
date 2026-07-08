@@ -313,10 +313,10 @@ namespace Global.Dynamic
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
+            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, commsContainer.RemoteProfiles, multiplayerContainer.RemoteAnnouncements, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -905,7 +905,6 @@ namespace Global.Dynamic
                 ));
 
             if (includeMarketplaceCredits)
-            {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     uiShellContainer.MainUIView,
                     assetsProvisioner,
@@ -920,7 +919,6 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
                     staticContainer.ImageControllerProvider));
-            }
 
             if (communitiesContainer.IncludeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(
@@ -1002,8 +1000,8 @@ namespace Global.Dynamic
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
-                dynamicWorldParams.StartParcel,
-                bootstrapContainer.Analytics.EntitiesAnalytics
+                bootstrapContainer.Analytics.EntitiesAnalytics,
+                commsContainer.RoomHub.SceneRoom()
             );
 
             var container = new DynamicWorldContainer(

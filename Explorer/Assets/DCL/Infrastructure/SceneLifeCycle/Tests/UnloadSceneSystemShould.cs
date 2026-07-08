@@ -1,15 +1,14 @@
 ﻿using Arch.Core;
-using Arch.Core.Utils;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System.Linq;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class UnloadSceneSystemShould : UnitySystemTestBase<UnloadSceneSystem>
     {
