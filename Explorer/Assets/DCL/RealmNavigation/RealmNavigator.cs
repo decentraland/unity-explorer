@@ -144,7 +144,7 @@ namespace DCL.RealmNavigation
                 RealmChangeFailed?.Invoke();
 
                 ReportHub.LogError(ReportCategory.REALM,
-                    $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
+                    $"Error trying to teleport to a realm {realm}: {loadResult.Error!.Value.Message}");
 
                 return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
             }

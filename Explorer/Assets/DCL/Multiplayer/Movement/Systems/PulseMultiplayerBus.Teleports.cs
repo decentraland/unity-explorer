@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;

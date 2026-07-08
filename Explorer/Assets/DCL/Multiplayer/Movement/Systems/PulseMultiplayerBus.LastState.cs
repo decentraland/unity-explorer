@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using Decentraland.Pulse;
 using System.Diagnostics;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -85,21 +84,20 @@ namespace DCL.Multiplayer.Movement
             PlayerState state = handshakeRequest.InitialState.State ??= new PlayerState();
             WritePlayerState(message, state, parcelEncoder);
 
-            if (!string.IsNullOrEmpty(capturedEmoteId))
-            {
-                initialState.EmoteId = capturedEmoteId;
+            if (string.IsNullOrEmpty(capturedEmoteId)) return;
 
-                if (capturedEmoteMask != AvatarEmoteMask.AemFullBody)
-                    initialState.EmoteMask = (int)capturedEmoteMask;
+            initialState.EmoteId = capturedEmoteId;
 
-                if (capturedDurationMs > 0)
-                    initialState.EmoteDurationMs = capturedDurationMs;
+            if (capturedEmoteMask != AvatarEmoteMask.AemFullBody)
+                initialState.EmoteMask = (int)capturedEmoteMask;
 
-                long elapsedTicks = Stopwatch.GetTimestamp() - capturedStartTicks;
+            if (capturedDurationMs > 0)
+                initialState.EmoteDurationMs = capturedDurationMs;
 
-                if (elapsedTicks > 0)
-                    initialState.EmoteStartOffsetMs = (uint)(elapsedTicks * 1000 / Stopwatch.Frequency);
-            }
+            long elapsedTicks = Stopwatch.GetTimestamp() - capturedStartTicks;
+
+            if (elapsedTicks > 0)
+                initialState.EmoteStartOffsetMs = (uint)(elapsedTicks * 1000 / Stopwatch.Frequency);
         }
     }
 }

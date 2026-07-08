@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
@@ -311,7 +310,7 @@ namespace DCL.Multiplayer.Movement
             WritePlayerState(message, state, parcelEncoder);
         }
 
-        internal static void WritePlayerState(NetworkMovementMessage message, PlayerState state, ParcelEncoder parcelEncoder)
+        private static void WritePlayerState(NetworkMovementMessage message, PlayerState state, ParcelEncoder parcelEncoder)
         {
             Vector2Int parcelIndex = message.position.ToParcel();
 
@@ -440,18 +439,14 @@ namespace DCL.Multiplayer.Movement
 
         private static GlideStateValue ToNetworkMovementGlideState(GlideState glideState)
         {
-            switch (glideState)
-            {
-                case GlideState.ClosingProp:
-                    return GlideStateValue.CLOSING_PROP;
-                case GlideState.Gliding:
-                    return GlideStateValue.GLIDING;
-                case GlideState.OpeningProp:
-                    return GlideStateValue.OPENING_PROP;
-                case GlideState.PropClosed:
-                    return GlideStateValue.PROP_CLOSED;
-                default: throw new ArgumentOutOfRangeException(nameof(glideState), glideState, null);
-            }
+            return glideState switch
+                   {
+                       GlideState.ClosingProp => GlideStateValue.CLOSING_PROP,
+                       GlideState.Gliding => GlideStateValue.GLIDING,
+                       GlideState.OpeningProp => GlideStateValue.OPENING_PROP,
+                       GlideState.PropClosed => GlideStateValue.PROP_CLOSED,
+                       _ => throw new ArgumentOutOfRangeException(nameof(glideState), glideState, null)
+                   };
         }
     }
 }

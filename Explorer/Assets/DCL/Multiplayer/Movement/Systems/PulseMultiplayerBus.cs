@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus : IMovementMessageBus, IEmotesMessageBus, IDisposable
     {
-        internal const string SELF_MIRROR_WALLET_ID = "self_mirror";
+        private const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
         private const double SERVER_TICKS_TO_MOVEMENT_TIMESTAMP = 0.001;
 
@@ -59,13 +59,8 @@ namespace DCL.Multiplayer.Movement
             this.settings = settings;
         }
 
-        private Web3Address ResolveSelfMirrorWallet(string userId)
-        {
-            if (userId != SELF_MIRROR_WALLET_ID)
-                return new Web3Address(userId);
-
-            return identityCache.EnsuredIdentity().Address;
-        }
+        private Web3Address ResolveSelfMirrorWallet(string userId) =>
+            userId != SELF_MIRROR_WALLET_ID ? new Web3Address(userId) : identityCache.EnsuredIdentity().Address;
 
         public void Dispose()
         {
@@ -111,11 +106,11 @@ namespace DCL.Multiplayer.Movement
         // The purge is deferred to here because the peer collections are routing-thread-only.
         private bool ShouldDropIngress()
         {
-            if (peerPurgePending)
-            {
-                peerPurgePending = false;
-                RemoveAllPeers();
-            }
+            if (!peerPurgePending)
+                return ingressBlocked;
+
+            peerPurgePending = false;
+            RemoveAllPeers();
 
             return ingressBlocked;
         }
@@ -129,9 +124,7 @@ namespace DCL.Multiplayer.Movement
             emotingSubjects.Clear();
         }
 
-        private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
-        {
+        private void Inbox(NetworkMovementMessage fullMovementMessage, string @for) =>
             movementInbox.Enqueue(fullMovementMessage, @for);
-        }
     }
 }
