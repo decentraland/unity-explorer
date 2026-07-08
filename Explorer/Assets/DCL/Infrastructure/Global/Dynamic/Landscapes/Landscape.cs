@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.RealmNavigation;
@@ -61,10 +62,19 @@ namespace Global.Dynamic.Landscapes
             {
                 genesisTerrain.Hide();
 
-                if (realmController.RealmData.IsLocalScene())
-                    await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
-                else
-                    await GenerateFixedScenesTerrainAsync(realmController.RealmData.WorldManifest, landscapeLoadReport, ct);
+                WorldsTerrainResult result = realmController.RealmData.IsLocalScene()
+                    ? await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct)
+                    : await GenerateFixedScenesTerrainAsync(realmController.RealmData.WorldManifest, landscapeLoadReport, ct);
+
+                if (result != WorldsTerrainResult.GENERATED)
+                {
+                    worldsTerrain.Hide();
+                    landscapeLoadReport.SetProgress(1f);
+
+                    return result == WorldsTerrainResult.DISABLED
+                        ? EnumResult<LandscapeError>.SuccessResult()
+                        : EnumResult<LandscapeError>.ErrorResult(LandscapeError.TerrainDataUnavailable);
+                }
             }
 
             TerrainLoaded?.Invoke(CurrentTerrain);
@@ -91,39 +101,53 @@ namespace Global.Dynamic.Landscapes
                 : Result.SuccessResult();
         }
 
-        private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        private async UniTask<WorldsTerrainResult> GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
-                return;
+                return WorldsTerrainResult.DISABLED;
 
-            var staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
-            if (!staticScenesEntityDefinitions.HasValue) return;
+            SceneDefinitions? staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
 
-            int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
+            if (!staticScenesEntityDefinitions.HasValue)
+            {
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Static scenes definitions are unavailable, worlds terrain generation skipped");
+                return WorldsTerrainResult.UNAVAILABLE;
+            }
+
+            List<SceneEntityDefinition> sceneDefinitions = staticScenesEntityDefinitions.Value.Value;
+
+            if (IsLandscapeTerrainDisabledByScene(sceneDefinitions))
+                return WorldsTerrainResult.DISABLED;
+
+            int parcelsAmount = sceneDefinitions.Count;
 
             using (var parcels = new NativeHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
-                foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
+                foreach (SceneEntityDefinition staticScene in sceneDefinitions)
                 {
                     foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
                 worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
+
+            return WorldsTerrainResult.GENERATED;
         }
 
-        private async UniTask GenerateFixedScenesTerrainAsync(WorldManifest worldManifest, AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
+        private async UniTask<WorldsTerrainResult> GenerateFixedScenesTerrainAsync(WorldManifest worldManifest, AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)
-                return;
+                return WorldsTerrainResult.DISABLED;
+
+            List<SceneEntityDefinition> sceneEntityDefinitions = await realmController.WaitForFixedScenePromisesAsync(ct);
+            if (IsLandscapeTerrainDisabledByScene(sceneEntityDefinitions))
+                return WorldsTerrainResult.DISABLED;
 
             if (!worldManifest.IsEmpty)
             {
                 worldsTerrain.GenerateTerrain(worldManifest.GetOccupiedParcels(), landscapeLoadReport);
-                return;
+                return WorldsTerrainResult.GENERATED;
             }
-
-            List<SceneEntityDefinition> sceneEntityDefinitions = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var parcelsAmount = 0;
 
@@ -140,6 +164,23 @@ namespace Global.Dynamic.Landscapes
 
                 worldsTerrain.GenerateTerrain(parcels, landscapeLoadReport);
             }
+
+            return WorldsTerrainResult.GENERATED;
+        }
+
+        private static bool IsLandscapeTerrainDisabledByScene(IReadOnlyList<SceneEntityDefinition> sceneDefinitions) =>
+            sceneDefinitions.Count == 1 && sceneDefinitions[0].metadata.landscapeTerrain == false;
+
+        private enum WorldsTerrainResult
+        {
+            /// <summary>Terrain was generated and is shown.</summary>
+            GENERATED,
+
+            /// <summary>Terrain is intentionally off: generator not initialized or the scene opted out via scene.json.</summary>
+            DISABLED,
+
+            /// <summary>Scene definitions required to build the terrain could not be loaded.</summary>
+            UNAVAILABLE,
         }
     }
 }
