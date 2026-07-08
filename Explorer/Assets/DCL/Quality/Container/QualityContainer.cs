@@ -34,6 +34,8 @@ namespace DCL.Quality
 
         public LandscapeData LandscapeData { get; init; }
 
+        public LightSourceSettings LightSourceSettings { get; init; }
+
         public Plugin CreatePlugin() =>
             new (onDebugViewUpdate);
 
@@ -60,6 +62,7 @@ namespace DCL.Quality
                 RendererFeaturesCache = rendererFeaturesCache,
                 QualityLevelController = controller,
                 LandscapeData = landscapeData.Value,
+                LightSourceSettings = lightSourceSettings.Value,
             };
         }
 

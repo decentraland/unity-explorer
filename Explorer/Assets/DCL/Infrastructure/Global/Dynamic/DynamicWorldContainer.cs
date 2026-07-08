@@ -519,7 +519,7 @@ namespace Global.Dynamic
             {
                 new ResourceUnloadingPlugin(staticContainer.SingletonSharedDependencies.MemoryBudget, staticContainer.CacheCleaner, staticContainer.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(staticContainer.Profiler, staticContainer.LoadingStatus),
-                new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld),
+                new LightSourceDebugPlugin(staticContainer.DebugContainerBuilder, globalWorld, staticContainer.QualityContainer.LightSourceSettings),
                 commsContainer.CreateMultiplayerPlugin(staticContainer, assetsProvisioner, debugBuilder, multiplayerContainer),
                 staticContainer.ProfilesContainer.CreatePlugin(),
                 new WorldInfoPlugin(realmNavigatorContainer.WorldInfoHub, debugBuilder, chatContainer.ChatHistory),
