@@ -30,7 +30,7 @@ namespace DCL.RealmNavigation
         /// <summary>
         ///     Realm Navigator with core teleport functionality
         /// </summary>
-        public RealmNavigator RealmNavigator { get; private init; } = null!;
+        public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
         public IWorldAccessGate WorldAccessGate { get; private init; } = null!;
 
@@ -40,13 +40,15 @@ namespace DCL.RealmNavigation
 
         private DebugWidgetBuilder? widgetBuilder { get; init; }
 
+        private RealmNavigator concreteRealmNavigator { get; init; } = null!;
+
         private Action onRealmChangeFailed { get; init; } = null!;
 
         public RealmNavigationDebugPlugin CreatePlugin() =>
             new (widgetBuilder);
 
         public void Dispose() =>
-            RealmNavigator.RealmChangeFailed -= onRealmChangeFailed;
+            concreteRealmNavigator.RealmChangeFailed -= onRealmChangeFailed;
 
         public static RealmNavigationContainer Create(
             StaticContainer staticContainer,
@@ -134,6 +136,7 @@ namespace DCL.RealmNavigation
             return new RealmNavigationContainer
             {
                 RealmNavigator = realmNavigator,
+                concreteRealmNavigator = realmNavigator,
                 onRealmChangeFailed = onRealmChangeFailed,
                 WorldAccessGate = worldAccessGate,
                 WorldPermissionsService = worldPermissionsService,
