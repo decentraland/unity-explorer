@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading;*/
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
 

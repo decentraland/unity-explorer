@@ -1,17 +1,12 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
-using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.LOD.Components;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.SceneRunner.Scene;
-using ECS.StreamableLoading.AssetBundles.InitialSceneState;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utilities.Extensions;
-using DCL.Utility;
+using DCL.SceneRunner.Scene;
+using ECS;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -21,16 +16,15 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using SceneRunner.Scene;
 using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class ResolveSceneStateByIncreasingRadiusSystemShould : UnitySystemTestBase<ResolveSceneStateByIncreasingRadiusSystem>
     {

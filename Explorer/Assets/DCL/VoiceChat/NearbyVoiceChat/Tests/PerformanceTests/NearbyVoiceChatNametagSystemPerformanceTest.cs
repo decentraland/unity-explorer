@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.VoiceChat.Nearby.Systems;
@@ -14,7 +15,7 @@ using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Benchmarks <see cref="NearbyVoiceChatNametagSystem.Update"/> on a mixed steady-state

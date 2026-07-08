@@ -7,7 +7,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class VisualSceneStateResolverShould
     {

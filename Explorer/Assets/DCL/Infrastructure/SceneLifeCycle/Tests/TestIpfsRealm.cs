@@ -1,14 +1,10 @@
 ﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
-using DCL.Profiles;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class TestIpfsRealm : IIpfsRealm
     {
