@@ -87,6 +87,10 @@ jobs:
 
     name: Lint
     runs-on: ubuntu-latest
+    # PRs from or into a release/hotfix branch may merge with an unchanged warning count
+    # (equality passes the ratchet below); the dev line still requires a strict reduction.
+    env:
+      IS_RELEASE_OR_HOTFIX: ${{ startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/') || startsWith(github.base_ref, 'release/') || startsWith(github.base_ref, 'hotfix/') }}
     steps:
       
       - name: Checkout CI actions
@@ -340,11 +344,12 @@ jobs:
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
           echo "Baseline warnings: ${baseline:-<none>}"
 
-      # Hard gate: a PR may only merge if it strictly reduces the warning count.
+      # Hard gate: a dev-targeted PR may only merge if it strictly reduces the warning count.
+      # Release/hotfix PRs skip this gate — each commit already passed it when merging into dev.
       # No baseline yet -> pass (the first dev push seeds it). Add the 'no-warning-ratchet'
-      # label to bypass on a PR that legitimately cannot touch warnings.
+      # label to bypass on a dev PR that legitimately cannot touch warnings.
       - name: Enforce warning reduction (PR)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev'
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           BASELINE: ${{ steps.baseline.outputs.baseline }}
@@ -356,6 +361,10 @@ jobs:
           fi
           if [ "$COUNT" -lt "$BASELINE" ]; then
             echo "Warnings reduced: $COUNT < $BASELINE"
+            exit 0
+          fi
+          if [ "$IS_RELEASE_OR_HOTFIX" = "true" ] && [ "$COUNT" -eq "$BASELINE" ]; then
+            echo "Warnings unchanged ($COUNT == $BASELINE) on a release/hotfix branch - passing."
             exit 0
           fi
           if [ "$BYPASS" = "true" ]; then
@@ -406,7 +415,8 @@ jobs:
             --argjson pr "${{ github.event.pull_request.number }}" \
             --argjson count "$COUNT" \
             --arg baseline "$BASELINE" \
-            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end)}' \
+            --argjson allow_equal "$IS_RELEASE_OR_HOTFIX" \
+            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal}' \
             > warning-result.json
           cat warning-result.json
 
