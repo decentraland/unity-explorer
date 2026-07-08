@@ -7,9 +7,9 @@ namespace DCL.RealmNavigation.TeleportOperations
     // Previous-realm peers would otherwise keep streaming over Pulse during loading and briefly materialize as avatars once it completes.
     public class BlockPulseIngressTeleportOperation : TeleportOperationBase
     {
-        private readonly PulseMultiplayerBus pulseMultiplayerBus;
+        private readonly IPulseIngressBlocker pulseMultiplayerBus;
 
-        public BlockPulseIngressTeleportOperation(PulseMultiplayerBus pulseMultiplayerBus)
+        public BlockPulseIngressTeleportOperation(IPulseIngressBlocker pulseMultiplayerBus)
         {
             this.pulseMultiplayerBus = pulseMultiplayerBus;
         }

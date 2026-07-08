@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {
-    public partial class PulseMultiplayerBus : IMovementMessageBus, IEmotesMessageBus, IDisposable
+    public partial class PulseMultiplayerBus : IMovementMessageBus, IEmotesMessageBus, IPulseIngressBlocker, IDisposable
     {
         private const string SELF_MIRROR_WALLET_ID = "self_mirror";
 
