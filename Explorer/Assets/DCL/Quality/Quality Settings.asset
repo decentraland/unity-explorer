@@ -337,7 +337,7 @@ MonoBehaviour:
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
-      - Distance: 100
+      - Distance: 160
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
@@ -346,7 +346,7 @@ MonoBehaviour:
         Shadows: 1
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
-      - Distance: 100
+      - Distance: 160
         Shadows: 0
         OverrideShadowMapResolution: 0
         ShadowMapResolution: 128
