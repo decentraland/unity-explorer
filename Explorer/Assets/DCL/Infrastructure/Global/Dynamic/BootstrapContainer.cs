@@ -51,9 +51,7 @@ namespace Global.Dynamic
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
         public ReactiveProperty<string?> DeeplinkSigninIdentityId { get; } = new (null);
 
-        // Raised by the deep-link login flow while it waits for a signin; the deep-link pipeline only
-        // consumes a signin (and deletes the shared bridge file) while this is true, so a concurrent idle
-        // Explorer instance doesn't steal the signin from the instance that is actually logging in.
+        // True while this instance's login flow is actively waiting for a signin deep link.
         public ReactiveProperty<bool> DeeplinkLoginAwaitingSignin { get; } = new (false);
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }

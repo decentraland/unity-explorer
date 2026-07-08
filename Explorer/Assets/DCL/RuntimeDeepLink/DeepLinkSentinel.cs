@@ -78,8 +78,7 @@ namespace DCL.RuntimeDeepLink
 
                 if (result == DeepLinkHandleResult.Deferred)
                 {
-                    // Keep the file so the instance that is logging in claims the signin, instead of this
-                    // idle one deleting it; a login starting within the grace period can still pick it up.
+                    // Leave the file in place: the login flow that claims it will delete it on consumption.
                     if (!deferralTimer.IsRunning)
                         deferralTimer.Restart();
 

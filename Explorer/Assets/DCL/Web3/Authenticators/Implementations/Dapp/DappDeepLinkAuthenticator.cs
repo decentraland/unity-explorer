@@ -128,9 +128,7 @@ namespace DCL.Web3.Authenticators
         {
             var completionSource = new UniTaskCompletionSource<string>();
 
-            // Signal the deep-link pipeline that this instance is now waiting: only then may it hand a
-            // signin over (and delete the shared bridge file). This is what keeps a concurrent idle Explorer
-            // instance from stealing the signin. It stays raised for the whole wait window below.
+            // Signals readiness: the deeplink pipeline only hands a signin over while this is true.
             loginAwaitingSignin.Value = true;
 
             using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
