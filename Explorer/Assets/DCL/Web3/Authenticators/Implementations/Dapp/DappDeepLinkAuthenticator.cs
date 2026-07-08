@@ -33,6 +33,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
+        private readonly ReactiveProperty<bool> loginAwaitingSignin;
         private readonly int? identityExpirationDuration;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -43,6 +44,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
+            ReactiveProperty<bool> loginAwaitingSignin,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -51,6 +53,7 @@ namespace DCL.Web3.Authenticators
             this.web3AccountFactory = web3AccountFactory;
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
+            this.loginAwaitingSignin = loginAwaitingSignin;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -119,6 +122,11 @@ namespace DCL.Web3.Authenticators
         {
             var completionSource = new UniTaskCompletionSource<string>();
 
+            // Signal the deep-link pipeline that this instance is now waiting: only then may it hand a
+            // signin over (and delete the shared bridge file). This is what keeps a concurrent idle Explorer
+            // instance from stealing the signin. It stays raised for the whole wait window below.
+            loginAwaitingSignin.Value = true;
+
             using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
                 static (identityId, completion) =>
                 {
@@ -129,8 +137,9 @@ namespace DCL.Web3.Authenticators
             try { return await completionSource.Task.Timeout(TimeSpan.FromSeconds(DEEPLINK_TIMEOUT_SECONDS), DelayType.Realtime).AttachExternalCancellation(ct); }
             finally
             {
-                // Consume the id on success, timeout and cancellation alike, so a later
-                // login attempt never resolves against a signin delivered for this one.
+                // Stop accepting signins and consume the id on success, timeout and cancellation alike, so a
+                // later login attempt never resolves against a signin delivered for this one.
+                loginAwaitingSignin.Value = false;
                 deeplinkSigninIdentityId.Value = null;
             }
         }

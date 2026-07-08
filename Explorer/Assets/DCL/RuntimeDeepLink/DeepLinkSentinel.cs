@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.Utility.Types;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -11,6 +12,12 @@ namespace DCL.RuntimeDeepLink
     public static class DeepLinkSentinel
     {
         private static readonly TimeSpan CHECK_IN_PERIOD = TimeSpan.FromMilliseconds(200);
+
+        // A signin deep link is not consumed unless this instance is the one logging in, so concurrent idle
+        // Explorer instances don't steal it from each other via the shared bridge file. An unclaimed signin
+        // is kept this long so a login starting shortly after can still pick it up, then dropped: without
+        // this cap the deferred file would be re-read on every check-in forever.
+        private static readonly TimeSpan DEFERRED_SIGNIN_LIFETIME = TimeSpan.FromSeconds(300);
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         // path for: C:\Users\<YourUsername>\AppData\Local\DecentralandLauncherLight\
@@ -35,18 +42,26 @@ namespace DCL.RuntimeDeepLink
         /// </summary>
         public static async UniTaskVoid StartListenForDeepLinksAsync(this IDeepLinkHandle handle, CancellationToken token)
         {
+            // Measures how long the current file has sat deferred (a signin nobody is logging in for yet),
+            // so it can be dropped once DEFERRED_SIGNIN_LIFETIME elapses instead of re-read indefinitely.
+            var deferralTimer = new Stopwatch();
+
             while (token.IsCancellationRequested == false)
             {
                 bool cancelled = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
                 if (cancelled) continue;
 
                 // File.Exists method is lightweight and can be used in this loop
-                if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
+                if (!File.Exists(DEEP_LINK_BRIDGE_PATH))
+                {
+                    deferralTimer.Reset();
+                    continue;
+                }
 
                 Result<string> contentResult = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!.SuppressToResultAsync<string>(ReportCategory.RUNTIME_DEEPLINKS);
 
                 // Transient IO read failure: leave the file for the next check-in.
-                if (contentResult.Success == false) continue;
+                if (!contentResult.Success) continue;
 
                 // Parse before deleting: a corrupt file is dropped, a valid one is handled.
                 Result<DeepLink> deepLinkCreateResult = DeepLink.FromJson(contentResult.Value);
@@ -55,10 +70,31 @@ namespace DCL.RuntimeDeepLink
                 {
                     ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content: {deepLinkCreateResult.ErrorMessage}");
                     TryDeleteBridgeFile();
+                    deferralTimer.Reset();
                     continue;
                 }
 
-                switch (handle.HandleDeepLink(deepLinkCreateResult.Value))
+                DeepLinkHandleResult result = handle.HandleDeepLink(deepLinkCreateResult.Value);
+
+                if (result == DeepLinkHandleResult.Deferred)
+                {
+                    // Keep the file so the instance that is logging in claims the signin, instead of this
+                    // idle one deleting it; a login starting within the grace period can still pick it up.
+                    if (!deferralTimer.IsRunning)
+                        deferralTimer.Restart();
+
+                    if (deferralTimer.Elapsed < DEFERRED_SIGNIN_LIFETIME)
+                        continue;
+
+                    ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"no login claimed the signin deeplink within {DEFERRED_SIGNIN_LIFETIME.TotalSeconds:0}s, dropping it: {deepLinkCreateResult.Value}");
+                    TryDeleteBridgeFile();
+                    deferralTimer.Reset();
+                    continue;
+                }
+
+                deferralTimer.Reset();
+
+                switch (result)
                 {
                     case DeepLinkHandleResult.Consumed:
                         ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deepLinkCreateResult.Value}");

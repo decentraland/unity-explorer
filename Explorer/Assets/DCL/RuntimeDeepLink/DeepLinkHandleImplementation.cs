@@ -18,16 +18,18 @@ namespace DCL.RuntimeDeepLink
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
+        private readonly IReadonlyReactiveProperty<bool> loginAwaitingSignin;
         private readonly bool routeNavigationDeepLinks;
 
         public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId,
-            bool routeNavigationDeepLinks)
+            IReadonlyReactiveProperty<bool> loginAwaitingSignin, bool routeNavigationDeepLinks)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
+            this.loginAwaitingSignin = loginAwaitingSignin;
             this.routeNavigationDeepLinks = routeNavigationDeepLinks;
         }
 
@@ -37,6 +39,13 @@ namespace DCL.RuntimeDeepLink
 
             if (!string.IsNullOrEmpty(signin))
             {
+                // Only a login flow actively awaiting a signin may consume it. The bridge file is a single
+                // shared handoff point, so with several Explorer instances open an idle one would otherwise
+                // read and delete the file first, "stealing" the signin from the instance that is actually
+                // logging in. Leaving it in place lets the awaiting instance claim it instead.
+                if (!loginAwaitingSignin.Value)
+                    return DeepLinkHandleResult.Deferred;
+
                 // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
                 return DeepLinkHandleResult.Consumed;
