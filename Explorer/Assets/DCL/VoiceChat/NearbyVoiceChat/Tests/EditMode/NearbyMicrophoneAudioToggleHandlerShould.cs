@@ -4,7 +4,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     ///     Documents <see cref="NearbyMicrophoneAudioToggleHandler"/> as a user-action SFX adapter:

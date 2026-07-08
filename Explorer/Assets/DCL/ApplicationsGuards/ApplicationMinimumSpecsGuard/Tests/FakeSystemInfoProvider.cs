@@ -1,4 +1,6 @@
-﻿namespace DCL.ApplicationMinimumSpecsGuard.Tests
+﻿using DCL.ApplicationMinimumSpecsGuard;
+
+namespace DCL.ApplicationsGuards.ApplicationMinimumSpecsGuard.Tests
 {
     /// <summary>
     ///     A fake implementation of ISystemInfoProvider for testing purposes.
