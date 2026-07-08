@@ -7,16 +7,16 @@ namespace DCL.RealmNavigation.TeleportOperations
     // Previous-realm peers would otherwise keep streaming over Pulse during loading and briefly materialize as avatars once it completes.
     public class BlockPulseIngressTeleportOperation : TeleportOperationBase
     {
-        private readonly IPulseIngressBlocker pulseMultiplayerBus;
+        private readonly IPulseIngressBlocker ingressBlocker;
 
-        public BlockPulseIngressTeleportOperation(IPulseIngressBlocker pulseMultiplayerBus)
+        public BlockPulseIngressTeleportOperation(IPulseIngressBlocker ingressBlocker)
         {
-            this.pulseMultiplayerBus = pulseMultiplayerBus;
+            this.ingressBlocker = ingressBlocker;
         }
 
         protected override UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            pulseMultiplayerBus.BlockIngressUntilTeleportBroadcast();
+            ingressBlocker.BlockIngressUntilTeleportBroadcast();
             return UniTask.CompletedTask;
         }
     }

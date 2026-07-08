@@ -94,9 +94,7 @@ namespace DCL.Multiplayer.Movement
             peerPurgePending = true;
         }
 
-        /// <summary>
-        ///     Reverts <see cref="BlockIngressUntilTeleportBroadcast" />.
-        /// </summary>
+        /// <inheritdoc />
         public void ResumeAfterFailedRealmChange(Vector3 currentPosition)
         {
             peerPurgePending = false;

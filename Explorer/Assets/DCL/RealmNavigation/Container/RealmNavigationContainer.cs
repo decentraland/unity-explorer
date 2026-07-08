@@ -58,7 +58,7 @@ namespace DCL.RealmNavigation
             RemoteEntities remoteEntities,
             RemoteProfiles remoteProfiles,
             IRemoteAnnouncements remoteAnnouncements,
-            PulseMultiplayerBus pulseMultiplayerBus,
+            IPulseIngressBlocker pulseIngressBlocker,
             World globalWorld,
             IRoomHub roomHub,
             ILandscape landscape,
@@ -85,7 +85,7 @@ namespace DCL.RealmNavigation
             var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
                 {
                     new RestartLoadingStatus(),
-                    new BlockPulseIngressTeleportOperation(pulseMultiplayerBus),
+                    new BlockPulseIngressTeleportOperation(pulseIngressBlocker),
                     new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                     new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                     new FlushRemoteProfilesTeleportOperation(remoteProfiles, remoteAnnouncements),
@@ -130,7 +130,7 @@ namespace DCL.RealmNavigation
                 teleportInSameRealmOperation,
                 worldAccessGate);
 
-            Action onRealmChangeFailed = () => pulseMultiplayerBus.ResumeAfterFailedRealmChange(staticContainer.CharacterContainer.CharacterObject.Position);
+            Action onRealmChangeFailed = () => pulseIngressBlocker.ResumeAfterFailedRealmChange(staticContainer.CharacterContainer.CharacterObject.Position);
             realmNavigator.RealmChangeFailed += onRealmChangeFailed;
 
             return new RealmNavigationContainer
