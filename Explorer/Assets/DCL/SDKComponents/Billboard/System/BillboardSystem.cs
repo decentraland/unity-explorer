@@ -78,7 +78,13 @@ namespace DCL.Billboard.System
 
             if (billboard.HasTargetEntity && billboard.TargetEntity != SpecialEntitiesID.CAMERA_ENTITY)
             {
-                if (!TryResolveTargetSource(entity, billboard.TargetEntity, ref sourcePosition, ref sourceRotationAxisZ))
+                if(TryGetTargetTransform(entity, billboard.TargetEntity, out TransformComponent targetTransform))
+                {
+                    Transform t = targetTransform.Transform;
+                    sourcePosition = t.position;
+                    sourceRotationAxisZ = Quaternion.Euler(0f, 0f, t.rotation.eulerAngles.z);
+                }
+                else
                     return; // target set but unresolved or self → billboard disabled this frame
             }
 
@@ -109,18 +115,12 @@ namespace DCL.Billboard.System
             billboardT.rotation = rotation;
         }
 
-        private bool TryResolveTargetSource(Entity selfEntity, uint targetCrdtId,
-            ref Vector3 sourcePosition, ref Quaternion sourceRotationAxisZ)
+        private bool TryGetTargetTransform(Entity selfEntity, uint targetCrdtId, out TransformComponent targetTransform)
         {
-            if (!entitiesMap.TryGetValue(new CRDTEntity((int)targetCrdtId), out Entity targetEntity)
-                || targetEntity == selfEntity
-                || !World.TryGet(targetEntity, out TransformComponent targetTransform))
-                return false;
-
-            Transform t = targetTransform.Transform;
-            sourcePosition = t.position;
-            sourceRotationAxisZ = Quaternion.Euler(0f, 0f, t.rotation.eulerAngles.z);
-            return true;
+            targetTransform = default(TransformComponent);
+            return entitiesMap.TryGetValue(new CRDTEntity((int)targetCrdtId), out Entity targetEntity)
+              && targetEntity != selfEntity
+              && World.TryGet(targetEntity, out targetTransform);
         }
     }
 }
