@@ -166,7 +166,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
-        private CreditsPanelController? creditsPanelController;
+        private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
 
@@ -347,7 +347,7 @@ namespace DCL.PluginSystem.Global
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
-            creditsPanelController?.Dispose();
+            creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -587,7 +587,11 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
-            creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus);
+            bool userCreditsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS);
+            explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
+
+            if (userCreditsEnabled)
+                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache);
 
             explorePanelController = new
                 ExplorePanelController(

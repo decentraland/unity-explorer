@@ -45,7 +45,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeDiscover;
         private readonly HttpEventsApiService eventsApiService;
         private readonly JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker;
-        private readonly CreditsPanelController creditsPanelController;
+        private readonly ICreditsPanelController creditsPanelController;
         private bool includeCommunities;
 
         private ReactivePropertyExtensions.DisposableSubscription<bool>? communitiesLiveBadgeSubscription;
@@ -90,7 +90,7 @@ namespace DCL.ExplorePanel
             HttpEventsApiService eventsApiService,
             IMVCManager mvcManager,
             JoinedCommunitiesVoiceLiveTracker communitiesLiveTracker,
-            CreditsPanelController creditsPanelController)
+            ICreditsPanelController creditsPanelController)
             : base(viewFactory)
         {
             NavmapController = navmapController;
