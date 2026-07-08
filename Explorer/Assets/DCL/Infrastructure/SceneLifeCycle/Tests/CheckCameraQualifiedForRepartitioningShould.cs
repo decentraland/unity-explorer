@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
-using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
+using ECS;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Systems;
@@ -9,11 +9,11 @@ using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class CheckCameraQualifiedForRepartitioningShould : UnitySystemTestBase<CheckCameraQualifiedForRepartitioningSystem>
     {
-        private IPartitionSettings partitionSettings;
+        private IPartitionSettings partitionSettings = null!;
 
         [SetUp]
         public void SetUp()
@@ -39,10 +39,10 @@ namespace ECS.SceneLifeCycle.Tests
 
             cameraTransform.position = new Vector3(12, 11, 11); // less than 10 units away
 
-            system.Update(0);
+            system?.Update(0);
 
-            Assert.That(world.TryGet(camera, out CameraSamplingData cameraSamplingData), Is.True);
-            Assert.That(cameraSamplingData.IsDirty, Is.False);
+            Assert.That(world.TryGet(camera, out CameraSamplingData? cameraSamplingData), Is.True);
+            Assert.That(cameraSamplingData!.IsDirty, Is.False);
             Assert.That(cameraSamplingData.Position, Is.EqualTo(new Vector3(10, 10, 10)));
         }
 
@@ -60,10 +60,10 @@ namespace ECS.SceneLifeCycle.Tests
 
             cameraTransform.position = new Vector3(12, 11, 11); // more than 1 unit away
 
-            system.Update(0);
+            system?.Update(0);
 
-            Assert.That(world.TryGet(camera, out CameraSamplingData cameraSamplingData), Is.True);
-            Assert.That(cameraSamplingData.IsDirty, Is.True);
+            Assert.That(world.TryGet(camera, out CameraSamplingData? cameraSamplingData), Is.True);
+            Assert.That(cameraSamplingData!.IsDirty, Is.True);
             Assert.That(cameraSamplingData.Position, Is.EqualTo(new Vector3(12, 11, 11)));
         }
 
@@ -81,10 +81,10 @@ namespace ECS.SceneLifeCycle.Tests
 
             cameraTransform.rotation = Quaternion.Euler(20, 25, 25); // less than 10 degrees
 
-            system.Update(0);
+            system?.Update(0);
 
-            Assert.That(world.TryGet(camera, out CameraSamplingData cameraSamplingData), Is.True);
-            Assert.That(cameraSamplingData.IsDirty, Is.False);
+            Assert.That(world.TryGet(camera, out CameraSamplingData? cameraSamplingData), Is.True);
+            Assert.That(cameraSamplingData!.IsDirty, Is.False);
             Assert.That(cameraSamplingData.Rotation, Is.EqualTo(Quaternion.Euler(25, 25, 25)));
         }
 
@@ -102,10 +102,10 @@ namespace ECS.SceneLifeCycle.Tests
 
             cameraTransform.rotation = Quaternion.Euler(20, 40, 25); // more than 10 degrees
 
-            system.Update(0);
+            system?.Update(0);
 
-            Assert.That(world.TryGet(camera, out CameraSamplingData cameraSamplingData), Is.True);
-            Assert.That(cameraSamplingData.IsDirty, Is.True);
+            Assert.That(world.TryGet(camera, out CameraSamplingData? cameraSamplingData), Is.True);
+            Assert.That(cameraSamplingData!.IsDirty, Is.True);
             Assert.That(cameraSamplingData.Rotation.eulerAngles.x, Is.EqualTo(20f).Within(1).Percent);
             Assert.That(cameraSamplingData.Rotation.eulerAngles.y, Is.EqualTo(40f).Within(1).Percent);
             Assert.That(cameraSamplingData.Rotation.eulerAngles.z, Is.EqualTo(25f).Within(1).Percent);

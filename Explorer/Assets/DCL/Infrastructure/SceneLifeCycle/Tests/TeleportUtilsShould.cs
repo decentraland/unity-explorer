@@ -1,10 +1,11 @@
 using DCL.Ipfs;
+using ECS.SceneLifeCycle;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class TeleportUtilsShould
     {

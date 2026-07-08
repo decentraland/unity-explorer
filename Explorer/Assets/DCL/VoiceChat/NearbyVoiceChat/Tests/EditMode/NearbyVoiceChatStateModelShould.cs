@@ -1,8 +1,9 @@
 using DCL.Utilities;
+using DCL.VoiceChat.Nearby;
 using NUnit.Framework;
 using System.Collections.Generic;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the Nearby Voice Chat state machine behavior.
