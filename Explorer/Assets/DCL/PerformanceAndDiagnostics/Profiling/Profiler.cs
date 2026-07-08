@@ -19,6 +19,10 @@ namespace DCL.Profiling
         // Memory footprint of your application as seen by the operating system.
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
+
+        // Memory consumed by the Profiler itself (sample buffers grow while it records). Non-zero only in the Editor
+        // and development builds; subtracted from the memory readings so it does not count as application memory.
+        private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
         private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
@@ -38,8 +42,8 @@ namespace DCL.Profiling
         public int PhysicsSimulationInFrame { get; set; }
         public float PhysicsSimulationsAvgInTenFrames => physSimRunningSum / PHYS_SIM_BUFFER_SIZE;
 
-        public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
-        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
+        public long TotalUsedMemoryInBytes => max(0L, totalUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
+        public long SystemUsedMemoryInBytes => max(0L, systemUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
         public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
@@ -69,6 +73,7 @@ namespace DCL.Profiling
         {
             systemUsedMemoryRecorder.Dispose();
             totalUsedMemoryRecorder.Dispose();
+            profilerUsedMemoryRecorder.Dispose();
             gcUsedMemoryRecorder.Dispose();
             gcAllocatedInFrameRecorder.Dispose();
 
