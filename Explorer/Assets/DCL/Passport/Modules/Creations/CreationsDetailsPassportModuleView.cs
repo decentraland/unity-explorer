@@ -12,12 +12,6 @@ namespace DCL.Passport.Modules.Creations
         public GameObject NoCreationsLabel { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject NoWearablesLabel { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject NoEmotesLabel { get; private set; } = null!;
-
-        [field: SerializeField]
         public GameObject WearablesLabel { get; private set; } = null!;
 
         [field: SerializeField]

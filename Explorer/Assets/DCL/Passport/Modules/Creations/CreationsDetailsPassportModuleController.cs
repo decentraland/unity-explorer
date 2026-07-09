@@ -119,8 +119,6 @@ namespace DCL.Passport.Modules.Creations
 
             view.MainLoadingSpinner.SetActive(true);
             view.NoCreationsLabel.SetActive(false);
-            view.NoWearablesLabel.SetActive(false);
-            view.NoEmotesLabel.SetActive(false);
             view.WearablesLabel.SetActive(false);
             view.EmotesLabel.SetActive(false);
 
@@ -175,10 +173,8 @@ namespace DCL.Passport.Modules.Creations
             view.NoCreationsLabel.SetActive(!hasAnyCreation);
             view.CreatedWearablesContainer.gameObject.SetActive(hasWearables);
             view.CreatedEmotesContainer.gameObject.SetActive(hasEmotes);
-            view.NoWearablesLabel.SetActive(hasAnyCreation && !hasWearables);
-            view.WearablesLabel.SetActive(hasAnyCreation);
-            view.NoEmotesLabel.SetActive(hasAnyCreation && !hasEmotes);
-            view.EmotesLabel.SetActive(hasAnyCreation);
+            view.WearablesLabel.SetActive(hasWearables);
+            view.EmotesLabel.SetActive(hasEmotes);
 
             if (hasWearables)
                 AddEmptyItems(view.CreatedWearablesContainer, wearablesCount);
