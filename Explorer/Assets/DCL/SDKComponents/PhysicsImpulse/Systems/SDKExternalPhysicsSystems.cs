@@ -12,7 +12,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.PhysicsImpulse.Systems
 {
@@ -36,7 +35,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalForce = Vector3.zero;
+            rigidTransform.ExternalForceContributions.Remove(World!);
 
             ApplyPhysicsForceQuery(World!, rigidTransform);
             ApplyPhysicsImpulseQuery(World!, rigidTransform);
@@ -47,17 +46,16 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             if (value)
                 DiscardStaleImpulsesQuery(World!); // fix for impulse accumulation when scene is not current (see full query description)
             else
-                ResetExternalForce();
+                RemoveOwnForceContribution();
         }
 
         public void FinalizeComponents(in Query query) =>
-            ResetExternalForce();
+            RemoveOwnForceContribution();
 
-        private void ResetExternalForce()
+        private void RemoveOwnForceContribution()
         {
             var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalForce = Vector3.zero;
-            rigidTransform.ExternalAcceleration = Vector3.zero;
+            rigidTransform.ExternalForceContributions.Remove(World!);
         }
 
         [Query]
@@ -67,7 +65,7 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
         {
             if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY || pbPhysicsForce.Vector == null) return;
 
-            rigidTransform.ExternalForce = pbPhysicsForce.Vector.ToUnityVector();
+            rigidTransform.ExternalForceContributions[World!] = pbPhysicsForce.Vector.ToUnityVector();
         }
 
         [Query]

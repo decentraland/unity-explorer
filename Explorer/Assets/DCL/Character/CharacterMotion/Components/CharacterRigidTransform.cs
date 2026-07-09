@@ -1,3 +1,5 @@
+using Arch.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
@@ -48,7 +50,11 @@ namespace DCL.CharacterMotion.Components
         // This flag is set when the rigidTransform is between 2 slopes
         public bool IsStuck;
 
-        // Net external force acting on the character (persistent while source is active, managed by the writer's lifecycle)
+        // Per-scene-world force contributions. Each scene world writes ONLY its own slot.
+        public readonly Dictionary<World, Vector3> ExternalForceContributions = new ();
+
+        // Net external force acting on the character is the sum of all contributions.
+        // Do not write it directly!!!
         public Vector3 ExternalForce;
 
         // Computed acceleration from ExternalForce (a = F / mass), per-frame
