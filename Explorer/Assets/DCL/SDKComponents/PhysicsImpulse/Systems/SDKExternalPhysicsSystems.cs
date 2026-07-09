@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
+
+            // Clear ONLY this world's slot; re-asserted below if the force component still exists
             rigidTransform.ExternalForceContributions.Remove(World!);
 
             ApplyPhysicsForceQuery(World!, rigidTransform);
@@ -46,17 +48,11 @@ namespace DCL.SDKComponents.PhysicsImpulse.Systems
             if (value)
                 DiscardStaleImpulsesQuery(World!); // fix for impulse accumulation when scene is not current (see full query description)
             else
-                RemoveOwnForceContribution();
+                globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity).ExternalForceContributions.Remove(World!);
         }
 
         public void FinalizeComponents(in Query query) =>
-            RemoveOwnForceContribution();
-
-        private void RemoveOwnForceContribution()
-        {
-            var rigidTransform = globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity);
-            rigidTransform.ExternalForceContributions.Remove(World!);
-        }
+            globalWorld.Get<CharacterRigidTransform>(globalPlayerEntity).ExternalForceContributions.Remove(World!);
 
         [Query]
         [All(typeof(PBPhysicsCombinedForce))]
