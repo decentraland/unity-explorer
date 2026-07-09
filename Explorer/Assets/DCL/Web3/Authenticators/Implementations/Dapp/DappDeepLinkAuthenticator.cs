@@ -90,8 +90,7 @@ namespace DCL.Web3.Authenticators
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
-            // Resolves when the OS delivers the deep link that carries the identity. The request id lets the
-            // pipeline hand back only the signin minted for this attempt (matched against the link's authRequestId).
+            // Resolves when the OS delivers the deep link that carries the identity id.
             string identityId = await WaitForSigninAsync(createRequestResponse.requestId, ct);
 
             return await FetchIdentityByIdAsync(identityId, ct);
