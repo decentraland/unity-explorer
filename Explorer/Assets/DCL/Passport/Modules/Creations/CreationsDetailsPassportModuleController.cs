@@ -33,7 +33,7 @@ namespace DCL.Passport.Modules.Creations
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> wearablesItemsPool;
@@ -55,7 +55,7 @@ namespace DCL.Passport.Modules.Creations
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ImageControllerProvider imageControllerProvider,
             PassportErrorsController passportErrorsController)
         {
@@ -254,7 +254,7 @@ namespace DCL.Passport.Modules.Creations
             itemView.OnSaleFlap.gameObject.SetActive(showBuy);
 
             RemoveNavigationListener(itemView);
-            UnityAction navigationListener = () => webBrowser.OpenUrl(marketplaceLink);
+            UnityAction navigationListener = () => webBrowser.OpenUrlMainThreadOnly(marketplaceLink);
             itemView.BuyButton.onClick.AddListener(navigationListener);
             itemView.ViewButton.onClick.AddListener(navigationListener);
             navigationListeners[itemView] = navigationListener;
