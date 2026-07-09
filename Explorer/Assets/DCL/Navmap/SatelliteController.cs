@@ -1,11 +1,9 @@
 using DCL.Browser;
-using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.UI;
-using System;
 using UnityEngine;
 
 namespace DCL.Navmap

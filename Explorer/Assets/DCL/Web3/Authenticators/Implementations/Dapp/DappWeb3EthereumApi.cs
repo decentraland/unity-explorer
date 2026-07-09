@@ -137,6 +137,7 @@ namespace DCL.Web3.Authenticators
         ///     <see cref="Default" />). The production wallet flow is <see cref="DappDeepLinkAuthenticator" />.
         /// </summary>
         /// <param name="payload">Login payload containing the authentication method</param>
+        /// <param name="ct">Token that cancels the login flow</param>
         /// <exception cref="Web3Exception"></exception>
         private async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {

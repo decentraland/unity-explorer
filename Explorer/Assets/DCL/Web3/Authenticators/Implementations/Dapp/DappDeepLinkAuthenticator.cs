@@ -202,12 +202,13 @@ namespace DCL.Web3.Authenticators
         private static string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
+        // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.
+        // ReSharper disable InconsistentNaming
         [Serializable]
         [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
         private struct SigninRequestDto
         {
             public string method;
-            // ReSharper disable once InconsistentNaming
             public object[] @params;
         }
 
@@ -240,5 +241,7 @@ namespace DCL.Web3.Authenticators
                 public string publicKey;
             }
         }
+
+        // ReSharper restore InconsistentNaming
     }
 }

@@ -76,7 +76,7 @@ namespace DCL.RuntimeDeepLink
 
                 DeepLinkHandleResult result = handle.HandleDeepLink(deepLinkCreateResult.Value);
 
-                if (result == DeepLinkHandleResult.Deferred)
+                if (result == DeepLinkHandleResult.DEFERRED)
                 {
                     // Leave the file in place: the login flow that claims it will delete it on consumption.
                     if (!deferralTimer.IsRunning)
@@ -95,10 +95,10 @@ namespace DCL.RuntimeDeepLink
 
                 switch (result)
                 {
-                    case DeepLinkHandleResult.Consumed:
+                    case DeepLinkHandleResult.CONSUMED:
                         ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deepLinkCreateResult.Value}");
                         break;
-                    case DeepLinkHandleResult.NoMatches:
+                    case DeepLinkHandleResult.NO_MATCHES:
                         ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"found no actionable content in deeplink: {deepLinkCreateResult.Value}");
                         break;
                 }

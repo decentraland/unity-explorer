@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
                     Web3SignatureException ex => new SpanErrorInfo("Web3 signature validation failed during deep-link authentication", ex),
                     DeeplinkSigninRetrievalException ex => new SpanErrorInfo($"Signin identity retrieval failed: {ex.Reason}", ex),
                     Web3Exception ex => new SpanErrorInfo("Connection error during deep-link authentication flow", ex),
-                    Exception ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
+                    { } ex => new SpanErrorInfo("Unexpected error during deep-link authentication flow", ex),
                 };
 
                 if (loginException is not OperationCanceledException)

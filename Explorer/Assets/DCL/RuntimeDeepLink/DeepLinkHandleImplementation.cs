@@ -44,17 +44,17 @@ namespace DCL.RuntimeDeepLink
                 // Guard: only consume a signin while a login here is waiting for one, and only if the link
                 // was minted for that login.
                 if (string.IsNullOrEmpty(awaitedRequestId) || deeplink.ValueOf(AppArgsFlags.AUTH_REQUEST_ID) != awaitedRequestId)
-                    return DeepLinkHandleResult.Deferred;
+                    return DeepLinkHandleResult.DEFERRED;
 
                 // The id persists in the property until it is overwritten or cleared.
                 deeplinkSigninIdentityId.Value = signin;
-                return DeepLinkHandleResult.Consumed;
+                return DeepLinkHandleResult.CONSUMED;
             }
 
             if (!routeNavigationDeepLinks)
             {
                 ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"navigation deep link routing is disabled, dropping: {deeplink}");
-                return DeepLinkHandleResult.Consumed;
+                return DeepLinkHandleResult.CONSUMED;
             }
 
             Vector2Int? position = PositionFrom(deeplink);
@@ -90,7 +90,7 @@ namespace DCL.RuntimeDeepLink
                 handled = true;
             }
 
-            return handled ? DeepLinkHandleResult.Consumed : DeepLinkHandleResult.NoMatches;
+            return handled ? DeepLinkHandleResult.CONSUMED : DeepLinkHandleResult.NO_MATCHES;
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)
