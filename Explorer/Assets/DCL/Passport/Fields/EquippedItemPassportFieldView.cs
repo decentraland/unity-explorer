@@ -30,6 +30,9 @@ namespace DCL.Passport.Fields
         public Button BuyButton { get; private set; }
 
         [field: SerializeField]
+        public Button ViewButton { get; private set; }
+
+        [field: SerializeField]
         public GameObject OnSaleFlap { get; private set; }
 
         [field: SerializeField]
@@ -72,8 +75,11 @@ namespace DCL.Passport.Fields
 
         private CancellationTokenSource cts;
 
-        private void Awake() =>
+        private void Awake()
+        {
             BuyButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
+            ViewButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
+        }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -104,7 +110,8 @@ namespace DCL.Passport.Fields
         {
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            var hoverBackgroundScale = new Vector3(1, BuyButton.gameObject.activeSelf ? 1 : 0.85f, 1);
+            bool hasActionButton = BuyButton.gameObject.activeSelf || ViewButton.gameObject.activeSelf;
+            var hoverBackgroundScale = new Vector3(1, hasActionButton ? 1 : 0.85f, 1);
             HoverBackgroundTransform.localScale = hoverBackgroundScale;
             HoverBackgroundTransform.gameObject.SetActive(true);
             ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);

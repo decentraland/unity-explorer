@@ -244,11 +244,19 @@ namespace DCL.Passport.Modules.Creations
             itemView.CategoryImage.sprite = categoryIcons.GetTypeImage(isEmote ? EMOTE_CATEGORY : item.data?.wearable?.category);
 
             string marketplaceLink = GetMarketplaceLink(item);
-            itemView.BuyButton.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
-            itemView.OnSaleFlap.gameObject.SetActive(item.isOnSale && marketplaceLink != string.Empty);
+            bool hasLink = marketplaceLink != string.Empty;
+            bool isBaseWearable = itemView.ItemId.IsBaseWearable();
+            bool showBuy = !isBaseWearable && item.isOnSale && hasLink;
+            bool showView = !isBaseWearable && !item.isOnSale && hasLink;
+
+            itemView.BuyButton.gameObject.SetActive(showBuy);
+            itemView.ViewButton.gameObject.SetActive(showView);
+            itemView.OnSaleFlap.gameObject.SetActive(showBuy);
+
             RemoveNavigationListener(itemView);
             UnityAction navigationListener = () => webBrowser.OpenUrl(marketplaceLink);
             itemView.BuyButton.onClick.AddListener(navigationListener);
+            itemView.ViewButton.onClick.AddListener(navigationListener);
             navigationListeners[itemView] = navigationListener;
 
             itemView.SetAsLoading(false);
@@ -261,6 +269,7 @@ namespace DCL.Passport.Modules.Creations
                 return;
 
             itemView.BuyButton.onClick.RemoveListener(navigationListener);
+            itemView.ViewButton.onClick.RemoveListener(navigationListener);
             navigationListeners.Remove(itemView);
         }
 
