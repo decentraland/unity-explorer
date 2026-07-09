@@ -12,6 +12,19 @@ Full tool catalog and flag reference: [`docs/mcp-automation.md`](../../../docs/m
 
 ## Setup (once per session)
 
+0. **Probe for an already-running setup first.** The Explorer and dev server are often already up from a previous session — check before launching anything:
+
+   ```bash
+   # MCP server up? (Explorer running with --mcp)
+   curl -s -m 2 http://127.0.0.1:8123/mcp -X POST \
+     -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'
+   # Dev server up, and serving the RIGHT scene folder?
+   lsof -nP -i :8000 -sTCP:LISTEN   # then check the PID's cwd or command path
+   ```
+
+   If the MCP probe answers with a `serverInfo` result, skip step 2 (and step 3 if `mcp__explorer__*` tools are already available). If port 8000 is served **from the target scene folder**, skip step 1; if it serves a different folder, kill that process and serve the right one. Only do the steps below for whatever is actually missing.
+
 1. **Serve the scene locally** from the scene folder (keep it running in the background):
 
    ```bash
@@ -20,7 +33,7 @@ Full tool catalog and flag reference: [`docs/mcp-automation.md`](../../../docs/m
 
    This serves the scene at `http://127.0.0.1:8000` and hot-reloads it in the connected Explorer whenever a source file changes. Close any Explorer/launcher window it auto-opens if you manage your own build.
 
-2. **Launch the Explorer** connected to that scene with the MCP server enabled:
+2. **Launch the Explorer** connected to that scene with the MCP server enabled (only if the step-0 probe found nothing on 8123):
 
    ```bash
    # macOS
@@ -37,6 +50,8 @@ Full tool catalog and flag reference: [`docs/mcp-automation.md`](../../../docs/m
    ```bash
    claude mcp add --transport http explorer http://127.0.0.1:8123/mcp
    ```
+
+   Errors with "already exists in local config" if registered by a previous session — that's fine, nothing to do. If the current session has no `mcp__explorer__*` tools (typically because the Explorer wasn't running when the session started, so the registered server failed its startup connection), don't jump straight to workarounds: **ask the user to run `/mcp` and reconnect the `explorer` server** — that's an interactive command only the user can run, and a successful reconnect binds all the server's tools into the running session (verified). Fall back to curl JSON-RPC (Tips section) only if reconnecting isn't possible or doesn't surface the tools.
 
 4. Wait for the world to load: poll `get_scene_state` until `loadingScreenOn` is false and the scene reports `isReady: true`.
 
@@ -70,12 +85,17 @@ Paths are relative to this skill's directory; requires curl + python3; pass `-p 
 - After `teleport` or `reload_scene`, always re-check `get_scene_state` before interacting; readiness can lag a few seconds.
 - One parcel is 16×16 m; parcel `(x, y)` spans world positions `(16x..16x+16, 16y..16y+16)`. `--position 0,0` spawns at parcel 0,0.
 - If the connection drops, the build probably crashed or was closed — relaunch it with the same flags; the MCP endpoint URL stays the same.
-- `claude mcp add` only takes effect for the NEXT Claude Code session. If the server was registered mid-session, its tools are not loadable in-session — drive the endpoint directly with curl JSON-RPC (`POST /mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks).
+- Missing `mcp__explorer__*` tools in-session are recoverable: the user running `/mcp` and reconnecting the `explorer` server binds its tools into the running session (verified — works when the server was registered but showed as failed because the Explorer wasn't up at session start). Ask the user to do that first; `/mcp` is interactive and cannot be run by the agent. As a last resort, drive the endpoint directly with curl JSON-RPC (`POST /mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks). A plain `claude mcp add` mid-session does NOT surface tools by itself.
 - `move_to`'s `lookAt*` params orient the avatar but NOT the third-person camera; `screenshot` and `walk` follow the camera. Call the standalone `look_at` tool (it aligns camera yaw — confirm via `get_player_state` → `camera.rotationEuler.y`) before walking a precise line or framing a screenshot.
 - After a hot reload the player can end up off-parcel (e.g. parcel `0,-1`); `get_scene_state` then reports a null scene and `reload_scene` fails with "no scene at the current parcel". Check `get_player_state` → `parcel`, `move_to` back inside, and the scene loads again.
 - Each file save triggers a rebuild: editing usage and import in separate saves produces a transient `SceneError: X is not defined` between them. Write new modules before wiring them in, and prefer a single whole-file write for multi-part edits to one file.
 - `click_entity` presses a pointer button on a scene entity (get ids from `list_scene_entities`). The target needs a `PointerEvents` component and a collider; the aim is validated by a real camera-origin raycast, so occluders return `hit:false` + `blockedBy*` (reposition and retry) and the entity's `maxDistance` (default 10 m) applies — get close first. `upRayMissed: true` means the target moved between press and release (e.g. a door starting to swing) and the release was delivered with the press-frame hit. For GLTF entities whose collider sits away from the pivot, pass an explicit `x/y/z` aim point. The player must be standing on the scene's parcel — off-parcel clicks fail with "no running current scene".
+- `walk` moves relative to the camera and requires an explicit direction: pass `directionY: 1` for forward (`directionX` strafes); omitting both errors with "directionX and directionY must not both be zero".
+- Composite-authored box primitives need `"box": {"uvs": []}` in `core::MeshRenderer` — a bare `"box": {}` crashes `sdk-commands build` with `TypeError: message.uvs is not iterable`.
 - Collider checks beat pixels for physics: `look_at` straight at the target, `walk` forward, then compare `get_player_state` positions to prove passage or blockage.
+- Collider-bump navigation moves the player along precise lines reliably: `look_at` a point past where you want to end up, `walk` with generous `seconds`, and let a blocking collider stop the player — the returned `endPosition` lands ~0.38m (capsule radius) short of the collider face, a deterministic waypoint for the next leg with no duration tuning. Timing legs precisely is fragile (jog ramp-up varies effective speed); overshooting into a collider is not. Only a final leg through a gap with nothing beyond it needs a tight duration, or the player runs off-parcel.
+- Measured locomotion speeds (flat ground): jog ≈6.5 m/s once ramped, `kind: "walk"` ≈1.4 m/s. To stop at a precise point no collider will stop you at, take one timed jog leg, read `endPosition`, then micro-correct with 0.5-1.2s `kind: "walk"` legs — position feedback plus slow corrections converges in 1-2 iterations where a single timed jog leg won't.
+- Trigger areas fire `onTriggerEnter` immediately after `reload_scene` if the player is already standing inside one — reposition the player outside all triggers before testing enter/exit sequencing (and treat post-reload trigger logs as stale state, not gameplay).
 - The free camera is the fastest way to inspect a scene from many points of view: `set_camera_pose` places it at any absolute position, optionally aims it (`lookAt*`) and sets `fov`, auto-entering free mode. Repositioning while already free is instant (~200ms), so sweep a build cheaply — aerial plan view, each facade, eye-level details, interiors — capturing to disk between calls, instead of walking the player around. `look_at` also works in free mode (aims from the camera's own position), and the free camera stays put while the player moves, so you can even watch the avatar walk through the scene from a fixed vantage. Entering free from another mode blends over ~2-3s (the tool waits and reports `settled`).
 - The free camera is a debug view, not what players see. To confirm the end-user experience, switch back to the real modes — `set_camera_mode` `first_person` / `third_person` / `drone` are exactly the cameras retail users have — and re-check framing, avatar occlusion, and interaction reach from there (e.g. verify a hover target is actually visible and clickable at player height, not just from a flattering freecam angle). Restore a player-following view with `set_camera_mode third_person` when done. `set_camera_mode` respects scene locks and errors truthfully — check `get_player_state` → `camera.modeChangeAllowed` first; `false` inside a `CameraModeArea`/scene virtual camera is correct behavior worth verifying, not a tool failure. `screenshot` works in any mode.
 - `look_at` lines the third-person camera up through the avatar, so the avatar occludes exactly the thing you framed. To photograph a subject, first `move_to` a spot offset sideways from the camera→subject line, then `look_at`.
