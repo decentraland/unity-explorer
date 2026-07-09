@@ -69,5 +69,15 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             Assert.IsTrue(emoteComponent.IsPlayingEmote);
         }
+
+        [Test]
+        public void Reset_ZeroesPlayingTime()
+        {
+            var emoteComponent = new CharacterEmoteComponent { PlayingTime = 5f };
+
+            emoteComponent.Reset();
+
+            Assert.AreEqual(0f, emoteComponent.PlayingTime);
+        }
     }
 }
