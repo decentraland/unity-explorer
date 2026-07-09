@@ -37,6 +37,7 @@ namespace Global.AppArgs
         // The auth request id the signin deep link belongs to, echoed back by the auth website. A login only
         // consumes the signin when this matches the request id it minted, so signins are not crossed between
         // concurrent logins or Explorer instances.
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
         public const string AUTH_REQUEST_ID = "authRequestId";
 
         public const string FORCED_EMOTES = "self-force-emotes";
