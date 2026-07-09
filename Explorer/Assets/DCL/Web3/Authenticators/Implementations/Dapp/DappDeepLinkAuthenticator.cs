@@ -83,16 +83,14 @@ namespace DCL.Web3.Authenticators
 
             var url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
             #if UNITY_EDITOR
-            // Tell the auth website to deliver the signin only by writing the bridge file,
-            // not by launching a new Explorer instance.
-            // Omitting this would spawn a build instance while the editor sits waiting for the signin.
+            // Without this flag the auth website also launches a standalone Explorer build,
+            // which would steal the signin from the editor.
             url += "&bridge-only";
             #endif
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
-            // The browser builds and stores the AuthIdentity, then opens decentraland://?signin={identityId},
-            // which is delivered here through the deep link pipeline.
+            // Resolves when the OS delivers the deep link that carries the identity
             string identityId = await WaitForSigninAsync(ct);
 
             return await FetchIdentityByIdAsync(identityId, ct);
