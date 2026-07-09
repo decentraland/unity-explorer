@@ -98,9 +98,6 @@ namespace DCL.Web3.Authenticators
 
         /// <summary>
         ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
-        /// <summary>
-        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
-        /// </summary>
         /// </summary>
         private async UniTask<CreateRequestResponseDto> CreateSigninRequestAsync(string ephemeralMessage, CancellationToken ct)
         {
