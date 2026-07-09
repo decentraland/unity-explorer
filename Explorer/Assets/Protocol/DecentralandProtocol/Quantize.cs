@@ -49,23 +49,21 @@ namespace Decentraland.Networking.Bitwise
         /// </summary>
         public static uint EncodePower(float value, float max, float pow, int bits)
         {
-            uint magnitudeSteps = (1u << (bits - 1)) - 1;
-            float t = Math.Clamp(MathF.Abs(value) / max, 0f, 1f);
-            float u = MathF.Pow(t, 1f / pow);
+            var magnitudeSteps = (1u << (bits - 1)) - 1;
+            var t = Math.Clamp(MathF.Abs(value) / max, 0f, 1f);
+            var u = MathF.Pow(t, 1f / pow);
             var magnitude = (uint)MathF.Round(u * magnitudeSteps);
-            uint sign = value < 0f && magnitude != 0u ? 1u : 0u;
+            var sign = value < 0f && magnitude != 0u ? 1u : 0u;
             return (magnitude << 1) | sign;
         }
 
-        /// <summary>
-        ///     Decodes a power-law quantized <see cref="uint" /> back to a float (inverse of
-        ///     <see cref="EncodePower" />).
-        /// </summary>
+        /// <summary>Decodes a power-law quantized <see cref="uint" /> back to a float (inverse of
+        /// <see cref="EncodePower" />).</summary>
         public static float DecodePower(uint encoded, float max, float pow, int bits)
         {
-            uint magnitudeSteps = (1u << (bits - 1)) - 1;
-            float u = (float)(encoded >> 1) / magnitudeSteps;
-            float magnitude = max * MathF.Pow(u, pow);
+            var magnitudeSteps = (1u << (bits - 1)) - 1;
+            var u = (float)(encoded >> 1) / magnitudeSteps;
+            var magnitude = max * MathF.Pow(u, pow);
             return (encoded & 1u) != 0 ? -magnitude : magnitude;
         }
     }

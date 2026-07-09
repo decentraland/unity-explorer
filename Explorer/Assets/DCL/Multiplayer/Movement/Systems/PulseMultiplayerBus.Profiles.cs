@@ -15,11 +15,14 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             PlayerProfileVersionsAnnounced announcement = message.Message.PlayerProfileVersionAnnounced;
 
-            if (!peerIdCache.TryGetWallet(announcement.SubjectId, out Web3Address userId))
+            if (!peerIdCache.TryGetWalletInRealm(announcement.SubjectId, realmData.RealmName, out Web3Address userId))
             {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Cannot process remote profile announcement, peer not found: {announcement.SubjectId}");
+                // Expected for peers filtered out by realm, so not an error
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Cannot process remote profile announcement, peer not found: {announcement.SubjectId}");
                 return;
             }
 

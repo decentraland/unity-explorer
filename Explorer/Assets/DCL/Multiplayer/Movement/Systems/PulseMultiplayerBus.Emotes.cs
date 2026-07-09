@@ -88,6 +88,15 @@ namespace DCL.Multiplayer.Movement
                 emoteIntentions.Add(intention);
         }
 
+        private void RemoveEmoteIntentionsFor(HashSet<string> wallets)
+        {
+            using (emoteSync.GetScope())
+            {
+                emoteIntentions.RemoveWhere(intention => wallets.Contains(intention.WalletId));
+                emoteStopIntentions.RemoveWhere(intention => wallets.Contains(intention.WalletId));
+            }
+        }
+
         private void HandleEmoteStarted(IncomingMessage message)
         {
             if (isDisposed)
@@ -96,9 +105,11 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
-            if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out Web3Address walletId))
+            if (!peerIdCache.TryGetWalletInRealm(emoteStarted.SubjectId, realmData.RealmName, out Web3Address walletId))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
                 return;
@@ -139,9 +150,11 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
 
-            if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out Web3Address walletId))
+            if (!peerIdCache.TryGetWalletInRealm(emoteStopped.SubjectId, realmData.RealmName, out Web3Address walletId))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
                 return;

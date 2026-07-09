@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
@@ -45,12 +44,22 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             PlayerJoined playerJoined = message.Message.PlayerJoined;
+
+            // An empty realm violates the server contract, so it is dropped too
+            if (playerJoined.Realm.Length == 0 || playerJoined.Realm != realmData.RealmName)
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping PlayerJoined for {playerJoined.State.SubjectId}: realm '{playerJoined.Realm}' differs from current '{realmData.RealmName}'");
+                return;
+            }
+
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
-            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
+            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId, playerJoined.Realm);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
             lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
@@ -66,8 +75,11 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
+            // Realm-agnostic on purpose: removals must process even for peers whose stored realm is stale
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
                 removeIntentions.Enqueue(wallet);
 
@@ -85,9 +97,11 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out Web3Address wallet))
+            if (!peerIdCache.TryGetWalletInRealm(playerStateFull.SubjectId, realmData.RealmName, out Web3Address wallet))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
                 return;
@@ -106,9 +120,11 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!peerIdCache.TryGetWallet(delta.SubjectId, out Web3Address wallet))
+            if (!peerIdCache.TryGetWalletInRealm(delta.SubjectId, realmData.RealmName, out Web3Address wallet))
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
                 return;

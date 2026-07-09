@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Web3;
@@ -13,6 +12,9 @@ namespace DCL.Multiplayer.Movement
     {
         public void BroadcastTeleport(Vector3 worldPosition)
         {
+            // RealmData is guaranteed to hold the destination realm by the time the teleport is broadcast
+            PurgeDifferentRealmPeers();
+
             var outgoing = OutgoingMessage.Create(PacketMode.RELIABLE, ClientMessage.MessageOneofCase.Teleport);
 
             Vector2Int parcelIndex = worldPosition.ToParcel();
@@ -41,11 +43,14 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
+            TryDrainRoutingPurge();
+
             TeleportPerformed teleport = message.Message.Teleported;
 
-            if (!peerIdCache.TryGetWallet(teleport.SubjectId, out Web3Address wallet))
+            if (!peerIdCache.TryGetWalletInRealm(teleport.SubjectId, realmData.RealmName, out Web3Address wallet))
             {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
+                // Expected for peers filtered out by realm, so not an error
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving teleport from unknown peer: {teleport.SubjectId}");
                 return;
             }
 
