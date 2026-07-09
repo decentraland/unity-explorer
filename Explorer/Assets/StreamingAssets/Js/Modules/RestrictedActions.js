@@ -31,10 +31,10 @@ module.exports.teleportTo = async function(message) {
 }
 
 module.exports.triggerEmote = async function(message) {
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    await UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote, message.mask);
+    // mask is an optional AvatarMask enum: absent means full-body
+    await UnityRestrictedActionsApi.TriggerEmote(
+        message.predefinedEmote,
+        message.mask != undefined ? message.mask : null);
     return {};
 }
 
@@ -73,10 +73,11 @@ module.exports.triggerSceneEmote = async function(message) {
     if (message.loop == undefined) {
         message.loop = false
     }
-    if (message.mask == undefined) {
-        message.mask = 0
-    }
-    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop, message.mask);
+    // mask is an optional AvatarMask enum: absent means full-body
+    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(
+        message.src,
+        message.loop,
+        message.mask != undefined ? message.mask : null);
     return {
         success: isSuccess
     };
