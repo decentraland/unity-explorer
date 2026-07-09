@@ -51,8 +51,9 @@ namespace Global.Dynamic
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
         public ReactiveProperty<string?> DeeplinkSigninIdentityId { get; } = new (null);
 
-        // True while this instance's login flow is actively waiting for a signin deep link.
-        public ReactiveProperty<bool> DeeplinkLoginAwaitingSignin { get; } = new (false);
+        // The auth request id this instance's login flow is waiting a signin deep link for (null when not
+        // logging in). The deep-link pipeline consumes a signin only for a link whose authRequestId matches it.
+        public ReactiveProperty<string?> DeeplinkLoginAwaitingSigninRequestId { get; } = new (null);
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public VolumeBus VolumeBus { get; private set; }
@@ -134,7 +135,7 @@ namespace Global.Dynamic
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
                 container.Bootstrap = await CreateBootstrapperAsync(debugSettings, debugContainer, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, settingsContainer, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSignin);
+                container.CompositeWeb3Provider = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container.Analytics, decentralandUrlsSource, decentralandEnvironment, applicationParametersParser, webRequestsContainer.WebRequestController, container.DeeplinkSigninIdentityId, container.DeeplinkLoginAwaitingSigninRequestId);
 
                 void AddIdentityToSentryScope(Scope scope)
                 {
@@ -191,7 +192,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
-            ReactiveProperty<bool> deeplinkLoginAwaitingSignin)
+            ReactiveProperty<string?> deeplinkLoginAwaitingSigninRequestId)
         {
             int? identityExpirationDuration = appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v)
                 ? int.Parse(v!)
@@ -215,7 +216,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 webRequestController,
                 deeplinkSigninIdentityId,
-                deeplinkLoginAwaitingSignin,
+                deeplinkLoginAwaitingSigninRequestId,
                 identityExpirationDuration
             );
 

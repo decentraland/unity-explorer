@@ -18,18 +18,18 @@ namespace DCL.RuntimeDeepLink
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
-        private readonly IReadonlyReactiveProperty<bool> loginAwaitingSignin;
+        private readonly IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly bool routeNavigationDeepLinks;
 
         public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId,
-            IReadonlyReactiveProperty<bool> loginAwaitingSignin, bool routeNavigationDeepLinks)
+            IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId, bool routeNavigationDeepLinks)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
-            this.loginAwaitingSignin = loginAwaitingSignin;
+            this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
             this.routeNavigationDeepLinks = routeNavigationDeepLinks;
         }
 
@@ -39,8 +39,11 @@ namespace DCL.RuntimeDeepLink
 
             if (!string.IsNullOrEmpty(signin))
             {
-                // Guard: a signin may only be consumed by the instance that is actively awaiting one.
-                if (!loginAwaitingSignin.Value)
+                string? awaitedRequestId = loginAwaitingSigninRequestId.Value;
+
+                // Guard: only consume a signin while a login here is waiting for one, and only if the link
+                // was minted for that login.
+                if (string.IsNullOrEmpty(awaitedRequestId) || deeplink.ValueOf(AppArgsFlags.AUTH_REQUEST_ID) != awaitedRequestId)
                     return DeepLinkHandleResult.Deferred;
 
                 // The id persists in the property until it is overwritten or cleared.

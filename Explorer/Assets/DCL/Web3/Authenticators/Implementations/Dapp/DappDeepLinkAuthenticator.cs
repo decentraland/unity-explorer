@@ -33,7 +33,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
-        private readonly ReactiveProperty<bool> loginAwaitingSignin;
+        private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly int? identityExpirationDuration;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -44,7 +44,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
-            ReactiveProperty<bool> loginAwaitingSignin,
+            ReactiveProperty<string?> loginAwaitingSigninRequestId,
             int? identityExpirationDuration = null)
         {
             this.webBrowser = webBrowser;
@@ -53,7 +53,7 @@ namespace DCL.Web3.Authenticators
             this.web3AccountFactory = web3AccountFactory;
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
-            this.loginAwaitingSignin = loginAwaitingSignin;
+            this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
             this.identityExpirationDuration = identityExpirationDuration;
         }
 
@@ -90,8 +90,9 @@ namespace DCL.Web3.Authenticators
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
-            // Resolves when the OS delivers the deep link that carries the identity
-            string identityId = await WaitForSigninAsync(ct);
+            // Resolves when the OS delivers the deep link that carries the identity. The request id lets the
+            // pipeline hand back only the signin minted for this attempt (matched against the link's authRequestId).
+            string identityId = await WaitForSigninAsync(createRequestResponse.requestId, ct);
 
             return await FetchIdentityByIdAsync(identityId, ct);
         }
@@ -122,12 +123,13 @@ namespace DCL.Web3.Authenticators
         /// <summary>
         ///     Awaits the first non-empty <c>identityId</c>, starting from the currently stored one, and consumes it.
         /// </summary>
-        private async UniTask<string> WaitForSigninAsync(CancellationToken ct)
+        private async UniTask<string> WaitForSigninAsync(string requestId, CancellationToken ct)
         {
             var completionSource = new UniTaskCompletionSource<string>();
 
-            // Signals readiness: the deeplink pipeline only hands a signin over while this is true.
-            loginAwaitingSignin.Value = true;
+            // Publishes the request id awaited: the deeplink pipeline only hands a signin over while this is
+            // set, and only for a link whose authRequestId matches it.
+            loginAwaitingSigninRequestId.Value = requestId;
 
             using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
                 static (identityId, completion) =>
@@ -141,7 +143,7 @@ namespace DCL.Web3.Authenticators
             {
                 // Stop accepting signins and consume the id on success, timeout and cancellation alike, so a
                 // later login attempt never resolves against a signin delivered for this one.
-                loginAwaitingSignin.Value = false;
+                loginAwaitingSigninRequestId.Value = null;
                 deeplinkSigninIdentityId.Value = null;
             }
         }

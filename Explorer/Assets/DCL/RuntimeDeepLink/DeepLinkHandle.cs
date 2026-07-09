@@ -6,9 +6,11 @@ namespace DCL.RuntimeDeepLink
         NoMatches,
 
         /// <summary>
-        ///     A signin deep link arrived while no login flow was waiting for it. It is left untouched so the
-        ///     instance actually logging in can claim it, rather than a concurrent idle Explorer instance
-        ///     consuming and deleting the shared bridge file first. Kept until claimed (bounded by a timeout).
+        ///     A signin deep link arrived that this instance must not consume: either no login here is waiting
+        ///     for one, or its authRequestId does not match the request this login minted. It is left untouched
+        ///     so the instance it was minted for can claim it from the shared bridge file, rather than a
+        ///     concurrent or idle Explorer instance consuming and deleting it first. Kept until claimed by the
+        ///     matching login (bounded by a timeout).
         /// </summary>
         Deferred,
     }
