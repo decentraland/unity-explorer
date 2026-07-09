@@ -39,6 +39,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[Memory & Resource Unloading](memory-budgeting-and-resource-unloading.md)** — Memory budgeting and cache unloading strategies
 - **[Multiplayer](multiplayer.md)** — Transport-agnostic multiplayer hub: shared interfaces, movement pipeline, entity/profile tables, SDK propagation, dual-transport wiring
 - **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
+- **[Authoritative Portable Experiences](authoritative-portable-experiences.md)** — Running an authoritative server (Hammurabi) for a Portable Experience: scene-level comms rooms, the spawn trigger, and the CRDT handshake
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
 

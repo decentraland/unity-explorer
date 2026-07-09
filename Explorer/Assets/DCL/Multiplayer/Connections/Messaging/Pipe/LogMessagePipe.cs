@@ -42,6 +42,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             );
         }
 
+        public void Unsubscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        {
+            ReportHub.Log(
+                ReportCategory.LIVEKIT, $"From: {fromPipe} LogMessagePipe: Unsubscribing from messages of type {typeof(T).FullName}");
+
+            origin.Unsubscribe(ofCase, onMessageReceived);
+        }
+
         public void Dispose()
         {
             origin.Dispose();

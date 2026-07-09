@@ -174,6 +174,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
+        public void Unsubscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        {
+            // Only one subscriber per type is allowed (see Subscribe), so dropping the type's entry removes
+            // that single subscription. An in-flight NotifySubscribersAsync holds its own list reference, so
+            // removing the dictionary key here does not disrupt a notification already in progress.
+            subscribers.Remove(ofCase);
+        }
+
         private (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
         {
             if (subscribers.TryGetValue(typeName, out (List<Action<(Packet, LKParticipant, string)>> list, IMessagePipe.ThreadStrict strict) item) == false)

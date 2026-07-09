@@ -23,6 +23,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, ThreadStrict threadStrict = ThreadStrict.MAIN_THREAD_ONLY) where T: class, IMessage, new();
 
+        /// <summary>
+        ///     Removes the subscription for the given message type. Only one subscriber per type is allowed
+        ///     (see <see cref="Subscribe{T}" />), so the type uniquely identifies the subscription to remove.
+        /// </summary>
+        void Unsubscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new();
+
         class Null : IMessagePipe
         {
             private Null() {}
@@ -33,6 +39,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 throw new Exception("Null implementation");
 
             public void Subscribe<T>(Packet.MessageOneofCase _, Action<ReceivedMessage<T>> __, ThreadStrict ___) where T: class, IMessage, new() { }
+            public void Unsubscribe<T>(Packet.MessageOneofCase _, Action<ReceivedMessage<T>> __) where T: class, IMessage, new() { }
             public void Dispose() { }
         }
     }

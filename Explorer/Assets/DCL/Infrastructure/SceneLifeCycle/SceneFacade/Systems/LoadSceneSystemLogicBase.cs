@@ -57,6 +57,19 @@ namespace ECS.SceneLifeCycle.Systems
 
             await UniTask.SwitchToMainThread();
 
+            // Authoritative-multiplayer Portable Experiences must join their world scene room before the scene is
+            // considered loaded: the join is what makes the world-content-server spawn the authoritative server.
+            // The room is owned and torn down by the facade; a failed connect fails the load.
+            if (intention.PortableExperienceRealm != null && sceneFacade is PortableExperienceSceneFacade portableExperienceScene)
+            {
+                try { await portableExperienceScene.StartAuthoritativeRoomAsync(intention.PortableExperienceRealm, ct); }
+                catch
+                {
+                    await sceneFacade.DisposeAsync();
+                    throw;
+                }
+            }
+
             sceneFacade.Initialize();
             ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' (sdk version: '{sceneData.GetSDKVersion()}') ended");
             return sceneFacade;

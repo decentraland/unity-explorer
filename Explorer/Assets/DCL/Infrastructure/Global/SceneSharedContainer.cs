@@ -3,7 +3,6 @@ using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using DCL.PluginSystem.World;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.PluginSystem.World.Dependencies;
@@ -44,7 +43,7 @@ namespace Global
             IProfileRepository profileRepository,
             IRoomHub roomHub,
             IMVCManager mvcManager,
-            IMessagePipesHub messagePipesHub,
+            ISceneCommunicationPipe sceneCommunicationPipe,
             IRemoteMetadata remoteMetadata,
             IWebJsSources webJsSources,
             DecentralandEnvironment dclEnvironment,
@@ -83,7 +82,7 @@ namespace Global
                     realmData,
                     staticContainer.PortableExperiencesController,
                     staticContainer.StaticSettings.SkyboxSettings,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
+                    sceneCommunicationPipe,
                     remoteMetadata,
                     dclEnvironment,
                     systemClipboard,

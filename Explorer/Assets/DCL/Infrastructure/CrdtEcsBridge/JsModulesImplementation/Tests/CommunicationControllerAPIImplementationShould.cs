@@ -364,6 +364,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             {
                 sendMessageCalls.Add(message.ToArray());
             }
+
+            public void RegisterSceneRoom(string sceneId, DCL.Multiplayer.Connections.Rooms.Connective.IConnectiveRoom room, DCL.Multiplayer.Connections.Messaging.Pipe.IMessagePipe roomPipe) { }
+
+            public void RemoveSceneRoom(string sceneId) { }
         }
     }
 }

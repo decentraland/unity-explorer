@@ -3,12 +3,12 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using ECS;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.SceneLifeCycle;
+using SceneRunner;
 using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.RealmInfo
@@ -22,13 +22,13 @@ namespace DCL.SDKComponents.RealmInfo
 
         private bool initialized;
 
-        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub, ISceneData sceneData)
+        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub, ISceneData sceneData, IScenesCache scenesCache)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.realmData = realmData;
 
-            commsRoomInfo = new CommsRoomInfo(roomHub, sceneData);
+            commsRoomInfo = new CommsRoomInfo(roomHub, sceneData, scenesCache);
         }
 
         public override void Initialize()
@@ -71,15 +71,17 @@ namespace DCL.SDKComponents.RealmInfo
         {
             private readonly IRoomHub roomHub;
             private readonly ISceneData sceneData;
+            private readonly IScenesCache scenesCache;
 
             public string IslandSid { get; private set; }
 
             public bool IsConnectedSceneRoom { get; private set; }
 
-            public CommsRoomInfo(IRoomHub roomHub, ISceneData sceneData)
+            public CommsRoomInfo(IRoomHub roomHub, ISceneData sceneData, IScenesCache scenesCache)
             {
                 this.roomHub = roomHub;
                 this.sceneData = sceneData;
+                this.scenesCache = scenesCache;
             }
 
             /// <summary>
@@ -88,8 +90,12 @@ namespace DCL.SDKComponents.RealmInfo
             /// <returns></returns>
             public bool TryFetchNewInfo()
             {
-                IGateKeeperSceneRoom sceneRoom = roomHub.SceneRoom();
-                bool isConnectedToSceneRoom = sceneRoom.IsSceneConnected(sceneData.SceneEntityDefinition.id);
+                // A Portable Experience scene connects through its own scene room, owned by its facade — not the
+                // host's current scene room — so for a PX the connection state is read from the scene's facade and
+                // the host scene-room check is omitted entirely (it is always false for a PX).
+                bool isConnectedToSceneRoom = sceneData.IsPortableExperience()
+                    ? IsPortableExperienceSceneRoomConnected()
+                    : roomHub.SceneRoom().IsSceneConnected(sceneData.SceneEntityDefinition.id);
 
                 string room = roomHub.IslandRoom().Info.Sid ?? string.Empty;
 
@@ -100,6 +106,15 @@ namespace DCL.SDKComponents.RealmInfo
                 IslandSid = room;
 
                 return true;
+            }
+
+            private bool IsPortableExperienceSceneRoomConnected()
+            {
+                string sceneId = sceneData.SceneEntityDefinition.id;
+
+                return !string.IsNullOrEmpty(sceneId)
+                       && scenesCache.TryGetPortableExperienceBySceneUrn(sceneId, out ISceneFacade facade)
+                       && facade is PortableExperienceSceneFacade { IsConnectedSceneRoom: true };
             }
 
             public void WriteToComponent(PBRealmInfo component)

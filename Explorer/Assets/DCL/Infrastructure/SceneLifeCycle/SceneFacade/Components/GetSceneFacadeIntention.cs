@@ -28,10 +28,17 @@ namespace ECS.SceneLifeCycle.Components
         /// </summary>
         public readonly ISSDescriptor ISSDescriptor;
 
-        public GetSceneFacadeIntention(SceneDefinitionComponent definitionComponent, ISSDescriptor issDescriptor)
+        /// <summary>
+        ///     Set only for authoritative-multiplayer Portable Experiences: the PX world's realm data, used by the
+        ///     scene loading flow to establish the scene-comms room. Null for ordinary scenes and non-authoritative PX.
+        /// </summary>
+        public readonly IRealmData? PortableExperienceRealm;
+
+        public GetSceneFacadeIntention(SceneDefinitionComponent definitionComponent, ISSDescriptor issDescriptor, IRealmData? portableExperienceRealm = null)
         {
             DefinitionComponent = definitionComponent;
             ISSDescriptor = issDescriptor;
+            PortableExperienceRealm = portableExperienceRealm;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
             CommonArguments = new CommonLoadingArguments(definitionComponent.IpfsPath.EntityId);

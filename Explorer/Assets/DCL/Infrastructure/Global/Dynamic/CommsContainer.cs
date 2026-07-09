@@ -1,5 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
+using CrdtEcsBridge.JsModulesImplementation.Communications;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
@@ -74,6 +75,8 @@ namespace Global.Dynamic
 
         public CurrentSceneInfo CurrentSceneInfo { get; }
 
+        public SceneCommunicationPipe SceneCommunicationPipe { get; }
+
         private CommsContainer(
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
@@ -90,7 +93,8 @@ namespace Global.Dynamic
             RemoteProfiles remoteProfiles,
             IRemoteMetadata remoteMetadata,
             IHealthCheck livekitHealthCheck,
-            CurrentSceneInfo currentSceneInfo)
+            CurrentSceneInfo currentSceneInfo,
+            SceneCommunicationPipe sceneCommunicationPipe)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -108,6 +112,7 @@ namespace Global.Dynamic
             RemoteMetadata = remoteMetadata;
             LivekitHealthCheck = livekitHealthCheck;
             CurrentSceneInfo = currentSceneInfo;
+            SceneCommunicationPipe = sceneCommunicationPipe;
         }
 
         public static CommsContainer Create(
@@ -212,6 +217,8 @@ namespace Global.Dynamic
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics.Controller)
                 : livekitHealthCheck;
 
+            var sceneCommunicationPipe = new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom());
+
             return new CommsContainer(
                 archipelagoIslandRoom,
                 gateKeeperSceneRoom,
@@ -228,7 +235,8 @@ namespace Global.Dynamic
                 remoteProfiles,
                 remoteMetadata,
                 livekitHealthCheck,
-                new CurrentSceneInfo());
+                new CurrentSceneInfo(),
+                sceneCommunicationPipe);
         }
 
         public MultiplayerPlugin CreateMultiplayerPlugin(
