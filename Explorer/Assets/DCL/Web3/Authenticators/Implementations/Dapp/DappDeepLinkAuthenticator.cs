@@ -131,6 +131,7 @@ namespace DCL.Web3.Authenticators
 
             // Publishes the request id awaited: the deeplink pipeline only hands a signin over while this is
             // set, and only for a link whose authRequestId matches it.
+            // Publishes the request id awaited by the pipeline.
             loginAwaitingSigninRequestId.Value = requestId;
 
             using var subscription = deeplinkSigninIdentityId.UseCurrentValueAndSubscribeToUpdate(completionSource,
