@@ -4,7 +4,7 @@ using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.CharacterMotion
+namespace DCL.Character.CharacterMotion
 {
     public static class ApplyGliding
     {
@@ -49,8 +49,8 @@ namespace DCL.CharacterMotion
                     // Stop gliding if the jump button is released or any other condition prevents it
                     glideState.Value = GlideStateValue.CLOSING_PROP;
                 else
-                    // Otherwise clamp the gravity
-                    rigidTransform.GravityVelocity = Vector3.ClampMagnitude(rigidTransform.GravityVelocity, settings.GlideMaxGravity);
+                    // Otherwise clamp the fall speed only: upward velocity (jump momentum, external forces like wind) must pass through untouched
+                    rigidTransform.GravityVelocity.y = Mathf.Max(rigidTransform.GravityVelocity.y, -settings.GlideMaxGravity);
             }
         }
     }

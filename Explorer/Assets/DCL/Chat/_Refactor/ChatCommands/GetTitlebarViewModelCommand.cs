@@ -58,7 +58,7 @@ namespace DCL.Chat.ChatCommands
                 return new ChatTitlebarViewModel("Community not found");
 
             Sprite thumbnail = await getCommunityThumbnailCommand
-                .ExecuteAsync(communityData.thumbnailUrl, ct);
+               .ExecuteAsync(communityData.ThumbnailUrl, ct);
 
             var viewModel = new ChatTitlebarViewModel(communityData.id, communityData.name, string.Empty)
             {

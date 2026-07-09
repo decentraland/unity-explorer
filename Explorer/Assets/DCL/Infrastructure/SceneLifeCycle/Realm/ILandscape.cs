@@ -10,6 +10,7 @@ namespace ECS.SceneLifeCycle.Realm
     {
         MessageError,
         LandscapeDisabled,
+        TerrainDataUnavailable,
     }
 
     public interface ILandscape

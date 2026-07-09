@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Loading.Components;
@@ -18,12 +17,13 @@ using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 using Avatar = DCL.Profiles.Avatar;
 
-namespace DCL.Character.Tests
+namespace DCL.Character.CharacterObject.Tests
 {
     public class CharacterTransformDirtyFlagShould : UnitySystemTestBase<PartitionGlobalAssetEntitiesSystem>
     {
