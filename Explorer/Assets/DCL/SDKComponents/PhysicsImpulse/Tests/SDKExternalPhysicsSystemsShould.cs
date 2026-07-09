@@ -149,6 +149,21 @@ namespace DCL.SDKComponents.PhysicsImpulse.Tests
             Assert.AreEqual(Vector3.zero, rigidTransform.ExternalAcceleration);
         }
 
+        [Test]
+        public void ZeroForceImmediatelyWhenAllContributionsAreCleared()
+        {
+            // Arrange
+            AddPlayerForceEntity(world, FORCE_A);
+            system!.Update(0);
+            Assert.AreEqual(FORCE_A, RunApplyExternalForce().ExternalForce);
+
+            // Act - the /reload chat command clears all slots at once
+            globalWorld.Get<CharacterRigidTransform>(playerEntity).ExternalForceContributions.Clear();
+
+            // Assert
+            Assert.AreEqual(Vector3.zero, RunApplyExternalForce().ExternalForce);
+        }
+
         private static ISceneStateProvider CurrentSceneStateProvider()
         {
             ISceneStateProvider provider = Substitute.For<ISceneStateProvider>();
