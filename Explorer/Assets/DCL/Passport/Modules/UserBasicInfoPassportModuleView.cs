@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
-    public class UserBasicInfo_PassportModuleView : MonoBehaviour
+    public class UserBasicInfoPassportModuleView : MonoBehaviour
     {
         [field: SerializeField] public UserNameElement UserNameElement { get; private set; } = null!;
         [field: SerializeField] public UserWalletAddressElement UserWalletAddressElement { get; private set; } = null!;

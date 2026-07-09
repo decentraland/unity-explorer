@@ -14,12 +14,12 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgesOverview_PassportModuleController : IPassportModuleController
+    public class BadgesOverviewPassportModuleController : IPassportModuleController
     {
         private const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
         private const int BADGES_OVERVIEW_MAX_COUNT = 9;
 
-        private readonly BadgesOverview_PassportModuleView view;
+        private readonly BadgesOverviewPassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeOverviewItem_PassportFieldView> badgesOverviewItemsPool;
@@ -28,8 +28,8 @@ namespace DCL.Passport.Modules.Badges
         private Profile currentProfile;
         private CancellationTokenSource fetchBadgesCts;
 
-        public BadgesOverview_PassportModuleController(
-            BadgesOverview_PassportModuleView view,
+        public BadgesOverviewPassportModuleController(
+            BadgesOverviewPassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             ImageControllerProvider imageControllerProvider)
