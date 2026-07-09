@@ -53,6 +53,7 @@ namespace Global.Dynamic
 
         // The auth request id this instance's login flow is waiting a signin deep link for (null when not
         // logging in). The deep-link pipeline consumes a signin only for a link whose authRequestId matches it.
+        // The auth request id this instance's login flow is waiting a signin deep link for (null when not logging in).
         public ReactiveProperty<string?> DeeplinkLoginAwaitingSigninRequestId { get; } = new (null);
         public AnalyticsContainer Analytics { get; private set; }
         public DebugSettings.DebugSettings DebugSettings { get; private set; }
