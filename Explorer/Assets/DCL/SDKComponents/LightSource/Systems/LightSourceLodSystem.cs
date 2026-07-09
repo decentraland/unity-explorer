@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
-            if (!LightSourceHelper.TryGetLodSettings(settings, pbLightSource.TypeCase, out List<LightSourceSettings.LodSettings> lodSettings)) return;
+            if (!LightSourceHelper.TryGetLodSettings(settings, pbLightSource.TypeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return;
 
             lightSourceComponent.LOD = LightSourceHelper.FindLOD(lodSettings, lightSourceComponent.DistanceToPlayerSq);
 
@@ -50,7 +50,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             ApplyLOD(ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
         }
 
-        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LightSourceSettings.LodSettings lodSetting)
+        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, in LightSourceSettings.LodSettings lodSetting)
         {
             Light light = lightSourceComponent.LightSourceInstance;
 

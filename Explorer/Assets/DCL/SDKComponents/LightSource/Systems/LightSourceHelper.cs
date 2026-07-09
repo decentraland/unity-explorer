@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -28,7 +29,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         /// <summary>
         /// Gets the non-empty LOD settings list that corresponds to the light source type.
         /// </summary>
-        public static bool TryGetLodSettings(LightSourceSettings settings, PBLightSource.TypeOneofCase typeCase, out List<LightSourceSettings.LodSettings> lodSettings)
+        public static bool TryGetLodSettings(LightSourceSettings settings, PBLightSource.TypeOneofCase typeCase, [NotNullWhen(true)] out List<LightSourceSettings.LodSettings>? lodSettings)
         {
             switch (typeCase)
             {
@@ -50,7 +51,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         /// <summary>
         /// Finds the LOD index for the given squared distance to the player.
-        /// Returns -1 when the distance is beyond the last LOD, meaning the light is culled.
+        /// Returns -1 when the distance is beyond the last LOD entry.
         /// </summary>
         public static int FindLOD(List<LightSourceSettings.LodSettings> lodSettings, float distanceToPlayerSq)
         {

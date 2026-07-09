@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         private bool IsLodCulled(PBLightSource.TypeOneofCase typeCase, float distanceToPlayerSq)
         {
-            if (!LightSourceHelper.TryGetLodSettings(settings, typeCase, out List<LightSourceSettings.LodSettings> lodSettings)) return false;
+            if (!LightSourceHelper.TryGetLodSettings(settings, typeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return false;
 
             return LightSourceHelper.FindLOD(lodSettings, distanceToPlayerSq) < 0;
         }
