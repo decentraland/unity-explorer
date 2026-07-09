@@ -99,7 +99,9 @@ namespace DCL.Web3.Authenticators
 
         /// <summary>
         ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
-        ///     The browser later recovers the request by that id to drive the wallet signature.
+        /// <summary>
+        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
+        /// </summary>
         /// </summary>
         private async UniTask<CreateRequestResponseDto> CreateSigninRequestAsync(string ephemeralMessage, CancellationToken ct)
         {
