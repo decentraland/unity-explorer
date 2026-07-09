@@ -26,56 +26,59 @@ namespace Decentraland.Kernel.Apis {
           string.Concat(
             "CjFkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcmVzdHJpY3RlZF9hY3Rpb25z",
             "LnByb3RvEhhkZWNlbnRyYWxhbmQua2VybmVsLmFwaXMaIWRlY2VudHJhbGFu",
-            "ZC9jb21tb24vdmVjdG9ycy5wcm90byKOAgoTTW92ZVBsYXllclRvUmVxdWVz",
-            "dBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24YASABKAsyHC5kZWNlbnRyYWxh",
-            "bmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJhX3RhcmdldBgCIAEoCzIcLmRl",
-            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjgKDWF2YXRhcl90YXJn",
-            "ZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjNIAYgBARIV",
-            "CghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFyZ2V0QhAKDl9h",
-            "dmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9ydFRvUmVxdWVz",
-            "dBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uVmVjdG9yMiJLChNUcmlnZ2VyRW1vdGVSZXF1ZXN0EhgKEHByZWRl",
-            "ZmluZWRfZW1vdGUYASABKAkSEQoEbWFzaxgCIAEoDUgAiAEBQgcKBV9tYXNr",
-            "IkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgBIAEoCRIUCgdtZXNz",
-            "YWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3BlbkV4dGVybmFsVXJs",
-            "UmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERpYWxvZ1JlcXVlc3QS",
-            "CwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVxdWVzdCIwChNDb21t",
-            "c0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3RyaW5nGAEgASgJIl8K",
-            "GFRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBILCgNzcmMYASABKAkSEQoEbG9v",
-            "cBgCIAEoCEgAiAEBEhEKBG1hc2sYAyABKA1IAYgBAUIHCgVfbG9vcEIHCgVf",
-            "bWFzayIiCg9TdWNjZXNzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIWChRU",
-            "cmlnZ2VyRW1vdGVSZXNwb25zZSInChRNb3ZlUGxheWVyVG9SZXNwb25zZRIP",
-            "CgdzdWNjZXNzGAEgASgIIhQKElRlbGVwb3J0VG9SZXNwb25zZSImChZDb3B5",
-            "VG9DbGlwYm9hcmRSZXF1ZXN0EgwKBHRleHQYASABKAkiDwoNRW1wdHlSZXNw",
-            "b25zZSISChBTdG9wRW1vdGVSZXF1ZXN0MvUIChhSZXN0cmljdGVkQWN0aW9u",
-            "c1NlcnZpY2USbwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLk1vdmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuTW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRv",
-            "EisuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0",
-            "GiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25z",
-            "ZSIAEm8KDFRyaWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
-            "cy5UcmlnZ2VyRW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlRyaWdnZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0Giku",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAK",
-            "D09wZW5FeHRlcm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5P",
-            "cGVuRXh0ZXJuYWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoY",
-            "U2V0Q29tbXVuaWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkNvbW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1v",
-            "dGUSMi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1v",
-            "dGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NS",
-            "ZXNwb25zZSIAEm4KD0NvcHlUb0NsaXBib2FyZBIwLmRlY2VudHJhbGFuZC5r",
-            "ZXJuZWwuYXBpcy5Db3B5VG9DbGlwYm9hcmRSZXF1ZXN0GicuZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLkVtcHR5UmVzcG9uc2UiABJkCglTdG9wRW1vdGUS",
-            "Ki5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3RvcEVtb3RlUmVxdWVzdBop",
-            "LmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiAGIG",
-            "cHJvdG8z"));
+            "ZC9jb21tb24vdmVjdG9ycy5wcm90bxo0ZGVjZW50cmFsYW5kL3Nkay9jb21w",
+            "b25lbnRzL2NvbW1vbi9hdmF0YXJfbWFzay5wcm90byKOAgoTTW92ZVBsYXll",
+            "clRvUmVxdWVzdBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24YASABKAsyHC5k",
+            "ZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJhX3RhcmdldBgC",
+            "IAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjgKDWF2",
+            "YXRhcl90YXJnZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3Rv",
+            "cjNIAYgBARIVCghkdXJhdGlvbhgEIAEoAkgCiAEBQhAKDl9jYW1lcmFfdGFy",
+            "Z2V0QhAKDl9hdmF0YXJfdGFyZ2V0QgsKCV9kdXJhdGlvbiJMChFUZWxlcG9y",
+            "dFRvUmVxdWVzdBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIcLmRlY2Vu",
+            "dHJhbGFuZC5jb21tb24uVmVjdG9yMiJ7ChNUcmlnZ2VyRW1vdGVSZXF1ZXN0",
+            "EhgKEHByZWRlZmluZWRfZW1vdGUYASABKAkSQQoEbWFzaxgCIAEoDjIuLmRl",
+            "Y2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5jb21tb24uQXZhdGFyTWFza0gA",
+            "iAEBQgcKBV9tYXNrIkUKEkNoYW5nZVJlYWxtUmVxdWVzdBINCgVyZWFsbRgB",
+            "IAEoCRIUCgdtZXNzYWdlGAIgASgJSACIAQFCCgoIX21lc3NhZ2UiJQoWT3Bl",
+            "bkV4dGVybmFsVXJsUmVxdWVzdBILCgN1cmwYASABKAkiIwoUT3Blbk5mdERp",
+            "YWxvZ1JlcXVlc3QSCwoDdXJuGAEgASgJIhcKFVVuYmxvY2tQb2ludGVyUmVx",
+            "dWVzdCIwChNDb21tc0FkYXB0ZXJSZXF1ZXN0EhkKEWNvbm5lY3Rpb25fc3Ry",
+            "aW5nGAEgASgJIo8BChhUcmlnZ2VyU2NlbmVFbW90ZVJlcXVlc3QSCwoDc3Jj",
+            "GAEgASgJEhEKBGxvb3AYAiABKAhIAIgBARJBCgRtYXNrGAMgASgOMi4uZGVj",
+            "ZW50cmFsYW5kLnNkay5jb21wb25lbnRzLmNvbW1vbi5BdmF0YXJNYXNrSAGI",
+            "AQFCBwoFX2xvb3BCBwoFX21hc2siIgoPU3VjY2Vzc1Jlc3BvbnNlEg8KB3N1",
+            "Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3RlUmVzcG9uc2UiJwoUTW92ZVBs",
+            "YXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIUChJUZWxlcG9ydFRv",
+            "UmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJkUmVxdWVzdBIMCgR0ZXh0GAEg",
+            "ASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVxdWVzdDL1CAoY",
+            "UmVzdHJpY3RlZEFjdGlvbnNTZXJ2aWNlEm8KDE1vdmVQbGF5ZXJUbxItLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXF1ZXN0Gi4u",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1vdmVQbGF5ZXJUb1Jlc3BvbnNl",
+            "IgASaQoKVGVsZXBvcnRUbxIrLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
+            "ZWxlcG9ydFRvUmVxdWVzdBosLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
+            "ZWxlcG9ydFRvUmVzcG9uc2UiABJvCgxUcmlnZ2VyRW1vdGUSLS5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVxdWVzdBouLmRlY2Vu",
+            "dHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2VyRW1vdGVSZXNwb25zZSIAEmgK",
+            "C0NoYW5nZVJlYWxtEiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNoYW5n",
+            "ZVJlYWxtUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNj",
+            "ZXNzUmVzcG9uc2UiABJwCg9PcGVuRXh0ZXJuYWxVcmwSMC5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuT3BlbkV4dGVybmFsVXJsUmVxdWVzdBopLmRlY2Vu",
+            "dHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJsCg1PcGVu",
+            "TmZ0RGlhbG9nEi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk9wZW5OZnRE",
+            "aWFsb2dSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
+            "c3NSZXNwb25zZSIAEnYKGFNldENvbW11bmljYXRpb25zQWRhcHRlchItLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Db21tc0FkYXB0ZXJSZXF1ZXN0Giku",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnQK",
+            "EVRyaWdnZXJTY2VuZUVtb3RlEjIuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
+            "LlRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJu",
+            "ZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJuCg9Db3B5VG9DbGlwYm9hcmQS",
+            "MC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ29weVRvQ2xpcGJvYXJkUmVx",
+            "dWVzdBonLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5FbXB0eVJlc3BvbnNl",
+            "IgASZAoJU3RvcEVtb3RlEiouZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN0",
+            "b3BFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3Vj",
+            "Y2Vzc1Jlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
@@ -724,12 +727,12 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "mask" field.</summary>
     public const int MaskFieldNumber = 2;
-    private readonly static uint MaskDefaultValue = 0;
+    private readonly static global::DCL.ECSComponents.AvatarMask MaskDefaultValue = global::DCL.ECSComponents.AvatarMask.AmUpperBody;
 
-    private uint mask_;
+    private global::DCL.ECSComponents.AvatarMask mask_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Mask {
+    public global::DCL.ECSComponents.AvatarMask Mask {
       get { if ((_hasBits0 & 1) != 0) { return mask_; } else { return MaskDefaultValue; } }
       set {
         _hasBits0 |= 1;
@@ -799,7 +802,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(16);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -817,7 +820,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(16);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -833,7 +836,7 @@ namespace Decentraland.Kernel.Apis {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(PredefinedEmote);
       }
       if (HasMask) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -877,7 +880,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 16: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -904,7 +907,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 16: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -2008,12 +2011,12 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "mask" field.</summary>
     public const int MaskFieldNumber = 3;
-    private readonly static uint MaskDefaultValue = 0;
+    private readonly static global::DCL.ECSComponents.AvatarMask MaskDefaultValue = global::DCL.ECSComponents.AvatarMask.AmUpperBody;
 
-    private uint mask_;
+    private global::DCL.ECSComponents.AvatarMask mask_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint Mask {
+    public global::DCL.ECSComponents.AvatarMask Mask {
       get { if ((_hasBits0 & 2) != 0) { return mask_; } else { return MaskDefaultValue; } }
       set {
         _hasBits0 |= 2;
@@ -2089,7 +2092,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(24);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -2111,7 +2114,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (HasMask) {
         output.WriteRawTag(24);
-        output.WriteUInt32(Mask);
+        output.WriteEnum((int) Mask);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -2130,7 +2133,7 @@ namespace Decentraland.Kernel.Apis {
         size += 1 + 1;
       }
       if (HasMask) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Mask);
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Mask);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2181,7 +2184,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 24: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }
@@ -2212,7 +2215,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 24: {
-            Mask = input.ReadUInt32();
+            Mask = (global::DCL.ECSComponents.AvatarMask) input.ReadEnum();
             break;
           }
         }

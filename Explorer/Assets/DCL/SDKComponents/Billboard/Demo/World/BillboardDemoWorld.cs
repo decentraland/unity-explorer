@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using DCL.Billboard.DebugTools;
 using DCL.Billboard.Demo.CameraData;
 using DCL.Billboard.Extensions;
@@ -7,6 +8,7 @@ using DCL.CharacterCamera;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
@@ -16,6 +18,9 @@ namespace DCL.Billboard.Demo.World
 {
     public class BillboardDemoWorld : IDemoWorld
     {
+        private const int TARGETED_COUNT = 5;
+        private const int TARGET_CRDT_ID_BASE = 512;
+
         private readonly int countInRow;
         private readonly int randomCounts;
         private readonly float spawnStep;
@@ -23,6 +28,8 @@ namespace DCL.Billboard.Demo.World
         private readonly BillboardMode[] predefinedBillboards;
         private readonly IDemoWorld origin;
         private readonly IExposedCameraData cameraData;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+        private readonly Dictionary<CRDTEntity, Entity>? ownedEntitiesMap;
 
         public BillboardDemoWorld(
             Arch.Core.World world,
@@ -30,7 +37,8 @@ namespace DCL.Billboard.Demo.World
             IExposedCameraData? cameraData = null,
             int countInRow = 10,
             int randomCounts = 50,
-            float spawnStep = 3
+            float spawnStep = 3,
+            IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap = null
         ) : this(
             world,
             cubeSize,
@@ -38,6 +46,7 @@ namespace DCL.Billboard.Demo.World
             countInRow,
             randomCounts,
             spawnStep,
+            entitiesMap,
             BillboardMode.BmAll, BillboardMode.BmNone, BillboardMode.BmX, BillboardMode.BmY, BillboardMode.BmZ
         ) { }
 
@@ -48,6 +57,7 @@ namespace DCL.Billboard.Demo.World
             int countInRow = 10,
             int randomCounts = 50,
             float spawnStep = 3,
+            IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap = null,
             params BillboardMode[] predefinedBillboards
         )
         {
@@ -57,6 +67,14 @@ namespace DCL.Billboard.Demo.World
             this.predefinedBillboards = predefinedBillboards;
             this.cubeSize = cubeSize;
             this.cameraData = cameraData ?? new FromTransformExposedCameraData();
+
+            if (entitiesMap == null)
+            {
+                ownedEntitiesMap = new Dictionary<CRDTEntity, Entity>();
+                this.entitiesMap = ownedEntitiesMap;
+            }
+            else
+                this.entitiesMap = entitiesMap;
 
             origin = new DemoWorld(
                 world,
@@ -87,6 +105,25 @@ namespace DCL.Billboard.Demo.World
                .Range(billboards.Count, randomCounts)
                .Select(i => world.Create(RandomBillboard(), NewTransform(i)))
                .ToList();
+
+            if (ownedEntitiesMap != null && predefinedBillboards.Length + randomCounts > 0)
+                FillUpTargeted(world);
+        }
+
+        private void FillUpTargeted(Arch.Core.World world)
+        {
+            int offset = predefinedBillboards.Length + randomCounts;
+
+            for (var i = 0; i < TARGETED_COUNT; i++)
+            {
+                Entity target = world.Create(NewTransform(offset + (i * 2)));
+                ownedEntitiesMap![new CRDTEntity(TARGET_CRDT_ID_BASE + i)] = target;
+
+                world.Create(
+                    new PBBillboard { BillboardMode = BillboardMode.BmAll, TargetEntity = (uint)(TARGET_CRDT_ID_BASE + i) },
+                    NewTransform(offset + (i * 2) + 1)
+                );
+            }
         }
 
         private static void AssignNames(Arch.Core.World world)
@@ -96,7 +133,7 @@ namespace DCL.Billboard.Demo.World
         }
 
         private BillboardSystem NewBillboardSystem(Arch.Core.World world) =>
-            new (world, cameraData);
+            new (world, cameraData, entitiesMap);
 
         private TransformComponent NewTransform(int offset = 0)
         {
