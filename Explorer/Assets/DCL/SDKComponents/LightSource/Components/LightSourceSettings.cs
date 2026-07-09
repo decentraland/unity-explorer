@@ -21,9 +21,9 @@ namespace DCL.SDKComponents.LightSource
         public float PointLightIntensityScale = 1;
 
         [Tooltip("Default values used when a property isn't defined in a protocol object.")]
-        public DefaultValuesSettings DefaultValues = new();
+        public DefaultValuesSettings DefaultValues;
 
-        [NonSerialized] public SceneLimitationsSettings SceneLimitations = new();
+        [NonSerialized] public SceneLimitationsSettings SceneLimitations;
 
         [NonSerialized] public List<LodSettings> SpotLightsLods = new();
 
