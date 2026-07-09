@@ -35,9 +35,9 @@ namespace DCL.UserInAppInitializationFlow
 
             if (!await service.ConnectAsync(ct, CONNECTION_ATTEMPTS))
             {
-                // Server is unreachable: fall back fully to LiveKit so the client behaves as if Pulse were absent.
+                // Server is unreachable or keeps failing the handshake: fall back fully to LiveKit so the client behaves as if Pulse were absent.
                 pulseActivation.Deactivate();
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, "Pulse unreachable at start-up; falling back to LiveKit-only.");
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, "Pulse connection failed at start-up; falling back to LiveKit-only.");
                 await UniTask.SwitchToMainThread();
                 return;
             }

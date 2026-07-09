@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.WebRequests;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -29,7 +30,6 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -46,6 +46,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.NotificationsBus;
 using DCL.NotificationsBus.NotificationTypes;
+using DCL.Passport.Modules.Creations;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Controls.Configs;
 using DCL.Utility.Types;
@@ -92,11 +93,13 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
+        private readonly List<IPassportModuleController> creationsPassportModules = new ();
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
+        private readonly IWebRequestController webRequestController;
         private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -139,7 +142,8 @@ namespace DCL.Passport
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
-        private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
+        private BadgesDetailsPassportModuleController? badgesDetailsPassportModuleController;
+        private CreationsDetailsPassportModuleController? creationsDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
@@ -201,7 +205,8 @@ namespace DCL.Passport
             CameraReelGalleryMessagesConfiguration cameraReelGalleryMessagesConfiguration,
             CommunitiesDataProvider communitiesDataProvider,
             ImageControllerProvider imageControllerProvider,
-            ColorPresetsSO colorPresets) : base(viewFactory)
+            ColorPresetsSO colorPresets,
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -241,6 +246,7 @@ namespace DCL.Passport
             this.isCommunitiesFeatureEnabled = isCommunitiesFeatureEnabled;
             this.imageControllerProvider = imageControllerProvider;
             this.colorPresets = colorPresets;
+            this.webRequestController = webRequestController;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -288,7 +294,7 @@ namespace DCL.Passport
                 colorPresets);
             colorPickerController.OnColorChanged += SetNewUserNameColor;
 
-            var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
+            var userBasicInfoPassportModuleController = new UserBasicInfoPassportModuleController(
                 viewInstance.UserBasicInfoModuleView,
                 selfProfile,
                 webBrowser,
@@ -308,7 +314,7 @@ namespace DCL.Passport
                 passportErrorsController,
                 passportProfileInfoController));
 
-            overviewPassportModules.Add(new EquippedItems_PassportModuleController(
+            overviewPassportModules.Add(new EquippedItemsPassportModuleController(
                 viewInstance.EquippedItemsModuleView,
                 world,
                 rarityBackgrounds,
@@ -319,13 +325,13 @@ namespace DCL.Passport
                 decentralandUrlsSource,
                 passportErrorsController));
 
-            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
+            overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
                 badgesAPIClient,
                 passportErrorsController,
                 imageControllerProvider));
 
-            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
+            badgesDetailsPassportModuleController = new BadgesDetailsPassportModuleController(
                 viewInstance.BadgesDetailsModuleView,
                 viewInstance.BadgeInfoModuleView,
                 badgesAPIClient,
@@ -333,6 +339,18 @@ namespace DCL.Passport
                 selfProfile,
                 badge3DPreviewCamera,
                 imageControllerProvider);
+
+            creationsDetailsPassportModuleController = new CreationsDetailsPassportModuleController(
+                viewInstance.CreationsDetailsModuleView,
+                webRequestController,
+                decentralandUrlsSource,
+                rarityBackgrounds,
+                rarityColors,
+                categoryIcons,
+                webBrowser,
+                imageControllerProvider,
+                passportErrorsController);
+            creationsPassportModules.Add(creationsDetailsPassportModuleController);
 
             cameraReelGalleryController = new CameraReelGalleryController(
                 viewInstance.CameraReelGalleryModuleView,
@@ -540,6 +558,9 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Clear();
 
+            foreach (IPassportModuleController module in creationsPassportModules)
+                module.Clear();
+
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
             badge3DPreviewCamera.gameObject.SetActive(false);
@@ -602,6 +623,9 @@ namespace DCL.Passport
                 module.Dispose();
 
             foreach (IPassportModuleController module in badgesPassportModules)
+                module.Dispose();
+
+            foreach (IPassportModuleController module in creationsPassportModules)
                 module.Dispose();
 
             if (colorPickerController == null) return;
@@ -674,11 +698,16 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Setup(profile);
 
-            List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+            List<IPassportModuleController> passportModulesToSetup = passportSection switch
+                                                                     {
+                                                                         PassportSection.OVERVIEW => overviewPassportModules,
+                                                                         PassportSection.CREATIONS => creationsPassportModules,
+                                                                         _ => badgesPassportModules,
+                                                                     };
 
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
-                if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
+                if (module is BadgesDetailsPassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
                     badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
 
                 module.Setup(profile);
@@ -701,7 +730,23 @@ namespace DCL.Passport
                 case PassportSection.PHOTOS:
                     OpenPhotosSection();
                     break;
+                case PassportSection.CREATIONS:
+                    OpenCreationsSection();
+                    break;
             }
+        }
+
+        private void OpenCreationsSection()
+        {
+            if (currentSection == PassportSection.CREATIONS)
+                return;
+
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
+            LoadPassportSectionAsync(currentUserId!, PassportSection.CREATIONS, characterPreviewLoadingCts.Token).Forget();
+
+            currentSection = PassportSection.CREATIONS;
+            viewInstance!.OpenSection(currentSection);
+            SetCharacterPreviewVisible(true);
         }
 
         private void OpenPhotosSection()
@@ -845,10 +890,10 @@ namespace DCL.Passport
                 try
                 {
                     // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
-                    Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                    Profile? myOwnProfile = await selfProfile.ProfileAsync(ct);
 
                     // Dont show any interaction for our own user
-                    if (ownProfile == null || ownProfile.UserId == inputData.UserId) return;
+                    if (myOwnProfile == null || myOwnProfile.UserId == inputData.UserId) return;
 
                     viewInstance!.CallButton.gameObject.SetActive(isVoiceCallFeatureEnabled);
 

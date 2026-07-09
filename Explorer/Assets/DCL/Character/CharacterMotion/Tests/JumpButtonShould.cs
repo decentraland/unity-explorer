@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
@@ -14,7 +15,7 @@ using NUnit.Framework;
 using System.Threading.Tasks;
 using UnityEngine.InputSystem;
 
-namespace DCL.CharacterMotion.Tests
+namespace DCL.Character.CharacterMotion.Tests
 {
     [TestFixture]
     public class JumpInputComponentShould : InputTestFixture

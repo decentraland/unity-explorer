@@ -1,11 +1,12 @@
 ﻿using DCL.Character.CharacterMotion.Components;
+using DCL.CharacterMotion;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace DCL.CharacterMotion.Tests
+namespace DCL.Character.CharacterMotion.Tests
 {
     [TestFixture]
     public class CoyoteTimerShould

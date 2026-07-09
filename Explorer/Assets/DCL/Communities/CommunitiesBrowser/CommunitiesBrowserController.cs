@@ -556,8 +556,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (ownProfile == null)
                     return;
 
-                Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct)
-                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<string> result = await dataProvider.SendInviteOrRequestToJoinAsync(evt.CommunityId, ownProfile.UserId, InviteRequestAction.request_to_join, ct);
 
                 if (ct.IsCancellationRequested)
                     return;
@@ -669,7 +668,7 @@ namespace DCL.Communities.CommunitiesBrowser
             browserEventBus.RaiseUpdateJoinedCommunityEvent(communityId, true, success);
         }
 
-        private void OnCommunityRequestedToJoin(string communityId, string requestId, bool success)
+        private void OnCommunityRequestedToJoin(string communityId, string? requestId, bool success)
         {
             var alreadyExistsInvitation = false;
 
@@ -694,7 +693,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 LoadInvitesAndRequestsResults();
 
             if (success)
-                browserStateService.AddJoinRequest(new GetUserInviteRequestData.UserInviteRequestData { communityId = communityId, id = requestId });
+                browserStateService.AddJoinRequest(new GetUserInviteRequestData.UserInviteRequestData { communityId = communityId, id = requestId! });
         }
 
         private void OnCommunityInviteRequestCancelled(string communityId, bool success)
