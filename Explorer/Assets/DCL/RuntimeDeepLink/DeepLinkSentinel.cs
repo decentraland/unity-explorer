@@ -78,7 +78,7 @@ namespace DCL.RuntimeDeepLink
 
                 if (result == DeepLinkHandleResult.DEFERRED)
                 {
-                    // Leave the file in place: the login flow that claims it will delete it on consumption.
+                    // Leave the file in place so the awaiting login can claim it.
                     if (!deferralTimer.IsRunning)
                         deferralTimer.Restart();
 
