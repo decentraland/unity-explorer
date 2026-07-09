@@ -51,8 +51,6 @@ namespace Global.Dynamic
         public ICompositeWeb3Provider? CompositeWeb3Provider { get; private set; }
         public ReactiveProperty<string?> DeeplinkSigninIdentityId { get; } = new (null);
 
-        // The auth request id this instance's login flow is waiting a signin deep link for (null when not
-        // logging in). The deep-link pipeline consumes a signin only for a link whose authRequestId matches it.
         // The auth request id this instance's login flow is waiting a signin deep link for (null when not logging in).
         public ReactiveProperty<string?> DeeplinkLoginAwaitingSigninRequestId { get; } = new (null);
         public AnalyticsContainer Analytics { get; private set; }
