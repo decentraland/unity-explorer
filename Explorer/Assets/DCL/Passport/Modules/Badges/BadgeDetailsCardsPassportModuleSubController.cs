@@ -1,6 +1,5 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
-using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using DCL.UI;
@@ -9,26 +8,26 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgeDetailsCards_PassportModuleSubController
+    public class BadgeDetailsCardsPassportModuleSubController
     {
         private const int BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY = 50;
         private const int GRID_ITEMS_PER_ROW = 6;
 
         public readonly Dictionary<string,List<BadgeDetailCard_PassportFieldView>> InstantiatedBadgeDetailCards = new ();
-        public event Action<string> OnBadgeSelected;
+        public event Action<string>? OnBadgeSelected;
 
-        private readonly BadgesDetails_PassportModuleView view;
-        private readonly BadgesCategories_PassportModuleSubController badgesCategoriesController;
-        private readonly BadgeInfo_PassportModuleSubController badgeInfoController;
+        private readonly BadgesDetailsPassportModuleView view;
+        private readonly BadgesCategoriesPassportModuleSubController badgesCategoriesController;
+        private readonly BadgeInfoPassportModuleSubController badgeInfoController;
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> badgeDetailCardsPool;
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> emptyItemsPool;
         private readonly List<BadgeDetailCard_PassportFieldView> instantiatedEmptyItems = new ();
 
-        public BadgeDetailsCards_PassportModuleSubController(
-            BadgesDetails_PassportModuleView view,
+        public BadgeDetailsCardsPassportModuleSubController(
+            BadgesDetailsPassportModuleView view,
             ImageControllerProvider imageControllerProvider,
-            BadgesCategories_PassportModuleSubController badgesCategoriesController,
-            BadgeInfo_PassportModuleSubController badgeInfoController)
+            BadgesCategoriesPassportModuleSubController badgesCategoriesController,
+            BadgeInfoPassportModuleSubController badgeInfoController)
         {
             this.view = view;
             this.badgesCategoriesController = badgesCategoriesController;
