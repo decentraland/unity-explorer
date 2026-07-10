@@ -48,6 +48,9 @@ namespace DCL.Multiplayer.Movement
             PlayerJoined playerJoined = message.Message.PlayerJoined;
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
+            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
+            UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] PULSE_PLAYER_JOINED wallet={resolvedWallet} subjectId={playerJoined.State.SubjectId} version={playerJoined.ProfileVersion}");
+
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
             peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
@@ -69,7 +72,11 @@ namespace DCL.Multiplayer.Movement
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
+            {
+                // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. Source of PULSE remove intentions.
+                UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] PULSE_PLAYER_LEFT wallet={wallet} subjectId={playerLeft.SubjectId} -> enqueue PULSE remove");
                 removeIntentions.Enqueue(wallet);
+            }
 
             peerIdCache.Remove(playerLeft.SubjectId);
             lastMovementMessages.Remove(playerLeft.SubjectId);

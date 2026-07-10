@@ -58,6 +58,9 @@ namespace DCL.Multiplayer.Profiles.Entities
 
         public void Initialize(RemoteAvatarCollider remoteAvatarCollider)
         {
+            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. If you don't see this, the edited assembly is NOT running.
+            UnityEngine.Debug.LogWarning("[INVISIBLE_AVATAR] BUILD_MARKER RemoteEntities.Initialize - instrumented build is running");
+
             remoteAvatarColliderPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarCollider));
             transformPool = componentPoolsRegistry
                            .GetReferenceTypePool<Transform>()
@@ -84,6 +87,10 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             tempRemoveAll.Clear();
             tempRemoveAll.AddRange(entityParticipantTable.Wallets());
+
+            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. Note: releases GATEKEEPER|ISLAND only, PULSE is NOT released here.
+            UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] FORCE_REMOVE_ALL count={tempRemoveAll.Count} releasing=GATEKEEPER|ISLAND (PULSE not released here)");
+
             foreach (string wallet in tempRemoveAll) Remove(wallet, RoomSource.GATEKEEPER | RoomSource.ISLAND, world);
         }
 
@@ -100,7 +107,14 @@ namespace DCL.Multiplayer.Profiles.Entities
             IReadOnlyEntityParticipantTable.Entry entry = entityParticipantTable.Get(walletId);
 
             if (!entityParticipantTable.Release(walletId, roomSource))
+            {
+                // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
+                UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] ENTITY_REMOVE_KEPT wallet={walletId} releasing={roomSource} was={entry.ConnectedTo} (other room source still connected)");
                 return;
+            }
+
+            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
+            UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] ENTITY_REMOVE_DELETED wallet={walletId} releasing={roomSource} was={entry.ConnectedTo}");
 
             movementInbox.RemovePending(walletId);
 
@@ -120,11 +134,15 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             if (entityParticipantTable.TryGet(profile.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
             {
+                // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
+                UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] ENTITY_UPDATE wallet={profile.WalletId} fromRoom={profile.FromRoom} connectedTo={entry.ConnectedTo}");
                 UpdateCharacter(profile, world, entry.Entity);
                 entity = entry.Entity;
             }
             else
             {
+                // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
+                UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] ENTITY_CREATE wallet={profile.WalletId} fromRoom={profile.FromRoom}");
                 entity = CreateCharacter(profile, world);
                 entityParticipantTable.Register(profile.WalletId, entity, profile.FromRoom);
                 // Must apply any pending movement since the creation of the avatar might be processed after the processing of the movement
