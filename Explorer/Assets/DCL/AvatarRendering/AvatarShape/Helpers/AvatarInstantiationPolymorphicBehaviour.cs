@@ -53,8 +53,10 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
                     IReadOnlyDictionary<string, SpringBoneParamsDto>? boneParams = ResolveSpringBoneParams(resultWearable, avatarShapeComponent.BodyShape);
 
+                    string? matcapName = resultWearable.Model.Asset?.metadata.data.matcap;
+
                     var instantiatedWearable =
-                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible(), boneParams);
+                        wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible(), boneParams, matcapName);
 
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 

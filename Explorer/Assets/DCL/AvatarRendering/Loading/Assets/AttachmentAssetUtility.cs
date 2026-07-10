@@ -27,9 +27,10 @@ namespace DCL.AvatarRendering.Loading.Assets
             AttachmentRegularAsset originalAsset,
             Transform parent,
             bool outlineCompatible,
-            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBonesParams = null)
+            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBonesParams = null,
+            string? matcapName = null)
         {
-            CachedAttachment wearable = InstantiateOrGetCached(attachmentsAssetsCache, originalAsset, parent, outlineCompatible, springBonesParams);
+            CachedAttachment wearable = InstantiateOrGetCached(attachmentsAssetsCache, originalAsset, parent, outlineCompatible, springBonesParams, matcapName);
 
             ProcessWearableChildren(parent, wearable);
 
@@ -43,7 +44,8 @@ namespace DCL.AvatarRendering.Loading.Assets
             AttachmentRegularAsset originalAsset,
             Transform parent,
             bool outlineCompatible,
-            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams)
+            IReadOnlyDictionary<string, SpringBoneParamsDto>? springBoneParams,
+            string? matcapName = null)
         {
             if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
             {
@@ -64,7 +66,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             RemoveBonesGameObjects(instantiatedWearable.transform);
 
             var springBones = BuildSpringBoneData(instantiatedWearable, springBoneParams);
-            return new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones);
+            return new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible, springBones, matcapName);
         }
 
         private static void ProcessWearableChildren(Transform parent, CachedAttachment wearable)

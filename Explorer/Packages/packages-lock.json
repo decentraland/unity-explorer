@@ -136,11 +136,11 @@
       "hash": "dc9994994637d30b0a61e2354eb2bbb8e963fa33"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#feat/toon-normalmap-stylized-metallic",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "f040030e82c51bdddce67ae18149e22b5b4c4c0d"
+      "hash": "1b97ec410fb5ed07d2a47df9a013f2a06f31ab93"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",

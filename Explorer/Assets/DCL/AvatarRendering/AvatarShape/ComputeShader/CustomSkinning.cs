@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             int boneCount);
 
         private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler celShadingMaterial,
-            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures);
+            AvatarShapeComponent shapeComponent, in FacialFeaturesTextures facialFeaturesTextures, string? matcapName);
 
         protected void ResetTransforms(Transform currentTransform, Transform rootTransform)
         {

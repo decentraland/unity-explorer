@@ -18,6 +18,48 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private static readonly int CLIPPING_LEVEL = Shader.PropertyToID("_Clipping_Level");
         private static readonly int CULL_MODE = Shader.PropertyToID("_CullMode");
 
+        private static readonly int IS_STYLIZED_METALLIC = Shader.PropertyToID("_IsStylizedMetallic");
+        private static readonly int METALLIC_GLOSS_MAP = TextureArrayConstants.METALLIC_GLOSS_MAP_ORIGINAL_TEXTURE_ID;
+        private static readonly int METALLIC_GLOSS_MAP_ARR_ID = TextureArrayConstants.METALLIC_GLOSS_MAP_ARR_SHADER_ID;
+        private static readonly int METALLIC = Shader.PropertyToID("_Metallic");
+        private static readonly int MATCAP_SAMPLER_ARR = Shader.PropertyToID("_MatCap_SamplerArr");
+        private static readonly int MATCAP_SAMPLER_ARR_ID = Shader.PropertyToID("_MatCap_SamplerArr_ID");
+        private static readonly int MATCAP_COLOR = Shader.PropertyToID("_MatCapColor");
+        private static readonly int BLUR_LEVEL_MATCAP = Shader.PropertyToID("_BlurLevelMatcap");
+
+        /// <summary>
+        ///     Shared stylized-metallic matcap library: one Texture2DArray built once from the shared
+        ///     MatcapPresets ScriptableObject, plus a preset-name -> slice map and per-slice look values.
+        ///     Assigned once at startup (see DefaultTexturesContainer). Null until then / when unset,
+        ///     in which case metallic materials fall back to the shader default (no matcap = unlit metal).
+        /// </summary>
+        public static MatcapLibrary? Matcap { get; set; }
+
+        public sealed class MatcapLibrary
+        {
+            public readonly Texture2DArray Array;
+            private readonly IReadOnlyDictionary<string, int> nameToSlice;
+            private readonly Color[] tints;
+            private readonly float[] blurs;
+            public readonly int DefaultSlice;
+
+            public MatcapLibrary(Texture2DArray array, IReadOnlyDictionary<string, int> nameToSlice, Color[] tints, float[] blurs, int defaultSlice)
+            {
+                Array = array;
+                this.nameToSlice = nameToSlice;
+                this.tints = tints;
+                this.blurs = blurs;
+                DefaultSlice = defaultSlice;
+            }
+
+            /// <summary>Resolves a wearable's matcap name to a slice index, or the default slice when null/unknown.</summary>
+            public int ResolveSlice(string? name) =>
+                !string.IsNullOrEmpty(name) && nameToSlice.TryGetValue(name, out int slice) ? slice : DefaultSlice;
+
+            public Color TintAt(int slice) => (uint)slice < (uint)tints.Length ? tints[slice] : Color.white;
+            public float BlurAt(int slice) => (uint)slice < (uint)blurs.Length ? blurs[slice] : 0f;
+        }
+
         private static readonly int Z_WRITE_MODE = Shader.PropertyToID("_ZWriteMode");
         private static readonly int CULL = Shader.PropertyToID("_Cull");
         private static readonly int Z_WRITE = Shader.PropertyToID("_ZWrite");
@@ -41,7 +83,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public static AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
             AvatarShapeComponent avatarShapeComponent,
-            in FacialFeaturesTextures facialFeatures)
+            in FacialFeaturesTextures facialFeatures,
+            string? matcapName = null)
         {
             TextureArraySlot?[] slots;
             Material avatarMaterial;
@@ -50,7 +93,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             (avatarMaterial, slots, shaderId) = TrySetupFacialFeature(meshRenderer, poolHandler, avatarShapeComponent, facialFeatures, out bool isFacialFeature);
 
             if (!isFacialFeature)
-                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler);
+                (avatarMaterial, slots, shaderId) = SetupRegularMaterial(originalMaterial, poolHandler, matcapName);
 
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
@@ -62,7 +105,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private static (Material avatarMaterial, TextureArraySlot?[] slots, int shaderId) SetupRegularMaterial(
-            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler)
+            Material originalMaterial, IAvatarMaterialPoolHandler poolHandler, string? matcapName = null)
         {
             int shaderId = TextureArrayConstants.SHADERID_DCL_TOON;
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
@@ -74,6 +117,33 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             var emissionColor = originalMaterial.GetColor("_EmissionColor");
             avatarMaterial.SetColor("_Emissive_Color", emissionColor);
+
+            // Stylized metallic: metal if the source material has a metallic map or metallicFactor > 0
+            // (mirrors aang). Always set the gate (materials are pooled/reused). When metal, bind the
+            // shared matcap array + this wearable's resolved preset slice/tint/blur; if the library
+            // isn't set up the shader default (_MatCap_SamplerArr_ID = -1) keeps it unlit — safe no-op.
+            bool metal = originalMaterial.IsKeywordEnabled("_METALLICSPECGLOSSMAP")
+                         || originalMaterial.GetTexture(METALLIC_GLOSS_MAP) != null
+                         || (originalMaterial.HasProperty(METALLIC) && originalMaterial.GetFloat(METALLIC) > 0f);
+            avatarMaterial.SetInteger(IS_STYLIZED_METALLIC, metal ? 1 : 0);
+
+            if (metal)
+            {
+                // Default to "no mask = fully metallic" (arr id = -1). The texture-array handler below
+                // overrides this with the packed slice when the source has a real metallic map; a
+                // factor-only wearable (no map) stays fully metallic. The pooled material inherits
+                // arr id = 0 from Avatar_Toon.mat, which would otherwise sample an empty slice (metal = 0).
+                avatarMaterial.SetInteger(METALLIC_GLOSS_MAP_ARR_ID, -1);
+
+                if (Matcap != null)
+                {
+                    int slice = Matcap.ResolveSlice(matcapName);
+                    avatarMaterial.SetTexture(MATCAP_SAMPLER_ARR, Matcap.Array);
+                    avatarMaterial.SetInteger(MATCAP_SAMPLER_ARR_ID, slice);
+                    avatarMaterial.SetColor(MATCAP_COLOR, Matcap.TintAt(slice));
+                    avatarMaterial.SetFloat(BLUR_LEVEL_MATCAP, Matcap.BlurAt(slice));
+                }
+            }
 
             avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
             avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");

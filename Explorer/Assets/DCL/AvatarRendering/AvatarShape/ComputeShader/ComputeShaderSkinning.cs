@@ -119,7 +119,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 MeshData meshData = gameObjects[i];
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
-                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture));
+                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, avatarMaterial, avatarShapeComponent, facilFeatureTexture, meshData.MatcapName));
                 auxVertCounter += currentVertexCount;
 
                 if (avatarShapeComponent.ShowOnlyWearables)
@@ -172,7 +172,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             cachedWearable.Renderers.Add(tuple.Item1);
 
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, springBoneOffset, cachedWearable.MatcapName));
                         }
                         else
                         {
@@ -180,7 +180,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                originalMaterial, springBoneOffset));
+                                originalMaterial, springBoneOffset, cachedWearable.MatcapName));
                         }
                     }
                 }
@@ -205,8 +205,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, IAvatarMaterialPoolHandler poolHandler,
-            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures) =>
-            AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures);
+            AvatarShapeComponent avatarShapeComponent, in FacialFeaturesTextures facialFeaturesTextures, string? matcapName) =>
+            AvatarMaterialConfiguration.SetupMaterial(meshRenderer, originalMaterial, lastWearableVertCount, poolHandler, avatarShapeComponent, facialFeaturesTextures, matcapName);
 
         /// <summary>
         /// Checks the bounds of a list of meshes and computes the bounding box that contains them all.

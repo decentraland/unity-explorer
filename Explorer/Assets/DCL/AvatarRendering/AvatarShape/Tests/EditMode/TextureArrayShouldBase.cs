@@ -30,7 +30,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture_BC7,
                 [new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7,
                 [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC5,
-                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7
+                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7,
+                [new TextureArrayKey(TextureArrayConstants.METALLIC_GLOSS_MAP_ARR_TEX_SHADER_ID, TEST_RESOLUTION)] = texture_BC7
             };
             var factory = new TextureArrayContainerFactory(defaultTextures);
             textureArrayContainer = factory.Create(targetShader, DEFAULT_RESOLUTIONS);

@@ -16,7 +16,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         /// </summary>
         public readonly int SpringBoneOffset;
 
-        public MeshData(MeshFilter mesh, Renderer renderer, Transform transform, Transform rootTransform, Material originalMaterial, int springBoneOffset = 0)
+        /// <summary>Matcap preset name carried from the wearable, resolved to a slice at material setup.</summary>
+        public readonly string? MatcapName;
+
+        public MeshData(MeshFilter mesh, Renderer renderer, Transform transform, Transform rootTransform, Material originalMaterial, int springBoneOffset = 0, string? matcapName = null)
         {
             Mesh = mesh;
             Transform = transform;
@@ -24,6 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             OriginalMaterial = originalMaterial;
             Renderer = renderer;
             SpringBoneOffset = springBoneOffset;
+            MatcapName = matcapName;
         }
     }
 }

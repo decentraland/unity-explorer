@@ -73,6 +73,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                         DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT,
                         defaultTextures),
                     EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION),
+
+                new (new TextureArrayHandler("Avatar_Toon",
+                        METALLIC_TEXTURE_ARRAY_SIZE,
+                        METALLIC_GLOSS_MAP_ARR_SHADER_ID,
+                        METALLIC_GLOSS_MAP_ARR_TEX_SHADER_ID,
+                        defaultResolutions,
+                        DEFAULT_METALLICMAP_TEXTURE_FORMAT,
+                        defaultTextures),
+                    METALLIC_GLOSS_MAP_ORIGINAL_TEXTURE_ID, METALLIC_TEXTURE_RESOLUTION),
             };
 
             if (enableRawGltfWearables)
@@ -110,7 +119,16 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                             defaultResolutions,
                             DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
                         EMISSION_MAP_ORIGINAL_TEXTURE_ID,
-                        EMISSION_TEXTURE_RESOLUTION)
+                        EMISSION_TEXTURE_RESOLUTION),
+
+                    new TextureArrayMapping(new TextureArrayHandler("Avatar_Toon_Raw_GLTF",
+                            METALLIC_TEXTURE_ARRAY_SIZE,
+                            METALLIC_GLOSS_MAP_ARR_SHADER_ID,
+                            METALLIC_GLOSS_MAP_ARR_TEX_SHADER_ID,
+                            defaultResolutions,
+                            DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        METALLIC_GLOSS_MAP_ORIGINAL_TEXTURE_ID,
+                        METALLIC_TEXTURE_RESOLUTION)
                 });
             }
 

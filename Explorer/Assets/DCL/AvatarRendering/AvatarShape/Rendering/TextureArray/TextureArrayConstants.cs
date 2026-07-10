@@ -16,6 +16,8 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const TextureFormat DEFAULT_BASEMAP_TEXTURE_FORMAT = TextureFormat.BC7;
         public const TextureFormat DEFAULT_NORMALMAP_TEXTURE_FORMAT = TextureFormat.BC5;
         public const TextureFormat DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT = TextureFormat.BC7;
+        // Metallic-gloss mask is an RGBA(+alpha) map; BC7 matches BaseMap/Emission so no test/whitelist change is needed.
+        public const TextureFormat DEFAULT_METALLICMAP_TEXTURE_FORMAT = TextureFormat.BC7;
         public const TextureFormat DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT = TextureFormat.RGBA32;
 
         public const int HIGH_RES_THRESHOLD = 1024;
@@ -26,11 +28,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public const int MAIN_TEXTURE_ARRAY_SIZE_FOR_1024_AND_ABOVE = 32;
         public const int NORMAL_TEXTURE_ARRAY_SIZE = 125;
         public const int EMISSION_TEXTURE_ARRAY_SIZE = 75;
+        public const int METALLIC_TEXTURE_ARRAY_SIZE = 75;
         public const int FACIAL_FEATURES_TEXTURE_ARRAY_SIZE = 75;
 
         public const int MAIN_TEXTURE_RESOLUTION = 512;
         public const int NORMAL_TEXTURE_RESOLUTION = 512;
         public const int EMISSION_TEXTURE_RESOLUTION = 512;
+        public const int METALLIC_TEXTURE_RESOLUTION = 512;
         public const int FACIAL_FEATURES_TEXTURE_RESOLUTION = 256;
 
         public const int SHADERID_DCL_PBR = 1;

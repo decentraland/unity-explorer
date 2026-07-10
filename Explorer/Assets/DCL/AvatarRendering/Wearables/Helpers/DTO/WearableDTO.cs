@@ -21,6 +21,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public class DataDto : DataBase
             {
                 public SpringBonesDto? springBones;
+
+                // Name of the stylized-metallic matcap preset (in the shared MatcapPresets library)
+                // to use for this wearable's metallic materials. Null/unknown falls back to the default.
+                public string? matcap;
             }
         }
 

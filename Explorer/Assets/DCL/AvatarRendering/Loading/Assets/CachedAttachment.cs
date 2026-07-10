@@ -14,13 +14,19 @@ namespace DCL.AvatarRendering.Loading.Assets
         public readonly bool OutlineCompatible;
         public readonly SpringBoneData[] SpringBones;
 
-        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible, SpringBoneData[] springBones)
+        // Matcap preset name for this wearable's metallic materials (from the wearable JSON), resolved
+        // to a slice at material setup. Null => default matcap. Optional param keeps existing call sites
+        // (tests) unchanged.
+        public readonly string? MatcapName;
+
+        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool outlineCompatible, SpringBoneData[] springBones, string? matcapName = null)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
             Renderers = new List<Renderer>();
             OutlineCompatible = outlineCompatible;
             SpringBones = springBones;
+            MatcapName = matcapName;
 
             ProfilingCounters.CachedWearablesAmount.Value++;
         }
