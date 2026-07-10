@@ -6,6 +6,13 @@ namespace DCL.Multiplayer.Connections.Pulse
 {
     public class PeerIdCache
     {
+        public enum LookupResult : byte
+        {
+            FOUND,
+            UNKNOWN_PEER,
+            REALM_MISMATCH,
+        }
+
         private readonly object sync = new ();
         private readonly Dictionary<uint, (Web3Address wallet, string realm)> peersByWallet = new ();
         private readonly Dictionary<Web3Address, uint> walletsByPeerId = new ();
@@ -59,21 +66,24 @@ namespace DCL.Multiplayer.Connections.Pulse
             }
         }
 
-        /// <summary>
-        ///     Fails when the peer is unknown or its announced realm differs from <paramref name="realm" />.
-        /// </summary>
-        public bool TryGetWalletInRealm(uint peerId, string realm, out Web3Address wallet)
+        public LookupResult GetWalletInRealm(uint peerId, string realm, out Web3Address wallet)
         {
             lock (sync)
             {
-                if (peersByWallet.TryGetValue(peerId, out (Web3Address wallet, string realm) entry) && entry.realm == realm)
+                if (!peersByWallet.TryGetValue(peerId, out (Web3Address wallet, string realm) entry))
                 {
-                    wallet = entry.wallet;
-                    return true;
+                    wallet = default(Web3Address);
+                    return LookupResult.UNKNOWN_PEER;
                 }
 
-                wallet = default(Web3Address);
-                return false;
+                if (entry.realm != realm)
+                {
+                    wallet = default(Web3Address);
+                    return LookupResult.REALM_MISMATCH;
+                }
+
+                wallet = entry.wallet;
+                return LookupResult.FOUND;
             }
         }
 

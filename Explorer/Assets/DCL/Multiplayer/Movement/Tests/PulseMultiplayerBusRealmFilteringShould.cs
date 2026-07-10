@@ -15,6 +15,7 @@ using ECS;
 using Google.Protobuf;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -57,6 +58,7 @@ namespace DCL.Multiplayer.Movement.Tests
         private IRealmData realmData;
         private PulseMultiplayerBus bus;
         private Dictionary<ServerMessage.MessageOneofCase, IPulseMultiplayerService.IncomingMessageHandler> handlers;
+        private Action beforeMessage;
         private string currentRealm;
         private World world;
 
@@ -73,6 +75,9 @@ namespace DCL.Multiplayer.Movement.Tests
 
             pulseService.When(s => s.RegisterSyncHandler(Arg.Any<ServerMessage.MessageOneofCase>(), Arg.Any<IPulseMultiplayerService.IncomingMessageHandler>()))
                         .Do(ci => handlers[ci.ArgAt<ServerMessage.MessageOneofCase>(0)] = ci.ArgAt<IPulseMultiplayerService.IncomingMessageHandler>(1));
+
+            pulseService.When(s => s.RegisterBeforeMessageHandler(Arg.Any<Action>()))
+                        .Do(ci => beforeMessage = ci.ArgAt<Action>(0));
 
             participantTable = Substitute.For<IReadOnlyEntityParticipantTable>();
             world = World.Create();
@@ -159,6 +164,9 @@ namespace DCL.Multiplayer.Movement.Tests
             // Park both movements as pending (no entities registered yet)
             movementInbox.DrainToEntities();
 
+            // Baseline broadcast: the purge triggers only when the realm differs from the previous broadcast
+            bus.BroadcastTeleport(Vector3.zero);
+
             currentRealm = REALM_B;
             bus.BroadcastTeleport(Vector3.zero);
 
@@ -182,6 +190,8 @@ namespace DCL.Multiplayer.Movement.Tests
         [Test]
         public void NotPurgeOnIntraRealmTeleport()
         {
+            bus.BroadcastTeleport(Vector3.zero);
+
             Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
 
             bus.BroadcastTeleport(Vector3.zero);
@@ -200,6 +210,8 @@ namespace DCL.Multiplayer.Movement.Tests
             Handle(EmoteStartedMessage(7));
             Assert.IsTrue(bus.IsPeerEmoting(new Web3Address(WALLET_1)));
 
+            bus.BroadcastTeleport(Vector3.zero);
+
             currentRealm = REALM_B;
             bus.BroadcastTeleport(Vector3.zero);
 
@@ -209,6 +221,60 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsTrue(peerIdCache.TryGetWallet(7, out Web3Address wallet));
             Assert.IsTrue(wallet.Equals(WALLET_2));
             Assert.IsFalse(bus.IsPeerEmoting(new Web3Address(WALLET_2)));
+        }
+
+        [Test]
+        public void RemovePeerOnTeleportToDifferentRealm()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            // No PlayerLeft is issued for a peer that changes realms within the same tick range
+            Handle(TeleportMessage(7, REALM_B));
+
+            Assert.IsFalse(peerIdCache.TryGetWallet(7, out _));
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                CollectionAssert.AreEquivalent(new[] { new RemoveIntention(WALLET_1, RoomSource.PULSE) }, bunch.Collection());
+        }
+
+        [Test]
+        public void KeepPeerAnnouncingDestinationRealmViaTeleport()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+            DrainAnnouncements();
+
+            bus.BroadcastTeleport(Vector3.zero);
+
+            currentRealm = REALM_B;
+
+            // A co-teleporting peer is not re-announced; its TeleportPerformed lands before the local broadcast
+            Handle(TeleportMessage(7, REALM_B));
+
+            bus.BroadcastTeleport(Vector3.zero);
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
+
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out Web3Address wallet));
+            Assert.IsTrue(wallet.Equals(WALLET_1));
+
+            // The deferred routing purge must keep the peer too
+            Handle(PlayerStateFullMessage(7, sequence: 3));
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out _));
+        }
+
+        [Test]
+        public void DropTeleportWithEmptyRealm()
+        {
+            Handle(PlayerJoinedMessage(7, WALLET_1, REALM_A));
+
+            Handle(TeleportMessage(7, string.Empty));
+
+            Assert.IsTrue(peerIdCache.TryGetWallet(7, out _));
+
+            using (OwnedBunch<RemoveIntention> bunch = removeIntentions.Bunch())
+                Assert.IsFalse(bunch.Available());
         }
 
         [Test]
@@ -232,7 +298,11 @@ namespace DCL.Multiplayer.Movement.Tests
             Assert.IsTrue(IncomingMessage.TryCreate(new PeerId(1), bytes, out IncomingMessage incoming));
 
             using (incoming)
+            {
+                // Mirrors the service routing loop: the before-message hook runs ahead of every handler
+                beforeMessage();
                 handlers[serverMessage.MessageCase](incoming);
+            }
         }
 
         private List<RemoteAnnouncement> DrainAnnouncements()
@@ -297,6 +367,19 @@ namespace DCL.Multiplayer.Movement.Tests
                 {
                     SubjectId = subjectId,
                     Version = version,
+                },
+            };
+
+        private static ServerMessage TeleportMessage(uint subjectId, string realm) =>
+            new ()
+            {
+                Teleported = new TeleportPerformed
+                {
+                    SubjectId = subjectId,
+                    Sequence = 2,
+                    ServerTick = 2,
+                    Realm = realm,
+                    State = new PlayerState(),
                 },
             };
 

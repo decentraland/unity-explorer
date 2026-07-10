@@ -33,6 +33,9 @@ namespace DCL.Multiplayer.Movement
         // BroadcastTeleport is main-thread-only, so single-threaded reuse is safe
         private readonly HashSet<string> staleWalletsBuffer = new ();
 
+        // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements
+        private string? lastBroadcastRealm;
+
         internal long ResyncCount { get; private set; }
 
         internal long EmoteStateMismatchCount { get; private set; }
@@ -68,6 +71,22 @@ namespace DCL.Multiplayer.Movement
             return identityCache.EnsuredIdentity().Address;
         }
 
+        private bool TryGetWalletInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
+        {
+            switch (peerIdCache.GetWalletInRealm(subjectId, realmData.RealmName, out wallet))
+            {
+                case PeerIdCache.LookupResult.UNKNOWN_PEER:
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
+                    return false;
+                case PeerIdCache.LookupResult.REALM_MISMATCH:
+                    // Expected while a realm-change purge is pending, so not a warning
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
         public void Dispose()
         {
             isDisposed = true;
@@ -85,6 +104,7 @@ namespace DCL.Multiplayer.Movement
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStarted, HandleEmoteStarted);
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped, HandleEmoteStopped);
 
+            pulseService.RegisterBeforeMessageHandler(TryDrainRoutingPurge);
             pulseService.RegisterDisconnectHandler(HandleDisconnect);
             pulseService.RegisterHandshakeHandler(HandshakeAsync);
         }
@@ -103,20 +123,19 @@ namespace DCL.Multiplayer.Movement
         /// </summary>
         private void PurgeDifferentRealmPeers()
         {
+            // Everything gathered up to the realm switch belongs to the previous realm
+            incomingProfiles.Clear();
+            ClearEmoteIntentions();
+
+            // The comparison spares co-teleporting peers whose TeleportPerformed already refreshed the cached realm
             staleWalletsBuffer.Clear();
             peerIdCache.CollectWalletsNotInRealm(realmData.RealmName, staleWalletsBuffer);
-
-            if (staleWalletsBuffer.Count == 0)
-                return;
 
             foreach (string wallet in staleWalletsBuffer)
             {
                 removeIntentions.Enqueue(wallet);
                 movementInbox.RemovePending(wallet);
             }
-
-            incomingProfiles.RemoveWallets(staleWalletsBuffer);
-            RemoveEmoteIntentionsFor(staleWalletsBuffer);
 
             routingPurgeRequested = true;
 

@@ -14,6 +14,9 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private const string PLAYER_STATE_MESSAGE = "player state";
+        private const string PLAYER_STATE_DELTA_MESSAGE = "player state delta";
+
         // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly Dictionary<uint, byte> pendingResyncs = new ();
@@ -44,8 +47,6 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
-            TryDrainRoutingPurge();
-
             PlayerJoined playerJoined = message.Message.PlayerJoined;
 
             // An empty realm violates the server contract, so it is dropped too
@@ -75,8 +76,6 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
-            TryDrainRoutingPurge();
-
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
             // Realm-agnostic on purpose: removals must process even for peers whose stored realm is stale
@@ -84,9 +83,7 @@ namespace DCL.Multiplayer.Movement
                 removeIntentions.Enqueue(wallet);
 
             peerIdCache.Remove(playerLeft.SubjectId);
-            lastMovementMessages.Remove(playerLeft.SubjectId);
-            pendingResyncs.Remove(playerLeft.SubjectId);
-            emotingSubjects.Remove(playerLeft.SubjectId);
+            PurgeQueues(playerLeft.SubjectId);
         }
 
         private void HandlePlayerStateFull(IncomingMessage message)
@@ -97,15 +94,10 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
-            TryDrainRoutingPurge();
-
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!peerIdCache.TryGetWalletInRealm(playerStateFull.SubjectId, realmData.RealmName, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
             TryUpdateLastMovementAndCompleteResync(playerStateFull.ServerTick, playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
@@ -120,15 +112,10 @@ namespace DCL.Multiplayer.Movement
                 return;
             }
 
-            TryDrainRoutingPurge();
-
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!peerIdCache.TryGetWalletInRealm(delta.SubjectId, realmData.RealmName, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(delta.SubjectId, PLAYER_STATE_DELTA_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
             {
