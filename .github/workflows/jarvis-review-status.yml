@@ -261,6 +261,9 @@ jobs:
               | jq -r --arg SHA "$SHA" '
                   map(select(.headSha == $SHA and (.status == "in_progress" or .status == "queued"))) | length
               ')
+            # A transient gh/API failure yields an empty string — treat it as 0
+            # so the step degrades to "proceed to re-run" instead of erroring.
+            IN_PROGRESS=${IN_PROGRESS:-0}
             if [ "$IN_PROGRESS" -eq 0 ]; then
               break
             fi
