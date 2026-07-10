@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.Index = -1;
             lightSourceComponent.Rank = -1;
             lightSourceComponent.TypeRank = -1;
-            lightSourceComponent.Culling = LightSourceComponent.CullingFlags.None;
+            lightSourceComponent.Culling = LightSourceComponent.CullingFlags.NONE;
         }
 
         [Query]
@@ -77,8 +77,18 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
+            // Lights that fall into a culled LOD are excluded from the ranking so they do not occupy budget slots.
+            if (IsLodCulled(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayerSq)) return;
+
             lightSourceComponent.Index = lightData.Length;
             lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayerSq));
+        }
+
+        private bool IsLodCulled(PBLightSource.TypeOneofCase typeCase, float distanceToPlayerSq)
+        {
+            if (!LightSourceHelper.TryGetLodSettings(settings, typeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return false;
+
+            return LightSourceHelper.FindLOD(lodSettings, distanceToPlayerSq) < 0;
         }
 
         [BurstCompile]
@@ -98,7 +108,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             for (var i = 0; i < lightCount; i++)
             {
-                int typeRank = lightData[i].Type switch
+                int typeRank = lightData[sortedIndices[i]].Type switch
                                {
                                    PBLightSource.TypeOneofCase.Point => pointLightRank++,
                                    PBLightSource.TypeOneofCase.Spot => spotLightRank++,
@@ -121,7 +131,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.TypeRank = typeRank;
 
             if (lightSourceComponent.Rank >= maxLightCount)
-                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TooManyLightSources;
+                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TOO_MANY_LIGHT_SOURCES;
 
             bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxPointLightShadows) ||
                                         (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxSpotLightShadows);
