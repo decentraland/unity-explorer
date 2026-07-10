@@ -48,6 +48,9 @@ namespace DCL.Multiplayer.Movement
             PlayerJoined playerJoined = message.Message.PlayerJoined;
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
+            // Join supersedes any still-queued leave for this wallet; drop the stale remove so it can't delete a present peer.
+            removeIntentions.Cancel(resolvedWallet);
+
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
             peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
