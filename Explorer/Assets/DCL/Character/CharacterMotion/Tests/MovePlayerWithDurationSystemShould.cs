@@ -10,7 +10,7 @@ using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace DCL.CharacterMotion.Tests
+namespace DCL.Character.CharacterMotion.Tests
 {
     public class MovePlayerWithDurationSystemShould : UnitySystemTestBase<MovePlayerWithDurationSystem>
     {

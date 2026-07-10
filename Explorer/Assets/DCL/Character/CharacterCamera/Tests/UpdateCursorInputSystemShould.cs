@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Character.CharacterCamera.Components;
-using DCL.CharacterCamera.Components;
-using DCL.CharacterCamera.Systems;
+using DCL.CharacterCamera;
 using DCL.Input;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
@@ -15,7 +14,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 
-namespace DCL.CharacterCamera.Tests
+namespace DCL.Character.CharacterCamera.Tests
 {
     [TestFixture]
     public class UpdateCursorInputSystemShould : InputTestFixture

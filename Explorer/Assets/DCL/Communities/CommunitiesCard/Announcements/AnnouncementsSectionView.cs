@@ -19,6 +19,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         public event Action? NewDataRequested;
         public event Action<string>? CreateAnnouncementButtonClicked;
+        public event Action<bool>? CreationInputFocusChanged;
         public event Action<string>? LikeAnnouncementButtonClicked;
         public event Action<string>? UnlikeAnnouncementButtonClicked;
         public event Action<string>? DeleteAnnouncementButtonClicked;
@@ -28,7 +29,7 @@ namespace DCL.Communities.CommunitiesCard.Announcements
         private ProfileRepositoryWrapper profileRepositoryWrapper = null!;
         private bool isCreationAllowed;
         private CommunityMemberRole currentRole;
-        private AnnouncementCreationCardView? announcementCreationCardItem = null;
+        private AnnouncementCreationCardView? announcementCreationCardItem;
 
         private void Awake() =>
             loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
@@ -90,6 +91,8 @@ namespace DCL.Communities.CommunitiesCard.Announcements
                     announcementCreationCardItem.Configure(currentProfile, profileRepositoryWrapper);
                     announcementCreationCardItem.CreateAnnouncementButtonClicked -= OnCreateAnnouncementButtonClicked;
                     announcementCreationCardItem.CreateAnnouncementButtonClicked += OnCreateAnnouncementButtonClicked;
+                    announcementCreationCardItem.InputFocusChanged -= OnCreationInputFocusChanged;
+                    announcementCreationCardItem.InputFocusChanged += OnCreationInputFocusChanged;
                     return creationInputItem;
                 }
 
@@ -124,6 +127,9 @@ namespace DCL.Communities.CommunitiesCard.Announcements
 
         private void OnCreateAnnouncementButtonClicked(string announcementContent) =>
             CreateAnnouncementButtonClicked?.Invoke(announcementContent);
+
+        private void OnCreationInputFocusChanged(bool isFocused) =>
+            CreationInputFocusChanged?.Invoke(isFocused);
 
         private void OnLikeAnnouncementButtonClicked(string announcementId) =>
             LikeAnnouncementButtonClicked?.Invoke(announcementId);

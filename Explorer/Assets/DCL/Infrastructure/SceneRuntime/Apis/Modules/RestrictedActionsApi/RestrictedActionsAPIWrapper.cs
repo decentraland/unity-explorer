@@ -53,7 +53,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
-        public object TriggerEmote(string predefinedEmote, uint mask)
+        public object TriggerEmote(string predefinedEmote, uint? mask)
         {
             triggerEmoteCancellationToken = triggerEmoteCancellationToken.SafeRestart();
             return TriggerEmoteAsync(triggerEmoteCancellationToken.Token).ToDisconnectedPromise(this);
@@ -62,19 +62,28 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             {
                 await UniTask.SwitchToMainThread();
                 if (ct.IsCancellationRequested) return;
-                api.TryTriggerEmote(predefinedEmote, EnumUtils.FromInt<AvatarEmoteMask>((int)mask));
+                api.TryTriggerEmote(predefinedEmote, ToAvatarEmoteMask(mask));
             }
         }
 
         [UsedImplicitly]
-        public object TriggerSceneEmote(string src, bool loop, uint mask)
+        public object TriggerSceneEmote(string src, bool loop, uint? mask)
         {
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
             return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise(this);
 
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct) =>
-                await api.TryTriggerSceneEmoteAsync(src, loop, EnumUtils.FromInt<AvatarEmoteMask>((int)mask), ct);
+                await api.TryTriggerSceneEmoteAsync(src, loop, ToAvatarEmoteMask(mask), ct);
         }
+
+        /// <summary>
+        ///     Converts the request's optional <see cref="DCL.ECSComponents.AvatarMask" /> wire value into the runtime
+        ///     <see cref="AvatarEmoteMask" />: an absent mask means full-body, <c>AM_UPPER_BODY</c> means upper-body.
+        /// </summary>
+        private static AvatarEmoteMask ToAvatarEmoteMask(uint? mask) =>
+            mask == (uint)DCL.ECSComponents.AvatarMask.AmUpperBody
+                ? AvatarEmoteMask.AemUpperBody
+                : AvatarEmoteMask.AemFullBody;
 
         [UsedImplicitly]
         public void CopyToClipboard(string text) =>

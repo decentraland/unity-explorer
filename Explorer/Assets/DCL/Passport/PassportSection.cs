@@ -6,8 +6,9 @@ namespace DCL.Passport
     public enum PassportSection
     {
         NONE,
-        OVERVIEW = 1,
+        OVERVIEW = 1 << 0,
         BADGES = 1 << 1,
-        PHOTOS = 2 << 1,
+        PHOTOS = 1 << 2,
+        CREATIONS = 1 << 3,
     }
 }
