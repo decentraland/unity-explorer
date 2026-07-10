@@ -8,12 +8,13 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    public class MediaPlayerPluginWrapper
+    public class MediaPlayerPluginWrapper : IDisposable
     {
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IExposedCameraData exposedCameraData;
@@ -22,19 +23,24 @@ namespace DCL.SDKComponents.MediaStream
         private readonly MediaFactoryBuilder mediaFactory;
         private readonly Material flipMaterial;
 
+        // Null on platforms where the LiveKit media feature is compiled out (see InjectToWorld guard).
+        private readonly AvatarPlaceHolderTextureSource? placeholderSource;
+
         public MediaPlayerPluginWrapper(
             IPerformanceBudget frameTimeBudget,
             IExposedCameraData exposedCameraData,
             float audioFadeSpeed,
             VideoPrioritizationSettings videoPrioritizationSettings,
             MediaFactoryBuilder mediaFactory,
-            Material flipMaterial)
+            Material flipMaterial,
+            AvatarPlaceHolderTextureSource? placeholderSource)
         {
             this.exposedCameraData = exposedCameraData;
             this.audioFadeSpeed = audioFadeSpeed;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.mediaFactory = mediaFactory;
             this.flipMaterial = flipMaterial;
+            this.placeholderSource = placeholderSource;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.frameTimeBudget = frameTimeBudget;
@@ -45,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream
             List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub);
+            MediaFactory mediaFactory = this.mediaFactory.CreateForScene(builder.World, sceneDeps, roomHub, placeholderSource);
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneStateProvider, mediaFactory);
             sceneIsCurrentListeners.Add(UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneDeps.SceneData, sceneDeps.SceneStateProvider, frameTimeBudget, mediaFactory, audioFadeSpeed, flipMaterial, videoPrioritizationSettings));
@@ -57,6 +63,11 @@ namespace DCL.SDKComponents.MediaStream
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder));
 #endif
+        }
+
+        public void Dispose()
+        {
+            placeholderSource?.Dispose();
         }
     }
 }
