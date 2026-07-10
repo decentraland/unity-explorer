@@ -18,6 +18,15 @@ Deeper reference, loaded only when the task reaches it:
 
 ## Setup (once per session)
 
+**Skill prerequisite — check before writing any scene code.** This skill only covers driving the Explorer; the SDK7 API knowledge (composite-first rule, component reference) lives in the `sdk-scenes` skill set, and parts of the API (e.g. native `TriggerArea`) are newer than training data — never write scene code from memory. If no `sdk-scenes`/`sdk-skills` skill is available in the session, stop and ask the user to install it from https://github.com/decentraland/sdk-skills:
+
+```bash
+npx skills add decentraland/sdk-skills --all       # run inside the scene folder (scene-local)
+npx skills add decentraland/sdk-skills --all -g    # or globally (user-level, ~/.claude/skills)
+```
+
+Skills are loaded at session start, so a mid-session install may not surface until the session restarts.
+
 0. **Probe for an already-running setup first.** The Explorer and dev server are often already up from a previous session — check before launching anything:
 
    ```bash
