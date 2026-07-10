@@ -19,8 +19,5 @@ namespace DCL.Multiplayer.Profiles.Announcements
         }
 
         public void Remove(IReadOnlyCollection<RemoveIntention> removeIntentions) { }
-
-        public void Clear() =>
-            queue.Clear();
     }
 }
