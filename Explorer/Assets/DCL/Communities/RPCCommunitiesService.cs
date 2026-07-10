@@ -62,11 +62,11 @@ namespace DCL.Communities
 
         private async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            await KeepServerStreamOpenAsync<CommunityMemberConnectivityUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
+            await KeepServerStreamOpenAsync<CommunityMemberConnectivityUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream)
             {
                 await foreach (CommunityMemberConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {

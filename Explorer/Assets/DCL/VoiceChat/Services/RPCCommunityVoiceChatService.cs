@@ -254,9 +254,9 @@ namespace DCL.VoiceChat.Services
 
         public UniTask SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync<CommunityVoiceChatUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, ct);
+            return KeepServerStreamOpenAsync<CommunityVoiceChatUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream)
             {
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Attempting to open community voice chat updates stream");
 

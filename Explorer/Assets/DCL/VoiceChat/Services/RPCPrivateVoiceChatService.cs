@@ -187,11 +187,11 @@ namespace DCL.VoiceChat.Services
 
         private async UniTaskVoid TrySubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            await KeepServerStreamOpenAsync<PrivateVoiceChatUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, ct);
+            await KeepServerStreamOpenAsync<PrivateVoiceChatUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 

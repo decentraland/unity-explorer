@@ -58,9 +58,9 @@ namespace DCL.Friends
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync<FriendshipUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, ct);
+            return KeepServerStreamOpenAsync<FriendshipUpdate>(ProcessUpdatesAsync, SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendshipUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendshipUpdate> stream)
             {
                 await foreach (FriendshipUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
@@ -111,9 +111,9 @@ namespace DCL.Friends
 
         public UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync<FriendConnectivityUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
+            return KeepServerStreamOpenAsync<FriendConnectivityUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream)
             {
                 await foreach (FriendConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
@@ -141,9 +141,9 @@ namespace DCL.Friends
 
         public UniTask SubscribeToUserBlockUpdatersAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync<BlockUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, ct);
+            return KeepServerStreamOpenAsync<BlockUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<BlockUpdate> stream)
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<BlockUpdate> stream)
             {
                 await foreach (BlockUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {

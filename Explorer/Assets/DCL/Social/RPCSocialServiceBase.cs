@@ -66,7 +66,7 @@ namespace DCL.SocialService
         ///     The active stream must never be torn down to make room for a new one — rpc-csharp sends no close message
         ///     for a cancelled stream, so the server would keep the old subscription alive and reject the new one as a duplicate.
         /// </summary>
-        protected async UniTask KeepServerStreamOpenAsync<T>(Func<IUniTaskAsyncEnumerable<T>, UniTask> openStreamFunc, string procedureName, CancellationToken ct) where T: IMessage, new()
+        protected async UniTask KeepServerStreamOpenAsync<T>(Func<IUniTaskAsyncEnumerable<T>, UniTask> processUpdatesAsync, string procedureName, CancellationToken ct) where T: IMessage, new()
         {
             if (!activeStreamTypes.Add(typeof(T)))
                 return;
@@ -86,7 +86,7 @@ namespace DCL.SocialService
                         // It's an endless [background] loop
                         await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                         IUniTaskAsyncEnumerable<T>? stream = socialServiceRPC.Module().CallServerStream<T>(procedureName, new Empty());
-                        await openStreamFunc(stream).AttachExternalCancellation(ct);
+                        await processUpdatesAsync(stream).AttachExternalCancellation(ct);
                     }
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
