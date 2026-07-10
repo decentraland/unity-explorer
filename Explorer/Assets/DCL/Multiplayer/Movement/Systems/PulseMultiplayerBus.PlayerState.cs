@@ -51,6 +51,9 @@ namespace DCL.Multiplayer.Movement
             // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
             DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] PULSE_PLAYER_JOINED wallet={resolvedWallet} subjectId={playerJoined.State.SubjectId} version={playerJoined.ProfileVersion}");
 
+            // Join supersedes any still-queued leave for this wallet; drop the stale remove so it can't delete a present peer.
+            removeIntentions.Cancel(resolvedWallet);
+
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
             peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
