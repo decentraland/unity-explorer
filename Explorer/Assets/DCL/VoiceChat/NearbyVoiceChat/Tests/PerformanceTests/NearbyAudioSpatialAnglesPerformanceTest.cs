@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using Unity.PerformanceTesting;
 using UnityEngine;
 
-namespace DCL.VoiceChat.Nearby
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.PerformanceTests
 {
     /// <summary>
     /// Isolates the per-source spatial-angles math from <c>NearbyAudioPositionSystem.CalculateSpatialAngles</c>:

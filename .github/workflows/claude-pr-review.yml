@@ -13,6 +13,8 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'github-actions[bot]' &&
+      !startsWith(github.head_ref, 'release/') &&
       !contains(github.event.pull_request.labels.*.name, 'no review') &&
       !contains(github.event.pull_request.labels.*.name, 'auto-pr') &&
       (github.event.action != 'labeled' || github.event.label.name == 'ext-contribution')

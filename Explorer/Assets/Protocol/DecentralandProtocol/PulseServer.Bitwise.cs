@@ -9,136 +9,154 @@ namespace Decentraland.Pulse
 {
     public partial class PlayerStateDeltaTier0
     {
-        private float? _positionX;
+        /// <summary>Coarsest quantization step of <see cref="PositionXQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PositionXQuantizedStep = 0.062745098f;
         /// <summary>Float accessor for <see cref="PositionX"/>. Range [0.0f, 16.0f], 8 bits, step ≈ 0.0627451.</summary>
         public float PositionXQuantized
         {
-            get => _positionX ??= Quantize.Decode(PositionX, 0.0f, 16.0f, 8);
-            set { _positionX = value; PositionX = Quantize.Encode(value, 0.0f, 16.0f, 8); }
+            get => Quantize.Decode(PositionX, 0.0f, 16.0f, 8);
+            set => PositionX = Quantize.Encode(value, 0.0f, 16.0f, 8);
         }
 
-        private float? _positionY;
+        /// <summary>Coarsest quantization step of <see cref="PositionYQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PositionYQuantizedStep = 0.024417043f;
         /// <summary>Float accessor for <see cref="PositionY"/>. Range [0.0f, 200.0f], 13 bits, step ≈ 0.024417.</summary>
         public float PositionYQuantized
         {
-            get => _positionY ??= Quantize.Decode(PositionY, 0.0f, 200.0f, 13);
-            set { _positionY = value; PositionY = Quantize.Encode(value, 0.0f, 200.0f, 13); }
+            get => Quantize.Decode(PositionY, 0.0f, 200.0f, 13);
+            set => PositionY = Quantize.Encode(value, 0.0f, 200.0f, 13);
         }
 
-        private float? _positionZ;
+        /// <summary>Coarsest quantization step of <see cref="PositionZQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PositionZQuantizedStep = 0.062745098f;
         /// <summary>Float accessor for <see cref="PositionZ"/>. Range [0.0f, 16.0f], 8 bits, step ≈ 0.0627451.</summary>
         public float PositionZQuantized
         {
-            get => _positionZ ??= Quantize.Decode(PositionZ, 0.0f, 16.0f, 8);
-            set { _positionZ = value; PositionZ = Quantize.Encode(value, 0.0f, 16.0f, 8); }
+            get => Quantize.Decode(PositionZ, 0.0f, 16.0f, 8);
+            set => PositionZ = Quantize.Encode(value, 0.0f, 16.0f, 8);
         }
 
-        private float? _velocityX;
-        /// <summary>Float accessor for <see cref="VelocityX"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Coarsest quantization step of <see cref="VelocityXQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VelocityXQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="VelocityX"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityXQuantized
         {
-            get => _velocityX ??= Quantize.Decode(VelocityX, -50.0f, 50.0f, 8);
-            set { _velocityX = value; VelocityX = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => Quantize.DecodePower(VelocityX, 50.0f, 2.0f, 8);
+            set => VelocityX = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
         }
 
-        private float? _velocityY;
-        /// <summary>Float accessor for <see cref="VelocityY"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Coarsest quantization step of <see cref="VelocityYQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VelocityYQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="VelocityY"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityYQuantized
         {
-            get => _velocityY ??= Quantize.Decode(VelocityY, -50.0f, 50.0f, 8);
-            set { _velocityY = value; VelocityY = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => Quantize.DecodePower(VelocityY, 50.0f, 2.0f, 8);
+            set => VelocityY = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
         }
 
-        private float? _velocityZ;
-        /// <summary>Float accessor for <see cref="VelocityZ"/>. Range [-50.0f, 50.0f], 8 bits, step ≈ 0.392157.</summary>
+        /// <summary>Coarsest quantization step of <see cref="VelocityZQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float VelocityZQuantizedStep = 0.78430157f;
+        /// <summary>Float accessor for <see cref="VelocityZ"/>. Range [-50.0f, 50.0f], power 2.0f, 8 bits (sign + 7-bit magnitude), near-zero step ≈ 0.00310001.</summary>
         public float VelocityZQuantized
         {
-            get => _velocityZ ??= Quantize.Decode(VelocityZ, -50.0f, 50.0f, 8);
-            set { _velocityZ = value; VelocityZ = Quantize.Encode(value, -50.0f, 50.0f, 8); }
+            get => Quantize.DecodePower(VelocityZ, 50.0f, 2.0f, 8);
+            set => VelocityZ = Quantize.EncodePower(value, 50.0f, 2.0f, 8);
         }
 
-        private float? _rotationY;
+        /// <summary>Coarsest quantization step of <see cref="RotationYQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float RotationYQuantizedStep = 2.8346457f;
         /// <summary>Float accessor for <see cref="RotationY"/>. Range [0.0f, 360.0f], 7 bits, step ≈ 2.83465.</summary>
         public float RotationYQuantized
         {
-            get => _rotationY ??= Quantize.Decode(RotationY, 0.0f, 360.0f, 7);
-            set { _rotationY = value; RotationY = Quantize.Encode(value, 0.0f, 360.0f, 7); }
+            get => Quantize.Decode(RotationY, 0.0f, 360.0f, 7);
+            set => RotationY = Quantize.Encode(value, 0.0f, 360.0f, 7);
         }
 
-        private float? _movementBlend;
+        /// <summary>Coarsest quantization step of <see cref="MovementBlendQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float MovementBlendQuantizedStep = 0.096774194f;
         /// <summary>Float accessor for <see cref="MovementBlend"/>. Range [0.0f, 3.0f], 5 bits, step ≈ 0.0967742.</summary>
         public float MovementBlendQuantized
         {
-            get => _movementBlend ??= Quantize.Decode(MovementBlend, 0.0f, 3.0f, 5);
-            set { _movementBlend = value; MovementBlend = Quantize.Encode(value, 0.0f, 3.0f, 5); }
+            get => Quantize.Decode(MovementBlend, 0.0f, 3.0f, 5);
+            set => MovementBlend = Quantize.Encode(value, 0.0f, 3.0f, 5);
         }
 
-        private float? _slideBlend;
+        /// <summary>Coarsest quantization step of <see cref="SlideBlendQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float SlideBlendQuantizedStep = 0.066666667f;
         /// <summary>Float accessor for <see cref="SlideBlend"/>. Range [0.0f, 1.0f], 4 bits, step ≈ 0.0666667.</summary>
         public float SlideBlendQuantized
         {
-            get => _slideBlend ??= Quantize.Decode(SlideBlend, 0.0f, 1.0f, 4);
-            set { _slideBlend = value; SlideBlend = Quantize.Encode(value, 0.0f, 1.0f, 4); }
+            get => Quantize.Decode(SlideBlend, 0.0f, 1.0f, 4);
+            set => SlideBlend = Quantize.Encode(value, 0.0f, 1.0f, 4);
         }
 
-        private float? _headYaw;
+        /// <summary>Coarsest quantization step of <see cref="HeadYawQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float HeadYawQuantizedStep = 2.8346457f;
         /// <summary>Float accessor for <see cref="HeadYaw"/>. Range [0.0f, 360.0f], 7 bits, step ≈ 2.83465.</summary>
         public float HeadYawQuantized
         {
-            get => _headYaw ??= Quantize.Decode(HeadYaw, 0.0f, 360.0f, 7);
-            set { _headYaw = value; HeadYaw = Quantize.Encode(value, 0.0f, 360.0f, 7); }
+            get => Quantize.Decode(HeadYaw, 0.0f, 360.0f, 7);
+            set => HeadYaw = Quantize.Encode(value, 0.0f, 360.0f, 7);
         }
 
-        private float? _headPitch;
+        /// <summary>Coarsest quantization step of <see cref="HeadPitchQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float HeadPitchQuantizedStep = 2.8346457f;
         /// <summary>Float accessor for <see cref="HeadPitch"/>. Range [0.0f, 360.0f], 7 bits, step ≈ 2.83465.</summary>
         public float HeadPitchQuantized
         {
-            get => _headPitch ??= Quantize.Decode(HeadPitch, 0.0f, 360.0f, 7);
-            set { _headPitch = value; HeadPitch = Quantize.Encode(value, 0.0f, 360.0f, 7); }
+            get => Quantize.Decode(HeadPitch, 0.0f, 360.0f, 7);
+            set => HeadPitch = Quantize.Encode(value, 0.0f, 360.0f, 7);
         }
 
-        private float? _pointAtX;
+        /// <summary>Coarsest quantization step of <see cref="PointAtXQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PointAtXQuantizedStep = 0.045776716f;
         /// <summary>Float accessor for <see cref="PointAtX"/>. Range [-3000.0f, 3000.0f], 17 bits, step ≈ 0.0457767.</summary>
         public float PointAtXQuantized
         {
-            get => _pointAtX ??= Quantize.Decode(PointAtX, -3000.0f, 3000.0f, 17);
-            set { _pointAtX = value; PointAtX = Quantize.Encode(value, -3000.0f, 3000.0f, 17); }
+            get => Quantize.Decode(PointAtX, -3000.0f, 3000.0f, 17);
+            set => PointAtX = Quantize.Encode(value, -3000.0f, 3000.0f, 17);
         }
 
-        private float? _pointAtY;
+        /// <summary>Coarsest quantization step of <see cref="PointAtYQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PointAtYQuantizedStep = 1.5748031f;
         /// <summary>Float accessor for <see cref="PointAtY"/>. Range [0.0f, 200.0f], 7 bits, step ≈ 1.5748.</summary>
         public float PointAtYQuantized
         {
-            get => _pointAtY ??= Quantize.Decode(PointAtY, 0.0f, 200.0f, 7);
-            set { _pointAtY = value; PointAtY = Quantize.Encode(value, 0.0f, 200.0f, 7); }
+            get => Quantize.Decode(PointAtY, 0.0f, 200.0f, 7);
+            set => PointAtY = Quantize.Encode(value, 0.0f, 200.0f, 7);
         }
 
-        private float? _pointAtZ;
+        /// <summary>Coarsest quantization step of <see cref="PointAtZQuantized"/>. Safe as an equality tolerance.</summary>
+        public const float PointAtZQuantizedStep = 0.045776716f;
         /// <summary>Float accessor for <see cref="PointAtZ"/>. Range [-3000.0f, 3000.0f], 17 bits, step ≈ 0.0457767.</summary>
         public float PointAtZQuantized
         {
-            get => _pointAtZ ??= Quantize.Decode(PointAtZ, -3000.0f, 3000.0f, 17);
-            set { _pointAtZ = value; PointAtZ = Quantize.Encode(value, -3000.0f, 3000.0f, 17); }
+            get => Quantize.Decode(PointAtZ, -3000.0f, 3000.0f, 17);
+            set => PointAtZ = Quantize.Encode(value, -3000.0f, 3000.0f, 17);
         }
 
-        /// <summary>Clears all cached decoded values. Call after mutating raw uint32 fields directly.</summary>
-        public void ResetDecodedCache()
-        {
-            _positionX = null;
-            _positionY = null;
-            _positionZ = null;
-            _velocityX = null;
-            _velocityY = null;
-            _velocityZ = null;
-            _rotationY = null;
-            _movementBlend = null;
-            _slideBlend = null;
-            _headYaw = null;
-            _headPitch = null;
-            _pointAtX = null;
-            _pointAtY = null;
-            _pointAtZ = null;
-        }
+        /// <summary>
+        ///     True when every quantized field holds a wire code within its declared bit width
+        ///     (<c>0 .. 2^bits-1</c>). The encoder never emits a code above this bound, so a larger
+        ///     value is a malformed/hostile message: decoding it would land far outside the field's
+        ///     <c>[min, max]</c> and, since the server relays raw codes verbatim, poison every observer.
+        ///     Reject before storing or relaying. Pure integer comparison — no decode.
+        /// </summary>
+        public bool AreQuantizedFieldsInRange() =>
+            PositionX <= 255u
+            && PositionY <= 8191u
+            && PositionZ <= 255u
+            && VelocityX <= 255u
+            && VelocityY <= 255u
+            && VelocityZ <= 255u
+            && RotationY <= 127u
+            && MovementBlend <= 31u
+            && SlideBlend <= 15u
+            && HeadYaw <= 127u
+            && HeadPitch <= 127u
+            && PointAtX <= 131071u
+            && PointAtY <= 127u
+            && PointAtZ <= 131071u;
     }
 
 

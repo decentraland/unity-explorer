@@ -1,13 +1,15 @@
 using DCL.Profiles;
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace DCL.Communities.CommunitiesDataProvider.DTOs
 {
+    // Server schema: https://github.com/decentraland/social-service-ea/blob/be255af07d5997792322d3b11b656dd66fd1d675/docs/schemas.yaml#L964 (GetCommunitiesV2200OkResponse)
     [Serializable]
     public class GetUserCommunitiesResponse
     {
-        public GetUserCommunitiesData data;
+        public GetUserCommunitiesData data = null!;
     }
 
     [Serializable]
@@ -16,18 +18,21 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
         [Serializable]
         public class CommunityData
         {
-            public string id;
-            public string thumbnailUrl;
-            public string name;
-            public string description;
-            public string ownerAddress;
-            public string ownerName;
+            public string id = null!;
+            [JsonIgnore] public string ThumbnailUrl { get; internal set; } = string.Empty;
+            public string name = null!;
+            public string description = null!;
+            public string ownerAddress = null!;
             public int membersCount;
             public CommunityPrivacy privacy;
             public CommunityVisibility visibility;
-            public CommunityMemberRole role;
-            [JsonConverter(typeof(CommunitiesDTOConverters.FriendsInCommunityConverter))]
-            public Profile.CompactInfo[] friends;
+            public CommunityMemberRole role = CommunityMemberRole.none;
+
+            [JsonIgnore] public string OwnerName { get; internal set; } = string.Empty;
+
+            // Optional per schema (present only when signed in) — left nullable, no non-null initialization; hydrated into Friends client-side.
+            [JsonProperty("friends")] public string[]? friendAddresses;
+            [JsonIgnore] public IReadOnlyList<Profile.CompactInfo> Friends { get; internal set; } = Array.Empty<Profile.CompactInfo>();
             [JsonConverter(typeof(VoiceChatStatusJsonConverter))]
             public GetCommunityResponse.VoiceChatStatus voiceChatStatus;
 
@@ -50,7 +55,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
                 GetCommunityResponse.VoiceChatStatus voiceChatStatus)
             {
                 this.id = id;
-                this.thumbnailUrl = thumbnailUrl;
+                this.ThumbnailUrl = thumbnailUrl;
                 this.name = name;
                 this.description = description;
                 this.privacy = privacy;
@@ -80,7 +85,7 @@ namespace DCL.Communities.CommunitiesDataProvider.DTOs
             }
         }
 
-        public CommunityData[] results;
+        public CommunityData[] results = Array.Empty<CommunityData>();
         public int total;
     }
 }

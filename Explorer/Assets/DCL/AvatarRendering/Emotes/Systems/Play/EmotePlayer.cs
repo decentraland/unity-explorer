@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (emoteReferences.avatarClip == null) return false;
 
-            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out AvatarMask? avatarMask))
+            if (!emoteMaskCatalog.TryGet(maskedEmote.Mask, out UnityEngine.AvatarMask? avatarMask))
             {
                 ReportHub.LogError(ReportCategory.EMOTE,
                     $"{nameof(EmoteMaskCatalog)} has no entry for {maskedEmote.Mask}, masked legacy emote ignored.");

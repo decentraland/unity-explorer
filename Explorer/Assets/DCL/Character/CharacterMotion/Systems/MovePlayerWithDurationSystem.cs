@@ -184,7 +184,7 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterAnimationComponent animationComponent)
         {
             // Reset to idle state
-            animationComponent.States.MovementBlendValue = 0f;
+            animationComponent.States.MovementBlendValue = MovementBlend.MIN;
             animationComponent.States.IsGrounded = true;
 
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, avatarView, isGrounded: true, movementBlendId: 0);

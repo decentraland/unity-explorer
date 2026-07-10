@@ -3,9 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.PrivateWorlds;
 using DCL.WebRequests;
-using LiveKit.Proto;
 using DCL.LiveKit.Public;
 using System;
 using System.Threading;
@@ -41,6 +39,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public event Action? CurrentSceneRoomDisconnected;
             public event Action? CurrentSceneRoomForbiddenAccess;
             public MetaData? ConnectedScene => origin.ConnectedScene;
+
+            public bool IsSceneRoomSettled(string sceneId)
+            {
+                // States in which the room will never connect must not hold callers waiting
+                if (!Activated || origin.options.IsCommsOffline || AttemptToConnectState is AttemptToConnectState.FORBIDDEN_ACCESS)
+                    return true;
+
+                return IsSceneConnected(sceneId);
+            }
 
             private void OnCurrentSceneRoomConnected() =>
                 CurrentSceneRoomConnected?.Invoke();
@@ -127,7 +134,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
-                var result = await options.SceneRoomMetaDataSource.MetaDataAsync(options.SceneRoomMetaDataSource.GetMetadataInput(), token);
+                // Captured so the waits below can detect input changes that occur while this cycle is busy awaiting
+                MetaData.Input input = options.SceneRoomMetaDataSource.GetMetadataInput();
+                var result = await options.SceneRoomMetaDataSource.MetaDataAsync(input, token);
 
                 if (result.Success == false)
                     return;
@@ -143,21 +152,21 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     CurrentSceneRoomDisconnected?.Invoke();
 
                     // After disconnection we need to wait for metadata to change
-                    waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);
+                    waitForReconnectionRequiredTask = WaitForMetadataInputChangedAsync(input, token);
 
                     currentMetaData = meta;
 
-                    async UniTask WaitForMetadataIsDirtyAsync(CancellationToken token)
+                    async UniTask WaitForMetadataInputChangedAsync(MetaData.Input usedInput, CancellationToken ct)
                     {
-                        while (!options.SceneRoomMetaDataSource.MetadataIsDirty)
-                            await UniTask.Yield(token);
+                        while (options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
+                            await UniTask.Yield(ct);
                     }
                 }
                 else
                 {
                     if (!meta.Equals(currentMetaData.GetValueOrDefault()) || Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                     {
-                        string connectionString = await ConnectionStringAsync(meta, token);
+                        string connectionString = await ConnectionStringAsync(meta.sceneId, meta, token);
 
                         if (Room().Info.ConnectionState != LKConnectionState.ConnConnected)
                             currentMetaData = null;
@@ -171,20 +180,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                         CurrentSceneRoomConnected?.Invoke();
 
                         if (roomSelection == RoomSelection.NEW)
-                        {
                             currentMetaData = meta;
-                        }
                     }
 
-                    waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(token);
+                    waitForReconnectionRequiredTask = WaitForReconnectionRequiredAsync(input, token);
 
                     // Either room has disconnected or metadata has changed
-                    async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
+                    async UniTask WaitForReconnectionRequiredAsync(MetaData.Input usedInput, CancellationToken ct)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
                                && Room().Info.ConnectionState == LKConnectionState.ConnConnected
-                               && !options.SceneRoomMetaDataSource.MetadataIsDirty)
-                            await UniTask.Yield(token);
+                               && options.SceneRoomMetaDataSource.GetMetadataInput().Equals(usedInput))
+                            await UniTask.Yield(ct);
                     }
                 }
 
@@ -200,16 +207,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             }
         }
 
-        private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
+        private async UniTask<string> ConnectionStringAsync(string sceneId, MetaData meta, CancellationToken token)
         {
-            string url = options.GetAdapterURL(meta.sceneId);
-            
+            string url = options.GetAdapterURL(sceneId);
+
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER,
-                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{meta.sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
+                $"[GateKeeperSceneRoom] Requesting adapter from '{url}' for scene '{sceneId}' (secretLength={options.RealmData.WorldCommsSecret.Length})");
 
             if (!string.IsNullOrEmpty(options.RealmData.WorldCommsSecret))
                 ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER,
-                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{meta.sceneId}'.");
+                    $"[GateKeeperSceneRoom] Non-empty WorldCommsSecret is being sent for scene '{sceneId}'.");
 
             AdapterResponse response = await webRequests
                                             .SignedFetchPostAsync(url, meta.BuildWithSecret(options.RealmData.WorldCommsSecret, options.HardwareFingerprint), token)

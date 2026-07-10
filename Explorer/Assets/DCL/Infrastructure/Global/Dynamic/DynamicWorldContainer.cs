@@ -6,34 +6,22 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat.ChatServices;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.ChatArea;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.SpringBones;
 using DCL.Communities.CommunitiesCard.Members;
-using DCL.Communities.CommunitiesDataProvider;
 using DCL.DebugUtilities;
-using DCL.Diagnostics;
 using DCL.Donations;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Friends.Passport;
 using DCL.Friends.UserBlocking;
-using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.Mcp;
@@ -43,47 +31,35 @@ using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Poses;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBus;
 using DCL.Optimization.AdaptivePerformance.Systems;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.PerformanceAndDiagnostics.Analytics.DecoratorBased;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.SmartWearables;
 using DCL.PluginSystem.World;
-using DCL.PrivateWorlds;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
-using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SDKComponents.AvatarLocomotion;
 using DCL.SkyBox;
-using DCL.SocialService;
-using DCL.Translation;
 using DCL.UI;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.InputFieldFormatting;
-using DCL.Prefs;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
-using DCL.VoiceChat.Nearby;
-using DCL.VoiceChat.Nearby.MutePersistence;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
-using SceneRunner.Debugging.Hub;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -269,7 +245,7 @@ namespace Global.Dynamic
                 ? new UserBlockingCache(friendsEventBus)
                 : new NullUserBlockingCache();
 
-            async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+            async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken cancellationToken)
             {
                 // Init other containers
                 defaultTexturesContainer =
@@ -278,7 +254,7 @@ namespace Global.Dynamic
                               settingsContainer,
                               assetsProvisioner,
                               appArgs,
-                              ct
+                              cancellationToken
                           )
                          .ThrowOnFail();
 
@@ -293,7 +269,7 @@ namespace Global.Dynamic
                               debugBuilder,
                               dynamicWorldParams.EnableLOD,
                               staticContainer.GPUInstancingService,
-                              ct
+                              cancellationToken
                           )
                          .ThrowOnFail();
 
@@ -309,13 +285,13 @@ namespace Global.Dynamic
                     dynamicSettings.MultiplayerDebugSettings,
                     userBlockingCache,
                     profileContainer.SelfProfile,
-                    ct);
+                    cancellationToken);
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
 
-            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, appArgs, ct);
+            CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, commsContainer.RemoteProfiles, multiplayerContainer.RemoteAnnouncements, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
@@ -755,7 +731,8 @@ namespace Global.Dynamic
                     uiShellContainer.Clipboard,
                     communitiesContainer.DataProvider,
                     wearableContainer.ThumbnailProvider,
-                    staticContainer.ImageControllerProvider
+                    staticContainer.ImageControllerProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController
                 ),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
@@ -1019,8 +996,8 @@ namespace Global.Dynamic
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,
                 staticContainer.SceneLoadingLimit,
-                dynamicWorldParams.StartParcel,
-                bootstrapContainer.Analytics.EntitiesAnalytics
+                bootstrapContainer.Analytics.EntitiesAnalytics,
+                commsContainer.RoomHub.SceneRoom()
             );
 
             var container = new DynamicWorldContainer(
