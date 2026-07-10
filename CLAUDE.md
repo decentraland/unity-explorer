@@ -2,9 +2,9 @@
 
 ## Startup
 
-At the start of every conversation, read [`docs/README.md`](docs/README.md) to load the project documentation map. Skills are automatically loaded by Claude Code from `.claude/skills/` — do not manually read them.
+At the start of every conversation, read [`docs/README.md`](docs/README.md) to load the project documentation map. Claude Code lists each skill's name and description, but a skill's full instructions are **not** in context until you invoke it with the `Skill` tool — invoke skills, don't assume they're already loaded.
 
-Before writing or modifying any code, follow the code-standards skill for naming conventions, member ordering, formatting rules, and test patterns. For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
+Before writing or modifying **any** `.cs` file, **first** invoke the code-standards skill (`Skill(code-standards)`) — before any Read/Edit/Write on production code — for naming conventions, member ordering, formatting rules, nullable/GC rules, anti-patterns, and test patterns. Invoke the relevant domain skills too when they apply (`ecs-system-and-component-design` for ECS, `async-programming` for UniTask, `sdk-component-implementation` for SDK components, `testing-infrastructure` for tests). For edge cases, [`Explorer/.editorconfig`](Explorer/.editorconfig) is the authoritative formatting reference.
 
 ## Linting in the AI flow
 
