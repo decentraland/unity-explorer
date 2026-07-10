@@ -1,16 +1,5 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/hooks/remind-code-standards.sh"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
