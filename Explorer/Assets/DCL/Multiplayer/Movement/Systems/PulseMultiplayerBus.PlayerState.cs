@@ -48,9 +48,6 @@ namespace DCL.Multiplayer.Movement
             PlayerJoined playerJoined = message.Message.PlayerJoined;
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
-            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
-            DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] PULSE_PLAYER_JOINED wallet={resolvedWallet} subjectId={playerJoined.State.SubjectId} version={playerJoined.ProfileVersion}");
-
             // Join supersedes any still-queued leave for this wallet; drop the stale remove so it can't delete a present peer.
             removeIntentions.Cancel(resolvedWallet);
 
@@ -75,11 +72,7 @@ namespace DCL.Multiplayer.Movement
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
-            {
-                // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. Source of PULSE remove intentions.
-                DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] PULSE_PLAYER_LEFT wallet={wallet} subjectId={playerLeft.SubjectId} -> enqueue PULSE remove");
                 removeIntentions.Enqueue(wallet);
-            }
 
             peerIdCache.Remove(playerLeft.SubjectId);
             lastMovementMessages.Remove(playerLeft.SubjectId);

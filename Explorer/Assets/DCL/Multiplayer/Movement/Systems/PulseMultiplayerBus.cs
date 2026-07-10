@@ -85,8 +85,6 @@ namespace DCL.Multiplayer.Movement
 
         private void RemoveAllPeers()
         {
-            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. Fires on pulse transport disconnect; enqueues a PULSE remove for every cached peer.
-            DCL.Diagnostics.ReportHub.LogProductionInfo("[INVISIBLE_AVATAR] PULSE_REMOVE_ALL_PEERS (transport disconnect -> enqueue PULSE remove for every peer)");
             peerIdCache.RemoveAll(wallet => removeIntentions.Enqueue(wallet));
 
             lastMovementMessages.Clear();

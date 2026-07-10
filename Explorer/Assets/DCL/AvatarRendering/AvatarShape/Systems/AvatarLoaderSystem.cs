@@ -65,9 +65,6 @@ namespace DCL.AvatarRendering.AvatarShape
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             var avatarShape = new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor);
             World.Add(entity, avatarShape, new AvatarHighlightComponent());
-
-            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
-            DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] SHAPE_CREATED id={profile.UserId} wearables={profile.Avatar.Wearables.Count}");
         }
 
         [Query]

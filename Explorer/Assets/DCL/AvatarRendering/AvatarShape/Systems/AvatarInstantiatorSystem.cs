@@ -87,9 +87,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
             pointAtFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.POINT_AT);
             headSyncFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.HEAD_SYNC);
-
-            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. Fires once at startup; if absent, the edited assembly is NOT running.
-            DCL.Diagnostics.ReportHub.LogProductionInfo("[INVISIBLE_AVATAR] BUILD_MARKER AvatarInstantiatorSystem constructed - instrumented build is running");
         }
 
         protected override void OnDispose()
@@ -302,9 +299,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
             avatarShapeComponent.InstantiationVersion++;
             avatarShapeComponent.IsDirty = false;
-
-            // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis. instantiatedWearables=0 or isVisible=false => avatar has no visible geometry.
-            DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] INSTANTIATED id={avatarShapeComponent.ID} instVer={avatarShapeComponent.InstantiationVersion} instantiatedWearables={avatarShapeComponent.InstantiatedWearables.Count} isVisible={avatarShapeComponent.IsVisible} wearablesSucceeded={wearablesResult.Succeeded}");
 
             return (skinningComponent, baseBoneArray);
         }
