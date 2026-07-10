@@ -17,7 +17,7 @@ namespace DCL.SDKComponents.MediaStream
     /// </summary>
     public sealed class AvatarPlaceHolderTextureSource : IDisposable
     {
-        // The background PNG is authored at 1024x1024 (power-of-two); the rig matches it.
+        // Square power-of-two dimensions of the composite render texture and the offscreen rig.
         private const int WIDTH = 1024;
         private const int HEIGHT = 1024;
         private const int UI_LAYER = 5; // Unity built-in "UI" layer.
