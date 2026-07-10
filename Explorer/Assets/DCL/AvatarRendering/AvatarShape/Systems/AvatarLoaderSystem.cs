@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.AvatarShape
             World.Add(entity, avatarShape, new AvatarHighlightComponent());
 
             // TEMP DEBUG [INVISIBLE_AVATAR] - remove after diagnosis
-            UnityEngine.Debug.LogWarning($"[INVISIBLE_AVATAR] SHAPE_CREATED id={profile.UserId} wearables={profile.Avatar.Wearables.Count}");
+            DCL.Diagnostics.ReportHub.LogProductionInfo($"[INVISIBLE_AVATAR] SHAPE_CREATED id={profile.UserId} wearables={profile.Avatar.Wearables.Count}");
         }
 
         [Query]
