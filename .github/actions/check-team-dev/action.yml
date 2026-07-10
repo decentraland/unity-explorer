@@ -1,0 +1,42 @@
+name: Check team dev
+description: >-
+  Resolves whether a PR author is an explorer team dev by reading the review
+  groups in .github/auto_assign_config_dev.yml from the checked-out tree.
+  PRs labeled ext-contribution are always treated as external.
+inputs:
+  pr-author:
+    description: GitHub login of the PR author
+    required: true
+  has-ext-label:
+    description: "'true' when the PR carries the ext-contribution label"
+    required: false
+    default: 'false'
+outputs:
+  is-team-dev:
+    description: "'true' when the author is in a review group and the PR is not an external contribution"
+    value: ${{ steps.check.outputs.is-team-dev }}
+runs:
+  using: composite
+  steps:
+    - name: Resolve team membership
+      id: check
+      shell: bash
+      env:
+        PR_AUTHOR: ${{ inputs.pr-author }}
+        HAS_EXT_LABEL: ${{ inputs.has-ext-label }}
+      run: |
+        if [[ "$HAS_EXT_LABEL" == "true" ]]; then
+          echo "Author $PR_AUTHOR has ext-contribution label — treating as external"
+          echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+        echo "Team devs:"
+        echo "$TEAM_DEVS"
+        if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+          echo "Author $PR_AUTHOR is a team dev"
+          echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Author $PR_AUTHOR is NOT a team dev"
+          echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+        fi
