@@ -19,11 +19,6 @@ namespace DCL.SocialService
     public abstract class RPCSocialServiceBase : IDisposable
     {
         /// <summary>
-        ///     Maximum number of retry attempts for server stream connection
-        /// </summary>
-        private const int MAX_RETRY_ATTEMPTS = 5;
-
-        /// <summary>
         ///     Base delay in seconds between retry attempts (will be exponentially increased)
         /// </summary>
         private const int BASE_RETRY_DELAY_SECONDS = 2;
@@ -44,15 +39,12 @@ namespace DCL.SocialService
 
         protected readonly IRPCSocialServices socialServiceRPC;
         protected readonly string reportCategory;
-        private readonly int maxRetries;
         private readonly HashSet<Type> activeStreamTypes = new ();
 
-        protected RPCSocialServiceBase(IRPCSocialServices rpcSocialServices, string reportCategory,
-            int maxRetries = MAX_RETRY_ATTEMPTS)
+        protected RPCSocialServiceBase(IRPCSocialServices rpcSocialServices, string reportCategory)
         {
             socialServiceRPC = rpcSocialServices;
             this.reportCategory = reportCategory;
-            this.maxRetries = maxRetries;
         }
 
         public virtual void Dispose()

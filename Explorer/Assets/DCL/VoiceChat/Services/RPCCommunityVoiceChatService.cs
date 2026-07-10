@@ -5,7 +5,6 @@ using DCL.SocialService;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
 using DCL.WebRequests;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
 using Utility;

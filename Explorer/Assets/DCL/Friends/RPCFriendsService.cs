@@ -1,10 +1,8 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -174,7 +172,7 @@ namespace DCL.Friends
                 },
             };
 
-            GetBlockedUsersResponse? response = await socialServiceRPC.Module()!
+            GetBlockedUsersResponse? response = await socialServiceRPC.Module()
                                                                       .CallUnaryProcedure<GetBlockedUsersResponse>(GET_BLOCKED_USERS, payload)
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -196,7 +194,7 @@ namespace DCL.Friends
                 },
             };
 
-            BlockUserResponse? response = await socialServiceRPC.Module()!
+            BlockUserResponse? response = await socialServiceRPC.Module()
                                                                 .CallUnaryProcedure<BlockUserResponse>(BLOCK_USER, payload)
                                                                 .AttachExternalCancellation(ct)
                                                                 .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -222,7 +220,7 @@ namespace DCL.Friends
                 },
             };
 
-            UnblockUserResponse? response = await socialServiceRPC.Module()!
+            UnblockUserResponse? response = await socialServiceRPC.Module()
                                                                   .CallUnaryProcedure<UnblockUserResponse>(UNBLOCK_USER, payload)
                                                                   .AttachExternalCancellation(ct)
                                                                   .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -240,7 +238,7 @@ namespace DCL.Friends
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            GetBlockingStatusResponse? response = await socialServiceRPC.Module()!
+            GetBlockingStatusResponse? response = await socialServiceRPC.Module()
                                                                         .CallUnaryProcedure<GetBlockingStatusResponse>(GET_BLOCKING_STATUS, new Empty())
                                                                         .AttachExternalCancellation(ct)
                                                                         .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -261,7 +259,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()!
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()
                                                                                .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -292,7 +290,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()!
+            PaginatedFriendsProfilesResponse? response = await socialServiceRPC.Module()
                                                                                .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
                                                                                .AttachExternalCancellation(ct)
                                                                                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -317,7 +315,7 @@ namespace DCL.Friends
                 },
             };
 
-            GetFriendshipStatusResponse response = await socialServiceRPC.Module()!
+            GetFriendshipStatusResponse response = await socialServiceRPC.Module()
                                                                          .CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
                                                                          .AttachExternalCancellation(ct)
                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -364,7 +362,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()!
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()
                                                                                  .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME,
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
@@ -412,7 +410,7 @@ namespace DCL.Friends
                 },
             };
 
-            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()!
+            PaginatedFriendshipRequestsResponse response = await socialServiceRPC.Module()
                                                                                  .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME,
                                                                                       payload)
                                                                                  .AttachExternalCancellation(ct)
@@ -554,7 +552,7 @@ namespace DCL.Friends
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
-            UpsertFriendshipResponse response = await socialServiceRPC.Module()!
+            UpsertFriendshipResponse response = await socialServiceRPC.Module()
                                                                       .CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
                                                                       .AttachExternalCancellation(ct)
                                                                       .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));

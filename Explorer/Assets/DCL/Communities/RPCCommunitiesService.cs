@@ -12,8 +12,6 @@ namespace DCL.Communities
     public class RPCCommunitiesService : RPCSocialServiceBase
     {
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToCommunityMemberConnectivityUpdates";
-        // Increase the default number of retries because once it consumes all, it will not receive updates for the rest of the session
-        private const int MAX_CONNECTION_RETRIES = 20;
 
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -24,7 +22,7 @@ namespace DCL.Communities
             IRPCSocialServices socialServiceRPC,
             CommunitiesEventBus communitiesEventBus,
             ISocialServiceEventBus socialServiceEventBus,
-            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITIES, MAX_CONNECTION_RETRIES)
+            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITIES)
         {
             this.communitiesEventBus = communitiesEventBus;
             this.socialServiceEventBus = socialServiceEventBus;

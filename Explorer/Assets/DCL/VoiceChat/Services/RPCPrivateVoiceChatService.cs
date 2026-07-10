@@ -7,7 +7,6 @@ using System;
 using System.Threading;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
-using Sentry;
 using Utility;
 
 namespace DCL.VoiceChat.Services
@@ -34,7 +33,7 @@ namespace DCL.VoiceChat.Services
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IWeb3IdentityCache identityCache;
         private CancellationTokenSource subscriptionCts = new ();
-        private bool isServiceDisabled;
+        private readonly bool isServiceDisabled;
 
         public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,
@@ -106,7 +105,7 @@ namespace DCL.VoiceChat.Services
                 },
             };
 
-            StartPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            StartPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                             .CallUnaryProcedure<StartPrivateVoiceChatResponse>(START_PRIVATE_VOICE_CHAT, payload)
                                                                             .AttachExternalCancellation(ct)
                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -125,7 +124,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            AcceptPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            AcceptPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                              .CallUnaryProcedure<AcceptPrivateVoiceChatResponse>(ACCEPT_PRIVATE_VOICE_CHAT, payload)
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -144,7 +143,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            RejectPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            RejectPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                              .CallUnaryProcedure<RejectPrivateVoiceChatResponse>(REJECT_PRIVATE_VOICE_CHAT, payload)
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -163,7 +162,7 @@ namespace DCL.VoiceChat.Services
                 CallId = callId,
             };
 
-            EndPrivateVoiceChatResponse? response = await socialServiceRPC.Module()!
+            EndPrivateVoiceChatResponse? response = await socialServiceRPC.Module()
                                                                           .CallUnaryProcedure<EndPrivateVoiceChatResponse>(END_PRIVATE_VOICE_CHAT, payload)
                                                                           .AttachExternalCancellation(ct)
                                                                           .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
@@ -177,7 +176,7 @@ namespace DCL.VoiceChat.Services
 
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
-            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()!
+            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()
                                                                                          .CallUnaryProcedure<GetIncomingPrivateVoiceChatRequestResponse>(GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST, new Empty())
                                                                                          .AttachExternalCancellation(ct)
                                                                                          .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
