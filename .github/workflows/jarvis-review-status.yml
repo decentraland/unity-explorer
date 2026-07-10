@@ -122,7 +122,6 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const currentReviewId = context.payload.review.id;
 
             const failed = '${{ steps.verdict.outputs.failed }}' === 'true';
             const isSimple = '${{ steps.verdict.outputs.is-simple }}' === 'true';
@@ -156,17 +155,20 @@ jobs:
 
             if (isAutoReview && isTeamDev) {
               if (canAutoApprove) {
+                let approvalOk = true;
                 if (ourApprovals.length === 0) {
                   const approvalBody = qaRequired
                     ? 'Auto-approved based on Jarvis review — simple fix/chore with no blocking issues. QA approval is still required.'
                     : 'Auto-approved based on Jarvis review — simple fix/chore with no blocking issues. No QA needed (non-runtime changes only).';
-                  await github.rest.pulls.createReview({
+                  approvalOk = await github.rest.pulls.createReview({
                     owner, repo, pull_number: prNumber, event: 'APPROVE', body: approvalBody
-                  });
+                  }).then(() => true).catch(e => { console.log(`createReview: ${e.message}`); return false; });
                 }
-                await github.rest.issues.addLabels({
-                  owner, repo, issue_number: prNumber, labels: ['claude-approved']
-                });
+                if (approvalOk) {
+                  await github.rest.issues.addLabels({
+                    owner, repo, issue_number: prNumber, labels: ['claude-approved']
+                  }).catch(e => console.log(`addLabels claude-approved: ${e.message}`));
+                }
               } else {
                 for (const r of ourApprovals) {
                   await github.rest.pulls.dismissReview({
@@ -187,13 +189,13 @@ jobs:
                   await github.rest.issues.createComment({
                     owner, repo, issue_number: prNumber,
                     body: `${SENSITIVE_MARKER} (\`.github/prompts\`, \`.github/workflows\`, or \`CODEOWNERS\`). Jarvis will not auto-approve these PRs — human DEV review is required. ${qaNote}`
-                  });
+                  }).catch(e => console.log(`createComment sensitive: ${e.message}`));
                 } else if (!touchesSensitive && passed && !isSimple && !comments.some(c =>
                     c.user?.login === 'github-actions[bot]' && c.body?.startsWith(COMPLEX_MARKER))) {
                   await github.rest.issues.createComment({
                     owner, repo, issue_number: prNumber,
                     body: COMPLEX_MARKER + ', but assessed it as **complex** — human DEV review is still required before merging.'
-                  });
+                  }).catch(e => console.log(`createComment complex: ${e.message}`));
                 }
               }
 
@@ -201,31 +203,13 @@ jobs:
                 if (!prLabels.includes('no QA needed')) {
                   await github.rest.issues.addLabels({
                     owner, repo, issue_number: prNumber, labels: ['no QA needed']
-                  });
+                  }).catch(e => console.log(`addLabels no QA needed: ${e.message}`));
                 }
               } else if (prLabels.includes('no QA needed')) {
                 await github.rest.issues.removeLabel({
                   owner, repo, issue_number: prNumber, name: 'no QA needed'
                 }).catch(e => console.log(`removeLabel no QA needed: ${e.message}`));
               }
-            }
-
-            // Minimize the bot's now-outdated earlier reviews so the latest
-            // verdict is the visible one (same UX as the old comment minimizing).
-            const outdatedBotReviews = reviews.filter(r =>
-              r.user?.login === 'decentraland-bot' &&
-              r.body?.includes('REVIEW_RESULT:') &&
-              r.id !== currentReviewId
-            );
-            for (const r of outdatedBotReviews) {
-              await github.graphql(
-                `mutation($id: ID!) {
-                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
-                    minimizedComment { isMinimized }
-                  }
-                }`,
-                { id: r.node_id }
-              ).catch(e => console.log(`minimizeComment ${r.id}: ${e.message}`));
             }
 
             let description;
@@ -261,29 +245,50 @@ jobs:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
         run: |
           SHA="${{ github.event.pull_request.head.sha }}"
-          echo "Searching for failed enforce-approvals run for SHA $SHA..."
+          REPO="${{ github.repository }}"
 
-          WORKFLOW_RUN_ID=$(gh run list \
+          # The bot's submitted review co-triggers an enforce run that reads the
+          # labels BEFORE this workflow applied them. Wait for every enforce run
+          # for this SHA to conclude, then re-run the failed ones (any event type)
+          # so the final "QA and DEV Approvals" status reflects the labels as
+          # they are now.
+          for i in $(seq 1 30); do
+            IN_PROGRESS=$(gh run list \
+              --workflow="Enforce QA and DEV Approvals" \
+              --limit 100 \
+              --repo "$REPO" \
+              --json headSha,status \
+              | jq -r --arg SHA "$SHA" '
+                  map(select(.headSha == $SHA and (.status == "in_progress" or .status == "queued"))) | length
+              ')
+            if [ "$IN_PROGRESS" -eq 0 ]; then
+              break
+            fi
+            echo "Waiting for $IN_PROGRESS in-flight enforce-approvals run(s) to conclude ($i/30)..."
+            sleep 10
+          done
+
+          FAILED_RUN_IDS=$(gh run list \
             --workflow="Enforce QA and DEV Approvals" \
             --limit 100 \
-            --repo "${{ github.repository }}" \
-            --json databaseId,event,headSha,conclusion \
+            --repo "$REPO" \
+            --json databaseId,headSha,conclusion \
             | jq -r --arg SHA "$SHA" '
                 .[] |
-                select(.event == "pull_request") |
                 select(.headSha == $SHA) |
                 select(.conclusion == "failure") |
                 .databaseId
-            ' | head -n 1)
+            ')
 
-          if [ -z "$WORKFLOW_RUN_ID" ]; then
-            echo "No failed enforce-approvals run found for this commit."
+          if [ -z "$FAILED_RUN_IDS" ]; then
+            echo "No failed enforce-approvals runs found for this commit."
             exit 0
           fi
 
-          echo "Re-running failed enforce-approvals workflow: $WORKFLOW_RUN_ID"
-          gh run rerun "$WORKFLOW_RUN_ID" --repo "${{ github.repository }}"
-          echo "Re-run triggered successfully."
+          for RUN_ID in $FAILED_RUN_IDS; do
+            echo "Re-running failed enforce-approvals workflow: $RUN_ID"
+            gh run rerun "$RUN_ID" --repo "$REPO" || echo "::warning::Could not re-run $RUN_ID"
+          done
 
   error-status:
     if: |
