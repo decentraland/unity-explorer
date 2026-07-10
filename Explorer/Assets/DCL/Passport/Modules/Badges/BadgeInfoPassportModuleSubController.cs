@@ -5,7 +5,6 @@ using DCL.Passport.Fields.Badges;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Arch.Core;
 using DCL.UI;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -14,23 +13,23 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules.Badges
 {
-    public class BadgeInfo_PassportModuleSubController
+    public class BadgeInfoPassportModuleSubController
     {
         private const string ERROR_MESSAGE = "There was an error loading tiers. Please try again!";
-        
+
         private const int BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY = 6;
         private static readonly int IS_STOPPED_3D_IMAGE_ANIMATION_PARAM = Animator.StringToHash("IsStopped");
         private static readonly int BASE_COLOR = Shader.PropertyToID("_baseColor");
         private static readonly int NORMAL = Shader.PropertyToID("_normal");
         private static readonly int HRM = Shader.PropertyToID("_hrm");
 
-        private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
+        private readonly BadgeInfoPassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
         private readonly List<BadgeTierButton_PassportFieldView> instantiatedBadgeTierButtons = new ();
         private readonly ImageControllerProvider imageControllerProvider;
-        
+
         private bool isOwnProfile;
         private BadgeInfo currentBadgeInfo;
         private IReadOnlyList<TierData> currentTiers = Array.Empty<TierData>();
@@ -44,8 +43,8 @@ namespace DCL.Passport.Modules.Badges
         private Texture2DRef? normalRef;
         private Texture2DRef? hrmRef;
 
-        public BadgeInfo_PassportModuleSubController(
-            BadgeInfo_PassportModuleView badgeInfoModuleView,
+        public BadgeInfoPassportModuleSubController(
+            BadgeInfoPassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
             BadgePreviewCameraView badge3DPreviewCamera,
@@ -55,7 +54,7 @@ namespace DCL.Passport.Modules.Badges
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
             this.imageControllerProvider  = imageControllerProvider;
-            
+
             badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
             badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
             badgeInfoModuleView.Badge3DImage.texture = badge3DPreviewCamera.badge3DCamera.targetTexture;
@@ -285,9 +284,9 @@ namespace DCL.Passport.Modules.Badges
                 if (assets?.textures3d == null)
                     return;
 
-                string baseColorUrl = assets.textures3d.baseColor ?? string.Empty;
-                string normalUrl = assets.textures3d.normal ?? string.Empty;
-                string hrmUrl = assets.textures3d.hrm ?? string.Empty;
+                string baseColorUrl = assets.textures3d.baseColor;
+                string normalUrl = assets.textures3d.normal;
+                string hrmUrl = assets.textures3d.hrm;
 
                 var baseTask = imageControllerProvider.LoadTextureAsync(baseColorUrl, ct);
                 var normalTask = imageControllerProvider.LoadTextureAsync(normalUrl, ct);
@@ -314,7 +313,7 @@ namespace DCL.Passport.Modules.Badges
             catch (Exception e)
             {
                 Dispose3DTextures();
-                
+
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
@@ -331,7 +330,7 @@ namespace DCL.Passport.Modules.Badges
             hrmRef?.Dispose();
             hrmRef = null;
         }
-        
+
         private void SetBadgeInfoViewAsLoading(bool isLoading)
         {
             badgeInfoModuleView.ImageLoadingSpinner.SetActive(isLoading);

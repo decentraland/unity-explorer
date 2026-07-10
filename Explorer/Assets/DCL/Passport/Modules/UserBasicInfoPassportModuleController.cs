@@ -16,11 +16,11 @@ using Utility;
 
 namespace DCL.Passport.Modules
 {
-    public class UserBasicInfo_PassportModuleController : IPassportModuleController
+    public class UserBasicInfoPassportModuleController : IPassportModuleController
     {
         private readonly UserNameElementPresenter userNameElementPresenter;
         private readonly UserWalletAddressElementPresenter walletAddressElementPresenter;
-        private readonly UserBasicInfo_PassportModuleView view;
+        private readonly UserBasicInfoPassportModuleView view;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
@@ -35,8 +35,8 @@ namespace DCL.Passport.Modules
 
         public event Action? NameClaimRequested;
 
-        public UserBasicInfo_PassportModuleController(
-            UserBasicInfo_PassportModuleView view,
+        public UserBasicInfoPassportModuleController(
+            UserBasicInfoPassportModuleView view,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IMVCManager mvcManager,

@@ -31,7 +31,7 @@ using Object = UnityEngine.Object;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
 
-namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     [Ignore("This test fails on the GameCI runner because it calls Unity with -nographics. Ignore until we figure out what to do.")]
     public class AvatarInstantiatorSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>

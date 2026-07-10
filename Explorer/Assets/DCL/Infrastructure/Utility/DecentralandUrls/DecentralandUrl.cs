@@ -161,5 +161,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         MembersV2 = 96,
 
         Pulse = 100,
+
+        MarketplaceApiLink = 101,
     }
 }
