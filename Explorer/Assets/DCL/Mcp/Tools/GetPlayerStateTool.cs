@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Mcp.Protocol;
+using DCL.Profiles;
 using ECS.SceneLifeCycle.CurrentScene;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,7 +24,8 @@ namespace DCL.Mcp.Tools
         public string Name => "get_player_state";
 
         public string Description =>
-            "Read the player's current world position, rotation, parcel, velocity and grounded state, plus the camera position, rotation and mode.";
+            "Read the player's current world position, rotation, parcel, velocity and grounded state, the camera position, rotation and mode, "
+            + "and the wallet address — use the address to tell Explorer instances apart when several run at once.";
 
         public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
 
@@ -43,6 +45,7 @@ namespace DCL.Mcp.Tools
             Vector3 position = characterTransform.Position;
 
             world.TryGet(playerEntity, out CharacterRigidTransform? rigidTransform);
+            world.TryGet(playerEntity, out Profile? profile);
 
             var state = new JObject
             {
@@ -52,6 +55,7 @@ namespace DCL.Mcp.Tools
                 ["velocity"] = McpJson.Vector(rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero),
                 ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
                 ["isPlayerStandingOnScene"] = currentSceneInfo.IsPlayerStandingOnScene,
+                ["address"] = profile == null ? JValue.CreateNull() : profile.Compact.UserId,
                 ["camera"] = new JObject
                 {
                     ["position"] = McpJson.Vector(exposedCameraData.WorldPosition.Value),

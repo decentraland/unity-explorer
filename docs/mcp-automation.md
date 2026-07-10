@@ -56,7 +56,7 @@ curl -s -X POST http://127.0.0.1:8123/mcp \
 | Tool | Arguments | Returns |
 |---|---|---|
 | `screenshot` | `maxWidth?` (default 1280), `quality?` (`jpg`\|`png`), `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
-| `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode |
+| `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
 | `get_scene_logs` | `limit?`, `severity?` (`all`\|`error`), `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
@@ -97,7 +97,7 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 
 ## Troubleshooting
 
-- **Port already in use** — the server logs an `MCP` category error and stays inert; relaunch with a different `--mcp-port`. Multiple Explorer instances (`--multi-instance`) each need their own port.
+- **Port already in use** — the server logs an `MCP` category error and stays inert; relaunch with a different `--mcp-port`. Multiple Explorer instances (`--multi-instance`) each need their own port. To confirm which process answers on a port, check `serverInfo.pid` in the `initialize` response and the `address` field of `get_player_state`.
 - **HTTP 403** — the request carried a non-localhost `Origin` header; MCP clients and curl don't send one.
 - **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/mcp/ user=Everyone` (elevated prompt), then relaunch.
 - **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).

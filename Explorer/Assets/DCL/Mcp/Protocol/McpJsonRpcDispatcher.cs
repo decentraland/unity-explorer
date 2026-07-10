@@ -17,6 +17,9 @@ namespace DCL.Mcp.Protocol
         private readonly McpToolRegistry toolRegistry;
         private readonly string serverVersion;
 
+        // Lets an agent orchestrating several Explorer instances confirm which process answers on this port.
+        private readonly int processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+
         public McpJsonRpcDispatcher(McpToolRegistry toolRegistry, string serverVersion)
         {
             this.toolRegistry = toolRegistry;
@@ -90,6 +93,7 @@ namespace DCL.Mcp.Protocol
                 {
                     ["name"] = McpConstants.SERVER_NAME,
                     ["version"] = serverVersion,
+                    ["pid"] = processId,
                 },
             };
 
