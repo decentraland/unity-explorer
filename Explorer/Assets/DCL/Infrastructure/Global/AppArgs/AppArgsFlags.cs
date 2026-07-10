@@ -112,6 +112,8 @@ namespace Global.AppArgs
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
 
+        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
+
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 
         public const string NATIVE_SHUTDOWN_STOPWATCH = "native-shutdown-stopwatch";

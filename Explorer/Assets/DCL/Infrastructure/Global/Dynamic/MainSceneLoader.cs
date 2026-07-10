@@ -234,6 +234,7 @@ namespace Global.Dynamic
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -241,7 +242,8 @@ namespace Global.Dynamic
                 launchSettings,
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
-                cliGatekeeperUrl);
+                cliGatekeeperUrl,
+                cliOptimizedAssetsUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
