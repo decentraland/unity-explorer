@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.SocialService;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
 using Utility;
@@ -32,24 +31,27 @@ namespace DCL.Communities
             this.identityCache = identityCache;
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
-            socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+            socialServiceEventBus.RPCClientReconnected += SubscribeToConnectivityStatus;
+            socialServiceEventBus.WebSocketConnectionEstablished += SubscribeToConnectivityStatus;
         }
 
         public override void Dispose()
         {
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
-            socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            socialServiceEventBus.RPCClientReconnected -= SubscribeToConnectivityStatus;
+            socialServiceEventBus.WebSocketConnectionEstablished -= SubscribeToConnectivityStatus;
             subscriptionCts.SafeCancelAndDispose();
             base.Dispose();
         }
 
-        private void OnTransportConnected()
+        /// <summary>
+        ///     Starts the connectivity updates subscription. A call while the subscription is already
+        ///     active is a no-op, enforced by <see cref="RPCSocialServiceBase.KeepServerStreamOpenAsync{T}" />.
+        /// </summary>
+        public void SubscribeToConnectivityStatus()
         {
             if (identityCache.Identity == null) return;
 
-            subscriptionCts = subscriptionCts.SafeRestart();
             TrySubscribeToConnectivityStatusAsync(subscriptionCts.Token).Forget();
         }
 
@@ -58,25 +60,14 @@ namespace DCL.Communities
             subscriptionCts = subscriptionCts.SafeRestart();
         }
 
-        private void OnTransportReconnected()
+        private async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            if (identityCache.Identity == null) return;
-
-            subscriptionCts = subscriptionCts.SafeRestart();
-            TrySubscribeToConnectivityStatusAsync(subscriptionCts.Token).Forget();
-        }
-
-        public async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
-        {
-            await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            await KeepServerStreamOpenAsync<CommunityMemberConnectivityUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream =
-                    socialServiceRPC.Module().CallServerStream<CommunityMemberConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
-
                 await foreach (CommunityMemberConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try

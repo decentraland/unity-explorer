@@ -35,7 +35,6 @@ namespace DCL.VoiceChat.Services
         private readonly IWeb3IdentityCache identityCache;
         private CancellationTokenSource subscriptionCts = new ();
         private bool isServiceDisabled;
-        private bool isListeningUpdatesFromServer;
 
         public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,
@@ -188,22 +187,12 @@ namespace DCL.VoiceChat.Services
 
         private async UniTaskVoid TrySubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            if (isListeningUpdatesFromServer) return;
-
-            try
-            {
-                isListeningUpdatesFromServer = true;
-                await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
-            }
-            finally { isListeningUpdatesFromServer = false; }
+            await KeepServerStreamOpenAsync<PrivateVoiceChatUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream =
-                    socialServiceRPC.Module().CallServerStream<PrivateVoiceChatUpdate>(SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, new Empty());
-
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Successfully opened private voice chat updates stream");
 
                 await foreach (PrivateVoiceChatUpdate? response in EnumerateWithCancellationAsync(stream, ct))

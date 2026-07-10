@@ -58,15 +58,10 @@ namespace DCL.Friends
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<FriendshipUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendshipUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
-                    socialServiceRPC.Module()
-                                    .CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
-                                         new Empty());
-
                 await foreach (FriendshipUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
@@ -116,13 +111,10 @@ namespace DCL.Friends
 
         public UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<FriendConnectivityUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
-
                 await foreach (FriendConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
@@ -149,13 +141,10 @@ namespace DCL.Friends
 
         public UniTask SubscribeToUserBlockUpdatersAsync(CancellationToken ct)
         {
-            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            return KeepServerStreamOpenAsync<BlockUpdate>(OpenStreamAndProcessUpdatesAsync, SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, ct);
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask OpenStreamAndProcessUpdatesAsync(IUniTaskAsyncEnumerable<BlockUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<BlockUpdate> stream =
-                    socialServiceRPC.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
-
                 await foreach (BlockUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try
