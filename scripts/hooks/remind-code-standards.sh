@@ -23,6 +23,9 @@ case "$file_path" in
 esac
 
 session_id="$(printf '%s' "$input" | jq -r '.session_id // "unknown"' 2>/dev/null || echo unknown)"
+# Strip anything not path-safe: the sentinel name must never escape $TMPDIR.
+session_id="${session_id//[^a-zA-Z0-9_-]/}"
+[ -n "$session_id" ] || session_id="unknown"
 sentinel="${TMPDIR:-/tmp}/claude-code-standards-reminder-${session_id}"
 
 # Fire once per session to avoid per-edit noise.

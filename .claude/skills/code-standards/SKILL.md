@@ -1,6 +1,6 @@
 ---
 name: code-standards
-description: "C# naming conventions, member ordering, formatting rules, nullable reference types, memory/GC rules, test patterns, and PR standards. Use BEFORE reading, writing, or modifying ANY .cs file in this Unity project — invoke it before the first Edit/Write on production C#, not only for large changes. Applies to ECS systems, controllers, tests, utilities, and plugins."
+description: "C# naming conventions, member ordering, formatting rules, nullable reference types, memory/GC rules, test patterns, and PR standards. Use BEFORE writing, modifying, or reviewing ANY .cs file in this Unity project — invoke it before the first Edit/Write on production C#, not only for large changes. Applies to ECS systems, controllers, tests, utilities, and plugins."
 user-invocable: false
 ---
 
