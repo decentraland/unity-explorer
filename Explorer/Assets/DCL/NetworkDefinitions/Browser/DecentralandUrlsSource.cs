@@ -191,8 +191,8 @@ namespace DCL.Browser.DecentralandUrls
         /// </summary>
         private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
         {
-            if (!string.IsNullOrEmpty(optimizedAssetsBaseOverride))
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, optimizedAssetsBaseOverride!);
+            if (optimizedAssetsBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, optimizedAssetsBaseOverride);
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
@@ -204,8 +204,8 @@ namespace DCL.Browser.DecentralandUrls
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
                 return dedicatedHostUrl;
 
-            if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && !string.IsNullOrEmpty(customBaseUrl))
-                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, customBaseUrl!.TrimEnd('/'));
+            if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, customBaseUrl.TrimEnd('/'));
 
             return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, $"https://abcdn.decentraland.{ENV}");
         }
