@@ -215,8 +215,7 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 webRequestController,
                 deeplinkSigninIdentityId,
-                deeplinkLoginAwaitingSigninRequestId,
-                identityExpirationDuration
+                deeplinkLoginAwaitingSigninRequestId
             );
 
             var dappAuth = new DappWeb3EthereumApi(

@@ -7,9 +7,7 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using JetBrains.Annotations;
 using Nethereum.Signer;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,13 +16,13 @@ using System.Threading;
 namespace DCL.Web3.Authenticators
 {
     /// <summary>
-    ///     Production wallet sign-in via browser and OS deep link: initiates a sign-in request on the auth server,
-    ///     opens the browser for the user to sign with their wallet, then awaits the deep link identity id
-    ///     and resolves the resulting identity from the server.
+    ///     Production wallet sign-in via browser and OS deep link: generates a client-side auth request id,
+    ///     opens the browser on the signature web app for the user to sign with their wallet, then awaits the
+    ///     deep link that carries the resulting identity id (matched against that request id) and resolves the
+    ///     identity from the auth server.
     /// </summary>
     public class DappDeepLinkAuthenticator : IWeb3Authenticator
     {
-        private const double IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS = 30;
         private const int DEEPLINK_TIMEOUT_SECONDS = 300;
 
         private readonly UnityAppWebBrowser webBrowser;
@@ -34,7 +32,6 @@ namespace DCL.Web3.Authenticators
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
-        private readonly int? identityExpirationDuration;
         private readonly URLBuilder urlBuilder = new ();
 
         public DappDeepLinkAuthenticator(
@@ -44,8 +41,7 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
-            ReactiveProperty<string?> loginAwaitingSigninRequestId,
-            int? identityExpirationDuration = null)
+            ReactiveProperty<string?> loginAwaitingSigninRequestId)
         {
             this.webBrowser = webBrowser;
             this.authApiUrl = authApiUrl;
@@ -54,7 +50,6 @@ namespace DCL.Web3.Authenticators
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
-            this.identityExpirationDuration = identityExpirationDuration;
         }
 
         public void Dispose() { }
@@ -65,57 +60,25 @@ namespace DCL.Web3.Authenticators
             // so a stale or foreign deep link does not complete this login with another session's identity.
             deeplinkSigninIdentityId.Value = null;
 
-            // The ephemeral address is embedded in the signed message so the server can mint a well-formed request from it.
-            var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
-
-            DateTime sessionExpiration = identityExpirationDuration != null
-                ? DateTime.UtcNow.AddSeconds(identityExpirationDuration.Value)
-                : DateTime.UtcNow.AddDays(IDENTITY_EXPIRATION_PERIOD_FALLBACK_IN_DAYS);
-
-            string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
-
-            CreateRequestResponseDto createRequestResponse = await CreateSigninRequestAsync(ephemeralMessage, ct);
-
-            if (string.IsNullOrEmpty(createRequestResponse.requestId))
-                throw new Web3Exception("Cannot solve auth request id");
-
             await UniTask.SwitchToMainThread(ct);
 
-            var url = $"{signatureWebAppUrl}/{createRequestResponse.requestId}?loginMethod={payload.Method}&flow=deeplink";
+            // Auth request ids are not requested to the auth server anymore but instead generated at client level,
+            // so it can later be validated through the flow
+            var authRequestId = Guid.NewGuid().ToString();
+
+            var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
             #if UNITY_EDITOR
             // Without this flag the auth website also launches a standalone Explorer build,
             // which would steal the signin from the editor.
-            url += "&bridge-only";
+            url += "&bridgeOnly";
             #endif
 
             webBrowser.OpenUrlMainThreadOnly(url);
 
             // Resolves when the OS delivers the deep link that carries the identity id.
-            string identityId = await WaitForSigninAsync(createRequestResponse.requestId, ct);
+            string identityId = await WaitForSigninAsync(authRequestId, ct);
 
             return await FetchIdentityByIdAsync(identityId, ct);
-        }
-
-        /// <summary>
-        ///     Mints a sign-in <c>requestId</c> via <c>POST {authApiUrl}/requests</c>.
-        /// </summary>
-        private async UniTask<CreateRequestResponseDto> CreateSigninRequestAsync(string ephemeralMessage, CancellationToken ct)
-        {
-            urlBuilder.Clear();
-
-            urlBuilder.AppendDomain(URLDomain.FromString(authApiUrl))
-                      .AppendPath(new URLPath("requests"));
-
-            var commonArguments = new CommonArguments(urlBuilder.Build(), RetryPolicy.Enforce());
-
-            string body = JsonConvert.SerializeObject(new SigninRequestDto
-            {
-                method = "dcl_personal_sign",
-                @params = new object[] { ephemeralMessage },
-            });
-
-            return await webRequestController.PostAsync(commonArguments, GenericPostArguments.CreateJson(body), ct, ReportCategory.AUTHENTICATION)
-                                             .CreateFromNewtonsoftJsonAsync<CreateRequestResponseDto>();
         }
 
         /// <summary>
@@ -196,27 +159,7 @@ namespace DCL.Web3.Authenticators
             return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
         }
 
-        private static string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
-            $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
-
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.
-        // ReSharper disable InconsistentNaming
-        [Serializable]
-        [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-        private struct SigninRequestDto
-        {
-            public string method;
-            public object[] @params;
-        }
-
-        [Serializable]
-        private struct CreateRequestResponseDto
-        {
-            public string requestId;
-            public string expiration;
-            public int code;
-        }
-
         [Serializable]
         private struct IdentityAuthResponseDto
         {
@@ -238,7 +181,5 @@ namespace DCL.Web3.Authenticators
                 public string publicKey;
             }
         }
-
-        // ReSharper restore InconsistentNaming
     }
 }
