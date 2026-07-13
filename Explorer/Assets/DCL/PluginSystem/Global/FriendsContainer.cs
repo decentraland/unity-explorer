@@ -230,7 +230,7 @@ namespace DCL.PluginSystem.Global
 
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
-            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token);
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).Forget();
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -276,16 +276,15 @@ namespace DCL.PluginSystem.Global
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCts.Token).Forget();
-            return;
 
-            async UniTaskVoid ReconnectFriendServiceAsync(CancellationToken ct)
-            {
-                await LaunchSubscriptionsAsync(ct);
-                await PreWarmFriendsCacheAsync(ct);
+            // Reset before re-subscribing: statuses cached for the previous identity would otherwise
+            // suppress the connectivity snapshot the new subscription delivers
+            friendsConnectivityStatusTracker.Reset();
+            friendsPanelController.Reset();
 
-                friendsPanelController.Reset();
-            }
+            // Subscriptions stay open until the next disconnect, so they must not gate the prewarm
+            LaunchSubscriptionsAsync(friendServiceSubscriptionCts.Token).Forget();
+            PreWarmFriendsCacheAsync(friendServiceSubscriptionCts.Token).Forget();
         }
 
         private async UniTask LaunchSubscriptionsAsync(CancellationToken ct)

@@ -197,7 +197,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository);
             mvcManager.RegisterController(communityCreationEditionController);
 
-            rpcCommunitiesService.TrySubscribeToConnectivityStatusAsync(ct).Forget();
+            rpcCommunitiesService.SubscribeToConnectivityStatus();
         }
 
         private void OnInputShortcutsEventsPerformedAsync(InputAction.CallbackContext _) =>

@@ -45,6 +45,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesDataProvider;
 using DCL.Communities.EventInfo;
+using DCL.Credits;
 using DCL.Donations;
 using DCL.Events;
 using DCL.EventsApi;
@@ -58,6 +59,7 @@ using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -151,6 +153,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunityCallOrchestrator communityCallOrchestrator;
         private readonly JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker;
         private readonly IPendingTransferService ownedNftFilter;
+        private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IPassportBridge passportBridge;
         private readonly DCLInput dclInput;
         private readonly SmartWearableCache smartWearableCache;
@@ -163,6 +166,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDonationsService donationsService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWorldPermissionsService worldPermissionsService;
+        private ICreditsPanelController creditsPanelController = new NullCreditsPanelController();
         private readonly bool isVoiceChatFeatureEnabled;
         private readonly bool isChatTranslationFeatureEnabled;
 
@@ -252,7 +256,8 @@ namespace DCL.PluginSystem.Global
             IRendererFeaturesCache rendererFeaturesCache,
             SpringBoneSimulationSettings springBoneSimulationSettings,
             JoinedCommunitiesVoiceLiveTracker joinedCommunitiesVoiceLiveTracker,
-            IPendingTransferService ownedNftFilter
+            IPendingTransferService ownedNftFilter,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient
             )
         {
             this.eventBus = eventBus;
@@ -325,6 +330,7 @@ namespace DCL.PluginSystem.Global
             this.springBoneSimulationSettings = springBoneSimulationSettings;
             this.joinedCommunitiesVoiceLiveTracker = joinedCommunitiesVoiceLiveTracker;
             this.ownedNftFilter = ownedNftFilter;
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void Dispose()
@@ -341,6 +347,7 @@ namespace DCL.PluginSystem.Global
             eventsController?.Dispose();
             eventDetailPanelController?.Dispose();
             placeDetailPanelController?.Dispose();
+            creditsPanelController.Dispose();
 
             dclInput.Shortcuts.MainMenu.performed -= OnInputShortcutsMainMenuPerformedAsync;
             dclInput.Shortcuts.Map.performed -= OnInputShortcutsMapPerformedAsync;
@@ -576,6 +583,12 @@ namespace DCL.PluginSystem.Global
                 eventCardActionsController);
             mvcManager.RegisterController(eventDetailPanelController);
 
+            bool userCreditsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS);
+            explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
+
+            if (userCreditsEnabled)
+                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache);
+
             explorePanelController = new
                 ExplorePanelController(
                     viewFactoryMethod,
@@ -600,7 +613,8 @@ namespace DCL.PluginSystem.Global
                     inputBlock,
                     eventsApiService,
                     mvcManager,
-                    joinedCommunitiesVoiceLiveTracker);
+                    joinedCommunitiesVoiceLiveTracker,
+                    creditsPanelController);
 
             mvcManager.RegisterController(explorePanelController);
 

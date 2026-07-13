@@ -52,7 +52,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ITextFormatter textFormatter,
-            ImageControllerProvider imageControllerProvider)
+            ImageControllerProvider imageControllerProvider,
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -67,7 +68,7 @@ namespace DCL.PluginSystem.Global
             this.textFormatter = textFormatter;
             this.imageControllerProvider = imageControllerProvider;
 
-            marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
+            this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

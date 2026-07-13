@@ -22,6 +22,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
@@ -291,7 +292,7 @@ namespace Global.Dynamic
             CommunitiesContainer communitiesContainer = await CommunitiesContainer.CreateAsync(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache, staticContainer.ProfilesContainer.Repository, appArgs, ct);
 
             var realmNavigatorContainer = RealmNavigationContainer.Create
-                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, commsContainer.RemoteProfiles, multiplayerContainer.RemoteAnnouncements, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, commsContainer.RemoteEntities, globalWorld, commsContainer.RoomHub, terrainContainer.Landscape, exposedGlobalDataContainer, realmContainer.LoadingScreen, placesAndEventsContainer.PlacesAPIService, identityCache, communitiesContainer.DataProvider, uiShellContainer.MvcManager);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.RealmNavigator;
 
@@ -422,12 +423,11 @@ namespace Global.Dynamic
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
-
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -660,7 +660,8 @@ namespace Global.Dynamic
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
-                    profileContainer.PendingTransferService
+                    profileContainer.PendingTransferService,
+                    marketplaceCreditsAPIClient
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -881,6 +882,7 @@ namespace Global.Dynamic
                 ));
 
             if (includeMarketplaceCredits)
+            {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     uiShellContainer.MainUIView,
                     assetsProvisioner,
@@ -894,7 +896,9 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
-                    staticContainer.ImageControllerProvider));
+                    staticContainer.ImageControllerProvider,
+                    marketplaceCreditsAPIClient));
+            }
 
             if (communitiesContainer.IncludeCommunities)
                 globalPlugins.Add(new CommunitiesPlugin(

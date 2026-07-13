@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
 using Decentraland.Pulse;
 using System.Diagnostics;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {

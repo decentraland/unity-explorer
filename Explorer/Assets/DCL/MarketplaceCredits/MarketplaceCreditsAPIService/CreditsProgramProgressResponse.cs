@@ -77,9 +77,9 @@ namespace DCL.MarketplaceCredits
 	/// </summary>
 	public struct SeasonsData
 	{
-		public SeasonData lastSeason;
-		public CurrentSeasonInfo currentSeason;
-		public SeasonData nextSeason;
+		public SeasonData LastSeason;
+		public CurrentSeasonInfo CurrentSeason;
+		public SeasonData NextSeason;
 	}
 
 	/// <summary>
