@@ -94,11 +94,46 @@ namespace DCL.Chat.Commands.Tests
             Assert.That(target.IsCrowd, Is.False);
         }
 
-        // Anything that is not a position, "random"/"crowd", "x,y/spawn", or "world/x,y"
-        // is treated verbatim as a world name.
+        [TestCase("myworld.dcl.eth/lobby", "myworld.dcl.eth", "lobby")]
+        [TestCase("olavra/PlazaCenter", "olavra", "PlazaCenter")]
+        [TestCase("myworld.dcl.eth/main lobby", "myworld.dcl.eth", "main lobby")]
+        public void ParseWorldWithSpawnPoint(string param, string world, string spawnPoint)
+        {
+            // Act
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(param);
+
+            // Assert
+            Assert.That(target.World, Is.EqualTo(world));
+            Assert.That(target.SpawnPoint, Is.EqualTo(spawnPoint));
+            Assert.That(target.Parcel, Is.Null);
+            Assert.That(target.IsRandom, Is.False);
+            Assert.That(target.IsCrowd, Is.False);
+        }
+
+        [TestCase("myworld.dcl.eth/-51,1/lobby", "myworld.dcl.eth", -51, 1, "lobby")]
+        [TestCase("olavra/0,0/PlazaCenter", "olavra", 0, 0, "PlazaCenter")]
+        [TestCase("myworld.dcl.eth/12,34/main lobby", "myworld.dcl.eth", 12, 34, "main lobby")]
+        public void ParseWorldWithParcelAndSpawnPoint(string param, string world, int x, int y, string spawnPoint)
+        {
+            // Act
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(param);
+
+            // Assert
+            Assert.That(target.World, Is.EqualTo(world));
+            Assert.That(target.Parcel, Is.EqualTo(new Vector2Int(x, y)));
+            Assert.That(target.SpawnPoint, Is.EqualTo(spawnPoint));
+            Assert.That(target.IsRandom, Is.False);
+            Assert.That(target.IsCrowd, Is.False);
+        }
+
+        // Anything that is not a position, "random"/"crowd", "x,y/spawn", "world/x,y",
+        // "world/spawn", or "world/x,y/spawn" is treated verbatim as a world name.
         [TestCase("")]
-        [TestCase("myworld.dcl.eth/lobby")]
         [TestCase("myworld.dcl.eth/")]
+        [TestCase("myworld.dcl.eth/-51,1/")]
+        [TestCase("myworld.dcl.eth//lobby")]
+        [TestCase("myworld.dcl.eth/-51,1/lob/by")]
+        [TestCase("myworld.dcl.eth/lob,by/lobby")]
         [TestCase("/12,34")]
         [TestCase("12,34,56")]
         [TestCase("12,x")]

@@ -80,7 +80,8 @@ namespace ECS.SceneLifeCycle.Realm
             Vector2Int parcelToTeleport = default,
             bool isWorld = false,
             bool allowsSpawnPointerOverride = false,
-            bool landOnParcel = false
+            bool landOnParcel = false,
+            string? spawnPointName = null
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal, bool landOnParcel = false, string? spawnPointName = null);

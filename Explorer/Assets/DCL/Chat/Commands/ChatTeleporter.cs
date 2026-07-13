@@ -40,7 +40,7 @@ namespace DCL.Chat.Commands
             };
         }
 
-        public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, CancellationToken ct, string? spawnPointName = null)
         {
             ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
@@ -50,7 +50,7 @@ namespace DCL.Chat.Commands
             if (realmNavigator.IsAlreadyOnRealm(realmURL))
                 return $"🟡 You are already in {realm}!";
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -75,7 +75,7 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Parses the realm and teleports the player to it, with an optional target position.
         /// </summary>
-        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int targetPosition, CancellationToken ct, string? spawnPointName = null)
         {
             ExtractWorldData(realm, out URLDomain realmURL, out bool isWorld);
 
@@ -83,9 +83,9 @@ namespace DCL.Chat.Commands
                 return errorMessage;
 
             if(realmNavigator.IsAlreadyOnRealm(realmURL))
-                return await TeleportToParcelAsync(targetPosition, true, ct);
+                return await TeleportToParcelAsync(targetPosition, true, ct, spawnPointName);
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false);
+            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition, isWorld, false, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";

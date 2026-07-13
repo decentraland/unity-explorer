@@ -32,7 +32,7 @@ namespace DCL.Chat.Commands
 
         /// <summary>
         /// Parses the single /goto argument into a <see cref="GotoTarget" />.
-        /// Grammar: "random" | "crowd" | "x,y" | "x,y/spawn" | "world" | "world/x,y".
+        /// Grammar: "random" | "crowd" | "x,y" | "x,y/spawn" | "world" | "world/x,y" | "world/spawn" | "world/x,y/spawn".
         /// A spawn point name contains neither ',' nor '/'.
         /// Anything that matches none of the forms is treated verbatim as a world name.
         /// </summary>
@@ -47,19 +47,26 @@ namespace DCL.Chat.Commands
             if (IsPositionParameter(param, false))
                 return new GotoTarget(world: null, parcel: ParseRawPosition(param), spawnPoint: null);
 
-            int slashIndex = param.IndexOf('/');
+            string[] segments = param.Split('/');
 
-            if (slashIndex > 0 && slashIndex < param.Length - 1)
+            if (segments.Length == 2 && segments[0].Length > 0)
             {
-                string head = param.Substring(0, slashIndex);
-                string tail = param.Substring(slashIndex + 1);
+                string head = segments[0];
+                string tail = segments[1];
 
                 if (IsPositionParameter(head, false) && IsSpawnPointName(tail))
                     return new GotoTarget(world: null, parcel: ParseRawPosition(head), spawnPoint: tail);
 
                 if (IsPositionParameter(tail, false))
                     return new GotoTarget(world: head, parcel: ParseRawPosition(tail), spawnPoint: null);
+
+                if (IsSpawnPointName(tail))
+                    return new GotoTarget(world: head, parcel: null, spawnPoint: tail);
             }
+
+            if (segments.Length == 3 && segments[0].Length > 0
+                && IsPositionParameter(segments[1], false) && IsSpawnPointName(segments[2]))
+                return new GotoTarget(world: segments[0], parcel: ParseRawPosition(segments[1]), spawnPoint: segments[2]);
 
             return new GotoTarget(world: param, parcel: null, spawnPoint: null);
         }

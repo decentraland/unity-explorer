@@ -15,7 +15,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             IRoomHub roomHub, string reportCategory = ReportCategory.SCENE_LOADING) : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, roomHub, reportCategory) { }
 
         public override UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams args, CancellationToken ct) =>
-            InternalExecuteAsync(args, args.CurrentDestinationParcel, ct, args.AllowsWorldPositionOverride, args.LandOnParcel);
+            InternalExecuteAsync(args, args.CurrentDestinationParcel, ct, args.AllowsWorldPositionOverride, args.LandOnParcel, args.SpawnPointName);
 
     }
 }

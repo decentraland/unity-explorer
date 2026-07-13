@@ -21,11 +21,13 @@ namespace DCL.Chat.Commands
     ///     /goto crowd          — teleport to the most populated scene
     ///     /goto *world*        — teleport to a world
     ///     /goto *world/x,y*    — teleport to a world at specific parcel
+    ///     /goto *world/name*   — teleport to a world, landing at the named spawn point
+    ///     /goto *world/x,y/name* — teleport to a world at specific parcel, landing at the named spawn point
     /// </summary>
     public class GoToChatCommand : IChatCommand
     {
         public string Command => "goto";
-        public string Description => "<b>/goto <i><x,y | x,y/spawn | random | crowd | world | world/x,y></i></b>\n  Teleport inside of Genesis or World";
+        public string Description => "<b>/goto <i><x,y | x,y/spawn | random | crowd | world | world/x,y | world/spawn | world/x,y/spawn></i></b>\n  Teleport inside of Genesis or World";
 
         private readonly ChatTeleporter chatTeleporter;
         private readonly IWebRequestController webRequestController;
@@ -53,8 +55,8 @@ namespace DCL.Chat.Commands
 
             if (target.World != null)
                 return target.Parcel.HasValue
-                    ? await chatTeleporter.TeleportToRealmAsync(target.World, target.Parcel.Value, ct)
-                    : await chatTeleporter.TeleportToRealmAsync(target.World, ct);
+                    ? await chatTeleporter.TeleportToRealmAsync(target.World, target.Parcel.Value, ct, target.SpawnPoint)
+                    : await chatTeleporter.TeleportToRealmAsync(target.World, ct, target.SpawnPoint);
 
             if (target.Parcel is { } parcel)
                 return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct, target.SpawnPoint);
