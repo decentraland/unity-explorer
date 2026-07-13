@@ -7,6 +7,8 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private const string PROFILE_ANNOUNCEMENT_MESSAGE = "profile announcement";
+
         private void HandleProfileAnnouncement(IncomingMessage message)
         {
             if (isDisposed)
@@ -17,11 +19,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerProfileVersionsAnnounced announcement = message.Message.PlayerProfileVersionAnnounced;
 
-            if (!peerIdCache.TryGetWallet(announcement.SubjectId, out Web3Address userId))
-            {
-                ReportHub.LogError(ReportCategory.MULTIPLAYER, $"Cannot process remote profile announcement, peer not found: {announcement.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(announcement.SubjectId, PROFILE_ANNOUNCEMENT_MESSAGE, out Web3Address userId))
                 return;
-            }
 
             incomingProfiles.Enqueue(userId, announcement.Version);
         }

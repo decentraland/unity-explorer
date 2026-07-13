@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Announcements;
@@ -8,6 +9,7 @@ using DCL.Web3.Identities;
 using Decentraland.Pulse;
 using ECS;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Movement
 {
@@ -26,6 +28,13 @@ namespace DCL.Multiplayer.Movement
         private readonly IWeb3IdentityCache identityCache;
 
         private volatile bool isDisposed;
+        private volatile bool routingPurgeRequested;
+
+        // BroadcastTeleport is main-thread-only, so single-threaded reuse is safe
+        private readonly HashSet<string> staleWalletsBuffer = new ();
+
+        // Null until the first broadcast so the spawn teleport doesn't purge current-realm announcements
+        private string? lastBroadcastRealm;
 
         internal long ResyncCount { get; private set; }
 
@@ -62,6 +71,22 @@ namespace DCL.Multiplayer.Movement
             return identityCache.EnsuredIdentity().Address;
         }
 
+        private bool TryGetWalletInCurrentRealm(uint subjectId, string messageType, out Web3Address wallet)
+        {
+            switch (peerIdCache.GetWalletInRealm(subjectId, realmData.RealmName, out wallet))
+            {
+                case PeerIdCache.LookupResult.UNKNOWN_PEER:
+                    ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received {messageType} from unknown peer {subjectId}");
+                    return false;
+                case PeerIdCache.LookupResult.REALM_MISMATCH:
+                    // Expected while a realm-change purge is pending, so not a warning
+                    ReportHub.Log(ReportCategory.MULTIPLAYER, $"Dropped {messageType} from peer {subjectId} in a different realm");
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
         public void Dispose()
         {
             isDisposed = true;
@@ -79,6 +104,7 @@ namespace DCL.Multiplayer.Movement
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStarted, HandleEmoteStarted);
             pulseService.RegisterSyncHandler(ServerMessage.MessageOneofCase.EmoteStopped, HandleEmoteStopped);
 
+            pulseService.RegisterBeforeMessageHandler(TryDrainRoutingPurge);
             pulseService.RegisterDisconnectHandler(HandleDisconnect);
             pulseService.RegisterHandshakeHandler(HandshakeAsync);
         }
@@ -90,6 +116,51 @@ namespace DCL.Multiplayer.Movement
             lastMovementMessages.Clear();
             pendingResyncs.Clear();
             emotingSubjects.Clear();
+        }
+
+        /// <summary>
+        ///     Must run on the main thread, before the teleport request is sent, so no new-realm announcements can race the scrub.
+        /// </summary>
+        private void PurgeDifferentRealmPeers()
+        {
+            // Everything gathered up to the realm switch belongs to the previous realm
+            incomingProfiles.Clear();
+            ClearEmoteIntentions();
+
+            // The comparison spares co-teleporting peers whose TeleportPerformed already refreshed the cached realm
+            staleWalletsBuffer.Clear();
+            peerIdCache.CollectWalletsNotInRealm(realmData.RealmName, staleWalletsBuffer);
+
+            foreach (string wallet in staleWalletsBuffer)
+            {
+                removeIntentions.Enqueue(wallet);
+                movementInbox.RemovePending(wallet);
+            }
+
+            routingPurgeRequested = true;
+
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"Purged {staleWalletsBuffer.Count} peers from a different realm on teleport to '{realmData.RealmName}'");
+        }
+
+        /// <summary>
+        ///     Routing-thread collections may only be mutated on the routing thread; deferring their purge to the
+        ///     next incoming message is safe because stale entries are inert until a message arrives.
+        /// </summary>
+        private void TryDrainRoutingPurge()
+        {
+            if (!routingPurgeRequested)
+                return;
+
+            routingPurgeRequested = false;
+
+            peerIdCache.RemoveWhereNotInRealm(realmData.RealmName, PurgeQueues);
+        }
+
+        private void PurgeQueues(uint subjectId)
+        {
+            lastMovementMessages.Remove(subjectId);
+            pendingResyncs.Remove(subjectId);
+            emotingSubjects.Remove(subjectId);
         }
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
