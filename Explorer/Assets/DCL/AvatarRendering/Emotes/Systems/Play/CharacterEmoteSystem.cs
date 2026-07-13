@@ -282,8 +282,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // Skipped while an emote plays: the disabled CharacterController makes grounded/blend readings stale, parking the intent forever and soft-locking movement.
                 if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
+                    !emoteComponent.IsPlayingEmote &&
                     (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                      !avatarView.GetAnimatorBool(AnimationHashes.GROUNDED) ||
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
