@@ -37,49 +37,21 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
-            if (!TryGetLodSettings(pbLightSource, out List<LightSourceSettings.LodSettings> lodSettings)) return;
+            if (!LightSourceHelper.TryGetLodSettings(settings, pbLightSource.TypeCase, out List<LightSourceSettings.LodSettings>? lodSettings)) return;
 
-            lightSourceComponent.LOD = FindLOD(lodSettings, lightSourceComponent);
+            lightSourceComponent.LOD = LightSourceHelper.FindLOD(lodSettings, lightSourceComponent.DistanceToPlayerSq);
+
+            if (lightSourceComponent.LOD < 0)
+            {
+                lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CULLED_BY_LOD;
+                return;
+            }
 
             ApplyLOD(ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
         }
 
-        private bool TryGetLodSettings(PBLightSource pbLightSource, out List<LightSourceSettings.LodSettings> lodSettings)
+        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, in LightSourceSettings.LodSettings lodSetting)
         {
-            switch (pbLightSource.TypeCase)
-            {
-                case PBLightSource.TypeOneofCase.Spot:
-                    lodSettings = settings.SpotLightsLods;
-                    break;
-
-                case PBLightSource.TypeOneofCase.Point:
-                    lodSettings = settings.PointLightsLods;
-                    break;
-
-                default:
-                    lodSettings = null;
-                    return false;
-            }
-
-            return lodSettings.Count > 0;
-        }
-
-        private int FindLOD(List<LightSourceSettings.LodSettings> lodSettings,  LightSourceComponent lightSourceComponent)
-        {
-            for (var lod = 0; lod < lodSettings.Count - 1; lod++)
-            {
-                float distance = lodSettings[lod].Distance;
-                if (lightSourceComponent.DistanceToPlayerSq < distance * distance)
-                    return lod;
-            }
-
-            return lodSettings.Count - 1;
-        }
-
-        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LightSourceSettings.LodSettings lodSetting)
-        {
-            if (lodSetting.IsCulled) lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLOD;
-
             Light light = lightSourceComponent.LightSourceInstance;
 
             light.shadows = LightSourceHelper.ClampShadowQuality(light.shadows, lodSetting.Shadows);
