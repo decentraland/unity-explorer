@@ -11,7 +11,5 @@ namespace DCL.Multiplayer.Profiles.Announcements
         public void Fill(List<RemoteAnnouncement> announcements);
 
         public void Remove(IReadOnlyCollection<RemoveIntention> removeIntentions);
-
-        public void Clear();
     }
 }

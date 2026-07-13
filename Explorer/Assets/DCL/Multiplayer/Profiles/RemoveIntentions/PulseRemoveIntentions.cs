@@ -16,6 +16,13 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
                 set.Add(new RemoveIntention(walletId, RoomSource.PULSE));
         }
 
+        /// <summary>Drops a pending remove so a newer re-join supersedes a not-yet-applied leave.</summary>
+        public void Cancel(string walletId)
+        {
+            using (mutexSync.GetScope())
+                set.Remove(new RemoveIntention(walletId, RoomSource.PULSE));
+        }
+
         public OwnedBunch<RemoveIntention> Bunch() =>
             new (mutexSync, set);
     }
