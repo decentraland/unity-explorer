@@ -590,8 +590,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6210271046698684379}
-  - {fileID: 2119156896072113711}
   - {fileID: 3066046139736365690}
+  - {fileID: 2119156896072113711}
   m_Father: {fileID: 8830084878494246411}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
@@ -617,14 +617,14 @@ MonoBehaviour:
     m_Top: 20
     m_Bottom: 30
   m_ChildAlignment: 0
-  m_Spacing: 20
+  m_Spacing: 10
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
   m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ReverseArrangement: 1
 --- !u!114 &4169767677730551106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4163,7 +4163,6 @@ MonoBehaviour:
   <BadgeInfoModuleView>k__BackingField: {fileID: 2960552255454602728}
   <CameraReelGalleryModuleView>k__BackingField: {fileID: 8447932679622754898}
   <CameraReelGalleryContextMenuView>k__BackingField: {fileID: 8359387739716697685}
-  <MainContainer>k__BackingField: {fileID: 2324426899192856976}
   <AddLinkModal>k__BackingField: {fileID: 9054811651154528581}
   <ErrorNotification>k__BackingField: {fileID: 3800359461374942149}
   Sections:

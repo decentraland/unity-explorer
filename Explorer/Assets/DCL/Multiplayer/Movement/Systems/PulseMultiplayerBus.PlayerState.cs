@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
@@ -15,6 +14,9 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private const string PLAYER_STATE_MESSAGE = "player state";
+        private const string PLAYER_STATE_DELTA_MESSAGE = "player state delta";
+
         // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly Dictionary<uint, byte> pendingResyncs = new ();
@@ -46,11 +48,22 @@ namespace DCL.Multiplayer.Movement
             }
 
             PlayerJoined playerJoined = message.Message.PlayerJoined;
+
+            // An empty realm violates the server contract, so it is dropped too
+            if (playerJoined.Realm.Length == 0 || playerJoined.Realm != realmData.RealmName)
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping PlayerJoined for {playerJoined.State.SubjectId}: realm '{playerJoined.Realm}' differs from current '{realmData.RealmName}'");
+                return;
+            }
+
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
+
+            // Join supersedes any still-queued leave for this wallet; drop the stale remove so it can't delete a present peer.
+            removeIntentions.Cancel(resolvedWallet);
 
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
-            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
+            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId, playerJoined.Realm);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
             lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
@@ -68,13 +81,12 @@ namespace DCL.Multiplayer.Movement
 
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
+            // Realm-agnostic on purpose: removals must process even for peers whose stored realm is stale
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
                 removeIntentions.Enqueue(wallet);
 
             peerIdCache.Remove(playerLeft.SubjectId);
-            lastMovementMessages.Remove(playerLeft.SubjectId);
-            pendingResyncs.Remove(playerLeft.SubjectId);
-            emotingSubjects.Remove(playerLeft.SubjectId);
+            PurgeQueues(playerLeft.SubjectId);
         }
 
         private void HandlePlayerStateFull(IncomingMessage message)
@@ -87,11 +99,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
             TryUpdateLastMovementAndCompleteResync(playerStateFull.ServerTick, playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
@@ -108,11 +117,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!peerIdCache.TryGetWallet(delta.SubjectId, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(delta.SubjectId, PLAYER_STATE_DELTA_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
             {
