@@ -29,5 +29,34 @@ namespace DCL.Chat.Commands
             string[] coords = param.Split(',');
             return new Vector2Int(int.Parse(coords[0]), int.Parse(coords[1]));
         }
+
+        /// <summary>
+        /// Parses the single /goto argument into a <see cref="GotoTarget" />.
+        /// Grammar: "random" | "crowd" | "x,y" | "world" | "world/x,y".
+        /// Anything that matches none of the forms is treated verbatim as a world name.
+        /// </summary>
+        public static GotoTarget ParseGotoTarget(string param)
+        {
+            if (param == PARAMETER_RANDOM)
+                return new GotoTarget(world: null, parcel: null, spawnPoint: null, isRandom: true);
+
+            if (param == PARAMETER_CROWD)
+                return new GotoTarget(world: null, parcel: null, spawnPoint: null, isCrowd: true);
+
+            if (IsPositionParameter(param, false))
+                return new GotoTarget(world: null, parcel: ParseRawPosition(param), spawnPoint: null);
+
+            int slashIndex = param.IndexOf('/');
+
+            if (slashIndex > 0 && slashIndex < param.Length - 1)
+            {
+                string position = param.Substring(slashIndex + 1);
+
+                if (IsPositionParameter(position, false))
+                    return new GotoTarget(world: param.Substring(0, slashIndex), parcel: ParseRawPosition(position), spawnPoint: null);
+            }
+
+            return new GotoTarget(world: param, parcel: null, spawnPoint: null);
+        }
     }
 }
