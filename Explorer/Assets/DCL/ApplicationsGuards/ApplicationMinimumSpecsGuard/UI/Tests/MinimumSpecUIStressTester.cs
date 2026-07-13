@@ -1,12 +1,12 @@
 ﻿#if UNITY_EDITOR
-using DCL.ApplicationsGuards;
+using DCL.ApplicationMinimumSpecsGuard;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards.UI.Tests
 {
     /// <summary>
     ///     Add this component to a GameObject with a MinimumSpecsTableView to stress test the UI.
