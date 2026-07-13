@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationsGuards;
+using DCL.ApplicationGuards;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow
 
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
-            var banStatusData = await ApplicationsGuards.ApplicationBlocklistGuard.IsUserBlocklistedAsync(webRequestController, urlsSource, identityCache.EnsuredIdentity().Address, moderationDataProvider, ct);
+            var banStatusData = await ApplicationBlocklistGuard.IsUserBlocklistedAsync(webRequestController, urlsSource, identityCache.EnsuredIdentity().Address, moderationDataProvider, ct);
 
             if (banStatusData.isBanned)
                 throw new UserBlockedException(banStatusData);

@@ -4,8 +4,7 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationMinimumSpecsGuard;
-using DCL.ApplicationsGuards;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
@@ -57,7 +56,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
-using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
+using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
 {

@@ -1,6 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationsGuards;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
