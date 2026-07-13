@@ -49,13 +49,13 @@ namespace DCL.MarketplaceCredits
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
             SeasonsData seasonResult = await UpdateProgramSeasonsAsync(ct);
 
-            creditsProgramProgressResponse.lastSeason = seasonResult!.lastSeason;
-            creditsProgramProgressResponse.currentSeason = seasonResult!.currentSeason.season;
+            creditsProgramProgressResponse.lastSeason = seasonResult!.LastSeason;
+            creditsProgramProgressResponse.currentSeason = seasonResult!.CurrentSeason.season;
             // Setting this here, so we don't need to check for null everytime.
-            if (seasonResult!.currentSeason.season.state == null)
+            if (seasonResult!.CurrentSeason.season.state == null)
                 creditsProgramProgressResponse.currentSeason.state = NO_DATA_STATE;
-            creditsProgramProgressResponse.currentWeek = seasonResult!.currentSeason.week;
-            creditsProgramProgressResponse.nextSeason = seasonResult!.nextSeason;
+            creditsProgramProgressResponse.currentWeek = seasonResult!.CurrentSeason.week;
+            creditsProgramProgressResponse.nextSeason = seasonResult!.NextSeason;
 
             creditsProgramProgressResponse.user.email =
                 !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail)
@@ -85,9 +85,9 @@ namespace DCL.MarketplaceCredits
             var result = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                     .CreateFromJson<SeasonsData>(WRJsonParser.Unity);
 
-            result.lastSeason.state ??= NO_DATA_STATE;
-            result.currentSeason.season.state ??= NO_DATA_STATE;
-            result.nextSeason.state = string.IsNullOrEmpty(result.nextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
+            result.LastSeason.state ??= NO_DATA_STATE;
+            result.CurrentSeason.season.state ??= NO_DATA_STATE;
+            result.NextSeason.state = string.IsNullOrEmpty(result.NextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
 
             return result;
         }

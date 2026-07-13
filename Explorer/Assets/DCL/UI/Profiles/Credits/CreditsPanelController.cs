@@ -3,7 +3,6 @@ using DCL.MarketplaceCredits;
 using DCL.Profiles;
 using DCL.UI.Credits;
 using DCL.Web3.Identities;
-using System;
 using System.Threading;
 using Utility;
 
@@ -35,7 +34,7 @@ namespace DCL.Credits
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
             if (identityCache.Identity != null)
-                LoadCredits();
+                LoadCreditsWithRestart();
         }
 
         public void Dispose()
@@ -47,15 +46,15 @@ namespace DCL.Credits
         }
 
         private void OnProfileUpdated(Profile profile) =>
-            LoadCredits();
+            LoadCreditsWithRestart();
 
         private void OnIdentityChanged() =>
-            LoadCredits();
+            LoadCreditsWithRestart();
 
         private void OnIdentityCleared() =>
             loadCreditsCts.SafeCancelAndDispose();
 
-        private void LoadCredits()
+        private void LoadCreditsWithRestart()
         {
             loadCreditsCts = loadCreditsCts.SafeRestart();
             LoadCreditsAsync(loadCreditsCts.Token).Forget();
@@ -67,7 +66,11 @@ namespace DCL.Credits
 
             UserCreditsResponse userCreditsResponse = await creditsAPIClient.GetUserCreditsAsync(identityCache.Identity.Address, ct);
 
-            if (ct.IsCancellationRequested) return;
+            if (ct.IsCancellationRequested)
+            {
+                view.CurrentCredits.text = "0";
+                return;
+            }
             view.CurrentCredits.text = userCreditsResponse.usd.credits.ToString();
         }
     }
