@@ -13,6 +13,7 @@ namespace DCL.Browser
     public class GatewayUrlsSource : DecentralandUrlsSource
     {
         private const string GATEWAY_SUBDOMAIN = "gateway";
+        private const string TRANSFORMABLE_DOMAIN_MARKER = ".decentraland.";
         private const int HTTPS_PREFIX_LENGTH = 8; // "https://".Length
 
         private static readonly DecentralandEnvironment[] SUPPORTED_ENVS = { DecentralandEnvironment.Org, DecentralandEnvironment.Zone };
@@ -92,8 +93,9 @@ namespace DCL.Browser
             ILaunchMode launchMode,
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
-            string? cliGatekeeperUrl = null)
-            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl)
+            string? cliGatekeeperUrl = null,
+            string? cliOptimizedAssetsUrl = null)
+            : base(environment, realmData, launchMode, gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, cliOptimizedAssetsUrl)
         {
             envSupported = SUPPORTED_ENVS.Contains(environment);
 
@@ -142,8 +144,36 @@ namespace DCL.Browser
             if (!enabled || serviceUrl.Url == null || !SUPPORTED_URLS.Contains(decentralandUrl))
                 return serviceUrl;
 
+            // Consolidated urls (FEATURE_FLAGS_DEPENDENT) and custom hosts pass through; only env-shaped hosts are reshaped
+            if (serviceUrl.Caching == CacheBehaviour.FEATURE_FLAGS_DEPENDENT || !IsGatewayTransformable(serviceUrl.Url))
+                return serviceUrl;
+
             // it is called only once and then cached in the base class
             return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, TransformToGateway(serviceUrl.Url));
+        }
+
+        /// <summary>
+        ///     True only for a bare https://{subdomain}.decentraland.{tld} authority (single-label sub + tld, no port or
+        ///     userinfo); any custom host passes through untouched.
+        /// </summary>
+        private static bool IsGatewayTransformable(string url)
+        {
+            if (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            int hostEnd = url.IndexOf('/', HTTPS_PREFIX_LENGTH);
+            ReadOnlySpan<char> authority = url.AsSpan(HTTPS_PREFIX_LENGTH, (hostEnd < 0 ? url.Length : hostEnd) - HTTPS_PREFIX_LENGTH);
+
+            if (authority.IndexOfAny(':', '@') >= 0)
+                return false;
+
+            int marker = authority.IndexOf(TRANSFORMABLE_DOMAIN_MARKER.AsSpan(), StringComparison.OrdinalIgnoreCase);
+
+            if (marker <= 0 || authority.Slice(0, marker).IndexOf('.') >= 0)
+                return false;
+
+            ReadOnlySpan<char> tld = authority.Slice(marker + TRANSFORMABLE_DOMAIN_MARKER.Length);
+            return tld.Length > 0 && tld.IndexOf('.') < 0;
         }
 
         public override string GetOriginalUrl(string url)
