@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationsGuards;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;

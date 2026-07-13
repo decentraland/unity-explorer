@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationsGuards;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;

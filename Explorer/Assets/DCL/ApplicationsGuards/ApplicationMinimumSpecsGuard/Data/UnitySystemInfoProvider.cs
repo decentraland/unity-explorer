@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Device;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards
 {
     public interface ISystemInfoProvider
     {

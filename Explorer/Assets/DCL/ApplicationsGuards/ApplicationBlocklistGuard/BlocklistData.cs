@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     [Serializable]
     public class BlocklistData

@@ -1,4 +1,4 @@
-﻿namespace DCL.ApplicationBlocklistGuard
+﻿namespace DCL.ApplicationsGuards
 {
     public struct BlockedScreenParameters
     {

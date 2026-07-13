@@ -11,7 +11,7 @@ using System;
 using System.Threading;
 using Utility;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     public class BannedNotificationHandler : IDisposable
     {
@@ -61,7 +61,7 @@ namespace DCL.ApplicationBlocklistGuard
                 {
                     string selfUserId = identityCache.EnsuredIdentity().Address;
 
-                    GetBanStatusData banStatusData = await ApplicationBlocklistGuard.IsUserBlocklistedAsync(
+                    GetBanStatusData banStatusData = await ApplicationsGuards.ApplicationBlocklistGuard.IsUserBlocklistedAsync(
                         webRequestController, urlsSource, selfUserId, moderationDataProvider, ct);
 
                     if (!banStatusData.isBanned)

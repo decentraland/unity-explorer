@@ -10,13 +10,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace DCL.ApplicationVersionGuard
+namespace DCL.ApplicationsGuards
 {
     public class ApplicationVersionGuard
     {
@@ -68,7 +67,7 @@ namespace DCL.ApplicationVersionGuard
                 try
                 {
                     await UniTask.Delay(1000, cancellationToken: ct);
-                    PlatformUtils.ShellExecute(launcherPath);
+                    Utility.PlatformUtils.ShellExecute(launcherPath);
                 }
                 catch (Exception e)
                 {

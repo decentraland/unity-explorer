@@ -8,7 +8,7 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     public class BlockedScreenController : ControllerBase<BlockedScreenView, BlockedScreenParameters>
     {

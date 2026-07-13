@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     public class BlockedScreenView : ViewBase, IView
     {

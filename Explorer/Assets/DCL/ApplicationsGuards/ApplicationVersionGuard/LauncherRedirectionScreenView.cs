@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.AuthenticationScreenFlow
+namespace DCL.ApplicationsGuards
 {
     public class LauncherRedirectionScreenView : ViewBase, IView
     {

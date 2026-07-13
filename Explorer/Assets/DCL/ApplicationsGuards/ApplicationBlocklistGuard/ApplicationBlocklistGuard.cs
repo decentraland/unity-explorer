@@ -9,7 +9,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     public static class ApplicationBlocklistGuard
     {

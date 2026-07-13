@@ -1,10 +1,11 @@
+using DCL.ApplicationMinimumSpecsGuard;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
-using DCL.Diagnostics;
 using UnityEngine;
 using Application = UnityEngine.Device.Application;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards
 {
     /// <summary>
     ///     Performs hardware validation against platform-specific minimum requirements.

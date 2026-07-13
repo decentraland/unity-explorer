@@ -1,4 +1,4 @@
-﻿using DCL.ApplicationBlocklistGuard;
+﻿using DCL.ApplicationsGuards;
 using DCL.Audio;
 using DCL.Character.Plugin;
 using DCL.Chat.History;

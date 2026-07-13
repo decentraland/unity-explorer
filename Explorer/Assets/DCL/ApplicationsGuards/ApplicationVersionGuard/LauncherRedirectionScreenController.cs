@@ -2,22 +2,21 @@
 using DCL.Utility;
 using MVC;
 using System.Threading;
-
 #if !UNITY_EDITOR
 using UnityEngine;
 #endif
 
-namespace DCL.AuthenticationScreenFlow
+namespace DCL.ApplicationsGuards
 {
     public class LauncherRedirectionScreenController : ControllerBase<LauncherRedirectionScreenView>
     {
-        private readonly ApplicationVersionGuard.ApplicationVersionGuard versionGuard;
+        private readonly ApplicationVersionGuard versionGuard;
         private readonly string current;
         private readonly string latest;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.OVERLAY;
 
-        public LauncherRedirectionScreenController(ApplicationVersionGuard.ApplicationVersionGuard versionGuard, ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
+        public LauncherRedirectionScreenController(ApplicationVersionGuard versionGuard, ViewFactoryMethod viewFactory, string current, string latest) : base(viewFactory)
         {
             this.versionGuard = versionGuard;
             this.current = current;

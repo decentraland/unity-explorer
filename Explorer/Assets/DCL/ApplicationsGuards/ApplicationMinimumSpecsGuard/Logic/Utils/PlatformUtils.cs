@@ -1,9 +1,9 @@
+using DCL.Diagnostics;
 using System;
 using System.IO;
-using DCL.Diagnostics;
 using UnityEngine;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards
 {
     public static class PlatformUtils
     {

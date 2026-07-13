@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards
 {
     /// <summary>
     ///     Contains pure, static logic functions for checking hardware specifications.

@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.ApplicationMinimumSpecsGuard
+namespace DCL.ApplicationsGuards
 {
     public enum SpecCategory
     {

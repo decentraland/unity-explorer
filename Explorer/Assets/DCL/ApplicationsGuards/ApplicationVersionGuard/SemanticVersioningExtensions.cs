@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace DCL.ApplicationVersionGuard
+namespace DCL.ApplicationsGuards
 {
     public static class SemanticVersioningExtensions
     {

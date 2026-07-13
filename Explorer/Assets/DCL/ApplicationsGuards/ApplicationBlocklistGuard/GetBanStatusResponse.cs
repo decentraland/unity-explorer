@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCL.ApplicationBlocklistGuard
+namespace DCL.ApplicationsGuards
 {
     [Serializable]
     public class GetBanStatusResponse
