@@ -24,6 +24,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly Dictionary<ServerMessage.MessageOneofCase, IncomingMessageHandler> syncHandlers = new ();
 
+        private Action? beforeMessageHandler;
         private DisconnectHandler? disconnectHandler;
         private HandshakeHandler? handshakeHandler;
         private CancellationTokenSource? connectionLifeCycleCts;
@@ -53,6 +54,11 @@ namespace DCL.Multiplayer.Connections.Pulse
             syncHandlers[type] = handler;
         }
 
+        public void RegisterBeforeMessageHandler(Action handler)
+        {
+            beforeMessageHandler = handler;
+        }
+
         public void RegisterDisconnectHandler(DisconnectHandler handler)
         {
             disconnectHandler = handler;
@@ -66,6 +72,7 @@ namespace DCL.Multiplayer.Connections.Pulse
         public void UnregisterAllHandlers()
         {
             syncHandlers.Clear();
+            beforeMessageHandler = null;
             disconnectHandler = null;
             handshakeHandler = null;
         }
@@ -232,7 +239,10 @@ namespace DCL.Multiplayer.Connections.Pulse
                                 try
                                 {
                                     if (syncHandlers.TryGetValue(message.Message.MessageCase, out IncomingMessageHandler? handler))
+                                    {
+                                        beforeMessageHandler?.Invoke();
                                         handler(message);
+                                    }
                                 }
                                 catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.MULTIPLAYER); }
                                 finally { evt.Dispose(); }
