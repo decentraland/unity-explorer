@@ -79,6 +79,7 @@ namespace DCL.SocialService
                         await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                         IUniTaskAsyncEnumerable<T>? stream = socialServiceRPC.Module().CallServerStream<T>(procedureName, new Empty());
                         await processUpdatesAsync(stream).AttachExternalCancellation(ct);
+                        retryAttempt = 0;
                     }
                     catch (OperationCanceledException) { break; }
                     catch (WebSocketException e)
