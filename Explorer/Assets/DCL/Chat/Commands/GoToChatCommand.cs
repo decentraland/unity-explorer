@@ -16,6 +16,7 @@ namespace DCL.Chat.Commands
     ///
     /// Usage:
     ///     /goto *x,y*          — teleport to parcel
+    ///     /goto *x,y/name*     — teleport to parcel, landing at the named spawn point
     ///     /goto random         — teleport to a random parcel
     ///     /goto crowd          — teleport to the most populated scene
     ///     /goto *world*        — teleport to a world
@@ -24,7 +25,7 @@ namespace DCL.Chat.Commands
     public class GoToChatCommand : IChatCommand
     {
         public string Command => "goto";
-        public string Description => "<b>/goto <i><x,y | random | crowd | world | world/x,y></i></b>\n  Teleport inside of Genesis or World";
+        public string Description => "<b>/goto <i><x,y | x,y/spawn | random | crowd | world | world/x,y></i></b>\n  Teleport inside of Genesis or World";
 
         private readonly ChatTeleporter chatTeleporter;
         private readonly IWebRequestController webRequestController;
@@ -56,7 +57,7 @@ namespace DCL.Chat.Commands
                     : await chatTeleporter.TeleportToRealmAsync(target.World, ct);
 
             if (target.Parcel is { } parcel)
-                return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct);
+                return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct, target.SpawnPoint);
 
             // Unreachable: ParseGotoTarget always sets World when no other form matched.
             throw new InvalidOperationException($"Unrecognized /goto target: '{parameters[0]}'");

@@ -154,9 +154,9 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// Teleports the player to a parcel.
         /// </summary>
-        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
+        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct, string? spawnPointName = null)
         {
-            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
+            var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local, spawnPointName: spawnPointName);
 
             if (result.Success)
                 return $"🟢 You teleported to {targetPosition.x},{targetPosition.y}.";

@@ -32,7 +32,8 @@ namespace DCL.Chat.Commands
 
         /// <summary>
         /// Parses the single /goto argument into a <see cref="GotoTarget" />.
-        /// Grammar: "random" | "crowd" | "x,y" | "world" | "world/x,y".
+        /// Grammar: "random" | "crowd" | "x,y" | "x,y/spawn" | "world" | "world/x,y".
+        /// A spawn point name contains neither ',' nor '/'.
         /// Anything that matches none of the forms is treated verbatim as a world name.
         /// </summary>
         public static GotoTarget ParseGotoTarget(string param)
@@ -50,13 +51,20 @@ namespace DCL.Chat.Commands
 
             if (slashIndex > 0 && slashIndex < param.Length - 1)
             {
-                string position = param.Substring(slashIndex + 1);
+                string head = param.Substring(0, slashIndex);
+                string tail = param.Substring(slashIndex + 1);
 
-                if (IsPositionParameter(position, false))
-                    return new GotoTarget(world: param.Substring(0, slashIndex), parcel: ParseRawPosition(position), spawnPoint: null);
+                if (IsPositionParameter(head, false) && IsSpawnPointName(tail))
+                    return new GotoTarget(world: null, parcel: ParseRawPosition(head), spawnPoint: tail);
+
+                if (IsPositionParameter(tail, false))
+                    return new GotoTarget(world: head, parcel: ParseRawPosition(tail), spawnPoint: null);
             }
 
             return new GotoTarget(world: param, parcel: null, spawnPoint: null);
         }
+
+        private static bool IsSpawnPointName(string segment) =>
+            segment.Length > 0 && segment.IndexOf(',') < 0 && segment.IndexOf('/') < 0;
     }
 }

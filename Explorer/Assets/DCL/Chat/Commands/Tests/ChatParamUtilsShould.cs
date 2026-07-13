@@ -78,8 +78,24 @@ namespace DCL.Chat.Commands.Tests
             Assert.That(target.IsCrowd, Is.False);
         }
 
-        // Current behavior preserved by the prefactor: anything that is not a position,
-        // "random"/"crowd", or "world/x,y" is treated verbatim as a world name.
+        [TestCase("12,34/lobby", 12, 34, "lobby")]
+        [TestCase("-51,1/PlazaCenter", -51, 1, "PlazaCenter")]
+        [TestCase("0,0/theatre", 0, 0, "theatre")]
+        public void ParseParcelWithSpawnPoint(string param, int x, int y, string spawnPoint)
+        {
+            // Act
+            GotoTarget target = ChatParamUtils.ParseGotoTarget(param);
+
+            // Assert
+            Assert.That(target.Parcel, Is.EqualTo(new Vector2Int(x, y)));
+            Assert.That(target.SpawnPoint, Is.EqualTo(spawnPoint));
+            Assert.That(target.World, Is.Null);
+            Assert.That(target.IsRandom, Is.False);
+            Assert.That(target.IsCrowd, Is.False);
+        }
+
+        // Anything that is not a position, "random"/"crowd", "x,y/spawn", or "world/x,y"
+        // is treated verbatim as a world name.
         [TestCase("")]
         [TestCase("myworld.dcl.eth/lobby")]
         [TestCase("myworld.dcl.eth/")]
@@ -87,6 +103,9 @@ namespace DCL.Chat.Commands.Tests
         [TestCase("12,34,56")]
         [TestCase("12,x")]
         [TestCase("12,")]
+        [TestCase("12,34/")]
+        [TestCase("12,34/lob/by")]
+        [TestCase("12,34/lob,by")]
         public void TreatEverythingElseAsWorld(string param)
         {
             // Act

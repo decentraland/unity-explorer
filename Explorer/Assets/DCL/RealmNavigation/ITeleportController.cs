@@ -13,16 +13,17 @@ namespace DCL.RealmNavigation
         void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct);
 
         /// <param name="landOnParcel">When true, land at <paramref name="parcel" /> itself instead of the scene's spawn point.</param>
-        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false);
+        /// <param name="spawnPointName">When set, land at the scene's spawn point with this name (case-insensitive); an unmatched name falls back to the default selection.</param>
+        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null);
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
     }
 
     public static class TeleportControllerExtensions
     {
-        public static async UniTask<EnumResult<TaskError>> TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false)
+        public static async UniTask<EnumResult<TaskError>> TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null)
         {
-            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct, landOnParcel);
+            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct, landOnParcel, spawnPointName);
             return await waitForSceneReadiness.ToUniTask();
         }
     }
