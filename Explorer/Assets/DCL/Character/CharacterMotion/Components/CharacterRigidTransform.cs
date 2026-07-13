@@ -54,7 +54,7 @@ namespace DCL.CharacterMotion.Components
         public readonly Dictionary<World, Vector3> ExternalForceContributions = new ();
 
         // Net external force acting on the character is the sum of all contributions.
-        // Do not write it directly!!!
+        // Overwritten every frame by ApplyExternalForce.Execute from ExternalForceContributions; direct writes do not persist.
         public Vector3 ExternalForce;
 
         // Computed acceleration from ExternalForce (a = F / mass), per-frame
