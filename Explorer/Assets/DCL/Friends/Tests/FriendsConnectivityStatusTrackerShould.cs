@@ -17,8 +17,12 @@ namespace DCL.Friends.Tests
         private FriendsConnectivityStatusTracker tracker = null!;
 
         [OneTimeSetUp]
-        public void OneTimeSetUp() =>
+        public void OneTimeSetUp()
+        {
+            // The editor domain may still hold an initialized registry from a play-mode session
+            EcsTestsUtils.TearDownFeaturesRegistry();
             EcsTestsUtils.SetUpFeaturesRegistry();
+        }
 
         [OneTimeTearDown]
         public void OneTimeTearDown() =>
