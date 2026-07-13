@@ -38,6 +38,7 @@ namespace DCL.FeatureFlags
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string PULSE = "pulse";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
+        public const string USER_CREDITS = "alfa-user-credits";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
         public const string COMMUNITIES_ANNOUNCEMENTS = "alfa-communities-announcements";
