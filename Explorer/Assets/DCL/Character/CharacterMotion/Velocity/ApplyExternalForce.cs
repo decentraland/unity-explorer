@@ -10,7 +10,7 @@ namespace DCL.Character.CharacterMotion
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings settings, ref CharacterRigidTransform characterPhysics, in GlideState glideState, float dt)
         {
-            // accumulate external forces from all scenes (current and potable experiences)
+            // accumulate external forces from all scenes (current and portable experiences)
             characterPhysics.ExternalForce = Vector3.zero;
             foreach (Vector3 contribution in characterPhysics.ExternalForceContributions.Values)
                 characterPhysics.ExternalForce += contribution;
