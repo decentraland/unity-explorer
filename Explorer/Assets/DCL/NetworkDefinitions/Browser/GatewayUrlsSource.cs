@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Utility;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
     public class GatewayUrlsSource : DecentralandUrlsSource

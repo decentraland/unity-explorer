@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     [Serializable]
