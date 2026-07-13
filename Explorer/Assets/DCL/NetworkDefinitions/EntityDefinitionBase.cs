@@ -1,7 +1,7 @@
-using DCL.Platforms;
 using Newtonsoft.Json;
 using System;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>
@@ -23,10 +23,8 @@ namespace DCL.Ipfs
             this.id = id;
         }
 
-        public override string ToString()
-        {
-            return id ?? string.Empty;
-        }
+        public override string ToString() =>
+            id ?? string.Empty;
     }
 
     [Serializable]

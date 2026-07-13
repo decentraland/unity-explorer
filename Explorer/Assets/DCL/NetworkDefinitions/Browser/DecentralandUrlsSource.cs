@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Pool;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser.DecentralandUrls
 {
     public class DecentralandUrlsSource : IDecentralandUrlsSource

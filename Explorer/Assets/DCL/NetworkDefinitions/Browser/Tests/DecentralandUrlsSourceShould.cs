@@ -7,6 +7,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser.DecentralandUrls.Tests
 {
     public class DecentralandUrlsSourceShould
@@ -32,14 +33,12 @@ namespace DCL.Browser.DecentralandUrls.Tests
             };
 
             if (customBaseUrl != null)
-            {
                 dto.variants[FeatureFlagsStrings.OPTIMIZED_ASSETS] = new FeatureFlagVariantDto
                 {
                     name = FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT,
                     enabled = true,
                     payload = new FeatureFlagPayload { type = "string", value = customBaseUrl },
                 };
-            }
 
             FeatureFlagsConfiguration.Reset();
             FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(dto));

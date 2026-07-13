@@ -1,11 +1,10 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using UnityEngine;
 using System.ComponentModel;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     [Serializable]
@@ -109,7 +108,6 @@ namespace DCL.Ipfs
         public struct FeatureToggles
         {
             private const string PORTABLE_EXPERIENCES_ENABLED = "enabled";
-            private const string PORTABLE_EXPERIENCES_DISABLED = "disabled";
             private const string PORTABLE_EXPERIENCES_HIDE_UI = "hideUi";
 
             [SerializeField]
