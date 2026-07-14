@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using ScriptableWizard = UnityEditor.ScriptableWizard;
 
@@ -8,7 +9,7 @@ public class BoneHider : ScriptableWizard
     public static void ToggleBones()
     {
         // Find all instances of BoneRenderer in the scene.
-        BoneRenderer[] bones = FindObjectsOfType<BoneRenderer>();
+        BoneRenderer[] bones = Object.FindObjectsByType<BoneRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
     
         // Check if there are any bones to toggle. If not, simply return.
         if (bones.Length == 0) return;
@@ -27,7 +28,7 @@ public class BoneHider : ScriptableWizard
     public static void ToggleEffectors()
     {
         // Find all instances of Rig in the scene.
-        Rig[] rigs = FindObjectsOfType<Rig>();
+        Rig[] rigs = Object.FindObjectsByType<Rig>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
     
         // Initialize a flag to indicate if the valueToSet has been determined.
         bool valueDetermined = false;
