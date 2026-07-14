@@ -69,6 +69,12 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
+        public bool IsAnyNonPersistentViewShowing()
+        {
+            var info = windowsStackManager.GetNonPersistentControllersInfo();
+            return info.PopupControllers.Count > 0 || info.FullscreenController != null || info.OverlayController != null;
+        }
+
         public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();

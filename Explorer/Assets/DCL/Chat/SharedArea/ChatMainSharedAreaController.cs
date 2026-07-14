@@ -77,6 +77,12 @@ namespace DCL.ChatArea
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
+            //Don't focus the chat while any view is open on top of it. Views come and go as a stack
+            //(e.g. a context menu that opens the community card), so we query the current state instead
+            //of tracking show/close events, which is order-dependent and breaks with stacked popups.
+            if (mvcManager.IsAnyNonPersistentViewShowing())
+                return;
+
             chatSharedAreaEventBus.RaiseUISubmitEvent();
         }
 
@@ -114,17 +120,11 @@ namespace DCL.ChatArea
 
         private void OnMvcViewShowed(IController controller)
         {
-            //We disable submit shortcut recognition to avoid opening the chat when we have a popup on top
-            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
             chatSharedAreaEventBus.RaiseMVCViewOpenEvent(controller.Layer);
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            //We restore the chat to its previous appearance if the view is closed, as well as the shortcut for it
-            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
-            dclInput.UI.Submit.performed += OnUISubmitPerformed;
-
             chatSharedAreaEventBus.RaiseMVCViewClosedEvent(controller.Layer);
         }
 

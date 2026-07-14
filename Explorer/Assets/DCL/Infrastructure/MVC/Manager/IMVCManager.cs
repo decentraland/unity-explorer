@@ -31,6 +31,11 @@ namespace MVC
         ///     Closes all POPUPS, FULLSCREEN and OVERLAY views currently open, leaving only PERSISTENT ones.
         /// </summary>
         void CloseAllNonPersistentViews(CancellationToken ct = default);
+
+        /// <summary>
+        ///     Returns true when at least one POPUP, FULLSCREEN or OVERLAY view is currently open on top of the PERSISTENT ones.
+        /// </summary>
+        bool IsAnyNonPersistentViewShowing();
     }
 
     public static class ManagerExtensions
