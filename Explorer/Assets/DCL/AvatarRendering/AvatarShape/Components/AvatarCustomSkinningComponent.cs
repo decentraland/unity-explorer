@@ -45,8 +45,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             public void DisposeBuffers()
             {
-                computeSkinningBufferContainer.Dispose();
-                bones.Dispose();
+                // a default(Buffers) (empty avatar) owns nothing to dispose
+                computeSkinningBufferContainer?.Dispose();
+                bones?.Dispose();
             }
         }
 
@@ -117,6 +118,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Result ComputeSkinning(NativeArray<float4x4> bonesResult, GlobalJobArrayIndex indexInGlobalJobArray)
         {
+            // an empty avatar (no vertices) has nothing to skin
+            if (VertCount == 0)
+                return Result.SuccessResult();
+
             if (indexInGlobalJobArray.TryGetValue(out int validIndex) == false)
             {
                 return Result.ErrorResult("Attempt to process an invalid avatar");

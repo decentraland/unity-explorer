@@ -192,6 +192,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void StartMaskedLegacyEmote(AnimationClip clip, AvatarMask avatarMask, bool loop)
         {
+            if (AvatarAnimator == null) return;
+
             // Keep the Animator enabled so locomotion stays driving the bones we restore each frame.
             AvatarAnimator.enabled = true;
             AddOrGetMaskedLegacyBlender().Play(clip, avatarMask, loop);
@@ -200,15 +202,22 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void StopMaskedLegacyEmote() =>
             maskedLegacyBlender?.Stop();
 
-        public void SetPointAtLayerWeight(float weight) =>
+        public void SetPointAtLayerWeight(float weight)
+        {
+            if (AvatarAnimator == null) return;
             AvatarAnimator.SetLayerWeight(rightPointAtLayerIndex, weight);
+        }
 
-        public void SetRotationLayerWeight(float weight) =>
+        public void SetRotationLayerWeight(float weight)
+        {
+            if (AvatarAnimator == null) return;
             AvatarAnimator.SetLayerWeight(rotationLayerIndex, weight);
+        }
 
         public void SetAnimatorFloat(int hash, float value)
         {
             if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator == null) return;
             if (AvatarAnimator.GetFloat(hash).Equals(value)) return;
 
             AvatarAnimator.enabled = true;
@@ -218,6 +227,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetAnimatorInt(int hash, int value)
         {
             if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator == null) return;
             if (AvatarAnimator.GetInteger(hash).Equals(value)) return;
 
             AvatarAnimator.enabled = true;
@@ -227,22 +237,28 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetAnimatorTrigger(int hash)
         {
             if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator == null) return;
 
             AvatarAnimator.enabled = true;
             AvatarAnimator.SetTrigger(hash);
         }
 
         public bool IsAnimatorInTag(int hashTag) =>
-            AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
+            AvatarAnimator != null && AvatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash == hashTag;
 
         public int GetAnimatorCurrentStateTag(string layerName)
         {
+            if (AvatarAnimator == null) return 0;
+
             int layerIndex = AvatarAnimator.GetLayerIndex(layerName);
             return AvatarAnimator.GetCurrentAnimatorStateInfo(layerIndex).tagHash;
         }
 
-        public void ResetAnimatorTrigger(int hash) =>
+        public void ResetAnimatorTrigger(int hash)
+        {
+            if (AvatarAnimator == null) return;
             AvatarAnimator.ResetTrigger(hash);
+        }
 
         public void ResetArmatureInclination()
         {
@@ -260,7 +276,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             transform.localPosition = Vector3.zero;
             LegacyAnimation?.Stop();
             maskedLegacyBlender?.Stop();
-            AvatarAnimator.Rebind();
+            if (AvatarAnimator != null) AvatarAnimator.Rebind();
             HipsConstraint.data.offset = Vector3.zero;
             HipsConstraint.weight = 0;
             FeetIKRig.enabled = false;
@@ -268,16 +284,19 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public void SetLayerWeight(string layerName, float weight)
         {
+            if (AvatarAnimator == null) return;
+
             int index = AvatarAnimator.GetLayerIndex(layerName);
             AvatarAnimator.SetLayerWeight(index, weight);
         }
 
         public bool GetAnimatorBool(int hash) =>
-            AvatarAnimator.GetBool(hash);
+            AvatarAnimator != null && AvatarAnimator.GetBool(hash);
 
         public void SetAnimatorBool(int hash, bool value)
         {
             if (IsLegacyAnimationPlaying) return;
+            if (AvatarAnimator == null) return;
             if (AvatarAnimator.GetBool(hash) == value) return;
 
             AvatarAnimator.enabled = true;
@@ -285,11 +304,12 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         }
 
         public float GetAnimatorFloat(int hash) =>
-            AvatarAnimator.GetFloat(hash);
+            AvatarAnimator != null ? AvatarAnimator.GetFloat(hash) : 0f;
 
         public void ReplaceEmoteAnimation(AnimationClip animationClip)
         {
             if (lastEmote == animationClip) return;
+            if (AvatarAnimator == null) return;
 
             overrideController["Emote"] = animationClip;
             AvatarAnimator.runtimeAnimatorController = overrideController;

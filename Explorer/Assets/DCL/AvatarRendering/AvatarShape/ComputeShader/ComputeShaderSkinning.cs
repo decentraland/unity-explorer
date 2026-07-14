@@ -28,6 +28,18 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             (int vertCount, int totalBoneBufferCount) = SetupCounters(meshesData, boneCount);
 
+            if (vertCount == 0 || boneCount == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.AVATAR,
+                    $"[ComputeShaderSkinning] Empty avatar mesh data (vertCount={vertCount}, boneCount={boneCount}); skipping skinning.");
+                ListPool<MeshData>.Release(meshesData);
+
+                // VertCount == 0 with default Buffers marks the component as empty: ComputeSkinning and
+                // DisposeBuffers no-op on it, and the materials list is pool-rented so Dispose's
+                // unconditional USED_SLOTS_POOL.Release stays balanced.
+                return new AvatarCustomSkinningComponent(0, 0, default, AvatarCustomSkinningComponent.USED_SLOTS_POOL.Get(), skinningShader, default);
+            }
+
             AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, totalBoneBufferCount, boneCount);
             List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, avatarMaterialPool, avatarShapeComponent, facialFeatureTexture);
 

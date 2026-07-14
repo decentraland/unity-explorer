@@ -46,13 +46,13 @@ namespace DCL.AuthenticationScreenFlow
             JumpIntoWorldButton.interactable = true;
             DiffAccountButton.interactable = true;
 
-            ShowAsync(CancellationToken.None).Forget();
+            ShowAsync(destroyCancellationToken).Forget();
         }
 
         public void Hide(int animHash)
         {
             hideAnimHash = animHash;
-            HideAsync(CancellationToken.None).Forget();
+            HideAsync(destroyCancellationToken).Forget();
         }
 
         public override async UniTask ShowAsync(CancellationToken ct)

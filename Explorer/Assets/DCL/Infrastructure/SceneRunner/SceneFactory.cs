@@ -198,6 +198,10 @@ namespace SceneRunner
             var engineAPIMutexOwner = new MultiThreadSync.Owner(nameof(EngineAPIImplementation));
             var ethereumApiImpl = new RestrictedEthereumApi(ethereumApi, permissionsProvider);
 
+            // ENABLE_SDK_OBSERVABLES is a deliberate compile-time toggle; the else branch is kept intact
+            // so the SDK-observables feature can be disabled by flipping the constant. Suppress the
+            // unreachable-code warning for the currently-disabled branch without removing it.
+#pragma warning disable CS0162
             if (ENABLE_SDK_OBSERVABLES)
             {
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime);
@@ -262,6 +266,7 @@ namespace SceneRunner
                     deps.RuntimeMetrics
                 );
             }
+#pragma warning restore CS0162
 
             try
             {

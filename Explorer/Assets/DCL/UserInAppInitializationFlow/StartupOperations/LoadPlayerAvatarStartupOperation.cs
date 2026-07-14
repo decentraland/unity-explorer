@@ -33,6 +33,12 @@ namespace DCL.UserInAppInitializationFlow
             Profile? profile = await selfProfile.ProfileAsync(ct);
             args.Report.SetProgress(finalizationProgress);
 
+            // A null profile must fail the operation: adding it to the world poisons every
+            // Profile-querying system with a per-frame NRE (observed when the profiles endpoint
+            // returns no avatars for the signed-in wallet).
+            if (profile == null)
+                throw new System.InvalidOperationException("Self profile could not be resolved (profiles endpoint returned no avatar for the signed-in wallet) — cannot create the player avatar.");
+
             // Add the profile into the player entity so it will create the avatar in world
 
             World world = args.FlowParameters.World;

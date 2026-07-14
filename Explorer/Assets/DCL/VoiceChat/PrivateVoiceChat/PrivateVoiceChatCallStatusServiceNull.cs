@@ -7,7 +7,7 @@ namespace DCL.VoiceChat
     public class PrivateVoiceChatCallStatusServiceNull : IPrivateVoiceChatCallStatusService
     {
         public string CurrentTargetWallet { get; }
-        public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived;
+        public event Action<PrivateVoiceChatUpdate>? PrivateVoiceChatUpdateReceived { add { } remove { } }
         public IReadonlyReactiveProperty<VoiceChatStatus> Status { get; } = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
         public IReadonlyReactiveProperty<string> CallId { get; } = new ReactiveProperty<string>(string.Empty);
         public string ConnectionUrl { get; }
