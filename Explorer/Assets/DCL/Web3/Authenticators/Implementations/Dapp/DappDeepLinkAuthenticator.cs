@@ -62,9 +62,6 @@ namespace DCL.Web3.Authenticators
 
             await UniTask.SwitchToMainThread(ct);
 
-            // Auth request ids are not requested to the auth server anymore but instead generated at client level,
-            // so it can later be validated through the flow
-            var authRequestId = Guid.NewGuid().ToString();
             // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
             var authRequestId = Guid.NewGuid().ToString();
             var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
