@@ -33,18 +33,22 @@ namespace DCL.RealmNavigation
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value)
+        public StartParcel(Vector2Int value, string? spawnPointName = null)
         {
             this.value = value;
+            SpawnPointName = spawnPointName;
         }
+
+        public string? SpawnPointName { get; private set; }
 
         public bool IsConsumed() =>
             consumed;
 
-        public AssignResult Assign(Vector2Int newParcel)
+        public AssignResult Assign(Vector2Int newParcel, string? newSpawnPointName = null)
         {
             if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
+            SpawnPointName = newSpawnPointName;
             return AssignResult.Ok;
         }
 

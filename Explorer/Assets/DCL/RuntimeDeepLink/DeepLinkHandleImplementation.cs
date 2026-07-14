@@ -32,15 +32,16 @@ namespace DCL.RuntimeDeepLink
             Vector2Int? position = PositionFrom(deeplink);
             URLDomain? realm = RealmFrom(deeplink);
             string? communityId = CommunityFrom(deeplink);
+            string? spawnPointName = SpawnPointFrom(deeplink);
 
             var result = Result.ErrorResult("no matches");
 
             if (realm.HasValue)
             {
                 if(position.HasValue)
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token).Forget();
+                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token, spawnPointName).Forget();
                 else
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
+                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token, spawnPointName).Forget();
 
                 result = Result.SuccessResult();
             }
@@ -49,9 +50,9 @@ namespace DCL.RuntimeDeepLink
                 var parcel = position.Value;
 
                 if (startParcel.IsConsumed())
-                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token).Forget();
+                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token, spawnPointName).Forget();
                 else
-                    startParcel.Assign(parcel);
+                    startParcel.Assign(parcel, spawnPointName);
 
                 result = Result.SuccessResult();
             }
@@ -87,6 +88,12 @@ namespace DCL.RuntimeDeepLink
             if (int.TryParse(parts[1], out int y) == false) return null;
 
             return new Vector2Int(x, y);
+        }
+
+        private static string? SpawnPointFrom(DeepLink deepLink)
+        {
+            string? rawSpawnPoint = deepLink.ValueOf(AppArgsFlags.SPAWN_POINT);
+            return string.IsNullOrEmpty(rawSpawnPoint) ? null : rawSpawnPoint;
         }
 
         private static string? CommunityFrom(DeepLink deepLink)

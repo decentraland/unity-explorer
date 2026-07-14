@@ -42,6 +42,7 @@ namespace Global.Dynamic
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
         private bool isLocalSceneDevelopmentRealm;
+        internal string? spawnPointName;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -93,6 +94,9 @@ namespace Global.Dynamic
 
             if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
                 ParsePositionAppParameter(parcelToTeleportOverride);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.SPAWN_POINT, out string? spawnPointOverride) && !string.IsNullOrEmpty(spawnPointOverride))
+                spawnPointName = spawnPointOverride;
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
