@@ -33,7 +33,7 @@ namespace MVC
         void CloseAllNonPersistentViews(CancellationToken ct = default);
 
         /// <summary>
-        ///     Returns true when at least one POPUP, FULLSCREEN or OVERLAY view is currently open on top of the PERSISTENT ones.
+        ///     True while any POPUP, FULLSCREEN or OVERLAY view is open (PERSISTENT ones don't count).
         /// </summary>
         bool IsAnyNonPersistentViewShowing();
     }

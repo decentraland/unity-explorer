@@ -101,7 +101,7 @@ namespace MVC
             if (controller.State != ControllerState.ViewHidden)
                 return;
 
-            ct = ct.Equals(default(CancellationToken))
+            ct = ct.Equals(CancellationToken.None)
                 ? destructionToken
                 : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken).Token;
 
@@ -264,10 +264,8 @@ namespace MVC
         private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
             do
-            {
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
                     UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused, cancellationToken: ct));
-            }
             while (currentController != windowsStackManager.TopMostPopup.controller);
         }
     }

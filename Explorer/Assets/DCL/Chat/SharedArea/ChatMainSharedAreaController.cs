@@ -77,9 +77,7 @@ namespace DCL.ChatArea
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
-            //Don't focus the chat while any view is open on top of it. Views come and go as a stack
-            //(e.g. a context menu that opens the community card), so we query the current state instead
-            //of tracking show/close events, which is order-dependent and breaks with stacked popups.
+            //Don't steal focus for the chat while another view is on top (e.g. a popup opened from a context menu).
             if (mvcManager.IsAnyNonPersistentViewShowing())
                 return;
 
