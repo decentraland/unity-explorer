@@ -17,9 +17,12 @@ namespace CommunicationData.URLHelpers
 
         public URN(string urn)
         {
+            // A null/empty urn produces the same field state as default(URN), which IsNullOrEmpty and
+            // IsValid already treat as a first-class value; ToLower() on it crashed emote loading when
+            // a DTO carried no id.
             originalUrn = urn;
-            lowercaseUrn = originalUrn.ToLower();
-            hash = originalUrn != null ? lowercaseUrn.GetHashCode() : 0;
+            lowercaseUrn = string.IsNullOrEmpty(urn) ? urn : urn.ToLower();
+            hash = string.IsNullOrEmpty(urn) ? 0 : lowercaseUrn.GetHashCode();
         }
 
         private URN(URN urn, int shortenIndex)
