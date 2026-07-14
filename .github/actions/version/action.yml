@@ -5,8 +5,8 @@ inputs:
     description: 'Formatted version tag. If not set, it uses the latest version tag (v[0-9]*)'
     required: false
   commit_sha:
-    description: 'The commit SHA to use for versioning'
-    required: true
+    description: 'The commit SHA to use for versioning. Falls back to GITHUB_SHA when omitted.'
+    required: false
 outputs:
   latest_version:
     description: 'Latest available version tag in repo'

@@ -60,6 +60,14 @@ jobs:
       head_ref: ${{ steps.pr.outputs.head_ref }}
 
     steps:
+      # Checked out from the PR's trigger context only for the shared S3 path
+      # script (issue_comment events run on the default branch).
+      - name: Checkout CI scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: scripts/ci
+          sparse-checkout-cone-mode: false
+
       - name: Gate by author association
         id: gate
         env:
@@ -123,17 +131,7 @@ jobs:
           # this PR. Derive both from the run so /visual-tests also works on
           # PRs whose only build for the SHA ran on another trigger — e.g.
           # bot-created release PRs, whose tip is built by the push to dev.
-          case "$ORIGINAL_EVENT" in
-            pull_request) BUILD_PREFIX="pr" ;;
-            push) BUILD_PREFIX="pu" ;;
-            merge_group) BUILD_PREFIX="mg" ;;
-            workflow_dispatch) BUILD_PREFIX="wd" ;;
-            workflow_call) BUILD_PREFIX="wc" ;;
-            schedule) BUILD_PREFIX="sc" ;;
-            *) BUILD_PREFIX="gn" ;;
-          esac
-
-          ARTIFACT_PATH="@dcl/${{ github.event.repository.name }}/branch/${RUN_BRANCH}/${BUILD_PREFIX}-${RUN_NUMBER}-${SHORT_SHA}"
+          ARTIFACT_PATH=$(bash scripts/ci/s3-build-path.sh "$ORIGINAL_EVENT" "${{ github.event.repository.name }}" "$RUN_BRANCH" "$RUN_NUMBER" "$HEAD_SHA")
           BUILD_URL="${PUBLIC_URL_PREFIX}/${ARTIFACT_PATH}/Decentraland_macos.zip"
 
           {

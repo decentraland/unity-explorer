@@ -1,0 +1,96 @@
+name: 'Resolve Unity Docker image'
+description: >
+  Reads the Unity version from Explorer/ProjectSettings/ProjectVersion.txt,
+  composes the unityci editor image references, logs into GHCR, and makes the
+  image available locally: the GHCR mirror is pulled when present and seeded
+  from Docker Hub when missing. A GHCR failure other than a missing manifest
+  falls back to Docker Hub without seeding, so a transient registry error
+  cannot push a bad mirror.
+inputs:
+  token:
+    description: 'GitHub token used for the GHCR login (needs packages: write to seed)'
+    required: true
+  flavor:
+    description: 'unityci image flavor'
+    required: false
+    default: 'linux-il2cpp'
+  image-version:
+    description: 'unityci (GameCI) image version suffix'
+    required: false
+    default: '3.2.0'
+  ghcr-name:
+    description: 'Image name of the GHCR mirror'
+    required: false
+    default: 'unityci-editor'
+outputs:
+  tag:
+    description: 'ubuntu-<unityVersion>-<flavor>-<gameciVersion>'
+    value: ${{ steps.img.outputs.tag }}
+  upstream:
+    description: 'Docker Hub image reference'
+    value: ${{ steps.img.outputs.upstream }}
+  ghcr:
+    description: 'GHCR mirror image reference (pulled and present locally)'
+    value: ${{ steps.img.outputs.ghcr }}
+runs:
+  using: "composite"
+  steps:
+    - name: Read Unity version from ProjectVersion.txt
+      id: unity-version
+      shell: bash
+      run: |
+        verFile="Explorer/ProjectSettings/ProjectVersion.txt"
+        if [ ! -f "$verFile" ]; then
+          echo "File not found: $verFile"
+          exit 1
+        fi
+        ver=$(grep -o 'm_EditorVersion: [0-9a-f.]*' "$verFile" | cut -d' ' -f2)
+        if [ -z "$ver" ]; then
+          echo "Could not parse Unity version from $verFile"
+          exit 1
+        fi
+        echo "version=$ver" >> "$GITHUB_OUTPUT"
+        echo "Detected Unity version: $ver"
+
+    - name: Set image names
+      id: img
+      shell: bash
+      run: |
+        tag="ubuntu-${{ steps.unity-version.outputs.version }}-${{ inputs.flavor }}-${{ inputs.image-version }}"
+        owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+        upstream="unityci/editor:$tag"
+        ghcr="ghcr.io/$owner/${{ inputs.ghcr-name }}:$tag"
+        echo "tag=$tag" >> "$GITHUB_OUTPUT"
+        echo "upstream=$upstream" >> "$GITHUB_OUTPUT"
+        echo "ghcr=$ghcr" >> "$GITHUB_OUTPUT"
+        echo "Upstream image: $upstream"
+        echo "GHCR image:     $ghcr"
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+
+    - name: Restore Unity image from GHCR or seed from Docker Hub
+      shell: bash
+      run: |
+        set -o pipefail
+        ghcr="${{ steps.img.outputs.ghcr }}"
+        upstream="${{ steps.img.outputs.upstream }}"
+
+        if docker pull "$ghcr" 2>&1 | tee /tmp/ghcr-pull.log; then
+          exit 0
+        fi
+
+        if grep -qiE 'manifest unknown|not found' /tmp/ghcr-pull.log; then
+          echo "GHCR image missing - seeding from Docker Hub (one-time per tag)..."
+          docker pull "$upstream"
+          docker tag "$upstream" "$ghcr"
+          docker push "$ghcr"
+        else
+          echo "::warning::GHCR pull failed but not because the image is missing - using Docker Hub for this run without seeding the mirror."
+          docker pull "$upstream"
+          docker tag "$upstream" "$ghcr"
+        fi

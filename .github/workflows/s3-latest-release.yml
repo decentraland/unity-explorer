@@ -1,43 +1,35 @@
 name: S3 Latest Release
 
+# Keeps @dcl/<repo>/releases/latest.json in sync with the repo's current
+# latest release. Publishing, editing, and deleting all funnel through the
+# same logic: resolve the latest release *after* the event and write it.
+# Re-publishing or editing an older release rewrites the same (unchanged)
+# latest version - idempotent by design.
 on:
   release:
-    types: 
+    types:
       - published
       - edited
+      - deleted
 
 jobs:
-  check-latest-release:
+  update-latest-json:
     runs-on: ubuntu-latest
-    container:
-      image: amazon/aws-cli:latest
+    timeout-minutes: 5
     steps:
-      - name: Install jq
+      - name: Resolve current latest release
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yum update -y
-          yum install -y jq
+          # Empty when no release remains (e.g. the only release was deleted) -
+          # the update is skipped instead of writing a bogus version.
+          LATEST=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+          echo "tag=${LATEST}" >> "$GITHUB_OUTPUT"
+          echo "Current latest release: ${LATEST:-<none>}"
 
-      - name: Check if current release is the latest release
-        id: check_latest
-        run: |
-          RELEASE_TAG=$(jq -r .release.tag_name "$GITHUB_EVENT_PATH")
-          echo "Release Tag: $RELEASE_TAG"
-
-          # Get the latest release from the API
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
-          echo "Latest Release: $LATEST_RELEASE"
-
-          # Set output for is_latest_release based on comparison
-          if [ "$RELEASE_TAG" == "$LATEST_RELEASE" ]; then
-            echo "is_latest_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_latest_release=false" >> $GITHUB_OUTPUT
-          fi
-
-          echo "latest_release=$LATEST_RELEASE" >> $GITHUB_ENV
-
-      - name: Run actions if release is the latest
-        if: steps.check_latest.outputs.is_latest_release == 'true'
+      - name: Update latest.json on S3
+        if: steps.latest.outputs.tag != ''
         env:
           AWS_MAX_ATTEMPTS: 3
           AWS_RETRY_MODE: standard
@@ -45,9 +37,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.EXPLORER_TEAM_AWS_SECRET_ACCESS_KEY }}
           EXPLORER_TEAM_S3_BUCKET: ${{ secrets.EXPLORER_TEAM_S3_BUCKET }}
           RELEASES_PATH: ${{ format('@dcl/{0}/releases', github.event.repository.name) }}
+          LATEST_RELEASE: ${{ steps.latest.outputs.tag }}
         run: |
-          echo '{
-            "version": "${{ env.latest_release }}",
-            "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
-          }' > latest.json
-          aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
+          jq -n --arg v "$LATEST_RELEASE" --arg t "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            '{version: $v, timestamp: $t}' > latest.json
+          cat latest.json
+          aws s3 cp latest.json "s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json"

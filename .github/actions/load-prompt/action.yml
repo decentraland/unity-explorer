@@ -1,0 +1,36 @@
+name: 'Load prompt from ref'
+description: >
+  Reads a repository file at a given ref through the GitHub API and exposes it
+  as an output. Used to load AI review instructions pinned to the PR base SHA,
+  so a PR cannot alter the instructions it is reviewed with.
+inputs:
+  path:
+    description: 'Repo-relative path of the file to load'
+    required: true
+  ref:
+    description: 'Commit SHA or ref to read the file at'
+    required: true
+  token:
+    description: 'GitHub token for the API call'
+    required: true
+outputs:
+  content:
+    description: 'Decoded file content'
+    value: ${{ steps.load.outputs.content }}
+runs:
+  using: "composite"
+  steps:
+    - name: Load file via API
+      id: load
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        DELIM="PROMPT_EOF_$(uuidgen)"
+        {
+          echo "content<<$DELIM"
+          gh api "repos/$GITHUB_REPOSITORY/contents/${{ inputs.path }}?ref=${{ inputs.ref }}" \
+            --jq '.content' | base64 -d
+          echo
+          echo "$DELIM"
+        } >> "$GITHUB_OUTPUT"

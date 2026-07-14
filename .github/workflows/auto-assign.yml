@@ -1,7 +1,6 @@
 name: 'Auto Assign Reviewers'
 
 on:
-  workflow_dispatch:
   pull_request:
     types: [opened, ready_for_review]
 
@@ -17,6 +16,7 @@ jobs:
         with:
           script: |
             const title = context.payload.pull_request.title || '';
+            // Keep this regex in sync with claude-pr-review.yml and claude-pr-review-require.yml.
             const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
             core.setOutput('is-feature', (!isAutoReview).toString());
 

@@ -22,9 +22,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
-            --base dev \
-            --head chore/sync \
-            --title "chore: sync main to dev" \
-            --body ":crown: *An automated PR*" \
-            --label auto-pr \
+          # Create the PR only if none is open — a second create fails and would
+          # turn every subsequent push to main into a red run.
+          PR_NUMBER=$(gh pr list --head chore/sync --base dev --state open --json number --jq '.[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create \
+              --base dev \
+              --head chore/sync \
+              --title "chore: sync main to dev" \
+              --body ":crown: *An automated PR*"
+            PR_NUMBER=$(gh pr list --head chore/sync --base dev --state open --json number --jq '.[0].number')
+          fi
+
+          # Always ensure the label is applied (handles 502 / retry scenarios)
+          gh pr edit "$PR_NUMBER" --add-label auto-pr

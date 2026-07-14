@@ -1,9 +1,9 @@
 name: Build GameCI Image
 
+# workflow_dispatch only: a push trigger cannot supply the required inputs —
+# on push every ${{ inputs.* }} is empty, producing a malformed image tag and
+# empty docker build args.
 on:
-  push:
-    branches:
-      - dev-game-ci-docker-image
   workflow_dispatch:
     inputs:
       editor_version:
