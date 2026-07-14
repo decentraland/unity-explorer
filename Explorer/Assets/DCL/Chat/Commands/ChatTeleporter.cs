@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utility.Types;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,15 @@ namespace DCL.Chat.Commands
         private const string WORLD_SUFFIX = ".dcl.eth";
 
         private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly URLDomain worldDomain;
 
-        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource, IScenesCache scenesCache)
         {
             this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
             this.environmentValidator = environmentValidator;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldServer));
 
@@ -48,7 +51,12 @@ namespace DCL.Chat.Commands
                 return errorMessage;
 
             if (realmNavigator.IsAlreadyOnRealm(realmURL))
-                return $"🟡 You are already in {realm}!";
+            {
+                if (spawnPointName == null)
+                    return $"🟡 You are already in {realm}!";
+
+                return await TeleportToParcelAsync(scenesCache.CurrentParcel.Value, true, ct, spawnPointName);
+            }
 
             var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, default, isWorld, true, spawnPointName: spawnPointName);
 
