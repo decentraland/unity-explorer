@@ -538,7 +538,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         {
             const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
-            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID.ToLower(), "fake user", new Avatar(
                 BodyShape.MALE,
                 WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
                 WearablesConstants.DefaultColors.GetRandomEyesColor(),
