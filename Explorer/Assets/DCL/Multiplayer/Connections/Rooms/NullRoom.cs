@@ -34,21 +34,21 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
         public ILocalTracks LocalTracks => NullLocalTracks.INSTANCE;
 
-        public event LocalPublishDelegate? LocalTrackPublished;
-        public event LocalPublishDelegate? LocalTrackUnpublished;
-        public event PublishDelegate? TrackPublished;
-        public event PublishDelegate? TrackUnpublished;
-        public event SubscribeDelegate? TrackSubscribed;
-        public event SubscribeDelegate? TrackUnsubscribed;
-        public event MuteDelegate? TrackMuted;
-        public event MuteDelegate? TrackUnmuted;
+        public event LocalPublishDelegate? LocalTrackPublished { add { } remove { } }
+        public event LocalPublishDelegate? LocalTrackUnpublished { add { } remove { } }
+        public event PublishDelegate? TrackPublished { add { } remove { } }
+        public event PublishDelegate? TrackUnpublished { add { } remove { } }
+        public event SubscribeDelegate? TrackSubscribed { add { } remove { } }
+        public event SubscribeDelegate? TrackUnsubscribed { add { } remove { } }
+        public event MuteDelegate? TrackMuted { add { } remove { } }
+        public event MuteDelegate? TrackUnmuted { add { } remove { } }
 #endif
 
-        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
-        public event ConnectionStateChangeDelegate? ConnectionStateChanged;
-        public event ConnectionDelegate? ConnectionUpdated;
-        public event Room.MetaDelegate? RoomMetadataChanged;
-        public event Room.SidDelegate? RoomSidChanged;
+        public event ConnectionQualityChangeDelegate? ConnectionQualityChanged { add { } remove { } }
+        public event ConnectionStateChangeDelegate? ConnectionStateChanged { add { } remove { } }
+        public event ConnectionDelegate? ConnectionUpdated { add { } remove { } }
+        public event Room.MetaDelegate? RoomMetadataChanged { add { } remove { } }
+        public event Room.SidDelegate? RoomSidChanged { add { } remove { } }
 
         public void UpdateLocalMetadata(string metadata)
         {

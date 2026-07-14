@@ -322,6 +322,10 @@ namespace DCL.WebRequests
 
                             using var textReader = new StreamReader(stream, Encoding.UTF8);
                             using var jsonReader = new JsonTextReader(textReader);
+
+                            if (Target == null)
+                                throw new InvalidOperationException($"{nameof(OverwriteFromJsonAsyncOp<T, TRequest>)} requires a non-null {nameof(Target)} to populate");
+
                             serializer.Populate(jsonReader, Target);
                         }
                     }
