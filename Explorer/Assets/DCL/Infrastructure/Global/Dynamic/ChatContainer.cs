@@ -111,7 +111,7 @@ namespace Global.Dynamic
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
-                new GoToLocalChatCommand(chatTeleporter),
+                new GoToLocalChatCommand(chatTeleporter, staticContainer.ScenesCache),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,

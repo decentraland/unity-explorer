@@ -71,7 +71,7 @@ namespace DCL.Chat.Commands
             return new GotoTarget(world: param, parcel: null, spawnPoint: null);
         }
 
-        private static bool IsSpawnPointName(string segment) =>
+        public static bool IsSpawnPointName(string segment) =>
             segment.Length > 0 && segment.IndexOf(',') < 0 && segment.IndexOf('/') < 0;
     }
 }
