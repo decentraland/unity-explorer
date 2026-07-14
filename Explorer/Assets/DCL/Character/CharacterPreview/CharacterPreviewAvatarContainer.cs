@@ -25,13 +25,13 @@ namespace DCL.CharacterPreview
         private bool isFOVTransitioning;
 
         [field: SerializeField] internal Vector3 previewPositionInScene { get; private set; }
-        [field: SerializeField] internal Transform avatarParent { get; private set; }
-        [field: SerializeField] internal Camera camera { get; private set; }
-        [field: SerializeField] internal Transform cameraTarget { get; private set; }
-        [field: SerializeField] internal Transform rotationTarget { get; private set; }
-        [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
-        [field: SerializeField] internal GameObject previewPlatform { get; private set; }
-        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
+        [field: SerializeField] internal Transform avatarParent { get; private set; } = null!;
+        [field: SerializeField] internal new Camera camera { get; private set; } = null!;
+        [field: SerializeField] internal Transform cameraTarget { get; private set; } = null!;
+        [field: SerializeField] internal Transform rotationTarget { get; private set; } = null!;
+        [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; } = null!;
+        [field: SerializeField] internal GameObject previewPlatform { get; private set; } = null!;
+        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; } = null!;
 
         internal float TargetFOV { get; set; }
         internal float RotationModifier { get; set; }

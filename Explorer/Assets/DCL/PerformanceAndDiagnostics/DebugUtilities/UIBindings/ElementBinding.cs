@@ -8,7 +8,7 @@ namespace DCL.DebugUtilities.UIBindings
     /// </summary>
     public class ElementBinding<T> : IElementBinding<T>
     {
-        private T tempValue;
+        private T tempValue = default!;
 
         private bool tempValueIsDirty;
 

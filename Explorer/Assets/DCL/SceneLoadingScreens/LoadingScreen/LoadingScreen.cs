@@ -102,10 +102,12 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                                                      SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport)), ct)
                                                 .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
 
-                if (loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
+                // Both logs below are pure cancellation artifacts on ExitPlayMode (the outer ct cancels ShowAsync,
+                // leaving loadReport Pending and result as TaskError.Cancelled). Only log when not cancelled (CLAUDE.md §9).
+                if (!ct.IsCancellationRequested && loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
 
-                if (finalResult.HasValue && !result.Success)
+                if (!ct.IsCancellationRequested && finalResult.HasValue && !result.Success)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Loading screen finished with an error after the flow has finished: {result.Error.AsMessage()}");
 
                 return result;

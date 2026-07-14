@@ -19,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly U requestManager;
 
         private CancellationTokenSource friendListInitCts = new ();
+        private bool disposed;
 
         protected UniTaskCompletionSource? panelLifecycleTask { get; private set; }
 
@@ -40,6 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.Disable -= Disable;
             requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
+            disposed = true;
         }
 
         public async UniTask InitAsync(CancellationToken ct)
@@ -51,6 +53,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             EnumResult<TaskError> result = await requestManager.InitAsync(ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
             if (!result.Success)
+                return;
+
+            if (ct.IsCancellationRequested)
                 return;
 
             view.SetLoadingState(false);
@@ -73,6 +78,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected void CheckShouldInit()
         {
+            if (disposed)
+                return;
+
             if (!requestManager.WasInitialised)
                 InitAsync(friendListInitCts.Token).Forget();
         }
