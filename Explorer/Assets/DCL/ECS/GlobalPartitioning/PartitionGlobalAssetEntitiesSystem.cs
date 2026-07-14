@@ -12,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.Unity.Systems;
 using UnityEngine;
 
-// ReSharper disable once CheckNamespace (Code generation issues)
 namespace DCL.Systems
 {
     /// <summary>

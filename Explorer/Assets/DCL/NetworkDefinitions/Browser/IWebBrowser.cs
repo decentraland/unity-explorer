@@ -1,6 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
     public interface IWebBrowser

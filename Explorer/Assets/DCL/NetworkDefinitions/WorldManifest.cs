@@ -2,7 +2,6 @@ using System;
 using Unity.Collections;
 using Unity.Mathematics;
 
-// ReSharper disable once CheckNamespace
 namespace ECS
 {
     /// <summary>

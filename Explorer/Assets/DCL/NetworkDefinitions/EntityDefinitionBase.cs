@@ -2,7 +2,6 @@ using Newtonsoft.Json;
 using System;
 
 // ReSharper disable InconsistentNaming
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>

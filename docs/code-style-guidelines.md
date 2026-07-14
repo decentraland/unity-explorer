@@ -249,6 +249,8 @@ List<string> filteredWords = new FilterLogic(listWords).
   - Not every folder should be namespace provider, especially folders like `Scripts`, `MainScripts`, `Assets`.
   - Folders that are deep in the folders hierarchy should be without namespace.
 
+**Namespace-folder correspondence is not machine-enforced.** Namespaces are stable public contracts: they name the domain (`DCL.Ipfs`), are imported by hundreds of files, and deliberately survive assembly consolidation (`DCL.Ipfs` lives in the `DCL.Network` assembly). Folder layout is internal organization and may drift from them. The ReSharper `CheckNamespace` inspection ("namespace does not correspond to file location") is therefore disabled project-wide in [`Explorer/.editorconfig`](../Explorer/.editorconfig) (`resharper_check_namespace_highlighting = none`). Do not add `// ReSharper disable once CheckNamespace` comments — the inspection is off, so they are dead weight; and do not re-enable the inspection per file or per folder without a team decision.
+
 ### Whitespaces
 
 Most of these rules are saved in the `.editorconfig` and will be applied automatically on formatting.
