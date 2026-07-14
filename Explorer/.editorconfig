@@ -739,6 +739,12 @@ resharper_space_after_operator_keyword = true
 
 # ############################### ReSharper inspection severities ###############################
 
+# Namespaces intentionally do not mirror folder layout: they are stable public contracts that
+# survive assembly consolidation (e.g. DCL.Ipfs lives in the DCL.Network assembly), so the
+# folder-correspondence inspection is disabled — matching dotnet_style_namespace_match_folder
+# above. See docs/code-style-guidelines.md § Namespaces.
+resharper_check_namespace_highlighting = none
+
 # # ReSharper inspection severities 1
 # resharper_invocation_is_skipped_highlighting = none
 # resharper_non_parsable_element_highlighting = none

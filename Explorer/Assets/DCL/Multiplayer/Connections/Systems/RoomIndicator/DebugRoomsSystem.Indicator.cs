@@ -10,7 +10,6 @@ using DCL.Nametags;
 using ECS.LifeCycle.Components;
 using UnityEngine.Pool;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Multiplayer.Connections.Systems
 {
     public partial class DebugRoomsSystem
