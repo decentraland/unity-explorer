@@ -2,11 +2,12 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using DCL.VoiceChat.Nearby;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents <see cref="NearbyVoiceBannedPlayerWatcher"/>:

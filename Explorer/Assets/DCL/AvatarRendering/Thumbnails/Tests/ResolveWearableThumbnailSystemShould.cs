@@ -1,14 +1,14 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.AvatarShape.Tests.EditMode;
+using DCL.AvatarRendering.AvatarShape.Tests;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Thumbnails.Systems;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.SceneLifeCycle.Tests;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;

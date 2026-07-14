@@ -1,8 +1,10 @@
 ﻿using Arch.Core;
 using DCL.Ipfs;
 using DCL.Utilities;
+using ECS;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -19,7 +21,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     public class ControlSceneUpdateLoopSystemShould : UnitySystemTestBase<ControlSceneUpdateLoopSystem>
     {
@@ -60,7 +62,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             Entity e = world.Create(promise, PartitionComponent.TOP_PRIORITY, sceneDefinitionComponent);
 
-            system.Update(0f);
+            system?.Update(0f);
 
             scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
@@ -88,7 +90,7 @@ namespace ECS.SceneLifeCycle.Tests
             Entity e = world.Create(promise, partition, sceneDefinitionComponent);
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
-            system.Update(0f);
+            system?.Update(0f);
 
             // let the system switch to the thread pool
             await Task.Delay(100);
@@ -102,7 +104,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: true);
 
-            system.Update(0f);
+            system?.Update(0f);
 
             scene.DidNotReceive().StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
@@ -112,7 +114,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: true, hasReadinessReport: true);
 
-            system.Update(0f);
+            system?.Update(0f);
 
             scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
@@ -122,7 +124,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: false);
 
-            system.Update(0f);
+            system?.Update(0f);
 
             scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
@@ -137,7 +139,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             world.Create(scene, partition, new SceneDefinitionComponent());
 
-            system.Update(0f);
+            system?.Update(0f);
 
             scene.Received(1).SetTargetFPS(15);
         }

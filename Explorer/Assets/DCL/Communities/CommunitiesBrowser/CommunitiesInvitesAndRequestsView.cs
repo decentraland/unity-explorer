@@ -358,14 +358,14 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = community.role != CommunityMemberRole.none;
 
             // Setup card data
-            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
+            invitedCommunityCardView.SetCommunityData(community.communityId, community.name, community.OwnerName, community.description, isMember);
             invitedCommunityCardView.SetPrivacy(community.privacy);
             invitedCommunityCardView.SetMembersCount(community.membersCount);
             invitedCommunityCardView.SetInviteOrRequestId(community.id);
             invitedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             invitedCommunityCardView.SetActionLoadingActive(false);
             invitedCommunityCardView.ConfigureListenersCount(false, 0);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.ThumbnailUrl, invitedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             invitedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;
@@ -402,7 +402,7 @@ namespace DCL.Communities.CommunitiesBrowser
             requestsReceivedGroupView.SetProfileDataProvider(profileRepositoryWrapper!);
             requestsReceivedGroupView.SetCommunitiesDataProvider(communitiesDataProvider!);
 
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.thumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(requestsReceivedGroup.Key.ThumbnailUrl, requestsReceivedGroupView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestsReceivedGroupView.CommunityButtonClicked -= OnOpenCommunityProfile;
@@ -437,13 +437,13 @@ namespace DCL.Communities.CommunitiesBrowser
             bool isMember = community.role != CommunityMemberRole.none;
 
             // Setup card data
-            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.ownerName, community.description, isMember);
+            requestedCommunityCardView.SetCommunityData(community.communityId, community.name, community.OwnerName, community.description, isMember);
             requestedCommunityCardView.SetPrivacy(community.privacy);
             requestedCommunityCardView.SetMembersCount(community.membersCount);
             requestedCommunityCardView.SetInviteOrRequestId(community.id);
             requestedCommunityCardView.SetActionButtonsState(community.privacy, community.type, community.role != CommunityMemberRole.none);
             requestedCommunityCardView.SetActionLoadingActive(false);
-            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.thumbnailUrl, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailFromUrlAsync(community.ThumbnailUrl, requestedCommunityCardView.communityThumbnail, defaultThumbnailSprite, thumbnailsCts.Token, true).Forget();
 
             // Setup card events
             requestedCommunityCardView.MainButtonClicked -= OnOpenCommunityProfile;

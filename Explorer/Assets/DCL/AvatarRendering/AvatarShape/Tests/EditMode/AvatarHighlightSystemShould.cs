@@ -2,7 +2,6 @@ using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Interaction.Raycast.Components;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 

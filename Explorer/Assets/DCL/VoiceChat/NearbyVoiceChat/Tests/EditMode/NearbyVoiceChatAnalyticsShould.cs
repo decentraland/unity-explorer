@@ -1,12 +1,13 @@
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.MutePersistence;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using System;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Guards the edge cases called out in the Nearby Voice Chat analytics PR:

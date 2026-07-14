@@ -344,12 +344,12 @@ jobs:
           echo "baseline=$baseline" >> "$GITHUB_OUTPUT"
           echo "Baseline warnings: ${baseline:-<none>}"
 
-      # Hard gate: a PR may only merge if it strictly reduces the warning count.
-      # Exception: release/hotfix PRs may merge when the count is unchanged (equality passes).
+      # Hard gate: a dev-targeted PR may only merge if it strictly reduces the warning count.
+      # Release/hotfix PRs skip this gate — each commit already passed it when merging into dev.
       # No baseline yet -> pass (the first dev push seeds it). Add the 'no-warning-ratchet'
-      # label to bypass on a PR that legitimately cannot touch warnings.
+      # label to bypass on a dev PR that legitimately cannot touch warnings.
       - name: Enforce warning reduction (PR)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev'
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           BASELINE: ${{ steps.baseline.outputs.baseline }}

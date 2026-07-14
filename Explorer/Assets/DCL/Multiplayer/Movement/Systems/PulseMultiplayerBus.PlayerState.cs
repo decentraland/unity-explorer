@@ -1,4 +1,3 @@
-using CrdtEcsBridge.Components.Conversion;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Pulse;
@@ -15,6 +14,9 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private const string PLAYER_STATE_MESSAGE = "player state";
+        private const string PLAYER_STATE_DELTA_MESSAGE = "player state delta";
+
         // Concurrent collections are not needed as messages are processed strictly from a single thread at a time message by message
         private readonly Dictionary<uint, (uint sequence, NetworkMovementMessage message)> lastMovementMessages = new ();
         private readonly Dictionary<uint, byte> pendingResyncs = new ();
@@ -46,6 +48,14 @@ namespace DCL.Multiplayer.Movement
             }
 
             PlayerJoined playerJoined = message.Message.PlayerJoined;
+
+            // An empty realm violates the server contract, so it is dropped too
+            if (playerJoined.Realm.Length == 0 || playerJoined.Realm != realmData.RealmName)
+            {
+                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Dropping PlayerJoined for {playerJoined.State.SubjectId}: realm '{playerJoined.Realm}' differs from current '{realmData.RealmName}'");
+                return;
+            }
+
             Web3Address resolvedWallet = ResolveSelfMirrorWallet(playerJoined.UserId);
 
             // Join supersedes any still-queued leave for this wallet; drop the stale remove so it can't delete a present peer.
@@ -53,7 +63,7 @@ namespace DCL.Multiplayer.Movement
 
             incomingProfiles.Enqueue(resolvedWallet, playerJoined.ProfileVersion);
 
-            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId);
+            peerIdCache.Set(resolvedWallet, playerJoined.State.SubjectId, playerJoined.Realm);
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerJoined.State);
             lastMovementMessages[playerJoined.State.SubjectId] = (playerJoined.State.Sequence, movementMessage);
@@ -71,13 +81,12 @@ namespace DCL.Multiplayer.Movement
 
             PlayerLeft playerLeft = message.Message.PlayerLeft;
 
+            // Realm-agnostic on purpose: removals must process even for peers whose stored realm is stale
             if (peerIdCache.TryGetWallet(playerLeft.SubjectId, out Web3Address wallet))
                 removeIntentions.Enqueue(wallet);
 
             peerIdCache.Remove(playerLeft.SubjectId);
-            lastMovementMessages.Remove(playerLeft.SubjectId);
-            pendingResyncs.Remove(playerLeft.SubjectId);
-            emotingSubjects.Remove(playerLeft.SubjectId);
+            PurgeQueues(playerLeft.SubjectId);
         }
 
         private void HandlePlayerStateFull(IncomingMessage message)
@@ -90,11 +99,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateFull playerStateFull = message.Message.PlayerStateFull;
 
-            if (!peerIdCache.TryGetWallet(playerStateFull.SubjectId, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Receiving player state from unknown peer {playerStateFull.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(playerStateFull.SubjectId, PLAYER_STATE_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             NetworkMovementMessage movementMessage = ToNetworkMovementMessage(playerStateFull);
             TryUpdateLastMovementAndCompleteResync(playerStateFull.ServerTick, playerStateFull.SubjectId, playerStateFull.Sequence, movementMessage);
@@ -111,11 +117,8 @@ namespace DCL.Multiplayer.Movement
 
             PlayerStateDeltaTier0 delta = message.Message.PlayerStateDelta;
 
-            if (!peerIdCache.TryGetWallet(delta.SubjectId, out Web3Address wallet))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"[{delta.ServerTick}] Receiving player state from unknown peer {delta.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(delta.SubjectId, PLAYER_STATE_DELTA_MESSAGE, out Web3Address wallet))
                 return;
-            }
 
             if (!lastMovementMessages.TryGetValue(delta.SubjectId, out (uint sequence, NetworkMovementMessage message) lastMovement))
             {
@@ -317,23 +320,31 @@ namespace DCL.Multiplayer.Movement
             );
 
             state.ParcelIndex = parcelEncoder.Encode(parcelIndex);
-            state.Position = relativePosition.ToProtoVector();
-            state.Velocity = message.velocity.ToProtoVector();
-            state.RotationY = message.rotationY;
-            state.MovementBlend = Mathf.Clamp(message.animState.MovementBlendValue, 0, 3);
-            state.SlideBlend = message.animState.SlideBlendValue;
+            state.PositionXQuantized = relativePosition.x;
+            state.PositionYQuantized = relativePosition.y;
+            state.PositionZQuantized = relativePosition.z;
+            state.VelocityXQuantized = message.velocity.x;
+            state.VelocityYQuantized = message.velocity.y;
+            state.VelocityZQuantized = message.velocity.z;
+            state.RotationYQuantized = message.rotationY;
+            state.MovementBlendQuantized = Mathf.Clamp(message.animState.MovementBlendValue, MovementBlend.MIN, MovementBlend.MAX);
+            state.SlideBlendQuantized = message.animState.SlideBlendValue;
             state.StateFlags = BuildStateFlags(message);
             state.GlideState = (GlideState)message.animState.GlideState;
             state.JumpCount = message.animState.JumpCount;
 
             if (message.headIKYawEnabled)
-                state.HeadYaw = message.headYawAndPitch[0];
+                state.HeadYawQuantized = message.headYawAndPitch[0];
 
             if (message.headIKPitchEnabled)
-                state.HeadPitch = message.headYawAndPitch[1];
+                state.HeadPitchQuantized = message.headYawAndPitch[1];
 
             if (message.isPointingAt)
-                state.PointAt = message.pointAtWorldHitPoint.ToProtoVector();
+            {
+                state.PointAtXQuantized = message.pointAtWorldHitPoint.x;
+                state.PointAtYQuantized = message.pointAtWorldHitPoint.y;
+                state.PointAtZQuantized = message.pointAtWorldHitPoint.z;
+            }
         }
 
         private NetworkMovementMessage ToNetworkMovementMessage(PlayerStateFull full) =>
@@ -344,14 +355,14 @@ namespace DCL.Multiplayer.Movement
             Vector2Int parcel = parcelEncoder.Decode(playerState.ParcelIndex);
 
             var worldPosition = new Vector3(
-                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.X,
-                playerState.Position.Y,
-                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + playerState.Position.Z
+                (parcel.x * ParcelMathHelper.PARCEL_SIZE) + playerState.PositionXQuantized,
+                playerState.PositionYQuantized,
+                (parcel.y * ParcelMathHelper.PARCEL_SIZE) + playerState.PositionZQuantized
             );
 
-            Vector3 vel = playerState.Velocity.ToUnityVector();
+            var vel = new Vector3(playerState.VelocityXQuantized, playerState.VelocityYQuantized, playerState.VelocityZQuantized);
 
-            float movementBlend = Mathf.Clamp(playerState.MovementBlend, 0, 3);
+            float movementBlend = Mathf.Clamp(playerState.MovementBlendQuantized, MovementBlend.MIN, MovementBlend.MAX);
             var movementKind = (MovementKind)Mathf.Max(Mathf.RoundToInt(movementBlend), movementBlend > LiveKitMovementMessageBus.WALK_EPSILON ? 1 : 0);
 
             bool isPointingAt = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.PointingAt);
@@ -361,7 +372,7 @@ namespace DCL.Multiplayer.Movement
                 timestamp = serverTick * SERVER_TICKS_TO_MOVEMENT_TIMESTAMP,
                 parcel = parcel,
                 position = worldPosition,
-                rotationY = playerState.RotationY,
+                rotationY = playerState.RotationYQuantized,
                 velocity = vel,
                 velocitySqrMagnitude = vel.sqrMagnitude,
                 movementKind = movementKind,
@@ -369,7 +380,7 @@ namespace DCL.Multiplayer.Movement
                 animState = new AnimationStates
                 {
                     MovementBlendValue = movementBlend,
-                    SlideBlendValue = playerState.SlideBlend,
+                    SlideBlendValue = playerState.SlideBlendQuantized,
                     IsGrounded = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Grounded),
                     IsLongJump = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.LongJump),
                     IsFalling = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.Falling),
@@ -383,11 +394,11 @@ namespace DCL.Multiplayer.Movement
 
                 headIKYawEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadYaw),
                 headIKPitchEnabled = EnumUtils.HasFlag(playerState.StateFlags, PlayerAnimationFlags.HeadPitch),
-                headYawAndPitch = new Vector2(playerState.HeadYaw, playerState.HeadPitch),
+                headYawAndPitch = new Vector2(playerState.HeadYawQuantized, playerState.HeadPitchQuantized),
 
                 isPointingAt = isPointingAt,
-                pointAtWorldHitPoint = isPointingAt && playerState.PointAt != null
-                    ? playerState.PointAt.ToUnityVector()
+                pointAtWorldHitPoint = isPointingAt
+                    ? new Vector3(playerState.PointAtXQuantized, playerState.PointAtYQuantized, playerState.PointAtZQuantized)
                     : Vector3.zero,
             };
 

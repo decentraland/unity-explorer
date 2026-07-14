@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Friends.UserBlocking;
 using DCL.Profiles;
 using DCL.SceneBannedUsers;
+using DCL.VoiceChat.Nearby;
 using DCL.VoiceChat.Nearby.Audio;
 using DCL.VoiceChat.Nearby.Systems;
 using ECS.LifeCycle.Components;
@@ -12,14 +13,13 @@ using LiveKit.Rooms.Streaming.Audio;
 using NSubstitute;
 using NUnit.Framework;
 using RichTypes;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents <see cref="NearbyAudioBindingSystem"/> contract:

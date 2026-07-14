@@ -70,6 +70,14 @@ namespace DCL.MarketplaceCredits
             return creditsProgramProgressResponse;
         }
 
+        public async UniTask<UserCreditsResponse> GetUserCreditsAsync(string walletId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/credits";
+
+            return await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                .CreateFromJson<UserCreditsResponse>(WRJsonParser.Unity);
+        }
+
         private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
         {
             var url = $"{marketplaceCreditsBaseUrl}/seasons";
