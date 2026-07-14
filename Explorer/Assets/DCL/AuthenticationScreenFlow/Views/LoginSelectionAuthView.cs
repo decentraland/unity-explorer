@@ -106,7 +106,7 @@ namespace DCL.AuthenticationScreenFlow
         public void Show(int animHash, bool moreOptionsExpanded)
         {
             showAnimHash = animHash;
-            ShowAsync(CancellationToken.None).Forget();
+            ShowAsync(destroyCancellationToken).Forget();
 
             areOptionsExpanded = moreOptionsExpanded;
             SetOptionsPanelVisibility(areOptionsExpanded);
@@ -120,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow
             loadingSpinner.SetActive(false);
             SetEmailInputFieldSpinnerActive(false);
 
-            HideAsync(CancellationToken.None).Forget();
+            HideAsync(destroyCancellationToken).Forget();
         }
 
         public void SetLoadingSpinnerVisibility(bool isLoading)

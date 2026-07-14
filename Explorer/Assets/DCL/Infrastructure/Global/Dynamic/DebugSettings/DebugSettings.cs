@@ -43,7 +43,7 @@ namespace Global.Dynamic.DebugSettings
         private string customGatekeeperUrl = string.Empty;
         [Space]
         [SerializeField]
-        private string[] appParameters;
+        private string[] appParameters = System.Array.Empty<string>();
 
         public static DebugSettings Release() =>
             new ()

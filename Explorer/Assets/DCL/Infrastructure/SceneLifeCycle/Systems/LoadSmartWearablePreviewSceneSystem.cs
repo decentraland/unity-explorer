@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -31,10 +32,17 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
 
+        private readonly CancellationTokenSource systemCts = new ();
+
         public LoadSmartWearablePreviewSceneSystem(World world, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource) : base(world)
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+        }
+
+        protected override void OnDispose()
+        {
+            systemCts.SafeCancelAndDispose();
         }
 
         protected override void Update(float t)
@@ -49,7 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             World.Add(entity, new SmartWearablePreviewScene { Value = Entity.Null });
 
-            TryLoadPreviewSceneAsync(entity, realm.Ipfs, CancellationToken.None).Forget();
+            TryLoadPreviewSceneAsync(entity, realm.Ipfs, systemCts.Token).Forget();
         }
 
         [Query]

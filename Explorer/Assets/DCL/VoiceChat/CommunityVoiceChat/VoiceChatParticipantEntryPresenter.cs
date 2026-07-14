@@ -75,6 +75,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             if (string.IsNullOrEmpty(currentParticipantState.WalletId)) return;
 
+            // deliberately not tied to this pooled entry's cts: the open passport must survive
+            // the entry being recycled (participant leaves, list rebuild)
             OpenPassportAsync(currentParticipantState.WalletId, CancellationToken.None).Forget();
             return;
 

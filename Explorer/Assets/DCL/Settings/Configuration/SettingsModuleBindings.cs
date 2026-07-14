@@ -49,9 +49,9 @@ namespace DCL.Settings.Configuration
         where TConfig : SettingsModuleViewConfiguration
         where TControllerType : Enum
     {
-        [field: SerializeField] public ViewRef View { get; private set; }
-        [field: SerializeField] public TConfig Config { get; private set; }
-        [field: SerializeField] public TControllerType Feature { get; private set; }
+        [field: SerializeField] public ViewRef View { get; private set; } = null!;
+        [field: SerializeField] public TConfig Config { get; private set; } = null!;
+        [field: SerializeField] public TControllerType Feature { get; private set; } = default!;
 
         [Serializable]
         public class ViewRef : ComponentReference<TView>

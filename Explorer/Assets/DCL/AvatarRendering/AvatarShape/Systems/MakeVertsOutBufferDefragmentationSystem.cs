@@ -35,6 +35,11 @@ namespace DCL.AvatarRendering.AvatarShape
         [Query]
         private void UpdateIndices([Data] IReadOnlyDictionary<int, FixedComputeBufferHandler.Slice> remapping, ref AvatarCustomSkinningComponent avatarCustomSkinningComponent)
         {
+            // a zero-length region owns no slice of the buffer; its default StartIndex (0) must not
+            // match a real region that starts at 0
+            if (avatarCustomSkinningComponent.VertsOutRegion.Length == 0)
+                return;
+
             if (remapping.TryGetValue(avatarCustomSkinningComponent.VertsOutRegion.StartIndex, out FixedComputeBufferHandler.Slice newRegion))
                 avatarCustomSkinningComponent.SetVertOutRegion(newRegion);
         }
