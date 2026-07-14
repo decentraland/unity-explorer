@@ -19,19 +19,18 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public EquippedWearables()
         {
-            foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
-                wearables.Add(category, null);
+            UnEquipAll();
         }
 
         public IWearable? Wearable(string category) =>
-            wearables[category];
+            wearables.TryGetValue(category, out IWearable? wearable) ? wearable : null;
 
         public (Color, Color, Color) GetColors() =>
             (hairColor, eyesColor, bodyshapeColor);
 
         public bool IsEquipped(ITrimmedWearable wearable)
         {
-            return wearables[wearable.GetCategory()]?.DTO.id == wearable.TrimmedDTO.id;
+            return Wearable(wearable.GetCategory())?.DTO.id == wearable.TrimmedDTO.id;
         }
 
         public void Equip(IWearable wearable) =>
@@ -48,8 +47,14 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void UnEquipAll()
         {
+            // Re-seed instead of a bare Dictionary.Clear(): reads rely on every seeded category key
+            // surviving with a null value (Clear() made category reads throw KeyNotFoundException after
+            // an identity change), and Equip() can add non-priority category keys that must not keep
+            // the previous identity's wearables equipped.
+            wearables.Clear();
+
             foreach (string category in WearableCategories.CATEGORIES_PRIORITY)
-                wearables[category] = null;
+                wearables.Add(category, null);
         }
 
         public void SetHairColor(Color newColor) =>
@@ -69,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public void Clear()
         {
-            wearables.Clear();
+            UnEquipAll();
             forceRenderCategories.Clear();
         }
 
