@@ -209,6 +209,8 @@ List<string> filteredWords = new FilterLogic(listWords).
 
 **Namespace-folder correspondence is not machine-enforced.** Namespaces are stable public contracts: they name the domain (`DCL.Ipfs`), are imported by hundreds of files, and deliberately survive assembly consolidation (`DCL.Ipfs` lives in the `DCL.Network` assembly). Folder layout is internal organization and may drift from them. The ReSharper `CheckNamespace` inspection ("namespace does not correspond to file location") is therefore disabled project-wide in [`Explorer/.editorconfig`](../Explorer/.editorconfig) (`resharper_check_namespace_highlighting = none`, matching the already-disabled Roslyn twin `dotnet_style_namespace_match_folder = false`). Do not add `// ReSharper disable once CheckNamespace` comments — the inspection is off, so they are dead weight; and do not re-enable the inspection per file or per folder without a team decision.
 
+The real convention is enforced at review time instead, because it is semantic, not mechanical: **a type's namespace must name the domain it belongs to.** When adding a type, join the existing namespace that owns the concept (check where its closest collaborators live); creating a new namespace is a design decision requiring justification, not a default. Never derive a namespace from the folder path or rename one to match a folder. Reviewers (human and AI) should flag types whose namespace doesn't match their domain and gratuitous new namespaces where an existing one fits.
+
 ### Whitespaces
 
 Most of these rules are saved in the `.editorconfig` and will be applied automatically on formatting.

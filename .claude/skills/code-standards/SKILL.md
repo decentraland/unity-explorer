@@ -27,6 +27,16 @@ user-invocable: false
 | Events | Past tense, no `On` prefix | `ViewShowingComplete` |
 | Unused parameters | `_`, `__`, `___` | `Update(float _)` |
 
+## Namespaces
+
+**Namespaces are domain names, not file paths.** They name the concept a type belongs to (`DCL.Ipfs`, `DCL.Browser`, `ECS`) and deliberately survive assembly consolidation — `DCL.Ipfs` lives in the `DCL.Network` assembly. Folder layout is internal organization; folder-namespace mismatch is expected and correct. The ReSharper `CheckNamespace` inspection is intentionally disabled (`Explorer/.editorconfig`), and this convention is enforced at review time instead.
+
+- **Adding a type:** join the existing namespace that owns the concept — check where its closest collaborators live. Creating a new namespace is a design decision requiring justification, not a default.
+- **Never** derive a namespace from the folder path, rename a namespace to match a folder, or add `// ReSharper disable once CheckNamespace` (dead weight — the inspection is off).
+- **Review flags:** a type whose namespace doesn't match its domain; a gratuitous new namespace where an existing one fits.
+
+Full rationale: [`docs/code-style-guidelines.md` § Namespaces](../../../docs/code-style-guidelines.md#namespaces).
+
 ## Member Ordering
 
 Within a class, group members in this order:
