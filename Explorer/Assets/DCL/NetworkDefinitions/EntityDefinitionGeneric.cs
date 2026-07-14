@@ -1,16 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
+// ReSharper disable InconsistentNaming
 // ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
+    // Server schema: decentraland/common-schemas src/platform/entity.ts#/Entity
+    // (metadata is schema-optional, but every entity type the client consumes carries it)
     [Serializable]
     public class EntityDefinitionGeneric<T> : EntityDefinitionBase, IEquatable<EntityDefinitionGeneric<T>>
     {
         public const string DEFAULT_VERSION = "v3";
 
-        public T metadata;
+        public T metadata = default!;
 
         public EntityDefinitionGeneric() { }
 
@@ -29,8 +31,8 @@ namespace DCL.Ipfs
             entityDefinition.pointers = Array.Empty<string>();
         }
 
-        public bool Equals(EntityDefinitionGeneric<T> other) =>
-            id.Equals(other?.id);
+        public bool Equals(EntityDefinitionGeneric<T>? other) =>
+            string.Equals(id, other?.id);
 
         public string FullInfo() =>
             $"Id: {id}\n"
@@ -42,9 +44,9 @@ namespace DCL.Ipfs
             + $"Type: {type}\n";
 
         private string ContentString() =>
-            $"Count {content?.Length ?? 0}: {string.Join(", ", content?.Select(e => $"{e.file}: {e.hash}") ?? Array.Empty<string>())}";
+            $"Count {content.Length}: {string.Join(", ", content.Select(e => $"{e.file}: {e.hash}"))}";
 
         private string PointersString() =>
-            $"Count {pointers?.Length ?? 0}: {string.Join(", ", pointers as IEnumerable<string> ?? Array.Empty<string>())}";
+            $"Count {pointers.Length}: {string.Join(", ", pointers)}";
     }
 }

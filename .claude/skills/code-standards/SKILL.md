@@ -27,6 +27,8 @@ user-invocable: false
 | Events | Past tense, no `On` prefix | `ViewShowingComplete` |
 | Unused parameters | `_`, `__`, `___` | `Update(float _)` |
 
+**Exception:** serialized JSON DTO fields keep their wire-format casing — see *Serialized JSON DTOs* below.
+
 ## Member Ordering
 
 Within a class, group members in this order:
@@ -131,7 +133,17 @@ The project is migrating to nullable reference types. ~80 of ~153 assemblies alr
 - **Parameters that legitimately accept null** must be typed `T?` (e.g., `string? name`).
 - **Return types that may return null** must be typed `T?`.
 - **Fields and properties that can be null** must be typed `T?`.
-- **Never use the null-forgiving operator `!`** to silence warnings — fix the root cause instead. The only acceptable use is in test code where NSubstitute returns null proxies.
+- **Never use the null-forgiving operator `!`** to silence warnings — fix the root cause instead. The only acceptable uses are test code where NSubstitute returns null proxies, and schema-required serialized DTO fields (see below).
+
+## Serialized JSON DTOs (wire-format exceptions)
+
+Fields populated by JSON deserialization follow the wire format, not local conventions:
+
+- **Naming:** field names must match the JSON keys exactly. Do not rename to PascalCase — `[JsonProperty]` only rescues the Newtonsoft path, and DTOs also parsed with Unity's `JsonUtility` (e.g. `SceneEntityDefinition` via `WRJsonParser.Unity`) have no rename mechanism. Keep the wire-format casing and suppress the inspection per file with `// ReSharper disable InconsistentNaming` above the namespace declaration.
+- **Nullability (CS8618):** fields the schema marks *required* are initialized `= null!` (`= default!` when the field's type is a generic parameter); fields the schema marks *optional* are declared `T?`. A schema-optional field may be kept non-nullable only when every entity type the client consumes guarantees it in practice — state that strengthened contract in the schema-link comment. A field absent from the linked schema is optional unless verified against its actual source. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`) so reviewers can verify the contract.
+- **Guards follow the declaration:** a required field (`= null!`) must not be null-guarded at all — no `?.`, no `?? fallback`, no `== null` (see anti-pattern 4); an optional `T?` field keeps its guards.
+
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code.
 
 ## Comments
 
