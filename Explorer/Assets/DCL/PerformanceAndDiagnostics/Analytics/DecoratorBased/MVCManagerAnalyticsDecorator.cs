@@ -81,7 +81,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void CloseAllNonPersistentViews(CancellationToken ct = default) =>
             core.CloseAllNonPersistentViews(ct);
 
-        public bool IsAnyNonPersistentViewShowing() =>
-            core.IsAnyNonPersistentViewShowing();
+        public bool IsAnyModalViewShowing() =>
+            core.IsAnyModalViewShowing();
     }
 }

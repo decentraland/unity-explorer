@@ -69,10 +69,10 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
-        public bool IsAnyNonPersistentViewShowing()
+        public bool IsAnyModalViewShowing()
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();
-            return info.PopupControllers.Count > 0 || info.FullscreenController != null || info.OverlayController != null;
+            return info.PopupControllers.Count > 0 || info.FullscreenController != null;
         }
 
         public void CloseAllNonPersistentViews(CancellationToken ct = default)

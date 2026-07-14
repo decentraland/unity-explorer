@@ -77,8 +77,9 @@ namespace DCL.ChatArea
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
-            //Don't steal focus for the chat while another view is on top (e.g. a popup opened from a context menu).
-            if (mvcManager.IsAnyNonPersistentViewShowing())
+            //Don't steal focus for the chat while a modal view (popup or fullscreen) is on top, e.g. a popup opened
+            //from a context menu. Transient overlay toasts (notifications) don't count, so Enter still opens the chat.
+            if (mvcManager.IsAnyModalViewShowing())
                 return;
 
             chatSharedAreaEventBus.RaiseUISubmitEvent();
