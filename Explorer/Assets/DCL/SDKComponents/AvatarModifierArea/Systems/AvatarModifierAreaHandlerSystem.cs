@@ -114,8 +114,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
                     if (isHideNameTagsType)
                         HideNameTag(entity, modifierAreaComponent.ExcludedIds);
-                    else
-                        ShowNameTag(entity);
                 }
             }
 

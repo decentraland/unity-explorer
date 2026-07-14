@@ -90,7 +90,8 @@ namespace DCL.Nametags
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
                 return;
 
-            if (avatarShape.NameTagHiddenByModifierArea ||
+            if (avatarShape.HiddenByModifierArea ||
+                avatarShape.NameTagHiddenByModifierArea ||
                 partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
