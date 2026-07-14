@@ -137,13 +137,13 @@ The project is migrating to nullable reference types. ~80 of ~153 assemblies alr
 
 ## Serialized JSON DTOs (wire-format exceptions)
 
-Fields populated by JSON deserialization follow the wire format, not local conventions:
+Deserialized DTO fields follow the wire format, not local conventions:
 
-- **Naming:** field names must match the JSON keys exactly. Do not rename to PascalCase — `[JsonProperty]` only rescues the Newtonsoft path, and DTOs also parsed with Unity's `JsonUtility` (e.g. `SceneEntityDefinition` via `WRJsonParser.Unity`) have no rename mechanism. Keep the wire-format casing and suppress the inspection per file with `// ReSharper disable InconsistentNaming` above the namespace declaration.
-- **Nullability (CS8618):** fields the schema marks *required* are initialized `= null!` (`= default!` when the field's type is a generic parameter); fields the schema marks *optional* are declared `T?`. A schema-optional field may be kept non-nullable only when every entity type the client consumes guarantees it in practice — state that strengthened contract in the schema-link comment. A field absent from the linked schema is optional unless verified against its actual source. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`) so reviewers can verify the contract.
-- **Guards follow the declaration:** a required field (`= null!`) must not be null-guarded at all — no `?.`, no `?? fallback`, no `== null` (see anti-pattern 4); an optional `T?` field keeps its guards.
+- **Naming:** field names keep the JSON key casing — suppress per file with `// ReSharper disable InconsistentNaming` above the namespace declaration.
+- **Nullability (CS8618):** schema-*required* fields are initialized `= null!` (`= default!` when the field's type is a generic parameter); schema-*optional* fields are declared `T?`. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`).
+- **Guards follow the declaration:** never null-guard a `null!` field (see anti-pattern 4); an optional `T?` field keeps its guards.
 
-These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code.
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code. Authoritative rules, edge cases (strengthened contracts, fields absent from the schema), and the reference example: [`docs/code-style-guidelines.md` § Serialized JSON DTOs](../../../docs/code-style-guidelines.md#serialized-json-dtos-wire-format-exceptions).
 
 ## Comments
 
