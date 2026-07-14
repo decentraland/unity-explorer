@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using NSubstitute;
@@ -12,6 +13,7 @@ namespace DCL.Character.CharacterMotion.Tests
         private const float DT = 0.02f;
 
         private ICharacterControllerSettings settings = null!;
+        private World sceneWorld = null!;
 
         [SetUp]
         public void SetUp()
@@ -19,15 +21,20 @@ namespace DCL.Character.CharacterMotion.Tests
             settings = Substitute.For<ICharacterControllerSettings>();
             settings.CharacterMass.Returns(1f);
             settings.GlideWindResponse.Returns(GLIDE_WIND_RESPONSE);
+
+            sceneWorld = World.Create();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            sceneWorld.Dispose();
         }
 
         [Test]
         public void ComputeAccelerationFromForce()
         {
-            var rigidTransform = new CharacterRigidTransform
-                {
-                    ExternalForce = new Vector3(10f, 20f, 0f),
-                };
+            CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 0f));
 
             var glideState = new GlideState { Value = GlideStateValue.PROP_CLOSED };
 
@@ -40,10 +47,7 @@ namespace DCL.Character.CharacterMotion.Tests
         [Test]
         public void MultiplyAccelerationWhileGliding()
         {
-            var rigidTransform = new CharacterRigidTransform
-                {
-                    ExternalForce = new Vector3(10f, 20f, 0f),
-                };
+            CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 0f));
 
             var glideState = new GlideState { Value = GlideStateValue.GLIDING };
 
@@ -56,10 +60,7 @@ namespace DCL.Character.CharacterMotion.Tests
         [Test]
         public void IntegrateOnlyHorizontalVelocity()
         {
-            var rigidTransform = new CharacterRigidTransform
-                {
-                    ExternalForce = new Vector3(10f, 20f, 5f),
-                };
+            CharacterRigidTransform rigidTransform = WithExternalForce(new Vector3(10f, 20f, 5f));
 
             var glideState = new GlideState { Value = GlideStateValue.GLIDING };
 
@@ -68,6 +69,15 @@ namespace DCL.Character.CharacterMotion.Tests
             Assert.IsTrue(Mathf.Approximately(rigidTransform.ExternalAcceleration.x * DT, rigidTransform.ExternalVelocity.x), "Horizontal X velocity is integrated");
             Assert.IsTrue(Mathf.Approximately(rigidTransform.ExternalAcceleration.z * DT, rigidTransform.ExternalVelocity.z), "Horizontal Z velocity is integrated");
             Assert.IsTrue(Mathf.Approximately(0f, rigidTransform.ExternalVelocity.y), "Vertical velocity is handled by gravity via ExternalAcceleration.y");
+        }
+
+        // Execute derives ExternalForce from the per-world contribution slots, so tests arrange
+        // the input force through a slot instead of writing the field directly.
+        private CharacterRigidTransform WithExternalForce(Vector3 force)
+        {
+            var rigidTransform = new CharacterRigidTransform();
+            rigidTransform.ExternalForceContributions[sceneWorld] = force;
+            return rigidTransform;
         }
     }
 }
