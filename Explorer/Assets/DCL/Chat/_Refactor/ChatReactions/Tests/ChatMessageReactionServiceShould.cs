@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
 using DCL.Web3.Identities;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace DCL.Chat.ChatReactions.Tests
 {
