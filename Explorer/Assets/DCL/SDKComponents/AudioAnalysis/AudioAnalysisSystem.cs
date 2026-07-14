@@ -88,6 +88,10 @@ namespace DCL.SDKComponents.AudioSources
                 {
                     PBAudioAnalysisMode.ModeRaw => AnalysisResultMode.Raw,
                     PBAudioAnalysisMode.ModeLogarithmic => AnalysisResultMode.Logarithmic,
+
+                    // proto3 open enum: scene wire data can carry any out-of-range value; fall back
+                    // to the default mode instead of throwing every frame.
+                    _ => AnalysisResultMode.Raw,
                 };
                 float amplitudeGain = sdkComponent.HasAmplitudeGain ? sdkComponent.AmplitudeGain : DEFAULT_AMPLITUDE_GAIN; 
                 float bandsGain = sdkComponent.HasBandsGain ? sdkComponent.BandsGain : DEFAULT_BANDS_GAIN; 
