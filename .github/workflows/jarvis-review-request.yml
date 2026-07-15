@@ -94,24 +94,27 @@ jobs:
         run: |
           # Debounce: a pending request already covers subsequent pushes — Jarvis
           # fetches the live diff when the review runs, so re-requesting would only
-          # queue a duplicate run on agent-server.
+          # queue a duplicate run on agent-server. `covered` is true whenever a
+          # review is genuinely in flight (fresh request OR debounced), so the
+          # pending status below is set for the new SHA in both cases; only a
+          # failed request leaves the check at "Expected" (plus the warning).
           PENDING=$(gh api "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" --jq '.users[].login' || echo "")
           if grep -qxi "decentraland-bot" <<< "$PENDING"; then
-            echo "decentraland-bot already has a pending review request — skipping."
-            echo "requested=false" >> "$GITHUB_OUTPUT"
+            echo "decentraland-bot already has a pending review request — the in-flight review covers this push."
+            echo "covered=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if gh api --method POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" \
                -f 'reviewers[]=decentraland-bot' --silent; then
             echo "Requested review from decentraland-bot."
-            echo "requested=true" >> "$GITHUB_OUTPUT"
+            echo "covered=true" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Could not request review from decentraland-bot — request it manually from the Reviewers panel."
-            echo "requested=false" >> "$GITHUB_OUTPUT"
+            echo "covered=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set status to pending
-        if: steps.request.outputs.requested == 'true'
+        if: steps.request.outputs.covered == 'true'
         uses: actions/github-script@v8
         with:
           script: |
