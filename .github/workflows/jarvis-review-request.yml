@@ -81,18 +81,12 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - name: Check PR type
-        id: check-type
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const title = context.payload.pull_request.title || '';
-            const isAutoReview = /^(fix|chore)(\(.*?\))?!?:/i.test(title);
-            core.setOutput('is-auto-review', isAutoReview.toString());
-
+      # Reviews are auto-requested for EVERY team-dev PR regardless of title type
+      # (fix/chore/feat/opti). The fix/chore distinction lives only in
+      # jarvis-review-status.yml, where it bounds what the verdict may do
+      # (auto-approve and QA waiver stay fix/chore-only).
       - name: Request Jarvis review
         id: request
-        if: steps.check-type.outputs.is-auto-review == 'true'
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
           REPO: ${{ github.repository }}

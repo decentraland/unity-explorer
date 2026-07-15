@@ -64,9 +64,9 @@ Skip auto-assign by adding the `no review` or `no QA needed` label (see [Labels]
 
 AI review runs through **Jarvis** (the org's agent-server bot): [`jarvis-review-request.yml`](../.github/workflows/jarvis-review-request.yml) requests the review and [`jarvis-review-status.yml`](../.github/workflows/jarvis-review-status.yml) applies the verdict. The review checks the diff against the project's architecture docs and code standards.
 
-**Automatic** for `fix:` and `chore:` PRs — runs on open and on every push.
+**Automatic** for every PR from an explorer team dev, regardless of type — requested on open and on every push. Pushes made while a request is still pending are covered by the in-flight review (it reads the live diff); after a verdict lands, the next push re-requests automatically.
 
-**Manual** for `feat:` and `opti:` PRs — request a review from `decentraland-bot` in the **Reviewers** panel to trigger it.
+**Manual** for PRs from outside the team — a maintainer requests `decentraland-bot` from the **Reviewers** panel (external contributions are also routed to Slack for coordination).
 
 The review:
 - Reads the diff, [`CLAUDE.md`](../CLAUDE.md), and the relevant subsystem docs.
@@ -76,7 +76,7 @@ The review:
 - Decides whether QA is needed (`QA_REQUIRED: YES/NO`).
 - Emits a `Claude Review` commit status (pass/fail).
 
-**Outcomes (for auto-reviewed `fix:`/`chore:` PRs):**
+**Outcomes (for `fix:`/`chore:` PRs from team devs):**
 
 | AI verdict | Complexity | Effect |
 |---|---|---|
@@ -89,7 +89,7 @@ For `feat:`/`opti:` PRs, the AI review provides feedback but does **not** auto-a
 **AI review has real limits.** It checks standards, bugs, and obvious issues. It cannot judge architectural fit, cross-system impact, or whether the PR fixes the *root cause* vs. a symptom. A green Claude status is not a substitute for a human reviewer on a complex change.
 
 You can invoke or re-invoke it at any time from the **Reviewers** panel:
-- Request a review from `decentraland-bot` — fresh review (required for `feat:`/`opti:` PRs)
+- Request a review from `decentraland-bot` — fresh review (team-dev PRs get this automatically; use it for external PRs or an extra pass)
 - Use the 🔄 re-request arrow next to `decentraland-bot` after pushing fixes — triggers a fresh full review
 
 ### 3. QA review
@@ -129,12 +129,12 @@ If in doubt, **do not apply the label.** Let the default flow run.
 
 You don't need to be on the `qa` or `explorer-devs` teams to open a PR. Follow this page and the PR template and the automation will route reviewers to you.
 
-When you open a PR, AI review either runs automatically (`fix:`/`chore:`) or needs to be requested from `decentraland-bot` in the Reviewers panel (`feat:`/`opti:`).
+When you open a PR, the team is notified and a maintainer requests the AI review from `decentraland-bot` (reviews are auto-requested only for explorer team members' PRs).
 
 A few things to know:
 
 - The auto-assigned reviewers will handle the QA/DEV approvals the merge gate requires — you don't need to pin anyone yourself.
-- For `feat:` and `opti:` PRs, AI review is **not automatic**. Request a review from `decentraland-bot` in the Reviewers panel, or re-request it after addressing feedback.
+- AI review of external PRs is requested by a maintainer as part of review routing — you don't need to (and can't) request `decentraland-bot` yourself.
 - If you're unsure whether a change is "simple" or "complex," lean toward **complex**: write a richer technical description and don't worry if the AI classifies it as COMPLEX. That just means a human dev will look at it, which is the right outcome for anything non-trivial.
 - You **cannot** apply `claude-approved`, `no QA needed`, `no review`, or `auto-pr` yourself, and you should not request them. Let the automation or a maintainer decide.
 - If AI review raises a concern you think is wrong, reply on the inline comment with reasoning rather than silently dismissing it. A maintainer will adjudicate.
