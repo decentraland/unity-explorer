@@ -81,6 +81,22 @@ jobs:
               echo "**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
             else
               echo "**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
+              total=$(jq -r '.pr_findings_total // 0' warning-result.json)
+              if [ "$total" -gt 0 ]; then
+                echo ""
+                echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
+                echo ""
+                echo "| File | Line | Rule | Message |"
+                echo "| --- | --- | --- | --- |"
+                jq -r '.pr_findings[] | "| \(.file) | \(.line) | \(.rule) | \(.message | gsub("[|\r\n]"; " ")) |"' warning-result.json
+                shown=$(jq -r '.pr_findings | length' warning-result.json)
+                if [ "$total" -gt "$shown" ]; then
+                  echo ""
+                  echo "_…and $((total - shown)) more (see the \`csharp-lint-reports\` artifact)._"
+                fi
+                echo ""
+                echo "</details>"
+              fi
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
