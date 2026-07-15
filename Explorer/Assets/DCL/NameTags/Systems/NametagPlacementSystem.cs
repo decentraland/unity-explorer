@@ -90,7 +90,9 @@ namespace DCL.Nametags
             if (!includeGhosts && avatarShape.InstantiatedWearables.Count == 0)
                 return;
 
-            if (partitionComponent.IsBehind ||
+            if (avatarShape.HiddenByModifierArea ||
+                avatarShape.NameTagHiddenByModifierArea ||
+                partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR))
                 return;
@@ -110,6 +112,7 @@ namespace DCL.Nametags
                 return;
 
             if (avatarShape.HiddenByModifierArea ||
+                avatarShape.NameTagHiddenByModifierArea ||
                 partitionComponent.IsBehind ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR) ||
                 string.IsNullOrEmpty(avatarShape.Name))
@@ -176,6 +179,7 @@ namespace DCL.Nametags
             in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (avatarShape.HiddenByModifierArea
+                || avatarShape.NameTagHiddenByModifierArea
                 || partitionComponent.IsBehind
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, MAX_DISTANCE_SQR, MIN_DISTANCE_SQR)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
