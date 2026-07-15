@@ -23,7 +23,9 @@ namespace DCL.Profiling
         // Memory consumed/reserved by the Profiler itself (sample buffers grow while it records). Non-zero only in the
         // Editor and development builds; subtracted from the memory readings so it does not count as application memory.
         // "Used" is the Profiler's share of "Total Used Memory"; "Reserved" (>= used) is its share of the OS-level
-        // footprint, since reserved pools stay committed even after the used portion drops.
+        // Profiler sample buffers inflate the OS footprint in Editor/dev builds; subtracted so they don't count as app memory.
+        private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
+        private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
         private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
         private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size

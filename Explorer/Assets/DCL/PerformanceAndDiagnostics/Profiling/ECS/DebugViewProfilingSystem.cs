@@ -296,8 +296,9 @@ namespace DCL.Profiling.ECS
         {
             usedMemory.Value =
                 $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
-            profilerMemory.Value =
-                $"{BytesFormatter.Convert((ulong)memoryProfiler.ProfilerUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)} | {BytesFormatter.Convert((ulong)memoryProfiler.ProfilerReservedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture)}";
+            double profilerUsedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            double profilerReservedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerReservedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            profilerMemory.Value = $"{profilerUsedMb.ToString("F0", CultureInfo.InvariantCulture)} | {profilerReservedMb.ToString("F0", CultureInfo.InvariantCulture)}";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
             jsEnginesCount.Value = profiler.ActiveEngines.ToString();
