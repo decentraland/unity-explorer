@@ -64,7 +64,7 @@ Skip auto-assign by adding the `no review` or `no QA needed` label (see [Labels]
 
 AI review runs through **Jarvis** (the org's agent-server bot): [`jarvis-review-request.yml`](../.github/workflows/jarvis-review-request.yml) requests the review and [`jarvis-review-status.yml`](../.github/workflows/jarvis-review-status.yml) applies the verdict. The review checks the diff against the project's architecture docs and code standards.
 
-**Automatic** for every PR from an explorer team dev, regardless of type — requested on open and on every push. Pushes made while a request is still pending are covered by the in-flight review (it reads the live diff); after a verdict lands, the next push re-requests automatically.
+**Automatic initial review** for every PR from an explorer team dev, regardless of type — requested when the PR is opened (or marked ready for review). After a verdict lands, later pushes do **not** trigger a new review automatically: the `Claude Review` check resets to pending and you re-request `decentraland-bot` (🔄 in the Reviewers panel) when the PR is ready for a fresh pass. Pushes made while a review is still in flight are covered by it (the review reads the live diff).
 
 **Manual** for PRs from outside the team — a maintainer requests `decentraland-bot` from the **Reviewers** panel (external contributions are also routed to Slack for coordination).
 

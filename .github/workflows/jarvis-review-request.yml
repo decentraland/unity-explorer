@@ -81,27 +81,35 @@ jobs:
     permissions:
       statuses: write
     steps:
-      # Reviews are auto-requested for EVERY team-dev PR regardless of title type
-      # (fix/chore/feat/opti). The fix/chore distinction lives only in
-      # jarvis-review-status.yml, where it bounds what the verdict may do
-      # (auto-approve and QA waiver stay fix/chore-only).
+      # The INITIAL review is auto-requested for every team-dev PR regardless of
+      # title type (fix/chore/feat/opti), when the PR is opened or marked ready.
+      # Subsequent reviews are ON DEMAND: a push after a verdict does NOT
+      # re-request — it resets the Claude Review check to pending and the dev
+      # re-requests decentraland-bot (🔄 in the Reviewers panel) when ready.
+      # The fix/chore distinction lives only in jarvis-review-status.yml, where
+      # it bounds what the verdict may do (auto-approve / QA waiver).
       - name: Request Jarvis review
         id: request
         env:
           GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
-          # Debounce: a pending request already covers subsequent pushes — Jarvis
-          # fetches the live diff when the review runs, so re-requesting would only
-          # queue a duplicate run on agent-server. `covered` is true whenever a
-          # review is genuinely in flight (fresh request OR debounced), so the
-          # pending status below is set for the new SHA in both cases; only a
-          # failed request leaves the check at "Expected" (plus the warning).
+          # `covered=true`  → a review is genuinely in flight (fresh request or
+          #                   an already-pending one that reads the live diff).
+          # `rerequest=true`→ push with no review in flight: no auto re-request;
+          #                   the check resets to a descriptive pending instead.
+          # Neither         → the request API call failed (warning below).
           PENDING=$(gh api "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" --jq '.users[].login' || echo "")
           if grep -qxi "decentraland-bot" <<< "$PENDING"; then
             echo "decentraland-bot already has a pending review request — the in-flight review covers this push."
             echo "covered=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_ACTION" == "synchronize" ]]; then
+            echo "Push with no review in flight — reviews after the initial one are on demand (re-request decentraland-bot)."
+            echo "rerequest=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if gh api --method POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" \
@@ -113,7 +121,7 @@ jobs:
             echo "covered=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Set status to pending
+      - name: Set status to pending (review in flight)
         if: steps.request.outputs.covered == 'true'
         uses: actions/github-script@v8
         with:
@@ -125,6 +133,20 @@ jobs:
               state: 'pending',
               context: 'Claude Review',
               description: 'Jarvis review requested — awaiting verdict...'
+            });
+
+      - name: Set status to pending (awaiting re-request)
+        if: steps.request.outputs.rerequest == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'pending',
+              context: 'Claude Review',
+              description: 'Awaiting Jarvis review — request a review from decentraland-bot'
             });
 
   notify-ext-contribution:
