@@ -40,7 +40,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sdkVersionBinding;
         private readonly ElementBinding<string> globalPositionBinding;
         private readonly ElementBinding<string> sceneRelativePositionBinding;
-        private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject? sceneBoundsCube;
         private ISceneFacade? currentActiveScene;
@@ -66,7 +65,6 @@ namespace ECS.SceneLifeCycle.Systems
             this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
 
-            debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
             sdkVersionBinding = new ElementBinding<string>(string.Empty);
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
@@ -75,7 +73,6 @@ namespace ECS.SceneLifeCycle.Systems
             sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
-                         .SetVisibilityBinding(debugInfoVisibilityBinding)
                          .AddCustomMarker("SDK Version:", sdkVersionBinding)
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
@@ -102,7 +99,7 @@ namespace ECS.SceneLifeCycle.Systems
             lastParcel = parcel;
             UpdateSceneReadiness(parcel);
 
-            if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
+            if (debugBuilder.IsVisible)
                 RefreshSceneDebugInfo();
         }
 
