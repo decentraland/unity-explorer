@@ -17,8 +17,8 @@ namespace DCL.Chat.Commands.Tests
     {
         private static readonly Vector2Int CURRENT_PARCEL = new (5, 7);
 
-        private IRealmNavigator realmNavigator;
-        private ChatTeleporter chatTeleporter;
+        private IRealmNavigator realmNavigator = null!;
+        private ChatTeleporter chatTeleporter = null!;
 
         [SetUp]
         public void SetUp()

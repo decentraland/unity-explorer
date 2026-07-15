@@ -66,7 +66,7 @@ namespace DCL.SceneLifeCycle.Tests
             (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel);
 
             Assert.AreEqual(baseParcel.x * PARCEL, worldPos.x, EPSILON);
-            Assert.AreEqual(baseParcel.y * PARCEL + 8f, worldPos.z, EPSILON);
+            Assert.AreEqual((baseParcel.y * PARCEL) + 8f, worldPos.z, EPSILON);
         }
 
         [Test]
