@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -61,8 +60,7 @@ namespace DCL.Chat.Commands
             if (target.Parcel is { } parcel)
                 return await chatTeleporter.TeleportToParcelAsync(parcel, false, ct, target.SpawnPoint);
 
-            // Unreachable: ParseGotoTarget always sets World when no other form matched.
-            throw new InvalidOperationException($"Unrecognized /goto target: '{parameters[0]}'");
+            return $"🔴 Invalid parameters, usage:\n{Description}";
         }
 
         private static Vector2Int GetRandomParcel() =>

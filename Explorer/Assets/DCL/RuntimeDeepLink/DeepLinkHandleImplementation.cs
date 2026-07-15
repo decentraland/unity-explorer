@@ -4,7 +4,6 @@ using DCL.Chat.Commands;
 using DCL.Communities;
 using DCL.RealmNavigation;
 using DCL.Utility.Types;
-using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
 
@@ -29,10 +28,10 @@ namespace DCL.RuntimeDeepLink
 
         public Result HandleDeepLink(DeepLink deeplink)
         {
-            Vector2Int? position = PositionFrom(deeplink);
-            URLDomain? realm = RealmFrom(deeplink);
-            string? communityId = CommunityFrom(deeplink);
-            string? spawnPointName = SpawnPointFrom(deeplink);
+            Vector2Int? position = deeplink.Position();
+            URLDomain? realm = deeplink.Realm();
+            string? communityId = deeplink.Community();
+            string? spawnPointName = deeplink.SpawnPoint();
 
             var result = Result.ErrorResult("no matches");
 
@@ -64,42 +63,6 @@ namespace DCL.RuntimeDeepLink
             }
 
             return result;
-        }
-
-        private static URLDomain? RealmFrom(DeepLink deepLink)
-        {
-            string? rawRealm = deepLink.ValueOf(AppArgsFlags.REALM);
-
-            if (rawRealm == null)
-                return null;
-
-            return URLDomain.FromString(rawRealm);
-        }
-
-        private static Vector2Int? PositionFrom(DeepLink deeplink)
-        {
-            string? rawPosition = deeplink.ValueOf(AppArgsFlags.POSITION);
-            string[]? parts = rawPosition?.Split(',');
-
-            if (parts == null || parts.Length < 2)
-                return null;
-
-            if (int.TryParse(parts[0], out int x) == false) return null;
-            if (int.TryParse(parts[1], out int y) == false) return null;
-
-            return new Vector2Int(x, y);
-        }
-
-        private static string? SpawnPointFrom(DeepLink deepLink)
-        {
-            string? rawSpawnPoint = deepLink.ValueOf(AppArgsFlags.SPAWN_POINT);
-            return string.IsNullOrEmpty(rawSpawnPoint) ? null : rawSpawnPoint;
-        }
-
-        private static string? CommunityFrom(DeepLink deepLink)
-        {
-            string? rawCommunity = deepLink.ValueOf(AppArgsFlags.COMMUNITY);
-            return rawCommunity ?? null;
         }
     }
 }
