@@ -90,7 +90,7 @@ For `feat:`/`opti:` PRs, the AI review provides feedback but does **not** auto-a
 
 You can invoke or re-invoke it at any time from the **Reviewers** panel:
 - Request a review from `decentraland-bot` — fresh review (required for `feat:`/`opti:` PRs)
-- Use the 🔄 re-request arrow next to `decentraland-bot` after pushing fixes — the review checks whether prior feedback was addressed
+- Use the 🔄 re-request arrow next to `decentraland-bot` after pushing fixes — triggers a fresh full review
 
 ### 3. QA review
 QA runs the **Test Instructions** from the PR description against a build of the branch (typically via `metaforge explorer run <PR>`). If steps are missing or unclear, QA will send the PR back — they should not have to reverse-engineer the test plan from the diff.

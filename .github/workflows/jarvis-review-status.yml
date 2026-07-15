@@ -28,12 +28,15 @@ jobs:
             const review = context.payload.review;
             const pr = context.payload.pull_request;
 
-            // Stale guard: a push after the review was requested means the
-            // request workflow already reset the status to pending and
-            // re-requested a fresh review — this verdict must not gate that SHA.
+            // Stale guard: this verdict was submitted against an older commit
+            // than the PR's current head — it must not gate the newer SHA. A push
+            // that lands while the bot is still a pending reviewer is debounced by
+            // the request workflow (no re-request), so nothing else recovers this
+            // case: signal `stale` and let the next step re-request a fresh review.
             if (review.commit_id !== pr.head.sha) {
-              core.notice(`Review is for ${review.commit_id.substring(0, 7)} but head is ${pr.head.sha.substring(0, 7)} — skipping (a newer push re-requested a fresh review).`);
+              core.notice(`Review is for ${review.commit_id.substring(0, 7)} but head is ${pr.head.sha.substring(0, 7)} — skipping stale verdict and re-requesting.`);
               core.setOutput('proceed', 'false');
+              core.setOutput('stale', 'true');
               return;
             }
             core.setOutput('proceed', 'true');
@@ -44,6 +47,17 @@ jobs:
             core.setOutput('failed', body.includes('REVIEW_RESULT: FAIL').toString());
             core.setOutput('is-simple', body.includes('COMPLEXITY: SIMPLE').toString());
             core.setOutput('qa-required', (!body.includes('QA_REQUIRED: NO')).toString());
+
+      - name: Re-request review on stale verdict
+        if: steps.verdict.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          gh api --method POST \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
+            -f 'reviewers[]=decentraland-bot' --silent \
+            && echo "Re-requested review from decentraland-bot for the current HEAD." \
+            || echo "::warning::Could not re-request review — request it manually from the Reviewers panel."
 
       - name: Fail status when verdict markers are missing
         if: |
@@ -148,19 +162,9 @@ jobs:
             const isTeamDev = '${{ steps.team.outputs.is-team-dev }}' === 'true';
             const passed = !failed;
 
-            const reviews = await github.paginate(github.rest.pulls.listReviews, {
-              owner, repo, pull_number: prNumber, per_page: 100
-            });
-            const ourApprovals = reviews.filter(r =>
-              r.user?.login === 'github-actions[bot]' && r.state === 'APPROVED'
-            );
             const prLabels = (context.payload.pull_request.labels || []).map(l => l.name);
             const COMPLEX_MARKER = '🔍 Jarvis reviewed this PR and found no blocking issues';
             const SENSITIVE_MARKER = '🔒 Jarvis reviewed this PR — sensitive paths modified';
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner, repo, issue_number: prNumber, per_page: 100
-            });
 
             // Approvals and labels are managed ONLY for the auto-review population
             // (fix/chore PRs from team devs) — exact parity with the old auto-review
@@ -171,6 +175,16 @@ jobs:
             const canWaiveQa = passed && isSimple && !qaRequired;
 
             if (isAutoReview && isTeamDev) {
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner, repo, pull_number: prNumber, per_page: 100
+              });
+              const ourApprovals = reviews.filter(r =>
+                r.user?.login === 'github-actions[bot]' && r.state === 'APPROVED'
+              );
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: prNumber, per_page: 100
+              });
+
               if (canAutoApprove) {
                 let approvalOk = true;
                 if (ourApprovals.length === 0) {

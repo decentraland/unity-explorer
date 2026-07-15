@@ -214,6 +214,8 @@ jobs:
           Slack notification sent to #explorer-ext-contributions for external review.
           To re-send, delete this comment and re-add the \`ext-contribution\` label."
 
+  # TODO: remove this job once the team has adjusted to the Reviewers-panel
+  # flow (a few weeks after the Jarvis migration merges).
   deprecation-notice:
     if: |
       github.event_name == 'issue_comment' &&
