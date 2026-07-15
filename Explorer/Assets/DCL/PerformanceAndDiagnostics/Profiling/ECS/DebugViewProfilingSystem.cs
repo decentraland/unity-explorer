@@ -126,7 +126,7 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Profiler Memory used | reserved (excluded) [MB]:", profilerMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Profiler Used | Reserved [MB]:", profilerMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Is In Abundances:", isInAbundance = new ElementBinding<string>("YES"))
