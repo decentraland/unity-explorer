@@ -33,8 +33,14 @@ cli="$(find_cli)" || {
 # environment this script runs in (CI: inside the Unity container; locally: your
 # machine), so the absolute reference paths in the generated csprojs resolve.
 # Unity already compiled everything during solution sync — no second build needed.
+#
+# --eXtensions=JetBrains.Unity makes the CLI Unity-aware, exactly like Rider's Unity
+# plugin: without it 'Assets'/'Packages' are treated as namespace providers and every
+# 'Assets/DCL/...' file (namespaced 'DCL....') triggers a false CheckNamespace warning.
+# The extension is pulled from the JetBrains plugin gallery on first run (needs network).
 "$cli" "$solution" \
     --no-build \
+    --eXtensions=JetBrains.Unity \
     --verbosity=INFO \
     --properties:Configuration=Debug \
     --disable-settings-layers:SolutionPersonal \
