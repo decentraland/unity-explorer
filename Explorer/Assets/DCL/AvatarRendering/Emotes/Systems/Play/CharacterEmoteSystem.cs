@@ -20,7 +20,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -28,6 +27,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility.Animations;
@@ -96,6 +96,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         /// <summary>
         /// Stops scene emotes when the player is no longer in the scene that triggered them.
+        /// PXs and smart wearables are exempt while their scene remains loaded
         /// </summary>
         [Query]
         [All(typeof(PlayerComponent))]
@@ -103,8 +104,10 @@ namespace DCL.AvatarRendering.Emotes.Play
         private void CancelSceneEmotesBySceneChange(Entity entity, ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             if (emoteComponent.CurrentEmoteReference == null) return;
-            if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene)) return;
-            if (emoteScene != null && emoteScene == scenesCache.CurrentScene.Value) return;
+            if (!TryParseSceneEmoteURN(emoteComponent.EmoteUrn, out _, out _, out _, out ISceneFacade? emoteScene, out bool isPortableExperience)) return;
+
+            //Skips this for Pxs and smart wearables as they are their own scenes
+            if (emoteScene != null && (isPortableExperience || emoteScene == scenesCache.CurrentScene.Value)) return;
 
             StopEmote(entity, ref emoteComponent, avatarView);
             messageBus.SendStop();
@@ -279,8 +282,10 @@ namespace DCL.AvatarRendering.Emotes.Play
             {
                 // we wait until the avatar finishes moving to trigger the emote,
                 // avoid the case where: you stop moving, trigger the emote, the emote gets triggered and next frame it gets cancelled because inertia keeps moving the avatar
-                //We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // We also avoid triggering the emote while the character is jumping or landing, as the landing animation breaks the emote flow if they have props
+                // Skipped while an emote plays: the disabled CharacterController makes grounded/blend readings stale, parking the intent forever and soft-locking movement.
                 if (emoteIntent.Mask == AvatarEmoteMask.AemFullBody &&
+                    !emoteComponent.IsPlayingEmote &&
                     (avatarView.IsAnimatorInTag(AnimationHashes.JUMPING_TAG) ||
                      !avatarView.GetAnimatorBool(AnimationHashes.GROUNDED) ||
                      avatarView.GetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND) > 0.1f))
@@ -494,7 +499,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             loadEmoteBuffer[0] = urn;
 
-            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene))
+            if (TryParseSceneEmoteURN(urn, out string sceneId, out string emoteHash, out bool loop, out ISceneFacade? scene, out _))
             {
                 if (scene == null)
                     return;
@@ -523,12 +528,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                     PartitionComponent.TOP_PRIORITY);
         }
 
-        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene)
+        private bool TryParseSceneEmoteURN(URN urnToParse, out string sceneId, out string parsedEmoteHash, out bool parsedLoop, out ISceneFacade? resolvedScene, out bool isPortableExperience)
         {
             sceneId = string.Empty;
             parsedEmoteHash = string.Empty;
             parsedLoop = false;
             resolvedScene = null;
+            isPortableExperience = false;
 
             ReadOnlySpan<char> urnStr = urnToParse.ToString().AsSpan();
             ReadOnlySpan<char> emotePrefixWithColon = (ReadOnlySpan<char>)SCENE_EMOTE_PREFIX_WITH_COLON;
@@ -553,7 +559,37 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             // sceneId and emoteHash can contain '-' in local preview,
             // so we can't just split by "last two dashes". Instead, match against loaded scenes by prefix.
-            foreach (ISceneFacade facade in scenesCache.Scenes)
+            if (TryResolveSceneByNamePrefix(scenesCache.Scenes, payloadWithoutLoop, ref sceneId, ref parsedEmoteHash, ref resolvedScene))
+                return true;
+
+            if (TryResolveSceneByNamePrefix(scenesCache.PortableExperiencesScenes, payloadWithoutLoop, ref sceneId, ref parsedEmoteHash, ref resolvedScene))
+            {
+                isPortableExperience = true;
+                return true;
+            }
+
+            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
+            // This is primarily for deployed realm format where scene id has no '-'.
+            int firstDash = payloadWithoutLoop.IndexOf('-');
+
+            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
+            {
+                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
+                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
+
+                if (!scenesCache.TryGetBySceneId(sceneId, out resolvedScene) &&
+                    scenesCache.TryGetPortableExperienceBySceneUrn(sceneId, out resolvedScene))
+                    isPortableExperience = true;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryResolveSceneByNamePrefix(IReadOnlyCollection<ISceneFacade> scenes, ReadOnlySpan<char> payloadWithoutLoop, ref string sceneId, ref string parsedEmoteHash, ref ISceneFacade? resolvedScene)
+        {
+            foreach (ISceneFacade facade in scenes)
             {
                 string candidateName = facade.SceneData.SceneShortInfo.Name;
 
@@ -569,18 +605,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                     resolvedScene = facade;
                     return true;
                 }
-            }
-
-            // Fallback: assume "{sceneKey}-{emoteHash}" split by first dash.
-            // This is primarily for deployed realm format where scene id has no '-'.
-            int firstDash = payloadWithoutLoop.IndexOf('-');
-
-            if (firstDash > 0 && firstDash < payloadWithoutLoop.Length - 1)
-            {
-                sceneId = payloadWithoutLoop.Slice(0, firstDash).ToString();
-                parsedEmoteHash = payloadWithoutLoop.Slice(firstDash + 1).ToString();
-                scenesCache.TryGetBySceneId(sceneId, out resolvedScene);
-                return true;
             }
 
             return false;

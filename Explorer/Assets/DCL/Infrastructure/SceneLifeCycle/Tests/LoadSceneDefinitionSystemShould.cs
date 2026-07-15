@@ -1,5 +1,4 @@
-﻿using CommunicationData.URLHelpers;
-using DCL.Ipfs;
+﻿using DCL.Ipfs;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
@@ -7,7 +6,7 @@ using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Tests
+namespace DCL.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>

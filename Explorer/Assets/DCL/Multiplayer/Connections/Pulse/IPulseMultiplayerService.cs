@@ -19,6 +19,11 @@ namespace DCL.Multiplayer.Connections.Pulse
 
         public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler);
 
+        /// <summary>
+        ///     Invoked on the routing thread before every dispatched message.
+        /// </summary>
+        public void RegisterBeforeMessageHandler(Action handler);
+
         public void RegisterDisconnectHandler(DisconnectHandler handler);
 
         public void RegisterHandshakeHandler(HandshakeHandler handler);
@@ -53,6 +58,8 @@ namespace DCL.Multiplayer.Connections.Pulse
             public void Dispose() { }
 
             public void RegisterSyncHandler(ServerMessage.MessageOneofCase type, IncomingMessageHandler handler) { }
+
+            public void RegisterBeforeMessageHandler(Action handler) { }
 
             public void RegisterDisconnectHandler(DisconnectHandler handler) { }
 

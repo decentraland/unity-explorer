@@ -40,6 +40,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_RATE_LIMIT, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT)),
                 [FeatureId.CHAT_MESSAGE_BUFFER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_BUFFER, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG)),
                 [FeatureId.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
+                [FeatureId.USER_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.USER_CREDITS),
                 [FeatureId.HEAD_SYNC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HEAD_SYNC, featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || isEditor),
                 [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.STOP_ON_DUPLICATE_IDENTITY, featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY)),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PRIVATE_CHAT_REQUIRES_TOPIC, featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC)),
@@ -203,5 +204,6 @@ namespace DCL.FeatureFlags
         BYTE_WEIGHTED_LOADING_PROGRESS = 64,
         PULSE = 65,
         HARDWARE_FINGERPRINT = 66,
+        USER_CREDITS = 67,
     }
 }

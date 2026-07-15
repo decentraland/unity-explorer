@@ -7,9 +7,8 @@ using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
+namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class FakeWearable : IWearable
     {

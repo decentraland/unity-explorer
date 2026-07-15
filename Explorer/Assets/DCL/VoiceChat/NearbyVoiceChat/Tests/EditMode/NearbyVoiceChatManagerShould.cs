@@ -1,8 +1,9 @@
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.VoiceChat.Nearby;
 using NUnit.Framework;
 
-namespace DCL.VoiceChat.Nearby.Tests
+namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     /// Documents the slimmed <see cref="NearbyVoiceChatSuppressor"/> as a pure state-orchestration adapter:

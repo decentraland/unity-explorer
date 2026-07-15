@@ -1,8 +1,8 @@
-using System;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Simulation.World;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Tests

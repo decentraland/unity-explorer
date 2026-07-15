@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Connections.Pulse;
 using DCL.Multiplayer.Connections.Rooms;
 using Google.Protobuf;
+using LiveKit.Rooms;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -111,8 +112,5 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                     announcedWallets[walletId] = currentSource;
             }
         }
-
-        public void Clear() =>
-            announcedWallets.Clear();
     }
 }
