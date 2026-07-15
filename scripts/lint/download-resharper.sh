@@ -5,7 +5,17 @@
 # Usage: download-resharper.sh [target_dir]   (default target_dir: rsharp)
 set -euo pipefail
 
-RESHARPER_URL="https://download.jetbrains.com/resharper/dotUltimate.2025.3.0.1/JetBrains.ReSharper.CommandLineTools.2025.3.0.1.zip"
+# Held at the 2025.1 wave (not the newer 2025.3) because the JetBrains.Unity extension
+# below only has a build for wave 251 (2025.1) — no 2025.2/2025.3 build is published, and
+# an extension is rejected by a mismatched engine wave. The extension is what makes the CLI
+# Unity-aware (Assets/Packages are not namespace providers), matching Rider and killing the
+# false CheckNamespace warnings. Bump both together once a newer Unity build ships.
+RESHARPER_URL="https://download.jetbrains.com/resharper/dotUltimate.2025.1.4/JetBrains.ReSharper.CommandLineTools.2025.1.4.zip"
+
+# Unity Support extension, pinned to the 2025.1.4.67 build (wave 251, matches the CLI above).
+# Dropped into the CLI directory so InspectCode loads it offline via --source (see
+# run-inspectcode.sh) — no plugin-gallery access needed at inspection time.
+UNITY_EXT_URL="https://plugins.jetbrains.com/files/JetBrains.Unity/2025.1.4.67/jetbrains.unity.2025.1.4.67.nupkg"
 
 target="${1:-rsharp}"
 
@@ -18,4 +28,8 @@ echo "Downloading ReSharper CLI to '$target'..." >&2
 wget -q "$RESHARPER_URL" -O rsharp.zip
 unzip -q rsharp.zip -d "$target"
 chmod +x "$target"/*.sh
+
+echo "Downloading Unity Support extension to '$target'..." >&2
+wget -q "$UNITY_EXT_URL" -O "$target/jetbrains.unity.2025.1.4.67.nupkg"
+
 echo "ReSharper CLI installed at '$target'." >&2

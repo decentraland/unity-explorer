@@ -84,7 +84,7 @@ jobs:
               total=$(jq -r '.pr_findings_total // 0' warning-result.json)
               if [ "$total" -gt 0 ]; then
                 echo ""
-                echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
+                echo "<details open><summary>Warnings/errors in files changed by this PR ($total)</summary>"
                 echo ""
                 echo "| File | Line | Rule | Message |"
                 echo "| --- | --- | --- | --- |"
