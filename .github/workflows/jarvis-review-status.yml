@@ -230,13 +230,19 @@ jobs:
                 }
               }
 
+              // Asymmetric on purpose: the automation only ADDS the QA waiver for
+              // SIMPLE PRs (conservative), but only REMOVES it when the verdict
+              // actively contradicts it (QA_REQUIRED: YES). COMPLEXITY answers
+              // "does a DEV need to look?", QA_REQUIRED answers "does QA need to
+              // test runtime behavior?" — a COMPLEX verdict with QA_REQUIRED: NO
+              // must not strip a deliberately applied 'no QA needed' label.
               if (canWaiveQa) {
                 if (!prLabels.includes('no QA needed')) {
                   await github.rest.issues.addLabels({
                     owner, repo, issue_number: prNumber, labels: ['no QA needed']
                   }).catch(e => console.log(`addLabels no QA needed: ${e.message}`));
                 }
-              } else if (prLabels.includes('no QA needed')) {
+              } else if (qaRequired && prLabels.includes('no QA needed')) {
                 await github.rest.issues.removeLabel({
                   owner, repo, issue_number: prNumber, name: 'no QA needed'
                 }).catch(e => console.log(`removeLabel no QA needed: ${e.message}`));

@@ -117,7 +117,7 @@ Labels drive policy decisions. Only apply them when the criteria below are genui
 | Label | Effect | When to apply |
 |---|---|---|
 | `claude-approved` | DEV approval no longer required. | Applied **automatically** by AI review on SIMPLE+PASS. Don't apply by hand. |
-| `no QA needed` | QA approval no longer required. | Changes limited to CI/CD, scripts, docs, or other non-runtime code. **No** user-facing or runtime Unity code touched. Applied automatically when AI review determines this, or manually with justification in the PR. |
+| `no QA needed` | QA approval no longer required. | Changes limited to CI/CD, scripts, docs, or other non-runtime code. **No** user-facing or runtime Unity code touched. Applied automatically when AI review determines this, or manually with justification in the PR. Removed automatically only when the AI review reports `QA_REQUIRED: YES` — a COMPLEX classification alone won't strip a manually applied waiver. |
 | `no review` | Suppresses AI review and reviewer auto-assignment. | Rare — reserved for trivial maintenance where the author has coordinated review separately. |
 | `auto-pr` | Skips both AI review and the approval gate entirely. | Bot-generated PRs only (dependency bumps, auto-sync). Humans should not apply this. |
 
