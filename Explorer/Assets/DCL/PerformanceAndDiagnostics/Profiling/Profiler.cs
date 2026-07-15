@@ -45,6 +45,7 @@ namespace DCL.Profiling
         public long TotalUsedMemoryInBytes => max(0L, totalUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
         public long SystemUsedMemoryInBytes => max(0L, systemUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
+        public long ProfilerUsedMemoryInBytes => max(0L, profilerUsedMemoryRecorder.CurrentValue);
         public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
