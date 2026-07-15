@@ -34,7 +34,7 @@ In the Unity Editor, add `--mcp` to `Main Scene Loader → Debug Settings → Ap
 ## Connecting a coding agent
 
 ```bash
-claude mcp add --transport http explorer http://127.0.0.1:8123/mcp
+claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/mcp
 ```
 
 Smoke test without an agent:
@@ -92,6 +92,8 @@ open Decentraland.app --args \
 Optional determinism flags for stable screenshots: `--disable-hud`, `--skybox-time-enabled false`, `--landscape-terrain-enabled false`, `--skip-minimum-specs-screen`.
 
 3. The agent then loops: edit scene TypeScript → LSD hot reload applies it (or call `reload_scene`) → `get_scene_state` until ready → `screenshot` + `get_scene_logs` → verify → repeat.
+
+Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer, so agents can confirm the server from inside the loop.
 
 A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/mcp-scene-iteration/` (invoke with `/mcp-scene-iteration`).
 

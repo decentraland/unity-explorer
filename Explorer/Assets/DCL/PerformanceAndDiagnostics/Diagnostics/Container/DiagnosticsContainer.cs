@@ -106,9 +106,11 @@ namespace DCL.Diagnostics
                     ReportCategory.SCENE_FETCH_REQUEST,
                     ReportCategory.PORTABLE_EXPERIENCE,
                     ReportCategory.EMOTE,
+                    ReportCategory.MCP,
                 }, logType: false);
 
             entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+            entries.Add(new CategorySeverityMatrix.Entry { Category = ReportCategory.MCP, Severity = LogType.Log });
 
             jsOnlyMatrix.entries = entries;
             return new SceneDebugConsoleReportHandler(jsOnlyMatrix, sceneDebugConsoleMessageBus, false);

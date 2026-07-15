@@ -63,7 +63,7 @@ Skills are loaded at session start, so a mid-session install may not surface unt
 3. **Connect the MCP server** (default port 8123):
 
    ```bash
-   claude mcp add --transport http explorer http://127.0.0.1:8123/mcp
+   claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/mcp
    ```
 
    Errors with "already exists in local config" if registered by a previous session — that's fine, nothing to do. If the current session has no `mcp__explorer__*` tools, follow "Missing tools" under Scene health & recovery below — the fix is the user reconnecting via `/mcp`, not a workaround.

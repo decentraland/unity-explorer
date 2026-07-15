@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.Mcp.Transport
@@ -56,7 +57,7 @@ namespace DCL.Mcp.Transport
             }
 
             listener = newListener;
-            ReportHub.Log(ReportCategory.MCP, $"MCP server listening on http://127.0.0.1:{port}/mcp");
+            ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on http://127.0.0.1:{port}/mcp");
             return true;
         }
 

@@ -16,6 +16,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using Global.AppArgs;
 using SceneRunner.Debugging.Hub;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -139,8 +140,34 @@ namespace DCL.Mcp
             server = new McpHttpServer(dispatcher, port);
             serverCts = serverCts.SafeRestart();
 
-            if (server.TryStart())
+            bool started = server.TryStart();
+
+            if (started)
                 server.RunAsync(serverCts.Token).Forget();
+
+            AnnounceStatusWhenLoadedAsync(started, serverCts.Token).Forget();
+        }
+
+        /// <summary>
+        ///     Reports the server address (or the startup failure) once loading completes, so the message
+        ///     reaches the scene debug console: its UI subscribes to log entries only after this plugin runs,
+        ///     and a line logged at server start would be dropped.
+        /// </summary>
+        private async UniTaskVoid AnnounceStatusWhenLoadedAsync(bool started, CancellationToken ct)
+        {
+            try
+            {
+                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
+
+                if (started)
+                    ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on http://127.0.0.1:{port}/mcp");
+                else
+                    ReportHub.LogError(ReportCategory.MCP, $"MCP server failed to start on port {port} — agent connections unavailable (pass a different --mcp-port)");
+            }
+            catch (OperationCanceledException)
+            {
+                // Disposed before loading completed; nothing to announce.
+            }
         }
     }
 }
