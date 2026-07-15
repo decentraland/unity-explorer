@@ -20,9 +20,12 @@ namespace DCL.Profiling
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
 
-        // Memory consumed by the Profiler itself (sample buffers grow while it records). Non-zero only in the Editor
-        // and development builds; subtracted from the memory readings so it does not count as application memory.
+        // Memory consumed/reserved by the Profiler itself (sample buffers grow while it records). Non-zero only in the
+        // Editor and development builds; subtracted from the memory readings so it does not count as application memory.
+        // "Used" is the Profiler's share of "Total Used Memory"; "Reserved" (>= used) is its share of the OS-level
+        // footprint, since reserved pools stay committed even after the used portion drops.
         private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
+        private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
         private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
@@ -43,9 +46,10 @@ namespace DCL.Profiling
         public float PhysicsSimulationsAvgInTenFrames => physSimRunningSum / PHYS_SIM_BUFFER_SIZE;
 
         public long TotalUsedMemoryInBytes => max(0L, totalUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
-        public long SystemUsedMemoryInBytes => max(0L, systemUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
+        public long SystemUsedMemoryInBytes => max(0L, systemUsedMemoryRecorder.CurrentValue - profilerReservedMemoryRecorder.CurrentValue);
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
         public long ProfilerUsedMemoryInBytes => max(0L, profilerUsedMemoryRecorder.CurrentValue);
+        public long ProfilerReservedMemoryInBytes => max(0L, profilerReservedMemoryRecorder.CurrentValue);
         public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
@@ -75,6 +79,7 @@ namespace DCL.Profiling
             systemUsedMemoryRecorder.Dispose();
             totalUsedMemoryRecorder.Dispose();
             profilerUsedMemoryRecorder.Dispose();
+            profilerReservedMemoryRecorder.Dispose();
             gcUsedMemoryRecorder.Dispose();
             gcAllocatedInFrameRecorder.Dispose();
 
