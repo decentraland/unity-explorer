@@ -37,7 +37,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ElementBinding<string> sceneNameBinding;
         private readonly ElementBinding<string> sceneParcelsBinding;
         private readonly ElementBinding<string> sceneHeightBinding;
-        private readonly ElementBinding<string> sdk6Binding;
+        private readonly ElementBinding<string> sdkVersionBinding;
         private readonly ElementBinding<string> globalPositionBinding;
         private readonly ElementBinding<string> sceneRelativePositionBinding;
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.playerEntity = playerEntity;
 
             debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
-            sdk6Binding = new ElementBinding<string>(string.Empty);
+            sdkVersionBinding = new ElementBinding<string>(string.Empty);
             sceneNameBinding = new ElementBinding<string>(string.Empty);
             sceneParcelsBinding = new ElementBinding<string>(string.Empty);
             sceneHeightBinding = new ElementBinding<string>(string.Empty);
@@ -76,7 +76,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
                          .SetVisibilityBinding(debugInfoVisibilityBinding)
-                         .AddCustomMarker("SDK 6:", sdk6Binding)
+                         .AddCustomMarker("SDK Version:", sdkVersionBinding)
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
@@ -144,7 +144,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
-            sdk6Binding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
+            sdkVersionBinding.Value = currentActiveScene != null ? (currentActiveScene.SceneData.IsSdk7() ? "7" : "6") : NO_DATA_STRING;
 
             Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
             globalPositionBinding.Value = FormatPositionVector(globalPosition);
