@@ -9,6 +9,32 @@ using CameraType = DCL.ECSComponents.CameraType;
 namespace DCL.CharacterCamera
 {
     /// <summary>
+    ///     Running total of raw pointer delta. Double-backed so the accumulation does not drift
+    ///     from float precision loss over long sessions. Consumers diff two snapshots to recover
+    ///     the motion of the interval; nobody resets the total.
+    /// </summary>
+    public readonly struct CumulativePointerDelta
+    {
+        public readonly double X;
+        public readonly double Y;
+
+        public CumulativePointerDelta(double x, double y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public static CumulativePointerDelta operator +(CumulativePointerDelta total, Vector2 frameDelta) =>
+            new (total.X + frameDelta.x, total.Y + frameDelta.y);
+
+        /// <summary>
+        ///     Difference between two snapshots as a Vector2. The interval is short enough for float precision.
+        /// </summary>
+        public static Vector2 operator -(CumulativePointerDelta total, CumulativePointerDelta snapshot) =>
+            new ((float)(total.X - snapshot.X), (float)(total.Y - snapshot.Y));
+    }
+
+    /// <summary>
     ///     Reference to camera data that is exposed to JavaScript scene with
     ///     all Proto values prepared once in advance
     /// </summary>
@@ -21,6 +47,11 @@ namespace DCL.CharacterCamera
         CanBeDirty<CameraType> CameraType { get; }
 
         CanBeDirty<bool> PointerIsLocked { get; }
+
+        /// <summary>
+        ///     Raw pointer delta accumulated every render frame in the global world, regardless of lock state.
+        /// </summary>
+        CumulativePointerDelta AccumulatedPointerDelta { get; }
 
         ObjectProxy<Entity> CameraEntityProxy { get; }
 
@@ -35,6 +66,7 @@ namespace DCL.CharacterCamera
             public CanBeDirty<Quaternion> WorldRotation { get; }
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
+            public CumulativePointerDelta AccumulatedPointerDelta { get; }
 
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
@@ -63,6 +95,7 @@ namespace DCL.CharacterCamera
             public CanBeDirty<Quaternion> WorldRotation { get; }
             public CanBeDirty<CameraType> CameraType { get; }
             public CanBeDirty<bool> PointerIsLocked { get; }
+            public CumulativePointerDelta AccumulatedPointerDelta { get; }
             public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
             public CinemachineBrain? CinemachineBrain { get; set; }
             public CameraMode CameraMode { get; set; }

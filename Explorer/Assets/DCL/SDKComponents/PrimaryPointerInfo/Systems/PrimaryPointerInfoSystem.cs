@@ -26,8 +26,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData exposedCameraData;
         private InputAction inputPoint;
-        private InputAction inputDelta;
         private Vector2 previousPosition = Vector2.zero;
+        private CumulativePointerDelta lastSeenAccumulatedDelta;
         private Camera cachedCamera;
 
         internal PrimaryPointerInfoSystem(
@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
             cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
             inputPoint = DCLInput.Instance.Camera.Point;
-            inputDelta = DCLInput.Instance.Camera.Delta;
+            lastSeenAccumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
 
             UpdatePointerInfo();
         }
@@ -66,15 +66,17 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private void UpdatePointerInfo()
         {
             Vector2 rawPosition = inputPoint.ReadValue<Vector2>();
+            CumulativePointerDelta accumulatedDelta = exposedCameraData.AccumulatedPointerDelta;
             Vector2 pointerPos;
             Vector2 deltaPos;
 
             if (exposedCameraData.PointerIsLocked.Value)
             {
-                // Unity freezes the absolute pointer position while the cursor is locked,
-                // so source the delta from the raw delta action and report screen-center coordinates.
+                // Unity freezes the absolute pointer position while the cursor is locked, so source the delta
+                // from the per-render-frame accumulated total (this system is throttled to the scene tick, and
+                // the raw delta action resets every render frame) and report screen-center coordinates.
                 pointerPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-                deltaPos = inputDelta.ReadValue<Vector2>();
+                deltaPos = accumulatedDelta - lastSeenAccumulatedDelta;
             }
             else
             {
@@ -82,8 +84,10 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 deltaPos = rawPosition - previousPosition;
             }
 
-            // Always track the raw position, so the first unlocked frame doesn't produce a stale-diff spike.
+            // Always track the raw position and the accumulated total, so the first frame after a
+            // lock-state transition doesn't produce a stale-diff spike.
             previousPosition = rawPosition;
+            lastSeenAccumulatedDelta = accumulatedDelta;
 
             var ray = cachedCamera.ScreenPointToRay(pointerPos);
 
