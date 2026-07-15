@@ -14,9 +14,7 @@ namespace DCL.RuntimeDeepLink
         private static readonly TimeSpan CHECK_IN_PERIOD = TimeSpan.FromMilliseconds(200);
 
         // A signin deep link is not consumed unless this instance is the one logging in, so concurrent idle
-        // Explorer instances don't steal it from each other via the shared bridge file. An unclaimed signin
-        // is kept this long so a login starting shortly after can still pick it up, then dropped: without
-        // this cap the deferred file would be re-read on every check-in forever.
+        // Maximum time a deferred signin bridge file is retained on disk; without this cap it would be re-read on every check-in forever.
         private static readonly TimeSpan DEFERRED_SIGNIN_LIFETIME = TimeSpan.FromSeconds(300);
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
