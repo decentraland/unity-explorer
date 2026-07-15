@@ -20,8 +20,6 @@ namespace DCL.Profiling
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
 
-        // Memory consumed/reserved by the Profiler itself (sample buffers grow while it records). Non-zero only in the
-        // Editor and development builds; subtracted from the memory readings so it does not count as application memory.
         // Subtracted from memory readings: Profiler buffers inflate the OS footprint in Editor/dev builds only.
         private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
         private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
