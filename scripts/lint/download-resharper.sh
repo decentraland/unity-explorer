@@ -13,8 +13,9 @@ set -euo pipefail
 RESHARPER_URL="https://download.jetbrains.com/resharper/dotUltimate.2025.1.4/JetBrains.ReSharper.CommandLineTools.2025.1.4.zip"
 
 # Unity Support extension, pinned to the 2025.1.4.67 build (wave 251, matches the CLI above).
-# Dropped into the CLI directory so InspectCode loads it offline via --source (see
-# run-inspectcode.sh) — no plugin-gallery access needed at inspection time.
+# Dropped into the CLI directory, which InspectCode auto-scans for extension nupkgs, so it
+# loads offline — no plugin-gallery access needed at inspection time. run-inspectcode.sh only
+# names it via --eXtensions; it must NOT also pass --source for this dir (double-registration).
 UNITY_EXT_URL="https://plugins.jetbrains.com/files/JetBrains.Unity/2025.1.4.67/jetbrains.unity.2025.1.4.67.nupkg"
 
 target="${1:-rsharp}"
