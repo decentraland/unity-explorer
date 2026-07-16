@@ -45,12 +45,15 @@ ext_dir="$(dirname "$cli")-plugins"
 # --source points at the isolated feed dir so the extension resolves offline from the bundled
 # nupkg (no gallery access) and deploys exactly once. The nupkg must stay OUT of the CLI dir,
 # otherwise auto-scan + --eXtensions double-deploy it and startup crashes on a duplicate ID.
-# --no-swea disables solution-wide analysis, so InspectCode does not build the deferred caches
-# whose background flush is what crashes headless on Linux ("Serializing delegates is not
-# supported"). EXPERIMENT: checking whether this lets the Unity extension run to completion on
-# the Linux CI container. No exit-code tolerance here on purpose — if it still crashes, the step
-# fails loudly so the result is unambiguous. Trade-off if we keep it: solution-wide-only
-# inspections (e.g. the '*.Global' unused-symbol rules) stop being reported, shifting the baseline.
+# The pinned 2023.1 JetBrains.Unity plugin (see download-resharper.sh) should not schedule the
+# background deferred-cache flush that crashes headless on Linux in 2023.2+ ("Serializing
+# delegates is not supported"); --no-swea is kept as extra insurance against that flush (it
+# disables solution-wide analysis, which also drops the '*.Global' unused-symbol rules). No
+# exit-code tolerance on purpose — if it still crashes, the step fails loudly so it's unambiguous.
+#
+# --format=Sarif is REQUIRED on 2023.1: SARIF only became the default output in 2024.1, so without
+# it 2023.1 writes XML into the .json file and the downstream SARIF parser (filter-warnings.sh)
+# breaks. (SARIF has been an explicit option since 2021.1.)
 "$cli" "$solution" \
     --no-build \
     --eXtensions=JetBrains.Unity \
@@ -59,4 +62,5 @@ ext_dir="$(dirname "$cli")-plugins"
     --verbosity=INFO \
     --properties:Configuration=Debug \
     --disable-settings-layers:SolutionPersonal \
+    --format=Sarif \
     --output="$output"
