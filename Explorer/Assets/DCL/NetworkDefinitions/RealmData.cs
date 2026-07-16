@@ -1,11 +1,9 @@
-using Arch.Core;
-using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Utilities;
 using System;
 using System.Text;
 
+// ReSharper disable once CheckNamespace
 namespace ECS
 {
     /// <summary>

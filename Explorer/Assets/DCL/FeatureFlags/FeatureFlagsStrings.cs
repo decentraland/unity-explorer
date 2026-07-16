@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.FeatureFlags
 {
     [Serializable]
@@ -84,6 +85,8 @@ namespace DCL.FeatureFlags
         public const string NEW_LODS = "new-lods";
         public const string FOUNDATION_COMMUNITY_ID = "alfa-foundation-community-id";
         public const string HARDWARE_FINGERPRINT = "alfa-hardware-fingerprint";
+        public const string OPTIMIZED_ASSETS = "optimized-assets";
+        public const string OPTIMIZED_ASSETS_BASE_URL_VARIANT = "assets-base-url";
 
         public static class Endpoints
         {
