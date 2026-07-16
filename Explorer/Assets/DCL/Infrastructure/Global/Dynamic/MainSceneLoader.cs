@@ -198,7 +198,11 @@ namespace Global.Dynamic
 
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
 #if UNITY_EDITOR
-                debugSettings.AppParameters
+                // Debug Settings are the base; real command-line args (e.g. --optimized-assets-url
+                // for a local preview sidecar) are appended so they override, matching a build. The
+                // bare "--" resets the parser's pending key so the Unity executable path that leads
+                // GetCommandLineArgs() is not consumed as a trailing Debug Setting's value.
+                debugSettings.AppParameters.Append("--").Concat(Environment.GetCommandLineArgs()).ToArray()
 #else
                 Environment.GetCommandLineArgs()
 #endif
