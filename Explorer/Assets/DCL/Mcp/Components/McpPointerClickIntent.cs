@@ -3,7 +3,7 @@ using DCL.ECSComponents;
 using UnityEngine;
 using RaycastHit = UnityEngine.RaycastHit;
 
-namespace DCL.Mcp.Systems.Components
+namespace DCL.Mcp.Components
 {
     /// <summary>
     ///     Present on the player entity while an agent-requested pointer click is in flight.

@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterMotion.Components;
 using UnityEngine;
 
-namespace DCL.Mcp.Systems.Components
+namespace DCL.Mcp.Components
 {
     /// <summary>
     ///     Held movement input requested by the MCP walk tool. While present on the player entity,

@@ -6,7 +6,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Mcp.Systems.Components;
+using DCL.Mcp.Components;
 using ECS.Abstract;
 using UnityEngine;
 

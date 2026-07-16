@@ -12,7 +12,7 @@ using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
-using DCL.Mcp.Systems.Components;
+using DCL.Mcp.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
