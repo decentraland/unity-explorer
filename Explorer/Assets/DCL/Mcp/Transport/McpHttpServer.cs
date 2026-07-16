@@ -87,9 +87,9 @@ namespace DCL.Mcp.Transport
         {
             try
             {
-                if (!McpOriginValidator.IsAllowed(context.Request.Headers["Origin"]))
+                if (!IsAllowed(context.Request.Headers["Origin"]))
                 {
-                    WriteEmpty(context.Response, (int)HttpStatusCode.Forbidden);
+                    context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.Forbidden, sessionId);
                     return;
                 }
 
@@ -100,10 +100,10 @@ namespace DCL.Mcp.Transport
                         break;
                     case "DELETE":
                         // Session termination is accepted but stateless: nothing to clean up.
-                        WriteEmpty(context.Response, (int)HttpStatusCode.OK);
+                        context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.OK, sessionId);
                         break;
                     default:
-                        WriteEmpty(context.Response, (int)HttpStatusCode.MethodNotAllowed);
+                        context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.MethodNotAllowed, sessionId);
                         break;
                 }
             }
@@ -122,7 +122,7 @@ namespace DCL.Mcp.Transport
         {
             if (context.Request.ContentLength64 > MAX_BODY_BYTES)
             {
-                WriteEmpty(context.Response, (int)HttpStatusCode.RequestEntityTooLarge);
+                context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.RequestEntityTooLarge, sessionId);
                 return;
             }
 
@@ -136,38 +136,26 @@ namespace DCL.Mcp.Transport
             if (responseJson == null)
             {
                 // Notifications get 202 Accepted with no body.
-                WriteEmpty(context.Response, (int)HttpStatusCode.Accepted);
+                context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.Accepted, sessionId);
                 return;
             }
 
             byte[] payload = Encoding.UTF8.GetBytes(responseJson);
 
+            context.Response.WithMcpHeaders(sessionId);
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Response.ContentType = "application/json; charset=utf-8";
             context.Response.ContentLength64 = payload.Length;
-            AddCommonHeaders(context.Response);
-
             await context.Response.OutputStream.WriteAsync(payload, 0, payload.Length, CancellationToken.None);
             context.Response.Close();
         }
 
-        private void WriteEmpty(HttpListenerResponse response, int statusCode)
-        {
-            response.StatusCode = statusCode;
-            response.ContentLength64 = 0;
-            AddCommonHeaders(response);
-            response.Close();
-        }
-
-        private void AddCommonHeaders(HttpListenerResponse response)
-        {
-            response.AddHeader("Mcp-Session-Id", sessionId);
-            response.AddHeader("MCP-Protocol-Version", McpJsonRpcDispatcher.PROTOCOL_VERSION);
-        }
-
         private void TryWriteInternalError(HttpListenerContext context)
         {
-            try { WriteEmpty(context.Response, (int)HttpStatusCode.InternalServerError); }
+            try
+            {
+                context.Response.WriteEmptyAncClose(statusCode: (int)HttpStatusCode.InternalServerError, sessionId);
+            }
             catch (Exception)
             {
                 // The response may already be closed or the client gone; nothing else to do.
@@ -181,6 +169,38 @@ namespace DCL.Mcp.Transport
             {
                 // Ignored: aborting a torn-down connection during shutdown.
             }
+        }
+
+        private static bool IsAllowed(string? origin)
+        {
+            if (string.IsNullOrEmpty(origin))
+                return true;
+
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? originUri))
+                return false;
+
+            if (originUri.Scheme != Uri.UriSchemeHttp && originUri.Scheme != Uri.UriSchemeHttps)
+                return false;
+
+            return originUri.Host is "localhost" or "127.0.0.1" or "::1";
+        }
+    }
+
+    internal static class HttpListenerResponseExtensions
+    {
+        public static void WriteEmptyAncClose(this HttpListenerResponse response, int statusCode, string sessionId)
+        {
+            response.StatusCode = statusCode;
+            response.ContentLength64 = 0;
+            response.WithMcpHeaders(sessionId)
+                    .Close();
+        }
+
+        public static HttpListenerResponse WithMcpHeaders(this HttpListenerResponse response, string sessionId)
+        {
+            response.AddHeader("Mcp-Session-Id", sessionId);
+            response.AddHeader("MCP-Protocol-Version", McpJsonRpcDispatcher.PROTOCOL_VERSION);
+            return response;
         }
     }
 }
