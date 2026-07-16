@@ -115,23 +115,24 @@ namespace DCL.Mcp
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
             McpPointerClickSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
 
-            var registry = new McpToolRegistry();
-
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
-            registry.Register(screenshotTool);
-            registry.Register(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo));
-            registry.Register(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment));
-            registry.Register(new GetSceneLogsTool(logBuffer));
-            registry.Register(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus));
-            registry.Register(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity));
-            registry.Register(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData));
-            registry.Register(new SetCameraModeTool(globalWorld, exposedCameraData));
-            registry.Register(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData));
-            registry.Register(new WalkTool(globalWorld, arguments.PlayerEntity));
-            registry.Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity));
-            registry.Register(new ListSceneEntitiesTool(worldInfoHub));
-            registry.Register(new GetEntityDetailsTool(worldInfoHub));
-            registry.Register(new ClickEntityTool(globalWorld, arguments.PlayerEntity));
+
+            var registry = new McpToolRegistry()
+                          .Register(screenshotTool)
+                          .Register(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
+                          .Register(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
+                          .Register(new GetSceneLogsTool(logBuffer))
+                          .Register(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
+                          .Register(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
+                          .Register(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Register(new SetCameraModeTool(globalWorld, exposedCameraData))
+                          .Register(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Register(new WalkTool(globalWorld, arguments.PlayerEntity))
+                          .Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
+                          .Register(new ListSceneEntitiesTool(worldInfoHub))
+                          .Register(new GetEntityDetailsTool(worldInfoHub))
+                          .Register(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+                          .Build();
 
             var dispatcher = new McpJsonRpcDispatcher(registry, Application.version);
 

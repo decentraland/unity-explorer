@@ -57,19 +57,14 @@ namespace DCL.Mcp.Protocol
             if (id == null)
                 return null;
 
-            switch (method)
-            {
-                case "initialize":
-                    return Serialize(JsonRpc.Result(id, InitializeResult()));
-                case "ping":
-                    return Serialize(JsonRpc.Result(id, new JObject()));
-                case "tools/list":
-                    return Serialize(JsonRpc.Result(id, toolRegistry.ToolsListResult));
-                case "tools/call":
-                    return await CallToolAsync(id, request["params"] as JObject, ct);
-                default:
-                    return Serialize(JsonRpc.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}"));
-            }
+            return method switch
+                   {
+                       "initialize" => Serialize(JsonRpc.Result(id, InitializeResult())),
+                       "ping" => Serialize(JsonRpc.Result(id, new JObject())),
+                       "tools/list" => Serialize(JsonRpc.Result(id, toolRegistry.ToolsList)),
+                       "tools/call" => await CallToolAsync(id, request["params"] as JObject, ct),
+                       _ => Serialize(JsonRpc.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}"))
+                   };
         }
 
         private async UniTask<string?> CallToolAsync(JToken id, JObject? callParams, CancellationToken ct)

@@ -8,23 +8,15 @@ namespace DCL.Mcp.Tools
     {
         private readonly Dictionary<string, IMcpTool> tools = new ();
 
-        private JObject? cachedToolsListResult;
+        public JObject ToolsList { get; private set; } = new () { ["tools"] = new JArray() };
 
-        /// <summary>
-        ///     The tools/list result, built once and reused for every request.
-        /// </summary>
-        public JObject ToolsListResult => cachedToolsListResult ??= BuildToolsListResult();
-
-        public void Register(IMcpTool tool)
+        public McpToolRegistry Register(IMcpTool tool)
         {
             tools.Add(tool.Name, tool);
-            cachedToolsListResult = null;
+            return this;
         }
 
-        public bool TryGet(string name, [NotNullWhen(true)] out IMcpTool? tool) =>
-            tools.TryGetValue(name, out tool);
-
-        private JObject BuildToolsListResult()
+        public McpToolRegistry Build()
         {
             var toolsArray = new JArray();
 
@@ -38,7 +30,11 @@ namespace DCL.Mcp.Tools
                 });
             }
 
-            return new JObject { ["tools"] = toolsArray };
+            ToolsList = new JObject { ["tools"] = toolsArray };
+            return this;
         }
+
+        public bool TryGet(string name, [NotNullWhen(true)] out IMcpTool? tool) =>
+            tools.TryGetValue(name, out tool);
     }
 }
