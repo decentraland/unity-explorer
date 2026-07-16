@@ -23,6 +23,7 @@ You can find a settings export file in the root of the project called "rider_cod
 Use:
 
 - `PascalCase` - Namespace, Class, Struct, Interface, Enumeration and its Enumerators, Method, Delegate declaration, Event, public Property, and public Field.
+  - **Exception:** serialized JSON DTO fields keep their wire-format casing — see [Serialized JSON DTOs](#serialized-json-dtos-wire-format-exceptions) below.
 - `camelCase` - non-public Property, non-public Field, method Parameter, local Variable.
 - `ALL_UPPER_SNAKE_CASE` - Constants, static read-only fields.
 - `I` prefix in front of Interface name.
@@ -65,6 +66,47 @@ namespace MyProject                                     // Namespace -> PascalCa
 - `Interface` - try to name it with adjective phrases (`IDamageable`). If it is difficult, then use descriptive noun (`IBaseVariable`) or noun phrase (`IAssetProvider`).
 - `Class`/`Struct` - name with nouns (`Health`) or noun phrases (`InputService`).
 - `Delegate type` - try to use nouns or noun phrases (take example from .NET built-in delegate types - `Action`/`Function`/`Predicate`).
+
+### Serialized JSON DTOs (wire-format exceptions)
+
+Fields populated by JSON deserialization follow the wire format, not local conventions:
+
+- **Naming:** field names must match the JSON keys exactly. Do not rename to PascalCase — `[JsonProperty]` only rescues the Newtonsoft path, and DTOs also parsed with Unity's `JsonUtility` (e.g. `SceneEntityDefinition` via `WRJsonParser.Unity`) have no rename mechanism. Keep the wire-format casing and suppress the inspection per file with `// ReSharper disable InconsistentNaming` above the namespace declaration.
+- **Nullability (CS8618):** fields the schema marks *required* are initialized `= null!` (`= default!` when the field's type is a generic parameter); fields the schema marks *optional* are declared `T?`. A schema-optional field may be kept non-nullable only when every entity type the client consumes guarantees it in practice — state that strengthened contract in the schema-link comment. A field absent from the linked schema is optional unless verified against its actual source. The DTO class must carry a schema-link comment (e.g. `// Server schema: <repo>/<file>#/SchemaName`) so reviewers can verify the contract.
+- **Guards follow the declaration:** a required field (`= null!`) must not be null-guarded at all — no `?.`, no `?? fallback`, no `== null`; an optional `T?` field keeps its guards.
+
+These exceptions apply **only** to deserialized DTO fields — never to locals, return types, or non-DTO code.
+
+Reference example — [`EntityDefinitionBase.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionBase.cs) and [`EntityDefinitionGeneric.cs`](https://github.com/decentraland/unity-explorer/blob/main/Explorer/Assets/DCL/NetworkDefinitions/EntityDefinitionGeneric.cs):
+
+```csharp
+// ReSharper disable InconsistentNaming
+namespace DCL.Ipfs
+{
+    // Server schema: decentraland/common-schemas src/platform/entity.ts#/Entity
+    [Serializable]
+    public abstract class EntityDefinitionBase : TrimmedEntityDefinitionBase
+    {
+        public string type = null!;             // schema-required -> null! + wire-format casing
+        public string[] pointers = null!;
+    }
+
+    [Serializable]
+    public class TrimmedEntityDefinitionBase
+    {
+        public string? id;                      // schema-optional -> T?, guards stay
+        public string? thumbnail;
+    }
+
+    // Server schema: decentraland/common-schemas src/platform/entity.ts#/Entity
+    // (metadata is schema-optional, but every entity type the client consumes carries it)
+    [Serializable]
+    public class EntityDefinitionGeneric<T> : EntityDefinitionBase
+    {
+        public T metadata = default!;           // generic parameter -> default!
+    }
+}
+```
 
 ## Ordering Conventions
 
