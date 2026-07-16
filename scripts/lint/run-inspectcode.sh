@@ -45,6 +45,8 @@ ext_dir="$(dirname "$cli")-plugins"
 # --source points at the isolated feed dir so the extension resolves offline from the bundled
 # nupkg (no gallery access) and deploys exactly once. The nupkg must stay OUT of the CLI dir,
 # otherwise auto-scan + --eXtensions double-deploy it and startup crashes on a duplicate ID.
+run_log="$output.log"
+set +e
 "$cli" "$solution" \
     --no-build \
     --eXtensions=JetBrains.Unity \
@@ -52,4 +54,21 @@ ext_dir="$(dirname "$cli")-plugins"
     --verbosity=INFO \
     --properties:Configuration=Debug \
     --disable-settings-layers:SolutionPersonal \
-    --output="$output"
+    --output="$output" 2>&1 | tee "$run_log"
+rc=${PIPESTATUS[0]}
+set -e
+
+# The pinned JetBrains.Unity extension throws on headless shutdown while flushing its deferred
+# caches (a BeforeAcquiringWriteLock handler hits "Serializing delegates is not supported"), so
+# InspectCode returns non-zero AFTER it has already written a complete, valid report. Tolerate
+# ONLY that known crash, and only when the report was actually produced; a real analysis failure
+# or a missing report still fails the step (and the downstream resolution-health assert catches
+# any report that is present but garbage).
+if [ "$rc" -ne 0 ]; then
+    if [ -s "$output" ] && grep -q "Serializing delegates is not supported" "$run_log"; then
+        echo "run-inspectcode: InspectCode exited $rc after writing '$output'; ignoring the known JetBrains.Unity headless-shutdown crash." >&2
+    else
+        echo "run-inspectcode: InspectCode failed with exit $rc and no recoverable report." >&2
+        exit "$rc"
+    fi
+fi
