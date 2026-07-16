@@ -23,18 +23,18 @@ namespace DCL.Mcp.Tests
         private const int TARGET_CRDT_ID = 512;
         private const int BLOCKER_CRDT_ID = 513;
 
-        private World sceneWorld;
+        private World sceneWorld = null!;
         private Entity playerEntity;
         private Entity targetEntity;
 
-        private GameObject cameraGo;
-        private GameObject playerGo;
-        private GameObject targetGo;
-        private GameObject blockerGo;
+        private GameObject cameraGo = null!;
+        private GameObject playerGo = null!;
+        private GameObject targetGo = null!;
+        private GameObject blockerGo = null!;
 
-        private BoxCollider targetCollider;
-        private PBPointerEvents targetPointerEvents;
-        private ISceneStateProvider sceneStateProvider;
+        private BoxCollider targetCollider = null!;
+        private PBPointerEvents targetPointerEvents = null!;
+        private ISceneStateProvider sceneStateProvider = null!;
         private uint tick;
 
         [SetUp]
@@ -49,8 +49,11 @@ namespace DCL.Mcp.Tests
             playerGo = new GameObject("mcp-click-test-player");
             playerEntity = world.Create(new CharacterTransform(playerGo.transform));
 
-            targetGo = new GameObject("mcp-click-test-target");
-            targetGo.transform.position = new Vector3(0f, 0f, 5f);
+            targetGo = new GameObject("mcp-click-test-target")
+                {
+                    transform = { position = new Vector3(0f, 0f, 5f), },
+                };
+
             targetCollider = targetGo.AddComponent<BoxCollider>();
 
             targetPointerEvents = new PBPointerEvents
@@ -163,7 +166,7 @@ namespace DCL.Mcp.Tests
         {
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
-            system.Update(0);
+            system!.Update(0);
 
             var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
             Assert.That(actions.Count, Is.EqualTo(1));
@@ -197,7 +200,7 @@ namespace DCL.Mcp.Tests
         {
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(McpPointerClickIntent.ClickKind.Down);
 
-            system.Update(0);
+            system!.Update(0);
 
             var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
             Assert.That(actions.Count, Is.EqualTo(1));
@@ -210,13 +213,13 @@ namespace DCL.Mcp.Tests
         [Test]
         public void FailWhenAnotherColliderBlocksTheRay()
         {
-            blockerGo = new GameObject("mcp-click-test-blocker");
-            blockerGo.transform.position = new Vector3(0f, 0f, 2f);
+            blockerGo = new GameObject("mcp-click-test-blocker") { transform = { position = new Vector3(0f, 0f, 2f) }};
+
             blockerGo.AddComponent<BoxCollider>();
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
-            system.Update(0);
+            system!.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -232,7 +235,7 @@ namespace DCL.Mcp.Tests
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
-            system.Update(0);
+            system!.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -247,7 +250,7 @@ namespace DCL.Mcp.Tests
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
-            system.Update(0);
+            system!.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -259,7 +262,7 @@ namespace DCL.Mcp.Tests
         {
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(targetId: 987654);
 
-            system.Update(0);
+            system!.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
@@ -281,7 +284,7 @@ namespace DCL.Mcp.Tests
                 Completion = completion,
             });
 
-            system.Update(0);
+            system!.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);

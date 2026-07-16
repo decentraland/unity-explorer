@@ -45,40 +45,39 @@ namespace DCL.Mcp.Systems
             if (!overrideExists)
                 return;
 
-            if (UnityEngine.Time.time >= movementOverride.EndTime)
+            ref MovementInputComponent movement = ref World.TryGetRef<MovementInputComponent>(playerEntity, out bool hasMovement);
+
+            if (UnityEngine.Time.time < movementOverride.EndTime)
+            {
+                if (hasMovement)
+                {
+                    movement.Axes = movementOverride.Axes;
+                    movement.Kind = movementOverride.Kind;
+                }
+
+                if (movementOverride.JumpRequested)
+                {
+                    movementOverride.JumpRequested = false;
+
+                    ref JumpInputComponent jump = ref World.TryGetRef<JumpInputComponent>(playerEntity, out bool hasJump);
+
+                    if (hasJump)
+                        jump.Trigger.TickWhenJumpOccurred = physicsTick.GetPhysicsTickComponent(World).Tick + 1;
+                }
+            }
+            else
             {
                 UniTaskCompletionSource? completion = movementOverride.Completion;
 
-                ref MovementInputComponent idleMovement = ref World.TryGetRef<MovementInputComponent>(playerEntity, out bool hasIdleMovement);
-
-                if (hasIdleMovement)
+                if (hasMovement)
                 {
-                    idleMovement.Axes = Vector2.zero;
-                    idleMovement.Kind = MovementKind.IDLE;
+                    movement.Axes = Vector2.zero;
+                    movement.Kind = MovementKind.IDLE;
                 }
 
                 // Structural change only after all outstanding component refs are done.
                 World.Remove<McpMovementOverride>(playerEntity);
                 completion?.TrySetResult();
-                return;
-            }
-
-            ref MovementInputComponent movement = ref World.TryGetRef<MovementInputComponent>(playerEntity, out bool hasMovement);
-
-            if (hasMovement)
-            {
-                movement.Axes = movementOverride.Axes;
-                movement.Kind = movementOverride.Kind;
-            }
-
-            if (movementOverride.JumpRequested)
-            {
-                movementOverride.JumpRequested = false;
-
-                ref JumpInputComponent jump = ref World.TryGetRef<JumpInputComponent>(playerEntity, out bool hasJump);
-
-                if (hasJump)
-                    jump.Trigger.TickWhenJumpOccurred = physicsTick.GetPhysicsTickComponent(World).Tick + 1;
             }
         }
     }
