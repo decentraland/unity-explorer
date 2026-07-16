@@ -62,11 +62,11 @@ Skip auto-assign by adding the `no review` or `no QA needed` label (see [Labels]
 
 ### 2. AI pre-review
 
-The `Claude Review` workflow ([`.github/workflows/claude-pr-review.yml`](../.github/workflows/claude-pr-review.yml)) reviews the diff against the project's architecture docs and code standards.
+AI review runs through **Jarvis** (the org's agent-server bot): [`jarvis-review-request.yml`](../.github/workflows/jarvis-review-request.yml) requests the review and [`jarvis-review-status.yml`](../.github/workflows/jarvis-review-status.yml) applies the verdict. The review checks the diff against the project's architecture docs and code standards.
 
-**Automatic** for `fix:` and `chore:` PRs — runs on open and on every push.
+**Automatic initial review** for every PR from an explorer team dev, regardless of type — requested when the PR is opened (or marked ready for review). After a verdict lands, later pushes do **not** trigger a new review automatically: the `Claude Review` check resets to pending and you re-request `decentraland-bot` (🔄 in the Reviewers panel) when the PR is ready for a fresh pass. Pushes made while a review is still in flight are covered by it (the review reads the live diff).
 
-**Manual** for `feat:` and `opti:` PRs — comment `@claude review` on the PR to trigger it. External contributors will see a welcome comment with these instructions when they open a PR.
+**Manual** for PRs from outside the team — a maintainer requests `decentraland-bot` from the **Reviewers** panel (external contributions are also routed to Slack for coordination).
 
 The review:
 - Reads the diff, [`CLAUDE.md`](../CLAUDE.md), and the relevant subsystem docs.
@@ -76,7 +76,7 @@ The review:
 - Decides whether QA is needed (`QA_REQUIRED: YES/NO`).
 - Emits a `Claude Review` commit status (pass/fail).
 
-**Outcomes (for auto-reviewed `fix:`/`chore:` PRs):**
+**Outcomes (for `fix:`/`chore:` PRs from team devs):**
 
 | AI verdict | Complexity | Effect |
 |---|---|---|
@@ -88,9 +88,9 @@ For `feat:`/`opti:` PRs, the AI review provides feedback but does **not** auto-a
 
 **AI review has real limits.** It checks standards, bugs, and obvious issues. It cannot judge architectural fit, cross-system impact, or whether the PR fixes the *root cause* vs. a symptom. A green Claude status is not a substitute for a human reviewer on a complex change.
 
-You can invoke or re-invoke it at any time with a PR comment:
-- `@claude review` — fresh review (required for `feat:`/`opti:` PRs)
-- `@claude re-review` — focus on whether prior feedback was addressed
+You can invoke or re-invoke it at any time from the **Reviewers** panel:
+- Request a review from `decentraland-bot` — fresh review (team-dev PRs get this automatically; use it for external PRs or an extra pass)
+- Use the 🔄 re-request arrow next to `decentraland-bot` after pushing fixes — triggers a fresh full review
 
 ### 3. QA review
 QA runs the **Test Instructions** from the PR description against a build of the branch (typically via `metaforge explorer run <PR>`). If steps are missing or unclear, QA will send the PR back — they should not have to reverse-engineer the test plan from the diff.
@@ -117,7 +117,7 @@ Labels drive policy decisions. Only apply them when the criteria below are genui
 | Label | Effect | When to apply |
 |---|---|---|
 | `claude-approved` | DEV approval no longer required. | Applied **automatically** by AI review on SIMPLE+PASS. Don't apply by hand. |
-| `no QA needed` | QA approval no longer required. | Changes limited to CI/CD, scripts, docs, or other non-runtime code. **No** user-facing or runtime Unity code touched. Applied automatically when AI review determines this, or manually with justification in the PR. |
+| `no QA needed` | QA approval no longer required. | Changes limited to CI/CD, scripts, docs, or other non-runtime code. **No** user-facing or runtime Unity code touched. Applied automatically when AI review determines this, or manually with justification in the PR. Removed automatically only when the AI review reports `QA_REQUIRED: YES` — a COMPLEX classification alone won't strip a manually applied waiver. |
 | `no review` | Suppresses AI review and reviewer auto-assignment. | Rare — reserved for trivial maintenance where the author has coordinated review separately. |
 | `auto-pr` | Skips both AI review and the approval gate entirely. | Bot-generated PRs only (dependency bumps, auto-sync). Humans should not apply this. |
 
@@ -129,12 +129,12 @@ If in doubt, **do not apply the label.** Let the default flow run.
 
 You don't need to be on the `qa` or `explorer-devs` teams to open a PR. Follow this page and the PR template and the automation will route reviewers to you.
 
-When you open a PR, you'll receive a **welcome comment** that explains the review process for your specific PR type — whether AI review runs automatically or needs to be triggered manually with `@claude review`.
+When you open a PR, the team is notified and a maintainer requests the AI review from `decentraland-bot` (reviews are auto-requested only for explorer team members' PRs).
 
 A few things to know:
 
 - The auto-assigned reviewers will handle the QA/DEV approvals the merge gate requires — you don't need to pin anyone yourself.
-- For `feat:` and `opti:` PRs, AI review is **not automatic**. Comment `@claude review` to request it, or `@claude re-review` after addressing feedback.
+- AI review of external PRs is requested by a maintainer as part of review routing — you don't need to (and can't) request `decentraland-bot` yourself.
 - If you're unsure whether a change is "simple" or "complex," lean toward **complex**: write a richer technical description and don't worry if the AI classifies it as COMPLEX. That just means a human dev will look at it, which is the right outcome for anything non-trivial.
 - You **cannot** apply `claude-approved`, `no QA needed`, `no review`, or `auto-pr` yourself, and you should not request them. Let the automation or a maintainer decide.
 - If AI review raises a concern you think is wrong, reply on the inline comment with reasoning rather than silently dismissing it. A maintainer will adjudicate.
@@ -158,7 +158,7 @@ GitHub pre-fills most of this from the PR; tidy it before clicking the final mer
 
 | Situation | What to do |
 |---|---|
-| Opened a `fix:` PR, Claude approved it, but you want a human to look anyway | Leave it — the `claude-approved` label only waives the DEV *requirement*. Any human can still approve or request changes. |
+| Opened a `fix:` PR, Jarvis approved it, but you want a human to look anyway | Leave it — the `claude-approved` label only waives the DEV *requirement*. Any human can still approve or request changes. |
 | QA reviewer isn't responding | Ping in `#qa-team` on Slack. Don't reassign QA — the auto-assign picked the right rotation. |
 | Your PR touches only GitHub workflows | It's still a real PR. The AI should mark it `QA_REQUIRED: NO`; if it doesn't, add `no QA needed` manually and note why. |
 | You disagree with an AI inline comment | Reply with your reasoning on the thread. A maintainer will resolve it. Don't silently resolve/dismiss AI comments without engaging. |
