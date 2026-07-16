@@ -74,5 +74,9 @@ Explorer/.cursorignore
 .claude/settings.local.json
 .claude/worktrees/
 
+# ReSharper CLI used by the local lint flow (scripts/lint/run-inspectcode.sh)
+/rsharp/
+/rsharp.zip
+
 # API Keys
 .env
