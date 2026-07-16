@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -73,7 +74,7 @@ namespace ECS.SceneLifeCycle.Systems
             sceneRelativePositionBinding = new ElementBinding<string>(string.Empty);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CURRENT_SCENE)?
-                         .AddCustomMarker("SDK Version:", sdkVersionBinding)
+                        .AddCustomMarker("SDK 7:", sdkVersionBinding)
                          .AddCustomMarker("Name:", sceneNameBinding)
                          .AddCustomMarker("Parcels:", sceneParcelsBinding)
                          .AddCustomMarker("Height (m):", sceneHeightBinding)
@@ -141,7 +142,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
-            sdkVersionBinding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
+            sdkVersionBinding.Value = currentActiveScene != null ? bool.TrueString : bool.FalseString;
 
             Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
             globalPositionBinding.Value = FormatPositionVector(globalPosition);
@@ -243,7 +244,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         //Debug only
-        private void OnBackfaceCullingToggle(UnityEngine.UIElements.ChangeEvent<bool> evt)
+        private void OnBackfaceCullingToggle(ChangeEvent<bool> evt)
         {
             backfaceCulling = evt.newValue;
 
