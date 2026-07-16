@@ -29,7 +29,7 @@ user-invocable: false
 
 **Exception:** serialized JSON DTO fields keep their wire-format casing — see *Serialized JSON DTOs* below.
 
-**Namespaces are domain names, not folder paths.** A folder-namespace mismatch is often intentional (namespaces survive folder/assembly reshuffles). Never add `// ReSharper disable once CheckNamespace` (or the file-wide variant) — the CI warning ratchet already excludes that inspection, so the comment is pure noise. Either move the type into the domain namespace its collaborators live in, or leave the IDE warning visible.
+**Namespaces are domain names, not folder paths** — never suppress a folder-namespace mismatch with `// ReSharper disable once CheckNamespace`; fix the namespace or leave the warning visible. Full rule: `docs/code-style-guidelines.md` § Namespaces.
 
 ## Member Ordering
 
