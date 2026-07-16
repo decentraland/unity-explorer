@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -33,6 +34,7 @@ namespace DCL.Web3.Authenticators
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly URLBuilder urlBuilder = new ();
+        private readonly DCLSemaphoreSlim loginMutex = new (1, 1);
 
         public DappDeepLinkAuthenticator(
             UnityAppWebBrowser webBrowser,
@@ -56,27 +58,34 @@ namespace DCL.Web3.Authenticators
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
-            // A signin id stored before this attempt minted its request cannot belong to it: drop it
-            // so a stale or foreign deep link does not complete this login with another session's identity.
-            deeplinkSigninIdentityId.Value = null;
+            await loginMutex.WaitAsync(ct);
 
-            await UniTask.SwitchToMainThread(ct);
+            try
+            {
+                // A signin id stored before this attempt minted its request cannot belong to it: drop it
+                // so a stale or foreign deep link does not complete this login with another session's identity.
+                deeplinkSigninIdentityId.Value = null;
 
-            // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
-            var authRequestId = Guid.NewGuid().ToString();
-            var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
-            #if UNITY_EDITOR
-            // Without this flag the auth website also launches a standalone Explorer build,
-            // which would steal the signin from the editor.
-            url += "&bridgeOnly";
-            #endif
+                await UniTask.SwitchToMainThread(ct);
 
-            webBrowser.OpenUrlMainThreadOnly(url);
+                // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
+                var authRequestId = Guid.NewGuid().ToString();
+                var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
+#if UNITY_EDITOR
 
-            // Resolves when the OS delivers the deep link that carries the identity id.
-            string identityId = await WaitForSigninAsync(authRequestId, ct);
+                // Without this flag the auth website also launches a standalone Explorer build,
+                // which would steal the signin from the editor.
+                url += "&bridgeOnly";
+#endif
 
-            return await FetchIdentityByIdAsync(identityId, ct);
+                webBrowser.OpenUrlMainThreadOnly(url);
+
+                // Resolves when the OS delivers the deep link that carries the identity id.
+                string identityId = await WaitForSigninAsync(authRequestId, ct);
+
+                return await FetchIdentityByIdAsync(identityId, ct);
+            }
+            finally { loginMutex.Release(); }
         }
 
         /// <summary>
@@ -118,12 +127,12 @@ namespace DCL.Web3.Authenticators
             IdentityAuthResponseDto json = await webRequestController.GetAsync(commonArguments, ct, ReportCategory.AUTHENTICATION)
                                                                      .CreateFromNewtonsoftJsonAsync<IdentityAuthResponseDto>()
                                                                      .WithCustomExceptionAsync(e => e.ResponseCode switch
-                                                                      {
-                                                                          404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NOT_FOUND, identityId),
-                                                                          410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.EXPIRED, identityId),
-                                                                          403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IP_MISMATCH, identityId),
-                                                                          _ => e,
-                                                                      });
+                                                                                                    {
+                                                                                                        404 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.NOT_FOUND, identityId),
+                                                                                                        410 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.EXPIRED, identityId),
+                                                                                                        403 => new DeeplinkSigninRetrievalException(DeeplinkSigninRetrievalException.ErrorReason.IP_MISMATCH, identityId),
+                                                                                                        _ => e,
+                                                                                                    });
 
             string? signerAddress = null;
             string? ephemeralPayload = null;

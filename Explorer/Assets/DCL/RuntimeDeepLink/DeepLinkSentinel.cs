@@ -82,7 +82,7 @@ namespace DCL.RuntimeDeepLink
                     if (deferralTimer.Elapsed < DEFERRED_SIGNIN_LIFETIME)
                         continue;
 
-                    ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"no login claimed the signin deeplink within {DEFERRED_SIGNIN_LIFETIME.TotalSeconds:0}s, dropping it: {deepLinkCreateResult.Value}");
+                    ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"no login claimed the signin deeplink within {DEFERRED_SIGNIN_LIFETIME.TotalSeconds:0}s, dropping it");
                     TryDeleteBridgeFile();
                     deferralTimer.Reset();
                     continue;
@@ -93,10 +93,10 @@ namespace DCL.RuntimeDeepLink
                 switch (result)
                 {
                     case DeepLinkHandleResult.CONSUMED:
-                        ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"successfully handled deeplink: {deepLinkCreateResult.Value}");
+                        ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, "successfully handled deeplink");
                         break;
                     case DeepLinkHandleResult.NO_MATCHES:
-                        ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, $"found no actionable content in deeplink: {deepLinkCreateResult.Value}");
+                        ReportHub.LogWarning(ReportCategory.RUNTIME_DEEPLINKS, "found no actionable content in deeplink");
                         break;
                 }
 
