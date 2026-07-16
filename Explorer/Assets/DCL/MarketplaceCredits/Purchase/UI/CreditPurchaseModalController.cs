@@ -27,6 +27,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
+        private readonly CancellationTokenSource disposalCts = new ();
 
         private ModalState currentState;
         private bool settlementPending;
@@ -48,6 +49,13 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             this.identityCache = identityCache;
             this.webBrowser = webBrowser;
             this.openGetCreditsPanelAsync = openGetCreditsPanelAsync;
+            purchaseService.StateChanged += OnPurchaseStateChanged;
+        }
+
+        public override void Dispose()
+        {
+            purchaseService.StateChanged -= OnPurchaseStateChanged;
+            disposalCts.SafeCancelAndDispose();
         }
 
         private static bool CanAfford(ShopListingDto listing, in UserCreditsResponse credits) =>
@@ -95,7 +103,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
                 viewInstance.OpenMarketplaceButton.onClick.RemoveListener(OnOpenMarketplaceClicked);
             }
 
-            purchaseService.StateChanged = null;
             lifeCts.SafeCancelAndDispose();
         }
 
@@ -161,7 +168,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private void OnGetCreditsClicked()
         {
             RequestClose();
-            OpenGetCreditsAfterCloseAsync(CancellationToken.None).Forget();
+            OpenGetCreditsAfterCloseAsync(disposalCts.Token).Forget();
         }
 
         private void OnOpenMarketplaceClicked()
@@ -173,7 +180,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private async UniTask PurchaseAsync(CancellationToken ct)
         {
             SetUiState(ModalState.PURCHASING);
-            purchaseService.StateChanged = OnPurchaseStateChanged;
             NativeWindowManager.RequestTemporaryWindowMode();
 
             try
@@ -195,7 +201,6 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             }
             finally
             {
-                purchaseService.StateChanged = null;
                 NativeWindowManager.ReleaseTemporaryWindowMode();
             }
         }

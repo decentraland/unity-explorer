@@ -61,7 +61,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
                 new CreditsChainConfig(DecentralandEnvironment.Zone), identityCache, web3Provider, isFeatureEnabled: true);
 
             recordedStates = new List<CreditsPurchaseState>();
-            service.StateChanged = state => recordedStates.Add(state);
+            service.StateChanged += state => recordedStates.Add(state);
         }
 
         private static TradeDto CreateTrade() =>

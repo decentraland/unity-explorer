@@ -63,7 +63,7 @@ namespace DCL.Passport.Modules
             int secondLastColonIndex = urnSpan.LastIndexOf(':');
             var contract = urnSpan.Slice(secondLastColonIndex + 1).ToString();
 
-            if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
+            if (!contract.StartsWith("0x") || item.Length == 0 || !ulong.TryParse(item, out ulong _))
                 return false;
 
             contractAddress = contract;

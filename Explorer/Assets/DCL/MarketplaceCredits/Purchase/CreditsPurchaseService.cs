@@ -29,7 +29,7 @@ namespace DCL.MarketplaceCredits.Purchase
         private readonly ICompositeWeb3Provider web3Provider;
         private readonly bool isFeatureEnabled;
 
-        public Action<CreditsPurchaseState>? StateChanged { get; set; }
+        public event Action<CreditsPurchaseState>? StateChanged;
 
         public CreditsPurchaseService(
             MarketplaceShopAPIClient shopAPIClient,

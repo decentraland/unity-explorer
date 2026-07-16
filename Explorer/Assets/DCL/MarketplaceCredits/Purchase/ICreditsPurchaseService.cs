@@ -6,7 +6,7 @@ namespace DCL.MarketplaceCredits.Purchase
 {
     public interface ICreditsPurchaseService
     {
-        Action<CreditsPurchaseState>? StateChanged { get; set; }
+        event Action<CreditsPurchaseState>? StateChanged;
 
         UniTask<CreditsPurchaseResult> PurchaseAsync(string tradeId, int expectedPriceCredits, CancellationToken ct);
     }
