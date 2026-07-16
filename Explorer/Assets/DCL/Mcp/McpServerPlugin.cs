@@ -30,7 +30,7 @@ namespace DCL.Mcp
     /// </summary>
     public class McpServerPlugin : IDCLGlobalPluginWithoutSettings
     {
-        public const int DEFAULT_PORT = 8123;
+        private const int DEFAULT_PORT = 8123;
 
         private const int MIN_PORT = 1024;
         private const int MAX_PORT = 65535;
@@ -164,7 +164,7 @@ namespace DCL.Mcp
             }
             catch (OperationCanceledException)
             {
-                // Disposed before loading completed; nothing to announce.
+                ReportHub.Log(LogType.Log, ReportCategory.MCP, "MCP server status announcement cancelled before loading completed");
             }
         }
     }
