@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.MarketplaceCredits.Purchase
 {
     // Server schema: marketplace-server GET /v3/catalog/shop (Server/shop/app/src/lib/api.ts ShopListingRaw).
