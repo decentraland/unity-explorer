@@ -80,3 +80,7 @@ Explorer/.cursorignore
 
 # API Keys
 .env
+
+# ReSharper CLI download for local linting (scripts/lint/download-resharper.sh)
+/rsharp/
+rsharp.zip
