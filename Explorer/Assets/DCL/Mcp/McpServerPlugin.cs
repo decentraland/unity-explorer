@@ -128,11 +128,9 @@ namespace DCL.Mcp
             registry.Register(new SetCameraModeTool(globalWorld, exposedCameraData));
             registry.Register(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData));
             registry.Register(new WalkTool(globalWorld, arguments.PlayerEntity));
-            registry.Register(new SendChatTool(chatMessagesBus));
             registry.Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity));
             registry.Register(new ListSceneEntitiesTool(worldInfoHub));
             registry.Register(new GetEntityDetailsTool(worldInfoHub));
-            registry.Register(new TriggerEmoteTool(globalWorldActions));
             registry.Register(new ClickEntityTool(globalWorld, arguments.PlayerEntity));
 
             var dispatcher = new McpJsonRpcDispatcher(registry, Application.version);
