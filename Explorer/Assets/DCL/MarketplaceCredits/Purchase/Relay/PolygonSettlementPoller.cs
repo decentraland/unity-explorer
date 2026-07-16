@@ -18,10 +18,10 @@ namespace DCL.MarketplaceCredits.Purchase
     public class PolygonSettlementPoller
     {
         private static readonly TimeSpan POLL_INTERVAL = TimeSpan.FromSeconds(5);
-        private static readonly string GET_TRANSACTION_METHOD = "eth_getTransactionReceipt";
-        private static readonly string CONFIRMED_STATUS = "0x1";
-        private static readonly string REVERTED_STATUS = "0x0";
-        private static readonly string STATUS_FIELD = "status";
+        private const string GET_TRANSACTION_METHOD = "eth_getTransactionReceipt";
+        private const string CONFIRMED_STATUS = "0x1";
+        private const string REVERTED_STATUS = "0x0";
+        private const string STATUS_FIELD = "status";
 
         private readonly IEthereumApi ethereumApi;
         private readonly CreditsChainConfig chainConfig;
