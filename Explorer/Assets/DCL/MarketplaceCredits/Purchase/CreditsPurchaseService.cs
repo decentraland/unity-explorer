@@ -178,7 +178,11 @@ namespace DCL.MarketplaceCredits.Purchase
                     CreditsPurchaseResult? fallbackFailure = null;
 
                     try { txHash = await SendWalletTransactionAsync(buyer, useCreditsCalldata, ct); }
-                    catch (OperationCanceledException) { throw; }
+                    catch (OperationCanceledException)
+                    {
+                        await ReleaseIntentAsync(authorization.credit.id);
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         bool userRejected = e.Message.IndexOf("reject", StringComparison.OrdinalIgnoreCase) >= 0
