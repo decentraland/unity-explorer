@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Profiling;
+using UnityEngine;
 using static Unity.Mathematics.math;
 
 namespace DCL.Profiling
@@ -10,7 +11,9 @@ namespace DCL.Profiling
     /// </summary>
     public class Profiler : IProfiler
     {
-        private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
+        private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS; also the lower floor for the target-relative threshold
+        private const long NS_PER_SECOND = 1_000_000_000;
+        private const float HICCUP_TARGET_FRAME_TIME_MULTIPLIER = 2f; // a frame counts as a hiccup above 2x the target frame time
         private const int FRAME_BUFFER_SIZE = 1_024; // 1000 samples: for 34 FPS it's 33 seconds gameplay, for 60 FPS it's 17 seconds
         private const int PHYS_SIM_BUFFER_SIZE = 10;
 
@@ -102,6 +105,9 @@ namespace DCL.Profiling
                 mainThreadTimeRecorder.Stop();
                 gpuFrameTimeRecorder.Stop();
             }
+
+            // Discard buffered samples so pre-transition hiccups aren't attributed to the next realm/scene on resume.
+            ResetHiccupRecorders();
         }
 
         public void StartFrameTimeDataCollection()
@@ -134,6 +140,9 @@ namespace DCL.Profiling
         {
             MainThreadFrameTimes.Clear();
             GpuFrameTimes.Clear();
+
+            // Reset the hiccup buffers too, so each report counts only its own interval's frames.
+            ResetHiccupRecorders();
         }
 
         /// <summary>
@@ -141,24 +150,23 @@ namespace DCL.Profiling
         /// </summary>
         public FrameTimeStats? CalculateMainThreadFrameTimesNs()
         {
-            int availableSamples = mainThreadTimeRecorder.Capacity;
+            samples.Clear();
+            mainThreadTimeRecorder.CopyTo(samples);
 
-            if (availableSamples == 0)
+            if (samples.Count == 0)
                 return null;
 
             long minFrameTime = long.MaxValue;
             long maxFrameTime = long.MinValue;
 
             long hiccupCount = 0;
-
-            samples.Clear();
-            mainThreadTimeRecorder.CopyTo(samples);
+            long thresholdNs = EffectiveHiccupThresholdNs();
 
             for (var i = 0; i < samples.Count; i++)
             {
                 long frameTime = samples[i].Value;
 
-                if (frameTime > HICCUP_THRESHOLD_IN_NS) hiccupCount++;
+                if (frameTime > thresholdNs) hiccupCount++;
                 if (frameTime < minFrameTime) minFrameTime = frameTime;
                 if (frameTime > maxFrameTime) maxFrameTime = frameTime;
             }
@@ -166,35 +174,39 @@ namespace DCL.Profiling
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
         }
 
-        public (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateMainThreadHiccups() =>
+        public HiccupStats CalculateMainThreadHiccups() =>
             CalculateThreadHiccups(mainThreadTimeRecorder);
 
-        public (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateGpuHiccups() =>
+        public HiccupStats CalculateGpuHiccups() =>
             CalculateThreadHiccups(gpuFrameTimeRecorder);
 
-        private (bool hasValue, long count, long sumTime, long min, long max, float avg) CalculateThreadHiccups(ProfilerRecorder recorder)
+        private HiccupStats CalculateThreadHiccups(ProfilerRecorder recorder)
         {
-            int availableSamples = recorder.Capacity;
-
-            if (availableSamples == 0)
-                return (false, 0, 0, 0, 0, 0);
-
-            long hiccupCount = 0;
-            long hiccupTotalTime = 0;
-            long hiccupMin = -1;
-            long hiccupMax = -1;
-
             samples.Clear();
             recorder.CopyTo(samples);
 
-            for (var i = 0; i < samples.Count; i++)
+            // Actual frames in the window; below FRAME_BUFFER_SIZE during warm-up or right after a reset.
+            int sampleCount = samples.Count;
+            long thresholdNs = EffectiveHiccupThresholdNs();
+
+            if (sampleCount == 0)
+                return new HiccupStats(false, 0, 0, 0, 0, 0, 0, 0, thresholdNs);
+
+            long hiccupCount = 0;
+            long hiccupTotalTime = 0;
+            long hiccupExcessTime = 0;
+            long hiccupMin = -1;
+            long hiccupMax = -1;
+
+            for (var i = 0; i < sampleCount; i++)
             {
                 long frameTime = samples[i].Value;
 
-                if (frameTime > HICCUP_THRESHOLD_IN_NS)
+                if (frameTime > thresholdNs)
                 {
                     hiccupCount++;
                     hiccupTotalTime += frameTime;
+                    hiccupExcessTime += frameTime - thresholdNs;
 
                     if (frameTime > hiccupMax) hiccupMax = frameTime;
 
@@ -203,25 +215,57 @@ namespace DCL.Profiling
                 }
             }
 
-            return (true, hiccupCount, hiccupTotalTime, hiccupMin, hiccupMax, hiccupCount == 0 ? 0 : hiccupTotalTime / (float)hiccupCount);
+            float avg = hiccupCount == 0 ? 0 : hiccupTotalTime / (float)hiccupCount;
+            return new HiccupStats(true, hiccupCount, hiccupTotalTime, hiccupExcessTime, hiccupMin, hiccupMax, avg, sampleCount, thresholdNs);
+        }
+
+        // Hiccup bar = 2x the target frame time, floored at 50 ms. Uncapped/vsync configs (>= 60 FPS)
+        // stay at the floor; capped configs (e.g. 30 FPS -> 67 ms) get a higher bar so their normal
+        // cadence isn't counted as hiccups.
+        private static long EffectiveHiccupThresholdNs()
+        {
+            int targetFps = Application.targetFrameRate;
+
+            // 0 (vsync) or -1 (uncapped): no cap set, so use the floor.
+            if (targetFps <= 0)
+                return HICCUP_THRESHOLD_IN_NS;
+
+            var relativeThresholdNs = (long)(HICCUP_TARGET_FRAME_TIME_MULTIPLIER * NS_PER_SECOND / targetFps);
+            return max(HICCUP_THRESHOLD_IN_NS, relativeThresholdNs);
         }
 
         private float GetRecorderSamplesSum(ProfilerRecorder recorder)
         {
-            int samplesCount = recorder.Capacity;
+            samples.Clear();
+            recorder.CopyTo(samples);
 
-            if (samplesCount == 0)
+            if (samples.Count == 0)
                 return 0;
 
             float r = 0;
-
-            samples.Clear();
-            recorder.CopyTo(samples);
 
             for (var i = 0; i < samples.Count; i++)
                 r += samples[i].Value;
 
             return r;
+        }
+
+        // ProfilerRecorder has no flush, so a fresh window means recreating the recorders (keeping run state).
+        private void ResetHiccupRecorders()
+        {
+            bool wasRunning = mainThreadTimeRecorder.IsRunning;
+
+            mainThreadTimeRecorder.Dispose();
+            gpuFrameTimeRecorder.Dispose();
+
+            mainThreadTimeRecorder = new ProfilerRecorder(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
+            gpuFrameTimeRecorder = new ProfilerRecorder(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
+
+            if (wasRunning)
+            {
+                mainThreadTimeRecorder.Start();
+                gpuFrameTimeRecorder.Start();
+            }
         }
     }
 }
