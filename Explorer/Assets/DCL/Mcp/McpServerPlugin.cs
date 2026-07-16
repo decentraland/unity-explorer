@@ -36,26 +36,32 @@ namespace DCL.Mcp
         private const int MAX_PORT = 65535;
 
         private readonly int port;
-        private readonly IGlobalWorldActions globalWorldActions;
+
+        private readonly ICoroutineRunner coroutineRunner;
+        private readonly ILoadingStatus loadingStatus;
+
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly ExposedCameraData exposedCameraData;
+
+        private readonly Arch.Core.World globalWorld;
+        private readonly IGlobalWorldActions globalWorldActions;
+        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
+        private readonly IWorldInfoHub worldInfoHub;
+
         private readonly IScenesCache scenesCache;
         private readonly ICurrentSceneInfo currentSceneInfo;
-        private readonly ILoadingStatus loadingStatus;
-        private readonly IWorldInfoHub worldInfoHub;
         private readonly ECSReloadScene reloadSceneController;
-        private readonly ExposedCameraData exposedCameraData;
-        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
-        private readonly ICoroutineRunner coroutineRunner;
-        private readonly Arch.Core.World globalWorld;
         private readonly bool localSceneDevelopment;
+
         private readonly SceneLogBuffer logBuffer;
 
-        private ScreenshotTool? screenshotTool;
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
 
+        private ScreenshotTool? screenshotTool;
+
         public McpServerPlugin(
-            int port,
+            IAppArgs appArgs,
             IGlobalWorldActions globalWorldActions,
             IChatMessagesBus chatMessagesBus,
             IScenesCache scenesCache,
@@ -70,7 +76,12 @@ namespace DCL.Mcp
             Arch.Core.World globalWorld,
             bool localSceneDevelopment)
         {
-            this.port = port;
+            port = appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
+                   && int.TryParse(portValue, out int parsedPort)
+                   && parsedPort is >= MIN_PORT and <= MAX_PORT
+                ? parsedPort
+                : DEFAULT_PORT;
+
             this.globalWorldActions = globalWorldActions;
             this.chatMessagesBus = chatMessagesBus;
             this.scenesCache = scenesCache;
@@ -97,19 +108,6 @@ namespace DCL.Mcp
             serverCts.SafeCancelAndDispose();
         }
 
-        public static bool IsEnabled(IAppArgs appArgs) =>
-            appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT);
-
-        public static int ResolvePort(IAppArgs appArgs)
-        {
-            if (appArgs.TryGetValue(AppArgsFlags.MCP_PORT, out string? portValue)
-                && int.TryParse(portValue, out int parsedPort)
-                && parsedPort is >= MIN_PORT and <= MAX_PORT)
-                return parsedPort;
-
-            return DEFAULT_PORT;
-        }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
@@ -117,26 +115,24 @@ namespace DCL.Mcp
 
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
-            var registry = new McpToolsRegistry()
-                          .Register(screenshotTool)
-                          .Register(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
-                          .Register(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
-                          .Register(new GetSceneLogsTool(logBuffer))
-                          .Register(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
-                          .Register(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
-                          .Register(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
-                          .Register(new SetCameraModeTool(globalWorld, exposedCameraData))
-                          .Register(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
-                          .Register(new WalkTool(globalWorld, arguments.PlayerEntity))
-                          .Register(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
-                          .Register(new ListSceneEntitiesTool(worldInfoHub))
-                          .Register(new GetEntityDetailsTool(worldInfoHub))
-                          .Register(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
+            var toolsRegistry = new McpToolsRegistry()
+                          .Add(screenshotTool)
+                          .Add(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
+                          .Add(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))
+                          .Add(new GetSceneLogsTool(logBuffer))
+                          .Add(new TeleportTool(chatMessagesBus, scenesCache, loadingStatus))
+                          .Add(new MoveToTool(globalWorldActions, globalWorld, arguments.PlayerEntity))
+                          .Add(new LookAtTool(globalWorldActions, globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
+                          .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
+                          .Add(new WalkTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
+                          .Add(new ListSceneEntitiesTool(worldInfoHub))
+                          .Add(new GetEntityDetailsTool(worldInfoHub))
+                          .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
                           .Build();
 
-            var dispatcher = new McpJsonRpcDispatcher(registry, Application.version);
-
-            server = new McpHttpServer(dispatcher, port);
+            server = new McpHttpServer(toolsRegistry, port);
             serverCts = serverCts.SafeRestart();
 
             bool started = server.TryStart();

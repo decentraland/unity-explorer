@@ -70,6 +70,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HARDWARE_FINGERPRINT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
+                [FeatureId.MCP_SERVER] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -205,5 +206,6 @@ namespace DCL.FeatureFlags
         PULSE = 65,
         HARDWARE_FINGERPRINT = 66,
         USER_CREDITS = 67,
+        MCP_SERVER = 68,
     }
 }

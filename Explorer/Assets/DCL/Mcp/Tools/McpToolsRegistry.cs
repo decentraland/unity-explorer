@@ -7,14 +7,13 @@ namespace DCL.Mcp.Tools
     public class McpToolsRegistry
     {
         private readonly Dictionary<string, IMcpTool> tools = new ();
-
         private JObject toolsList = null!;
 
         /// <summary>Lets the built registry stand in directly for its tools/list payload.</summary>
         public static implicit operator JObject(McpToolsRegistry registry) =>
             registry.toolsList;
 
-        public McpToolsRegistry Register(IMcpTool tool)
+        public McpToolsRegistry Add(IMcpTool tool)
         {
             tools.Add(tool.Name, tool);
             return this;

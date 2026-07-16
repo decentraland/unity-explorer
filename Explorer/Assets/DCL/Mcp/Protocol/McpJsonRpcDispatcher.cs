@@ -45,13 +45,13 @@ namespace DCL.Mcp.Protocol
             JObject request;
 
             try { request = JObject.Parse(requestJson); }
-            catch (JsonException) { return JsonRpc.Error(null, PARSE_ERROR, "Parse error"); }
+            catch (JsonException) { return JsonRpcEnvelope.Error(null, PARSE_ERROR, "Parse error"); }
 
             JToken? id = request["id"];
             string? method = request["method"]?.Value<string>();
 
             if (string.IsNullOrEmpty(method))
-                return id == null ? null : JsonRpc.Error(id, INVALID_REQUEST, "Invalid request: missing method");
+                return id == null ? null : JsonRpcEnvelope.Error(id, INVALID_REQUEST, "Invalid request: missing method");
 
             // Messages without an id are notifications ("notifications/initialized" et al.) and get no response.
             if (id == null)
@@ -59,34 +59,12 @@ namespace DCL.Mcp.Protocol
 
             return method switch
                    {
-                       "initialize" => JsonRpc.Result(id, InitializeResult()),
-                       "ping" => JsonRpc.Result(id, new JObject()),
-                       "tools/list" => JsonRpc.Result(id, tools),
+                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult()),
+                       "ping" => JsonRpcEnvelope.Result(id, new JObject()),
+                       "tools/list" => JsonRpcEnvelope.Result(id, tools),
                        "tools/call" => await CallToolAsync(id, request["params"] as JObject, ct),
-                       _ => JsonRpc.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}")
+                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}")
                    };
-        }
-
-        private async UniTask<string?> CallToolAsync(JToken id, JObject? callParams, CancellationToken ct)
-        {
-            string? toolName = callParams?["name"]?.Value<string>();
-
-            if (string.IsNullOrEmpty(toolName) || !tools.TryGet(toolName, out IMcpTool? tool))
-                return JsonRpc.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
-
-            JObject arguments = callParams?["arguments"] as JObject ?? new JObject();
-
-            try
-            {
-                McpToolResult result = await tool.ExecuteAsync(arguments, ct);
-                return JsonRpc.Result(id, result.Payload);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.MCP);
-                return JsonRpc.Result(id, McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}").Payload);
-            }
         }
 
         private JObject InitializeResult() =>
@@ -102,7 +80,29 @@ namespace DCL.Mcp.Protocol
                 },
             };
 
-        private static class JsonRpc
+        private async UniTask<string?> CallToolAsync(JToken id, JObject? callParams, CancellationToken ct)
+        {
+            string? toolName = callParams?["name"]?.Value<string>();
+
+            if (string.IsNullOrEmpty(toolName) || !tools.TryGet(toolName, out IMcpTool? tool))
+                return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
+
+            JObject arguments = callParams?["arguments"] as JObject ?? new JObject();
+
+            try
+            {
+                McpToolResult result = await tool.ExecuteAsync(arguments, ct);
+                return JsonRpcEnvelope.Result(id, result.Payload);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.MCP);
+                return JsonRpcEnvelope.Result(id, McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}").Payload);
+            }
+        }
+
+        private static class JsonRpcEnvelope
         {
             public static string Result(JToken id, JToken result) =>
                 new JObject

@@ -822,9 +822,9 @@ namespace Global.Dynamic
                 globalPlugins.Add(lodContainer.RoadPlugin);
             }
 
-            if (McpServerPlugin.IsEnabled(appArgs))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER))
                 globalPlugins.Add(new McpServerPlugin(
-                    McpServerPlugin.ResolvePort(appArgs),
+                    appArgs,
                     new GlobalWorldActions(globalWorld, playerEntity, localSceneDevelopment, bootstrapContainer.UseRemoteAssetBundles, FeaturesRegistry.Instance.IsEnabled(FeatureId.SELF_PREVIEW_BUILDER_COLLECTIONS)),
                     chatContainer.ChatMessagesBus,
                     staticContainer.ScenesCache,

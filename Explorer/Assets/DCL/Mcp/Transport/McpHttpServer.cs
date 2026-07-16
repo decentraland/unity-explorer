@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Mcp.Protocol;
+using DCL.Mcp.Tools;
 using System;
 using System.IO;
 using System.Net;
@@ -25,14 +26,16 @@ namespace DCL.Mcp.Transport
 
         private HttpListener? listener;
 
-        public McpHttpServer(McpJsonRpcDispatcher dispatcher, int port)
+        public McpHttpServer(McpToolsRegistry toolsRegistry, int port)
         {
-            this.dispatcher = dispatcher;
+            this.dispatcher = new McpJsonRpcDispatcher(toolsRegistry, Application.version);;
             this.port = port;
         }
 
         public void Dispose()
         {
+            if (listener == null) return;
+
             try
             {
                 listener?.Stop();
