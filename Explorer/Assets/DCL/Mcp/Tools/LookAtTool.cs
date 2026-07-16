@@ -3,7 +3,7 @@ using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;

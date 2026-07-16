@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
 
-namespace DCL.Mcp.Protocol
+namespace DCL.Mcp.Server
 {
     /// <summary>
     ///     Routes JSON-RPC 2.0 messages of the MCP Streamable HTTP transport to the tool registry.

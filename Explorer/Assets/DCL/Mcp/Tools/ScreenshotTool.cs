@@ -2,7 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;

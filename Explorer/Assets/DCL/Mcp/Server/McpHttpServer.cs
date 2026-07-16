@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Mcp.Protocol;
 using DCL.Mcp.Tools;
 using System;
 using System.IO;
@@ -10,7 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
 
-namespace DCL.Mcp.Transport
+namespace DCL.Mcp.Server
 {
     /// <summary>
     ///     Minimal MCP Streamable HTTP transport on top of <see cref="HttpListener" />, bound to 127.0.0.1 only.

@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;

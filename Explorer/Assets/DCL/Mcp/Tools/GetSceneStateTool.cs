@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;

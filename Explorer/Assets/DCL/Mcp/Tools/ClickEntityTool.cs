@@ -2,7 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.Mcp.Components;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

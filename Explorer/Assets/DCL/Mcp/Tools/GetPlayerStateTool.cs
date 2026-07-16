@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using DCL.Profiles;
 using ECS.SceneLifeCycle.CurrentScene;
 using Newtonsoft.Json;

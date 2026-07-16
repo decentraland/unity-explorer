@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using DCL.SkyBox.Components;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;

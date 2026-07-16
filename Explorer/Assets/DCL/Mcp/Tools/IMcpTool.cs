@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Mcp.Protocol;
+using DCL.Mcp.Server;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 

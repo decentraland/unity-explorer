@@ -1,7 +1,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 
-namespace DCL.Mcp.Protocol
+namespace DCL.Mcp.Server
 {
     /// <summary>
     ///     The payload of a tools/call result: a content array of text/image items,
