@@ -16,9 +16,14 @@ outputs:
 runs:
   using: "composite"
   steps:
+    # CheckNamespace is excluded from the CI ratchet only: namespaces are domain names,
+    # not folder paths, so folder-namespace mismatch is expected here. Local inspection
+    # (Rider and the AI-flow Stop hook) intentionally still reports it.
     - name: Filter false positives and count
       id: count
       shell: bash
+      env:
+        EXCLUDE_RULES: CheckNamespace
       run: |
         set -euo pipefail
         count=$(bash "$GITHUB_WORKSPACE/scripts/lint/filter-warnings.sh" "${{ inputs.report }}" "${{ inputs.filtered_output }}")

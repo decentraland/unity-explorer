@@ -248,6 +248,10 @@ List<string> filteredWords = new FilterLogic(listWords).
 - Folder structure should be aligned with the namespaces.
   - Not every folder should be namespace provider, especially folders like `Scripts`, `MainScripts`, `Assets`.
   - Folders that are deep in the folders hierarchy should be without namespace.
+- Never suppress the folder-namespace inspection with `// ReSharper disable once CheckNamespace` (or the file-wide `// ReSharper disable CheckNamespace`).
+  - Namespaces name domains and deliberately survive folder and assembly reshuffles (e.g. `DCL.Ipfs` lives in the `DCL.Network` assembly), so a folder-namespace mismatch is often intentional.
+  - The CI warning ratchet already excludes the `CheckNamespace` inspection, so the comment changes nothing remotely — it is pure noise, and it hides genuine cases where a type joined the wrong namespace.
+  - If the IDE flags a mismatch, either move the type into the domain namespace its closest collaborators live in, or leave the warning visible.
 
 ### Whitespaces
 
