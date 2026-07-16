@@ -117,7 +117,7 @@ namespace DCL.Mcp
 
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 
-            var registry = new McpToolRegistry()
+            var registry = new McpToolsRegistry()
                           .Register(screenshotTool)
                           .Register(new GetPlayerStateTool(globalWorld, arguments.PlayerEntity, exposedCameraData, currentSceneInfo))
                           .Register(new GetSceneStateTool(scenesCache, currentSceneInfo, loadingStatus, localSceneDevelopment))

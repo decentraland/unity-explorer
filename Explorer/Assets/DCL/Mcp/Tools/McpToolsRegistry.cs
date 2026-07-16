@@ -4,19 +4,23 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.Mcp.Tools
 {
-    public class McpToolRegistry
+    public class McpToolsRegistry
     {
         private readonly Dictionary<string, IMcpTool> tools = new ();
 
-        public JObject ToolsList { get; private set; } = new () { ["tools"] = new JArray() };
+        private JObject toolsList = null!;
 
-        public McpToolRegistry Register(IMcpTool tool)
+        /// <summary>Lets the built registry stand in directly for its tools/list payload.</summary>
+        public static implicit operator JObject(McpToolsRegistry registry) =>
+            registry.toolsList;
+
+        public McpToolsRegistry Register(IMcpTool tool)
         {
             tools.Add(tool.Name, tool);
             return this;
         }
 
-        public McpToolRegistry Build()
+        public McpToolsRegistry Build()
         {
             var toolsArray = new JArray();
 
@@ -30,7 +34,7 @@ namespace DCL.Mcp.Tools
                 });
             }
 
-            ToolsList = new JObject { ["tools"] = toolsArray };
+            toolsList = new JObject { ["tools"] = toolsArray };
             return this;
         }
 
