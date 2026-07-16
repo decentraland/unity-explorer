@@ -159,7 +159,7 @@ namespace DCL.Mcp.Transport
         private void AddCommonHeaders(HttpListenerResponse response)
         {
             response.AddHeader("Mcp-Session-Id", sessionId);
-            response.AddHeader("MCP-Protocol-Version", McpConstants.PROTOCOL_VERSION);
+            response.AddHeader("MCP-Protocol-Version", McpJsonRpcDispatcher.PROTOCOL_VERSION);
         }
 
         private void TryWriteInternalError(HttpListenerContext context)

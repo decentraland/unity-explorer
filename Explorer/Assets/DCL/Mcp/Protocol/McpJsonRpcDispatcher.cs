@@ -14,6 +14,16 @@ namespace DCL.Mcp.Protocol
     /// </summary>
     public class McpJsonRpcDispatcher
     {
+        /// <summary>Version of the MCP specification this server implements, declared in the initialize handshake.</summary>
+        public const string PROTOCOL_VERSION = "2025-06-18";
+
+        private const string SERVER_NAME = "decentraland-explorer";
+
+        private const int PARSE_ERROR = -32700;
+        private const int INVALID_REQUEST = -32600;
+        private const int METHOD_NOT_FOUND = -32601;
+        private const int INVALID_PARAMS = -32602;
+
         private readonly McpToolRegistry toolRegistry;
         private readonly string serverVersion;
 
@@ -35,13 +45,13 @@ namespace DCL.Mcp.Protocol
             JObject request;
 
             try { request = JObject.Parse(requestJson); }
-            catch (JsonException) { return Serialize(JsonRpc.Error(null, McpConstants.PARSE_ERROR, "Parse error")); }
+            catch (JsonException) { return Serialize(JsonRpc.Error(null, PARSE_ERROR, "Parse error")); }
 
             JToken? id = request["id"];
             string? method = request["method"]?.Value<string>();
 
             if (string.IsNullOrEmpty(method))
-                return id == null ? null : Serialize(JsonRpc.Error(id, McpConstants.INVALID_REQUEST, "Invalid request: missing method"));
+                return id == null ? null : Serialize(JsonRpc.Error(id, INVALID_REQUEST, "Invalid request: missing method"));
 
             // Messages without an id are notifications ("notifications/initialized" et al.) and get no response.
             if (id == null)
@@ -58,7 +68,7 @@ namespace DCL.Mcp.Protocol
                 case "tools/call":
                     return await CallToolAsync(id, request["params"] as JObject, ct);
                 default:
-                    return Serialize(JsonRpc.Error(id, McpConstants.METHOD_NOT_FOUND, $"Method not found: {method}"));
+                    return Serialize(JsonRpc.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}"));
             }
         }
 
@@ -67,7 +77,7 @@ namespace DCL.Mcp.Protocol
             string? toolName = callParams?["name"]?.Value<string>();
 
             if (string.IsNullOrEmpty(toolName) || !toolRegistry.TryGet(toolName, out IMcpTool? tool))
-                return Serialize(JsonRpc.Error(id, McpConstants.INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}"));
+                return Serialize(JsonRpc.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}"));
 
             JObject arguments = callParams?["arguments"] as JObject ?? new JObject();
 
@@ -87,11 +97,11 @@ namespace DCL.Mcp.Protocol
         private JObject InitializeResult() =>
             new ()
             {
-                ["protocolVersion"] = McpConstants.PROTOCOL_VERSION,
+                ["protocolVersion"] = PROTOCOL_VERSION,
                 ["capabilities"] = new JObject { ["tools"] = new JObject() },
                 ["serverInfo"] = new JObject
                 {
-                    ["name"] = McpConstants.SERVER_NAME,
+                    ["name"] = SERVER_NAME,
                     ["version"] = serverVersion,
                     ["pid"] = processId,
                 },
