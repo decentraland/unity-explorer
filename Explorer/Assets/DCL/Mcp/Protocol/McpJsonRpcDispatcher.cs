@@ -42,29 +42,56 @@ namespace DCL.Mcp.Protocol
         /// </summary>
         public async UniTask<string?> DispatchAsync(string requestJson, CancellationToken ct)
         {
-            JObject request;
+            var routable = ParseRoutableRequest(requestJson, out string? earlyResponse);
+            if (routable == null)
+                return earlyResponse;
 
+            JToken id = routable.Value.id;
+
+            return routable.Value.method switch
+                   {
+                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult()),
+                       "ping" => JsonRpcEnvelope.Result(id, new JObject()),
+                       "tools/list" => JsonRpcEnvelope.Result(id, tools),
+                       "tools/call" => await CallToolAsync(id,
+                           toolName: routable.Value.callParams?["name"]?.Value<string>(),
+                           arguments: routable.Value.callParams?["arguments"] as JObject ?? new JObject(),
+                           ct),
+                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {routable.Value.method}")
+                   };
+        }
+
+        /// <summary>
+        ///     Parses the raw message and returns the id, method and params to route on.
+        ///     Returns null when there is nothing to route: <paramref name="earlyResponse" /> then
+        ///     carries the reply to send back (a JSON-RPC error) or null for a notification that gets no response.
+        /// </summary>
+        private static (JToken id, string method, JObject? callParams)? ParseRoutableRequest(string requestJson, out string? earlyResponse)
+        {
+            earlyResponse = null;
+
+            JObject request;
             try { request = JObject.Parse(requestJson); }
-            catch (JsonException) { return JsonRpcEnvelope.Error(null, PARSE_ERROR, "Parse error"); }
+            catch (JsonException)
+            {
+                earlyResponse = JsonRpcEnvelope.Error(null, PARSE_ERROR, "Parse error");
+                return null;
+            }
 
             JToken? id = request["id"];
             string? method = request["method"]?.Value<string>();
 
             if (string.IsNullOrEmpty(method))
-                return id == null ? null : JsonRpcEnvelope.Error(id, INVALID_REQUEST, "Invalid request: missing method");
+            {
+                earlyResponse = id == null ? null : JsonRpcEnvelope.Error(id, INVALID_REQUEST, "Invalid request: missing method");
+                return null;
+            }
 
             // Messages without an id are notifications ("notifications/initialized" et al.) and get no response.
             if (id == null)
                 return null;
 
-            return method switch
-                   {
-                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult()),
-                       "ping" => JsonRpcEnvelope.Result(id, new JObject()),
-                       "tools/list" => JsonRpcEnvelope.Result(id, tools),
-                       "tools/call" => await CallToolAsync(id, request["params"] as JObject, ct),
-                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}")
-                   };
+            return (id, method, request["params"] as JObject);
         }
 
         private JObject InitializeResult() =>
@@ -80,14 +107,10 @@ namespace DCL.Mcp.Protocol
                 },
             };
 
-        private async UniTask<string?> CallToolAsync(JToken id, JObject? callParams, CancellationToken ct)
+        private async UniTask<string?> CallToolAsync(JToken id, string? toolName, JObject arguments, CancellationToken ct)
         {
-            string? toolName = callParams?["name"]?.Value<string>();
-
             if (!tools.TryGet(toolName, out IMcpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
-
-            JObject arguments = callParams?["arguments"] as JObject ?? new JObject();
 
             try
             {
