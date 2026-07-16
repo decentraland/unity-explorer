@@ -38,8 +38,8 @@ namespace DCL.MarketplaceCredits.Purchase
     // AI Generated on the base of the backend information
     public class CreditsManagerMetaTxRelayer
     {
-        private static readonly string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
-        private static readonly string ETH_CALL_METHOD = "eth_call";
+        private const string ETH_SIGN_TYPED_DATA_METHOD = "eth_signTypedData_v4";
+        private const string ETH_CALL_METHOD = "eth_call";
 
         private readonly IEthereumApi ethereumApi;
         private readonly IWebRequestController webRequestController;
