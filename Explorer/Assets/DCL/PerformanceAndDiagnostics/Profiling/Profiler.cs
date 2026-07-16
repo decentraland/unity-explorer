@@ -21,11 +21,7 @@ namespace DCL.Profiling
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
 
 #if ENABLE_PROFILER
-        // Subtracted from memory readings: Profiler buffers inflate the OS footprint in Editor/dev builds only.
-        // Guarded by ENABLE_PROFILER: in release players the Profiler's dedicated allocator does not exist and these
-        // counters mirror "Total Used/Reserved Memory" instead of profiler overhead (confirmed Unity bug), so the
-        // subtraction would zero out the budget readings there.
-        // See https://discussions.unity.com/t/profiler-used-memory-on-non-development-player/900344
+        // Subtracted from memory readings in Editor/dev builds only: in release players these counters mirror "Total Used/Reserved Memory" instead of profiler overhead (Unity bug: https://discussions.unity.com/t/profiler-used-memory-on-non-development-player/900344), so subtracting them there would zero out the budget readings.
         private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
         private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
 #endif
