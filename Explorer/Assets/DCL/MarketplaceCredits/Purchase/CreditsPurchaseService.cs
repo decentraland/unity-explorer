@@ -211,7 +211,7 @@ namespace DCL.MarketplaceCredits.Purchase
 
             SetState(CreditsPurchaseState.WAITING_SETTLEMENT);
 
-            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash!, SETTLEMENT_TIMEOUT, ct);
+            SettlementOutcome settlement = await settlementPoller.WaitForSettlementAsync(txHash!, SETTLEMENT_TIMEOUT, ct); // non-null: guarded by IsNullOrEmpty check at line 195
 
             switch (settlement)
             {
