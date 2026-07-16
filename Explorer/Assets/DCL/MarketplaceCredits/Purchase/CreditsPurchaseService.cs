@@ -143,7 +143,14 @@ namespace DCL.MarketplaceCredits.Purchase
 
             SetState(CreditsPurchaseState.SIGNING);
 
-            RelayResult relay = await metaTxRelayer.RelayUseCreditsAsync(buyer, useCreditsCalldata, ct);
+            RelayResult relay;
+
+            try { relay = await metaTxRelayer.RelayUseCreditsAsync(buyer, useCreditsCalldata, ct); }
+            catch (OperationCanceledException)
+            {
+                await ReleaseIntentAsync(authorization.credit.id);
+                throw;
+            }
             string? txHash = null;
 
             switch (relay.Outcome)
