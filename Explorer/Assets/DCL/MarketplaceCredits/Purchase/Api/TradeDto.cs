@@ -1,5 +1,6 @@
 using System;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.MarketplaceCredits.Purchase
 {
     // Server schema: marketplace-server GET /v1/trades/:id (@dcl/schemas Trade, unwrapped from { ok, data }).
