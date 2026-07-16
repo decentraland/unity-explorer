@@ -20,7 +20,7 @@ namespace DCL.MarketplaceCredits.Purchase
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<ShopListingDto?> GetShopListingForItemAsync(string contractAddress, string itemId, CancellationToken ct)
+        public virtual async UniTask<ShopListingDto?> GetShopListingForItemAsync(string contractAddress, string itemId, CancellationToken ct)
         {
             var url = $"{marketplaceServerBaseUrl}/v3/catalog/shop?contractAddress={contractAddress}&itemId={itemId}&first=1";
 
@@ -30,7 +30,7 @@ namespace DCL.MarketplaceCredits.Purchase
             return response.data is { Length: > 0 } ? response.data[0] : null;
         }
 
-        public async UniTask<TradeDto?> GetTradeAsync(string tradeId, CancellationToken ct)
+        public virtual async UniTask<TradeDto?> GetTradeAsync(string tradeId, CancellationToken ct)
         {
             var url = $"{marketplaceServerBaseUrl}/v1/trades/{tradeId}";
 

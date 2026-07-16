@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace DCL.MarketplaceCredits.Purchase.Tests
 {
@@ -181,6 +183,8 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         public async Task MapAuthorizationFailureWithoutReleasingAnything()
         {
             // Arrange
+            LogAssert.Expect(LogType.Exception, "Exception: boom");
+
             creditsAPIClient.AuthorizeUsdCreditAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                             .Returns(UniTask.FromException<AuthorizeCreditResponse>(new Exception("boom")));
 

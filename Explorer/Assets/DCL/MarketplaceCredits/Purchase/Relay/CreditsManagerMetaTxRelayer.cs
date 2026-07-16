@@ -58,7 +58,7 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct)
+        public virtual async UniTask<RelayResult> RelayUseCreditsAsync(string buyer, string useCreditsCalldata, CancellationToken ct)
         {
             BigInteger nonce;
 

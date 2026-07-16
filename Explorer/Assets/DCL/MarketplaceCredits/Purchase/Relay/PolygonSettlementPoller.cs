@@ -32,7 +32,7 @@ namespace DCL.MarketplaceCredits.Purchase
             this.chainConfig = chainConfig;
         }
 
-        public async UniTask<SettlementOutcome> WaitForSettlementAsync(string txHash, TimeSpan timeout, CancellationToken ct)
+        public virtual async UniTask<SettlementOutcome> WaitForSettlementAsync(string txHash, TimeSpan timeout, CancellationToken ct)
         {
             DateTime deadline = DateTime.UtcNow + timeout;
 
