@@ -46,8 +46,6 @@ namespace ECS.SceneLifeCycle.Systems
         private ISceneFacade? currentActiveScene;
         private Vector2Int previousParcelPosition;
 
-        private Vector2Int lastParcel;
-
         //Debug only
         private readonly Dictionary<Material, Color> originalColors = new ();
         private readonly Dictionary<Material, int> originalCullValues = new ();
@@ -91,13 +89,9 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             if (!realmData.Configured)
-            {
-                lastParcel = new Vector2Int(int.MinValue, int.MinValue);
                 return;
-            }
             Vector2Int parcel = World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
-            lastParcel = parcel;
             UpdateSceneReadiness(parcel);
 
             if (debugBuilder.IsVisible)
