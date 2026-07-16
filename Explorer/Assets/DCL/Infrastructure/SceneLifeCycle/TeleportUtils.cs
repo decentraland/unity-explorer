@@ -84,45 +84,69 @@ namespace ECS.SceneLifeCycle
 
             if (sceneDef != null && spawnPoints is { Count: > 0 })
             {
-                LocalBounds bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, parcel);
+                SceneMetadata.SpawnPoint spawnPoint;
+                Vector3 anchorWorldPosition;
+                LocalBounds bounds;
 
-                SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition, in bounds, spawnPointName);
+                if (TryPickNamedSpawnPoint(spawnPoints, spawnPointName, out spawnPoint))
+                {
+                    // Named spawn point positions are scene-local: anchor them at the scene base parcel,
+                    // not at the teleport target parcel
+                    Vector2Int baseParcel = sceneDef.metadata.scene.DecodedBase;
+                    anchorWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(baseParcel).WithErrorCompensation();
+                    bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, baseParcel);
+                }
+                else
+                {
+                    anchorWorldPosition = parcelBaseWorldPosition;
+                    bounds = CalculateLocalBounds(sceneDef.metadata.scene.DecodedParcels, parcel);
+                    spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition, in bounds);
+                }
 
-                targetWorldPosition += GetSpawnPositionOffset(spawnPoint, in bounds);
+                targetWorldPosition = anchorWorldPosition + GetSpawnPositionOffset(spawnPoint, in bounds);
 
                 if (spawnPoint.cameraTarget != null)
-                    cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
+                    cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + anchorWorldPosition;
             }
 
             return (targetWorldPosition, cameraTarget);
         }
 
-        private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition, in LocalBounds bounds, string? spawnPointName)
+        private static bool TryPickNamedSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, string? spawnPointName, out SceneMetadata.SpawnPoint spawnPoint)
         {
-            if (!string.IsNullOrEmpty(spawnPointName))
+            spawnPoint = default(SceneMetadata.SpawnPoint);
+
+            if (string.IsNullOrEmpty(spawnPointName))
+                return false;
+
+            var namedIndex = -1;
+
+            for (var i = 0; i < spawnPoints.Count; i++)
             {
-                var namedIndex = -1;
+                if (!string.Equals(spawnPoints[i].name, spawnPointName, StringComparison.OrdinalIgnoreCase))
+                    continue;
 
-                for (var i = 0; i < spawnPoints.Count; i++)
+                if (namedIndex < 0)
+                    namedIndex = i;
+                else
                 {
-                    if (!string.Equals(spawnPoints[i].name, spawnPointName, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    if (namedIndex < 0)
-                        namedIndex = i;
-                    else
-                    {
-                        ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Scene declares multiple spawn points named '{spawnPointName}', using the first one");
-                        break;
-                    }
+                    ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Scene declares multiple spawn points named '{spawnPointName}', using the first one");
+                    break;
                 }
-
-                if (namedIndex >= 0)
-                    return spawnPoints[namedIndex];
-
-                ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Spawn point '{spawnPointName}' not found in scene, falling back to default spawn point selection");
             }
 
+            if (namedIndex >= 0)
+            {
+                spawnPoint = spawnPoints[namedIndex];
+                return true;
+            }
+
+            ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"Spawn point '{spawnPointName}' not found in scene, falling back to default spawn point selection");
+            return false;
+        }
+
+        private static SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition, in LocalBounds bounds)
+        {
             List<SceneMetadata.SpawnPoint> defaults = ListPool<SceneMetadata.SpawnPoint>.Get();
             defaults.AddRange(spawnPoints.Where(sp => sp.@default));
 

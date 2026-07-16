@@ -201,6 +201,52 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.AreEqual(10f, cameraTarget.Value.z, EPSILON);
         }
 
+        [Test]
+        public void AnchorNamedSpawnPointToSceneBaseNotTargetParcel()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var parcels = new[] { new Vector2Int(0, 0), new Vector2Int(1, 0) };
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                parcels,
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 20f, ySingle: 0f, zSingle: 8f, name: "lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, new Vector2Int(1, 0), "lobby");
+
+            Assert.AreEqual(20f, worldPos.x, EPSILON);
+            Assert.AreEqual(8f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void ScatterWithinNamedRangeRegardlessOfTargetParcel()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var parcels = new[] { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(2, 0) };
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                parcels,
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xRange: new[] { 26f, 38f }, ySingle: 0f, zSingle: 8f, name: "scatter"));
+
+            var distinctLandings = new HashSet<float>();
+
+            for (var i = 0; i < 100; i++)
+            {
+                (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, new Vector2Int(2, 0), "scatter");
+
+                Assert.GreaterOrEqual(worldPos.x, 26f);
+                Assert.LessOrEqual(worldPos.x, 38f + EPSILON);
+                Assert.AreEqual(8f, worldPos.z, EPSILON);
+
+                distinctLandings.Add(worldPos.x);
+            }
+
+            Assert.Greater(distinctLandings.Count, 1, "Players must scatter within the range, not stack on one point");
+        }
+
         private static SceneEntityDefinition BuildSceneDef(Vector2Int baseParcel, IReadOnlyList<Vector2Int> parcels, params SceneMetadata.SpawnPoint[] spawnPoints)
         {
             var sceneSection = new SceneMetadataScene
