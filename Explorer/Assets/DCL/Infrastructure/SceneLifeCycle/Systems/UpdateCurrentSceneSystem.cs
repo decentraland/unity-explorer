@@ -141,7 +141,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void RefreshSceneDebugInfo()
         {
-            sdkVersionBinding.Value = currentActiveScene != null ? "7" : NO_DATA_STRING;
+            sdkVersionBinding.Value = currentActiveScene != null ? bool.FalseString : bool.TrueString;
 
             Vector3 globalPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
             globalPositionBinding.Value = FormatPositionVector(globalPosition);
