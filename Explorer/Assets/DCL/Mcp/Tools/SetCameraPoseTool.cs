@@ -55,7 +55,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""x"", ""y"", ""z""]
             }";
 
-        internal SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
+        public SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {
             this.world = world;
             this.playerEntity = playerEntity;

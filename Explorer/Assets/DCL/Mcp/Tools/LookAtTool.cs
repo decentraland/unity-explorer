@@ -34,7 +34,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""x"", ""y"", ""z""]
             }";
 
-        internal LookAtTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
+        public LookAtTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {
             this.globalWorldActions = globalWorldActions;
             this.world = world;

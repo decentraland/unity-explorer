@@ -46,7 +46,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""directionX"", ""directionY""]
             }";
 
-        internal WalkTool(World world, Entity playerEntity)
+        public WalkTool(World world, Entity playerEntity)
         {
             this.world = world;
             this.playerEntity = playerEntity;

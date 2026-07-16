@@ -45,7 +45,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""x"", ""y""]
             }";
 
-        internal TeleportTool(IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, ILoadingStatus loadingStatus)
+        public TeleportTool(IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, ILoadingStatus loadingStatus)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.scenesCache = scenesCache;

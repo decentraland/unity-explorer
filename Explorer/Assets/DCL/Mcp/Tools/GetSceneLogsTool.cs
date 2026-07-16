@@ -31,7 +31,7 @@ namespace DCL.Mcp.Tools
                 }
             }";
 
-        internal GetSceneLogsTool(SceneLogBuffer logBuffer)
+        public GetSceneLogsTool(SceneLogBuffer logBuffer)
         {
             this.logBuffer = logBuffer;
         }

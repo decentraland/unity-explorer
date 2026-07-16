@@ -42,7 +42,7 @@ namespace DCL.Mcp.Tools
                 }
             }";
 
-        internal ReloadSceneTool(ECSReloadScene reloadScene, IScenesCache scenesCache, World world, Entity playerEntity, Entity skyboxEntity)
+        public ReloadSceneTool(ECSReloadScene reloadScene, IScenesCache scenesCache, World world, Entity playerEntity, Entity skyboxEntity)
         {
             this.reloadScene = reloadScene;
             this.scenesCache = scenesCache;

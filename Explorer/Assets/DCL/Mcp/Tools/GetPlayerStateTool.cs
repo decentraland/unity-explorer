@@ -29,7 +29,7 @@ namespace DCL.Mcp.Tools
 
         public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
 
-        internal GetPlayerStateTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData, ICurrentSceneInfo currentSceneInfo)
+        public GetPlayerStateTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData, ICurrentSceneInfo currentSceneInfo)
         {
             this.world = world;
             this.playerEntity = playerEntity;

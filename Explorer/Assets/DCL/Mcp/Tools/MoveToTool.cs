@@ -42,7 +42,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""x"", ""y"", ""z""]
             }";
 
-        internal MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity)
+        public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity)
         {
             this.globalWorldActions = globalWorldActions;
             this.world = world;

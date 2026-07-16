@@ -55,7 +55,7 @@ namespace DCL.Mcp.Tools
                 }
             }";
 
-        internal ScreenshotTool(ICoroutineRunner coroutineRunner, World world, Entity playerEntity)
+        public ScreenshotTool(ICoroutineRunner coroutineRunner, World world, Entity playerEntity)
         {
             this.coroutineRunner = coroutineRunner;
             this.world = world;

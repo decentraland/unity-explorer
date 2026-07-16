@@ -36,7 +36,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""mode""]
             }";
 
-        internal SetCameraModeTool(World world, ExposedCameraData exposedCameraData)
+        public SetCameraModeTool(World world, ExposedCameraData exposedCameraData)
         {
             this.world = world;
             this.exposedCameraData = exposedCameraData;

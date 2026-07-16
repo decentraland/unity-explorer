@@ -35,7 +35,7 @@ namespace DCL.Mcp.Tools
                 }
             }";
 
-        internal ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
+        public ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;
         }

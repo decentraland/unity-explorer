@@ -49,7 +49,7 @@ namespace DCL.Mcp.Tools
                 }
             }";
 
-        internal ClickEntityTool(World world, Entity playerEntity)
+        public ClickEntityTool(World world, Entity playerEntity)
         {
             this.world = world;
             this.playerEntity = playerEntity;

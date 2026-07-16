@@ -27,7 +27,7 @@ namespace DCL.Mcp.Tools
                 ""required"": [""entityId""]
             }";
 
-        internal GetEntityDetailsTool(IWorldInfoHub worldInfoHub)
+        public GetEntityDetailsTool(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;
         }

@@ -26,7 +26,7 @@ namespace DCL.Mcp.Tools
 
         public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
 
-        internal GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
+        public GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
         {
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
