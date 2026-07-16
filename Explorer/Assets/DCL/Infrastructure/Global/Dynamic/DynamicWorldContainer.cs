@@ -1,7 +1,7 @@
 using Arch.Core;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -23,6 +23,7 @@ using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
+using DCL.MarketplaceCredits;
 using DCL.Mcp;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -424,12 +425,11 @@ namespace Global.Dynamic
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var upscaleController = new UpscalingController(uiShellContainer.MvcManager);
-
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-
+            MarketplaceCreditsAPIClient marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -662,7 +662,8 @@ namespace Global.Dynamic
                     staticContainer.QualityContainer.RendererFeaturesCache,
                     springBoneSimulationSettings,
                     voiceChatContainer.JoinedCommunitiesVoiceLiveTracker,
-                    profileContainer.PendingTransferService
+                    profileContainer.PendingTransferService,
+                    marketplaceCreditsAPIClient
                 ),
                 profileContainer.CreateGiftingPlugin(staticContainer, bootstrapContainer, assetsProvisioner, uiShellContainer, wearableContainer, chatContainer.ChatEventBus, identityCache),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -914,7 +915,8 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.LoadingStatus,
                     hyperlinkTextFormatter,
-                    staticContainer.ImageControllerProvider));
+                    staticContainer.ImageControllerProvider,
+                    marketplaceCreditsAPIClient));
             }
 
             if (communitiesContainer.IncludeCommunities)

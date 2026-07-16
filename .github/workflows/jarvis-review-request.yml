@@ -1,0 +1,269 @@
+name: Jarvis Review Request
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, synchronize, ready_for_review, labeled]
+
+jobs:
+  check-author:
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'github-actions[bot]' &&
+      !startsWith(github.head_ref, 'release/') &&
+      !contains(github.event.pull_request.labels.*.name, 'no review') &&
+      !contains(github.event.pull_request.labels.*.name, 'auto-pr') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ext-contribution')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      is-team-dev: ${{ steps.check.outputs.is-team-dev }}
+    steps:
+      - name: Checkout team config
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/auto_assign_config_dev.yml
+          fetch-depth: 1
+
+      # Inlined on purpose rather than a shared `./.github/actions/check-team-dev`
+      # composite action: a local action is resolved from the checked-out tree, and
+      # we check out the team list at the PR BASE sha (trusted — so a PR can't add
+      # its own author to the list). A local action would therefore have to already
+      # exist on the base branch and cannot bootstrap on the PR that introduces it.
+      # jarvis-review-status.yml carries the same ~12 lines for the same reason.
+      - name: Check if PR author is a team dev
+        id: check
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HAS_EXT_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'ext-contribution') }}
+        run: |
+          if [[ "$HAS_EXT_LABEL" == "true" ]]; then
+            echo "Author $PR_AUTHOR has ext-contribution label — treating as external"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TEAM_DEVS=$(yq eval '.reviewGroups | .[] | .[]' .github/auto_assign_config_dev.yml)
+          echo "Team devs:"
+          echo "$TEAM_DEVS"
+          if echo "$TEAM_DEVS" | grep -qxF "$PR_AUTHOR"; then
+            echo "Author $PR_AUTHOR is a team dev"
+            echo "is-team-dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Author $PR_AUTHOR is NOT a team dev"
+            echo "is-team-dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add ext-contribution label for non-team PRs
+        if: |
+          steps.check.outputs.is-team-dev == 'false' &&
+          !contains(github.event.pull_request.labels.*.name, 'ext-contribution') &&
+          (github.event.action == 'opened' || github.event.action == 'ready_for_review')
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label ext-contribution --repo ${{ github.repository }} || echo "::warning::Could not add label (expected for fork PRs)"
+          echo "Added ext-contribution label to PR #${{ github.event.pull_request.number }}"
+
+  request-review:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'true' &&
+      github.event.action != 'labeled'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: jarvis-review-request-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      statuses: write
+    steps:
+      # The INITIAL review is auto-requested for every team-dev PR regardless of
+      # title type (fix/chore/feat/opti), when the PR is opened or marked ready.
+      # Subsequent reviews are ON DEMAND: a push after a verdict does NOT
+      # re-request — it resets the Claude Review check to pending and the dev
+      # re-requests decentraland-bot (🔄 in the Reviewers panel) when ready.
+      # The fix/chore distinction lives only in jarvis-review-status.yml, where
+      # it bounds what the verdict may do (auto-approve / QA waiver).
+      - name: Request Jarvis review
+        id: request
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: |
+          # `covered=true`  → a review is genuinely in flight (fresh request or
+          #                   an already-pending one that reads the live diff).
+          # `rerequest=true`→ push with no review in flight: no auto re-request;
+          #                   the check resets to a descriptive pending instead.
+          # Neither         → the request API call failed (warning below).
+          PENDING=$(gh api "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" --jq '.users[].login' || echo "")
+          if grep -qxi "decentraland-bot" <<< "$PENDING"; then
+            echo "decentraland-bot already has a pending review request — the in-flight review covers this push."
+            echo "covered=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_ACTION" == "synchronize" ]]; then
+            echo "Push with no review in flight — reviews after the initial one are on demand (re-request decentraland-bot)."
+            echo "rerequest=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh api --method POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" \
+               -f 'reviewers[]=decentraland-bot' --silent; then
+            echo "Requested review from decentraland-bot."
+            echo "covered=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Could not request review from decentraland-bot — request it manually from the Reviewers panel."
+            echo "covered=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set status to pending (review in flight)
+        if: steps.request.outputs.covered == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'pending',
+              context: 'Claude Review',
+              description: 'Jarvis review requested — awaiting verdict...'
+            });
+
+      - name: Set status to pending (awaiting re-request)
+        if: steps.request.outputs.rerequest == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'pending',
+              context: 'Claude Review',
+              description: 'Awaiting Jarvis review — request a review from decentraland-bot'
+            });
+
+  notify-ext-contribution:
+    needs: check-author
+    if: |
+      needs.check-author.result == 'success' &&
+      needs.check-author.outputs.is-team-dev == 'false' &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'ext-contribution'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check for existing Slack notification marker
+        id: dedup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MARKER="<!-- ext-contribution-slack-sent -->"
+          COMMENTS=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" --jq '.[].body')
+          if echo "$COMMENTS" | grep -qF "$MARKER"; then
+            echo "Slack notification already sent for this PR — skipping"
+            echo "already-sent=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already-sent=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify PR author is a decentraland org member
+        if: steps.dedup.outputs.already-sent != 'true'
+        id: check-org
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if gh api "/orgs/decentraland/members/$PR_AUTHOR" --silent 2>/dev/null; then
+            echo "is-member=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::PR author $PR_AUTHOR is not a member of decentraland org; Slack notification skipped"
+            echo "is-member=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract Slack requester tag from PR description
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        id: extract-slack-tag
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          SLACK_TAG=$(echo "$PR_BODY" | grep -oP '(?<=Requested by ).*?(\(<@U[A-Z0-9]+>\))' | grep -oP '<@U[A-Z0-9]+>' | head -1)
+          if [ -n "$SLACK_TAG" ]; then
+            echo "Found Slack tag: $SLACK_TAG"
+            echo "slack-tag=$SLACK_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Slack tag found in PR description, will use GitHub username"
+            echo "slack-tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post to Slack #explorer-ext-contributions
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.EXPLORER_EXT_CONTRIBUTIONS_WEBHOOK }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          SLACK_TAG: ${{ steps.extract-slack-tag.outputs.slack-tag }}
+        run: |
+          if [ -n "$SLACK_TAG" ]; then
+            AUTHOR_REF="$SLACK_TAG"
+          else
+            AUTHOR_REF="$PR_AUTHOR_LOGIN"
+          fi
+          PAYLOAD=$(jq -n --arg url "$PR_URL" --arg author "$AUTHOR_REF" \
+            '{"text": "<@U0AJ91P1KBP> review \($url) (initiated by \($author))"}')
+          curl -fsS -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
+
+      - name: Post dedup marker comment
+        if: steps.dedup.outputs.already-sent != 'true' && steps.check-org.outputs.is-member == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -f body="<!-- ext-contribution-slack-sent -->
+          Slack notification sent to #explorer-ext-contributions for external review.
+          To re-send, delete this comment and re-add the \`ext-contribution\` label."
+
+  # TODO: remove this job once the team has adjusted to the Reviewers-panel
+  # flow (a few weeks after the Jarvis migration merges).
+  deprecation-notice:
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request != null &&
+      github.event.comment.user.login != 'github-actions[bot]' &&
+      (
+        contains(github.event.comment.body, '@claude review') ||
+        contains(github.event.comment.body, '@claude re-review') ||
+        contains(github.event.comment.body, '@claude approve')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Post migration notice (once per PR)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          MARKER="<!-- jarvis-review-migration-notice -->"
+          COMMENTS=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" --jq '.[].body')
+          if grep -qF "$MARKER" <<< "$COMMENTS"; then
+            echo "Migration notice already posted — skipping."
+            exit 0
+          fi
+          BODY="$MARKER
+          🤖 \`@claude review\` has been retired — AI reviews now run through **Jarvis**.
+          Request a review from \`decentraland-bot\` in the **Reviewers** panel instead
+          (use the 🔄 re-request arrow next to it for a re-review after pushing changes)."
+          gh api "repos/$REPO/issues/$PR_NUMBER/comments" -f body="$BODY"

@@ -56,36 +56,37 @@ namespace Decentraland.Pulse {
             "dEINCgtfcG9pbnRfYXRfeEINCgtfcG9pbnRfYXRfeUINCgtfcG9pbnRfYXRf",
             "eiJ8Cg9QbGF5ZXJTdGF0ZUZ1bGwSEgoKc3ViamVjdF9pZBgBIAEoDRIQCghz",
             "ZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0ZRgE",
-            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJsCgxQbGF5",
+            "IAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSJ7CgxQbGF5",
             "ZXJKb2luZWQSDwoHdXNlcl9pZBgBIAEoCRIXCg9wcm9maWxlX3ZlcnNpb24Y",
             "AiABKAUSMgoFc3RhdGUYAyABKAsyIy5kZWNlbnRyYWxhbmQucHVsc2UuUGxh",
-            "eWVyU3RhdGVGdWxsIiAKClBsYXllckxlZnQSEgoKc3ViamVjdF9pZBgBIAEo",
-            "DSKuAQoMRW1vdGVTdGFydGVkEhIKCnN1YmplY3RfaWQYASABKA0SEAoIc2Vx",
-            "dWVuY2UYAiABKA0SEwoLc2VydmVyX3RpY2sYAyABKA0SEAoIZW1vdGVfaWQY",
-            "BCABKAkSNQoMcGxheWVyX3N0YXRlGAUgASgLMh8uZGVjZW50cmFsYW5kLnB1",
-            "bHNlLlBsYXllclN0YXRlEhEKBG1hc2sYBiABKAVIAIgBAUIHCgVfbWFzayK1",
-            "AQoMRW1vdGVTdG9wcGVkEhIKCnN1YmplY3RfaWQYASABKA0SEwoLc2VydmVy",
-            "X3RpY2sYAiABKA0SMwoGcmVhc29uGAMgASgOMiMuZGVjZW50cmFsYW5kLnB1",
-            "bHNlLkVtb3RlU3RvcFJlYXNvbhIQCghzZXF1ZW5jZRgEIAEoDRI1CgxwbGF5",
-            "ZXJfc3RhdGUYBSABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3Rh",
-            "dGUifgoRVGVsZXBvcnRQZXJmb3JtZWQSEgoKc3ViamVjdF9pZBgBIAEoDRIQ",
-            "CghzZXF1ZW5jZRgCIAEoDRITCgtzZXJ2ZXJfdGljaxgDIAEoDRIuCgVzdGF0",
-            "ZRgEIAEoCzIfLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZSLmBAoN",
-            "U2VydmVyTWVzc2FnZRI6CgloYW5kc2hha2UYASABKAsyJS5kZWNlbnRyYWxh",
-            "bmQucHVsc2UuSGFuZHNoYWtlUmVzcG9uc2VIABJAChFwbGF5ZXJfc3RhdGVf",
-            "ZnVsbBgCIAEoCzIjLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJTdGF0ZUZ1",
-            "bGxIABJHChJwbGF5ZXJfc3RhdGVfZGVsdGEYAyABKAsyKS5kZWNlbnRyYWxh",
-            "bmQucHVsc2UuUGxheWVyU3RhdGVEZWx0YVRpZXIwSAASOQoNcGxheWVyX2pv",
-            "aW5lZBgEIAEoCzIgLmRlY2VudHJhbGFuZC5wdWxzZS5QbGF5ZXJKb2luZWRI",
-            "ABI1CgtwbGF5ZXJfbGVmdBgFIAEoCzIeLmRlY2VudHJhbGFuZC5wdWxzZS5Q",
-            "bGF5ZXJMZWZ0SAASXgogcGxheWVyX3Byb2ZpbGVfdmVyc2lvbl9hbm5vdW5j",
-            "ZWQYBiABKAsyMi5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyUHJvZmlsZVZl",
-            "cnNpb25zQW5ub3VuY2VkSAASOQoNZW1vdGVfc3RhcnRlZBgHIAEoCzIgLmRl",
-            "Y2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0YXJ0ZWRIABI5Cg1lbW90ZV9zdG9w",
-            "cGVkGAggASgLMiAuZGVjZW50cmFsYW5kLnB1bHNlLkVtb3RlU3RvcHBlZEgA",
-            "EjsKCnRlbGVwb3J0ZWQYCSABKAsyJS5kZWNlbnRyYWxhbmQucHVsc2UuVGVs",
-            "ZXBvcnRQZXJmb3JtZWRIAEIJCgdtZXNzYWdlKi8KD0Vtb3RlU3RvcFJlYXNv",
-            "bhINCglDT01QTEVURUQQABINCglDQU5DRUxMRUQQAWIGcHJvdG8z"));
+            "eWVyU3RhdGVGdWxsEg0KBXJlYWxtGAQgASgJIiAKClBsYXllckxlZnQSEgoK",
+            "c3ViamVjdF9pZBgBIAEoDSKuAQoMRW1vdGVTdGFydGVkEhIKCnN1YmplY3Rf",
+            "aWQYASABKA0SEAoIc2VxdWVuY2UYAiABKA0SEwoLc2VydmVyX3RpY2sYAyAB",
+            "KA0SEAoIZW1vdGVfaWQYBCABKAkSNQoMcGxheWVyX3N0YXRlGAUgASgLMh8u",
+            "ZGVjZW50cmFsYW5kLnB1bHNlLlBsYXllclN0YXRlEhEKBG1hc2sYBiABKAVI",
+            "AIgBAUIHCgVfbWFzayK1AQoMRW1vdGVTdG9wcGVkEhIKCnN1YmplY3RfaWQY",
+            "ASABKA0SEwoLc2VydmVyX3RpY2sYAiABKA0SMwoGcmVhc29uGAMgASgOMiMu",
+            "ZGVjZW50cmFsYW5kLnB1bHNlLkVtb3RlU3RvcFJlYXNvbhIQCghzZXF1ZW5j",
+            "ZRgEIAEoDRI1CgxwbGF5ZXJfc3RhdGUYBSABKAsyHy5kZWNlbnRyYWxhbmQu",
+            "cHVsc2UuUGxheWVyU3RhdGUijQEKEVRlbGVwb3J0UGVyZm9ybWVkEhIKCnN1",
+            "YmplY3RfaWQYASABKA0SEAoIc2VxdWVuY2UYAiABKA0SEwoLc2VydmVyX3Rp",
+            "Y2sYAyABKA0SLgoFc3RhdGUYBCABKAsyHy5kZWNlbnRyYWxhbmQucHVsc2Uu",
+            "UGxheWVyU3RhdGUSDQoFcmVhbG0YBSABKAki5gQKDVNlcnZlck1lc3NhZ2US",
+            "OgoJaGFuZHNoYWtlGAEgASgLMiUuZGVjZW50cmFsYW5kLnB1bHNlLkhhbmRz",
+            "aGFrZVJlc3BvbnNlSAASQAoRcGxheWVyX3N0YXRlX2Z1bGwYAiABKAsyIy5k",
+            "ZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyU3RhdGVGdWxsSAASRwoScGxheWVy",
+            "X3N0YXRlX2RlbHRhGAMgASgLMikuZGVjZW50cmFsYW5kLnB1bHNlLlBsYXll",
+            "clN0YXRlRGVsdGFUaWVyMEgAEjkKDXBsYXllcl9qb2luZWQYBCABKAsyIC5k",
+            "ZWNlbnRyYWxhbmQucHVsc2UuUGxheWVySm9pbmVkSAASNQoLcGxheWVyX2xl",
+            "ZnQYBSABKAsyHi5kZWNlbnRyYWxhbmQucHVsc2UuUGxheWVyTGVmdEgAEl4K",
+            "IHBsYXllcl9wcm9maWxlX3ZlcnNpb25fYW5ub3VuY2VkGAYgASgLMjIuZGVj",
+            "ZW50cmFsYW5kLnB1bHNlLlBsYXllclByb2ZpbGVWZXJzaW9uc0Fubm91bmNl",
+            "ZEgAEjkKDWVtb3RlX3N0YXJ0ZWQYByABKAsyIC5kZWNlbnRyYWxhbmQucHVs",
+            "c2UuRW1vdGVTdGFydGVkSAASOQoNZW1vdGVfc3RvcHBlZBgIIAEoCzIgLmRl",
+            "Y2VudHJhbGFuZC5wdWxzZS5FbW90ZVN0b3BwZWRIABI7Cgp0ZWxlcG9ydGVk",
+            "GAkgASgLMiUuZGVjZW50cmFsYW5kLnB1bHNlLlRlbGVwb3J0UGVyZm9ybWVk",
+            "SABCCQoHbWVzc2FnZSovCg9FbW90ZVN0b3BSZWFzb24SDQoJQ09NUExFVEVE",
+            "EAASDQoJQ0FOQ0VMTEVEEAFiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.OptionsReflection.Descriptor, global::Decentraland.Pulse.PulseSharedReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Pulse.EmoteStopReason), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -93,11 +94,11 @@ namespace Decentraland.Pulse {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerProfileVersionsAnnounced), global::Decentraland.Pulse.PlayerProfileVersionsAnnounced.Parser, new[]{ "SubjectId", "Version" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateDeltaTier0), global::Decentraland.Pulse.PlayerStateDeltaTier0.Parser, new[]{ "SubjectId", "BaselineSeq", "NewSeq", "ServerTick", "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount", "PointAtX", "PointAtY", "PointAtZ" }, new[]{ "ParcelIndex", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "RotationY", "MovementBlend", "SlideBlend", "HeadYaw", "HeadPitch", "StateFlags", "GlideState", "JumpCount", "PointAtX", "PointAtY", "PointAtZ" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerStateFull), global::Decentraland.Pulse.PlayerStateFull.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "ProfileVersion", "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerJoined), global::Decentraland.Pulse.PlayerJoined.Parser, new[]{ "UserId", "ProfileVersion", "State", "Realm" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.PlayerLeft), global::Decentraland.Pulse.PlayerLeft.Parser, new[]{ "SubjectId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStarted), global::Decentraland.Pulse.EmoteStarted.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "EmoteId", "PlayerState", "Mask" }, new[]{ "Mask" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.EmoteStopped), global::Decentraland.Pulse.EmoteStopped.Parser, new[]{ "SubjectId", "ServerTick", "Reason", "Sequence", "PlayerState" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportPerformed), global::Decentraland.Pulse.TeleportPerformed.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.TeleportPerformed), global::Decentraland.Pulse.TeleportPerformed.Parser, new[]{ "SubjectId", "Sequence", "ServerTick", "State", "Realm" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Pulse.ServerMessage), global::Decentraland.Pulse.ServerMessage.Parser, new[]{ "Handshake", "PlayerStateFull", "PlayerStateDelta", "PlayerJoined", "PlayerLeft", "PlayerProfileVersionAnnounced", "EmoteStarted", "EmoteStopped", "Teleported" }, new[]{ "Message" }, null, null, null)
           }));
     }
@@ -2247,6 +2248,7 @@ namespace Decentraland.Pulse {
       userId_ = other.userId_;
       profileVersion_ = other.profileVersion_;
       state_ = other.state_ != null ? other.state_.Clone() : null;
+      realm_ = other.realm_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2292,6 +2294,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "realm" field.</summary>
+    public const int RealmFieldNumber = 4;
+    private string realm_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Realm {
+      get { return realm_; }
+      set {
+        realm_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2310,6 +2324,7 @@ namespace Decentraland.Pulse {
       if (UserId != other.UserId) return false;
       if (ProfileVersion != other.ProfileVersion) return false;
       if (!object.Equals(State, other.State)) return false;
+      if (Realm != other.Realm) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2320,6 +2335,7 @@ namespace Decentraland.Pulse {
       if (UserId.Length != 0) hash ^= UserId.GetHashCode();
       if (ProfileVersion != 0) hash ^= ProfileVersion.GetHashCode();
       if (state_ != null) hash ^= State.GetHashCode();
+      if (Realm.Length != 0) hash ^= Realm.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2350,6 +2366,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(26);
         output.WriteMessage(State);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2372,6 +2392,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(26);
         output.WriteMessage(State);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2390,6 +2414,9 @@ namespace Decentraland.Pulse {
       }
       if (state_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
+      }
+      if (Realm.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Realm);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2414,6 +2441,9 @@ namespace Decentraland.Pulse {
           State = new global::Decentraland.Pulse.PlayerStateFull();
         }
         State.MergeFrom(other.State);
+      }
+      if (other.Realm.Length != 0) {
+        Realm = other.Realm;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2449,6 +2479,10 @@ namespace Decentraland.Pulse {
             input.ReadMessage(State);
             break;
           }
+          case 34: {
+            Realm = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -2481,6 +2515,10 @@ namespace Decentraland.Pulse {
               State = new global::Decentraland.Pulse.PlayerStateFull();
             }
             input.ReadMessage(State);
+            break;
+          }
+          case 34: {
+            Realm = input.ReadString();
             break;
           }
         }
@@ -3507,6 +3545,7 @@ namespace Decentraland.Pulse {
       sequence_ = other.sequence_;
       serverTick_ = other.serverTick_;
       state_ = other.state_ != null ? other.state_.Clone() : null;
+      realm_ = other.realm_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -3564,6 +3603,18 @@ namespace Decentraland.Pulse {
       }
     }
 
+    /// <summary>Field number for the "realm" field.</summary>
+    public const int RealmFieldNumber = 5;
+    private string realm_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Realm {
+      get { return realm_; }
+      set {
+        realm_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -3583,6 +3634,7 @@ namespace Decentraland.Pulse {
       if (Sequence != other.Sequence) return false;
       if (ServerTick != other.ServerTick) return false;
       if (!object.Equals(State, other.State)) return false;
+      if (Realm != other.Realm) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3594,6 +3646,7 @@ namespace Decentraland.Pulse {
       if (Sequence != 0) hash ^= Sequence.GetHashCode();
       if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
       if (state_ != null) hash ^= State.GetHashCode();
+      if (Realm.Length != 0) hash ^= Realm.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3628,6 +3681,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(34);
         output.WriteMessage(State);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3654,6 +3711,10 @@ namespace Decentraland.Pulse {
         output.WriteRawTag(34);
         output.WriteMessage(State);
       }
+      if (Realm.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(Realm);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3675,6 +3736,9 @@ namespace Decentraland.Pulse {
       }
       if (state_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(State);
+      }
+      if (Realm.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Realm);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -3702,6 +3766,9 @@ namespace Decentraland.Pulse {
           State = new global::Decentraland.Pulse.PlayerState();
         }
         State.MergeFrom(other.State);
+      }
+      if (other.Realm.Length != 0) {
+        Realm = other.Realm;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3741,6 +3808,10 @@ namespace Decentraland.Pulse {
             input.ReadMessage(State);
             break;
           }
+          case 42: {
+            Realm = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -3777,6 +3848,10 @@ namespace Decentraland.Pulse {
               State = new global::Decentraland.Pulse.PlayerState();
             }
             input.ReadMessage(State);
+            break;
+          }
+          case 42: {
+            Realm = input.ReadString();
             break;
           }
         }
