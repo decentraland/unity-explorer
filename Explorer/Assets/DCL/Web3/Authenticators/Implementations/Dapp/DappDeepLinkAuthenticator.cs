@@ -54,7 +54,10 @@ namespace DCL.Web3.Authenticators
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            loginMutex.Dispose();
+        }
 
         public async UniTask<IWeb3Identity> LoginAsync(LoginPayload payload, CancellationToken ct)
         {
