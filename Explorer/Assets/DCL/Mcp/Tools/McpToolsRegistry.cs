@@ -37,7 +37,14 @@ namespace DCL.Mcp.Tools
             return this;
         }
 
-        public bool TryGet(string name, [NotNullWhen(true)] out IMcpTool? tool) =>
-            tools.TryGetValue(name, out tool);
+        public bool TryGet(string? name, [NotNullWhen(true)] out IMcpTool? tool)
+        {
+            tool = null;
+
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            return tools.TryGetValue(name, out tool);
+        }
     }
 }

@@ -84,7 +84,7 @@ namespace DCL.Mcp.Protocol
         {
             string? toolName = callParams?["name"]?.Value<string>();
 
-            if (string.IsNullOrEmpty(toolName) || !tools.TryGet(toolName, out IMcpTool? tool))
+            if (!tools.TryGet(toolName, out IMcpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
             JObject arguments = callParams?["arguments"] as JObject ?? new JObject();
