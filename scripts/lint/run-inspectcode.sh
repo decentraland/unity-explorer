@@ -45,11 +45,12 @@ ext_dir="$(dirname "$cli")-plugins"
 # --source points at the isolated feed dir so the extension resolves offline from the bundled
 # nupkg (no gallery access) and deploys exactly once. The nupkg must stay OUT of the CLI dir,
 # otherwise auto-scan + --eXtensions double-deploy it and startup crashes on a duplicate ID.
-# The pinned 2023.1 JetBrains.Unity plugin (see download-resharper.sh) should not schedule the
+# The pinned 2023.1 JetBrains.Unity plugin (see download-resharper.sh) does not schedule the
 # background deferred-cache flush that crashes headless on Linux in 2023.2+ ("Serializing
-# delegates is not supported"); --no-swea is kept as extra insurance against that flush (it
-# disables solution-wide analysis, which also drops the '*.Global' unused-symbol rules). No
-# exit-code tolerance on purpose — if it still crashes, the step fails loudly so it's unambiguous.
+# delegates is not supported") — confirmed by a green CI run — so solution-wide analysis is left
+# ON (no --no-swea) for full coverage. No exit-code tolerance on purpose: if it ever crashes, the
+# step fails loudly. --no-build is required: the solution was already generated and compiled by
+# Unity in this same container, and its absolute reference paths only resolve here.
 #
 # --format=Sarif is REQUIRED on 2023.1: SARIF only became the default output in 2024.1, so without
 # it 2023.1 writes XML into the .json file and the downstream SARIF parser (filter-warnings.sh)
@@ -58,7 +59,6 @@ ext_dir="$(dirname "$cli")-plugins"
     --no-build \
     --eXtensions=JetBrains.Unity \
     --source="$ext_dir" \
-    --no-swea \
     --verbosity=INFO \
     --properties:Configuration=Debug \
     --disable-settings-layers:SolutionPersonal \
