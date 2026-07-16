@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.SocialService;
 using DCL.Web3.Identities;
 using Decentraland.SocialService.V2;
-using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
 using Utility;
@@ -13,8 +12,6 @@ namespace DCL.Communities
     public class RPCCommunitiesService : RPCSocialServiceBase
     {
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToCommunityMemberConnectivityUpdates";
-        // Increase the default number of retries because once it consumes all, it will not receive updates for the rest of the session
-        private const int MAX_CONNECTION_RETRIES = 20;
 
         private readonly CommunitiesEventBus communitiesEventBus;
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -25,31 +22,34 @@ namespace DCL.Communities
             IRPCSocialServices socialServiceRPC,
             CommunitiesEventBus communitiesEventBus,
             ISocialServiceEventBus socialServiceEventBus,
-            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITIES, MAX_CONNECTION_RETRIES)
+            IWeb3IdentityCache identityCache) : base(socialServiceRPC, ReportCategory.COMMUNITIES)
         {
             this.communitiesEventBus = communitiesEventBus;
             this.socialServiceEventBus = socialServiceEventBus;
             this.identityCache = identityCache;
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
-            socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+            socialServiceEventBus.RPCClientReconnected += SubscribeToConnectivityStatus;
+            socialServiceEventBus.WebSocketConnectionEstablished += SubscribeToConnectivityStatus;
         }
 
         public override void Dispose()
         {
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
-            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
-            socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            socialServiceEventBus.RPCClientReconnected -= SubscribeToConnectivityStatus;
+            socialServiceEventBus.WebSocketConnectionEstablished -= SubscribeToConnectivityStatus;
             subscriptionCts.SafeCancelAndDispose();
             base.Dispose();
         }
 
-        private void OnTransportConnected()
+        /// <summary>
+        ///     Starts the connectivity updates subscription. A call while the subscription is already
+        ///     active is a no-op, enforced by <see cref="RPCSocialServiceBase.KeepServerStreamOpenAsync{T}" />.
+        /// </summary>
+        public void SubscribeToConnectivityStatus()
         {
             if (identityCache.Identity == null) return;
 
-            subscriptionCts = subscriptionCts.SafeRestart();
             TrySubscribeToConnectivityStatusAsync(subscriptionCts.Token).Forget();
         }
 
@@ -58,25 +58,14 @@ namespace DCL.Communities
             subscriptionCts = subscriptionCts.SafeRestart();
         }
 
-        private void OnTransportReconnected()
+        private async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            if (identityCache.Identity == null) return;
-
-            subscriptionCts = subscriptionCts.SafeRestart();
-            TrySubscribeToConnectivityStatusAsync(subscriptionCts.Token).Forget();
-        }
-
-        public async UniTask TrySubscribeToConnectivityStatusAsync(CancellationToken ct)
-        {
-            await KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+            await KeepServerStreamOpenAsync<CommunityMemberConnectivityUpdate>(ProcessUpdatesAsync, SUBSCRIBE_TO_CONNECTIVITY_UPDATES, ct);
 
             return;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            async UniTask ProcessUpdatesAsync(IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream)
             {
-                IUniTaskAsyncEnumerable<CommunityMemberConnectivityUpdate> stream =
-                    socialServiceRPC.Module().CallServerStream<CommunityMemberConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
-
                 await foreach (CommunityMemberConnectivityUpdate? response in EnumerateWithCancellationAsync(stream, ct))
                 {
                     try

@@ -1,11 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Sentry;
+using Sentry.Unity;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility.Networking;
+using Type = System.Type;
 
 namespace DCL.SocialService
 {
@@ -15,16 +19,11 @@ namespace DCL.SocialService
     public abstract class RPCSocialServiceBase : IDisposable
     {
         /// <summary>
-        ///     Maximum number of retry attempts for server stream connection
-        /// </summary>
-        private const int MAX_RETRY_ATTEMPTS = 5;
-
-        /// <summary>
         ///     Base delay in seconds between retry attempts (will be exponentially increased)
         /// </summary>
         private const int BASE_RETRY_DELAY_SECONDS = 2;
 
-        public class ServerStreamReportsDebouncer : FrameDebouncer
+        protected class ServerStreamReportsDebouncer : FrameDebouncer
         {
             public ServerStreamReportsDebouncer() : base(1)
             {
@@ -40,14 +39,12 @@ namespace DCL.SocialService
 
         protected readonly IRPCSocialServices socialServiceRPC;
         protected readonly string reportCategory;
-        private readonly int maxRetries;
+        private readonly HashSet<Type> activeStreamTypes = new ();
 
-        protected RPCSocialServiceBase(IRPCSocialServices rpcSocialServices, string reportCategory,
-            int maxRetries = MAX_RETRY_ATTEMPTS)
+        protected RPCSocialServiceBase(IRPCSocialServices rpcSocialServices, string reportCategory)
         {
             socialServiceRPC = rpcSocialServices;
             this.reportCategory = reportCategory;
-            this.maxRetries = maxRetries;
         }
 
         public virtual void Dispose()
@@ -55,56 +52,74 @@ namespace DCL.SocialService
             lifeTimeCts.Cancel();
         }
 
-        protected async UniTask KeepServerStreamOpenAsync(Func<UniTask> openStreamFunc, CancellationToken ct)
+        /// <summary>
+        ///     Keeps the server stream of <typeparamref name="T" /> updates open until cancellation is requested.
+        ///     At most one stream per update type can be active at a time: a call for an already active type is a no-op.
+        ///     The active stream must never be torn down to make room for a new one — rpc-csharp sends no close message
+        ///     for a cancelled stream, so the server would keep the old subscription alive and reject the new one as a duplicate.
+        /// </summary>
+        protected async UniTask KeepServerStreamOpenAsync<T>(Func<IUniTaskAsyncEnumerable<T>, UniTask> processUpdatesAsync, string procedureName, CancellationToken ct) where T: IMessage, new()
         {
-            ct = CancellationTokenSource.CreateLinkedTokenSource(ct, lifeTimeCts.Token).Token;
+            if (!activeStreamTypes.Add(typeof(T)))
+                return;
 
-            var retryAttempt = 0;
-
-            // We try to keep the stream open until cancellation is requested
-            // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
-            while (!ct.IsCancellationRequested)
+            try
             {
-                try
+                ct = CancellationTokenSource.CreateLinkedTokenSource(ct, lifeTimeCts.Token).Token;
+
+                var retryAttempt = 0;
+
+                // We try to keep the stream open until cancellation is requested
+                // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
+                while (!ct.IsCancellationRequested)
                 {
-                    // It's an endless [background] loop
-                    await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
-                    await openStreamFunc().AttachExternalCancellation(ct);
-                }
-                catch (OperationCanceledException) { break; }
-                catch (WebSocketException e)
-                {
-                    retryAttempt++;
+                    try
+                    {
+                        // It's an endless [background] loop
+                        await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+                        IUniTaskAsyncEnumerable<T>? stream = socialServiceRPC.Module().CallServerStream<T>(procedureName, new Empty());
+                        await processUpdatesAsync(stream).AttachExternalCancellation(ct);
+                        retryAttempt = 0;
+                    }
+                    catch (OperationCanceledException) { break; }
+                    catch (WebSocketException e)
+                    {
+                        retryAttempt++;
 
-                    Sentry.Unity.SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
-                                                         + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
+                        SentrySdk.AddBreadcrumb($"WebSocketException reason was WebSocketErrorCode: {e.WebSocketErrorCode.ToString()} "
+                                                + $"ErrorCode: {e.ErrorCode.ToString()}", reportCategory, level: BreadcrumbLevel.Info);
 
-                    var webSocketErrorCode = (WebSocketError)e.ErrorCode;
+                        var webSocketErrorCode = (WebSocketError)e.ErrorCode;
 
-                    if (webSocketErrorCode is WebSocketError.Faulted
-                        or WebSocketError.ConnectionClosedPrematurely
-                        or WebSocketError.NativeError
-                        or WebSocketError.HeaderError)
-                        ReportHub.LogWarning(new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)),
-                            $"WebSocketException {webSocketErrorCode} occurred while trying to keep rpc connection open, retrying..");
-                    else
+                        if (webSocketErrorCode is WebSocketError.Faulted
+                            or WebSocketError.ConnectionClosedPrematurely
+                            or WebSocketError.NativeError
+                            or WebSocketError.HeaderError)
+                            ReportHub.LogWarning(new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)),
+                                $"WebSocketException {webSocketErrorCode} occurred while trying to keep rpc connection open, retrying..");
+                        else
+                            ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
+
+                        try { await WaitNextRetryAsync(retryAttempt, ct); }
+                        catch (OperationCanceledException) { break; }
+                    }
+                    catch (InvalidOperationException e) when (IsExpectedDisconnectException(e))
+                    {
+                        // Expected during sign-out or transport close, exit gracefully
+                        break;
+                    }
+                    catch (Exception e)
+                    {
                         ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
 
-                    try { await WaitNextRetryAsync(retryAttempt, ct); }
-                    catch (OperationCanceledException) { break; }
+                        try { await WaitNextRetryAsync(retryAttempt, ct); }
+                        catch (OperationCanceledException) { break; }
+                    }
                 }
-                catch (InvalidOperationException e) when (IsExpectedDisconnectException(e))
-                {
-                    // Expected during sign-out or transport close, exit gracefully
-                    break;
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(reportCategory, new ReportDebounce(serverStreamReportsDebouncer)));
-
-                    try { await WaitNextRetryAsync(retryAttempt, ct); }
-                    catch (OperationCanceledException) { break; }
-                }
+            }
+            finally
+            {
+                activeStreamTypes.Remove(typeof(T));
             }
         }
 

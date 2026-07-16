@@ -77,6 +77,11 @@ namespace DCL.ChatArea
 
         private void OnUISubmitPerformed(InputAction.CallbackContext _)
         {
+            //Don't steal focus for the chat while a modal view (popup or fullscreen) is on top, e.g. a popup opened
+            //from a context menu. Transient overlay toasts (notifications) don't count, so Enter still opens the chat.
+            if (mvcManager.IsAnyModalViewShowing())
+                return;
+
             chatSharedAreaEventBus.RaiseUISubmitEvent();
         }
 
@@ -114,17 +119,11 @@ namespace DCL.ChatArea
 
         private void OnMvcViewShowed(IController controller)
         {
-            //We disable submit shortcut recognition to avoid opening the chat when we have a popup on top
-            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
             chatSharedAreaEventBus.RaiseMVCViewOpenEvent(controller.Layer);
         }
 
         private void OnMvcViewClosed(IController controller)
         {
-            //We restore the chat to its previous appearance if the view is closed, as well as the shortcut for it
-            dclInput.UI.Submit.performed -= OnUISubmitPerformed;
-            dclInput.UI.Submit.performed += OnUISubmitPerformed;
-
             chatSharedAreaEventBus.RaiseMVCViewClosedEvent(controller.Layer);
         }
 

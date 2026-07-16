@@ -15,6 +15,9 @@ namespace DCL.Multiplayer.Movement
 {
     public partial class PulseMultiplayerBus
     {
+        private const string EMOTE_STARTED_MESSAGE = "EmoteStarted";
+        private const string EMOTE_STOPPED_MESSAGE = "EmoteStopped";
+
         private readonly HashSet<uint> emotingSubjects = new ();
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly HashSet<RemoteEmoteStopIntention> emoteStopIntentions = new (PoolConstants.AVATARS_COUNT);
@@ -88,6 +91,15 @@ namespace DCL.Multiplayer.Movement
                 emoteIntentions.Add(intention);
         }
 
+        private void ClearEmoteIntentions()
+        {
+            using (emoteSync.GetScope())
+            {
+                emoteIntentions.Clear();
+                emoteStopIntentions.Clear();
+            }
+        }
+
         private void HandleEmoteStarted(IncomingMessage message)
         {
             if (isDisposed)
@@ -98,11 +110,8 @@ namespace DCL.Multiplayer.Movement
 
             EmoteStarted emoteStarted = message.Message.EmoteStarted;
 
-            if (!peerIdCache.TryGetWallet(emoteStarted.SubjectId, out Web3Address walletId))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStarted from unknown peer {emoteStarted.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(emoteStarted.SubjectId, EMOTE_STARTED_MESSAGE, out Web3Address walletId))
                 return;
-            }
 
             emotingSubjects.Add(emoteStarted.SubjectId);
 
@@ -141,11 +150,8 @@ namespace DCL.Multiplayer.Movement
 
             EmoteStopped emoteStopped = message.Message.EmoteStopped;
 
-            if (!peerIdCache.TryGetWallet(emoteStopped.SubjectId, out Web3Address walletId))
-            {
-                ReportHub.LogWarning(ReportCategory.MULTIPLAYER, $"Received EmoteStopped from unknown peer {emoteStopped.SubjectId}");
+            if (!TryGetWalletInCurrentRealm(emoteStopped.SubjectId, EMOTE_STOPPED_MESSAGE, out Web3Address walletId))
                 return;
-            }
 
             emotingSubjects.Remove(emoteStopped.SubjectId);
 
