@@ -199,7 +199,7 @@ namespace DCL.Browser.DecentralandUrls
 
             if (featureFlags.IsEmpty)
                 return isTodayEnvironment
-                    ? dedicatedHostUrl
+                    ? dedicatedHostUrl // STATIC — pinned on construction before the domain switches to org
                     : new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, dedicatedHostUrl.Replace(ENV, decentralandDomain));
 
             if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
