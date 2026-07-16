@@ -55,6 +55,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         public override void Dispose()
         {
             purchaseService.StateChanged -= OnPurchaseStateChanged;
+            lifeCts?.SafeCancelAndDispose();
             disposalCts.SafeCancelAndDispose();
         }
 
