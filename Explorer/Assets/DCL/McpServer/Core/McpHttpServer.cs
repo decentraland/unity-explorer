@@ -47,7 +47,7 @@ namespace DCL.McpServer.Core
         public bool TryStart()
         {
             var newListener = new HttpListener();
-            newListener.Prefixes.Add($"http://127.0.0.1:{port}/mcp/");
+            newListener.Prefixes.Add($"http://127.0.0.1:{port}/unity-explorer-mcp/");
 
             try { newListener.Start(); }
             catch (Exception e) when (e is HttpListenerException or InvalidOperationException)
