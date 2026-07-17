@@ -49,9 +49,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         private long trackId;
         private long flushId;
 
-        // temportal sentry budget fix. TODO remove once the core issue solved
-        private static bool ONCE_PATTERN_ALREADY_CAUGHT = false;
-
         public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             using Mutex<RustSegmentAnalyticsService>.Guard instanceGuard = CURRENT.Lock(); // IGNORE_LINE_WEBGL_THREAD_SAFETY_FLAG
@@ -234,18 +231,17 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 string marshaled = Marshal.PtrToStringUTF8(msg) ?? "cannot parse message";
                 bool isCaught = marshaled.Contains(ONCE_PATTERN);
 
-                if (isCaught && ONCE_PATTERN_ALREADY_CAUGHT)
+                if (isCaught)
                 {
-                    // Don't log if already was
+                    // Transient, self-recovering analytics-upload failure (the SDK retries): this is
+                    // report-noise, not a hard error. Route to the local debug log only — never Sentry —
+                    // so it stops generating Sentry errors (UNITY-EXPLORER-P13: 637 events / 242 users).
+                    ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment error: {marshaled}", ReportHandler.DebugLog);
                     return;
                 }
 
+                // Genuine, non-transient Segment errors keep full Sentry reporting.
                 ReportHub.LogException(new Exception($"Segment error: {marshaled}"), ReportCategory.ANALYTICS);
-
-                if (isCaught)
-                {
-                    ONCE_PATTERN_ALREADY_CAUGHT = true;
-                }
             }
             catch
             {
