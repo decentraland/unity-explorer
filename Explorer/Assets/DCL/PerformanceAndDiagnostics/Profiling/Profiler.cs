@@ -22,6 +22,12 @@ namespace DCL.Profiling
         // Memory footprint of your application as seen by the operating system.
         private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
+
+#if ENABLE_PROFILER
+        // Subtracted from memory readings in Editor/dev builds only: in release players these counters mirror "Total Used/Reserved Memory" instead of profiler overhead (Unity bug: https://discussions.unity.com/t/profiler-used-memory-on-non-development-player/900344), so subtracting them there would zero out the budget readings.
+        private ProfilerRecorder profilerUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Used Memory");
+        private ProfilerRecorder profilerReservedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Profiler Reserved Memory");
+#endif
         private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
         private ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
@@ -41,8 +47,17 @@ namespace DCL.Profiling
         public int PhysicsSimulationInFrame { get; set; }
         public float PhysicsSimulationsAvgInTenFrames => physSimRunningSum / PHYS_SIM_BUFFER_SIZE;
 
+#if ENABLE_PROFILER
+        public long TotalUsedMemoryInBytes => max(0L, totalUsedMemoryRecorder.CurrentValue - profilerUsedMemoryRecorder.CurrentValue);
+        public long SystemUsedMemoryInBytes => max(0L, systemUsedMemoryRecorder.CurrentValue - profilerReservedMemoryRecorder.CurrentValue);
+        public long ProfilerUsedMemoryInBytes => max(0L, profilerUsedMemoryRecorder.CurrentValue);
+        public long ProfilerReservedMemoryInBytes => max(0L, profilerReservedMemoryRecorder.CurrentValue);
+#else
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
         public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
+        public long ProfilerUsedMemoryInBytes => 0L;
+        public long ProfilerReservedMemoryInBytes => 0L;
+#endif
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
         public float TotalGcAlloc => GetRecorderSamplesSum(gcAllocatedInFrameRecorder);
 
@@ -72,6 +87,10 @@ namespace DCL.Profiling
         {
             systemUsedMemoryRecorder.Dispose();
             totalUsedMemoryRecorder.Dispose();
+#if ENABLE_PROFILER
+            profilerUsedMemoryRecorder.Dispose();
+            profilerReservedMemoryRecorder.Dispose();
+#endif
             gcUsedMemoryRecorder.Dispose();
             gcAllocatedInFrameRecorder.Dispose();
 
