@@ -29,8 +29,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "walk";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
-
         public string Description =>
             "Walk/jog/run the player in a camera-relative direction for a number of seconds through the real locomotion pipeline "
             + "(collisions apply). directionY is forward, directionX is strafe right. Returns the start and end positions.";
@@ -43,6 +41,8 @@ namespace DCL.McpServer.Tools
                           .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
                           .Boolean("jump", "Jump once at the start of the movement. Default false.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
         public WalkTool(World world, Entity playerEntity)
         {

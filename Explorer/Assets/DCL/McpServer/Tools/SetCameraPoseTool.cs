@@ -34,8 +34,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "set_camera_pose";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
-
         public string Description =>
             "Place the free camera at an absolute world position, optionally aiming it at a point and setting its field of view. "
             + "Enters the free camera mode if needed (refuses with the reason when the scene locks the camera). The camera stays "
@@ -52,6 +50,8 @@ namespace DCL.McpServer.Tools
                           .Number("fov", "Optional vertical field of view in degrees (10-120).")
                           .Number("timeoutSec", "Seconds to wait for the camera to settle at the target. Default 5, max 15.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {

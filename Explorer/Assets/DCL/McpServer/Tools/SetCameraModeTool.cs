@@ -22,8 +22,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "set_camera_mode";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
-
         public string Description =>
             "Switch the player camera mode (first_person, third_person, drone, or the free-fly camera), like a user pressing the camera key. "
             + "Refuses with an explanation when the scene locks the mode (CameraModeArea, scene virtual camera, photo camera). "
@@ -33,6 +31,8 @@ namespace DCL.McpServer.Tools
             McpInputSchema.Object()
                           .String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true)
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public SetCameraModeTool(World world, ExposedCameraData exposedCameraData)
         {

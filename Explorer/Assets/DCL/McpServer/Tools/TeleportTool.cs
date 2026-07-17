@@ -29,8 +29,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "teleport";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
-
         public string Description =>
             "Teleport the player to a parcel (x,y) through the regular /goto flow and wait until the destination scene is ready. "
             + "Reports the final scene state; follow up with get_scene_state for details.";
@@ -42,6 +40,8 @@ namespace DCL.McpServer.Tools
                           .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")
                           .Number("timeoutSec", "Maximum seconds to wait for readiness. Default 60.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public TeleportTool(IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, ILoadingStatus loadingStatus)
         {

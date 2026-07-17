@@ -23,8 +23,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "move_to";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
-
         public string Description =>
             "Move the player to a world-space position (x,y,z in meters; one parcel is 16x16m). Instant by default, or smooth over durationSec. "
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
@@ -39,6 +37,8 @@ namespace DCL.McpServer.Tools
                           .Number("lookAtZ")
                           .Number("durationSec", "Seconds to move over; 0 (default) teleports instantly.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity)
         {

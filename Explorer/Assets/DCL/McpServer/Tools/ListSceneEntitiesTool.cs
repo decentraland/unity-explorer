@@ -24,8 +24,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "list_scene_entities";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
-
         public string Description =>
             "List the ECS entity ids of the scene at the player's current parcel. Feed an id into get_entity_details to inspect its components.";
 
@@ -33,6 +31,8 @@ namespace DCL.McpServer.Tools
             McpInputSchema.Object()
                           .Integer("limit", "Maximum ids to return. Default 200.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
         {

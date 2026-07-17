@@ -30,8 +30,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "reload_scene";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: true, idempotent: false);
-
         public string Description =>
             "Reload the scene at the player's current parcel and wait for it to restart. Use after editing scene code "
             + "when hot reload didn't trigger, or to reset scene state before a test run.";
@@ -40,6 +38,8 @@ namespace DCL.McpServer.Tools
             McpInputSchema.Object()
                           .Number("timeoutSec", "Maximum seconds to wait for the reload. Default 15.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: true, idempotent: false);
 
         public ReloadSceneTool(ECSReloadScene reloadScene, IScenesCache scenesCache, World world, Entity playerEntity, Entity skyboxEntity)
         {
