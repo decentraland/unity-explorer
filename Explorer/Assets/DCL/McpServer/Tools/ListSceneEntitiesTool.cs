@@ -51,14 +51,21 @@ namespace DCL.McpServer.Tools
                 return McpToolResult.Error("No scene world found at the current parcel.");
 
             IReadOnlyList<int> entityIds = worldInfo.EntityIds();
+            int returned = Mathf.Min(limit, entityIds.Count);
 
             var output = new StringBuilder();
-            output.AppendLine($"total={entityIds.Count} returned={Mathf.Min(limit, entityIds.Count)}");
+            output.AppendLine($"total={entityIds.Count} returned={returned}");
 
             for (var i = 0; i < entityIds.Count && i < limit; i++)
             {
                 output.Append(entityIds[i]);
                 output.Append(i < entityIds.Count - 1 && i < limit - 1 ? ", " : string.Empty);
+            }
+
+            if (returned < entityIds.Count)
+            {
+                output.AppendLine();
+                output.Append($"{returned} of {entityIds.Count} shown; raise limit (max {MAX_LIMIT}) to see the rest.");
             }
 
             return McpToolResult.Text(output.ToString());

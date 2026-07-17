@@ -17,8 +17,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "get_scene_logs";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
-
         public string Description =>
             "Read the scene's JavaScript console output (logs, warnings, errors and exceptions). Entries carry monotonic sequence numbers; "
             + "pass the last seen sequence as sinceSeq to poll incrementally.";
@@ -29,6 +27,8 @@ namespace DCL.McpServer.Tools
                           .String("severity", "Filter by severity. Default all.", enumValues: new[] { "all", "error" })
                           .Integer("sinceSeq", "Only return entries with a sequence number greater than this.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetSceneLogsTool(SceneLogBuffer logBuffer)
         {

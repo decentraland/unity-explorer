@@ -29,8 +29,6 @@ namespace DCL.McpServer.Tools
 
         public string Name => "click_entity";
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
-
         public string Description =>
             "Press and release a pointer button on a scene entity so its PointerEvents fire exactly like a real click. "
             + "The aim is validated by a physics raycast from the camera: occluders and the entity's maxDistance apply, and a miss "
@@ -47,6 +45,8 @@ namespace DCL.McpServer.Tools
                           .String("eventType", "click = down, then up on the next scene tick. Default click.", enumValues: new[] { "click", "down", "up" })
                           .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.")
                           .Build();
+
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
         public ClickEntityTool(World world, Entity playerEntity)
         {
