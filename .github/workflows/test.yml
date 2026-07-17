@@ -398,6 +398,44 @@ jobs:
           aws s3 cp baseline.json "s3://$EXPLORER_TEAM_S3_BUCKET/${{ env.WARNINGS_BASELINE_S3_KEY }}" \
             --content-type application/json --cache-control no-cache
 
+      # Warnings/errors located in files this PR changed — surfaced in the PR comment.
+      - name: Collect PR-file warnings
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: pr-findings
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MAX_FINDINGS: 50   # max rows listed in the PR comment; change here
+        run: |
+          set -euo pipefail
+          echo '[]' > pr-findings.json
+          echo "total=0" >> "$GITHUB_OUTPUT"
+          [ -f filtered.json ] || exit 0
+
+          base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA" 2>/dev/null || true)
+          [ -n "$base" ] || { echo "No merge-base - skipping PR-file findings."; exit 0; }
+
+          # repo-relative paths -> project-relative (strip leading 'Explorer/')
+          git diff --name-only "$base" "$HEAD_SHA" -- '*.cs' \
+            | sed 's#^Explorer/##' | sort -u > changed-files.txt
+
+          jq --rawfile changed changed-files.txt '
+            ($changed | split("\n") | map(select(length > 0))) as $files
+            | map({
+                file:    (.locations[0].physicalLocation.artifactLocation.uri // ""),
+                line:    (.locations[0].physicalLocation.region.startLine // 0),
+                rule:    (.ruleId // ""),
+                level:   (.level // "warning"),
+                message: (.message.text // "")
+              })
+            | map(select(.file as $f | $files | index($f) != null))
+          ' filtered.json > pr-findings-all.json
+
+          total=$(jq length pr-findings-all.json)
+          jq --argjson max "$MAX_FINDINGS" '.[:$max]' pr-findings-all.json > pr-findings.json   # cap comment size
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+          echo "PR-file findings: $total (listing up to $MAX_FINDINGS)"
+
       # Hand the numbers to the trusted workflow_run companion that posts the PR comment.
       # Runs even when the gate above failed (!cancelled), so a failing run still refreshes the comment
       # instead of leaving a stale message.
@@ -416,7 +454,9 @@ jobs:
             --argjson count "$COUNT" \
             --arg baseline "$BASELINE" \
             --argjson allow_equal "$IS_RELEASE_OR_HOTFIX" \
-            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal}' \
+            --slurpfile findings pr-findings.json \
+            --argjson findings_total "${{ steps.pr-findings.outputs.total || 0 }}" \
+            '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal, pr_findings: ($findings[0] // []), pr_findings_total: $findings_total}' \
             > warning-result.json
           cat warning-result.json
 
