@@ -22,6 +22,19 @@ namespace DCL.McpServer.Core
                 ["content"] = new JArray { TextItem(text) },
             });
 
+        /// <summary>
+        ///     A result that carries both a machine-readable <paramref name="structured" /> payload (surfaced as
+        ///     structuredContent, validated against the tool's outputSchema) and a <paramref name="text" /> item that
+        ///     mirrors the same data — the spec requires the text duplicate so clients without structured support still
+        ///     read the result. Callers pass the structured JObject and its Formatting.Indented serialization as text.
+        /// </summary>
+        public static McpToolResult TextWithStructured(string text, JObject structured) =>
+            new (new JObject
+            {
+                ["content"] = new JArray { TextItem(text) },
+                ["structuredContent"] = structured,
+            });
+
         public static McpToolResult Error(string message) =>
             new (new JObject
             {

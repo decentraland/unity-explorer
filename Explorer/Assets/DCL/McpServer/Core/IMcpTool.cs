@@ -25,6 +25,13 @@ namespace DCL.McpServer.Core
         McpToolAnnotations Annotations { get; }
 
         /// <summary>
+        ///     JSON Schema of this tool's structuredContent, surfaced as outputSchema in tools/list. Build it with
+        ///     <see cref="McpInputSchema" />. Null (the default) when the tool returns only unstructured text; tools
+        ///     that emit <see cref="McpToolResult.TextWithStructured" /> override this to describe that payload.
+        /// </summary>
+        JObject? OutputSchema => null;
+
+        /// <summary>
         ///     Invoked from a thread-pool thread; implementations switch to the main thread themselves
         ///     before touching ECS or Unity state. Expected failures are reported through
         ///     <see cref="McpToolResult.Error" />, not exceptions.

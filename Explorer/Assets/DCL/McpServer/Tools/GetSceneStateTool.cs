@@ -26,6 +26,23 @@ namespace DCL.McpServer.Tools
 
         public JObject InputSchema => McpInputSchema.Object().Build();
 
+        public JObject? OutputSchema =>
+            McpInputSchema.Object()
+                          .Object("currentParcel", JObjectExtensions.ParcelSchema())
+                          .String("loadingStage")
+                          .Boolean("loadingScreenOn")
+                          .Boolean("localSceneDevelopment")
+                          .Object("scene", McpInputSchema.Object()
+                                                         .String("name")
+                                                         .Object("baseParcel", JObjectExtensions.ParcelSchema())
+                                                         .String("sdkVersion", "SDK version reported by the scene, or null when unknown.", nullable: true)
+                                                         .String("state")
+                                                         .Boolean("isReady")
+                                                         .Boolean("assetsLoadingConcluded")
+                                                         .String("runningStatus"),
+                              "The scene at the player's current parcel, or null when no scene is loaded there.", nullable: true)
+                          .Build();
+
         public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
@@ -63,7 +80,7 @@ namespace DCL.McpServer.Tools
                     },
             };
 
-            return McpToolResult.Text(state.ToString(Formatting.Indented));
+            return McpToolResult.TextWithStructured(state.ToString(Formatting.Indented), state);
         }
     }
 }

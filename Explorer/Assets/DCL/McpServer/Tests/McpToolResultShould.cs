@@ -21,6 +21,28 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void CarryBothAMirroringTextItemAndStructuredContent()
+        {
+            var structured = new JObject
+            {
+                ["count"] = 3,
+                ["nested"] = new JObject { ["ok"] = true },
+            };
+
+            JObject payload = McpToolResult.TextWithStructured("mirror", structured).Payload;
+
+            var content = (JArray)payload["content"]!;
+            Assert.That(content.Count, Is.EqualTo(1));
+            Assert.That(content[0]!["type"]!.Value<string>(), Is.EqualTo("text"));
+            Assert.That(content[0]!["text"]!.Value<string>(), Is.EqualTo("mirror"));
+
+            var structuredContent = (JObject)payload["structuredContent"]!;
+            Assert.That(structuredContent["count"]!.Value<int>(), Is.EqualTo(3));
+            Assert.That(structuredContent["nested"]!["ok"]!.Value<bool>(), Is.True);
+            Assert.That(payload.ContainsKey("isError"), Is.False);
+        }
+
+        [Test]
         public void FlagErrorsWithIsErrorAndCarryTheMessageAsText()
         {
             JObject payload = McpToolResult.Error("it broke").Payload;

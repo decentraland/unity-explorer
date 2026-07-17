@@ -29,6 +29,23 @@ namespace DCL.McpServer.Tools
 
         public JObject InputSchema => McpInputSchema.Object().Build();
 
+        public JObject? OutputSchema =>
+            McpInputSchema.Object()
+                          .Object("position", JObjectExtensions.VectorSchema())
+                          .Object("rotationEuler", JObjectExtensions.VectorSchema())
+                          .Object("parcel", JObjectExtensions.ParcelSchema())
+                          .Object("velocity", JObjectExtensions.VectorSchema())
+                          .Boolean("isGrounded")
+                          .Boolean("isPlayerStandingOnScene")
+                          .String("address", "Wallet address of the logged-in player, or null when no profile is loaded.", nullable: true)
+                          .Object("camera", McpInputSchema.Object()
+                                                          .Object("position", JObjectExtensions.VectorSchema())
+                                                          .Object("rotationEuler", JObjectExtensions.VectorSchema())
+                                                          .String("mode")
+                                                          .Boolean("modeChangeAllowed")
+                                                          .Boolean("pointerLocked"))
+                          .Build();
+
         public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetPlayerStateTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData, ICurrentSceneInfo currentSceneInfo)
@@ -68,7 +85,7 @@ namespace DCL.McpServer.Tools
                 },
             };
 
-            return McpToolResult.Text(state.ToString(Formatting.Indented));
+            return McpToolResult.TextWithStructured(state.ToString(Formatting.Indented), state);
         }
     }
 }

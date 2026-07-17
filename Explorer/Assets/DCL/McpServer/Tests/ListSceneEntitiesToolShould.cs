@@ -55,6 +55,26 @@ namespace DCL.McpServer.Tests
             Assert.That(text, Does.Not.Contain("shown"));
         }
 
+        [Test]
+        public void MirrorTheListingInStructuredContentWhileKeepingTheText()
+        {
+            // Arrange
+            worldInfo.EntityIds().Returns(Ids(10));
+
+            // Act
+            McpToolResult result = Execute(limit: 3);
+
+            // Assert — text output is untouched
+            Assert.That(TextOf(result), Does.Contain("total=10 returned=3"));
+
+            // Assert — structured mirror carries the same figures
+            var structured = (JObject)result.Payload["structuredContent"]!;
+            Assert.That(structured["total"]!.Value<int>(), Is.EqualTo(10));
+            Assert.That(structured["returned"]!.Value<int>(), Is.EqualTo(3));
+            Assert.That(structured["truncated"]!.Value<bool>(), Is.True);
+            Assert.That(((JArray)structured["entityIds"]!).ToObject<int[]>(), Is.EqualTo(new[] { 0, 1, 2 }));
+        }
+
         private McpToolResult Execute(int limit) =>
             tool.ExecuteAsync(new JObject { ["limit"] = limit }, CancellationToken.None).GetAwaiter().GetResult();
 

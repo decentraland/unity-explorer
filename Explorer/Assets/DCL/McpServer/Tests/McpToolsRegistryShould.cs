@@ -90,6 +90,36 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void IncludeOutputSchemaWhenTheToolDeclaresOne()
+        {
+            // Arrange
+            JObject outputSchema = McpInputSchema.Object().Integer("total").Build();
+
+            JObject toolsList = new McpToolsRegistry()
+                              .Add(new FakeTool("structured", McpToolAnnotations.ReadOnly(), outputSchema: outputSchema))
+                              .Build();
+
+            // Act
+            JObject entry = EntryOf(toolsList, "structured");
+
+            // Assert
+            Assert.That(entry.ContainsKey("outputSchema"), Is.True);
+            Assert.That(entry["outputSchema"]!["type"]!.Value<string>(), Is.EqualTo("object"));
+        }
+
+        [Test]
+        public void OmitOutputSchemaWhenTheToolDeclaresNone()
+        {
+            // Arrange
+            JObject toolsList = new McpToolsRegistry()
+                              .Add(new FakeTool("plain", McpToolAnnotations.ReadOnly()))
+                              .Build();
+
+            // Act & Assert
+            Assert.That(EntryOf(toolsList, "plain").ContainsKey("outputSchema"), Is.False);
+        }
+
+        [Test]
         public void FindARegisteredToolByName()
         {
             var tool = new FakeTool("known", McpToolAnnotations.ReadOnly());
@@ -138,11 +168,14 @@ namespace DCL.McpServer.Tests
             Assert.That(names, Is.EquivalentTo(new[] { "first", "second" }));
         }
 
-        private static JObject AnnotationsOf(JObject toolsList, string name)
+        private static JObject AnnotationsOf(JObject toolsList, string name) =>
+            (JObject)EntryOf(toolsList, name)["annotations"]!;
+
+        private static JObject EntryOf(JObject toolsList, string name)
         {
             foreach (JToken entry in (JArray)toolsList["tools"]!)
                 if (entry["name"]!.Value<string>() == name)
-                    return (JObject)entry["annotations"]!;
+                    return (JObject)entry;
 
             Assert.Fail($"tool '{name}' not found in tools/list");
             return null!;
@@ -158,11 +191,14 @@ namespace DCL.McpServer.Tests
 
             public JObject InputSchema { get; }
 
-            public FakeTool(string name, McpToolAnnotations annotations, JObject? inputSchema = null)
+            public JObject? OutputSchema { get; }
+
+            public FakeTool(string name, McpToolAnnotations annotations, JObject? inputSchema = null, JObject? outputSchema = null)
             {
                 Name = name;
                 Annotations = annotations;
                 InputSchema = inputSchema ?? McpInputSchema.Object().Build();
+                OutputSchema = outputSchema;
             }
 
             public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct) =>

@@ -3,9 +3,10 @@ using Newtonsoft.Json.Linq;
 namespace DCL.McpServer.Core
 {
     /// <summary>
-    ///     Fluent builder for a tool's input JSON Schema. Declaring each field through a typed method keeps the
-    ///     schema typo-safe — a mistyped type name can't slip through the way it could in a raw JSON string — and
-    ///     produces the same { type: object, properties, required } shape a tools/list entry expects.
+    ///     Fluent builder for a tool's input or output JSON Schema. Declaring each field through a typed method keeps
+    ///     the schema typo-safe — a mistyped type name can't slip through the way it could in a raw JSON string — and
+    ///     produces the same { type: object, properties, required } shape a tools/list entry expects. Nested objects,
+    ///     integer arrays and nullable fields extend the same style to the richer shapes an outputSchema needs.
     /// </summary>
     public sealed class McpInputSchema
     {
@@ -18,17 +19,49 @@ namespace DCL.McpServer.Core
         public static McpInputSchema Object() =>
             new ();
 
-        public McpInputSchema String(string name, string? description = null, string[]? enumValues = null, bool required = false) =>
-            Property(name, "string", description, enumValues, required);
+        public McpInputSchema String(string name, string? description = null, string[]? enumValues = null, bool required = false, bool nullable = false) =>
+            Property(name, "string", description, enumValues, required, nullable);
 
-        public McpInputSchema Number(string name, string? description = null, bool required = false) =>
-            Property(name, "number", description, null, required);
+        public McpInputSchema Number(string name, string? description = null, bool required = false, bool nullable = false) =>
+            Property(name, "number", description, null, required, nullable);
 
-        public McpInputSchema Integer(string name, string? description = null, bool required = false) =>
-            Property(name, "integer", description, null, required);
+        public McpInputSchema Integer(string name, string? description = null, bool required = false, bool nullable = false) =>
+            Property(name, "integer", description, null, required, nullable);
 
-        public McpInputSchema Boolean(string name, string? description = null, bool required = false) =>
-            Property(name, "boolean", description, null, required);
+        public McpInputSchema Boolean(string name, string? description = null, bool required = false, bool nullable = false) =>
+            Property(name, "boolean", description, null, required, nullable);
+
+        /// <summary>
+        ///     Adds a nested object field described by its own <paramref name="schema" /> builder. A
+        ///     <paramref name="nullable" /> field admits null in place of the object (JSON Schema "type": ["object", "null"]).
+        /// </summary>
+        public McpInputSchema Object(string name, McpInputSchema schema, string? description = null, bool required = false, bool nullable = false)
+        {
+            JObject field = schema.Build();
+
+            if (nullable)
+                field["type"] = new JArray { "object", "null" };
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, required);
+        }
+
+        /// <summary>Adds an array field whose items are all integers.</summary>
+        public McpInputSchema IntegerArray(string name, string? description = null, bool required = false)
+        {
+            var field = new JObject
+            {
+                ["type"] = "array",
+                ["items"] = new JObject { ["type"] = "integer" },
+            };
+
+            if (description != null)
+                field["description"] = description;
+
+            return AddField(name, field, required);
+        }
 
         /// <summary>Materializes the accumulated fields into the JSON Schema object.</summary>
         public JObject Build()
@@ -45,9 +78,9 @@ namespace DCL.McpServer.Core
             return schema;
         }
 
-        private McpInputSchema Property(string name, string type, string? description, string[]? enumValues, bool isRequired)
+        private McpInputSchema Property(string name, string type, string? description, string[]? enumValues, bool isRequired, bool nullable)
         {
-            var field = new JObject { ["type"] = type };
+            var field = new JObject { ["type"] = nullable ? new JArray { type, "null" } : (JToken)type };
 
             if (description != null)
                 field["description"] = description;
@@ -62,6 +95,11 @@ namespace DCL.McpServer.Core
                 field["enum"] = values;
             }
 
+            return AddField(name, field, isRequired);
+        }
+
+        private McpInputSchema AddField(string name, JObject field, bool isRequired)
+        {
             properties[name] = field;
 
             if (isRequired)

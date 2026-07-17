@@ -42,6 +42,50 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void NestAnObjectFieldWithItsOwnProperties()
+        {
+            JObject schema = McpInputSchema.Object()
+                                           .Object("camera", McpInputSchema.Object().String("mode"), "The camera.", required: true)
+                                           .Build();
+
+            var camera = (JObject)schema["properties"]!["camera"]!;
+            Assert.That(camera["type"]!.Value<string>(), Is.EqualTo("object"));
+            Assert.That(camera["description"]!.Value<string>(), Is.EqualTo("The camera."));
+            Assert.That(camera["properties"]!["mode"]!["type"]!.Value<string>(), Is.EqualTo("string"));
+            Assert.That(((JArray)schema["required"]!).ToObject<string[]>(), Is.EqualTo(new[] { "camera" }));
+        }
+
+        [Test]
+        public void AdmitNullAlongsideAnObjectForANullableNestedField()
+        {
+            JObject schema = McpInputSchema.Object()
+                                           .Object("scene", McpInputSchema.Object().String("name"), nullable: true)
+                                           .Build();
+
+            var sceneType = (JArray)schema["properties"]!["scene"]!["type"]!;
+            Assert.That(sceneType.ToObject<string[]>(), Is.EqualTo(new[] { "object", "null" }));
+        }
+
+        [Test]
+        public void AdmitNullAlongsideTheDeclaredTypeForANullableScalar()
+        {
+            JObject schema = McpInputSchema.Object().String("address", nullable: true).Build();
+
+            var addressType = (JArray)schema["properties"]!["address"]!["type"]!;
+            Assert.That(addressType.ToObject<string[]>(), Is.EqualTo(new[] { "string", "null" }));
+        }
+
+        [Test]
+        public void DescribeAnArrayOfIntegerItems()
+        {
+            JObject schema = McpInputSchema.Object().IntegerArray("entityIds").Build();
+
+            var field = (JObject)schema["properties"]!["entityIds"]!;
+            Assert.That(field["type"]!.Value<string>(), Is.EqualTo("array"));
+            Assert.That(field["items"]!["type"]!.Value<string>(), Is.EqualTo("integer"));
+        }
+
+        [Test]
         public void ProduceAnEmptyPropertiesObjectForAnArgumentlessTool()
         {
             JObject schema = McpInputSchema.Object().Build();

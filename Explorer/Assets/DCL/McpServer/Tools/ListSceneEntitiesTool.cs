@@ -32,6 +32,14 @@ namespace DCL.McpServer.Tools
                           .Integer("limit", "Maximum ids to return. Default 200.")
                           .Build();
 
+        public JObject? OutputSchema =>
+            McpInputSchema.Object()
+                          .Integer("total")
+                          .Integer("returned")
+                          .Boolean("truncated")
+                          .IntegerArray("entityIds")
+                          .Build();
+
         public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
@@ -52,23 +60,34 @@ namespace DCL.McpServer.Tools
 
             IReadOnlyList<int> entityIds = worldInfo.EntityIds();
             int returned = Mathf.Min(limit, entityIds.Count);
+            bool truncated = returned < entityIds.Count;
 
+            var ids = new JArray();
             var output = new StringBuilder();
             output.AppendLine($"total={entityIds.Count} returned={returned}");
 
             for (var i = 0; i < entityIds.Count && i < limit; i++)
             {
+                ids.Add(entityIds[i]);
                 output.Append(entityIds[i]);
                 output.Append(i < entityIds.Count - 1 && i < limit - 1 ? ", " : string.Empty);
             }
 
-            if (returned < entityIds.Count)
+            if (truncated)
             {
                 output.AppendLine();
                 output.Append($"{returned} of {entityIds.Count} shown; raise limit (max {MAX_LIMIT}) to see the rest.");
             }
 
-            return McpToolResult.Text(output.ToString());
+            var structured = new JObject
+            {
+                ["total"] = entityIds.Count,
+                ["returned"] = returned,
+                ["truncated"] = truncated,
+                ["entityIds"] = ids,
+            };
+
+            return McpToolResult.TextWithStructured(output.ToString(), structured);
         }
     }
 }
