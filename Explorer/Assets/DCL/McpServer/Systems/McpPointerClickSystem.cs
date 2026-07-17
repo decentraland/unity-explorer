@@ -43,6 +43,7 @@ namespace DCL.McpServer.Systems
     public partial class McpPointerClickSystem : BaseUnityLoopSystem
     {
         private const float MAX_RAYCAST_DISTANCE = 100f;
+        private const float AIM_DIRECTION_EPSILON_SQR = 0.0001f;
 
         private static readonly QueryDescription ALL_ENTITIES = new ();
 
@@ -167,7 +168,7 @@ namespace DCL.McpServer.Systems
             Vector3 origin = camera.Camera.transform.position;
             Vector3 direction = aimPoint - origin;
 
-            if (direction.sqrMagnitude < 0.0001f)
+            if (direction.sqrMagnitude < AIM_DIRECTION_EPSILON_SQR)
             {
                 result = Failure(in intent, "the camera is on top of the aim point; move back and retry");
                 return false;

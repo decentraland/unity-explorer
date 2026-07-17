@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 

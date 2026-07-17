@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

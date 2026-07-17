@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using Newtonsoft.Json.Linq;
 using SceneRunner.Debugging;
 using SceneRunner.Debugging.Hub;

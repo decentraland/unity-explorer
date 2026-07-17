@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using ECS.Abstract;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

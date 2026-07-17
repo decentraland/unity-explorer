@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

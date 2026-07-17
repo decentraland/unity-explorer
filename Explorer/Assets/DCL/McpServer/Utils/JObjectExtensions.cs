@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using UnityEngine;
 
-namespace DCL.McpServer.Tools
+namespace DCL.McpServer.Utils
 {
     /// <summary>
     ///     Builders for the JSON fragments shared by tool outputs.

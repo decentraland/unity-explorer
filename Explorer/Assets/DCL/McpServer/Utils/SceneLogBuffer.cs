@@ -1,7 +1,7 @@
 using DCL.UI.DebugMenu.LogHistory;
 using System.Collections.Generic;
 
-namespace DCL.McpServer.Tools
+namespace DCL.McpServer.Utils
 {
     /// <summary>
     ///     Thread-safe ring buffer of scene console log entries with monotonic sequence numbers,

@@ -3,6 +3,7 @@ using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

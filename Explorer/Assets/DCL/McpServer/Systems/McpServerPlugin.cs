@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
+using DCL.McpServer.Utils;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.UI.DebugMenu.MessageBus;

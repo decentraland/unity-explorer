@@ -4,6 +4,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using DCL.Profiles;
 using ECS.SceneLifeCycle.CurrentScene;
 using Newtonsoft.Json;

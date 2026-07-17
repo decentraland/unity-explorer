@@ -3,6 +3,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.McpServer.Core;
+using DCL.McpServer.Utils;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using Newtonsoft.Json.Linq;
