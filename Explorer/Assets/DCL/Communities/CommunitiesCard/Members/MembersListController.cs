@@ -51,7 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ChatEventBus chatEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private readonly Dictionary<MembersListView.MemberListSections, SectionFetchData<ICommunityMemberData>> sectionsFetchData = new ();
@@ -88,7 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ChatEventBus chatEventBus,
             IWeb3IdentityCache web3IdentityCache,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;

@@ -17,6 +17,7 @@ namespace DCL.Billboard.Demo.CameraData
         public CanBeDirty<Quaternion> WorldRotation => new (t.rotation);
         public CanBeDirty<CameraType> CameraType { get; }
         public CanBeDirty<bool> PointerIsLocked { get; }
+        public CumulativePointerDelta AccumulatedPointerDelta => default;
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
         public CameraMode CameraMode { get; set; }

@@ -49,7 +49,7 @@ namespace DCL.UI.Sidebar
         private readonly IMVCManager mvcManager;
         private readonly SidebarProfileButtonPresenter profileButtonPresenter;
         private readonly SmartWearablesSideBarTooltipController smartWearablesTooltipController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IChatHistory chatHistory;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
@@ -89,7 +89,7 @@ namespace DCL.UI.Sidebar
             IMVCManager mvcManager,
             SidebarProfileButtonPresenter profileButtonPresenter,
             SmartWearablesSideBarTooltipController smartWearablesTooltipController,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IChatHistory chatHistory,
             ISelfProfile selfProfile,
             IRealmData realmData,
@@ -304,7 +304,7 @@ namespace DCL.UI.Sidebar
                                                .AppendPath(URLPath.FromString($"profile/accounts/{myProfile.UserId}/referral"))
                                                .Build();
 
-                    webBrowser.OpenUrl(url);
+                    webBrowser.OpenUrlMainThreadOnly(url);
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
@@ -451,7 +451,7 @@ namespace DCL.UI.Sidebar
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Market)));
             urlBuilder.AppendParameter(marketplaceSourceParam);
-            webBrowser.OpenUrl(urlBuilder.Build());
+            webBrowser.OpenUrlMainThreadOnly(urlBuilder.Build());
         }
 
         private async UniTaskVoid OpenPanelAsync<TView, TInputData>(

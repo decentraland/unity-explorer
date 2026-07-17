@@ -87,7 +87,7 @@ namespace DCL.Passport
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportProfileInfoController passportProfileInfoController;
@@ -182,7 +182,7 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,

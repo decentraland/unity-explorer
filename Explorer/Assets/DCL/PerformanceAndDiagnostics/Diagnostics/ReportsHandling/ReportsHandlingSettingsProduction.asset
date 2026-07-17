@@ -458,6 +458,12 @@ MonoBehaviour:
       Severity: 2
     - Category: MCP
       Severity: 0
+    - Category: AUTHENTICATION
+      Severity: 3
+    - Category: AUTHENTICATION
+      Severity: 2
+    - Category: AUTHENTICATION
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

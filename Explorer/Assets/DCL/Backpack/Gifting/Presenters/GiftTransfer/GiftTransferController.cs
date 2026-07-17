@@ -30,7 +30,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private State currentState;
 
         private readonly IEventBus eventBus;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly GiftTransferRequestCommand  giftTransferRequestCommand;
@@ -41,7 +41,7 @@ namespace DCL.Backpack.Gifting.Presenters
         private CancellationTokenSource? delayCts;
 
         public GiftTransferController(ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEventBus eventBus,
             IMVCManager mvcManager,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -292,7 +292,7 @@ namespace DCL.Backpack.Gifting.Presenters
 
         private void LinkCallback(string url)
         {
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
         }
     }
 }
