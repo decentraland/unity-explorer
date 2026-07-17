@@ -22,6 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class UpdateCurrentSceneSystem : BaseUnityLoopSystem
     {
+
         private const string NO_DATA_STRING = "<No data>";
 
         private static readonly int SRC_BLEND = Shader.PropertyToID("_SrcBlend");

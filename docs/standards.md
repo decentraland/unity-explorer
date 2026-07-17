@@ -32,6 +32,7 @@ Use [Unity Native Collections](https://docs.unity3d.com/Packages/com.unity.colle
 
 ### Be Mindful of Serialization and Deserialization
 - JSON. Using JSON is not a great idea overall. It creates a significant GC Pressure. If it is still needed consider reusing the existing objects and filling them with data instead of creating new ones. Consider using Unity's `JsonUtility` as it's more performant.
+  - For naming and nullability rules on deserialized JSON DTO fields (wire-format casing, `= null!` on schema-required fields), see [Code Style Guidelines → Serialized JSON DTOs](code-style-guidelines.md#serialized-json-dtos-wire-format-exceptions).
 - Protobuf. Instead of creating a new instance, parse into the existing one.
 
 ### Be Mindful of Boxing and Unboxing

@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
+        public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -74,8 +75,29 @@ namespace DCL.MarketplaceCredits
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/credits";
 
-            return await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+            UserCreditsResponse userCreditsResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                 .CreateFromJson<UserCreditsResponse>(WRJsonParser.Unity);
+
+            OnUserCreditsFetched?.Invoke(userCreditsResponse);
+            return userCreditsResponse;
+        }
+
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
+            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+
+            return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                             .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize/cancel";
+            string jsonBody = JsonUtility.ToJson(new ReleaseUsdIntentsBody { salts = salts });
+
+            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
         private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
