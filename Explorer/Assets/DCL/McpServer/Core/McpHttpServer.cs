@@ -24,6 +24,13 @@ namespace DCL.McpServer.Core
 
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
+
+        // Stateless single-session design: this localhost, single-user automation server exposes one logical MCP
+        // session for the whole process lifetime. It therefore uses one id for its entire life and echoes it on
+        // every response (including errors and before initialize) instead of minting one per handshake, and it does
+        // not validate the incoming Mcp-Session-Id — there is no per-session state to bind a request to. This
+        // deliberately departs from the Streamable HTTP session lifecycle; revisit if the server ever serves
+        // multiple concurrent clients.
         private readonly string sessionId = Guid.NewGuid().ToString("N");
 
         private HttpListener? listener;
@@ -73,11 +80,16 @@ namespace DCL.McpServer.Core
         {
             await DCLTask.SwitchToThreadPool();
 
-            while (!ct.IsCancellationRequested && listener is { IsListening: true })
+            // Capture once: a concurrent Dispose() on the main thread nulls the field, and re-reading it between
+            // the guard and GetContextAsync would throw an unfiltered NRE. Dispose still stops/closes this same
+            // instance, so a parked GetContextAsync surfaces as one of the caught exceptions below.
+            HttpListener? local = listener;
+
+            while (!ct.IsCancellationRequested && local is { IsListening: true })
             {
                 HttpListenerContext context;
 
-                try { context = await listener.GetContextAsync(); }
+                try { context = await local.GetContextAsync(); }
                 catch (Exception e) when (e is HttpListenerException or ObjectDisposedException or InvalidOperationException)
                 {
                     // The listener was stopped or disposed; end the accept loop.

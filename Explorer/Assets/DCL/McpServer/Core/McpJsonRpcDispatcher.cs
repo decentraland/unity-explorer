@@ -49,7 +49,7 @@ namespace DCL.McpServer.Core
 
             return routable.Value.method switch
                    {
-                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult()),
+                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult(routable.Value.callParams)),
                        "ping" => JsonRpcEnvelope.Result(id, new JObject()),
                        "tools/list" => JsonRpcEnvelope.Result(id, tools),
                        "tools/call" => await CallToolAsync(id,
@@ -69,11 +69,19 @@ namespace DCL.McpServer.Core
         {
             earlyResponse = null;
 
-            JObject request;
-            try { request = JObject.Parse(requestJson); }
+            JToken parsed;
+            try { parsed = JToken.Parse(requestJson); }
             catch (JsonException)
             {
                 earlyResponse = JsonRpcEnvelope.Error(null, PARSE_ERROR, "Parse error");
+                return null;
+            }
+
+            // -32700 is reserved for unparseable JSON; well-formed JSON that is not a JSON-RPC object
+            // (a bare array, number or string) is a valid document but an invalid request: -32600.
+            if (parsed is not JObject request)
+            {
+                earlyResponse = JsonRpcEnvelope.Error(null, INVALID_REQUEST, "Invalid request: expected a JSON-RPC object");
                 return null;
             }
 
@@ -93,8 +101,17 @@ namespace DCL.McpServer.Core
             return (id, method, request["params"] as JObject);
         }
 
-        private JObject InitializeResult() =>
-            new ()
+        private JObject InitializeResult(JObject? initializeParams)
+        {
+            // We implement a single MCP revision. Per the handshake rules we answer with our version regardless,
+            // but a client pinned to a different revision may abort on a strict mismatch — surface it so the
+            // otherwise-silent interop failure is diagnosable from the server logs.
+            string? requestedVersion = initializeParams?["protocolVersion"]?.Value<string>();
+
+            if (!string.IsNullOrEmpty(requestedVersion) && requestedVersion != PROTOCOL_VERSION)
+                ReportHub.LogWarning(ReportCategory.MCP, $"MCP client requested protocol version '{requestedVersion}', server responding with '{PROTOCOL_VERSION}'");
+
+            return new JObject
             {
                 ["protocolVersion"] = PROTOCOL_VERSION,
                 ["capabilities"] = new JObject { ["tools"] = new JObject() },
@@ -105,6 +122,7 @@ namespace DCL.McpServer.Core
                     ["pid"] = processId,
                 },
             };
+        }
 
         private async UniTask<string?> CallToolAsync(JToken id, string? toolName, JObject arguments, CancellationToken ct)
         {

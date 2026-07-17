@@ -10,9 +10,14 @@ namespace DCL.McpServer.Core
         private readonly Dictionary<string, IMcpTool> tools = new ();
         private JObject toolsList = null!;
 
-        /// <summary>Lets the built registry stand in directly for its tools/list payload.</summary>
+        /// <summary>
+        ///     Lets the built registry stand in directly for its tools/list payload. Returns a detached clone:
+        ///     dispatched requests run concurrently on the thread pool, and attaching the shared instance to a
+        ///     response envelope re-parents it in place, so handing out the same object would race on its parent/
+        ///     sibling pointers during serialization.
+        /// </summary>
         public static implicit operator JObject(McpToolsRegistry registry) =>
-            registry.toolsList;
+            (JObject)registry.toolsList.DeepClone();
 
         public McpToolsRegistry Add(IMcpTool tool)
         {
