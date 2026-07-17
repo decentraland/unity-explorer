@@ -80,9 +80,9 @@ namespace DCL.McpServer.Tools
 
             switch (arguments.GetString("eventType", "click"))
             {
-                case "click": kind = McpPointerClickIntent.ClickKind.Click; break;
-                case "down": kind = McpPointerClickIntent.ClickKind.Down; break;
-                case "up": kind = McpPointerClickIntent.ClickKind.Up; break;
+                case "click": kind = McpPointerClickIntent.ClickKind.CLICK; break;
+                case "down": kind = McpPointerClickIntent.ClickKind.DOWN; break;
+                case "up": kind = McpPointerClickIntent.ClickKind.UP; break;
                 default: return McpToolResult.Error("eventType must be one of: click, down, up.");
             }
 
@@ -107,7 +107,7 @@ namespace DCL.McpServer.Tools
                 HasExplicitAimPoint = hasAimPoint,
                 Button = button,
                 Kind = kind,
-                Phase = McpPointerClickIntent.ClickPhase.Down,
+                Phase = McpPointerClickIntent.ClickPhase.DOWN,
                 Deadline = UnityEngine.Time.time + timeoutSec,
                 Completion = completion,
             });

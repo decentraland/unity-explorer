@@ -99,8 +99,8 @@ namespace DCL.McpServer.Systems
 
             switch (intent.Phase)
             {
-                case McpPointerClickIntent.ClickPhase.Down:
-                    PointerEventType pressType = intent.Kind == McpPointerClickIntent.ClickKind.Up
+                case McpPointerClickIntent.ClickPhase.DOWN:
+                    PointerEventType pressType = intent.Kind == McpPointerClickIntent.ClickKind.UP
                         ? PointerEventType.PetUp
                         : PointerEventType.PetDown;
 
@@ -110,7 +110,7 @@ namespace DCL.McpServer.Systems
                         return;
                     }
 
-                    if (intent.Kind != McpPointerClickIntent.ClickKind.Click)
+                    if (intent.Kind != McpPointerClickIntent.ClickKind.CLICK)
                     {
                         CompleteAndRemove(intent.Completion, result);
                         return;
@@ -119,17 +119,17 @@ namespace DCL.McpServer.Systems
                     intent.SceneWorld = sceneWorld;
                     intent.DownTick = scene.SceneStateProvider.TickNumber;
                     intent.DownResult = result;
-                    intent.Phase = McpPointerClickIntent.ClickPhase.WaitTick;
+                    intent.Phase = McpPointerClickIntent.ClickPhase.WAIT_TICK;
                     return;
 
-                case McpPointerClickIntent.ClickPhase.WaitTick:
+                case McpPointerClickIntent.ClickPhase.WAIT_TICK:
                     // The scene must observe PetDown on an earlier tick than PetUp, otherwise ordering is ambiguous.
                     if (scene.SceneStateProvider.TickNumber > intent.DownTick)
-                        intent.Phase = McpPointerClickIntent.ClickPhase.Up;
+                        intent.Phase = McpPointerClickIntent.ClickPhase.UP;
 
                     return;
 
-                case McpPointerClickIntent.ClickPhase.Up:
+                case McpPointerClickIntent.ClickPhase.UP:
                     DeliverUp(ref intent, sceneWorld, out McpPointerClickResult upResult);
                     CompleteAndRemove(intent.Completion, upResult);
                     return;

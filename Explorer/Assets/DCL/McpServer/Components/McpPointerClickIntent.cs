@@ -16,16 +16,16 @@ namespace DCL.McpServer.Components
         public enum ClickKind : byte
         {
             /// <summary>Pointer down, then pointer up on the next scene tick.</summary>
-            Click,
-            Down,
-            Up,
+            CLICK,
+            DOWN,
+            UP,
         }
 
         public enum ClickPhase : byte
         {
-            Down,
-            WaitTick,
-            Up,
+            DOWN,
+            WAIT_TICK,
+            UP,
         }
 
         /// <summary>Arch entity id in the current scene world; -1 when aiming at an explicit world point.</summary>

@@ -137,7 +137,7 @@ namespace DCL.McpServer.Tests
         }
 
         private UniTaskCompletionSource<McpPointerClickResult> AddIntent(
-            McpPointerClickIntent.ClickKind kind = McpPointerClickIntent.ClickKind.Click,
+            McpPointerClickIntent.ClickKind kind = McpPointerClickIntent.ClickKind.CLICK,
             int? targetId = null)
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
@@ -147,7 +147,7 @@ namespace DCL.McpServer.Tests
                 TargetEntityId = targetId ?? targetEntity.Id,
                 Button = InputAction.IaPointer,
                 Kind = kind,
-                Phase = McpPointerClickIntent.ClickPhase.Down,
+                Phase = McpPointerClickIntent.ClickPhase.DOWN,
                 Deadline = UnityEngine.Time.time + 5f,
                 Completion = completion,
             });
@@ -198,7 +198,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void DeliverSingleDownWithoutWaiting()
         {
-            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(McpPointerClickIntent.ClickKind.Down);
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(McpPointerClickIntent.ClickKind.DOWN);
 
             system!.Update(0);
 
@@ -278,8 +278,8 @@ namespace DCL.McpServer.Tests
             {
                 TargetEntityId = targetEntity.Id,
                 Button = InputAction.IaPointer,
-                Kind = McpPointerClickIntent.ClickKind.Click,
-                Phase = McpPointerClickIntent.ClickPhase.Down,
+                Kind = McpPointerClickIntent.ClickKind.CLICK,
+                Phase = McpPointerClickIntent.ClickPhase.DOWN,
                 Deadline = UnityEngine.Time.time - 1f,
                 Completion = completion,
             });
