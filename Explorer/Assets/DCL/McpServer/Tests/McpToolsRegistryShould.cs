@@ -3,6 +3,7 @@ using DCL.McpServer.Core;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.McpServer.Tests
@@ -86,6 +87,55 @@ namespace DCL.McpServer.Tests
             Assert.That(annotations["destructiveHint"]!.Value<bool>(), Is.True);
             Assert.That(annotations["idempotentHint"]!.Value<bool>(), Is.False);
             Assert.That(annotations["openWorldHint"]!.Value<bool>(), Is.False);
+        }
+
+        [Test]
+        public void FindARegisteredToolByName()
+        {
+            var tool = new FakeTool("known", McpToolAnnotations.ReadOnly());
+            var registry = new McpToolsRegistry().Add(tool);
+
+            bool found = registry.TryGet("known", out IMcpTool? resolved);
+
+            Assert.That(found, Is.True);
+            Assert.That(resolved, Is.SameAs(tool));
+        }
+
+        [Test]
+        public void NotFindAnUnknownTool()
+        {
+            var registry = new McpToolsRegistry().Add(new FakeTool("known", McpToolAnnotations.ReadOnly()));
+
+            Assert.That(registry.TryGet("missing", out IMcpTool? resolved), Is.False);
+            Assert.That(resolved, Is.Null);
+        }
+
+        [Test]
+        public void NotFindAToolForANullOrEmptyName()
+        {
+            var registry = new McpToolsRegistry().Add(new FakeTool("known", McpToolAnnotations.ReadOnly()));
+
+            Assert.That(registry.TryGet(null, out IMcpTool? byNull), Is.False);
+            Assert.That(byNull, Is.Null);
+
+            Assert.That(registry.TryGet(string.Empty, out IMcpTool? byEmpty), Is.False);
+            Assert.That(byEmpty, Is.Null);
+        }
+
+        [Test]
+        public void ReflectTheRegisteredSetInTheToolsList()
+        {
+            JObject toolsList = new McpToolsRegistry()
+                              .Add(new FakeTool("first", McpToolAnnotations.ReadOnly()))
+                              .Add(new FakeTool("second", McpToolAnnotations.Mutating(destructive: false, idempotent: true)))
+                              .Build();
+
+            var names = new List<string>();
+
+            foreach (JToken entry in (JArray)toolsList["tools"]!)
+                names.Add(entry["name"]!.Value<string>());
+
+            Assert.That(names, Is.EquivalentTo(new[] { "first", "second" }));
         }
 
         private static JObject AnnotationsOf(JObject toolsList, string name)
