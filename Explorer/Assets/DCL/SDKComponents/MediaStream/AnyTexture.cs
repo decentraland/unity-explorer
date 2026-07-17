@@ -1,5 +1,6 @@
 ﻿using REnum;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using Utility;
 
 namespace ECS.StreamableLoading.Textures
@@ -12,7 +13,23 @@ namespace ECS.StreamableLoading.Textures
     [REnumField(typeof(Texture2D))]
     public partial struct AnyTexture
     {
-        public long ByteSize => Match(static _ => 0L, tex2d => tex2d.GetRawTextureData<byte>().Length);
+        public long ByteSize => Match(static _ => 0L, static tex2d => EstimateTextureByteSize(tex2d));
+
+        private static long EstimateTextureByteSize(Texture2D tex2d)
+        {
+            // Destroyed textures (Unity fake-null) account as zero instead of throwing.
+            if (tex2d == null) return 0L;
+            if (tex2d.isReadable) return tex2d.GetRawTextureData<byte>().Length;
+
+            // Non-readable textures have no CPU copy to measure (GetRawTextureData throws);
+            // estimate the GPU footprint across the full mip chain instead.
+            var size = (long)GraphicsFormatUtility.ComputeMipmapSize(tex2d.width, tex2d.height, tex2d.graphicsFormat);
+
+            for (var mip = 1; mip < tex2d.mipmapCount; mip++)
+                size += (long)GraphicsFormatUtility.ComputeMipmapSize(Mathf.Max(1, tex2d.width >> mip), Mathf.Max(1, tex2d.height >> mip), tex2d.graphicsFormat);
+
+            return size;
+        }
 
         public Texture Texture => Match<Texture>(static video => video.Texture, static tex2d => tex2d);
 
