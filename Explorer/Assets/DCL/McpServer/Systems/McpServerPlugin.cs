@@ -53,6 +53,7 @@ namespace DCL.McpServer.Systems
         private readonly bool localSceneDevelopment;
 
         private readonly SceneLogBuffer logBuffer;
+        private readonly DebugMenuConsoleLogEntryBus logEntryBus;
 
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
@@ -95,13 +96,14 @@ namespace DCL.McpServer.Systems
             this.localSceneDevelopment = localSceneDevelopment;
 
             logBuffer = new SceneLogBuffer();
-            var logEntryBus = new DebugMenuConsoleLogEntryBus();
+            logEntryBus = new DebugMenuConsoleLogEntryBus();
             logEntryBus.MessageAdded += logBuffer.Append;
             diagnosticsContainer.AddDebugConsoleHandler(logEntryBus);
         }
 
         public void Dispose()
         {
+            logEntryBus.MessageAdded -= logBuffer.Append;
             screenshotTool?.Dispose();
             server?.Dispose();
             serverCts.SafeCancelAndDispose();
