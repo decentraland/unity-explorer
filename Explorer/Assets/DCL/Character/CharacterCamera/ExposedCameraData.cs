@@ -17,6 +17,7 @@ namespace DCL.CharacterCamera
         public CanBeDirty<Quaternion> WorldRotation = new (Quaternion.identity, EQUALITY_COMPARER_WITH_ERROR);
         public CanBeDirty<bool> PointerIsLocked;
         public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
+        public CumulativePointerDelta AccumulatedPointerDelta;
         public ObjectProxy<Entity> CameraEntityProxy { get; } = new ();
         public CinemachineBrain? CinemachineBrain { get; set; }
         public CameraMode CameraMode { get; set; }
@@ -25,5 +26,6 @@ namespace DCL.CharacterCamera
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;
         CanBeDirty<CameraType> IExposedCameraData.CameraType => CameraType;
         CanBeDirty<bool> IExposedCameraData.PointerIsLocked => PointerIsLocked;
+        CumulativePointerDelta IExposedCameraData.AccumulatedPointerDelta => AccumulatedPointerDelta;
     }
 }
