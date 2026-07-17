@@ -14,9 +14,10 @@ namespace DCL.McpServer.Core
         string Description { get; }
 
         /// <summary>
-        ///     JSON Schema of the tool arguments, serialized. Must describe an object type.
+        ///     JSON Schema of the tool arguments. Must be a JSON Schema object (type=object); build it with
+        ///     <see cref="McpInputSchema" /> so a malformed schema is caught at registration, not on first use.
         /// </summary>
-        string InputSchemaJson { get; }
+        JObject InputSchema { get; }
 
         /// <summary>
         ///     Behaviour hints (read-only, destructive, idempotent, open-world) surfaced in tools/list.

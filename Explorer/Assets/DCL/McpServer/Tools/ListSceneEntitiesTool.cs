@@ -29,13 +29,10 @@ namespace DCL.McpServer.Tools
         public string Description =>
             "List the ECS entity ids of the scene at the player's current parcel. Feed an id into get_entity_details to inspect its components.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""limit"": { ""type"": ""integer"", ""description"": ""Maximum ids to return. Default 200."" }
-                }
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Integer("limit", "Maximum ids to return. Default 200.")
+                          .Build();
 
         public ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
         {

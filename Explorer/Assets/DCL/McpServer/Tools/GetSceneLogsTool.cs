@@ -23,15 +23,12 @@ namespace DCL.McpServer.Tools
             "Read the scene's JavaScript console output (logs, warnings, errors and exceptions). Entries carry monotonic sequence numbers; "
             + "pass the last seen sequence as sinceSeq to poll incrementally.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""limit"": { ""type"": ""integer"", ""description"": ""Maximum entries to return (newest win). Default 100."" },
-                    ""severity"": { ""type"": ""string"", ""enum"": [""all"", ""error""], ""description"": ""Filter by severity. Default all."" },
-                    ""sinceSeq"": { ""type"": ""integer"", ""description"": ""Only return entries with a sequence number greater than this."" }
-                }
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Integer("limit", "Maximum entries to return (newest win). Default 100.")
+                          .String("severity", "Filter by severity. Default all.", enumValues: new[] { "all", "error" })
+                          .Integer("sinceSeq", "Only return entries with a sequence number greater than this.")
+                          .Build();
 
         public GetSceneLogsTool(SceneLogBuffer logBuffer)
         {

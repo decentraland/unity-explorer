@@ -37,19 +37,16 @@ namespace DCL.McpServer.Tools
             + "returns hit:false with the blocking entity. Ids come from list_scene_entities. For entities whose collider "
             + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""entityId"": { ""type"": ""integer"", ""description"": ""Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target."" },
-                    ""x"": { ""type"": ""number"", ""description"": ""World-space aim point; overrides the automatic aim at the entity's collider center."" },
-                    ""y"": { ""type"": ""number"" },
-                    ""z"": { ""type"": ""number"" },
-                    ""button"": { ""type"": ""string"", ""enum"": [""pointer"", ""primary"", ""secondary""], ""description"": ""Which input action to press. Default pointer (left click / IA_POINTER)."" },
-                    ""eventType"": { ""type"": ""string"", ""enum"": [""click"", ""down"", ""up""], ""description"": ""click = down, then up on the next scene tick. Default click."" },
-                    ""timeoutSec"": { ""type"": ""number"", ""description"": ""Seconds to wait for delivery. Default 3, max 15."" }
-                }
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Integer("entityId", "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
+                          .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
+                          .Number("y")
+                          .Number("z")
+                          .String("button", "Which input action to press. Default pointer (left click / IA_POINTER).", enumValues: new[] { "pointer", "primary", "secondary" })
+                          .String("eventType", "click = down, then up on the next scene tick. Default click.", enumValues: new[] { "click", "down", "up" })
+                          .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.")
+                          .Build();
 
         public ClickEntityTool(World world, Entity playerEntity)
         {

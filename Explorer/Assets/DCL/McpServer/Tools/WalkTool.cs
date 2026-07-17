@@ -35,18 +35,14 @@ namespace DCL.McpServer.Tools
             "Walk/jog/run the player in a camera-relative direction for a number of seconds through the real locomotion pipeline "
             + "(collisions apply). directionY is forward, directionX is strafe right. Returns the start and end positions.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""directionX"": { ""type"": ""number"", ""description"": ""Strafe axis: 1 right, -1 left."" },
-                    ""directionY"": { ""type"": ""number"", ""description"": ""Forward axis: 1 forward, -1 backward."" },
-                    ""seconds"": { ""type"": ""number"", ""description"": ""How long to hold the movement. Default 1, max 30."" },
-                    ""kind"": { ""type"": ""string"", ""enum"": [""walk"", ""jog"", ""run""], ""description"": ""Movement speed. Default jog."" },
-                    ""jump"": { ""type"": ""boolean"", ""description"": ""Jump once at the start of the movement. Default false."" }
-                },
-                ""required"": [""directionX"", ""directionY""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Number("directionX", "Strafe axis: 1 right, -1 left.", required: true)
+                          .Number("directionY", "Forward axis: 1 forward, -1 backward.", required: true)
+                          .Number("seconds", "How long to hold the movement. Default 1, max 30.")
+                          .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
+                          .Boolean("jump", "Jump once at the start of the movement. Default false.")
+                          .Build();
 
         public WalkTool(World world, Entity playerEntity)
         {

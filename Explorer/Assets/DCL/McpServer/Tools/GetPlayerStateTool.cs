@@ -29,7 +29,7 @@ namespace DCL.McpServer.Tools
             "Read the player's current world position, rotation, parcel, velocity and grounded state, the camera position, rotation and mode, "
             + "and the wallet address — use the address to tell Explorer instances apart when several run at once.";
 
-        public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
+        public JObject InputSchema => McpInputSchema.Object().Build();
 
         public GetPlayerStateTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData, ICurrentSceneInfo currentSceneInfo)
         {

@@ -36,13 +36,10 @@ namespace DCL.McpServer.Tools
             "Reload the scene at the player's current parcel and wait for it to restart. Use after editing scene code "
             + "when hot reload didn't trigger, or to reset scene state before a test run.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""timeoutSec"": { ""type"": ""number"", ""description"": ""Maximum seconds to wait for the reload. Default 15."" }
-                }
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Number("timeoutSec", "Maximum seconds to wait for the reload. Default 15.")
+                          .Build();
 
         public ReloadSceneTool(ECSReloadScene reloadScene, IScenesCache scenesCache, World world, Entity playerEntity, Entity skyboxEntity)
         {

@@ -20,14 +20,10 @@ namespace DCL.McpServer.Tools
         public string Description =>
             "Dump all components of one entity in the current scene's ECS world (ids come from list_scene_entities).";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""entityId"": { ""type"": ""integer"", ""description"": ""Entity id within the current scene world."" }
-                },
-                ""required"": [""entityId""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Integer("entityId", "Entity id within the current scene world.", required: true)
+                          .Build();
 
         public GetEntityDetailsTool(IWorldInfoHub worldInfoHub)
         {

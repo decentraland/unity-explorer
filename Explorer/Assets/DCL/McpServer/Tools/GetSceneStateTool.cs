@@ -26,7 +26,7 @@ namespace DCL.McpServer.Tools
             "Read the state of the scene at the player's current parcel: name, base parcel, runtime state (including JavaScript/ECS errors), "
             + "readiness, asset loading progress and the global loading-screen stage. Call this after teleporting or reloading before interacting.";
 
-        public string InputSchemaJson => @"{ ""type"": ""object"", ""properties"": {} }";
+        public JObject InputSchema => McpInputSchema.Object().Build();
 
         public GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
         {

@@ -41,21 +41,17 @@ namespace DCL.McpServer.Tools
             + "Enters the free camera mode if needed (refuses with the reason when the scene locks the camera). The camera stays "
             + "put while the player moves; restore a player-following view with set_camera_mode third_person.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""x"": { ""type"": ""number"", ""description"": ""Camera world position."" },
-                    ""y"": { ""type"": ""number"" },
-                    ""z"": { ""type"": ""number"" },
-                    ""lookAtX"": { ""type"": ""number"", ""description"": ""Optional world point to aim at (all three lookAt components required together)."" },
-                    ""lookAtY"": { ""type"": ""number"" },
-                    ""lookAtZ"": { ""type"": ""number"" },
-                    ""fov"": { ""type"": ""number"", ""description"": ""Optional vertical field of view in degrees (10-120)."" },
-                    ""timeoutSec"": { ""type"": ""number"", ""description"": ""Seconds to wait for the camera to settle at the target. Default 5, max 15."" }
-                },
-                ""required"": [""x"", ""y"", ""z""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Number("x", "Camera world position.", required: true)
+                          .Number("y", required: true)
+                          .Number("z", required: true)
+                          .Number("lookAtX", "Optional world point to aim at (all three lookAt components required together).")
+                          .Number("lookAtY")
+                          .Number("lookAtZ")
+                          .Number("fov", "Optional vertical field of view in degrees (10-120).")
+                          .Number("timeoutSec", "Seconds to wait for the camera to settle at the target. Default 5, max 15.")
+                          .Build();
 
         public SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {

@@ -29,20 +29,16 @@ namespace DCL.McpServer.Tools
             "Move the player to a world-space position (x,y,z in meters; one parcel is 16x16m). Instant by default, or smooth over durationSec. "
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""x"": { ""type"": ""number"" },
-                    ""y"": { ""type"": ""number"" },
-                    ""z"": { ""type"": ""number"" },
-                    ""lookAtX"": { ""type"": ""number"" },
-                    ""lookAtY"": { ""type"": ""number"" },
-                    ""lookAtZ"": { ""type"": ""number"" },
-                    ""durationSec"": { ""type"": ""number"", ""description"": ""Seconds to move over; 0 (default) teleports instantly."" }
-                },
-                ""required"": [""x"", ""y"", ""z""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Number("x", required: true)
+                          .Number("y", required: true)
+                          .Number("z", required: true)
+                          .Number("lookAtX")
+                          .Number("lookAtY")
+                          .Number("lookAtZ")
+                          .Number("durationSec", "Seconds to move over; 0 (default) teleports instantly.")
+                          .Build();
 
         public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity)
         {

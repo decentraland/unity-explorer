@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -25,11 +26,16 @@ namespace DCL.McpServer.Core
 
             foreach (IMcpTool tool in tools.Values)
             {
+                JObject inputSchema = tool.InputSchema;
+
+                if (inputSchema == null || inputSchema["type"]?.Value<string>() != "object")
+                    throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid input schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpInputSchema.");
+
                 toolsArray.Add(new JObject
                 {
                     ["name"] = tool.Name,
                     ["description"] = tool.Description,
-                    ["inputSchema"] = JObject.Parse(tool.InputSchemaJson),
+                    ["inputSchema"] = inputSchema,
                     ["annotations"] = tool.Annotations.ToJObject(),
                 });
             }

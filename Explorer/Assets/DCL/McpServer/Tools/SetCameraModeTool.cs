@@ -29,14 +29,10 @@ namespace DCL.McpServer.Tools
             + "Refuses with an explanation when the scene locks the mode (CameraModeArea, scene virtual camera, photo camera). "
             + "Any player movement drops free back to third_person.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""mode"": { ""type"": ""string"", ""enum"": [""first_person"", ""third_person"", ""drone"", ""free""], ""description"": ""Target camera mode."" }
-                },
-                ""required"": [""mode""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true)
+                          .Build();
 
         public SetCameraModeTool(World world, ExposedCameraData exposedCameraData)
         {

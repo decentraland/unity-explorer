@@ -35,17 +35,13 @@ namespace DCL.McpServer.Tools
             "Teleport the player to a parcel (x,y) through the regular /goto flow and wait until the destination scene is ready. "
             + "Reports the final scene state; follow up with get_scene_state for details.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""x"": { ""type"": ""integer"", ""description"": ""Target parcel X coordinate."" },
-                    ""y"": { ""type"": ""integer"", ""description"": ""Target parcel Y coordinate."" },
-                    ""waitForReady"": { ""type"": ""boolean"", ""description"": ""Wait until the destination scene is ready. Default true."" },
-                    ""timeoutSec"": { ""type"": ""number"", ""description"": ""Maximum seconds to wait for readiness. Default 60."" }
-                },
-                ""required"": [""x"", ""y""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Integer("x", "Target parcel X coordinate.", required: true)
+                          .Integer("y", "Target parcel Y coordinate.", required: true)
+                          .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")
+                          .Number("timeoutSec", "Maximum seconds to wait for readiness. Default 60.")
+                          .Build();
 
         public TeleportTool(IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, ILoadingStatus loadingStatus)
         {

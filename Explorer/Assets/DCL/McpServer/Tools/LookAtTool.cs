@@ -25,16 +25,12 @@ namespace DCL.McpServer.Tools
         public string Description =>
             "Rotate the camera to look at a world-space point (x,y,z in meters). Useful to center something on screen before a screenshot.";
 
-        public string InputSchemaJson =>
-            @"{
-                ""type"": ""object"",
-                ""properties"": {
-                    ""x"": { ""type"": ""number"" },
-                    ""y"": { ""type"": ""number"" },
-                    ""z"": { ""type"": ""number"" }
-                },
-                ""required"": [""x"", ""y"", ""z""]
-            }";
+        public JObject InputSchema =>
+            McpInputSchema.Object()
+                          .Number("x", required: true)
+                          .Number("y", required: true)
+                          .Number("z", required: true)
+                          .Build();
 
         public LookAtTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {
