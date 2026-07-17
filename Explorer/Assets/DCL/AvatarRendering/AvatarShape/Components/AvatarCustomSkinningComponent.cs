@@ -1,15 +1,16 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Helpers;
-using DCL.Optimization.Pools;
-using System.Collections.Generic;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using RichTypes;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Pool;
 using UnityEngine.Assertions;
-using RichTypes;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
@@ -21,8 +22,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public struct Buffers
         {
             // since it's impossible to guarantee initialization of structure in C# the case requires to provide an additional check
-            private ComputeSkinningBufferContainer computeSkinningBufferContainer;
-            private readonly ComputeBuffer bones; 
+            private ComputeSkinningBufferContainer? computeSkinningBufferContainer;
+            private readonly ComputeBuffer? bones;
             internal readonly int kernel;
 
             public Buffers(ComputeBuffer bones, int kernel) : this()
@@ -32,7 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 this.kernel = kernel;
             }
 
-            public bool TryGetBones(out ComputeBuffer bones)
+            public bool TryGetBones([NotNullWhen(true)] out ComputeBuffer? bones)
             {
                 bones = this.bones;
                 return bones != null;
@@ -127,7 +128,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 return Result.ErrorResult("Attempt to process an invalid avatar");
             }
 
-            if (buffers.TryGetBones(out ComputeBuffer bones) == false)
+            if (buffers.TryGetBones(out ComputeBuffer? bones) == false)
             {
                 return Result.ErrorResult("ComputeSkinning error: Cannot get bones (ComputeBuffer)");
             }
