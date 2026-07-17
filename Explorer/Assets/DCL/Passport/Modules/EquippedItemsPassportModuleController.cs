@@ -37,7 +37,7 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> loadingItemsPool;
@@ -46,6 +46,7 @@ namespace DCL.Passport.Modules
         private readonly List<EquippedItemPassportFieldView> instantiatedEquippedItems = new ();
         private readonly IObjectPool<EquippedItemPassportFieldView> emptyItemsPool;
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
+        private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
@@ -57,9 +58,10 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            CreditPurchaseBuyHandler creditPurchaseBuyHandler)
         {
             this.view = view;
             this.world = world;
@@ -70,6 +72,7 @@ namespace DCL.Passport.Modules
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
+            this.creditPurchaseBuyHandler = creditPurchaseBuyHandler;
 
             loadingItemsPool = new ObjectPool<EquippedItemPassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -124,6 +127,7 @@ namespace DCL.Passport.Modules
         public void Clear()
         {
             getEquippedItemsCts.SafeCancelAndDispose();
+            creditPurchaseBuyHandler.ClearCache();
             ClearLoadingItems();
             ClearEquippedItems();
             ClearEmptyItems();
@@ -200,7 +204,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
                 equippedWearableItem.OnSaleFlap.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                string wearableUrn = wearable.GetUrn();
+                var wearableItemView = equippedWearableItem;
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(wearableItemView, wearableUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -225,7 +231,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
                 equippedWearableItem.ViewButton.gameObject.SetActive(false);
                 equippedWearableItem.OnSaleFlap.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                string emoteUrn = emote.GetUrn();
+                var emoteItemView = equippedWearableItem;
+                equippedWearableItem.BuyButton.onClick.AddListener(() => OnBuyClicked(emoteItemView, emoteUrn, marketPlaceLink, rarityName, raritySprite, rarityColor));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -327,6 +335,23 @@ namespace DCL.Passport.Modules
                 emptyItemsPool.Release(emptyItem);
 
             instantiatedEmptyItems.Clear();
+        }
+
+        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, string rarityName, Sprite raritySprite, Color rarityColor)
+        {
+            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(
+                itemView.AssetNameText.text,
+                rarityName,
+                itemView.EquippedItemThumbnail.sprite,
+                raritySprite,
+                rarityColor,
+                itemView.CategoryImage.sprite);
+
+            creditPurchaseBuyHandler.HandleBuyClickAsync(
+                                         urn, marketplaceLink, visuals,
+                                         resolving => itemView.BuyButton.interactable = !resolving,
+                                         getEquippedItemsCts.Token)
+                                    .Forget();
         }
 
         private string GetMarketplaceLink(string id)

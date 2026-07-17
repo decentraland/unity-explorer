@@ -47,7 +47,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
         private readonly IPendingTransferService ownedNftFilter;
 
@@ -71,7 +71,7 @@ namespace DCL.Backpack.EmotesSection
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             IPendingTransferService ownedNftFilter)
         {
@@ -459,6 +459,6 @@ namespace DCL.Backpack.EmotesSection
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
     }
 }

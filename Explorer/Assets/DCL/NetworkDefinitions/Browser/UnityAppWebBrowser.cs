@@ -2,9 +2,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using UnityEngine;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser
 {
-    public class UnityAppWebBrowser : IWebBrowser
+    public class UnityAppWebBrowser
     {
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -13,14 +14,14 @@ namespace DCL.Browser
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public void OpenUrl(string url)
+        public virtual void OpenUrlMainThreadOnly(string url)
         {
             Application.OpenURL(Uri.EscapeUriString(url));
         }
 
-        public void OpenUrl(DecentralandUrl url)
+        public virtual void OpenUrlMainThreadOnly(DecentralandUrl url)
         {
-            OpenUrl(decentralandUrlsSource.Url(url));
+            OpenUrlMainThreadOnly(decentralandUrlsSource.Url(url));
         }
 
         public string GetUrl(DecentralandUrl url) =>

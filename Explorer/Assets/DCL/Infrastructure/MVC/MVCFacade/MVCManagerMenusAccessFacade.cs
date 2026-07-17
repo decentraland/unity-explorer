@@ -46,7 +46,7 @@ namespace MVC
         private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly bool includeCommunities;
         private readonly CommunitiesDataProvider communitiesDataProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISelfProfile selfProfile;
         private readonly NearbyMuteService? nearbyMuteService;
@@ -71,7 +71,7 @@ namespace MVC
             IVoiceChatOrchestrator voiceChatOrchestrator,
             bool includeCommunities,
             CommunitiesDataProvider communitiesDataProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile,
             NearbyMuteService? nearbyMuteService = null)

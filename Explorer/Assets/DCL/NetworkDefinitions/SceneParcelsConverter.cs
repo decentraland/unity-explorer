@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
     /// <summary>
@@ -49,7 +50,7 @@ namespace DCL.Ipfs
             {
                 decodedParcels = new Vector2Int[parcels.Count];
 
-                for (var i = 0; i < parcels.Count; i++) { decodedParcels[i] = IpfsHelper.DecodePointer(parcels[i]); }
+                for (var i = 0; i < parcels.Count; i++) decodedParcels[i] = IpfsHelper.DecodePointer(parcels[i]);
             }
             else
                 decodedParcels = Array.Empty<Vector2Int>();

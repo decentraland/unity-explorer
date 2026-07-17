@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Pool;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Browser.DecentralandUrls
 {
-    //TODO test urls
     public class DecentralandUrlsSource : IDecentralandUrlsSource
     {
         protected enum CacheBehaviour
@@ -39,6 +39,8 @@ namespace DCL.Browser.DecentralandUrls
         private readonly ILaunchMode launchMode;
         private readonly string decentralandDomain;
         private readonly string? gatekeeperBaseOverride;
+        private readonly string? optimizedAssetsBaseOverride;
+        private readonly bool isTodayEnvironment;
 
         public DecentralandUrlsSource(
             DecentralandEnvironment environment,
@@ -46,15 +48,18 @@ namespace DCL.Browser.DecentralandUrls
             ILaunchMode launchMode,
             GatekeeperMode gatekeeperMode = GatekeeperMode.Org,
             string customGatekeeperUrl = "",
-            string? cliGatekeeperUrl = null)
+            string? cliGatekeeperUrl = null,
+            string? cliOptimizedAssetsUrl = null)
         {
             decentralandDomain = environment.ToString()!.ToLower();
+            isTodayEnvironment = environment == DecentralandEnvironment.Today;
             this.realmData = realmData;
             this.launchMode = launchMode;
             this.gatekeeperBaseOverride = ResolveGatekeeperOverride(gatekeeperMode, customGatekeeperUrl, cliGatekeeperUrl, out string source);
             ReportHub.Log(ReportCategory.STARTUP, $"Gatekeeper base override: {gatekeeperBaseOverride ?? "(default)"} (source: {source})");
+            this.optimizedAssetsBaseOverride = cliOptimizedAssetsUrl?.TrimEnd('/');
 
-            if (environment == DecentralandEnvironment.Today)
+            if (isTodayEnvironment)
             {
                 // The today environment is a mixture of the org and today environments.
                 // Asset delivery (registry and S3) are used with the `.today` extension
@@ -181,6 +186,35 @@ namespace DCL.Browser.DecentralandUrls
         private string ResolveGatekeeperBaseUrl(string defaultBaseUrl) =>
             gatekeeperBaseOverride ?? defaultBaseUrl;
 
+        /// <summary>
+        ///     The "--optimized-assets-url" arg or the flag variant payload override the base url, otherwise
+        ///     https://abcdn.decentraland.{ENV}. FEATURE_FLAGS_DEPENDENT means it is re-resolved (not cached) until flags load.
+        /// </summary>
+        private UrlData ResolveOptimizedAssetsUrl(string dedicatedHostUrl)
+        {
+            if (optimizedAssetsBaseOverride is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, optimizedAssetsBaseOverride);
+
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (featureFlags.IsEmpty)
+                return isTodayEnvironment
+                    ? dedicatedHostUrl // STATIC — pinned on construction before the domain switches to org
+                    : new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, dedicatedHostUrl.Replace(ENV, decentralandDomain));
+
+            if (!featureFlags.IsEnabled(FeatureFlagsStrings.OPTIMIZED_ASSETS))
+                return dedicatedHostUrl;
+
+            if (featureFlags.TryGetTextPayload(FeatureFlagsStrings.OPTIMIZED_ASSETS, FeatureFlagsStrings.OPTIMIZED_ASSETS_BASE_URL_VARIANT, out string? customBaseUrl) && customBaseUrl is { Length: > 0 })
+                return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, customBaseUrl.TrimEnd('/'));
+
+            return new UrlData(CacheBehaviour.FEATURE_FLAGS_DEPENDENT, $"https://abcdn.decentraland.{ENV}");
+        }
+
+        /// <summary>Registry-composed endpoints inherit the registry base's caching so a flag-driven base is not cached early.</summary>
+        private UrlData ComposeRegistryUrl(string path) =>
+            new (RawUrl(DecentralandUrl.AssetBundleRegistry).Caching, $"{Url(DecentralandUrl.AssetBundleRegistry)}{path}");
+
         protected virtual UrlData RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
@@ -190,7 +224,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TwitterNewPostLink => "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
-                DecentralandUrl.MarketplaceApiLink => $"https://marketplace-api.decentraland.{ENV}/v2/catalog",
+                DecentralandUrl.MarketplaceServer => $"https://marketplace-api.decentraland.{ENV}",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ContentPolicy => $"https://decentraland.{ENV}/content",
@@ -230,8 +264,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Account => $"https://decentraland.{ENV}/account/",
                 DecentralandUrl.MinimumSpecs => $"https://docs.decentraland.{ENV}/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
-                DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.{ENV}",
-                DecentralandUrl.LodGeneratorCDN => $"https://lod-generator-unity-cdn.decentraland.{ENV}",
+                DecentralandUrl.AssetBundlesCDN => ResolveOptimizedAssetsUrl($"https://ab-cdn.decentraland.{ENV}"),
+                DecentralandUrl.LodGeneratorCDN => ResolveOptimizedAssetsUrl($"https://lod-generator-unity-cdn.decentraland.{ENV}"),
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
                 DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/status",
@@ -243,8 +277,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistryVersion => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/versions",
+                DecentralandUrl.AssetBundleRegistry => ResolveOptimizedAssetsUrl($"https://asset-bundle-registry.decentraland.{ENV}"),
+
+                DecentralandUrl.AssetBundleRegistryVersion => ComposeRegistryUrl("/entities/versions"),
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldPermissions => $"https://worlds-content-server.decentraland.{ENV}/world/{{0}}/permissions",
                 DecentralandUrl.WorldComms => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/comms",
@@ -274,15 +309,15 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.SceneAdmins => $"{RawUrl(DecentralandUrl.Gatekeeper).Url!}/scene-admin",
                 DecentralandUrl.Pulse => $"pulse-server.decentraland.{ENV}",
 
-                DecentralandUrl.Profiles => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles",
-                DecentralandUrl.ProfilesMetadata => $"{Url(DecentralandUrl.AssetBundleRegistry)}/profiles/metadata",
+                DecentralandUrl.Profiles => ComposeRegistryUrl("/profiles"),
+                DecentralandUrl.ProfilesMetadata => ComposeRegistryUrl("/profiles/metadata"),
                 DecentralandUrl.WorldCommsAdapter => $"https://worlds-content-server.decentraland.{ENV}/worlds/{{0}}/scenes/{{1}}/comms",
 
                 DecentralandUrl.EntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),
 
                 // Meant for Wearables and Emotes since they always must be solved by the AB-Registry
-                DecentralandUrl.EntitiesActiveElements => $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active",
+                DecentralandUrl.EntitiesActiveElements => ComposeRegistryUrl("/entities/active"),
 
                 DecentralandUrl.WorldEntitiesActive => UrlData.RealmDependent(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && launchMode.CurrentMode != LaunchMode.LocalSceneDevelopment ? $"{Url(DecentralandUrl.AssetBundleRegistry)}/entities/active?world_name={{0}}" :
                     realmData.Configured ? realmData.Ipfs.EntitiesActiveEndpoint.Value : null),

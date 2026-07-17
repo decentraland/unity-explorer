@@ -17,6 +17,7 @@ namespace DCL.MarketplaceCredits
         private const string NO_DATA_STATE = "NO_DATA";
         private const string SEASON_NOT_STARTED_STATE = "NOT_STARTED";
         public event Action<CreditsProgramProgressResponse> OnProgramProgressUpdated;
+        public event Action<UserCreditsResponse> OnUserCreditsFetched;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -49,13 +50,13 @@ namespace DCL.MarketplaceCredits
             EmailSubscriptionResponse emailSubscriptionResponse = await GetEmailSubscriptionInfoAsync(ct);
             SeasonsData seasonResult = await UpdateProgramSeasonsAsync(ct);
 
-            creditsProgramProgressResponse.lastSeason = seasonResult!.LastSeason;
-            creditsProgramProgressResponse.currentSeason = seasonResult!.CurrentSeason.season;
+            creditsProgramProgressResponse.lastSeason = seasonResult!.lastSeason;
+            creditsProgramProgressResponse.currentSeason = seasonResult!.currentSeason.season;
             // Setting this here, so we don't need to check for null everytime.
-            if (seasonResult!.CurrentSeason.season.state == null)
+            if (seasonResult!.currentSeason.season.state == null)
                 creditsProgramProgressResponse.currentSeason.state = NO_DATA_STATE;
-            creditsProgramProgressResponse.currentWeek = seasonResult!.CurrentSeason.week;
-            creditsProgramProgressResponse.nextSeason = seasonResult!.NextSeason;
+            creditsProgramProgressResponse.currentWeek = seasonResult!.currentSeason.week;
+            creditsProgramProgressResponse.nextSeason = seasonResult!.nextSeason;
 
             creditsProgramProgressResponse.user.email =
                 !string.IsNullOrEmpty(emailSubscriptionResponse.unconfirmedEmail)
@@ -74,8 +75,29 @@ namespace DCL.MarketplaceCredits
         {
             var url = $"{marketplaceCreditsBaseUrl}/users/{walletId}/credits";
 
-            return await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+            UserCreditsResponse userCreditsResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                 .CreateFromJson<UserCreditsResponse>(WRJsonParser.Unity);
+
+            OnUserCreditsFetched?.Invoke(userCreditsResponse);
+            return userCreditsResponse;
+        }
+
+        public virtual async UniTask<AuthorizeCreditResponse> AuthorizeUsdCreditAsync(int usdPriceCents, string tradeId, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize";
+            string jsonBody = JsonUtility.ToJson(new AuthorizeUsdCreditBody { usdPriceCents = usdPriceCents, tradeId = tradeId });
+
+            return await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                             .CreateFromJson<AuthorizeCreditResponse>(WRJsonParser.Unity);
+        }
+
+        public virtual async UniTask ReleaseUsdIntentsAsync(string[] salts, CancellationToken ct)
+        {
+            var url = $"{marketplaceCreditsBaseUrl}/credits/authorize/cancel";
+            string jsonBody = JsonUtility.ToJson(new ReleaseUsdIntentsBody { salts = salts });
+
+            await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                      .WithNoOpAsync();
         }
 
         private async UniTask<SeasonsData> UpdateProgramSeasonsAsync(CancellationToken ct)
@@ -85,9 +107,9 @@ namespace DCL.MarketplaceCredits
             var result = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                     .CreateFromJson<SeasonsData>(WRJsonParser.Unity);
 
-            result.LastSeason.state ??= NO_DATA_STATE;
-            result.CurrentSeason.season.state ??= NO_DATA_STATE;
-            result.NextSeason.state = string.IsNullOrEmpty(result.NextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
+            result.lastSeason.state ??= NO_DATA_STATE;
+            result.currentSeason.season.state ??= NO_DATA_STATE;
+            result.nextSeason.state = string.IsNullOrEmpty(result.nextSeason.startDate) ? NO_DATA_STATE : SEASON_NOT_STARTED_STATE;
 
             return result;
         }
