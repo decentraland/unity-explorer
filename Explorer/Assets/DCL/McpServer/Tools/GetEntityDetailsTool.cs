@@ -15,6 +15,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "get_entity_details";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+
         public string Description =>
             "Dump all components of one entity in the current scene's ECS world (ids come from list_scene_entities).";
 

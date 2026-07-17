@@ -30,6 +30,7 @@ namespace DCL.McpServer.Core
                     ["name"] = tool.Name,
                     ["description"] = tool.Description,
                     ["inputSchema"] = JObject.Parse(tool.InputSchemaJson),
+                    ["annotations"] = tool.Annotations.ToJObject(),
                 });
             }
 

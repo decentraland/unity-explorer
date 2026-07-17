@@ -20,6 +20,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "get_scene_state";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+
         public string Description =>
             "Read the state of the scene at the player's current parcel: name, base parcel, runtime state (including JavaScript/ECS errors), "
             + "readiness, asset loading progress and the global loading-screen stage. Call this after teleporting or reloading before interacting.";

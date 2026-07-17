@@ -29,6 +29,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "click_entity";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
+
         public string Description =>
             "Press and release a pointer button on a scene entity so its PointerEvents fire exactly like a real click. "
             + "The aim is validated by a physics raycast from the camera: occluders and the entity's maxDistance apply, and a miss "

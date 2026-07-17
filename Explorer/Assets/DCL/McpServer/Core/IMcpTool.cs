@@ -19,6 +19,11 @@ namespace DCL.McpServer.Core
         string InputSchemaJson { get; }
 
         /// <summary>
+        ///     Behaviour hints (read-only, destructive, idempotent, open-world) surfaced in tools/list.
+        /// </summary>
+        McpToolAnnotations Annotations { get; }
+
+        /// <summary>
         ///     Invoked from a thread-pool thread; implementations switch to the main thread themselves
         ///     before touching ECS or Unity state. Expected failures are reported through
         ///     <see cref="McpToolResult.Error" />, not exceptions.

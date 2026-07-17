@@ -23,6 +23,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "get_player_state";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+
         public string Description =>
             "Read the player's current world position, rotation, parcel, velocity and grounded state, the camera position, rotation and mode, "
             + "and the wallet address — use the address to tell Explorer instances apart when several run at once.";

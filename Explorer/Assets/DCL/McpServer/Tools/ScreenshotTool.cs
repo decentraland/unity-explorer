@@ -41,6 +41,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "screenshot";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+
         public string Description =>
             "Capture a screenshot of what the player currently sees in the Explorer, including scene UI. "
             + "Use worldOnly to exclude all UI overlays. Returns a downscaled image plus a caption with the capture context.";

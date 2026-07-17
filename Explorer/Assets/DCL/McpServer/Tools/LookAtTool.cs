@@ -20,6 +20,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "look_at";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+
         public string Description =>
             "Rotate the camera to look at a world-space point (x,y,z in meters). Useful to center something on screen before a screenshot.";
 

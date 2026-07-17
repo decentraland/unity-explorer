@@ -23,6 +23,8 @@ namespace DCL.McpServer.Tools
 
         public string Name => "move_to";
 
+        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+
         public string Description =>
             "Move the player to a world-space position (x,y,z in meters; one parcel is 16x16m). Instant by default, or smooth over durationSec. "
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
