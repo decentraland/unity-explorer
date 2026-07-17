@@ -30,6 +30,7 @@ namespace DCL.Credits
 
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
 
+            creditsAPIClient.OnUserCreditsFetched += OnUserCreditsFetched;
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
 
@@ -41,12 +42,16 @@ namespace DCL.Credits
         {
             loadCreditsCts.SafeCancelAndDispose();
             profileChangesBus.UnsubscribeToUpdate(OnProfileUpdated);
+            creditsAPIClient.OnUserCreditsFetched -= OnUserCreditsFetched;
             identityCache.OnIdentityChanged -= OnIdentityChanged;
             identityCache.OnIdentityCleared -= OnIdentityCleared;
         }
 
         private void OnProfileUpdated(Profile profile) =>
             LoadCreditsWithRestart();
+
+        private void OnUserCreditsFetched(UserCreditsResponse userCreditsResponse) =>
+            view.CurrentCredits.text = userCreditsResponse.usd.credits.ToString();
 
         private void OnIdentityChanged() =>
             LoadCreditsWithRestart();

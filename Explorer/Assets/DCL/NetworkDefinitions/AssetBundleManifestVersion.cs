@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Utility;
 
+// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
 public class AssetBundleManifestVersion
@@ -75,7 +76,7 @@ public class AssetBundleManifestVersion
         private static bool TryParseVersionNumber(string? version, out int parsed)
         {
             parsed = 0;
-            if (string.IsNullOrEmpty(version) || version!.Length < 2 || version[0] != 'v')
+            if (string.IsNullOrEmpty(version) || version.Length < 2 || version[0] != 'v')
                 return false;
             return int.TryParse(version.AsSpan(1), out parsed);
         }
@@ -95,9 +96,8 @@ public class AssetBundleManifestVersion
 
             Dictionary<string, string>? map = null;
 
-            for (var i = 0; i < files.Length; i++)
+            foreach (string file in files)
             {
-                string file = files[i];
                 if (string.IsNullOrEmpty(file)) continue;
 
                 string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
@@ -154,9 +154,11 @@ public class AssetBundleManifestVersion
         public static AssetBundleManifestVersion CreateManualManifest(string assetBundleManifestVersionMac, string buildDateMac, string assetBundleManifestVersionWin, string buildDateWin)
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(assetBundleManifestVersionMac, buildDateMac);
-            assets.windows = new PlatformInfo(assetBundleManifestVersionWin, buildDateWin);
+            var assets = new AssetBundleManifestVersionPerPlatform
+            {
+                mac = new PlatformInfo(assetBundleManifestVersionMac, buildDateMac),
+                windows = new PlatformInfo(assetBundleManifestVersionWin, buildDateWin),
+            };
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
@@ -166,9 +168,11 @@ public class AssetBundleManifestVersion
         public static AssetBundleManifestVersion CreateManualManifest()
         {
             var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            var assets = new AssetBundleManifestVersionPerPlatform();
-            assets.mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1");
-            assets.windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1");
+            var assets = new AssetBundleManifestVersionPerPlatform
+            {
+                mac = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_WINDOWS.ToString(), "1"),
+                windows = new PlatformInfo(AB_MIN_SUPPORTED_VERSION_MAC.ToString(), "1"),
+            };
             assetBundleManifestVersion.assets = assets;
             assetBundleManifestVersion.HasHashInPath();
 
@@ -180,8 +184,7 @@ public class AssetBundleManifestVersion
             var assets = new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(version, buildDate);
 
-            var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            assetBundleManifestVersion.assets = assets;
+            var assetBundleManifestVersion = new AssetBundleManifestVersion { assets = assets };
             assetBundleManifestVersion.HasHashInPath();
 
             return assetBundleManifestVersion;
@@ -192,8 +195,7 @@ public class AssetBundleManifestVersion
             var assets = new AssetBundleManifestVersionPerPlatform();
             assets.SetVersion(assetBundleManifestVerison, buildDate);
 
-            var assetBundleManifestVersion = new AssetBundleManifestVersion();
-            assetBundleManifestVersion.assets = assets;
+            var assetBundleManifestVersion = new AssetBundleManifestVersion { assets = assets };
 
             return assetBundleManifestVersion;
         }
@@ -225,11 +227,11 @@ public class AssetBundleManifestVersion
             convertedFiles = new HashSet<string>(new UrlHashComparer());
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                for (int i = 0; i < entityDefinitionContent.Length; i++)
+                for (var i = 0; i < entityDefinitionContent.Length; i++)
                     convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                for (int i = 0; i < entityDefinitionContent.Length; i++)
+                for (var i = 0; i < entityDefinitionContent.Length; i++)
                     convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
         }
     }
@@ -258,8 +260,8 @@ public class AssetBundleManifestVersion
 
     public class PlatformInfo
     {
-        public string version;
-        public string buildDate;
+        public readonly string version;
+        public readonly string buildDate;
 
         public PlatformInfo(string version, string buildDate)
         {
