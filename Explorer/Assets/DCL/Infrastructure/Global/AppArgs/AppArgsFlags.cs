@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace Global.AppArgs
 {
     public static class AppArgsFlags
@@ -112,6 +113,8 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+
+        public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 
         public const string NO_LIVEKIT_MODE = "no-livekit-mode";
 

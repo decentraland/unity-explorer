@@ -53,6 +53,7 @@ namespace DCL.Profiling.ECS
         private ElementBinding<string> bottleneck;
 
         private ElementBinding<string> usedMemory;
+        private ElementBinding<string> profilerMemory;
         private ElementBinding<string> gcUsedMemory;
         private ElementBinding<string> isInAbundance;
 
@@ -125,6 +126,7 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Profiler Used | Reserved [MB]:", profilerMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Is In Abundances:", isInAbundance = new ElementBinding<string>("YES"))
@@ -294,6 +296,9 @@ namespace DCL.Profiling.ECS
         {
             usedMemory.Value =
                 $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
+            double profilerUsedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            double profilerReservedMb = BytesFormatter.Convert((ulong)memoryProfiler.ProfilerReservedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte);
+            profilerMemory.Value = $"{profilerUsedMb.ToString("F0", CultureInfo.InvariantCulture)} | {profilerReservedMb.ToString("F0", CultureInfo.InvariantCulture)}";
             gcUsedMemory.Value = BytesFormatter.Convert((ulong)memoryProfiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte).ToString("F0", CultureInfo.InvariantCulture);
 
             jsEnginesCount.Value = profiler.ActiveEngines.ToString();

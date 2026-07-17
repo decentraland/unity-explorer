@@ -41,6 +41,7 @@ Welcome to the official documentation for Unity Explorer — the Decentraland cl
 - **[LiveKit Networking](livekit-networking.md)** — LiveKit transport: dual-room architecture, messaging pipes, Archipelago/GateKeeper, voice and chat rooms
 - **[Pulse](pulse.md)** — Pulse transport: ENet peer transport, peer identity, protocol, feature-flag gating
 - **[Diagnostics](diagnostics.md)** — ReportHub logging system and Sentry integration
+- **[Performance Analytics](performance-analytics.md)** — `performance_report` telemetry: hiccup/frame-time metrics, measurement window, and target-relative threshold
 
 ## Avatar System
 - **[Avatar Rendering](avatar-rendering.md)** — GPU skinning, compute shaders, and cel-shading

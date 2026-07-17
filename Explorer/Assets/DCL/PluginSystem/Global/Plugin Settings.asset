@@ -30,6 +30,7 @@ MonoBehaviour:
   - rid: 1766526334245273896
   - rid: 648265872610426982
   - rid: 6478896861045588059
+  - rid: 5252236530421858403
   - rid: 657752310186246267
   - rid: 1045841226745774107
   - rid: 2563261270153757000
@@ -1213,6 +1214,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         DefaultFemaleEyebrowsTexture:
           m_AssetGUID: eae766b15f997414794bfd4f17de5949
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 5252236530421858403
+      type: {class: CreditPurchasePlugin/CreditPurchaseSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CreditPurchasePopupPrefab>k__BackingField:
+          m_AssetGUID: fe492edbd0cef4457951fba2129d4c0a
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
