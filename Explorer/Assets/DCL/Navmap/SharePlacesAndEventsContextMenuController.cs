@@ -19,7 +19,7 @@ namespace DCL.Navmap
         private readonly SharePlacesAndEventsContextMenuView view;
         private readonly WarningNotificationView warningNotificationView;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private string? twitterLink;
         private string? copyLink;
@@ -28,7 +28,7 @@ namespace DCL.Navmap
         public SharePlacesAndEventsContextMenuController(SharePlacesAndEventsContextMenuView view,
             WarningNotificationView warningNotificationView,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.view = view;
@@ -94,7 +94,7 @@ namespace DCL.Navmap
         private void ShareOnTwitter()
         {
             if (string.IsNullOrEmpty(twitterLink)) return;
-            webBrowser.OpenUrl(twitterLink);
+            webBrowser.OpenUrlMainThreadOnly(twitterLink);
             Hide();
         }
     }

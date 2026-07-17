@@ -37,7 +37,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IPlacesAPIService placesAPIService;
         private readonly HttpEventsApiService eventsApiService;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
@@ -58,7 +58,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             ThumbnailLoader thumbnailLoader,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IRealmNavigator realmNavigator,
             IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
@@ -101,7 +101,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnCreateEventButtonClicked() =>
-            webBrowser.OpenUrl(string.Format(createEventFormat, communityData?.id));
+            webBrowser.OpenUrlMainThreadOnly(string.Format(createEventFormat, communityData?.id));
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
@@ -111,7 +111,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl($"{EventUtilities.GetEventShareLink(eventData.Event, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=communities");
+            webBrowser.OpenUrlMainThreadOnly($"{EventUtilities.GetEventShareLink(eventData.Event, decentralandUrlsSource)}&utm_source=explorer&utm_campaign=communities");
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {

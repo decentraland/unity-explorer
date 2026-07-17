@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunityCreation
         private const string CONTENT_POLICY_LINK_ID = "CONTENT_POLICY_LINK_ID";
         private const string CODE_AND_ETHICS_LINK_ID = "CODE_AND_ETHICS_LINK_ID";
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly CommunitiesDataProvider.CommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
@@ -98,7 +98,7 @@ namespace DCL.Communities.CommunityCreation
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             CommunitiesDataProvider.CommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
@@ -201,12 +201,12 @@ namespace DCL.Communities.CommunityCreation
             if (id != WORLD_LINK_ID)
                 return;
 
-            webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
+            webBrowser.OpenUrlMainThreadOnly($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
             viewInstance!.PlayOnLinkClickAudio();
         }
 
         private void GoToGetNameLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.MarketplaceClaimName);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.MarketplaceClaimName);
 
         private void DisableShortcutsInput() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
@@ -615,10 +615,10 @@ namespace DCL.Communities.CommunityCreation
             switch (id)
             {
                 case CONTENT_POLICY_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.ContentPolicy);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.ContentPolicy);
                     break;
                 case CODE_AND_ETHICS_LINK_ID:
-                    webBrowser.OpenUrl(DecentralandUrl.CodeOfEthics);
+                    webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.CodeOfEthics);
                     break;
             }
 

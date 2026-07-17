@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly Entity playerEntity;
         private readonly Arch.Core.World world;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IInputBlock inputBlock;
         private readonly ICompositeWeb3Provider web3Provider;
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             Entity playerEntity,
             Arch.Core.World world,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             IInputBlock inputBlock,
             ICompositeWeb3Provider web3Provider)

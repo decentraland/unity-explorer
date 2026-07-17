@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 
 namespace DCL.Web3.Authenticators
 {
-    public partial class DappWeb3Authenticator
+    public partial class DappWeb3EthereumApi
     {
         [Serializable]
-        public struct TransferAuthApiRequest
+        public struct LoginAuthApiRequest
         {
             public string method;
             public object[] @params;

@@ -63,7 +63,7 @@ namespace DCL.Backpack
         public BackpackController(
             BackpackView view,
             ISelfProfile selfProfile,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,

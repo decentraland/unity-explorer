@@ -25,7 +25,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private readonly ICreditsPurchaseService purchaseService;
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly Func<CancellationToken, UniTask> openGetCreditsPanelAsync;
         private readonly CancellationTokenSource disposalCts = new ();
 
@@ -40,7 +40,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
             ICreditsPurchaseService purchaseService,
             MarketplaceCreditsAPIClient creditsAPIClient,
             IWeb3IdentityCache identityCache,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             Func<CancellationToken, UniTask> openGetCreditsPanelAsync)
             : base(viewFactory)
         {
@@ -175,7 +175,7 @@ namespace DCL.MarketplaceCredits.Purchase.UI
         private void OnOpenMarketplaceClicked()
         {
             if (!string.IsNullOrEmpty(inputData.FallbackMarketplaceUrl))
-                webBrowser.OpenUrl(inputData.FallbackMarketplaceUrl);
+                webBrowser.OpenUrlMainThreadOnly(inputData.FallbackMarketplaceUrl);
         }
 
         private async UniTask PurchaseAsync(CancellationToken ct)

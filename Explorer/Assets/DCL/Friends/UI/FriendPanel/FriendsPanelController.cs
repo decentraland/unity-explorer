@@ -63,7 +63,7 @@ namespace DCL.Friends.UI.FriendPanel
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile) : base(viewFactory)
         {
