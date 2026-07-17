@@ -34,7 +34,7 @@ namespace DCL.Web3.Authenticators
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly URLBuilder urlBuilder = new ();
-        private readonly DCLSemaphoreSlim loginMutex = new (1, 1);
+        private readonly DCLSemaphoreSlim loginMutex = new ();
 
         public DappDeepLinkAuthenticator(
             UnityAppWebBrowser webBrowser,
@@ -166,7 +166,7 @@ namespace DCL.Web3.Authenticators
 
             DateTime expiration = DateTime.Parse(json.identity.expiration, null, DateTimeStyles.RoundtripKind);
 
-            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.Deeplink);
+            return new DecentralandIdentity(new Web3Address(signerAddress), ephemeralAccount, expiration, authChain, IWeb3Identity.Web3IdentitySource.DEEPLINK);
         }
 
         // Field names mirror the auth server's JSON payloads verbatim, so they intentionally break the naming rules.

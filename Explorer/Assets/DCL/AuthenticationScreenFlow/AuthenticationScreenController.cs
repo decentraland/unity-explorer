@@ -212,7 +212,7 @@ namespace DCL.AuthenticationScreenFlow
                 bool autoLoginSuccess = await web3Authenticator.TryAutoLoginAsync(ct);
 
                 if (autoLoginSuccess)
-                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TokenFile, ct));
+                    fsm.Enter<ProfileFetchingAuthState, ProfileFetchingPayload>(new (storedIdentity, storedIdentity.Source != IWeb3Identity.Web3IdentitySource.TOKEN_FILE, ct));
                 else
                 {
                     fsm.Enter<LoginSelectionAuthState, int>(UIAnimationHashes.IN, true);
