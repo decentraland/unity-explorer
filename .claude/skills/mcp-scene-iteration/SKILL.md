@@ -18,37 +18,44 @@ Deeper reference, loaded only when the task reaches it:
 
 ## Setup (once per session)
 
-**Skill prerequisite — check before writing any scene code.** This skill only covers driving the Explorer; the SDK7 API knowledge (composite-first rule, component reference) lives in the `sdk-scenes` skill set, and parts of the API (e.g. native `TriggerArea`) are newer than training data — never write scene code from memory. If no `sdk-scenes`/`sdk-skills` skill is available in the session, stop and ask the user to install it from https://github.com/decentraland/sdk-skills:
-
-```bash
-npx skills add decentraland/sdk-skills --all       # run inside the scene folder (scene-local)
-npx skills add decentraland/sdk-skills --all -g    # or globally (user-level, ~/.claude/skills)
-```
-
-Skills are loaded at session start, so a mid-session install may not surface until the session restarts.
-
-0. **Probe for an already-running setup first.** The Explorer and dev server are often already up from a previous session — check before launching anything:
+0. **Load the SDK skills.** This skill only covers driving the Explorer; the SDK7 API knowledge (composite-first rule, component reference) lives in the `sdk-scenes` skill set, and parts of the API (e.g. native `TriggerArea`) are newer than training data. Try to load it: session skills first, then the filesystem — scene-local (`.claude/skills/` in the scene folder) and global (`~/.claude/skills/`). If it cannot be loaded, **MANDATORY — ask the user**: install `sdk-skills` (from https://github.com/decentraland/sdk-skills)? Recommend installing. If YES, ask at which level — scene-local or global — and run the matching command:
 
    ```bash
-   # MCP server up? (Explorer running with --mcp)
+   npx skills add decentraland/sdk-skills --all       # scene-local (run inside the scene folder)
+   npx skills add decentraland/sdk-skills --all -g    # global (user-level, ~/.claude/skills)
+   ```
+
+   Skills are loaded at session start, so a mid-session install may not surface until the session restarts. If NO, move forward without them — the scene can still be implemented, just less efficiently: verify any API you are not certain about against the official docs instead of writing it from memory.
+
+1. **Probe for an already-running MCP server, then start the scene.** Check through the harness first: if `mcp__explorer__*` tools are available in the session, call `get_scene_state` — an answer means the server is up. Fall back to curl **only if the tools are absent**:
+
+   ```bash
    curl -s -m 2 http://127.0.0.1:8123/unity-explorer-mcp -X POST \
      -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
      -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'
-   # Dev server up, and serving the RIGHT scene folder?
-   lsof -nP -i :8000 -sTCP:LISTEN   # then check the PID's cwd or command path
    ```
 
-   If the MCP probe answers with a `serverInfo` result, skip step 2 (and step 3 if `mcp__explorer__*` tools are already available). If port 8000 is served **from the target scene folder**, skip step 1; if it serves a different folder, kill that process and serve the right one. Only do the steps below for whatever is actually missing.
+   **Server found** (tool answer or `serverInfo` result) — **MANDATORY — ask the user**: use the already-running Explorer, or start the scene from scratch with the MCP flag? Never decide silently.
+   - *Use it*: launch nothing. If port 8000 isn't serving the target scene folder (`lsof -nP -i :8000 -sTCP:LISTEN`, then check the PID's cwd), kill whatever holds it and run `npm run start -- --no-client`. Skip step 3 if the tools are already available.
+   - *From scratch*: **MANDATORY — follow-up question**: kill the previously-running scene server, or keep it and run a second stack alongside? Never kill it unasked.
+     - *Kill it*: kill the port-8000 dev server, have the user close the running client (never kill an Editor process yourself), then continue below.
+     - *Keep it*: leave it and its Explorer untouched; start a second stack on its own ports — a different dev-server port (`--port`; the launched client follows it automatically), a different MCP port (`--mcp-port`, implies `--mcp`), and `--multi-instance` so a second Explorer instance can run concurrently:
 
-1. **Serve the scene locally** from the scene folder (keep it running in the background):
+       ```bash
+       npm install && npm run start -- --port 8666 --multi-instance --mcp-port 8124
+       ```
+
+       From here on use the chosen ports instead of 8000/8123 — including step 3's registration, which needs a distinct server name (e.g. `claude mcp add --transport http --scope user explorer2 http://127.0.0.1:8124/unity-explorer-mcp`; the tools then surface as `mcp__explorer2__*`).
+
+   **No server found** — serve the scene and launch the Explorer in one command from the scene folder (keep it running in the background; if something else already holds port 8000, apply the same kill-or-keep question and port overrides as above):
 
    ```bash
-   npm install && npm run start
+   npm install && npm run start -- --mcp
    ```
 
-   This serves the scene at `http://127.0.0.1:8000` and hot-reloads it in the connected Explorer whenever a source file changes. Close any Explorer/launcher window it auto-opens if you manage your own build.
+   This serves the scene at `http://127.0.0.1:8000`, auto-launches the **installed** Decentraland client connected to it with the MCP server enabled (port 8123; `--mcp-port <port>` picks another and implies `--mcp` — adjust the 8123 URLs in steps 1 and 3 to match), and the LSD dev server hot-reloads the running Explorer on file changes. Other useful flags: `--port <port>` (dev-server port; the launched client follows it automatically), `--position x,y`, `--skip-auth-screen`, `-n` (new client instance), `--multi-instance` (allow concurrent Explorer instances), `--no-client` (serve only, launch nothing). Anything after a second standalone `--` is forwarded verbatim into the launch as extra Explorer params, e.g. `npm run start -- --mcp -- --windowed-mode --resolution 1280x720` (npm consumes the first `--`). If `--mcp` is rejected as an unknown option, the scene's `@dcl/sdk-commands` predates the flag — update `@dcl/sdk`, or fall back to step 2.
 
-2. **Launch the Explorer** connected to that scene with the MCP server enabled (only if the step-0 probe found nothing on 8123):
+2. **(Alternative) Launch a specific Explorer build manually** — a local build or the Editor instead of the installed client. Serve with `npm run start -- --no-client` in step 1, then:
 
    ```bash
    # macOS
@@ -101,7 +108,7 @@ Paths are relative to this skill's directory; requires curl + python3; pass `-p 
 - `scene.json` changes (parcels, spawn points) are not hot-reloaded — restart the `npm run start` process, then `reload_scene`.
 - After `teleport` or `reload_scene`, always re-check `get_scene_state` before interacting; readiness can lag a few seconds.
 - One parcel is 16×16 m; parcel `(x, y)` spans world positions `(16x..16x+16, 16y..16y+16)`. `--position 0,0` spawns at parcel 0,0.
-- If the connection drops, the build probably crashed or was closed — relaunch it with the same flags; the MCP endpoint URL stays the same.
+- If the connection drops, the client probably crashed or was closed — relaunch it the same way it was started (`npm run start -- --mcp`, or the manual launch line); the MCP endpoint URL stays the same.
 - **Missing tools**: `mcp__explorer__*` tools absent in-session are recoverable (typically the Explorer wasn't running when the session started, so the registered server failed its startup connection). Ask the user to run `/mcp` and reconnect the `explorer` server — an interactive command only the user can run; a successful reconnect binds all the server's tools into the running session (verified). A plain `claude mcp add` mid-session does NOT surface tools by itself. Last resort: drive the endpoint directly with curl JSON-RPC (`POST /unity-explorer-mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks).
 - After a hot reload the player can end up off-parcel (e.g. parcel `0,-1`); `get_scene_state` then reports a null scene and `reload_scene` fails with "no scene at the current parcel". Check `get_player_state` → `parcel`, `move_to` back inside, and the scene loads again.
 - Each file save triggers a rebuild: editing usage and import in separate saves produces a transient `SceneError: X is not defined` between them. Write new modules before wiring them in, and prefer a single whole-file write for multi-part edits to one file.

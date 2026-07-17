@@ -25,6 +25,8 @@ Decentraland.exe --mcp-port 8124
 
 In the Unity Editor, add `--mcp` to `Main Scene Loader → Debug Settings → App Parameters`.
 
+From a scene folder, `@dcl/sdk-commands` can enable it at launch: `npm run start -- --mcp` (optionally `--mcp-port <port>`) forwards both flags into the deep link that auto-launches the installed client. Any extra Explorer params can follow a second standalone `--` (`npm run start -- --mcp -- --windowed-mode --resolution 1280x720`; npm consumes the first `--`).
+
 ## Security model
 
 - The listener binds to **127.0.0.1 only** — it is never reachable from the network.
@@ -83,8 +85,8 @@ curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
 
 ## The scene-iteration loop
 
-1. Serve the scene locally: `npm run start` in the scene folder (serves at `http://127.0.0.1:8000` and hot-reloads on file changes).
-2. Launch the Explorer against it with the MCP server on:
+1. Serve the scene and launch the Explorer in one step: `npm run start -- --mcp` in the scene folder (serves at `http://127.0.0.1:8000`, auto-launches the installed client against it with the MCP server on, and hot-reloads on file changes).
+2. To use a specific Explorer build instead, serve with `npm run start -- --no-client` and launch manually:
 
 ```bash
 open Decentraland.app --args \
@@ -114,7 +116,7 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 
 - `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
   - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `IMcpTool`, `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpInputSchema` (typed input-schema builder).
-  - `Tools/` — one class per tool (14).
+  - `Tools/` — one class per tool (16).
   - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerClickIntent`.
   - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerClickSystem` (synthetic entity clicks).
   - `Utils/` — `SceneLogBuffer`, `JObjectExtensions`.
