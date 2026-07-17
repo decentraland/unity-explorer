@@ -17,7 +17,12 @@ namespace SceneRuntime
             // IL2CPP does not support dynamic bindings!
             engine.DisableDynamicBinding = true;
             engine.UseReflectionBindFallback = true;
-            engine.AllowReflection = true;
+
+            // Scene JavaScript is untrusted (any parcel can serve arbitrary code). AllowReflection
+            // would let it call GetType()/typeOf()/TargetSite on the injected host objects and walk
+            // from there to any loaded .NET type - a sandbox escape. It must stay disabled; it does
+            // not affect normal host-member binding, which runs on UseReflectionBindFallback above.
+            engine.AllowReflection = false;
 
             return engine;
         }
