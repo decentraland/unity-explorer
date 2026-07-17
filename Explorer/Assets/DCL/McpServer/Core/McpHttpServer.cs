@@ -25,12 +25,11 @@ namespace DCL.McpServer.Core
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
 
-        // Stateless single-session design: this localhost, single-user automation server exposes one logical MCP
-        // session for the whole process lifetime. It therefore uses one id for its entire life and echoes it on
-        // every response (including errors and before initialize) instead of minting one per handshake, and it does
-        // not validate the incoming Mcp-Session-Id — there is no per-session state to bind a request to. This
-        // deliberately departs from the Streamable HTTP session lifecycle; revisit if the server ever serves
-        // multiple concurrent clients.
+        // The session maps to the Explorer process, not to a client: this server is stateless and drives one
+        // shared world, so every request operates on the same state and there is nothing session-scoped to isolate.
+        // Multiple agents on one server intentionally share this id because they drive the same world; a separate
+        // session means a separate Explorer instance (separate port, separate id). Hence one id for the process
+        // lifetime, echoed on every response, and no need to validate the incoming Mcp-Session-Id.
         private readonly string sessionId = Guid.NewGuid().ToString("N");
 
         private HttpListener? listener;
