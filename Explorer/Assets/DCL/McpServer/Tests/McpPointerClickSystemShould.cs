@@ -10,6 +10,7 @@ using DCL.McpServer.Systems;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -74,7 +75,13 @@ namespace DCL.McpServer.Tests
             };
 
             targetPointerEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
-            targetEntity = sceneWorld.Create(targetPointerEvents, new CRDTEntity(TARGET_CRDT_ID));
+
+            // The entity needs a TransformComponent so ResolveEntityAimPoint can aim the validation ray at it;
+            // without it the aim point is Vector3.zero and the click bails out before the raycast.
+            targetEntity = sceneWorld.Create(targetPointerEvents, new CRDTEntity(TARGET_CRDT_ID), new TransformComponent(targetGo.transform));
+
+            // Colliders created/moved this frame are not in the PhysX scene until transforms are synced (no physics step runs in EditMode).
+            Physics.SyncTransforms();
 
             tick = 100u;
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
@@ -216,6 +223,7 @@ namespace DCL.McpServer.Tests
             blockerGo = new GameObject("mcp-click-test-blocker") { transform = { position = new Vector3(0f, 0f, 2f) }};
 
             blockerGo.AddComponent<BoxCollider>();
+            Physics.SyncTransforms();
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
