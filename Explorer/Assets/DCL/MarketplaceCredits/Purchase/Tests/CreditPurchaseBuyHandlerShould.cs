@@ -19,14 +19,14 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private IMVCManager mvcManager = null!;
         private MarketplaceShopAPIClient shopAPIClient = null!;
-        private IWebBrowser webBrowser = null!;
+        private UnityAppWebBrowser webBrowser = null!;
 
         [SetUp]
         public void SetUp()
         {
             mvcManager = Substitute.For<IMVCManager>();
             shopAPIClient = Substitute.For<MarketplaceShopAPIClient>(null, null);
-            webBrowser = Substitute.For<IWebBrowser>();
+            webBrowser = Substitute.For<UnityAppWebBrowser>();
         }
 
         private CreditPurchaseBuyHandler CreateHandler(bool isEnabled) =>
@@ -45,7 +45,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrl(MARKETPLACE_URL);
+            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
             await shopAPIClient.DidNotReceive().GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -63,7 +63,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert
             await mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(), Arg.Any<CancellationToken>());
-            webBrowser.DidNotReceive().OpenUrl(Arg.Any<string>());
+            webBrowser.DidNotReceive().OpenUrlMainThreadOnly(Arg.Any<string>());
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrl(MARKETPLACE_URL);
+            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
             await mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(), Arg.Any<CancellationToken>());
         }
 
@@ -96,7 +96,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrl(MARKETPLACE_URL);
+            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync("urn:decentraland:off-chain:base-avatars:brown_pants", MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrl(MARKETPLACE_URL);
+            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
             await shopAPIClient.DidNotReceive().GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 

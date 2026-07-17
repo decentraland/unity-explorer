@@ -35,11 +35,11 @@ namespace DCL.Passport.Modules
 
         private readonly IMVCManager mvcManager;
         private readonly MarketplaceShopAPIClient shopAPIClient;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly bool isEnabled;
         private readonly Dictionary<string, ShopListingDto?> listingCache = new ();
 
-        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopAPIClient, IWebBrowser webBrowser, bool isEnabled)
+        public CreditPurchaseBuyHandler(IMVCManager mvcManager, MarketplaceShopAPIClient shopAPIClient, UnityAppWebBrowser webBrowser, bool isEnabled)
         {
             this.mvcManager = mvcManager;
             this.shopAPIClient = shopAPIClient;
@@ -78,7 +78,7 @@ namespace DCL.Passport.Modules
         {
             if (!isEnabled)
             {
-                webBrowser.OpenUrl(marketplaceUrl);
+                webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace DCL.Passport.Modules
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.CREDITS_PURCHASE, $"Listing resolution failed for {itemUrn}: {e.Message}");
-                webBrowser.OpenUrl(marketplaceUrl);
+                webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
             finally
@@ -109,7 +109,7 @@ namespace DCL.Passport.Modules
 
             if (listing == null)
             {
-                webBrowser.OpenUrl(marketplaceUrl);
+                webBrowser.OpenUrlMainThreadOnly(marketplaceUrl);
                 return;
             }
 
