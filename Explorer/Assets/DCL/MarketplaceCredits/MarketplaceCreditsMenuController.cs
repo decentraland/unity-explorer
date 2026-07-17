@@ -335,8 +335,9 @@ namespace DCL.MarketplaceCredits
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
-                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
-                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City,
+                    // holding off while any other popup or fullscreen view is on screen (e.g. the backpack opened via force-open-backpack).
+                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis() && !mvcManager.IsAnyModalViewShowing(), cancellationToken: ct);
                     await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 
