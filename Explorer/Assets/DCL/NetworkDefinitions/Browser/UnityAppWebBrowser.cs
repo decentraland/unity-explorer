@@ -14,12 +14,12 @@ namespace DCL.Browser
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public void OpenUrlMainThreadOnly(string url)
+        public virtual void OpenUrlMainThreadOnly(string url)
         {
             Application.OpenURL(Uri.EscapeUriString(url));
         }
 
-        public void OpenUrlMainThreadOnly(DecentralandUrl url)
+        public virtual void OpenUrlMainThreadOnly(DecentralandUrl url)
         {
             OpenUrlMainThreadOnly(decentralandUrlsSource.Url(url));
         }

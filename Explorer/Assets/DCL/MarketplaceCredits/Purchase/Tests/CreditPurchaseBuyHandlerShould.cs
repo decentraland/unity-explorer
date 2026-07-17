@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.MarketplaceCredits.Purchase.UI;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
+using JetBrains.Annotations;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -19,14 +21,14 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
         private IMVCManager mvcManager = null!;
         private MarketplaceShopAPIClient shopAPIClient = null!;
-        private UnityAppWebBrowser webBrowser = null!;
+        private MockWebBrowser webBrowser = null!;
 
         [SetUp]
         public void SetUp()
         {
             mvcManager = Substitute.For<IMVCManager>();
             shopAPIClient = Substitute.For<MarketplaceShopAPIClient>(null, null);
-            webBrowser = Substitute.For<UnityAppWebBrowser>();
+            webBrowser = new MockWebBrowser();
         }
 
         private CreditPurchaseBuyHandler CreateHandler(bool isEnabled) =>
@@ -45,7 +47,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
+            Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
             await shopAPIClient.DidNotReceive().GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -63,7 +65,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             // Assert
             await mvcManager.Received(1).ShowAsync(Arg.Any<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(), Arg.Any<CancellationToken>());
-            webBrowser.DidNotReceive().OpenUrlMainThreadOnly(Arg.Any<string>());
+            Assert.IsNull(webBrowser.UrlOpened);
         }
 
         [Test]
@@ -79,7 +81,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
+            Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
             await mvcManager.DidNotReceive().ShowAsync(Arg.Any<ShowCommand<CreditPurchaseModalView, CreditPurchaseModalControllerParams>>(), Arg.Any<CancellationToken>());
         }
 
@@ -96,7 +98,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync(ITEM_URN, MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
+            Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
         }
 
         [Test]
@@ -109,7 +111,7 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
             await handler.HandleBuyClickAsync("urn:decentraland:off-chain:base-avatars:brown_pants", MARKETPLACE_URL, CreateVisuals(), _ => { }, CancellationToken.None);
 
             // Assert
-            webBrowser.Received(1).OpenUrlMainThreadOnly(MARKETPLACE_URL);
+            Assert.AreEqual(webBrowser.UrlOpened, MARKETPLACE_URL);
             await shopAPIClient.DidNotReceive().GetShopListingForItemAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
@@ -163,6 +165,22 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
 
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("urn:decentraland:off-chain:base-avatars:brown_pants", out _, out _));
             Assert.IsFalse(CreditPurchaseBuyHandler.TryParseCollectionItem("no-colons-here", out _, out _));
+        }
+
+        private class MockWebBrowser : UnityAppWebBrowser
+        {
+            public string UrlOpened { get; private set; } = null;
+
+            public MockWebBrowser() : base(Substitute.For<IDecentralandUrlsSource>())
+            {
+
+            }
+
+            public override void OpenUrlMainThreadOnly(string url) =>
+                UrlOpened = url;
+
+            public override void OpenUrlMainThreadOnly(DecentralandUrl url) =>
+                UrlOpened = url.ToString();
         }
     }
 }
