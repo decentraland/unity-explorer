@@ -57,10 +57,21 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset!;
 
-            if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
-            else
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to load {assetIntention.Hash} from AB")));
+            // Instantiation can throw if the AB's underlying Unity asset was destroyed/unloaded
+            // (ref-counted bundle evicted) leaving a "fake-null" object that TryGetAsset still returns.
+            // Convert to a failed result instead of letting it escape Update as an EcsSystemException
+            // (UNITY-EXPLORER-P76 — top crash, 4911 evts/68 users). Mirrors the else-branch failure path.
+            try
+            {
+                if (Utils.TryCreateGltfObject(assetBundleData, assetIntention.Hash, out GltfContainerAsset result))
+                    World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+                else
+                    World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to load {assetIntention.Hash} from AB")));
+            }
+            catch (Exception e)
+            {
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(GetReportData(), new ArgumentException($"Failed to instantiate {assetIntention.Hash} from AB", e)));
+            }
 
         }
 
