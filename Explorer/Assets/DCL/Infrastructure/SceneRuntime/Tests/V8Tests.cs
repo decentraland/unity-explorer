@@ -9,8 +9,8 @@ namespace SceneRuntime.Tests
 {
     public class V8Tests
     {
-        private V8EngineFactory engineFactory;
-        private V8ScriptEngine engine;
+        private V8EngineFactory engineFactory = null!;
+        private V8ScriptEngine engine = null!;
 
         [SetUp]
         public void SetUp()
@@ -69,10 +69,10 @@ namespace SceneRuntime.Tests
         public void BlockReflectionFromSceneScript()
         {
             // Arrange
-            engine.AddHostObject("host", new ReflectionProbe());
+            engine.AddHostObject("host", new SampleHostObject());
 
-            // Act — normal host member access is bound via UseReflectionBindFallback and must still work.
-            var value = engine.Evaluate("host.Value");
+            // Act — ordinary host member access must still work.
+            object? value = engine.Evaluate("host.Value");
 
             // Assert
             Assert.AreEqual(42, value);
@@ -84,8 +84,9 @@ namespace SceneRuntime.Tests
             Assert.That(reflectionException.ToString(), Does.Contain("reflection").IgnoreCase);
         }
 
-        private class ReflectionProbe
+        public class SampleHostObject
         {
+            // ReSharper disable once UnusedMember.Local
             public int Value => 42;
         }
     }
