@@ -117,6 +117,7 @@ namespace DCL.Character.CharacterCamera.Systems
                                            {
                                                ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
                                                ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Right,
+                                               ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
                                            };
 
             ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;

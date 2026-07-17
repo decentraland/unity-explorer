@@ -55,13 +55,25 @@ namespace DCL.RealmNavigation.LoadingOperation
 
                         if (!lastOpResult.Success)
                         {
-                            ReportHub.LogError(
-                                reportData,
-                                $"Operation failed on {processName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.AsResult().ErrorMessage}"
-                            );
+                            // Do not log cancellation as an error (CLAUDE.md §9): on shutdown the inner op
+                            // converts its OperationCanceledException into a TaskError.Cancelled result.
+                            if (!ct.IsCancellationRequested && lastOpResult.Error?.State != TaskError.Cancelled)
+                                ReportHub.LogError(
+                                    reportData,
+                                    $"Operation failed on {processName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.AsResult().ErrorMessage}"
+                                );
 
                             break;
                         }
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        // Cancellation of the outer flow is not an error: convert to a cancelled result
+                        // (the check below exits the attempt loop). An OperationCanceledException from an
+                        // operation's internal token is NOT ours to absorb - it propagates as before, so
+                        // the attempt loop cannot re-run the whole chain on an inner timeout.
+                        lastOpResult = EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+                        break;
                     }
                     catch (Exception e)
                     {

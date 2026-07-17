@@ -72,11 +72,13 @@ namespace DCL.SceneLoadingScreens
 
         public void ClearTips()
         {
+            // Application/view teardown can destroy the tip objects (children of this view) before
+            // ClearTips runs; skip the already-destroyed entries.
             foreach (TipView tip in tips)
-                Destroy(tip.gameObject);
+                if (tip != null) Destroy(tip.gameObject);
 
             foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
-                Destroy(breadcrumb.gameObject);
+                if (breadcrumb != null) Destroy(breadcrumb.gameObject);
 
             tips.Clear();
             tipsBreadcrumbs.Clear();
