@@ -55,6 +55,8 @@ Deeper reference, loaded only when the task reaches it:
 
    This serves the scene at `http://127.0.0.1:8000`, auto-launches the **installed** Decentraland client connected to it with the MCP server enabled (port 8123; `--mcp-port <port>` picks another and implies `--mcp` — adjust the 8123 URLs in steps 1 and 3 to match), and the LSD dev server hot-reloads the running Explorer on file changes. Other useful flags: `--port <port>` (dev-server port; the launched client follows it automatically), `--position x,y`, `--skip-auth-screen`, `-n` (new client instance), `--multi-instance` (allow concurrent Explorer instances), `--no-client` (serve only, launch nothing). Anything after a second standalone `--` is forwarded verbatim into the launch as extra Explorer params, e.g. `npm run start -- --mcp -- --windowed-mode --resolution 1280x720` (npm consumes the first `--`). If `--mcp` is rejected as an unknown option, the scene's `@dcl/sdk-commands` predates the flag — update `@dcl/sdk`, or fall back to step 2.
 
+   **A freshly launched Explorer needs the user to log in.** The client opens on the auth screen unless a previous session's login is still cached (`--skip-auth-screen` only skips it when a valid identity exists — a missing or expired login shows it anyway, and extra `--multi-instance` instances always ask). Tell the user to log in, then wait — step 4's polling only starts succeeding once they're through, and only then can you continue working on the scene through the MCP server.
+
 2. **(Alternative) Launch a specific Explorer build manually** — a local build or the Editor instead of the installed client. Serve with `npm run start -- --no-client` in step 1, then:
 
    ```bash
@@ -88,6 +90,8 @@ Repeat until **every requirement has proof**: a screenshot or state read demonst
 5. **Exercise behavior**: `walk` into trigger areas, `click_entity` on interactables, `send_chat` for commands, `trigger_emote`, and re-screenshot to verify reactions. `list_scene_entities` + `get_entity_details` show the scene's ECS state when visuals aren't enough.
 
 **Cross-examine** every conclusion: confirm each visual claim with a state read (ECS values via `get_entity_details`, logs, `get_player_state` position), and each state claim with pixels. One channel lies routinely — colliders exist that pixels don't show, entities render invisible while their state looks healthy, animations silently don't play. The reference files call out where cross-examination is mandatory.
+
+**MANDATORY — camera cleanup before finishing.** NEVER leave the camera in `free` mode when you stop working (end of task, handing back to the user, or pausing for their input): always restore it with `set_camera_mode third_person` as your last camera action, and confirm via `get_player_state` → `camera.mode` if anything in between could have failed.
 
 ## Screenshot frequency & cost
 
