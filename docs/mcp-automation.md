@@ -106,6 +106,12 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 
 ## Implementation map
 
-- `Explorer/Assets/DCL/Mcp/` — feature folder (folded into `DCL.Plugins` via `.asmref`): `Protocol/` (JSON-RPC dispatcher), `Transport/` (`HttpListener` server + Origin validation), `Tools/` (one class per tool), `Systems/` (`McpInputOverrideSystem` for held movement, `McpPointerClickSystem` for synthetic entity clicks), `Tests/` (EditMode tests, folded into `DCL.EditMode.Tests`), `McpServerPlugin.cs`.
-- Registration: `DynamicWorldContainer.CreateAsync`, gated on `McpServerPlugin.IsEnabled(appArgs)`.
+- `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
+  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `IMcpTool`, `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpInputSchema` (typed input-schema builder).
+  - `Tools/` — one class per tool (14).
+  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerClickIntent`.
+  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerClickSystem` (synthetic entity clicks).
+  - `Utils/` — `SceneLogBuffer`, `JObjectExtensions`.
+  - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing and the pointer-click system.
+- Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `McpServerPlugin`.
 - Flags: `AppArgsFlags.MCP` / `AppArgsFlags.MCP_PORT`; log category: `ReportCategory.MCP`.
