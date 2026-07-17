@@ -13,7 +13,7 @@ The server is compiled into all builds but stays dormant unless explicitly enabl
 | `--mcp` | Starts the MCP server on the default port **8123** |
 | `--mcp-port <port>` | Starts the MCP server on a specific port (implies `--mcp`) |
 
-The flag is accepted from the command line or a deep link. The endpoint is `http://127.0.0.1:<port>/mcp`.
+The flag is accepted from the command line or a deep link. The endpoint is `http://127.0.0.1:<port>/unity-explorer-mcp`.
 
 ```bash
 # macOS
@@ -34,17 +34,17 @@ In the Unity Editor, add `--mcp` to `Main Scene Loader → Debug Settings → Ap
 ## Connecting a coding agent
 
 ```bash
-claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/mcp
+claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/unity-explorer-mcp
 ```
 
 Smoke test without an agent:
 
 ```bash
-curl -s -X POST http://127.0.0.1:8123/mcp \
+curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
 
-curl -s -X POST http://127.0.0.1:8123/mcp \
+curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 ```
@@ -97,7 +97,7 @@ Optional determinism flags for stable screenshots: `--disable-hud`, `--skybox-ti
 
 3. The agent then loops: edit scene TypeScript → LSD hot reload applies it (or call `reload_scene`) → `get_scene_state` until ready → `screenshot` + `get_scene_logs` → verify → repeat.
 
-Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer, so agents can confirm the server from inside the loop.
+Once loading completes, the server announces its address in the scene debug console (available with local scene development or `--scene-console`): `MCP server listening on http://127.0.0.1:8123/unity-explorer-mcp`. A startup failure (port in use) is announced there as an error instead. The same line lands in the `get_scene_logs` buffer, so agents can confirm the server from inside the loop.
 
 A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/mcp-scene-iteration/` (invoke with `/mcp-scene-iteration`).
 
@@ -105,7 +105,7 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 
 - **Port already in use** — the server logs an `MCP` category error and stays inert; relaunch with a different `--mcp-port`. Multiple Explorer instances (`--multi-instance`) each need their own port. To confirm which process answers on a port, check `serverInfo.pid` in the `initialize` response and the `address` field of `get_player_state`.
 - **HTTP 403** — the request carried a non-localhost `Origin` header; MCP clients and curl don't send one.
-- **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/mcp/ user=Everyone` (elevated prompt), then relaunch.
+- **Server won't start on Windows** — `HttpListener` may require a URL ACL depending on machine policy: `netsh http add urlacl url=http://127.0.0.1:8123/unity-explorer-mcp/ user=Everyone` (elevated prompt), then relaunch.
 - **Verbose logs** — enabling the server registers a scene-console log handler, which turns on unconditional verbose logging for the session (same behavior as `--scene-console`).
 - **Scene entity dumps** — `list_scene_entities`/`get_entity_details` read the scene world without acquiring its sync lock (same as the existing `WorldInfoTool` debug tooling); treat results as a diagnostic snapshot.
 - **`click_entity` returns `hit:false` with `blockedBy*`** — another collider sits on the camera→target line; `move_to`/`look_at` to a clear vantage and retry. If the reason is "out of range", close within the entity's `maxDistance` (default 10 m) first. Entities whose collider sits away from the pivot (GLTF meshes) may need an explicit `x/y/z` aim point.

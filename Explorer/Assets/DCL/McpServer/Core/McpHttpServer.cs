@@ -18,11 +18,18 @@ namespace DCL.McpServer.Core
     {
         private const int MAX_BODY_BYTES = 1024 * 1024;
 
+        // Single source of truth for the endpoint path. Docs and scripts restate it (they cannot reference this
+        // const): docs/mcp-automation.md, docs/app-arguments.md, .claude/skills/mcp-scene-iteration/ — keep in sync.
+        private const string ENDPOINT_PATH = "unity-explorer-mcp";
+
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
         private readonly string sessionId = Guid.NewGuid().ToString("N");
 
         private HttpListener? listener;
+
+        /// <summary>The localhost URL the server listens on, e.g. <c>http://127.0.0.1:8123/unity-explorer-mcp</c>.</summary>
+        public string EndpointUrl => $"http://127.0.0.1:{port}/{ENDPOINT_PATH}";
 
         public McpHttpServer(McpToolsRegistry toolsRegistry, int port)
         {
@@ -47,7 +54,7 @@ namespace DCL.McpServer.Core
         public bool TryStart()
         {
             var newListener = new HttpListener();
-            newListener.Prefixes.Add($"http://127.0.0.1:{port}/unity-explorer-mcp/");
+            newListener.Prefixes.Add($"{EndpointUrl}/"); // HttpListener requires the trailing slash
 
             try { newListener.Start(); }
             catch (Exception e) when (e is HttpListenerException or InvalidOperationException)
@@ -58,7 +65,7 @@ namespace DCL.McpServer.Core
             }
 
             listener = newListener;
-            ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on http://127.0.0.1:{port}/mcp");
+            ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on {EndpointUrl}");
             return true;
         }
 

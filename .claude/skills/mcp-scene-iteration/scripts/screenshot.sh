@@ -53,7 +53,7 @@ capture_one() {
     local response_file
     response_file=$(mktemp)
 
-    curl -sS --max-time 30 -X POST "http://127.0.0.1:${PORT}/mcp" \
+    curl -sS --max-time 30 -X POST "http://127.0.0.1:${PORT}/unity-explorer-mcp" \
         -H 'Content-Type: application/json' \
         -H 'Accept: application/json, text/event-stream' \
         -o "$response_file" \

@@ -31,7 +31,7 @@ Skills are loaded at session start, so a mid-session install may not surface unt
 
    ```bash
    # MCP server up? (Explorer running with --mcp)
-   curl -s -m 2 http://127.0.0.1:8123/mcp -X POST \
+   curl -s -m 2 http://127.0.0.1:8123/unity-explorer-mcp -X POST \
      -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
      -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'
    # Dev server up, and serving the RIGHT scene folder?
@@ -63,7 +63,7 @@ Skills are loaded at session start, so a mid-session install may not surface unt
 3. **Connect the MCP server** (default port 8123):
 
    ```bash
-   claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/mcp
+   claude mcp add --transport http --scope user explorer http://127.0.0.1:8123/unity-explorer-mcp
    ```
 
    Errors with "already exists in local config" if registered by a previous session — that's fine, nothing to do. If the current session has no `mcp__explorer__*` tools, follow "Missing tools" under Scene health & recovery below — the fix is the user reconnecting via `/mcp`, not a workaround.
@@ -102,7 +102,7 @@ Paths are relative to this skill's directory; requires curl + python3; pass `-p 
 - After `teleport` or `reload_scene`, always re-check `get_scene_state` before interacting; readiness can lag a few seconds.
 - One parcel is 16×16 m; parcel `(x, y)` spans world positions `(16x..16x+16, 16y..16y+16)`. `--position 0,0` spawns at parcel 0,0.
 - If the connection drops, the build probably crashed or was closed — relaunch it with the same flags; the MCP endpoint URL stays the same.
-- **Missing tools**: `mcp__explorer__*` tools absent in-session are recoverable (typically the Explorer wasn't running when the session started, so the registered server failed its startup connection). Ask the user to run `/mcp` and reconnect the `explorer` server — an interactive command only the user can run; a successful reconnect binds all the server's tools into the running session (verified). A plain `claude mcp add` mid-session does NOT surface tools by itself. Last resort: drive the endpoint directly with curl JSON-RPC (`POST /mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks).
+- **Missing tools**: `mcp__explorer__*` tools absent in-session are recoverable (typically the Explorer wasn't running when the session started, so the registered server failed its startup connection). Ask the user to run `/mcp` and reconnect the `explorer` server — an interactive command only the user can run; a successful reconnect binds all the server's tools into the running session (verified). A plain `claude mcp add` mid-session does NOT surface tools by itself. Last resort: drive the endpoint directly with curl JSON-RPC (`POST /unity-explorer-mcp`, methods `initialize` then `tools/call`; responses may be SSE-framed, tool payloads are JSON in `result.content[0].text`, screenshots are base64 in image content blocks).
 - After a hot reload the player can end up off-parcel (e.g. parcel `0,-1`); `get_scene_state` then reports a null scene and `reload_scene` fails with "no scene at the current parcel". Check `get_player_state` → `parcel`, `move_to` back inside, and the scene loads again.
 - Each file save triggers a rebuild: editing usage and import in separate saves produces a transient `SceneError: X is not defined` between them. Write new modules before wiring them in, and prefer a single whole-file write for multi-part edits to one file.
 - **Rapid successive saves can HARD-WEDGE the client (verified 2026-07-10).** Two saves seconds apart made the Explorer load a mid-write bundle → `SyntaxError: Invalid or unexpected token` at scene start → the scene facade is torn down and drops out of `ScenesCache`, and `get_scene_state` reports `scene: null` while standing on the parcel. From that state NOTHING recovers in-session: `reload_scene` errors ("no scene at the current parcel" — its guard and every underlying reload path need the scene still cached), `/reload` hangs until cancelled, the minimap RELOAD SCENE button just sends `/reload`, LSD file-save pushes no-op (`TryGetBySceneId` misses), and moving far off-parcel and back does not recreate the facade. Only exiting/re-entering play mode (editor) or relaunching the standalone build recovers. Prevention: batch multi-edit changes into ONE file write, and after any save landing seconds after a previous one, verify `get_scene_state` still shows a scene before saving again.
@@ -129,7 +129,7 @@ Two rules:
 - expected output shape
 - the blocked use case, and why the existing tools can't cover it
 
-The user decides whether and when to implement it. **MANDATORY: implementing an approved tool must go through plan mode first** — whichever session does the implementation starts in plan mode, researches the unity-explorer codebase (the server lives under `Explorer/Assets/DCL/Mcp/` — see `docs/mcp-automation.md` → Implementation map), and presents the plan for user approval before writing any code. Also append the proposal to the "Wanted tools" list below so it isn't lost if the user defers.
+The user decides whether and when to implement it. **MANDATORY: implementing an approved tool must go through plan mode first** — whichever session does the implementation starts in plan mode, researches the unity-explorer codebase (the server lives under `Explorer/Assets/DCL/McpServer/` — see `docs/mcp-automation.md` → Implementation map), and presents the plan for user approval before writing any code. Also append the proposal to the "Wanted tools" list below so it isn't lost if the user defers.
 
 ## Wanted tools
 

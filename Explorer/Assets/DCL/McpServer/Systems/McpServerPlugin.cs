@@ -140,7 +140,7 @@ namespace DCL.McpServer.Systems
             if (started)
                 server.RunAsync(serverCts.Token).Forget();
 
-            AnnounceStatusWhenLoadedAsync(started, serverCts.Token).Forget();
+            AnnounceStatusWhenLoadedAsync(started, server.EndpointUrl, serverCts.Token).Forget();
         }
 
         /// <summary>
@@ -148,14 +148,14 @@ namespace DCL.McpServer.Systems
         ///     reaches the scene debug console: its UI subscribes to log entries only after this plugin runs,
         ///     and a line logged at server start would be dropped.
         /// </summary>
-        private async UniTaskVoid AnnounceStatusWhenLoadedAsync(bool started, CancellationToken ct)
+        private async UniTaskVoid AnnounceStatusWhenLoadedAsync(bool started, string endpointUrl, CancellationToken ct)
         {
             try
             {
                 await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
 
                 if (started)
-                    ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on http://127.0.0.1:{port}/mcp");
+                    ReportHub.Log(LogType.Log, ReportCategory.MCP, $"MCP server listening on {endpointUrl}");
                 else
                     ReportHub.LogError(ReportCategory.MCP, $"MCP server failed to start on port {port} — agent connections unavailable (pass a different --mcp-port)");
             }

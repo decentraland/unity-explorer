@@ -312,7 +312,7 @@ More detailed instructions on how to test can be found in the description of rel
 ---
 
 ### `mcp`
-**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
+**Description:** Starts the embedded MCP (Model Context Protocol) server on `http://127.0.0.1:8123/unity-explorer-mcp` so coding agents can observe and drive the client (screenshots, player/scene state, scene logs, teleport/movement, chat commands). The listener binds to localhost only and rejects non-localhost browser Origins. See [MCP Automation](mcp-automation.md).
 
 **Usage:**
 ```bash
