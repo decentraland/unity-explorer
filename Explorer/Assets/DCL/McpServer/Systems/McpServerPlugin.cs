@@ -124,9 +124,11 @@ namespace DCL.McpServer.Systems
                           .Add(new SetCameraModeTool(globalWorld, exposedCameraData))
                           .Add(new SetCameraPoseTool(globalWorld, arguments.PlayerEntity, exposedCameraData))
                           .Add(new WalkTool(globalWorld, arguments.PlayerEntity))
+                          .Add(new SendChatTool(chatMessagesBus))
                           .Add(new ReloadSceneTool(reloadSceneController, scenesCache, globalWorld, arguments.PlayerEntity, arguments.SkyboxEntity))
                           .Add(new ListSceneEntitiesTool(worldInfoHub))
                           .Add(new GetEntityDetailsTool(worldInfoHub))
+                          .Add(new TriggerEmoteTool(globalWorldActions))
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
                           .Build();
 

@@ -448,6 +448,16 @@ MonoBehaviour:
       Severity: 0
     - Category: MULTIPLAYER
       Severity: 2
+    - Category: MCP
+      Severity: 4
+    - Category: MCP
+      Severity: 1
+    - Category: MCP
+      Severity: 3
+    - Category: MCP
+      Severity: 2
+    - Category: MCP
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

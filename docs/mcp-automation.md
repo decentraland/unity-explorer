@@ -72,8 +72,14 @@ curl -s -X POST http://127.0.0.1:8123/mcp \
 | `look_at` | `x`, `y`, `z` | Rotates the camera to a world point (aim before a screenshot) |
 | `set_camera_mode` | `mode` (`first_person`\|`third_person`\|`drone`\|`free`) | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
 | `set_camera_pose` | `x`,`y`,`z`, `lookAt{X,Y,Z}?`, `fov?`, `timeoutSec?` | Places the free camera at an absolute world position, optionally aiming it and setting FOV. Auto-enters free mode (same locks as `set_camera_mode`), waits for the blend to settle (`settled` in the result), and returns the actual pose. The camera stays put while the player moves; restore with `set_camera_mode` |
+| `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
+| `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
 | `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?` (`pointer`\|`primary`\|`secondary`), `eventType?` (`click`\|`down`\|`up`), `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
+
+## Structured output
+
+`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `IMcpTool.OutputSchema` (default `null`); the same `McpInputSchema` builder produces the schema.
 
 ## The scene-iteration loop
 
