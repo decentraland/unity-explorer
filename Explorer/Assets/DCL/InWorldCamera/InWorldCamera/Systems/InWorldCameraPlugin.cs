@@ -56,6 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly InWorldCameraFactory factory;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly CancellationTokenSource pluginCts = new ();
         private readonly IMVCManager mvcManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -133,6 +134,8 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            web3IdentityCache.OnIdentityChanged -= FetchCameraReelStorage;
+            pluginCts.SafeCancelAndDispose();
             factory.Dispose();
             dclInput.InWorldCamera.ToggleInWorldCamera.performed -= OnShortcutToggleInWorldCameraPressed;
         }
@@ -212,7 +215,7 @@ namespace DCL.PluginSystem.Global
             if (web3IdentityCache.Identity == null)
                 return;
 
-            cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, CancellationToken.None).Forget();
+            cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, pluginCts.Token).Forget();
         }
 
         [Serializable]

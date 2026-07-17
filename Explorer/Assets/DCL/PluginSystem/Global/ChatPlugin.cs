@@ -193,6 +193,9 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            web3IdentityCache.OnIdentityCleared -= OnIdentityCleared;
+            web3IdentityCache.OnIdentityChanged -= OnIdentityChanged;
+
             if (messageReactionService != null && chatStorage != null)
                 messageReactionService.ReactionPersistenceRequested -= chatStorage.OnReactionPersistenceRequested;
 
@@ -448,7 +451,7 @@ namespace DCL.PluginSystem.Global
             commandRegistry?.ResetChat.Execute();
 
             if (chatSharedAreaController is { IsVisible: true })
-                chatSharedAreaController.HideViewAsync(CancellationToken.None).Forget();
+                chatSharedAreaController.HideViewAsync(pluginCts.Token).Forget();
         }
 
         private void OnIdentityChanged()

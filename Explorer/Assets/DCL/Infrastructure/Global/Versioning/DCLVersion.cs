@@ -55,8 +55,9 @@ namespace Global.Versioning
 
                     return output.Trim();
                 }
-#endif
+#else
                 return null;
+#endif
             }
         }
     }

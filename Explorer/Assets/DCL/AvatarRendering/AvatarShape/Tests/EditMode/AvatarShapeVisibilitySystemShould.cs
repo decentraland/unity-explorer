@@ -421,10 +421,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             ref var shapeRef = ref world.Get<AvatarShapeComponent>(playerEntity);
             shapeRef.IsDirty = true;
 
-            // Add skinning component for dither test
-            var skinningMaterials = new List<AvatarCustomSkinningComponent.MaterialSetup>();
-            var skinningComponent = new AvatarCustomSkinningComponent();
-
             // Act - This update should trigger ResetDitherState due to IsDirty
             system.Update(0);
 

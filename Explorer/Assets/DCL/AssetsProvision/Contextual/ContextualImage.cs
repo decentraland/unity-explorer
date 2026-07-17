@@ -51,14 +51,16 @@ namespace DCL.AssetsProvision
 
         private void OnDisable()
         {
-            image.sprite = null!;
-            asset.Release();
+            if (image != null)
+                image.sprite = null!;
+            asset?.Release();
         }
 
         private void OnDestroy()
         {
-            image.sprite = null!;
-            asset.Dispose();
+            if (image != null)
+                image.sprite = null!;
+            asset?.Dispose();
         }
 
         public UniTask TriggerOrWaitReadyAsync(CancellationToken token) =>
