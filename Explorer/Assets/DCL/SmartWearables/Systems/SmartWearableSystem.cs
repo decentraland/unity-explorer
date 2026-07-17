@@ -57,6 +57,7 @@ namespace DCL.SmartWearables
         /// </summary>
         private readonly Dictionary<string, ScenePromise> pendingScenes = new ();
 
+        private readonly CancellationTokenSource systemCts = new ();
         private CancellationTokenSource outfitEquipCts = new ();
 
         private bool currentSceneDirty;
@@ -95,6 +96,21 @@ namespace DCL.SmartWearables
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
         }
 
+        protected override void OnDispose()
+        {
+            backpackEventBus.EquipWearableEvent -= OnEquipWearable;
+            backpackEventBus.UnEquipWearableEvent -= OnUnEquipWearable;
+            backpackEventBus.EquipOutfitEvent -= OnEquipOutfit;
+            portableExperiencesController.PortableExperienceUnloaded -= OnPortableExperienceUnloaded;
+            loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
+            scenesCache.CurrentScene.OnUpdate -= OnCurrentSceneChanged;
+            web3IdentityCache.OnIdentityCleared -= OnIdentityCleared;
+
+            systemCts.Cancel();
+            systemCts.Dispose();
+            outfitEquipCts.SafeCancelAndDispose();
+        }
+
         private void OnEquipWearable(IWearable wearable, bool isManuallyEquipped)
         {
             if (!isManuallyEquipped) return;
@@ -104,7 +120,7 @@ namespace DCL.SmartWearables
 
         private async UniTask TryRunSmartWearableSceneAsync(IWearable wearable)
         {
-            bool isSmart = await smartWearableCache.IsSmartAsync(wearable, CancellationToken.None);
+            bool isSmart = await smartWearableCache.IsSmartAsync(wearable, systemCts.Token);
             if (!isSmart || !smartWearableCache.CurrentSceneAllowsSmartWearables) return;
 
             string id = SmartWearableCache.GetCacheId(wearable);
@@ -322,7 +338,7 @@ namespace DCL.SmartWearables
             if (smartWearablesAllowed)
                 // Notice scenes that are already running won't run again, so we can call this safely
                 // TODO consider cancelling a previous running task
-                RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, CancellationToken.None).Forget();
+                RunScenesForEquippedWearablesAsync(AuthorizationAction.SkipAuthorization, systemCts.Token).Forget();
             else
                 UnloadAllSmartWearableScenes();
         }
@@ -348,7 +364,7 @@ namespace DCL.SmartWearables
             loadingStatus.CurrentStage.OnUpdate -= OnLoadingStatusChanged;
             scenesCache.CurrentScene.OnUpdate += OnCurrentSceneChanged;
 
-            RunScenesForEquippedWearablesAsync(AuthorizationAction.RequestAuthorization, CancellationToken.None).Forget();
+            RunScenesForEquippedWearablesAsync(AuthorizationAction.RequestAuthorization, systemCts.Token).Forget();
         }
 
         private async UniTask RunScenesForEquippedWearablesAsync(AuthorizationAction authorization, CancellationToken ct)

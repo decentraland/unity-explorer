@@ -42,8 +42,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         [Serializable]
         public abstract class MetadataBase : TrimmedAvatarAttachmentDTO.TrimmedMetadataBase<DataBase>
         {
-            public string name;
-
+            // `name` is inherited from TrimmedMetadataBase<TDataBase>.
             public I18n[] i18n;
             public string thumbnail;
 

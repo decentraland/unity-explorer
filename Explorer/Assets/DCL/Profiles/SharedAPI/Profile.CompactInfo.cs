@@ -284,7 +284,9 @@ namespace DCL.Profiles
                 PicturePromise?.LoadingIntention.CancellationTokenSource.Cancel();
                 PicturePromise = null;
 
+                // Nulling the reference keeps Dispose idempotent for any caller that reaches it twice.
                 ProfilePicture.TryDereference();
+                ProfilePicture = null;
             }
         }
     }

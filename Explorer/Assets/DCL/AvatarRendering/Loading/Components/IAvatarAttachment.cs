@@ -149,6 +149,8 @@ namespace DCL.AvatarRendering.Loading.Components
                         return true;
                     }
             }
+            else if (string.IsNullOrEmpty(key))
+                ReportHub.LogWarning(ReportCategory.WEARABLE, $"Empty content key requested for wearable with ID: {DTO.Metadata.id}");
             else
                 ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {DTO.Metadata.id}");
 
