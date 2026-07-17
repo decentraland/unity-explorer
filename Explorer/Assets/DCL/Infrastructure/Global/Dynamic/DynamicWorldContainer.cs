@@ -24,7 +24,7 @@ using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
-using DCL.Mcp;
+using DCL.McpServer.Systems;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
