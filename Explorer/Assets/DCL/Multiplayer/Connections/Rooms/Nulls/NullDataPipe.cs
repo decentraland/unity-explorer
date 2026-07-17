@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
     {
         public static readonly NullDataPipe INSTANCE = new ();
 
-        public event ReceivedDataDelegate? DataReceived;
+        public event ReceivedDataDelegate? DataReceived { add { } remove { } }
 
         public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, LKDataPacketKind kind = LKDataPacketKind.KindLossy)
         {

@@ -11,7 +11,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
 
         public int Count => 0;
 
-        public event Action? Updated;
+        public event Action? Updated { add { } remove { } }
 
         public IEnumerator<string> GetEnumerator()
         {

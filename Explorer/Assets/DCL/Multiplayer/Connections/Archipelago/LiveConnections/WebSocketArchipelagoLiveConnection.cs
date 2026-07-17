@@ -20,6 +20,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
     {
         private const int BUFFER_SIZE = 1024 * 1024; //1MB
 
+        /// <summary>
+        ///     Budget for the graceful close handshake before hard-dropping the socket. The server ack
+        ///     is only worth waiting for briefly: the receive loop that would read it is already
+        ///     cancelled when a room stops, so an unbounded CloseAsync hung the teleport pipeline
+        ///     into its 10s timeout.
+        /// </summary>
+        private static readonly TimeSpan CLOSE_HANDSHAKE_BUDGET = TimeSpan.FromSeconds(1);
+
         private readonly IMemoryPool memoryPool;
 
         private Current? current;
@@ -48,8 +56,22 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             try
             {
-                TryUpdateWebSocket();
-                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token);
+                if (current?.WebSocket.State is WebSocketState.Open or WebSocketState.Connecting)
+                {
+                    using var closeCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                    closeCts.CancelAfter(CLOSE_HANDSHAKE_BUDGET);
+
+                    try { await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, closeCts.Token); }
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+                    catch (Exception)
+                    {
+                        // The handshake exceeded its budget or the socket errored out; hard-drop below.
+                    }
+                }
+
+                // Install a fresh socket so a subsequent ConnectAsync can never race the old instance.
+                current?.Dispose();
+                current = Current.New();
                 return Result.SuccessResult();
             }
             catch (Exception e) { return Result.ErrorResult($"Cannot disconnect: {e}"); }

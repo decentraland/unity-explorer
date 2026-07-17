@@ -35,9 +35,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         class Fake : Null, IGateKeeperSceneRoom
         {
-            public event Action? CurrentSceneRoomConnected;
-            public event Action? CurrentSceneRoomDisconnected;
-            public event Action? CurrentSceneRoomForbiddenAccess;
+            public event Action? CurrentSceneRoomConnected { add { } remove { } }
+            public event Action? CurrentSceneRoomDisconnected { add { } remove { } }
+            public event Action? CurrentSceneRoomForbiddenAccess { add { } remove { } }
             public MetaData? ConnectedScene { get; } = new MetaData("Fake", Vector2Int.zero, new MetaData.Input());
 
             public bool Activated => true;

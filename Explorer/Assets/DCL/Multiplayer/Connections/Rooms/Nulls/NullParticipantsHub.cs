@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Nulls
         public static readonly LKParticipant NULL_PARTICIPANT = new ();
         public static readonly WeakReference<LKParticipant> WEAK_NULL_PARTICIPANT = new (NULL_PARTICIPANT);
 
-        public event ParticipantDelegate? UpdatesFromParticipant;
+        public event ParticipantDelegate? UpdatesFromParticipant { add { } remove { } }
 
         public LKParticipant LocalParticipant() =>
             NULL_PARTICIPANT;

@@ -56,6 +56,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.currentAdapterAddress = currentAdapterAddress;
         }
 
+        public override async UniTask StopAsync()
+        {
+            await base.StopAsync();
+
+            // Close the sign-flow ws on stop. Otherwise the next StartAsync reuses the
+            // still-open socket (EnsureConnectionAsync sees IsConnected and skips the
+            // handshake), the server keeps the old peer+island, never re-sends
+            // IslandChanged — and the restarted room waits for a connection string that
+            // never arrives (observed as 3x10s RestartRoom timeouts on every
+            // world->genesis realm change).
+            try { await signFlow.DisconnectAsync(CancellationToken.None); }
+            catch (Exception e) { ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"ArchipelagoIslandRoom stop: disconnect failed: {e.Message}"); }
+        }
+
         protected override async UniTask PrewarmAsync(CancellationToken token)
         {
             // Reset the per-session state: the room instance is reused across StopAsync/StartAsync (teleport, logout)
