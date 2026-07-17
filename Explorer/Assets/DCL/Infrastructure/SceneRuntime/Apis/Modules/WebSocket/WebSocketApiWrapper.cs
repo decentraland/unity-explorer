@@ -49,7 +49,11 @@ namespace SceneRuntime.Apis.Modules
                 if (!isLocalSceneDevelopment && !url.ToLower().StartsWith("wss://"))
                     throw new Exception("Can't start an unsafe ws connection, please upgrade to wss. url=" + url);
 
-                return api.ConnectAsync(websocketId, url, disposeCts.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(this);
+                // A failed connection to a scene-supplied endpoint is a scene-content problem, not an
+                // explorer defect, so it must NOT be reported to Sentry as an error (it spammed
+                // UNITY-EXPLORER-P4K with thousands of events). ToDisconnectedPromise still rejects the
+                // scene's JS connect() promise, matching how SimpleFetchApiWrapper.Fetch surfaces failures.
+                return api.ConnectAsync(websocketId, url, disposeCts.Token).ToDisconnectedPromise(this);
             }
             catch (Exception e)
             {
