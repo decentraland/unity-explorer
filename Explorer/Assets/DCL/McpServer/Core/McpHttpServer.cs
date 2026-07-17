@@ -133,8 +133,21 @@ namespace DCL.McpServer.Core
 
             string requestJson;
 
+            // The Content-Length check above is only a fast reject; a chunked request reports ContentLength64 == -1
+            // and bypasses it, so cap the read itself into a fixed buffer to keep the body bounded regardless.
             using (var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8))
-                requestJson = await reader.ReadToEndAsync();
+            {
+                var buffer = new char[MAX_BODY_BYTES + 1];
+                int charsRead = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
+
+                if (charsRead > MAX_BODY_BYTES)
+                {
+                    context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.RequestEntityTooLarge, sessionId);
+                    return;
+                }
+
+                requestJson = new string(buffer, 0, charsRead);
+            }
 
             string? responseJson = await dispatcher.DispatchAsync(requestJson, ct);
 
