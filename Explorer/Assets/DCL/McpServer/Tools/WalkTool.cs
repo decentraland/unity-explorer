@@ -110,10 +110,10 @@ namespace DCL.McpServer.Tools
 
             var result = new JObject
             {
-                ["startPosition"] = JObjectExtensions.ToVector(startPosition),
-                ["endPosition"] = JObjectExtensions.ToVector(endPosition),
+                ["startPosition"] = startPosition.ToVector(),
+                ["endPosition"] = endPosition.ToVector(),
                 ["distance"] = Math.Round(Vector3.Distance(startPosition, endPosition), 2),
-                ["parcel"] = JObjectExtensions.ToParcel(endPosition.ToParcel()),
+                ["parcel"] = endPosition.ToParcel().ToParcel(),
             };
 
             return McpToolResult.Text(result.ToString(Formatting.Indented));

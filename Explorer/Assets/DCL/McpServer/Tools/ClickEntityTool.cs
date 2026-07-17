@@ -141,7 +141,7 @@ namespace DCL.McpServer.Tools
 
             if (result.Hit)
             {
-                json["hitPoint"] = JObjectExtensions.ToVector(result.HitPoint);
+                json["hitPoint"] = result.HitPoint.ToVector();
                 json["distance"] = Math.Round(result.Distance, 2);
             }
 

@@ -49,17 +49,17 @@ namespace DCL.McpServer.Tools
 
             var state = new JObject
             {
-                ["position"] = JObjectExtensions.ToVector(position),
-                ["rotationEuler"] = JObjectExtensions.ToVector(characterTransform.Rotation.eulerAngles),
-                ["parcel"] = JObjectExtensions.ToParcel(position.ToParcel()),
-                ["velocity"] = JObjectExtensions.ToVector(rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero),
+                ["position"] = position.ToVector(),
+                ["rotationEuler"] = characterTransform.Rotation.eulerAngles.ToVector(),
+                ["parcel"] = position.ToParcel().ToParcel(),
+                ["velocity"] = (rigidTransform?.MoveVelocity.Velocity ?? Vector3.zero).ToVector(),
                 ["isGrounded"] = rigidTransform?.IsGrounded ?? false,
                 ["isPlayerStandingOnScene"] = currentSceneInfo.IsPlayerStandingOnScene,
                 ["address"] = profile == null ? JValue.CreateNull() : profile.Compact.UserId,
                 ["camera"] = new JObject
                 {
-                    ["position"] = JObjectExtensions.ToVector(exposedCameraData.WorldPosition.Value),
-                    ["rotationEuler"] = JObjectExtensions.ToVector(exposedCameraData.WorldRotation.Value.eulerAngles),
+                    ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
+                    ["rotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
                     ["mode"] = exposedCameraData.CameraMode.ToString(),
                     ["modeChangeAllowed"] = SetCameraModeTool.IsModeChangeAllowed(world),
                     ["pointerLocked"] = exposedCameraData.PointerIsLocked.Value,

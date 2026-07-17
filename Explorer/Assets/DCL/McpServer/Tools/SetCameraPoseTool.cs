@@ -131,8 +131,8 @@ namespace DCL.McpServer.Tools
 
             var result = new JObject
             {
-                ["position"] = JObjectExtensions.ToVector(exposedCameraData.WorldPosition.Value),
-                ["rotationEuler"] = JObjectExtensions.ToVector(exposedCameraData.WorldRotation.Value.eulerAngles),
+                ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
+                ["rotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
                 ["mode"] = exposedCameraData.CameraMode.ToString(),
                 ["settled"] = settled,
             };

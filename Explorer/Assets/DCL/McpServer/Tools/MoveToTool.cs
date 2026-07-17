@@ -78,8 +78,8 @@ namespace DCL.McpServer.Tools
 
             var result = new JObject
             {
-                ["position"] = JObjectExtensions.ToVector(finalPosition),
-                ["parcel"] = JObjectExtensions.ToParcel(finalPosition.ToParcel()),
+                ["position"] = finalPosition.ToVector(),
+                ["parcel"] = finalPosition.ToParcel().ToParcel(),
             };
 
             return McpToolResult.Text(result.ToString(Formatting.Indented));

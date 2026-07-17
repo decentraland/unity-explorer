@@ -43,7 +43,7 @@ namespace DCL.McpServer.Tools
 
             var state = new JObject
             {
-                ["currentParcel"] = JObjectExtensions.ToParcel(currentParcel),
+                ["currentParcel"] = currentParcel.ToParcel(),
                 ["loadingStage"] = loadingStatus.CurrentStage.Value.ToString(),
                 ["loadingScreenOn"] = loadingStatus.IsLoadingScreenOn(),
                 ["localSceneDevelopment"] = localSceneDevelopment,
@@ -52,7 +52,7 @@ namespace DCL.McpServer.Tools
                     : new JObject
                     {
                         ["name"] = scene.Info.Name,
-                        ["baseParcel"] = JObjectExtensions.ToParcel(scene.Info.BaseParcel),
+                        ["baseParcel"] = scene.Info.BaseParcel.ToParcel(),
                         ["sdkVersion"] = scene.Info.SdkVersion,
                         ["state"] = scene.SceneStateProvider.State.Value().ToString(),
                         ["isReady"] = scene.IsSceneReady(),

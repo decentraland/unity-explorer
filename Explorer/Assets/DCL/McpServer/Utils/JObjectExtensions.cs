@@ -1,30 +1,47 @@
 using Newtonsoft.Json.Linq;
+using System;
+using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Typed accessors over the tools/call arguments object shared by all tool implementations.
+    ///     Builders for the JSON fragments shared by tool outputs.
     /// </summary>
-    public static class McpToolArgs
+    public static class JObjectExtensions
     {
+        public static JObject ToVector(this Vector3 value) =>
+            new ()
+            {
+                ["x"] = Math.Round(value.x, 2),
+                ["y"] = Math.Round(value.y, 2),
+                ["z"] = Math.Round(value.z, 2),
+            };
+
+        public static JObject ToParcel(this Vector2Int value) =>
+            new ()
+            {
+                ["x"] = value.x,
+                ["y"] = value.y,
+            };
+
         public static bool GetBool(this JObject arguments, string name, bool defaultValue) =>
             arguments[name]?.Type == JTokenType.Boolean ? arguments[name]!.Value<bool>() : defaultValue;
 
         public static int GetInt(this JObject arguments, string name, int defaultValue) =>
-            IsNumber(arguments[name]) ? arguments[name]!.Value<int>() : defaultValue;
+            arguments[name].IsNumber() ? arguments[name]!.Value<int>() : defaultValue;
 
         public static long GetLong(this JObject arguments, string name, long defaultValue) =>
-            IsNumber(arguments[name]) ? arguments[name]!.Value<long>() : defaultValue;
+            arguments[name].IsNumber() ? arguments[name]!.Value<long>() : defaultValue;
 
         public static float GetFloat(this JObject arguments, string name, float defaultValue) =>
-            IsNumber(arguments[name]) ? arguments[name]!.Value<float>() : defaultValue;
+            arguments[name].IsNumber() ? arguments[name]!.Value<float>() : defaultValue;
 
         public static string GetString(this JObject arguments, string name, string defaultValue) =>
             arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>()! : defaultValue;
 
         public static bool TryGetFloat(this JObject arguments, string name, out float value)
         {
-            if (IsNumber(arguments[name]))
+            if (arguments[name].IsNumber())
             {
                 value = arguments[name]!.Value<float>();
                 return true;
@@ -36,7 +53,7 @@ namespace DCL.McpServer.Tools
 
         public static bool TryGetInt(this JObject arguments, string name, out int value)
         {
-            if (IsNumber(arguments[name]))
+            if (arguments[name].IsNumber())
             {
                 value = arguments[name]!.Value<int>();
                 return true;
@@ -46,7 +63,7 @@ namespace DCL.McpServer.Tools
             return false;
         }
 
-        private static bool IsNumber(JToken? token) =>
+        private static bool IsNumber(this JToken? token) =>
             token?.Type is JTokenType.Integer or JTokenType.Float;
     }
 }
