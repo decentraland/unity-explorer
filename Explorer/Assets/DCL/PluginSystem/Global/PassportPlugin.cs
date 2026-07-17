@@ -12,6 +12,7 @@ using DCL.Communities.CommunitiesDataProvider;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
         private PassportController? passportController;
 
         public PassportPlugin(
@@ -103,7 +105,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesDataProvider communitiesDataProvider,
             IThumbnailProvider thumbnailProvider,
             ImageControllerProvider imageControllerProvider,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            MarketplaceShopAPIClient marketplaceShopAPIClient)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -137,6 +140,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.imageControllerProvider = imageControllerProvider;
             this.webRequestController = webRequestController;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
         }
 
         public void Dispose()
@@ -198,7 +202,8 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 imageControllerProvider,
                 nameColors,
-                webRequestController
+                webRequestController,
+                marketplaceShopAPIClient
             );
 
             mvcManager.RegisterController(passportController);

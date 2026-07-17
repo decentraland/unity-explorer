@@ -23,6 +23,7 @@ using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
@@ -428,6 +429,19 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
+            var marketplaceShopAPIClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
+
+            ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
+                marketplaceShopAPIClient,
+                marketplaceCreditsAPIClient,
+                new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
+                new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
+                creditsChainConfig,
+                identityCache,
+                dynamicWorldDependencies.CompositeWeb3Provider,
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_WEARABLE_PURCHASE) && FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS));
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -730,8 +744,16 @@ namespace Global.Dynamic
                     communitiesContainer.DataProvider,
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
-                    staticContainer.WebRequestsContainer.WebRequestController
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    marketplaceShopAPIClient
                 ),
+                new CreditPurchasePlugin(
+                    assetsProvisioner,
+                    uiShellContainer.MvcManager,
+                    creditsPurchaseService,
+                    marketplaceCreditsAPIClient,
+                    identityCache,
+                    webBrowser),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),
