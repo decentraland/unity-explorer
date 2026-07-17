@@ -25,24 +25,27 @@ Tool requests from agent sessions accumulate in the **"Wanted tools"** section o
 
 ## Architecture map
 
-Everything lives in `Explorer/Assets/DCL/Mcp/`, folded into the `DCL.Plugins` assembly via `DCL.Mcp.asmref` (GUID `fc4fd35fb877e904d8cedee73b2256f6`) — no asmdef, no new references needed; `DynamicWorldContainer` is in the same assembly.
+Everything lives in `Explorer/Assets/DCL/McpServer/`, its own `DCL.McpServer` assembly (root asmdef). Two subfolders are folded into other assemblies via `.asmref`: `Systems/` → `DCL.Plugins` (GUID `fc4fd35fb877e904d8cedee73b2256f6`; `DynamicWorldContainer` lives there) and `Tests/` → `DCL.EditMode.Tests`.
 
 | Piece | Path | Role |
 |---|---|---|
-| Plugin | `McpServerPlugin.cs` | Builds the tool registry in `InjectToWorld` (needs `GlobalPluginArguments.PlayerEntity/SkyboxEntity`), starts/disposes the server, wires the scene-log tap (`DiagnosticsContainer.AddDebugConsoleHandler`) |
-| Transport | `Transport/McpHttpServer.cs`, `McpOriginValidator.cs` | `HttpListener` on `http://127.0.0.1:{port}/mcp/`; POST → dispatch, GET → 405, Origin allowlist, 1 MB body cap |
-| Protocol | `Protocol/McpJsonRpcDispatcher.cs`, `JsonRpc.cs`, `McpToolResult.cs`, `McpConstants.cs` | JSON-RPC 2.0 over Streamable HTTP (spec 2025-06-18), tools-only capability |
-| Tools | `Tools/*.cs` (one class per tool) + `IMcpTool.cs`, `McpToolRegistry.cs`, `SceneLogBuffer.cs`, `McpToolArgs.cs`, `McpJson.cs` | The agent-facing surface |
-| System | `Systems/McpInputOverrideSystem.cs` + `Systems/Components/McpMovementOverride.cs` | Per-frame re-assertion of held movement (the walk tool) |
+| Plugin | `Systems/McpServerPlugin.cs` | Builds the tool registry in `InjectToWorld` (needs `GlobalPluginArguments.PlayerEntity/SkyboxEntity`), starts/disposes the server, wires the scene-log tap (`DiagnosticsContainer.AddDebugConsoleHandler`) |
+| Core (transport + protocol + contract) | `Core/McpHttpServer.cs`, `McpJsonRpcDispatcher.cs`, `IMcpTool.cs`, `McpToolsRegistry.cs`, `McpToolResult.cs`, `McpToolAnnotations.cs`, `McpInputSchema.cs` | `HttpListener` on `http://127.0.0.1:{port}/unity-explorer-mcp` (endpoint path is single-sourced in `McpHttpServer` — commit `7a734c77b`); POST → dispatch, GET → 405, Origin allowlist, 1 MB body cap; JSON-RPC 2.0 over Streamable HTTP (spec 2025-06-18), tools-only capability |
+| Tools | `Tools/*.cs` (one class per tool, 16) | The agent-facing surface |
+| Components | `Components/` — `McpMovementOverride`, `McpPointerClickIntent` | ECS intents for the input-driving tools |
+| Systems | `Systems/McpInputOverrideSystem.cs` (held movement), `Systems/McpPointerClickSystem.cs` (synthetic entity clicks) | Per-frame/pipeline-integrated drivers |
+| Utils | `Utils/SceneLogBuffer.cs`, `JObjectExtensions.cs` | Log tap buffer, args parsing |
 
-Registration: `DynamicWorldContainer.CreateAsync`, gated on `McpServerPlugin.IsEnabled(appArgs)` (flags `AppArgsFlags.MCP` / `MCP_PORT`, accepted from CLI **or** deep link by user decision — do not add CLI-only enforcement without being asked). Log category: `ReportCategory.MCP`.
+Registration: `DynamicWorldContainer.CreateAsync`, gated on `FeaturesRegistry` `FeatureId.MCP_SERVER` = `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)` — so `--mcp-port` alone implies `--mcp` (presence check; an invalid port value still enables the server and falls back to 8123). Flags accepted from CLI **or** deep link by user decision — do not add CLI-only enforcement without being asked. Log category: `ReportCategory.MCP`.
+
+Cross-repo launch path: `@dcl/sdk-commands` (`../js-sdk-toolchain`, `packages/@dcl/sdk-commands/src/commands/start/{index,explorer-alpha}.ts`) forwards `--mcp` / `--mcp-port` from `npm run start` into the `decentraland://` deep link (`mcp=true` / `mcp-port=<n>`), plus arbitrary params after a second standalone `--`. Flag renames or deep-link changes must stay consistent across both repos.
 
 Request flow: `HttpListener` accepts on the thread pool → detached `UniTaskVoid` per request → dispatcher parses/routes → tool's `ExecuteAsync(JObject, ct)` begins with `await UniTask.SwitchToMainThread(ct)` for any ECS/Unity access → heavy encoding (base64) hops back via `DCLTask.SwitchToThreadPool()`.
 
 ## Adding a tool — checklist
 
-1. One class in `Tools/`, implementing `IMcpTool` (`Name` snake_case, 1–2 sentence `Description` written for an agent, `InputSchemaJson` as a verbatim JSON Schema string, `internal` constructor).
-2. Parse args with the `McpToolArgs` extensions; validate before switching threads; expected failures return `McpToolResult.Error(...)` (never throw — JSON-RPC errors are for protocol-level failures only).
+1. One class in `Tools/`, implementing `IMcpTool` (`Name` snake_case, 1–2 sentence `Description` written for an agent, `InputSchema` as a `JObject` built with the `McpInputSchema` builder — malformed schemas fail at registration, not first use; `Annotations` behaviour hints; override the default-null `OutputSchema` only for tools returning `McpToolResult.TextWithStructured`).
+2. Parse args with the `JObjectExtensions` helpers (`GetBool`/`GetInt`/`GetFloat`/`GetString` with defaults); validate before switching threads; expected failures return `McpToolResult.Error(...)` (never throw — JSON-RPC errors are for protocol-level failures only).
 3. Register it in `McpServerPlugin.InjectToWorld`; dependencies must be readable from `DynamicWorldContainer.CreateAsync` scope (never mutate containers).
 4. ECS writes go through **intent components** — reuse `GlobalWorldActions` (`MoveAndRotatePlayerAsync`, `RotateCamera`, `TriggerEmote`) or `IChatMessagesBus` / `ECSReloadScene` / `IWorldInfoHub` before inventing anything. A new `BaseUnityLoopSystem` is justified only when a value must be re-asserted every frame against a real-input system (see `McpInputOverrideSystem`, ordered `[UpdateAfter(typeof(UpdateInputMovementSystem))]`).
 5. Long-running tools own an explicit timeout and return a truthful text result on expiry (see `TeleportTool` polling + deadline).
@@ -50,7 +53,7 @@ Request flow: `HttpListener` accepts on the thread pool → detached `UniTaskVoi
 
 ## Hard rules
 
-- **Security invariants**: bind 127.0.0.1 only; keep `McpOriginValidator` (absent Origin = CLI = allowed; non-localhost = 403). No auth token by design (v1).
+- **Security invariants**: bind 127.0.0.1 only; keep the Origin allowlist in `McpHttpServer.IsAllowed` (absent Origin = CLI = allowed; non-localhost = 403). No auth token by design (v1).
 - **Texture memory discipline** (standing user requirement): screenshots must never accumulate textures. Temp RTs via `GetTemporary`/`ReleaseTemporary` released in `finally`; the `ScreenCapture.CaptureScreenshotAsTexture()` result destroyed immediately after blitting; the ReadPixels fallback reuses one persistent buffer; concurrent captures rejected via an `Interlocked` gate.
 - **Async rules**: ignore `OperationCanceledException`; `ReportHub.LogException(e, ReportCategory.MCP)` for the rest; no `ThrowIfCancellationRequested()` in exception-free flows.
 - **No LINQ**, ReportHub not Debug.Log, nullable annotations, no `!` null-forgiving operator.
@@ -71,14 +74,14 @@ The agent-side workflow lives in `.claude/skills/mcp-scene-iteration/` (user-inv
 
 ## Verification
 
-No automated tests exist for this feature yet (deferred by user decision). Smoke-test the protocol layer with the running client:
+EditMode tests exist in `Tests/` (folded into `DCL.EditMode.Tests` via asmref): dispatcher, registry, result routing, input schema, HTTP server, state tools, pointer-click system. Run them in the Unity Test Runner — you cannot compile or run tests from the CLI. Smoke-test the protocol layer with the running client:
 
 ```bash
-curl -s -X POST http://127.0.0.1:8123/mcp -H 'Content-Type: application/json' \
+curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Editor run: add `--mcp` to `Main Scene Loader → Debug Settings → App Parameters` in `Assets/Scenes/Main.unity` and hit Play. Full launch lines are in `docs/mcp-automation.md`.
+Editor run: add `--mcp` to `Main Scene Loader → Debug Settings → App Parameters` in `Assets/Scenes/Main.unity` and hit Play. Standalone against a local scene: `npm run start -- --mcp` in the scene folder auto-launches the installed client with the server on (`--mcp-port <port>` for another port, `--no-client` to serve only, `--multi-instance` + distinct `--port`/`--mcp-port` for side-by-side instances). Full launch lines are in `docs/mcp-automation.md`.
 
 ## Git rules
 
@@ -89,4 +92,6 @@ Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
 
 ## Roadmap context
 
-Milestone 2 (approved scope, not started): pointer clicks through the real input pipeline — persistent synthetic device (`InputSystem.AddDevice<Mouse>()`, removed in `Dispose`) + `InputSystem.QueueStateEvent` press/release across two frames driving `Player.Pointer`/`Player.Primary` (SDK action map built in `GlobalInteractionPlugin`; `ProcessPointerEventsSystem` checks `WasPressedThisFrame()`; raycast comes from screen center only while the cursor is locked — assert cursor-lock first). Feasibility proven by the `InputTestFixture`-based EditMode tests (`DCL/Character/CharacterMotion/Tests/JumpButtonShould.cs`). The `click_entity` entry in the skill's Wanted tools is this milestone's first concrete request.
+Milestone 2 (pointer clicks) SHIPPED 2026-07-05 as `click_entity` — implemented via **semantic injection**, not the originally-scoped synthetic `InputSystem` device: `McpPointerClickSystem` raycasts camera→target, mirrors the distance gate, and fills the entity's `PBPointerEvents.AppendPointerEventResultsIntent` so the unmodified `WritePointerEventResultsSystem` emits a byte-identical `PBPointerEventsResult`. Zero production interaction code changed; approach recorded in `~/.claude/plans/wondrous-forging-fox.md`.
+
+Current "Wanted tools" head: **recover_scene** — force-recreate a scene that dropped out of `ScenesCache` (`get_scene_state` → `scene: null`, the LSD hard-wedge from rapid saves where every existing reload path needs the cached facade). Implementation lead is in the skill's Wanted tools entry.
