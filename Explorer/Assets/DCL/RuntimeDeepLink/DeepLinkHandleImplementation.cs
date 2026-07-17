@@ -2,9 +2,14 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.ExplorePanel;
 using DCL.RealmNavigation;
+using DCL.UI;
 using DCL.Utility.Types;
 using Global.AppArgs;
+using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -16,13 +21,17 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
+        private readonly IMVCManager mvcManager;
+        private readonly ILoadingStatus loadingStatus;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IMVCManager mvcManager, ILoadingStatus loadingStatus)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
+            this.mvcManager = mvcManager;
+            this.loadingStatus = loadingStatus;
         }
 
         public string Name => "Real Implementation";
@@ -62,7 +71,24 @@ namespace DCL.RuntimeDeepLink
                 result = Result.SuccessResult();
             }
 
+            if (deeplink.ValueOf(AppArgsFlags.FORCE_OPEN_BACKPACK) != null)
+            {
+                OpenBackpackWhenLandedAsync().Forget();
+                result = Result.SuccessResult();
+            }
+
             return result;
+        }
+
+        private async UniTaskVoid OpenBackpackWhenLandedAsync()
+        {
+            try
+            {
+                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: token);
+                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)), token);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)
