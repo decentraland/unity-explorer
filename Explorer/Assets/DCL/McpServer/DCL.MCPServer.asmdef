@@ -1,5 +1,5 @@
 {
-    "name": "DCL.MCPServer",
+    "name": "DCL.McpServer",
     "rootNamespace": "",
     "references": [
         "GUID:d832748739a186646b8656bdbd447ad0",
