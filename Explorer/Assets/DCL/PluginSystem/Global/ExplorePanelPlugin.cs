@@ -17,7 +17,6 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Landscape.Settings;
@@ -629,18 +628,7 @@ namespace DCL.PluginSystem.Global
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformed;
 
             if (appArgs.HasFlag(AppArgsFlags.FORCE_OPEN_BACKPACK))
-                ForceOpenBackpackOnLandingAsync(ct).Forget();
-        }
-
-        private async UniTaskVoid ForceOpenBackpackOnLandingAsync(CancellationToken ct)
-        {
-            try
-            {
-                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: ct);
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)), ct);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
+                BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, ct).Forget();
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)

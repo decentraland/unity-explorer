@@ -2,14 +2,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
-using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.RealmNavigation;
-using DCL.UI;
 using DCL.Utility.Types;
 using Global.AppArgs;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -73,22 +70,11 @@ namespace DCL.RuntimeDeepLink
 
             if (deeplink.ValueOf(AppArgsFlags.FORCE_OPEN_BACKPACK) != null)
             {
-                OpenBackpackWhenLandedAsync().Forget();
+                BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, token).Forget();
                 result = Result.SuccessResult();
             }
 
             return result;
-        }
-
-        private async UniTaskVoid OpenBackpackWhenLandedAsync()
-        {
-            try
-            {
-                await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed, cancellationToken: token);
-                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack)), token);
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)
