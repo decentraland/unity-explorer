@@ -57,9 +57,9 @@ namespace DCL.McpServer.Tests
         public void EmitReadOnlyAnnotationsWithoutStateChangeHints()
         {
             // Arrange
-            JObject toolsList = new McpToolsRegistry()
-                              .Add(new FakeTool("reader", McpToolAnnotations.ReadOnly()))
-                              .Build();
+            JObject toolsList = Payload(new McpToolsRegistry()
+                                       .Add(new FakeTool("reader", McpToolAnnotations.ReadOnly()))
+                                       .Build());
 
             // Act
             JObject annotations = AnnotationsOf(toolsList, "reader");
@@ -75,9 +75,9 @@ namespace DCL.McpServer.Tests
         public void EmitMutatingAnnotationsWithAllStateChangeHints()
         {
             // Arrange
-            JObject toolsList = new McpToolsRegistry()
-                              .Add(new FakeTool("mutator", McpToolAnnotations.Mutating(destructive: true, idempotent: false)))
-                              .Build();
+            JObject toolsList = Payload(new McpToolsRegistry()
+                                       .Add(new FakeTool("mutator", McpToolAnnotations.Mutating(destructive: true, idempotent: false)))
+                                       .Build());
 
             // Act
             JObject annotations = AnnotationsOf(toolsList, "mutator");
@@ -95,9 +95,9 @@ namespace DCL.McpServer.Tests
             // Arrange
             JObject outputSchema = McpInputSchema.Object().Integer("total").Build();
 
-            JObject toolsList = new McpToolsRegistry()
-                              .Add(new FakeTool("structured", McpToolAnnotations.ReadOnly(), outputSchema: outputSchema))
-                              .Build();
+            JObject toolsList = Payload(new McpToolsRegistry()
+                                       .Add(new FakeTool("structured", McpToolAnnotations.ReadOnly(), outputSchema: outputSchema))
+                                       .Build());
 
             // Act
             JObject entry = EntryOf(toolsList, "structured");
@@ -111,9 +111,9 @@ namespace DCL.McpServer.Tests
         public void OmitOutputSchemaWhenTheToolDeclaresNone()
         {
             // Arrange
-            JObject toolsList = new McpToolsRegistry()
-                              .Add(new FakeTool("plain", McpToolAnnotations.ReadOnly()))
-                              .Build();
+            JObject toolsList = Payload(new McpToolsRegistry()
+                                       .Add(new FakeTool("plain", McpToolAnnotations.ReadOnly()))
+                                       .Build());
 
             // Act & Assert
             Assert.That(EntryOf(toolsList, "plain").ContainsKey("outputSchema"), Is.False);
@@ -155,10 +155,10 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ReflectTheRegisteredSetInTheToolsList()
         {
-            JObject toolsList = new McpToolsRegistry()
-                              .Add(new FakeTool("first", McpToolAnnotations.ReadOnly()))
-                              .Add(new FakeTool("second", McpToolAnnotations.Mutating(destructive: false, idempotent: true)))
-                              .Build();
+            JObject toolsList = Payload(new McpToolsRegistry()
+                                       .Add(new FakeTool("first", McpToolAnnotations.ReadOnly()))
+                                       .Add(new FakeTool("second", McpToolAnnotations.Mutating(destructive: false, idempotent: true)))
+                                       .Build());
 
             var names = new List<string>();
 
@@ -167,6 +167,9 @@ namespace DCL.McpServer.Tests
 
             Assert.That(names, Is.EquivalentTo(new[] { "first", "second" }));
         }
+
+        private static JObject Payload(McpToolsRegistry registry) =>
+            JObject.Parse(registry.ToolsListPayload().ToString());
 
         private static JObject AnnotationsOf(JObject toolsList, string name) =>
             (JObject)EntryOf(toolsList, name)["annotations"]!;

@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -8,16 +9,14 @@ namespace DCL.McpServer.Core
     public class McpToolsRegistry
     {
         private readonly Dictionary<string, IMcpTool> tools = new ();
-        private JObject toolsList = null!;
+        private string toolsListJson = null!;
 
         /// <summary>
-        ///     Lets the built registry stand in directly for its tools/list payload. Returns a detached clone:
-        ///     dispatched requests run concurrently on the thread pool, and attaching the shared instance to a
-        ///     response envelope re-parents it in place, so handing out the same object would race on its parent/
-        ///     sibling pointers during serialization.
+        ///     The tools/list payload, serialized once at Build(). Each dispatch wraps the shared immutable
+        ///     JSON string in a fresh JRaw, so there is no shared JToken tree to clone or re-parent when
+        ///     concurrent responses serialize on the thread pool.
         /// </summary>
-        public static implicit operator JObject(McpToolsRegistry registry) =>
-            (JObject)registry.toolsList.DeepClone();
+        public JRaw ToolsListPayload() => new (toolsListJson);
 
         public McpToolsRegistry Add(IMcpTool tool)
         {
@@ -50,7 +49,7 @@ namespace DCL.McpServer.Core
                 toolsArray.Add(entry);
             }
 
-            toolsList = new JObject { ["tools"] = toolsArray };
+            toolsListJson = new JObject { ["tools"] = toolsArray }.ToString(Formatting.None);
             return this;
         }
 

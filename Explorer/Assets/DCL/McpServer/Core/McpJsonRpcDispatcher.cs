@@ -51,7 +51,7 @@ namespace DCL.McpServer.Core
                    {
                        "initialize" => JsonRpcEnvelope.Result(id, InitializeResult(routable.Value.callParams)),
                        "ping" => JsonRpcEnvelope.Result(id, new JObject()),
-                       "tools/list" => JsonRpcEnvelope.Result(id, tools),
+                       "tools/list" => JsonRpcEnvelope.Result(id, tools.ToolsListPayload()),
                        "tools/call" => await CallToolAsync(id,
                            toolName: routable.Value.callParams?["name"]?.Value<string>(),
                            arguments: routable.Value.callParams?["arguments"] as JObject ?? new JObject(),
