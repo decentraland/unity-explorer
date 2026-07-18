@@ -41,22 +41,21 @@ namespace DCL.McpServer.Core
         /// </summary>
         public async UniTask<string?> DispatchAsync(string requestJson, CancellationToken ct)
         {
-            var routable = ParseRoutableRequest(requestJson, out string? earlyResponse);
-            if (routable == null)
+            if (ParseRoutableRequest(requestJson, out string? earlyResponse) is not { } routable)
                 return earlyResponse;
 
-            JToken id = routable.Value.id;
+            var (id, method, callParams) = routable;
 
-            return routable.Value.method switch
+            return method switch
                    {
-                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult(routable.Value.callParams)),
+                       "initialize" => JsonRpcEnvelope.Result(id, InitializeResult(callParams)),
                        "ping" => JsonRpcEnvelope.Result(id, new JObject()),
                        "tools/list" => JsonRpcEnvelope.Result(id, tools.ToolsListPayload()),
                        "tools/call" => await CallToolAsync(id,
-                           toolName: routable.Value.callParams?["name"]?.Value<string>(),
-                           arguments: routable.Value.callParams?["arguments"] as JObject ?? new JObject(),
+                           toolName: callParams?["name"]?.Value<string>(),
+                           arguments: callParams?["arguments"] as JObject ?? new JObject(),
                            ct),
-                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {routable.Value.method}")
+                       _ => JsonRpcEnvelope.Error(id, METHOD_NOT_FOUND, $"Method not found: {method}")
                    };
         }
 
