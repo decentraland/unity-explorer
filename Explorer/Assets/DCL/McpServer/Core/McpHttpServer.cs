@@ -105,7 +105,7 @@ namespace DCL.McpServer.Core
             {
                 if (!IsAllowed(context.Request.Headers["Origin"]))
                 {
-                    context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.Forbidden, sessionId);
+                    context.Response.WriteEmptyAndClose(HttpStatusCode.Forbidden, sessionId);
                     return;
                 }
 
@@ -116,10 +116,10 @@ namespace DCL.McpServer.Core
                         break;
                     case "DELETE":
                         // Session termination is accepted but stateless: nothing to clean up.
-                        context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.OK, sessionId);
+                        context.Response.WriteEmptyAndClose(HttpStatusCode.OK, sessionId);
                         break;
                     default:
-                        context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.MethodNotAllowed, sessionId);
+                        context.Response.WriteEmptyAndClose(HttpStatusCode.MethodNotAllowed, sessionId);
                         break;
                 }
             }
@@ -138,7 +138,7 @@ namespace DCL.McpServer.Core
         {
             if (context.Request.ContentLength64 > MAX_BODY_BYTES)
             {
-                context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.RequestEntityTooLarge, sessionId);
+                context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
                 return;
             }
 
@@ -153,7 +153,7 @@ namespace DCL.McpServer.Core
 
                 if (charsRead > MAX_BODY_BYTES)
                 {
-                    context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.RequestEntityTooLarge, sessionId);
+                    context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
                     return;
                 }
 
@@ -165,7 +165,7 @@ namespace DCL.McpServer.Core
             if (responseJson == null)
             {
                 // Notifications get 202 Accepted with no body.
-                context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.Accepted, sessionId);
+                context.Response.WriteEmptyAndClose(HttpStatusCode.Accepted, sessionId);
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace DCL.McpServer.Core
         {
             try
             {
-                context.Response.WriteEmptyAndClose(statusCode: (int)HttpStatusCode.InternalServerError, sessionId);
+                context.Response.WriteEmptyAndClose(HttpStatusCode.InternalServerError, sessionId);
             }
             catch (Exception)
             {
@@ -217,9 +217,9 @@ namespace DCL.McpServer.Core
 
     internal static class HttpListenerResponseExtensions
     {
-        public static void WriteEmptyAndClose(this HttpListenerResponse response, int statusCode, string sessionId)
+        public static void WriteEmptyAndClose(this HttpListenerResponse response, HttpStatusCode status, string sessionId)
         {
-            response.StatusCode = statusCode;
+            response.StatusCode = (int)status;
             response.ContentLength64 = 0;
             response.WithMcpHeaders(sessionId)
                     .Close();
