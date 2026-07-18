@@ -25,7 +25,7 @@ namespace DCL.McpServer.Tools
             + "(e.g. /goto x,y, /reload, /help); command output appears in chat and scene logs.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .String("message", "The chat message or /command to send.", required: true)
                           .Build();
 

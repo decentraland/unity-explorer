@@ -55,7 +55,7 @@ namespace DCL.McpServer.Tests
                 annotations ?? McpToolAnnotations.ReadOnly(), (_, _) => throw exception);
 
         private static JObject DefaultSchema() =>
-            McpInputSchema.Object().String("value", "Any value.").Build();
+            McpJsonSchema.Object().String("value", "Any value.").Build();
 
         public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {

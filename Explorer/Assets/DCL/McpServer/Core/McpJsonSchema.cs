@@ -8,34 +8,34 @@ namespace DCL.McpServer.Core
     ///     produces the same { type: object, properties, required } shape a tools/list entry expects. Nested objects,
     ///     integer arrays and nullable fields extend the same style to the richer shapes an outputSchema needs.
     /// </summary>
-    public sealed class McpInputSchema
+    public sealed class McpJsonSchema
     {
         private readonly JObject properties = new ();
         private readonly JArray required = new ();
 
-        private McpInputSchema() { }
+        private McpJsonSchema() { }
 
         /// <summary>Starts a schema describing an object; chain the field methods and finish with <see cref="Build" />.</summary>
-        public static McpInputSchema Object() =>
+        public static McpJsonSchema Object() =>
             new ();
 
-        public McpInputSchema String(string name, string? description = null, string[]? enumValues = null, bool required = false, bool nullable = false) =>
+        public McpJsonSchema String(string name, string? description = null, string[]? enumValues = null, bool required = false, bool nullable = false) =>
             Property(name, "string", description, enumValues, required, nullable);
 
-        public McpInputSchema Number(string name, string? description = null, bool required = false, bool nullable = false) =>
+        public McpJsonSchema Number(string name, string? description = null, bool required = false, bool nullable = false) =>
             Property(name, "number", description, null, required, nullable);
 
-        public McpInputSchema Integer(string name, string? description = null, bool required = false, bool nullable = false) =>
+        public McpJsonSchema Integer(string name, string? description = null, bool required = false, bool nullable = false) =>
             Property(name, "integer", description, null, required, nullable);
 
-        public McpInputSchema Boolean(string name, string? description = null, bool required = false, bool nullable = false) =>
+        public McpJsonSchema Boolean(string name, string? description = null, bool required = false, bool nullable = false) =>
             Property(name, "boolean", description, null, required, nullable);
 
         /// <summary>
         ///     Adds a nested object field described by its own <paramref name="schema" /> builder. A
         ///     <paramref name="nullable" /> field admits null in place of the object (JSON Schema "type": ["object", "null"]).
         /// </summary>
-        public McpInputSchema Object(string name, McpInputSchema schema, string? description = null, bool required = false, bool nullable = false)
+        public McpJsonSchema Object(string name, McpJsonSchema schema, string? description = null, bool required = false, bool nullable = false)
         {
             JObject field = schema.Build();
 
@@ -49,7 +49,7 @@ namespace DCL.McpServer.Core
         }
 
         /// <summary>Adds an array field whose items are all integers.</summary>
-        public McpInputSchema IntegerArray(string name, string? description = null, bool required = false)
+        public McpJsonSchema IntegerArray(string name, string? description = null, bool required = false)
         {
             var field = new JObject
             {
@@ -78,7 +78,7 @@ namespace DCL.McpServer.Core
             return schema;
         }
 
-        private McpInputSchema Property(string name, string type, string? description, string[]? enumValues, bool isRequired, bool nullable)
+        private McpJsonSchema Property(string name, string type, string? description, string[]? enumValues, bool isRequired, bool nullable)
         {
             var field = new JObject { ["type"] = nullable ? new JArray { type, "null" } : (JToken)type };
 
@@ -98,7 +98,7 @@ namespace DCL.McpServer.Core
             return AddField(name, field, isRequired);
         }
 
-        private McpInputSchema AddField(string name, JObject field, bool isRequired)
+        private McpJsonSchema AddField(string name, JObject field, bool isRequired)
         {
             properties[name] = field;
 

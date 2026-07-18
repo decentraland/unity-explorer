@@ -40,7 +40,7 @@ namespace DCL.McpServer.Tools
             + "put while the player moves; restore a player-following view with set_camera_mode third_person.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Number("x", "Camera world position.", required: true)
                           .Number("y", required: true)
                           .Number("z", required: true)

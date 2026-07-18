@@ -35,7 +35,7 @@ namespace DCL.McpServer.Tools
             + "Reports the final scene state; follow up with get_scene_state for details.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("x", "Target parcel X coordinate.", required: true)
                           .Integer("y", "Target parcel Y coordinate.", required: true)
                           .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")

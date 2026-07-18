@@ -36,7 +36,7 @@ namespace DCL.McpServer.Tools
             + "when hot reload didn't trigger, or to reset scene state before a test run.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Number("timeoutSec", "Maximum seconds to wait for the reload. Default 15.")
                           .Build();
 

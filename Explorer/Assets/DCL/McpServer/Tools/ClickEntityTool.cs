@@ -36,7 +36,7 @@ namespace DCL.McpServer.Tools
             + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("entityId", "Target entity id in the current scene world (from list_scene_entities). Omit only when x/y/z are given, then the ray decides the target.")
                           .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
                           .Number("y")

@@ -26,15 +26,15 @@ namespace DCL.McpServer.Utils
             };
 
         /// <summary>Output-schema counterpart of <see cref="ToVector" /> — an { x, y, z } object of numbers.</summary>
-        public static McpInputSchema VectorSchema() =>
-            McpInputSchema.Object()
+        public static McpJsonSchema VectorSchema() =>
+            McpJsonSchema.Object()
                           .Number("x")
                           .Number("y")
                           .Number("z");
 
         /// <summary>Output-schema counterpart of <see cref="ToParcel" /> — an { x, y } object of integers.</summary>
-        public static McpInputSchema ParcelSchema() =>
-            McpInputSchema.Object()
+        public static McpJsonSchema ParcelSchema() =>
+            McpJsonSchema.Object()
                           .Integer("x")
                           .Integer("y");
 

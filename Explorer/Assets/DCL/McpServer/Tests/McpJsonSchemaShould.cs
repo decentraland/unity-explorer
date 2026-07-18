@@ -4,12 +4,12 @@ using NUnit.Framework;
 
 namespace DCL.McpServer.Tests
 {
-    public class McpInputSchemaShould
+    public class McpJsonSchemaShould
     {
         [Test]
         public void EmitTheDeclaredJsonSchemaTypeForEachFieldKind()
         {
-            JObject schema = McpInputSchema.Object()
+            JObject schema = McpJsonSchema.Object()
                                            .Number("ratio")
                                            .Boolean("flag")
                                            .Build();
@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void OmitDescriptionAndEnumWhenNotProvided()
         {
-            JObject schema = McpInputSchema.Object().String("name").Build();
+            JObject schema = McpJsonSchema.Object().String("name").Build();
 
             var field = (JObject)schema["properties"]!["name"]!;
             Assert.That(field.ContainsKey("description"), Is.False);
@@ -32,7 +32,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void CollectEveryRequiredFieldInDeclarationOrder()
         {
-            JObject schema = McpInputSchema.Object()
+            JObject schema = McpJsonSchema.Object()
                                            .String("first", required: true)
                                            .Integer("skipped")
                                            .Boolean("second", required: true)
@@ -44,8 +44,8 @@ namespace DCL.McpServer.Tests
         [Test]
         public void NestAnObjectFieldWithItsOwnProperties()
         {
-            JObject schema = McpInputSchema.Object()
-                                           .Object("camera", McpInputSchema.Object().String("mode"), "The camera.", required: true)
+            JObject schema = McpJsonSchema.Object()
+                                           .Object("camera", McpJsonSchema.Object().String("mode"), "The camera.", required: true)
                                            .Build();
 
             var camera = (JObject)schema["properties"]!["camera"]!;
@@ -58,8 +58,8 @@ namespace DCL.McpServer.Tests
         [Test]
         public void AdmitNullAlongsideAnObjectForANullableNestedField()
         {
-            JObject schema = McpInputSchema.Object()
-                                           .Object("scene", McpInputSchema.Object().String("name"), nullable: true)
+            JObject schema = McpJsonSchema.Object()
+                                           .Object("scene", McpJsonSchema.Object().String("name"), nullable: true)
                                            .Build();
 
             var sceneType = (JArray)schema["properties"]!["scene"]!["type"]!;
@@ -69,7 +69,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void AdmitNullAlongsideTheDeclaredTypeForANullableScalar()
         {
-            JObject schema = McpInputSchema.Object().String("address", nullable: true).Build();
+            JObject schema = McpJsonSchema.Object().String("address", nullable: true).Build();
 
             var addressType = (JArray)schema["properties"]!["address"]!["type"]!;
             Assert.That(addressType.ToObject<string[]>(), Is.EqualTo(new[] { "string", "null" }));
@@ -78,7 +78,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void DescribeAnArrayOfIntegerItems()
         {
-            JObject schema = McpInputSchema.Object().IntegerArray("entityIds").Build();
+            JObject schema = McpJsonSchema.Object().IntegerArray("entityIds").Build();
 
             var field = (JObject)schema["properties"]!["entityIds"]!;
             Assert.That(field["type"]!.Value<string>(), Is.EqualTo("array"));
@@ -88,7 +88,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void ProduceAnEmptyPropertiesObjectForAnArgumentlessTool()
         {
-            JObject schema = McpInputSchema.Object().Build();
+            JObject schema = McpJsonSchema.Object().Build();
 
             Assert.That(schema["type"]!.Value<string>(), Is.EqualTo("object"));
             Assert.That(((JObject)schema["properties"]!).Count, Is.EqualTo(0));

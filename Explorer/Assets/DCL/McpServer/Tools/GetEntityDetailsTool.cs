@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tools
             "Dump all components of one entity in the current scene's ECS world (ids come from list_scene_entities).";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("entityId", "Entity id within the current scene world.", required: true)
                           .Build();
 

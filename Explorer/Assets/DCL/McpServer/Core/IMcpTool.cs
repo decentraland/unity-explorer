@@ -15,7 +15,7 @@ namespace DCL.McpServer.Core
 
         /// <summary>
         ///     JSON Schema of the tool arguments. Must be a JSON Schema object (type=object); build it with
-        ///     <see cref="McpInputSchema" /> so a malformed schema is caught at registration, not on first use.
+        ///     <see cref="McpJsonSchema" /> so a malformed schema is caught at registration, not on first use.
         /// </summary>
         JObject InputSchema { get; }
 
@@ -26,7 +26,7 @@ namespace DCL.McpServer.Core
 
         /// <summary>
         ///     JSON Schema of this tool's structuredContent, surfaced as outputSchema in tools/list. Build it with
-        ///     <see cref="McpInputSchema" />. Null (the default) when the tool returns only unstructured text; tools
+        ///     <see cref="McpJsonSchema" />. Null (the default) when the tool returns only unstructured text; tools
         ///     that emit <see cref="McpToolResult.TextWithStructured" /> override this to describe that payload.
         /// </summary>
         JObject? OutputSchema => null;

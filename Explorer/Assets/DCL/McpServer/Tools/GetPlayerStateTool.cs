@@ -27,10 +27,10 @@ namespace DCL.McpServer.Tools
             "Read the player's current world position, rotation, parcel, velocity and grounded state, the camera position, rotation and mode, "
             + "and the wallet address — use the address to tell Explorer instances apart when several run at once.";
 
-        public JObject InputSchema => McpInputSchema.Object().Build();
+        public JObject InputSchema => McpJsonSchema.Object().Build();
 
         public JObject? OutputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Object("position", JObjectExtensions.VectorSchema())
                           .Object("rotationEuler", JObjectExtensions.VectorSchema())
                           .Object("parcel", JObjectExtensions.ParcelSchema())
@@ -38,7 +38,7 @@ namespace DCL.McpServer.Tools
                           .Boolean("isGrounded")
                           .Boolean("isPlayerStandingOnScene")
                           .String("address", "Wallet address of the logged-in player, or null when no profile is loaded.", nullable: true)
-                          .Object("camera", McpInputSchema.Object()
+                          .Object("camera", McpJsonSchema.Object()
                                                           .Object("position", JObjectExtensions.VectorSchema())
                                                           .Object("rotationEuler", JObjectExtensions.VectorSchema())
                                                           .String("mode")

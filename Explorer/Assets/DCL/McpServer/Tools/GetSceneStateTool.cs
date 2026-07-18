@@ -24,15 +24,15 @@ namespace DCL.McpServer.Tools
             "Read the state of the scene at the player's current parcel: name, base parcel, runtime state (including JavaScript/ECS errors), "
             + "readiness, asset loading progress and the global loading-screen stage. Call this after teleporting or reloading before interacting.";
 
-        public JObject InputSchema => McpInputSchema.Object().Build();
+        public JObject InputSchema => McpJsonSchema.Object().Build();
 
         public JObject? OutputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Object("currentParcel", JObjectExtensions.ParcelSchema())
                           .String("loadingStage")
                           .Boolean("loadingScreenOn")
                           .Boolean("localSceneDevelopment")
-                          .Object("scene", McpInputSchema.Object()
+                          .Object("scene", McpJsonSchema.Object()
                                                          .String("name")
                                                          .Object("baseParcel", JObjectExtensions.ParcelSchema())
                                                          .String("sdkVersion", "SDK version reported by the scene, or null when unknown.", nullable: true)

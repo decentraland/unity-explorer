@@ -33,7 +33,7 @@ namespace DCL.McpServer.Core
                 JObject inputSchema = tool.InputSchema;
 
                 if (inputSchema == null || inputSchema["type"]?.Value<string>() != "object")
-                    throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid input schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpInputSchema.");
+                    throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid input schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpJsonSchema.");
 
                 var entry = new JObject
                 {

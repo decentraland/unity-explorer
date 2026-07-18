@@ -28,7 +28,7 @@ namespace DCL.McpServer.Tools
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Number("x", required: true)
                           .Number("y", required: true)
                           .Number("z", required: true)

@@ -28,7 +28,7 @@ namespace DCL.McpServer.Tools
             + "Any player movement drops free back to third_person.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true)
                           .Build();
 

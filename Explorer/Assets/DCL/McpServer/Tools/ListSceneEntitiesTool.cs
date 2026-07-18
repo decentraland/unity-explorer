@@ -29,12 +29,12 @@ namespace DCL.McpServer.Tools
             "List the ECS entity ids of the scene at the player's current parcel. Feed an id into get_entity_details to inspect its components.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("limit", "Maximum ids to return. Default 200.")
                           .Build();
 
         public JObject? OutputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("total")
                           .Integer("returned")
                           .Boolean("truncated")

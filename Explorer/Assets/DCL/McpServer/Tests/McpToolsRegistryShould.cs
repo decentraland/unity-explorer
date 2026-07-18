@@ -14,7 +14,7 @@ namespace DCL.McpServer.Tests
         public void BuildAnObjectSchemaWithTypedPropertiesAndRequired()
         {
             // Act
-            JObject schema = McpInputSchema.Object()
+            JObject schema = McpJsonSchema.Object()
                                            .Integer("count", "How many.")
                                            .String("mode", "Pick one.", enumValues: new[] { "a", "b" }, required: true)
                                            .Build();
@@ -35,7 +35,7 @@ namespace DCL.McpServer.Tests
         public void OmitRequiredWhenNoFieldIsRequired()
         {
             // Act
-            JObject schema = McpInputSchema.Object().Boolean("flag").Build();
+            JObject schema = McpJsonSchema.Object().Boolean("flag").Build();
 
             // Assert
             Assert.That(schema.ContainsKey("required"), Is.False);
@@ -93,7 +93,7 @@ namespace DCL.McpServer.Tests
         public void IncludeOutputSchemaWhenTheToolDeclaresOne()
         {
             // Arrange
-            JObject outputSchema = McpInputSchema.Object().Integer("total").Build();
+            JObject outputSchema = McpJsonSchema.Object().Integer("total").Build();
 
             JObject toolsList = Payload(new McpToolsRegistry()
                                        .Add(new FakeTool("structured", McpToolAnnotations.ReadOnly(), outputSchema: outputSchema))
@@ -200,7 +200,7 @@ namespace DCL.McpServer.Tests
             {
                 Name = name;
                 Annotations = annotations;
-                InputSchema = inputSchema ?? McpInputSchema.Object().Build();
+                InputSchema = inputSchema ?? McpJsonSchema.Object().Build();
                 OutputSchema = outputSchema;
             }
 

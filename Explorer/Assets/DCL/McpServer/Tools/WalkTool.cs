@@ -34,7 +34,7 @@ namespace DCL.McpServer.Tools
             + "(collisions apply). directionY is forward, directionX is strafe right. Returns the start and end positions.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Number("directionX", "Strafe axis: 1 right, -1 left.", required: true)
                           .Number("directionY", "Forward axis: 1 forward, -1 backward.", required: true)
                           .Number("seconds", "How long to hold the movement. Default 1, max 30.")

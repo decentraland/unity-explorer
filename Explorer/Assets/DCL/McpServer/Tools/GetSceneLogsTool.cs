@@ -23,7 +23,7 @@ namespace DCL.McpServer.Tools
             + "pass the last seen sequence as sinceSeq to poll incrementally.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("limit", "Maximum entries to return (newest win). Default 100.")
                           .String("severity", "Filter by severity. Default all.", enumValues: new[] { "all", "error" })
                           .Integer("sinceSeq", "Only return entries with a sequence number greater than this.")

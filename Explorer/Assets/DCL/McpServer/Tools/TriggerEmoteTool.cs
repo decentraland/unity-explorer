@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tools
             "Play an avatar emote by URN (e.g. a base emote like 'wave', 'dance', 'clap'), or stop the current one with stop: true.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .String("urn", "Emote URN or base emote id (wave, dance, clap...).")
                           .Boolean("loop", "Loop the emote until stopped. Default false.")
                           .Boolean("stop", "Stop the currently playing emote instead of triggering one.")

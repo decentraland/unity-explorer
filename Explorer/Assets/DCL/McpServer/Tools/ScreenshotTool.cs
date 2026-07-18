@@ -47,7 +47,7 @@ namespace DCL.McpServer.Tools
             + "Use worldOnly to exclude all UI overlays. Returns a downscaled image plus a caption with the capture context.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Integer("maxWidth", "Maximum output width in pixels (aspect ratio preserved). Default 1280.")
                           .String("quality", "Output encoding. Default jpg.", enumValues: new[] { "jpg", "png" })
                           .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.")

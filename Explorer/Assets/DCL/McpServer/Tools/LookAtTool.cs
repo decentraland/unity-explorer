@@ -24,7 +24,7 @@ namespace DCL.McpServer.Tools
             "Rotate the camera to look at a world-space point (x,y,z in meters). Useful to center something on screen before a screenshot.";
 
         public JObject InputSchema =>
-            McpInputSchema.Object()
+            McpJsonSchema.Object()
                           .Number("x", required: true)
                           .Number("y", required: true)
                           .Number("z", required: true)
