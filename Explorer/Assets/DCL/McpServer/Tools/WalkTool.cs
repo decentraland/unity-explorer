@@ -5,7 +5,6 @@ using DCL.CharacterMotion.Components;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -115,7 +114,7 @@ namespace DCL.McpServer.Tools
                 ["parcel"] = endPosition.ToParcel().ToParcel(),
             };
 
-            return McpToolResult.Text(result.ToString(Formatting.Indented));
+            return McpToolResult.Json(result);
         }
     }
 }

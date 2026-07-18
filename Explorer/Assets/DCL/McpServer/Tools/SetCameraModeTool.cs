@@ -5,7 +5,6 @@ using DCL.InWorldCamera;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using ECS.Abstract;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 
@@ -71,7 +70,7 @@ namespace DCL.McpServer.Tools
                 ["previousMode"] = previousMode.ToString(),
             };
 
-            return McpToolResult.Text(result.ToString(Formatting.Indented));
+            return McpToolResult.Json(result);
         }
 
         /// <summary>

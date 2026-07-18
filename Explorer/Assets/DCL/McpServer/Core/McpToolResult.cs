@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 
@@ -23,10 +24,24 @@ namespace DCL.McpServer.Core
             });
 
         /// <summary>
-        ///     A result that carries both a machine-readable <paramref name="structured" /> payload (surfaced as
-        ///     structuredContent, validated against the tool's outputSchema) and a <paramref name="text" /> item that
-        ///     mirrors the same data — the spec requires the text duplicate so clients without structured support still
-        ///     read the result. Callers pass the structured JObject and its Formatting.Indented serialization as text.
+        ///     A text result whose body is <paramref name="payload" /> rendered as indented JSON. Centralizes the
+        ///     Formatting.Indented serialization so tools never render JSON differently or forget the formatting.
+        /// </summary>
+        public static McpToolResult Json(JObject payload) =>
+            Text(payload.ToString(Formatting.Indented));
+
+        /// <summary>
+        ///     A result that surfaces <paramref name="structured" /> both as structuredContent (validated against the
+        ///     tool's outputSchema) and as its indented-JSON text duplicate — the spec requires the text mirror so
+        ///     clients without structured support still read the result. This is the common path; it serializes the
+        ///     mirror itself so the two copies cannot drift.
+        /// </summary>
+        public static McpToolResult JsonWithStructured(JObject structured) =>
+            TextWithStructured(structured.ToString(Formatting.Indented), structured);
+
+        /// <summary>
+        ///     Like <see cref="JsonWithStructured" /> but with an explicit <paramref name="text" /> mirror, for the rare
+        ///     case where the human-readable text is deliberately not the raw serialization of <paramref name="structured" />.
         /// </summary>
         public static McpToolResult TextWithStructured(string text, JObject structured) =>
             new (new JObject

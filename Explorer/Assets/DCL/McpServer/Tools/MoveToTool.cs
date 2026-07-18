@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -81,7 +80,7 @@ namespace DCL.McpServer.Tools
                 ["parcel"] = finalPosition.ToParcel().ToParcel(),
             };
 
-            return McpToolResult.Text(result.ToString(Formatting.Indented));
+            return McpToolResult.Json(result);
         }
     }
 }

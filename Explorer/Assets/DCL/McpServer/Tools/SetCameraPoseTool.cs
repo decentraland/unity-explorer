@@ -6,7 +6,6 @@ using DCL.CharacterCamera.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using ECS.Abstract;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using UnityEngine;
@@ -136,7 +135,7 @@ namespace DCL.McpServer.Tools
                 ["settled"] = settled,
             };
 
-            return McpToolResult.Text(result.ToString(Formatting.Indented));
+            return McpToolResult.Json(result);
         }
     }
 }

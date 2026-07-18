@@ -7,7 +7,6 @@ using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
 using DCL.Profiles;
 using ECS.SceneLifeCycle.CurrentScene;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using UnityEngine;
@@ -86,7 +85,7 @@ namespace DCL.McpServer.Tools
                 },
             };
 
-            return McpToolResult.TextWithStructured(state.ToString(Formatting.Indented), state);
+            return McpToolResult.JsonWithStructured(state);
         }
     }
 }

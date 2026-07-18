@@ -5,7 +5,6 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using UnityEngine;
@@ -60,7 +59,7 @@ namespace DCL.McpServer.Tools
                 ["cameraRotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
             };
 
-            return McpToolResult.Text(result.ToString(Formatting.Indented));
+            return McpToolResult.Json(result);
         }
     }
 }

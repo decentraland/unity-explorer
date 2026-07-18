@@ -4,7 +4,6 @@ using DCL.ECSComponents;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -158,7 +157,7 @@ namespace DCL.McpServer.Tools
             if (result.UpRayMissed)
                 json["upRayMissed"] = true;
 
-            return McpToolResult.Text(json.ToString(Formatting.Indented));
+            return McpToolResult.Json(json);
         }
     }
 }
