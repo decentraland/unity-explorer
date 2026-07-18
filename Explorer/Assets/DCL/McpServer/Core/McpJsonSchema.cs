@@ -40,7 +40,7 @@ namespace DCL.McpServer.Core
             JObject field = schema.Build();
 
             if (nullable)
-                field["type"] = new JArray { "object", "null" };
+                field["type"] = TypeToken("object", true);
 
             if (description != null)
                 field["description"] = description;
@@ -80,7 +80,7 @@ namespace DCL.McpServer.Core
 
         private McpJsonSchema Property(string name, string type, string? description, string[]? enumValues, bool isRequired, bool nullable)
         {
-            var field = new JObject { ["type"] = nullable ? new JArray { type, "null" } : (JToken)type };
+            var field = new JObject { ["type"] = TypeToken(type, nullable) };
 
             if (description != null)
                 field["description"] = description;
@@ -97,6 +97,9 @@ namespace DCL.McpServer.Core
 
             return AddField(name, field, isRequired);
         }
+
+        private static JToken TypeToken(string type, bool nullable) =>
+            nullable ? new JArray { type, "null" } : type;
 
         private McpJsonSchema AddField(string name, JObject field, bool isRequired)
         {
