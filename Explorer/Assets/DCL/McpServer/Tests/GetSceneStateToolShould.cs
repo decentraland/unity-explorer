@@ -90,7 +90,7 @@ namespace DCL.McpServer.Tests
             scene.IsSceneReady().Returns(true);
 
             scenesCache.CurrentScene.Returns(new ReactiveProperty<ISceneFacade?>(scene));
-            currentSceneInfo.SceneStatus.Returns(new ReactiveProperty<RunningStatus?>(null));
+            currentSceneInfo.SceneStatus.Returns(new ReactiveProperty<ICurrentSceneInfo.RunningStatus?>(null));
 
             // Act
             var structured = (JObject)Execute().Payload["structuredContent"]!;
