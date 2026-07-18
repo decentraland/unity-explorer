@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.RealmNavigation;
@@ -11,6 +12,7 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.McpServer.Tests
 {
@@ -69,6 +71,32 @@ namespace DCL.McpServer.Tests
 
             var sceneType = (JArray)schema["properties"]!["scene"]!["type"]!;
             Assert.That(sceneType.ToObject<string[]>(), Is.EqualTo(new[] { "object", "null" }));
+        }
+
+        [Test]
+        public void KeepTheOutputSchemaInSyncWithTheStructuredPayload()
+        {
+            // Arrange — a populated scene so the nested "scene" object is covered, not just the top level.
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Running));
+
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+
+            ISceneFacade scene = Substitute.For<ISceneFacade>();
+            scene.Info.Returns(new SceneShortInfo(new Vector2Int(1, 2), "Test scene", "7"));
+            scene.SceneStateProvider.Returns(sceneStateProvider);
+            scene.SceneData.Returns(sceneData);
+            scene.IsSceneReady().Returns(true);
+
+            scenesCache.CurrentScene.Returns(new ReactiveProperty<ISceneFacade?>(scene));
+            currentSceneInfo.SceneStatus.Returns(new ReactiveProperty<RunningStatus?>(null));
+
+            // Act
+            var structured = (JObject)Execute().Payload["structuredContent"]!;
+
+            // Assert
+            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
         }
 
         private McpToolResult Execute() =>

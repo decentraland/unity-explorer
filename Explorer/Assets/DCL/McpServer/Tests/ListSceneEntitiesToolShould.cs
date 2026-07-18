@@ -75,6 +75,19 @@ namespace DCL.McpServer.Tests
             Assert.That(((JArray)structured["entityIds"]!).ToObject<int[]>(), Is.EqualTo(new[] { 0, 1, 2 }));
         }
 
+        [Test]
+        public void KeepTheOutputSchemaInSyncWithTheStructuredPayload()
+        {
+            // Arrange
+            worldInfo.EntityIds().Returns(Ids(3));
+
+            // Act
+            var structured = (JObject)Execute(limit: 200).Payload["structuredContent"]!;
+
+            // Assert
+            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+        }
+
         private McpToolResult Execute(int limit) =>
             tool.ExecuteAsync(new JObject { ["limit"] = limit }, CancellationToken.None).GetAwaiter().GetResult();
 
