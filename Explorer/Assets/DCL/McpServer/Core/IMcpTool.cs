@@ -32,9 +32,9 @@ namespace DCL.McpServer.Core
         JObject? OutputSchema => null;
 
         /// <summary>
-        ///     Invoked from a thread-pool thread; implementations switch to the main thread themselves
-        ///     before touching ECS or Unity state. Expected failures are reported through
-        ///     <see cref="McpToolResult.Error" />, not exceptions.
+        ///     Invoked on the main thread, so implementations may touch ECS and Unity state directly. Offload
+        ///     heavy CPU work to the thread pool yourself and hop back before touching that state again. Expected
+        ///     failures are reported through <see cref="McpToolResult.Error" />, not exceptions.
         /// </summary>
         UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct);
     }

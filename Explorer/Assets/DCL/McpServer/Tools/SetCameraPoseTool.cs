@@ -81,8 +81,6 @@ namespace DCL.McpServer.Tools
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
             var targetPosition = new Vector3(x, y, z);
 
-            await UniTask.SwitchToMainThread(ct);
-
             SingleInstanceEntity cameraEntity = world.CacheCamera();
 
             if (cameraEntity.GetCameraComponent(world).Mode != CameraMode.Free)

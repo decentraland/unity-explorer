@@ -33,29 +33,27 @@ namespace DCL.McpServer.Tools
             this.worldInfoHub = worldInfoHub;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("entityId", out int entityId))
-                return McpToolResult.Error("entityId is required.");
-
-            await UniTask.SwitchToMainThread(ct);
+                return UniTask.FromResult(McpToolResult.Error("entityId is required."));
 
             IWorldInfo? worldInfo = worldInfoHub.WorldInfo(CURRENT_SCENE);
 
             if (worldInfo == null)
-                return McpToolResult.Error("No scene world found at the current parcel.");
+                return UniTask.FromResult(McpToolResult.Error("No scene world found at the current parcel."));
 
             string dump = worldInfo.EntityComponentsInfo(entityId);
 
             if (dump.Length <= MAX_CHARS)
-                return McpToolResult.Text(dump);
+                return UniTask.FromResult(McpToolResult.Text(dump));
 
             var output = new StringBuilder(MAX_CHARS + 64);
             output.Append(dump, 0, MAX_CHARS);
             output.AppendLine();
             output.Append($"... output truncated at {MAX_CHARS}/{dump.Length} chars");
 
-            return McpToolResult.Text(output.ToString());
+            return UniTask.FromResult(McpToolResult.Text(output.ToString()));
         }
     }
 }

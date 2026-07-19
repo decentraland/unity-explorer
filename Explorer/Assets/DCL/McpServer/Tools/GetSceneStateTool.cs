@@ -53,10 +53,8 @@ namespace DCL.McpServer.Tools
             this.localSceneDevelopment = localSceneDevelopment;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            await UniTask.SwitchToMainThread(ct);
-
             Vector2Int currentParcel = scenesCache.CurrentParcel.Value;
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
@@ -80,7 +78,7 @@ namespace DCL.McpServer.Tools
                     },
             };
 
-            return McpToolResult.JsonWithStructured(state);
+            return UniTask.FromResult(McpToolResult.JsonWithStructured(state));
         }
     }
 }

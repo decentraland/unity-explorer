@@ -45,8 +45,6 @@ namespace DCL.McpServer.Tools
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");
 
-            await UniTask.SwitchToMainThread(ct);
-
             Vector3 playerPosition = world.Get<CharacterTransform>(playerEntity).Position;
             globalWorldActions.RotateCamera(new Vector3(x, y, z), playerPosition);
 

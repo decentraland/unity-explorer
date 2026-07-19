@@ -35,26 +35,24 @@ namespace DCL.McpServer.Tools
             this.globalWorldActions = globalWorldActions;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             bool stop = arguments.GetBool("stop", false);
             string urn = arguments.GetString("urn", string.Empty);
 
             if (!stop && string.IsNullOrEmpty(urn))
-                return McpToolResult.Error("urn is required (or pass stop: true).");
-
-            await UniTask.SwitchToMainThread(ct);
+                return UniTask.FromResult(McpToolResult.Error("urn is required (or pass stop: true)."));
 
             if (stop)
             {
                 globalWorldActions.StopEmote();
-                return McpToolResult.Text("Emote stopped.");
+                return UniTask.FromResult(McpToolResult.Text("Emote stopped."));
             }
 
             bool loop = arguments.GetBool("loop", false);
             globalWorldActions.TriggerEmote(urn, loop, AvatarEmoteMask.AemFullBody);
 
-            return McpToolResult.Text($"Emote '{urn}' triggered{(loop ? " (looping)" : string.Empty)}.");
+            return UniTask.FromResult(McpToolResult.Text($"Emote '{urn}' triggered{(loop ? " (looping)" : string.Empty)}."));
         }
     }
 }

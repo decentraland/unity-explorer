@@ -55,8 +55,6 @@ namespace DCL.McpServer.Tools
         {
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            await UniTask.SwitchToMainThread(ct);
-
             if (scenesCache.CurrentScene.Value == null)
                 return McpToolResult.Error("There is no scene at the current parcel to reload.");
 

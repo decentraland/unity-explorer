@@ -48,16 +48,14 @@ namespace DCL.McpServer.Tools
             this.worldInfoHub = worldInfoHub;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
-
-            await UniTask.SwitchToMainThread(ct);
 
             IWorldInfo? worldInfo = worldInfoHub.WorldInfo(CURRENT_SCENE);
 
             if (worldInfo == null)
-                return McpToolResult.Error("No scene world found at the current parcel.");
+                return UniTask.FromResult(McpToolResult.Error("No scene world found at the current parcel."));
 
             IReadOnlyList<int> entityIds = worldInfo.EntityIds();
             int returned = Mathf.Min(limit, entityIds.Count);
@@ -88,7 +86,7 @@ namespace DCL.McpServer.Tools
                 ["entityIds"] = ids,
             };
 
-            return McpToolResult.TextWithStructured(output.ToString(), structured);
+            return UniTask.FromResult(McpToolResult.TextWithStructured(output.ToString(), structured));
         }
     }
 }

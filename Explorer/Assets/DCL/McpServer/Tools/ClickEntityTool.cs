@@ -87,8 +87,6 @@ namespace DCL.McpServer.Tools
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            await UniTask.SwitchToMainThread(ct);
-
             // A newer click preempts a pending one; release its awaiter before replacing the intent.
             if (world.TryGet(playerEntity, out McpPointerClickIntent existingIntent))
                 existingIntent.Completion?.TrySetResult(new McpPointerClickResult

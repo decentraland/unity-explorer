@@ -59,8 +59,6 @@ namespace DCL.McpServer.Tools
             bool waitForReady = arguments.GetBool("waitForReady", true);
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            await UniTask.SwitchToMainThread(ct);
-
             chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {x},{y}", ChatMessageOrigin.RESTRICTED_ACTION_API);
 
             if (!waitForReady)

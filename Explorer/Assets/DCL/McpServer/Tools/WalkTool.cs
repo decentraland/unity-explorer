@@ -69,8 +69,6 @@ namespace DCL.McpServer.Tools
                                     _ => MovementKind.JOG,
                                 };
 
-            await UniTask.SwitchToMainThread(ct);
-
             // A newer walk preempts a pending one; release its awaiter before replacing the override.
             if (world.TryGet(playerEntity, out McpMovementOverride existingOverride))
                 existingOverride.Completion?.TrySetResult();

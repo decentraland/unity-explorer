@@ -25,7 +25,7 @@ namespace DCL.McpServer.Core
 
         // A hung tool (e.g. an asset promise that never resolves) would otherwise hold its HttpListenerContext
         // open until the server stops. Cap each call so one stuck tool can't tie up the agent's connection.
-        private static readonly TimeSpan TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(180);
+        private static readonly TimeSpan TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(30);
 
         private readonly McpToolsRegistry tools;
         private readonly string serverVersion;
@@ -137,6 +137,9 @@ namespace DCL.McpServer.Core
 
             try
             {
+                // Tools run on the main thread: the transport accepts and reads requests on a thread-pool thread,
+                // and the single hop here lets every tool touch ECS/Unity state without repeating the switch.
+                await UniTask.SwitchToMainThread(timeout.Token);
                 McpToolResult result = await tool.ExecuteAsync(arguments, timeout.Token);
                 return JsonRpcEnvelope.Result(id, result.Payload);
             }

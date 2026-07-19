@@ -89,8 +89,6 @@ namespace DCL.McpServer.Tools
 
             try
             {
-                await UniTask.SwitchToMainThread(ct);
-
                 int sourceWidth;
                 int sourceHeight;
 

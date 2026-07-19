@@ -53,8 +53,6 @@ namespace DCL.McpServer.Tools
                 default: return McpToolResult.Error("mode must be one of: first_person, third_person, drone, free.");
             }
 
-            await UniTask.SwitchToMainThread(ct);
-
             string? blockReason = TrySwitchMode(world, targetMode, out CameraMode previousMode);
 
             if (blockReason != null)

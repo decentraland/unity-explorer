@@ -60,8 +60,6 @@ namespace DCL.McpServer.Tools
             float durationSec = Mathf.Clamp(arguments.GetFloat("durationSec", 0f), 0f, MAX_DURATION_SEC);
             var targetPosition = new Vector3(x, y, z);
 
-            await UniTask.SwitchToMainThread(ct);
-
             try
             {
                 await globalWorldActions.MoveAndRotatePlayerAsync(targetPosition, lookAtTarget, lookAtTarget, durationSec, ct)

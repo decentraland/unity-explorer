@@ -56,10 +56,8 @@ namespace DCL.McpServer.Tools
             this.currentSceneInfo = currentSceneInfo;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
-            await UniTask.SwitchToMainThread(ct);
-
             CharacterTransform characterTransform = world.Get<CharacterTransform>(playerEntity);
             Vector3 position = characterTransform.Position;
 
@@ -85,7 +83,7 @@ namespace DCL.McpServer.Tools
                 },
             };
 
-            return McpToolResult.JsonWithStructured(state);
+            return UniTask.FromResult(McpToolResult.JsonWithStructured(state));
         }
     }
 }

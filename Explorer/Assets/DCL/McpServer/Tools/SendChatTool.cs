@@ -36,21 +36,19 @@ namespace DCL.McpServer.Tools
             this.chatMessagesBus = chatMessagesBus;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             string message = arguments.GetString("message", string.Empty);
 
             if (string.IsNullOrWhiteSpace(message))
-                return McpToolResult.Error("message is required.");
+                return UniTask.FromResult(McpToolResult.Error("message is required."));
 
             if (message.Length > MAX_MESSAGE_LENGTH)
-                return McpToolResult.Error($"message exceeds the {MAX_MESSAGE_LENGTH} character limit.");
-
-            await UniTask.SwitchToMainThread(ct);
+                return UniTask.FromResult(McpToolResult.Error($"message exceeds the {MAX_MESSAGE_LENGTH} character limit."));
 
             chatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, message, ChatMessageOrigin.CHAT);
 
-            return McpToolResult.Text($"Sent to Nearby: {message}");
+            return UniTask.FromResult(McpToolResult.Text($"Sent to Nearby: {message}"));
         }
     }
 }
