@@ -54,6 +54,8 @@ namespace DCL.McpServer.Systems
 
         private readonly SceneLogBuffer logBuffer;
         private readonly DebugMenuConsoleLogEntryBus logEntryBus;
+        private readonly McpNotificationChannel notificationChannel;
+        private readonly McpLogNotifier logNotifier;
 
         private McpHttpServer? server;
         private CancellationTokenSource? serverCts;
@@ -99,13 +101,20 @@ namespace DCL.McpServer.Systems
             logEntryBus = new DebugMenuConsoleLogEntryBus();
             logEntryBus.MessageAdded += logBuffer.Append;
             diagnosticsContainer.AddDebugConsoleHandler(logEntryBus);
+
+            // Live push side: the same scene log bus plus the whole Unity/editor/build log, streamed over
+            // SSE to subscribers of McpHttpServer's GET endpoint. get_scene_logs stays as the pull side.
+            notificationChannel = new McpNotificationChannel();
+            logNotifier = new McpLogNotifier(notificationChannel, logEntryBus);
         }
 
         public void Dispose()
         {
             logEntryBus.MessageAdded -= logBuffer.Append;
+            logNotifier.Dispose();
             screenshotTool?.Dispose();
             server?.Dispose();
+            notificationChannel.Dispose();
             serverCts.SafeCancelAndDispose();
         }
 
@@ -135,7 +144,7 @@ namespace DCL.McpServer.Systems
                           .Add(new ClickEntityTool(globalWorld, arguments.PlayerEntity))
                           .Build();
 
-            server = new McpHttpServer(toolsRegistry, port);
+            server = new McpHttpServer(toolsRegistry, port, notificationChannel);
             serverCts = serverCts.SafeRestart();
 
             bool started = server.TryStart();

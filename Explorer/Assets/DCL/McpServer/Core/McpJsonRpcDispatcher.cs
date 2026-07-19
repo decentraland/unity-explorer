@@ -117,7 +117,22 @@ namespace DCL.McpServer.Core
             return new JObject
             {
                 ["protocolVersion"] = PROTOCOL_VERSION,
-                ["capabilities"] = new JObject { ["tools"] = new JObject() },
+                ["capabilities"] = new JObject
+                {
+                    ["tools"] = new JObject(),
+
+                    // Non-standard: the SSE GET endpoint streams notifications/message for a chosen log
+                    // source. Advertised under experimental so generic clients ignore it and DCL tooling
+                    // can discover it. See McpHttpServer.HandleGetAsync and docs/mcp-automation.md.
+                    ["experimental"] = new JObject
+                    {
+                        ["dcl/logStreams"] = new JObject
+                        {
+                            ["transport"] = "sse",
+                            ["streams"] = new JArray("scene", "client"),
+                        },
+                    },
+                },
                 ["serverInfo"] = new JObject
                 {
                     ["name"] = SERVER_NAME,
