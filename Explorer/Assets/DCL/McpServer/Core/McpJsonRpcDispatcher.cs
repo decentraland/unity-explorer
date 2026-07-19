@@ -143,12 +143,12 @@ namespace DCL.McpServer.Core
                 McpToolResult result = await tool.ExecuteAsync(arguments, timeout.Token);
                 return JsonRpcEnvelope.Result(id, result.Payload);
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
                 return JsonRpcEnvelope.Result(id, McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s").Payload);
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.MCP);
