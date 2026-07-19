@@ -23,6 +23,10 @@ namespace DCL.McpServer.Core
         private const int METHOD_NOT_FOUND = -32601;
         private const int INVALID_PARAMS = -32602;
 
+        // A hung tool (e.g. an asset promise that never resolves) would otherwise hold its HttpListenerContext
+        // open until the server stops. Cap each call so one stuck tool can't tie up the agent's connection.
+        private static readonly TimeSpan TOOL_CALL_TIMEOUT = TimeSpan.FromSeconds(180);
+
         private readonly McpToolsRegistry tools;
         private readonly string serverVersion;
 
@@ -128,12 +132,20 @@ namespace DCL.McpServer.Core
             if (!tools.TryGet(toolName, out IMcpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TOOL_CALL_TIMEOUT);
+
             try
             {
-                McpToolResult result = await tool.ExecuteAsync(arguments, ct);
+                McpToolResult result = await tool.ExecuteAsync(arguments, timeout.Token);
                 return JsonRpcEnvelope.Result(id, result.Payload);
             }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+            catch (OperationCanceledException)
+            {
+                ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
+                return JsonRpcEnvelope.Result(id, McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s").Payload);
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.MCP);
