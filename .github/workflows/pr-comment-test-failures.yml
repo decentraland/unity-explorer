@@ -73,7 +73,10 @@ jobs:
               file="failed-tests/$mode/failed-tests-$mode.json"
               [ -f "$file" ] || continue
               [ "$(jq -r '.hasResults' "$file")" = "true" ] && any_results=true
-              passed=$((passed + $(jq -r '.passed' "$file")))
+              # The artifact comes from the untrusted pull_request job - never let a
+              # non-numeric value reach the arithmetic context.
+              p=$(jq -r '.passed' "$file"); [[ "$p" =~ ^[0-9]+$ ]] || p=0
+              passed=$((passed + p))
               failed=$((failed + $(jq -r '.failed | length' "$file")))
             done
 
