@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System;
 
 namespace DCL.McpServer.Core
 {
@@ -21,6 +22,14 @@ namespace DCL.McpServer.Core
 
         public McpJsonSchema String(string name, string? description = null, string[]? enumValues = null, bool isRequired = false, bool nullable = false) =>
             Property(name, "string", description, enumValues, isRequired, nullable);
+
+        /// <summary>
+        ///     Adds a string field constrained to the wire names of <typeparamref name="T" />'s members (see
+        ///     <see cref="McpWireEnum{T}" />), so the schema and the parsing of the argument share the enum as
+        ///     the single source of truth. <paramref name="allowed" /> narrows the choices to a subset of members.
+        /// </summary>
+        public McpJsonSchema Enum<T>(string name, string? description = null, T[]? allowed = null, bool isRequired = false) where T : struct, Enum =>
+            Property(name, "string", description, allowed == null ? McpWireEnum<T>.WIRE_NAMES : McpWireEnum<T>.WireNamesOf(allowed), isRequired, false);
 
         public McpJsonSchema Number(string name, string? description = null, bool isRequired = false, bool nullable = false) =>
             Property(name, "number", description, null, isRequired, nullable);

@@ -53,14 +53,16 @@ curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
 
 ## Tool catalog
 
+The tables below are a human-readable overview. The authoritative argument contract — exact types, allowed values, defaults — is what the server itself reports via `tools/list`; agents get it fresh at every handshake and should rely on it, not on this page.
+
 ### Seeing
 
 | Tool | Arguments | Returns |
 |---|---|---|
-| `screenshot` | `maxWidth?` (default 1280), `quality?` (`jpg`\|`png`), `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
+| `screenshot` | `maxWidth?` (default 1280), `quality?`, `worldOnly?` (exclude UI; post-processing still applied) | Downscaled image of the current view (UI included by default) + caption |
 | `get_player_state` | — | Player position/rotation/parcel/velocity/grounded + camera position/rotation/mode + wallet address |
 | `get_scene_state` | — | Current parcel, scene name/state (incl. `JavaScriptError`/`EcsError`), readiness, loading stage |
-| `get_scene_logs` | `limit?`, `severity?` (`all`\|`error`), `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
+| `get_scene_logs` | `limit?`, `severity?`, `sinceSeq?` | Scene JS console output with monotonic sequence numbers for incremental polling |
 | `list_scene_entities` | `limit?` | Entity ids of the current scene's ECS world |
 | `get_entity_details` | `entityId` | All components of one scene entity |
 
@@ -72,12 +74,12 @@ curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
 | `move_to` | `x`, `y`, `z`, `lookAt{X,Y,Z}?`, `durationSec?` | Instant or smooth move to a world position (16 m per parcel) |
 | `walk` | `directionX`, `directionY`, `seconds?`, `kind?`, `jump?` | Holds camera-relative movement through the real locomotion pipeline (collisions apply) |
 | `look_at` | `x`, `y`, `z` | Rotates the camera to a world point (aim before a screenshot) |
-| `set_camera_mode` | `mode` (`first_person`\|`third_person`\|`drone`\|`free`) | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
+| `set_camera_mode` | `mode` | Switches the camera mode like the user hotkey; refuses (with the reason) while a scene locks the camera — `CameraModeArea`, scene virtual camera, or photo camera. `get_player_state` → `camera.modeChangeAllowed` reports the lock state in advance |
 | `set_camera_pose` | `x`,`y`,`z`, `lookAt{X,Y,Z}?`, `fov?`, `timeoutSec?` | Places the free camera at an absolute world position, optionally aiming it and setting FOV. Auto-enters free mode (same locks as `set_camera_mode`), waits for the blend to settle (`settled` in the result), and returns the actual pose. The camera stays put while the player moves; restore with `set_camera_mode` |
 | `send_chat` | `message` | Sends to Nearby chat; `/commands` run through the chat command pipeline |
 | `reload_scene` | `timeoutSec?` | Reloads the current scene (motion + skybox frozen during reload) |
 | `trigger_emote` | `urn` or `stop: true`, `loop?` | Plays or stops an avatar emote |
-| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?` (`pointer`\|`primary`\|`secondary`), `eventType?` (`click`\|`down`\|`up`), `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
+| `click_entity` | `entityId` and/or `x`,`y`,`z` aim point, `button?`, `eventType?`, `timeoutSec?` | Presses a pointer button on a scene entity exactly like a real click: a camera-origin raycast validates the aim (occluders and the entity's `maxDistance` apply), then the entity's pointer-event intent is filled so the scene receives an identical `PBPointerEventsResult`. `click` sends down + up on consecutive scene ticks. Returns `hit`, hover text, hit point/distance, or the blocking entity |
 
 ## Structured output
 

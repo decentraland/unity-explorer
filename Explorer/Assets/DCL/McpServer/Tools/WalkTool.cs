@@ -24,6 +24,8 @@ namespace DCL.McpServer.Tools
         private const float MAX_SECONDS = 30f;
         private const float COMPLETION_GRACE_SEC = 5f;
 
+        private static readonly MovementKind[] ALLOWED_KINDS = { MovementKind.WALK, MovementKind.JOG, MovementKind.RUN };
+
         private readonly World world;
         private readonly Entity playerEntity;
 
@@ -37,7 +39,7 @@ namespace DCL.McpServer.Tools
             schema.Number("directionX", "Strafe axis: 1 right, -1 left.", isRequired: true)
                   .Number("directionY", "Forward axis: 1 forward, -1 backward.", isRequired: true)
                   .Number("seconds", "How long to hold the movement. Default 1, max 30.")
-                  .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
+                  .Enum("kind", "Movement speed. Default jog.", ALLOWED_KINDS)
                   .Boolean("jump", "Jump once at the start of the movement. Default false.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
@@ -60,12 +62,8 @@ namespace DCL.McpServer.Tools
             float seconds = Mathf.Clamp(arguments.GetFloat("seconds", 1f), MIN_SECONDS, MAX_SECONDS);
             bool jump = arguments.GetBool("jump", false);
 
-            MovementKind kind = arguments.GetString("kind", "jog") switch
-                                {
-                                    "walk" => MovementKind.WALK,
-                                    "run" => MovementKind.RUN,
-                                    _ => MovementKind.JOG,
-                                };
+            if (!arguments.TryGetEnum("kind", MovementKind.JOG, out MovementKind kind, ALLOWED_KINDS))
+                return McpToolResult.Error("kind must be one of: walk, jog, run.");
 
             // A newer walk preempts a pending one; release its awaiter before replacing the override.
             if (world.TryGet(playerEntity, out McpMovementOverride existingOverride))

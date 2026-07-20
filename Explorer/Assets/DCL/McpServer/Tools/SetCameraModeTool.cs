@@ -17,18 +17,20 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class SetCameraModeTool : McpTool
     {
+        private static readonly CameraMode[] ALLOWED_MODES = { CameraMode.FirstPerson, CameraMode.ThirdPerson, CameraMode.DroneView, CameraMode.Free };
+
         private readonly World world;
         private readonly ExposedCameraData exposedCameraData;
 
         public override string Name => "set_camera_mode";
 
         public override string Description =>
-            "Switch the player camera mode (first_person, third_person, drone, or the free-fly camera), like a user pressing the camera key. "
+            "Switch the player camera mode (first_person, third_person, drone_view, or the free-fly camera), like a user pressing the camera key. "
             + "Refuses with an explanation when the scene locks the mode (CameraModeArea, scene virtual camera, photo camera). "
             + "Any player movement drops free back to third_person.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, isRequired: true);
+            schema.Enum("mode", "Target camera mode.", ALLOWED_MODES, isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
@@ -40,16 +42,8 @@ namespace DCL.McpServer.Tools
 
         protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
-            CameraMode targetMode;
-
-            switch (arguments.GetString("mode", string.Empty))
-            {
-                case "first_person": targetMode = CameraMode.FirstPerson; break;
-                case "third_person": targetMode = CameraMode.ThirdPerson; break;
-                case "drone": targetMode = CameraMode.DroneView; break;
-                case "free": targetMode = CameraMode.Free; break;
-                default: return McpToolResult.Error("mode must be one of: first_person, third_person, drone, free.");
-            }
+            if (!arguments.TryGetEnum("mode", out CameraMode targetMode, ALLOWED_MODES))
+                return McpToolResult.Error("mode must be one of: first_person, third_person, drone_view, free.");
 
             string? blockReason = TrySwitchMode(world, targetMode, out CameraMode previousMode);
 
@@ -61,9 +55,9 @@ namespace DCL.McpServer.Tools
 
             var result = new JObject
             {
-                ["requestedMode"] = targetMode.ToString(),
-                ["currentMode"] = exposedCameraData.CameraMode.ToString(),
-                ["previousMode"] = previousMode.ToString(),
+                ["requestedMode"] = McpWireEnum<CameraMode>.ToWire(targetMode),
+                ["currentMode"] = McpWireEnum<CameraMode>.ToWire(exposedCameraData.CameraMode),
+                ["previousMode"] = McpWireEnum<CameraMode>.ToWire(previousMode),
             };
 
             return McpToolResult.Json(result);

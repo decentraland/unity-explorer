@@ -25,10 +25,19 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ScreenshotTool : McpTool, IDisposable
     {
+        private enum OutputFormat : byte
+        {
+            JPG,
+            PNG,
+        }
+
         private const int DEFAULT_MAX_WIDTH = 1280;
         private const int MIN_WIDTH = 64;
         private const int MAX_WIDTH = 1920;
         private const int JPG_QUALITY = 75;
+
+        private const string MIME_TYPE_PNG = "image/png";
+        private const string MIME_TYPE_JPEG = "image/jpeg";
 
         private readonly ICoroutineRunner coroutineRunner;
         private readonly World world;
@@ -50,7 +59,7 @@ namespace DCL.McpServer.Tools
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("maxWidth", "Maximum output width in pixels (aspect ratio preserved). Default 1280.")
-                  .String("quality", "Output encoding. Default jpg.", enumValues: new[] { "jpg", "png" })
+                  .Enum<OutputFormat>("quality", "Output encoding. Default jpg.")
                   .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -71,7 +80,11 @@ namespace DCL.McpServer.Tools
         protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
-            bool asPng = arguments.GetString("quality", "jpg") == "png";
+
+            if (!arguments.TryGetEnum("quality", OutputFormat.JPG, out OutputFormat format))
+                return McpToolResult.Error("quality must be one of: jpg, png.");
+
+            bool asPng = format == OutputFormat.PNG;
             bool worldOnly = arguments.GetBool("worldOnly", false);
 
             if (capturing)
@@ -172,7 +185,7 @@ namespace DCL.McpServer.Tools
                                : ImageConversion.EncodeNativeArrayToJPG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height))
                         encoded = encodedNative.ToArray();
 
-                    mimeType = asPng ? "image/png" : "image/jpeg";
+                    mimeType = asPng ? MIME_TYPE_PNG : MIME_TYPE_JPEG;
                 }
 
                 Vector2Int parcel = world.Get<CharacterTransform>(playerEntity).Position.ToParcel();
@@ -240,8 +253,8 @@ namespace DCL.McpServer.Tools
             RenderTexture.active = previousActive;
 
             return asPng
-                ? (readPixelsBuffer.EncodeToPNG(), "image/png")
-                : (readPixelsBuffer.EncodeToJPG(JPG_QUALITY), "image/jpeg");
+                ? (readPixelsBuffer.EncodeToPNG(), MIME_TYPE_PNG)
+                : (readPixelsBuffer.EncodeToJPG(JPG_QUALITY), MIME_TYPE_JPEG);
         }
 
         private static GraphicsFormat OutputGraphicsFormat()

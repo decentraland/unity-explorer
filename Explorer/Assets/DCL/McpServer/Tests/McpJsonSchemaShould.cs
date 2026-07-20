@@ -1,11 +1,19 @@
 using DCL.McpServer.Core;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DCL.McpServer.Tests
 {
     public class McpJsonSchemaShould
     {
+        [SuppressMessage("ReSharper", "UnusedMember.Local")] // the members are read through reflection by McpWireEnum
+        private enum Speed
+        {
+            WALK,
+            RUN,
+        }
+
         [Test]
         public void EmitTheDeclaredJsonSchemaTypeForEachFieldKind()
         {
@@ -17,6 +25,19 @@ namespace DCL.McpServer.Tests
             var properties = (JObject)schema["properties"]!;
             Assert.That(properties["ratio"]!["type"]!.Value<string>(), Is.EqualTo("number"));
             Assert.That(properties["flag"]!["type"]!.Value<string>(), Is.EqualTo("boolean"));
+        }
+
+        [Test]
+        public void ConstrainAnEnumFieldToTheWireNamesOfItsMembers()
+        {
+            JObject schema = McpJsonSchema.Object()
+                                           .Enum<Speed>("kind")
+                                           .Enum("mode", allowed: new[] { Speed.RUN })
+                                           .Build();
+
+            var properties = (JObject)schema["properties"]!;
+            Assert.That(((JArray)properties["kind"]!["enum"]!).ToObject<string[]>(), Is.EqualTo(new[] { "walk", "run" }));
+            Assert.That(((JArray)properties["mode"]!["enum"]!).ToObject<string[]>(), Is.EqualTo(new[] { "run" }));
         }
 
         [Test]

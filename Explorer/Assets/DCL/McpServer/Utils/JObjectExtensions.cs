@@ -53,6 +53,33 @@ namespace DCL.McpServer.Utils
         public static string GetString(this JObject arguments, string name, string defaultValue) =>
             arguments[name]?.Type == JTokenType.String ? arguments[name]!.Value<string>()! : defaultValue;
 
+        /// <summary>
+        ///     Reads an enum argument sent as its wire name (see <see cref="McpWireEnum{T}" />). False when the
+        ///     argument is missing, not a string, not a member, or outside <paramref name="allowed" />.
+        /// </summary>
+        public static bool TryGetEnum<T>(this JObject arguments, string name, out T value, T[]? allowed = null) where T : struct, Enum
+        {
+            if (arguments[name]?.Type == JTokenType.String
+                && McpWireEnum<T>.TryParse(arguments[name]!.Value<string>()!, out value)
+                && (allowed == null || Array.IndexOf(allowed, value) >= 0))
+                return true;
+
+            value = default(T);
+            return false;
+        }
+
+        /// <summary>Same as <see cref="TryGetEnum{T}(JObject,string,out T,T[])" />, but a missing argument yields <paramref name="defaultValue" /> instead of failing.</summary>
+        public static bool TryGetEnum<T>(this JObject arguments, string name, T defaultValue, out T value, T[]? allowed = null) where T : struct, Enum
+        {
+            if (arguments[name] == null)
+            {
+                value = defaultValue;
+                return true;
+            }
+
+            return arguments.TryGetEnum(name, out value, allowed);
+        }
+
         public static bool TryGetFloat(this JObject arguments, string name, out float value)
         {
             if (arguments[name].IsNumber())

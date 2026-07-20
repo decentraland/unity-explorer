@@ -12,6 +12,12 @@ namespace DCL.McpServer.Tools
 {
     public class GetSceneLogsTool : McpTool
     {
+        private enum Severity : byte
+        {
+            ALL,
+            ERROR,
+        }
+
         private const int DEFAULT_LIMIT = 100;
         private const int MAX_LIMIT = 500;
 
@@ -28,7 +34,7 @@ namespace DCL.McpServer.Tools
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.Integer("limit", "Maximum entries to return (newest win). Default 100.")
-                  .String("severity", "Filter by severity. Default all.", enumValues: new[] { "all", "error" })
+                  .Enum<Severity>("severity", "Filter by severity. Default all.")
                   .Integer("sinceSeq", "Only return entries with a sequence number greater than this.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
@@ -45,7 +51,11 @@ namespace DCL.McpServer.Tools
         protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
-            bool errorsOnly = arguments.GetString("severity", "all") == "error";
+
+            if (!arguments.TryGetEnum("severity", Severity.ALL, out Severity severity))
+                return UniTask.FromResult(McpToolResult.Error("severity must be one of: all, error."));
+
+            bool errorsOnly = severity == Severity.ERROR;
             long sinceSeq = arguments.GetLong("sinceSeq", -1);
 
             using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);

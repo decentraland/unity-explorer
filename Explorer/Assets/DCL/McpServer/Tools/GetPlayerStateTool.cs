@@ -75,7 +75,7 @@ namespace DCL.McpServer.Tools
                 {
                     ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
                     ["rotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
-                    ["mode"] = exposedCameraData.CameraMode.ToString(),
+                    ["mode"] = McpWireEnum<CameraMode>.ToWire(exposedCameraData.CameraMode),
                     ["modeChangeAllowed"] = SetCameraModeTool.IsModeChangeAllowed(world),
                     ["pointerLocked"] = exposedCameraData.PointerIsLocked.Value,
                 },

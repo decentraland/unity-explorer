@@ -19,6 +19,14 @@ namespace DCL.McpServer.Tools
     /// </summary>
     public class ClickEntityTool : McpTool
     {
+        /// <summary>Wire-facing subset of <see cref="InputAction" />: only the three pointer buttons make sense for a click.</summary>
+        private enum PointerButton : byte
+        {
+            POINTER,
+            PRIMARY,
+            SECONDARY,
+        }
+
         private const float DEFAULT_TIMEOUT_SEC = 3f;
         private const float MIN_TIMEOUT_SEC = 0.5f;
         private const float MAX_TIMEOUT_SEC = 15f;
@@ -40,8 +48,8 @@ namespace DCL.McpServer.Tools
                   .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
                   .Number("y")
                   .Number("z")
-                  .String("button", "Which input action to press. Default pointer (left click / IA_POINTER).", enumValues: new[] { "pointer", "primary", "secondary" })
-                  .String("eventType", "click = down, then up on the next scene tick. Default click.", enumValues: new[] { "click", "down", "up" })
+                  .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
+                  .Enum<McpPointerClickIntent.ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
@@ -63,25 +71,18 @@ namespace DCL.McpServer.Tools
             if (!hasEntityId && !hasAimPoint)
                 return McpToolResult.Error("Provide entityId, or a full x/y/z world aim point, or both.");
 
-            InputAction button;
+            if (!arguments.TryGetEnum("button", PointerButton.POINTER, out PointerButton pointerButton))
+                return McpToolResult.Error("button must be one of: pointer, primary, secondary.");
 
-            switch (arguments.GetString("button", "pointer"))
-            {
-                case "pointer": button = InputAction.IaPointer; break;
-                case "primary": button = InputAction.IaPrimary; break;
-                case "secondary": button = InputAction.IaSecondary; break;
-                default: return McpToolResult.Error("button must be one of: pointer, primary, secondary.");
-            }
+            InputAction button = pointerButton switch
+                                 {
+                                     PointerButton.PRIMARY => InputAction.IaPrimary,
+                                     PointerButton.SECONDARY => InputAction.IaSecondary,
+                                     _ => InputAction.IaPointer,
+                                 };
 
-            McpPointerClickIntent.ClickKind kind;
-
-            switch (arguments.GetString("eventType", "click"))
-            {
-                case "click": kind = McpPointerClickIntent.ClickKind.CLICK; break;
-                case "down": kind = McpPointerClickIntent.ClickKind.DOWN; break;
-                case "up": kind = McpPointerClickIntent.ClickKind.UP; break;
-                default: return McpToolResult.Error("eventType must be one of: click, down, up.");
-            }
+            if (!arguments.TryGetEnum("eventType", McpPointerClickIntent.ClickKind.CLICK, out McpPointerClickIntent.ClickKind kind))
+                return McpToolResult.Error("eventType must be one of: click, down, up.");
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 

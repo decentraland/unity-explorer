@@ -27,6 +27,7 @@ namespace DCL.McpServer.Tools
         private const int POLL_INTERVAL_MS = 100;
         private const float MIN_FOV = 10f;
         private const float MAX_FOV = 120f;
+        private const int CAMERA_APPLY_DELAY_FRAMES = 2;
 
         private readonly World world;
         private readonly Entity playerEntity;
@@ -90,7 +91,7 @@ namespace DCL.McpServer.Tools
 
                 // Let ControlCinemachineVirtualCameraSystem activate the free vcam (and apply its default
                 // spawn position, which the pose below overrides).
-                await UniTask.DelayFrame(2, cancellationToken: ct);
+                await UniTask.DelayFrame(CAMERA_APPLY_DELAY_FRAMES, cancellationToken: ct);
             }
 
             if (!world.TryGet(cameraEntity, out ICinemachinePreset? cinemachinePreset) || cinemachinePreset == null)
@@ -121,13 +122,13 @@ namespace DCL.McpServer.Tools
             }
 
             // Let the look-at intent apply before reading the rotation back.
-            await UniTask.DelayFrame(2, cancellationToken: ct);
+            await UniTask.DelayFrame(CAMERA_APPLY_DELAY_FRAMES, cancellationToken: ct);
 
             var result = new JObject
             {
                 ["position"] = exposedCameraData.WorldPosition.Value.ToVector(),
                 ["rotationEuler"] = exposedCameraData.WorldRotation.Value.eulerAngles.ToVector(),
-                ["mode"] = exposedCameraData.CameraMode.ToString(),
+                ["mode"] = McpWireEnum<CameraMode>.ToWire(exposedCameraData.CameraMode),
                 ["settled"] = settled,
             };
 
