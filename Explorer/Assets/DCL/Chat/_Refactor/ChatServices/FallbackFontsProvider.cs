@@ -14,12 +14,7 @@ namespace DCL.Chat.ChatServices
     {
         private readonly List<ProvidedAsset<TMP_FontAsset>> providedAssets = new();
 
-        public FallbackFontsProvider(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
-        {
-            LoadAndApplyFallbacksAsync(assetsProvisioner, fallbackFonts, ct).Forget();
-        }
-
-        private async UniTask LoadAndApplyFallbacksAsync(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
+        public async UniTask LoadAndApplyFallbacksAsync(IAssetsProvisioner assetsProvisioner, List<AssetReferenceT<TMP_FontAsset>> fallbackFonts, CancellationToken ct)
         {
             try
             {
