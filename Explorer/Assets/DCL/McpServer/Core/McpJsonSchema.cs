@@ -11,7 +11,7 @@ namespace DCL.McpServer.Core
     public sealed class McpJsonSchema
     {
         private readonly JObject properties = new ();
-        private readonly JArray required = new ();
+        private readonly JArray requiredNames = new ();
 
         private McpJsonSchema() { }
 
@@ -72,8 +72,8 @@ namespace DCL.McpServer.Core
                 ["properties"] = properties,
             };
 
-            if (required.Count > 0)
-                schema["required"] = required;
+            if (requiredNames.Count > 0)
+                schema["required"] = requiredNames;
 
             return schema;
         }
@@ -106,7 +106,7 @@ namespace DCL.McpServer.Core
             properties[name] = field;
 
             if (isRequired)
-                required.Add(name);
+                requiredNames.Add(name);
 
             return this;
         }

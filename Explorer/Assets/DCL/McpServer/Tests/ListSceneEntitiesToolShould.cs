@@ -85,7 +85,7 @@ namespace DCL.McpServer.Tests
             var structured = (JObject)Execute(limit: 200).Payload["structuredContent"]!;
 
             // Assert
-            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
         }
 
         private McpToolResult Execute(int limit) =>

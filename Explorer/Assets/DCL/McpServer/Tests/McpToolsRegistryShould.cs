@@ -50,7 +50,7 @@ namespace DCL.McpServer.Tests
 
             // Act & Assert
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => registry.Build());
-            Assert.That(error!.Message, Does.Contain("broken"));
+            Assert.That(error.Message, Does.Contain("broken"));
         }
 
         [Test]

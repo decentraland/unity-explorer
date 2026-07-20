@@ -14,8 +14,9 @@ namespace DCL.Diagnostics
         private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
 
         private ILogHandler defaultLogHandler;
-        public ReportHubLogger ReportHubLogger { get; private set; }
-        public SentryReportHandler? Sentry { get; private set; }
+        private ReportHubLogger reportHubLogger;
+
+        public SentryReportHandler? Sentry { get; private init; }
         public IReportsHandlingSettings Settings { get; private set; }
         public SentrySampler? SentrySampler { get; private set; }
 
@@ -57,14 +58,14 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger);
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings, SentrySampler = sentrySampler };
+            return new DiagnosticsContainer { reportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings, SentrySampler = sentrySampler };
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)
         {
             SceneDebugConsoleReportHandler reportHandler = AddDebugConsoleReportHandler(sceneDebugConsoleMessageBus);
             ReportHub.EnforceUnconditionalVerboseLogs = true;
-            ReportHubLogger.AddHandler(reportHandler);
+            reportHubLogger.AddHandler(reportHandler);
         }
 
         private static SceneDebugConsoleReportHandler AddDebugConsoleReportHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)

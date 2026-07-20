@@ -15,8 +15,8 @@ namespace DCL.McpServer.Tests
 
             var content = (JArray)payload["content"]!;
             Assert.That(content.Count, Is.EqualTo(1));
-            Assert.That(content[0]!["type"]!.Value<string>(), Is.EqualTo("text"));
-            Assert.That(content[0]!["text"]!.Value<string>(), Is.EqualTo("hello"));
+            Assert.That(content[0]["type"]!.Value<string>(), Is.EqualTo("text"));
+            Assert.That(content[0]["text"]!.Value<string>(), Is.EqualTo("hello"));
             Assert.That(payload.ContainsKey("isError"), Is.False);
         }
 
@@ -33,8 +33,8 @@ namespace DCL.McpServer.Tests
 
             var content = (JArray)payload["content"]!;
             Assert.That(content.Count, Is.EqualTo(1));
-            Assert.That(content[0]!["type"]!.Value<string>(), Is.EqualTo("text"));
-            Assert.That(content[0]!["text"]!.Value<string>(), Is.EqualTo("mirror"));
+            Assert.That(content[0]["type"]!.Value<string>(), Is.EqualTo("text"));
+            Assert.That(content[0]["text"]!.Value<string>(), Is.EqualTo("mirror"));
 
             var structuredContent = (JObject)payload["structuredContent"]!;
             Assert.That(structuredContent["count"]!.Value<int>(), Is.EqualTo(3));
@@ -50,8 +50,8 @@ namespace DCL.McpServer.Tests
             Assert.That(payload["isError"]!.Value<bool>(), Is.True);
 
             var content = (JArray)payload["content"]!;
-            Assert.That(content[0]!["type"]!.Value<string>(), Is.EqualTo("text"));
-            Assert.That(content[0]!["text"]!.Value<string>(), Is.EqualTo("it broke"));
+            Assert.That(content[0]["type"]!.Value<string>(), Is.EqualTo("text"));
+            Assert.That(content[0]["text"]!.Value<string>(), Is.EqualTo("it broke"));
         }
 
         [Test]
@@ -64,12 +64,12 @@ namespace DCL.McpServer.Tests
             var content = (JArray)payload["content"]!;
             Assert.That(content.Count, Is.EqualTo(2));
 
-            var image = (JObject)content[0]!;
+            var image = (JObject)content[0];
             Assert.That(image["type"]!.Value<string>(), Is.EqualTo("image"));
             Assert.That(image["mimeType"]!.Value<string>(), Is.EqualTo("image/png"));
             Assert.That(Convert.FromBase64String(image["data"]!.Value<string>()!), Is.EqualTo(bytes));
 
-            var caption = (JObject)content[1]!;
+            var caption = (JObject)content[1];
             Assert.That(caption["type"]!.Value<string>(), Is.EqualTo("text"));
             Assert.That(caption["text"]!.Value<string>(), Is.EqualTo("a screenshot"));
             Assert.That(payload.ContainsKey("isError"), Is.False);

@@ -27,8 +27,6 @@ namespace DCL.McpServer.Tests
 
         public JObject? LastArguments { get; private set; }
 
-        public CancellationToken LastCancellationToken { get; private set; }
-
         private FakeMcpTool(string name, string description, JObject inputSchema, McpToolAnnotations annotations,
             Func<JObject, CancellationToken, McpToolResult> execute)
         {
@@ -61,7 +59,6 @@ namespace DCL.McpServer.Tests
         {
             CallCount++;
             LastArguments = arguments;
-            LastCancellationToken = ct;
             return UniTask.FromResult(execute(arguments, ct));
         }
     }

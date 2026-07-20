@@ -64,7 +64,7 @@ namespace DCL.McpServer.Tests
         public void DeclareAnObjectOutputSchemaThatAdmitsANullScene()
         {
             // Act
-            JObject schema = tool.OutputSchema!;
+            JObject schema = tool.OutputSchema;
 
             // Assert
             Assert.That(schema["type"]!.Value<string>(), Is.EqualTo("object"));
@@ -96,7 +96,7 @@ namespace DCL.McpServer.Tests
             var structured = (JObject)Execute().Payload["structuredContent"]!;
 
             // Assert
-            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
         }
 
         private McpToolResult Execute() =>

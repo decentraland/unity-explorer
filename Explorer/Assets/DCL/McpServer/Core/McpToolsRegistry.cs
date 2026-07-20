@@ -32,7 +32,7 @@ namespace DCL.McpServer.Core
             {
                 JObject inputSchema = tool.InputSchema;
 
-                if (inputSchema == null || !IsObjectSchema(inputSchema))
+                if (!IsObjectSchema(inputSchema))
                     throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid input schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpJsonSchema.");
 
                 if (tool.OutputSchema != null && !IsObjectSchema(tool.OutputSchema))

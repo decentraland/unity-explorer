@@ -29,7 +29,7 @@ namespace DCL.McpServer.Tools
 
         public JObject InputSchema => McpJsonSchema.Object().Build();
 
-        public JObject? OutputSchema =>
+        public JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Object("position", JObjectExtensions.VectorSchema())
                           .Object("rotationEuler", JObjectExtensions.VectorSchema())

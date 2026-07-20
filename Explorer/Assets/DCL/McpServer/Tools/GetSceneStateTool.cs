@@ -26,7 +26,7 @@ namespace DCL.McpServer.Tools
 
         public JObject InputSchema => McpJsonSchema.Object().Build();
 
-        public JObject? OutputSchema =>
+        public JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Object("currentParcel", JObjectExtensions.ParcelSchema())
                           .String("loadingStage")

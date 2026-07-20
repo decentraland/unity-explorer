@@ -87,8 +87,6 @@ namespace Global.Dynamic
 
         public IGlobalRealmController RealmController { get; }
 
-        public IRealmNavigator RealmNavigator { get; }
-
         public GlobalWorldFactory GlobalWorldFactory { get; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; }
@@ -132,7 +130,6 @@ namespace Global.Dynamic
         {
             this.uiShellContainer = uiShellContainer;
             RealmController = realmController;
-            RealmNavigator = realmNavigator;
             GlobalWorldFactory = globalWorldFactory;
             GlobalPlugins = globalPlugins;
             WorldPlugins = worldPlugins;

@@ -33,7 +33,7 @@ namespace DCL.McpServer.Tools
                           .Integer("limit", "Maximum ids to return. Default 200.")
                           .Build();
 
-        public JObject? OutputSchema =>
+        public JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Integer("total")
                           .Integer("returned")

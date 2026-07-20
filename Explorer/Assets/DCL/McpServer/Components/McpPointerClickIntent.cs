@@ -7,7 +7,7 @@ namespace DCL.McpServer.Components
 {
     /// <summary>
     ///     Present on the player entity while an agent-requested pointer click is in flight.
-    ///     <see cref="McpPointerClickSystem" /> validates the aim with a physics raycast each frame,
+    ///     <see cref="DCL.McpServer.Systems.McpPointerClickSystem" /> validates the aim with a physics raycast each frame,
     ///     delivers the press through the target's <see cref="PBPointerEvents.AppendPointerEventResultsIntent" />
     ///     and removes the component once the click completes or fails.
     /// </summary>

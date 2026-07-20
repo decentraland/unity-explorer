@@ -1,7 +1,6 @@
 using Arch.Core;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using ECS.SceneLifeCycle.CurrentScene;
@@ -41,20 +40,20 @@ namespace DCL.McpServer.Tests
         [Test]
         public void DeclareAnObjectOutputSchema()
         {
-            Assert.That(tool.OutputSchema!["type"]!.Value<string>(), Is.EqualTo("object"));
+            Assert.That(tool.OutputSchema["type"]!.Value<string>(), Is.EqualTo("object"));
         }
 
         [Test]
         public void ModelTheAddressAsANullableString()
         {
-            var addressType = (JArray)tool.OutputSchema!["properties"]!["address"]!["type"]!;
+            var addressType = (JArray)tool.OutputSchema["properties"]!["address"]!["type"]!;
             Assert.That(addressType.ToObject<string[]>(), Is.EqualTo(new[] { "string", "null" }));
         }
 
         [Test]
         public void ModelTheCameraAsANestedObject()
         {
-            JToken camera = tool.OutputSchema!["properties"]!["camera"]!;
+            JToken camera = tool.OutputSchema["properties"]!["camera"]!;
 
             Assert.That(camera["type"]!.Value<string>(), Is.EqualTo("object"));
             Assert.That(camera["properties"]!["mode"]!["type"]!.Value<string>(), Is.EqualTo("string"));
@@ -67,7 +66,7 @@ namespace DCL.McpServer.Tests
             var structured = (JObject)Execute().Payload["structuredContent"]!;
 
             // Assert
-            McpSchemaAssert.KeysMatch(tool.OutputSchema!, structured);
+            McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
         }
 
         private McpToolResult Execute() =>

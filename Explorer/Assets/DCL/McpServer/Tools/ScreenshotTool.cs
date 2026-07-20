@@ -171,7 +171,7 @@ namespace DCL.McpServer.Tools
 
                     using (NativeArray<byte> encodedNative = asPng
                                ? ImageConversion.EncodeNativeArrayToPNG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height)
-                               : ImageConversion.EncodeNativeArrayToJPG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height, 0, JPG_QUALITY))
+                               : ImageConversion.EncodeNativeArrayToJPG(rawPixels, downscaled.graphicsFormat, (uint)width, (uint)height))
                         encoded = encodedNative.ToArray();
 
                     mimeType = asPng ? "image/png" : "image/jpeg";

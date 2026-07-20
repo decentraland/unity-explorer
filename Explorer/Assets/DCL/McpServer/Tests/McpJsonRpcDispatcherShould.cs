@@ -78,8 +78,8 @@ namespace DCL.McpServer.Tests
             Assert.That(tool.LastArguments!["value"]!.Value<string>(), Is.EqualTo("hi"));
 
             var content = (JArray)result["content"]!;
-            Assert.That(content[0]!["type"]!.Value<string>(), Is.EqualTo("text"));
-            Assert.That(content[0]!["text"]!.Value<string>(), Is.EqualTo("done"));
+            Assert.That(content[0]["type"]!.Value<string>(), Is.EqualTo("text"));
+            Assert.That(content[0]["text"]!.Value<string>(), Is.EqualTo("done"));
             Assert.That(result.ContainsKey("isError"), Is.False);
         }
 
