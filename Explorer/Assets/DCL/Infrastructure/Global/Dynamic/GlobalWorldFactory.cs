@@ -163,7 +163,7 @@ namespace Global.Dynamic
             var assetBundleCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundlesCDN));
             var lodGeneratorCdnUrl = URLDomain.FromString(urlsSource.Url(DecentralandUrl.LodGeneratorCDN));
 
-            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, assetBundleCdnUrl, lodGeneratorCdnUrl,
+            LoadISSDescriptorSystem.InjectToWorld(ref builder, webRequestController, lodGeneratorCdnUrl,
                 new NoCache<ISSDescriptorMetadata, GetISSDescriptorIntention>(false, false),
                 new DiskCacheOptions<ISSDescriptorMetadata, GetISSDescriptorIntention>(staticContainer.ISSDescriptorDiskCache, GetISSDescriptorIntention.DiskHashCompute.INSTANCE, "iss.json"));
 

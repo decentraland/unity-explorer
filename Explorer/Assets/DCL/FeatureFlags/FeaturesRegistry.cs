@@ -1,6 +1,7 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using Global.AppArgs;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -68,7 +69,6 @@ namespace DCL.FeatureFlags
                 [FeatureId.AVATAR_CONTEXT_MENU] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.AVATAR_CONTEXT_MENU, featureFlags.IsEnabled(FeatureFlagsStrings.AVATAR_CONTEXT_MENU) || Application.isEditor),
                 [FeatureId.DOUBLE_CLICK_WALK] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.DOUBLE_CLICK_WALK, featureFlags.IsEnabled(FeatureFlagsStrings.DOUBLE_CLICK_WALK)),
                 [FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
-                [FeatureId.AB_DEPS_DIGEST_CACHE_KEY] = featureFlags.IsEnabled(FeatureFlagsStrings.AB_DEPS_DIGEST_CACHE_KEY),
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HARDWARE_FINGERPRINT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
@@ -201,6 +201,7 @@ namespace DCL.FeatureFlags
         AVATAR_CONTEXT_MENU = 60,
         DOUBLE_CLICK_WALK = 61,
         NEARBY_VOICE_CHAT = 62,
+        [Obsolete("The v49 deps-digest scheme is always on (gated by the manifest version itself); the flag is no longer read. Kept to preserve enum ordering.")]
         AB_DEPS_DIGEST_CACHE_KEY = 63,
         BYTE_WEIGHTED_LOADING_PROGRESS = 64,
         PULSE = 65,

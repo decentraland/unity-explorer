@@ -67,17 +67,15 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                // DepsDigest is pre-populated upstream (e.g. PrepareGltfAssetLoadingSystem) from the bare hash,
-                // before the platform suffix is appended. The digest map itself is also keyed by bare hashes, so
-                // any path that wants digest-based keying must set DepsDigest before reaching this system.
-                //
-                // Dispatch on the manifest version, not on whether DepsDigest happens to be populated. A v49+
-                // leaf AB that isn't listed in the manifest's deps map has an empty digest — routing it through
-                // the legacy path would key it on buildDate and prevent disk-cache sharing across CDN republishes.
-                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.SupportsDepsDigests()
+                // v49+ hashes carry the deps digest inside the file name (<hash>_<depsDigest>_<platform>), so
+                // (version + hash) is unique per dependency closure. Dispatch on whether the manifest carries the
+                // deps map (only scene manifests do), not on whether this hash happens to carry a digest — an AB
+                // with a legacy 2-part name inside a mapped manifest would otherwise be keyed on buildDate,
+                // preventing cache sharing across CDN republishes. Wearables/emotes never carry the map and keep
+                // buildDate keying: their bundles are republished in place and cannot be reused across builds.
+                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.HasDepsDigests()
                     ? ComputeHashV49(assetBundleIntention.Hash,
-                        assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion(),
-                        assetBundleIntention.DepsDigest ?? string.Empty)
+                        assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion())
                     : ComputeHashLegacy(assetBundleIntention.Hash,
                         assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
             }
@@ -103,24 +101,19 @@ namespace ECS.StreamableLoading.AssetBundles
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
-        public static unsafe Hash128 ComputeHashV49(string hash, string version, string depsDigest)
+        public static unsafe Hash128 ComputeHashV49(string hash, string version)
         {
-            // The per-file deps digest replaces the buildDate sledgehammer that was previously used to invalidate
-            // the cache whenever a dependency might have changed. Keying on (version + hash + digest) lets the disk
-            // cache stay shareable across CDN republishes when the dependency closure is unchanged. depsDigest may
-            // be empty for leaf ABs that aren't listed in the manifest's deps map — that's a valid input here.
+            // The per-file deps digest embedded in the hash replaces the buildDate sledgehammer that was previously
+            // used to invalidate the cache whenever a dependency might have changed. Keying on (version + hash) lets
+            // the cache stay shareable across CDN republishes when the dependency closure is unchanged. The delimiter
+            // prevents boundary collisions between version and hash.
             ReadOnlySpan<char> hashSpan = hash.AsSpan();
             ReadOnlySpan<char> versionSpan = version.AsSpan();
-            ReadOnlySpan<char> digestSpan = depsDigest.AsSpan();
 
-            Span<char> builder = stackalloc char[versionSpan.Length + 1 + hashSpan.Length + 1 + digestSpan.Length];
+            Span<char> builder = stackalloc char[versionSpan.Length + 1 + hashSpan.Length];
             versionSpan.CopyTo(builder);
-            int offset = versionSpan.Length;
-            builder[offset++] = '|';
-            hashSpan.CopyTo(builder[offset..]);
-            offset += hashSpan.Length;
-            builder[offset++] = '|';
-            digestSpan.CopyTo(builder[offset..]);
+            builder[versionSpan.Length] = '|';
+            hashSpan.CopyTo(builder[(versionSpan.Length + 1)..]);
 
             fixed (char* ptr = builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * builder.Length)); }
         }

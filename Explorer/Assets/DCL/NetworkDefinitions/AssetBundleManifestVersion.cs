@@ -25,12 +25,6 @@ public class AssetBundleManifestVersion
 
         private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
-        // Global kill-switch for the v49 deps-digest cache-keying scheme. Default off so the build is byte-identical
-        // to legacy behavior until the feature flag is rolled out. Flipped from bootstrap based on FeaturesRegistry.
-        // When false: SupportsDepsDigests reports false for every manifest, TryGetDepsDigest never returns a digest,
-        // and every downstream call site (cache dispatch, GLTF key compose, digest fetch) falls back to legacy.
-        public static bool DepsDigestKeyingEnabled;
-
         private bool? HasHashInPathValue;
 
         private bool? SupportsDepsDigestsValue;
@@ -40,7 +34,9 @@ public class AssetBundleManifestVersion
         public AssetBundleManifestVersionPerPlatform? assets;
 
         private HashSet<string>? convertedFiles;
-        private IReadOnlyDictionary<string, string>? depsDigests;
+
+        //Bare hash → verbatim manifest file name (<hash>_<depsDigest>_<platform>), see InjectDepsDigests
+        private IReadOnlyDictionary<string, string>? depsFiles;
 
         public bool HasHashInPath()
         {
@@ -50,12 +46,11 @@ public class AssetBundleManifestVersion
 
         /// <summary>
         ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
-        ///     in use for cache keying. This is purely a version check; an individual asset may still have an
-        ///     empty digest (leaf ABs that aren't listed in the manifest's deps map).
+        ///     in use. This is purely a version check; an individual file may still carry no digest (v49 manifests
+        ///     mix digest-bearing and legacy 2-part file names).
         /// </summary>
         public bool SupportsDepsDigests()
         {
-            if (!DepsDigestKeyingEnabled) return false;
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
             return SupportsDepsDigestsValue.Value;
         }
@@ -82,15 +77,16 @@ public class AssetBundleManifestVersion
         }
 
         /// <summary>
-        ///     Parses the manifest's <c>files[]</c> entries and stores the per-file deps digest map.
-        ///     Expects v49+ filenames in the form <c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>;
-        ///     legacy 2-part filenames split into fewer parts and are skipped.
+        ///     Parses the manifest's <c>files[]</c> entries and stores, per bare hash, the verbatim
+        ///     digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>). Entries without a
+        ///     valid digest segment (legacy 2-part names, which v49 manifests still mix in) are skipped and keep
+        ///     resolving to their digest-less name.
         /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (!DepsDigestKeyingEnabled || files == null || files.Length == 0)
+            if (files == null || files.Length == 0)
             {
-                depsDigests = null;
+                depsFiles = null;
                 return;
             }
 
@@ -104,18 +100,50 @@ public class AssetBundleManifestVersion
                 if (parts.Length < 3) continue;
 
                 map ??= new Dictionary<string, string>(new UrlHashComparer());
-                map[parts[0]] = parts[1];
+                map[parts[0]] = file;
             }
 
-            depsDigests = map;
+            depsFiles = map;
         }
 
-        public bool TryGetDepsDigest(string hash, out string digest)
+        /// <summary>
+        ///     True when this manifest carries the per-file deps map (injected from the manifest's <c>files[]</c>).
+        ///     Only scene manifests get it — wearable/emote manifests never fetch <c>files[]</c>, so they keep the
+        ///     legacy buildDate-based cache keying regardless of their version (their bundles are republished in
+        ///     place and cannot be reused across builds).
+        /// </summary>
+        public bool HasDepsDigests() =>
+            depsFiles != null;
+
+        /// <summary>
+        ///     Resolves a platform-suffixed hash (e.g. <c>bafk..._mac</c>) to the verbatim digest-bearing manifest
+        ///     entry (<c>bafk..._&lt;depsDigest&gt;_mac</c>) when the manifest lists one, or returns the input
+        ///     unchanged when it doesn't (pre-v49 manifests, files without a digest). The lookup is
+        ///     case-insensitive and the returned name carries the manifest's casing — the name that actually
+        ///     exists on the case-sensitive CDN.
+        /// </summary>
+        public string GetHashWithDigest(string hash)
         {
-            if (DepsDigestKeyingEnabled && depsDigests != null && depsDigests.TryGetValue(hash, out digest!))
+            if (depsFiles == null)
+                return hash;
+
+            string platformSuffix = PlatformUtils.GetCurrentPlatform();
+
+            if (platformSuffix.Length > 0 && !hash.EndsWith(platformSuffix, StringComparison.OrdinalIgnoreCase))
+                return hash;
+
+            return depsFiles.TryGetValue(hash[..^platformSuffix.Length], out string fileName) ? fileName : hash;
+        }
+
+        /// <summary>
+        ///     Same resolution as <see cref="GetHashWithDigest" /> but keyed by the bare hash (no platform suffix).
+        /// </summary>
+        public bool TryGetFileNameWithDigest(string bareHash, out string fileName)
+        {
+            if (depsFiles != null && depsFiles.TryGetValue(bareHash, out fileName!))
                 return true;
 
-            digest = string.Empty;
+            fileName = string.Empty;
             return false;
         }
 

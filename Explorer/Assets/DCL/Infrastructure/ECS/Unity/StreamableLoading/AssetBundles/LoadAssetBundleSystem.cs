@@ -221,7 +221,9 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // Inherit partition from the parent promise
             // we don't know the type of the dependency
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
+            // Dependency hashes baked into AB metadata are digest-less — resolve them to the manifest's
+            // digest-bearing file name so the URL and cache identity match the parent's scheme.
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(assetBundleManifestVersion.GetHashWithDigest(hash), assetBundleManifestVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, customEmbeddedSubDirectory: customEmbeddedSubdirectory, isDependency : true), partition);
 
             try
             {

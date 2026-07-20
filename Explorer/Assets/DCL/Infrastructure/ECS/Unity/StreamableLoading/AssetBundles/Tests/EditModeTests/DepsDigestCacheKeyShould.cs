@@ -1,4 +1,5 @@
 using DCL.Ipfs;
+using DCL.Utility;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NUnit.Framework;
@@ -12,107 +13,130 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private const string DIGEST_A = "dda1af30bdf4a19ce03e663a9a288afe";
         private const string DIGEST_B = "243f68977939e1f526b4c1a05a40b43a";
 
-        private bool depsDigestKeyingEnabledBackup;
+        private const string HASH_A = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
+        private const string HASH_B = "bafkreice3qpeyeb4ni7fnlt6bijs57zrbuw7cwmbymzcndyllzho3hbgaa";
+        private const string HASH_LEGACY = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
 
-        [OneTimeSetUp]
-        public void EnableDepsDigestKeyingForFixture()
+        private static AssetBundleManifestVersion CreateV49Manifest(params string[] files)
         {
-            // The production gate is off until the feature flag flips it from bootstrap. Tests exercise the v49
-            // code paths directly, so opt in for the lifetime of the fixture and restore in teardown.
-            depsDigestKeyingEnabledBackup = AssetBundleManifestVersion.DepsDigestKeyingEnabled;
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = true;
-        }
-
-        [OneTimeTearDown]
-        public void RestoreDepsDigestKeying()
-        {
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = depsDigestKeyingEnabledBackup;
-        }
-
-        [Test]
-        public void InjectDepsDigestsFromThreePartFilenames()
-        {
-            string[] files =
-            {
-                "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru_mac",
-                $"bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4_{DIGEST_A}_mac",
-                $"bafkreice3qpeyeb4ni7fnlt6bijs57zrbuw7cwmbymzcndyllzho3hbgaa_{DIGEST_B}_mac",
-            };
-
             var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
             manifest.InjectDepsDigests(files);
-
-            Assert.That(manifest.TryGetDepsDigest("bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru", out _), Is.False, "Legacy 2-part filenames must not contribute a digest");
-            Assert.That(manifest.TryGetDepsDigest("bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4", out string digestA), Is.True);
-            Assert.That(digestA, Is.EqualTo(DIGEST_A));
-            Assert.That(manifest.TryGetDepsDigest("bafkreice3qpeyeb4ni7fnlt6bijs57zrbuw7cwmbymzcndyllzho3hbgaa", out string digestB), Is.True);
-            Assert.That(digestB, Is.EqualTo(DIGEST_B));
+            return manifest;
         }
 
         [Test]
-        public void TreatIntentionsWithDifferentDigestsAsDistinct()
+        public void ResolveHashWithDigestToVerbatimManifestEntry()
         {
-            var sameHash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var a = GetAssetBundleIntention.FromHash(sameHash);
-            a.DepsDigest = DIGEST_A;
-            var b = GetAssetBundleIntention.FromHash(sameHash);
-            b.DepsDigest = DIGEST_B;
+            // GetHashWithDigest strips the *current* platform suffix off the input, so the manifest entries must be
+            // built with it for the test to be platform-agnostic.
+            string platform = PlatformUtils.GetCurrentPlatform();
+
+            AssetBundleManifestVersion manifest = CreateV49Manifest(
+                $"{HASH_LEGACY}{platform}",
+                $"{HASH_A}_{DIGEST_A}{platform}");
+
+            Assert.That(manifest.GetHashWithDigest($"{HASH_A}{platform}"), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+
+            Assert.That(manifest.GetHashWithDigest($"{HASH_LEGACY}{platform}"), Is.EqualTo($"{HASH_LEGACY}{platform}"),
+                "Files listed without a digest must fall back to the input hash");
+
+            Assert.That(manifest.GetHashWithDigest($"{HASH_B}{platform}"), Is.EqualTo($"{HASH_B}{platform}"),
+                "Hashes absent from the manifest must fall back to the input hash");
+        }
+
+        [Test]
+        public void ResolveHashWithDigestCaseInsensitivelyToManifestCasing()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}");
+
+            // The lookup is case-insensitive and returns the manifest's casing — the CDN is case-sensitive,
+            // so the verbatim entry is the one that actually exists.
+            Assert.That(manifest.GetHashWithDigest($"QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV{platform}"),
+                Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}"));
+        }
+
+        [Test]
+        public void ReportDepsDigestsOnlyWhenMapWasInjected()
+        {
+            // The cache-key dispatch (v49 version+hash vs legacy buildDate+hash) hinges on this: only manifests
+            // that received files[] (scenes) report true. Wearable/emote manifests never fetch files[] and must
+            // keep buildDate keying — their bundles are republished in place and cannot be reused across builds.
+            var withoutMap = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            Assert.That(withoutMap.HasDepsDigests(), Is.False);
+
+            AssetBundleManifestVersion withMap = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+            Assert.That(withMap.HasDepsDigests(), Is.True);
+
+            // A manifest whose files[] contained only legacy 2-part names carries no map either.
+            AssetBundleManifestVersion onlyLegacyFiles = CreateV49Manifest($"{HASH_LEGACY}_mac");
+            Assert.That(onlyLegacyFiles.HasDepsDigests(), Is.False);
+        }
+
+        [Test]
+        public void ComposeCacheKey_FallsBackToBareHashWhenManifestIsNull()
+        {
+            AssetBundleManifestVersion? manifest = null;
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo(HASH_A));
+        }
+
+        [Test]
+        public void ComposeCacheKey_FallsBackToBareHashWhenNoDigest()
+        {
+            AssetBundleManifestVersion manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo(HASH_A));
+        }
+
+        [Test]
+        public void ComposeCacheKey_ReturnsVerbatimFileNameWhenPresent()
+        {
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}_mac"));
+        }
+
+        [Test]
+        public void TreatIntentionsWithDifferentDigestBearingHashesAsDistinct()
+        {
+            // The digest is part of the Hash itself, so two dependency closures of the same bare hash never
+            // collide in the in-memory AB cache.
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac");
 
             Assert.That(a.Equals(b), Is.False);
             Assert.That(a.GetHashCode(), Is.Not.EqualTo(b.GetHashCode()));
         }
 
         [Test]
-        public void TreatIntentionsWithSameHashAndDigestAsEqual()
+        public void TreatIntentionsWithSameHashAsEqual()
         {
-            var sameHash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var a = GetAssetBundleIntention.FromHash(sameHash);
-            a.DepsDigest = DIGEST_A;
-            var b = GetAssetBundleIntention.FromHash(sameHash);
-            b.DepsDigest = DIGEST_A;
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
 
             Assert.That(a.Equals(b), Is.True);
             Assert.That(a.GetHashCode(), Is.EqualTo(b.GetHashCode()));
         }
 
         [Test]
-        public void PreserveLegacyEqualityWhenNoDigestPresent()
+        public void ProduceDistinctDiskFilenamesForDifferentDigestBearingHashes()
         {
-            // Two intentions with the same hash and no digest must still match — preserves cache hits for pre-v49 entries.
-            var sameHash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
-            var a = GetAssetBundleIntention.FromHash(sameHash);
-            var b = GetAssetBundleIntention.FromHash(sameHash);
-
-            Assert.That(a.Equals(b), Is.True);
-            Assert.That(a.GetHashCode(), Is.EqualTo(b.GetHashCode()));
-        }
-
-        [Test]
-        public void ProduceDistinctDiskFilenamesForDifferentDigests()
-        {
-            var sameHash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var a = GetAssetBundleIntention.FromHash(sameHash);
-            a.DepsDigest = DIGEST_A;
-            var b = GetAssetBundleIntention.FromHash(sameHash);
-            b.DepsDigest = DIGEST_B;
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac");
 
             using var keyA = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in a);
             using var keyB = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in b);
 
-            string nameA = HashNamings.HashNameFrom(keyA, ".ab");
-            string nameB = HashNamings.HashNameFrom(keyB, ".ab");
-
-            Assert.That(nameA, Is.Not.EqualTo(nameB));
+            Assert.That(HashNamings.HashNameFrom(keyA, ".ab"), Is.Not.EqualTo(HashNamings.HashNameFrom(keyB, ".ab")));
         }
 
         [Test]
-        public void PreserveLegacyDiskFilenameWhenNoDigest()
+        public void PreserveLegacyDiskFilenameForDigestLessHashes()
         {
-            // An intention without a digest must produce the same on-disk file name as before this change so existing
+            // A digest-less hash must produce the same on-disk file name as before this scheme so existing
             // cached entries keep hitting after upgrade.
-            var sameHash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
-            var legacy = GetAssetBundleIntention.FromHash(sameHash);
-            var alsoLegacy = GetAssetBundleIntention.FromHash(sameHash);
+            var legacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
+            var alsoLegacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
 
             using var keyA = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in legacy);
             using var keyB = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in alsoLegacy);
@@ -123,18 +147,16 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void GltfIntentionDefaultsCacheKeyToHash()
         {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var intention = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource());
+            var intention = new GetGltfContainerAssetIntention("model.glb", HASH_A, new CancellationTokenSource());
 
-            Assert.That(intention.CacheKey, Is.EqualTo(hash), "Legacy callers that don't supply a cache key must default to the bare hash");
+            Assert.That(intention.CacheKey, Is.EqualTo(HASH_A), "Legacy callers that don't supply a cache key must default to the bare hash");
         }
 
         [Test]
         public void GltfIntentionStoresPassedCacheKeyVerbatim()
         {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            string customKey = $"{hash}@{DIGEST_A}";
-            var intention = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), customKey);
+            string customKey = $"{HASH_A}_{DIGEST_A}_mac";
+            var intention = new GetGltfContainerAssetIntention("model.glb", HASH_A, new CancellationTokenSource(), customKey);
 
             Assert.That(intention.CacheKey, Is.EqualTo(customKey));
         }
@@ -142,86 +164,29 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void GltfIntentionsWithDifferentCacheKeysAreDistinct()
         {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            var a = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), $"{hash}@{DIGEST_A}");
-            var b = new GetGltfContainerAssetIntention("model.glb", hash, new CancellationTokenSource(), $"{hash}@{DIGEST_B}");
+            var a = new GetGltfContainerAssetIntention("model.glb", HASH_A, new CancellationTokenSource(), $"{HASH_A}_{DIGEST_A}_mac");
+            var b = new GetGltfContainerAssetIntention("model.glb", HASH_A, new CancellationTokenSource(), $"{HASH_A}_{DIGEST_B}_mac");
 
             Assert.That(a.CacheKey, Is.Not.EqualTo(b.CacheKey));
             Assert.That(a.Equals(b), Is.False);
         }
 
         [Test]
-        public void ComposeCacheKey_FallsBackToBareHashWhenManifestIsNull()
-        {
-            AssetBundleManifestVersion? manifest = null;
-            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
-        }
-
-        [Test]
-        public void ComposeCacheKey_FallsBackToBareHashWhenNoDigest()
-        {
-            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
-        }
-
-        [Test]
-        public void ComposeCacheKey_AppendsDigestWhenPresent()
-        {
-            var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            manifest.InjectDepsDigests(new[] { $"X_{DIGEST_A}_mac" });
-
-            Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo($"X@{DIGEST_A}"));
-        }
-
-        [Test]
         public void V49HashIsStableForSameInputs()
         {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
 
             Assert.That(a, Is.EqualTo(b));
         }
 
         [Test]
-        public void V49HashAcceptsEmptyDigestForLeafBundles()
+        public void V49HashDiffersWhenDigestBearingHashDiffers()
         {
-            // v49+ leaf ABs that aren't listed in the manifest's deps map carry an empty digest. They must still
-            // produce a deterministic key — and crucially, one that doesn't depend on buildDate.
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
-
-            Assert.That(a, Is.EqualTo(b));
-        }
-
-        [Test]
-        public void V49HashDiffersWhenDigestDiffers()
-        {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_B);
-
-            Assert.That(a, Is.Not.EqualTo(b));
-        }
-
-        [Test]
-        public void V49HashDiffersBetweenEmptyAndNonEmptyDigest()
-        {
-            // A v49+ leaf AB (no digest) and a v49+ AB with a digest must not share a cache key, even though
-            // both go through the v49 path — the digest is a real discriminator and absence is meaningful.
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 leaf = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
-            Hash128 withDigest = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
-
-            Assert.That(leaf, Is.Not.EqualTo(withDigest));
-        }
-
-        [Test]
-        public void V49HashDiffersWhenHashDiffers()
-        {
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("hashA", "v49", DIGEST_A);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("hashB", "v49", DIGEST_A);
+            // The digest travels inside the hash, so two dependency closures of the same bare hash produce
+            // different Unity-cache keys.
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_B}_mac", "v49");
 
             Assert.That(a, Is.Not.EqualTo(b));
         }
@@ -229,9 +194,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void V49HashDiffersWhenVersionDiffers()
         {
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", DIGEST_A);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v50", DIGEST_A);
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v50");
 
             Assert.That(a, Is.Not.EqualTo(b));
         }
@@ -239,10 +203,10 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void V49DelimiterPreventsBoundaryCollisions()
         {
-            // Without delimiters, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce the
-            // same byte stream.
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("9foo", "v4", string.Empty);
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("foo", "v49", string.Empty);
+            // Without the delimiter, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce
+            // the same byte stream.
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("9foo", "v4");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("foo", "v49");
 
             Assert.That(a, Is.Not.EqualTo(b));
         }
@@ -250,9 +214,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LegacyHashIsStableForSameInputs()
         {
-            const string hash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
 
             Assert.That(a, Is.EqualTo(b));
         }
@@ -262,11 +225,21 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             // Pre-v49 ABs have no per-file freshness signal, so buildDate is the only thing that flushes the cache
             // when dependencies might have changed — verify it is actually contributing to the key.
-            const string hash = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-01");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "2026-05-02");
+            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
+            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-02");
 
             Assert.That(a, Is.Not.EqualTo(b));
+        }
+
+        [Test]
+        public void V49AndLegacyDoNotCollideForSameHash()
+        {
+            // A v49+ AB with a digest-less name must not accidentally produce the same Hash128 as the legacy path
+            // for the same hash, even if the legacy buildDate happens to equal the v49 version string.
+            Hash128 legacy = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_A, "v49");
+            Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(HASH_A, "v49");
+
+            Assert.That(legacy, Is.Not.EqualTo(v49));
         }
 
         [Test]
@@ -288,49 +261,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             var nonNumeric = AssetBundleManifestVersion.CreateFromFallback("vfoo", "dummyDate");
             Assert.That(nonNumeric.SupportsDepsDigests(), Is.False);
-        }
-
-        [Test]
-        public void V49AndLegacyDoNotCollideForSameHash()
-        {
-            // A v49+ leaf AB with no digest must not accidentally produce the same Hash128 as the legacy path for
-            // the same bare hash, even if the legacy buildDate happens to equal the v49 version string.
-            const string hash = "bafkreif5xmg4un7cm4ouyqfoluc6ifcdouiatassnv5pykell4e4mw5xc4";
-            Hash128 legacy = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(hash, "v49");
-            Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(hash, "v49", string.Empty);
-
-            Assert.That(legacy, Is.Not.EqualTo(v49));
-        }
-
-        [Test]
-        public void Gate_DisablesV49DigestSupportEvenForV49Manifests()
-        {
-            // With the kill-switch off, every manifest must report SupportsDepsDigests() == false so the dispatch
-            // in PrepareCommonArguments takes the legacy path for v49 traffic too.
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = false;
-            try
-            {
-                var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-                Assert.That(manifest.SupportsDepsDigests(), Is.False);
-            }
-            finally { AssetBundleManifestVersion.DepsDigestKeyingEnabled = true; }
-        }
-
-        [Test]
-        public void Gate_SuppressesDigestLookupsAndInjection()
-        {
-            // With the kill-switch off, TryGetDepsDigest must not return digests even if InjectDepsDigests is
-            // called — guarantees ComposeCacheKey returns the bare hash and GLTF/AB cache keys stay legacy-shaped.
-            AssetBundleManifestVersion.DepsDigestKeyingEnabled = false;
-            try
-            {
-                var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-                manifest.InjectDepsDigests(new[] { $"X_{DIGEST_A}_mac" });
-
-                Assert.That(manifest.TryGetDepsDigest("X", out _), Is.False);
-                Assert.That(manifest.ComposeCacheKey("X"), Is.EqualTo("X"));
-            }
-            finally { AssetBundleManifestVersion.DepsDigestKeyingEnabled = true; }
         }
     }
 }

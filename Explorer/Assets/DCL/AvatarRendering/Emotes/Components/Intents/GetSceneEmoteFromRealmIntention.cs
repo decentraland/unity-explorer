@@ -59,9 +59,13 @@ namespace DCL.AvatarRendering.Emotes
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
+            // Scene emotes are part of the scene's converted content — resolve to the manifest's digest-bearing
+            // file name (v49+) so the URL and cache identity match the rest of the scene's ABs.
+            string platformHash = SceneAssetBundleManifestVersion.GetHashWithDigest(this.EmoteHash + PlatformUtils.GetCurrentPlatform());
+
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
-                    this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    platformHash,
                     typeof(GameObject),
                     assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,

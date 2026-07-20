@@ -1,7 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using DCL.Utility;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -35,13 +34,6 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         internal Hash128? cacheHash;
 
-        /// <summary>
-        ///     Per-file dependency digest from the v49+ scene asset-bundle manifest. Two scenes can request the same
-        ///     <see cref="Hash"/> with different dependency closures; this field disambiguates them in the cache.
-        ///     Empty for legacy (pre-v49) entries — those keep their historical key.
-        /// </summary>
-        public string? DepsDigest;
-
         public bool IsDependency;
         public bool LookForDependencies;
 
@@ -62,7 +54,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
-            DepsDigest = null;
 
             ParentEntityID = parentEntityID;
             AssetBundleManifestVersion = assetBundleVersion;
@@ -75,9 +66,10 @@ namespace ECS.StreamableLoading.AssetBundles
             CommonArguments = commonArguments;
         }
 
+        // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name itself
+        // (<hash>_<depsDigest>_<platform>), so two dependency closures never share a Hash.
         public bool Equals(GetAssetBundleIntention other) =>
-            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash)
-            && StringComparer.OrdinalIgnoreCase.Equals(DepsDigest ?? string.Empty, other.DepsDigest ?? string.Empty);
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
@@ -96,15 +88,10 @@ namespace ECS.StreamableLoading.AssetBundles
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(
-                StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty),
-                StringComparer.OrdinalIgnoreCase.GetHashCode(DepsDigest ?? string.Empty));
+            StringComparer.OrdinalIgnoreCase.GetHashCode(Hash ?? string.Empty);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
-
-        public static string BuildInitialSceneStateURL(string initialSceneStateID) =>
-            $"staticscene_{initialSceneStateID}{PlatformUtils.GetCurrentPlatform()}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
         {
@@ -114,11 +101,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
             {
+                // v49+ hashes carry the deps digest inside the name, so the hash alone keys the on-disk file;
+                // digest-less hashes produce the same key as before this scheme, keeping legacy entries hitting.
                 keyPayload.Put(asset.Hash ?? asset.Name!);
-
-                // Only contribute to the disk key when present so legacy 2-part-filename entries keep their existing on-disk file.
-                if (!string.IsNullOrEmpty(asset.DepsDigest))
-                    keyPayload.Put(asset.DepsDigest);
             }
         }
 

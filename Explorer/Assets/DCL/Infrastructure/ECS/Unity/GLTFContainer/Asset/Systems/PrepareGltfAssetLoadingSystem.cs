@@ -70,14 +70,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
             {
-                var abIntention = GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}", intention.Name);
-                // Pre-populate so PrepareAssetBundleLoadingParametersSystem doesn't have to look it up by the
-                // platform-suffixed hash (the digest map is keyed by bare hashes).
-                //This will go away when the urls include the depsDigest
-                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest
-                    && manifest.TryGetDepsDigest(intention.Hash, out string digest))
-                    abIntention.DepsDigest = digest;
-                World.Add(entity, abIntention);
+                // For v49+ manifests the hash resolves to the digest-bearing file name
+                // (<hash>_<depsDigest>_<platform>) — the name that actually exists on the CDN and the sole
+                // identity used by every cache layer downstream.
+                string platformHash = $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}";
+
+                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest)
+                    platformHash = manifest.GetHashWithDigest(platformHash);
+
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), platformHash, intention.Name));
             }
         }
 
