@@ -25,9 +25,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ResolveHashWithDigestToVerbatimManifestEntry()
+        public void ResolveCdnRequestHashToVerbatimManifestEntry()
         {
-            // GetHashWithDigest strips the *current* platform suffix off the input, so the manifest entries must be
+            // ResolveCdnRequestHash strips the *current* platform suffix off the input, so the manifest entries must be
             // built with it for the test to be platform-agnostic.
             string platform = PlatformUtils.GetCurrentPlatform();
 
@@ -35,17 +35,17 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 $"{HASH_LEGACY}{platform}",
                 $"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.GetHashWithDigest($"{HASH_A}{platform}"), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_A}{platform}"), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
-            Assert.That(manifest.GetHashWithDigest($"{HASH_LEGACY}{platform}"), Is.EqualTo($"{HASH_LEGACY}{platform}"),
+            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_LEGACY}{platform}"), Is.EqualTo($"{HASH_LEGACY}{platform}"),
                 "Files listed without a digest must fall back to the input hash");
 
-            Assert.That(manifest.GetHashWithDigest($"{HASH_B}{platform}"), Is.EqualTo($"{HASH_B}{platform}"),
+            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_B}{platform}"), Is.EqualTo($"{HASH_B}{platform}"),
                 "Hashes absent from the manifest must fall back to the input hash");
         }
 
         [Test]
-        public void ResolveHashWithDigestCaseInsensitivelyToManifestCasing()
+        public void ResolveCdnRequestHashCaseInsensitivelyToManifestCasing()
         {
             string platform = PlatformUtils.GetCurrentPlatform();
 
@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             // The lookup is case-insensitive and returns the manifest's casing — the CDN is case-sensitive,
             // so the verbatim entry is the one that actually exists.
-            Assert.That(manifest.GetHashWithDigest($"QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV{platform}"),
+            Assert.That(manifest.ResolveCdnRequestHash($"QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV{platform}"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}"));
         }
 

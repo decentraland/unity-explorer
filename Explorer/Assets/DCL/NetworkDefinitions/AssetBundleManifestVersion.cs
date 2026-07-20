@@ -122,7 +122,7 @@ public class AssetBundleManifestVersion
         ///     case-insensitive and the returned name carries the manifest's casing — the name that actually
         ///     exists on the case-sensitive CDN.
         /// </summary>
-        public string GetHashWithDigest(string hash)
+        public string ResolveCdnRequestHash(string hash)
         {
             if (depsFiles == null)
                 return hash;
@@ -136,7 +136,7 @@ public class AssetBundleManifestVersion
         }
 
         /// <summary>
-        ///     Same resolution as <see cref="GetHashWithDigest" /> but keyed by the bare hash (no platform suffix).
+        ///     Same resolution as <see cref="ResolveCdnRequestHash" /> but keyed by the bare hash (no platform suffix).
         /// </summary>
         public bool TryGetFileNameWithDigest(string bareHash, out string fileName)
         {
