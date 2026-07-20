@@ -42,11 +42,11 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void FailRegistrationNamingTheToolWithAnInvalidSchema()
+        public void FailRegistrationNamingTheToolWithAnInvalidOutputSchema()
         {
             // Arrange
             var registry = new McpToolsRegistry()
-               .Add(new FakeTool("broken", McpToolAnnotations.ReadOnly(), new JObject()));
+               .Add(new FakeTool("broken", McpToolAnnotations.ReadOnly(), outputSchema: new JObject()));
 
             // Act & Assert
             InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => registry.Build());
@@ -125,7 +125,7 @@ namespace DCL.McpServer.Tests
             var tool = new FakeTool("known", McpToolAnnotations.ReadOnly());
             var registry = new McpToolsRegistry().Add(tool);
 
-            bool found = registry.TryGet("known", out IMcpTool? resolved);
+            bool found = registry.TryGet("known", out McpTool? resolved);
 
             Assert.That(found, Is.True);
             Assert.That(resolved, Is.SameAs(tool));
@@ -136,7 +136,7 @@ namespace DCL.McpServer.Tests
         {
             var registry = new McpToolsRegistry().Add(new FakeTool("known", McpToolAnnotations.ReadOnly()));
 
-            Assert.That(registry.TryGet("missing", out IMcpTool? resolved), Is.False);
+            Assert.That(registry.TryGet("missing", out McpTool? resolved), Is.False);
             Assert.That(resolved, Is.Null);
         }
 
@@ -145,10 +145,10 @@ namespace DCL.McpServer.Tests
         {
             var registry = new McpToolsRegistry().Add(new FakeTool("known", McpToolAnnotations.ReadOnly()));
 
-            Assert.That(registry.TryGet(null, out IMcpTool? byNull), Is.False);
+            Assert.That(registry.TryGet(null, out McpTool? byNull), Is.False);
             Assert.That(byNull, Is.Null);
 
-            Assert.That(registry.TryGet(string.Empty, out IMcpTool? byEmpty), Is.False);
+            Assert.That(registry.TryGet(string.Empty, out McpTool? byEmpty), Is.False);
             Assert.That(byEmpty, Is.Null);
         }
 
@@ -184,27 +184,24 @@ namespace DCL.McpServer.Tests
             return null!;
         }
 
-        private class FakeTool : IMcpTool
+        private class FakeTool : McpTool
         {
-            public string Name { get; }
+            public override string Name { get; }
 
-            public McpToolAnnotations Annotations { get; }
+            public override McpToolAnnotations Annotations { get; }
 
-            public string Description => "fake";
+            public override string Description => "fake";
 
-            public JObject InputSchema { get; }
+            public override JObject? OutputSchema { get; }
 
-            public JObject? OutputSchema { get; }
-
-            public FakeTool(string name, McpToolAnnotations annotations, JObject? inputSchema = null, JObject? outputSchema = null)
+            public FakeTool(string name, McpToolAnnotations annotations, JObject? outputSchema = null)
             {
                 Name = name;
                 Annotations = annotations;
-                InputSchema = inputSchema ?? McpJsonSchema.Object().Build();
                 OutputSchema = outputSchema;
             }
 
-            public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct) =>
+            public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct) =>
                 UniTask.FromResult(McpToolResult.Text("fake"));
         }
     }

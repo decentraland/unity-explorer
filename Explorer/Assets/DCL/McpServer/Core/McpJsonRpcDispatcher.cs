@@ -129,7 +129,7 @@ namespace DCL.McpServer.Core
 
         private async UniTask<string?> CallToolAsync(JToken id, string? toolName, JObject arguments, CancellationToken ct)
         {
-            if (!tools.TryGet(toolName, out IMcpTool? tool))
+            if (!tools.TryGet(toolName, out McpTool? tool))
                 return JsonRpcEnvelope.Error(id, INVALID_PARAMS, $"Unknown tool: {toolName ?? "<missing>"}");
 
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);

@@ -81,7 +81,7 @@ curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
 
 ## Structured output
 
-`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `IMcpTool.OutputSchema` (default `null`); the same `McpInputSchema` builder produces the schema.
+`get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `McpTool.OutputSchema` (default `null`); the same `McpJsonSchema` builder produces the schema.
 
 ## The scene-iteration loop
 
@@ -115,7 +115,7 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 ## Implementation map
 
 - `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
-  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `IMcpTool`, `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpInputSchema` (typed input-schema builder).
+  - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder).
   - `Tools/` — one class per tool (16).
   - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerClickIntent`.
   - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerClickSystem` (synthetic entity clicks).

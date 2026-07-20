@@ -18,7 +18,7 @@ namespace DCL.McpServer.Tools
     ///     Holds a movement input on the player for a duration via <see cref="McpMovementOverride" />,
     ///     exercising the regular locomotion pipeline (velocity, collisions, jumps) instead of teleporting.
     /// </summary>
-    public class WalkTool : IMcpTool
+    public class WalkTool : McpTool
     {
         private const float MIN_SECONDS = 0.1f;
         private const float MAX_SECONDS = 30f;
@@ -27,22 +27,20 @@ namespace DCL.McpServer.Tools
         private readonly World world;
         private readonly Entity playerEntity;
 
-        public string Name => "walk";
+        public override string Name => "walk";
 
-        public string Description =>
+        public override string Description =>
             "Walk/jog/run the player in a camera-relative direction for a number of seconds through the real locomotion pipeline "
             + "(collisions apply). directionY is forward, directionX is strafe right. Returns the start and end positions.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Number("directionX", "Strafe axis: 1 right, -1 left.", required: true)
-                          .Number("directionY", "Forward axis: 1 forward, -1 backward.", required: true)
-                          .Number("seconds", "How long to hold the movement. Default 1, max 30.")
-                          .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
-                          .Boolean("jump", "Jump once at the start of the movement. Default false.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("directionX", "Strafe axis: 1 right, -1 left.", required: true)
+                  .Number("directionY", "Forward axis: 1 forward, -1 backward.", required: true)
+                  .Number("seconds", "How long to hold the movement. Default 1, max 30.")
+                  .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
+                  .Boolean("jump", "Jump once at the start of the movement. Default false.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
         public WalkTool(World world, Entity playerEntity)
         {
@@ -50,7 +48,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             var direction = new Vector2(arguments.GetFloat("directionX", 0f), arguments.GetFloat("directionY", 0f));
 

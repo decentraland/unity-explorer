@@ -8,7 +8,7 @@ namespace DCL.McpServer.Core
 {
     public class McpToolsRegistry
     {
-        private readonly Dictionary<string, IMcpTool> tools = new ();
+        private readonly Dictionary<string, McpTool> tools = new ();
         private string toolsListJson = null!;
 
         /// <summary>
@@ -18,7 +18,7 @@ namespace DCL.McpServer.Core
         /// </summary>
         public JRaw ToolsListPayload() => new (toolsListJson);
 
-        public McpToolsRegistry Add(IMcpTool tool)
+        public McpToolsRegistry Add(McpTool tool)
         {
             tools.Add(tool.Name, tool);
             return this;
@@ -28,13 +28,8 @@ namespace DCL.McpServer.Core
         {
             var toolsArray = new JArray();
 
-            foreach (IMcpTool tool in tools.Values)
+            foreach (McpTool tool in tools.Values)
             {
-                JObject inputSchema = tool.InputSchema;
-
-                if (!IsObjectSchema(inputSchema))
-                    throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid input schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpJsonSchema.");
-
                 if (tool.OutputSchema != null && !IsObjectSchema(tool.OutputSchema))
                     throw new InvalidOperationException($"MCP tool '{tool.Name}' produced an invalid output schema: expected a JSON Schema object (\"type\": \"object\"). Build it with McpJsonSchema.");
 
@@ -42,7 +37,7 @@ namespace DCL.McpServer.Core
                 {
                     ["name"] = tool.Name,
                     ["description"] = tool.Description,
-                    ["inputSchema"] = inputSchema,
+                    ["inputSchema"] = tool.InputSchema,
                     ["annotations"] = tool.Annotations.ToJObject(),
                 };
 
@@ -59,7 +54,7 @@ namespace DCL.McpServer.Core
         private static bool IsObjectSchema(JObject schema) =>
             schema["type"]?.Value<string>() == "object";
 
-        public bool TryGet(string? name, [NotNullWhen(true)] out IMcpTool? tool)
+        public bool TryGet(string? name, [NotNullWhen(true)] out McpTool? tool)
         {
             tool = null;
 

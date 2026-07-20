@@ -17,7 +17,7 @@ namespace DCL.McpServer.Tools
     ///     Teleports through the same /goto command pipeline a user teleport takes (loading screen included),
     ///     then polls until the destination scene is ready or the timeout elapses.
     /// </summary>
-    public class TeleportTool : IMcpTool
+    public class TeleportTool : McpTool
     {
         private const int POLL_INTERVAL_MS = 500;
         private const float MIN_TIMEOUT_SEC = 5f;
@@ -28,21 +28,19 @@ namespace DCL.McpServer.Tools
         private readonly IScenesCache scenesCache;
         private readonly ILoadingStatus loadingStatus;
 
-        public string Name => "teleport";
+        public override string Name => "teleport";
 
-        public string Description =>
+        public override string Description =>
             "Teleport the player to a parcel (x,y) through the regular /goto flow and wait until the destination scene is ready. "
             + "Reports the final scene state; follow up with get_scene_state for details.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Integer("x", "Target parcel X coordinate.", required: true)
-                          .Integer("y", "Target parcel Y coordinate.", required: true)
-                          .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")
-                          .Number("timeoutSec", "Maximum seconds to wait for readiness. Default 60.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Integer("x", "Target parcel X coordinate.", required: true)
+                  .Integer("y", "Target parcel Y coordinate.", required: true)
+                  .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")
+                  .Number("timeoutSec", "Maximum seconds to wait for readiness. Default 60.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public TeleportTool(IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, ILoadingStatus loadingStatus)
         {
@@ -51,7 +49,7 @@ namespace DCL.McpServer.Tools
             this.loadingStatus = loadingStatus;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("x", out int x) || !arguments.TryGetInt("y", out int y))
                 return McpToolResult.Error("Both x and y parcel coordinates are required.");

@@ -15,7 +15,7 @@ namespace DCL.McpServer.Tools
     ///     Lists the entity ids of the current scene's ECS world through the same unsynchronized
     ///     <see cref="IWorldInfoHub" /> path the existing debug tooling uses.
     /// </summary>
-    public class ListSceneEntitiesTool : IMcpTool
+    public class ListSceneEntitiesTool : McpTool
     {
         private const int DEFAULT_LIMIT = 200;
         private const int MAX_LIMIT = 2000;
@@ -23,17 +23,15 @@ namespace DCL.McpServer.Tools
 
         private readonly IWorldInfoHub worldInfoHub;
 
-        public string Name => "list_scene_entities";
+        public override string Name => "list_scene_entities";
 
-        public string Description =>
+        public override string Description =>
             "List the ECS entity ids of the scene at the player's current parcel. Feed an id into get_entity_details to inspect its components.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Integer("limit", "Maximum ids to return. Default 200.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Integer("limit", "Maximum ids to return. Default 200.");
 
-        public JObject OutputSchema =>
+        public override JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Integer("total")
                           .Integer("returned")
@@ -41,14 +39,14 @@ namespace DCL.McpServer.Tools
                           .IntegerArray("entityIds")
                           .Build();
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public ListSceneEntitiesTool(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;
         }
 
-        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
 

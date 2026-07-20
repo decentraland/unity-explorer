@@ -18,7 +18,7 @@ namespace DCL.McpServer.Tools
     ///     Enters Free mode when needed (same scene-lock gates as <see cref="SetCameraModeTool" />) and waits
     ///     for the Cinemachine blend to reach the target before reporting the actual pose.
     /// </summary>
-    public class SetCameraPoseTool : IMcpTool
+    public class SetCameraPoseTool : McpTool
     {
         private const float DEFAULT_TIMEOUT_SEC = 5f;
         private const float MIN_TIMEOUT_SEC = 0.5f;
@@ -32,26 +32,24 @@ namespace DCL.McpServer.Tools
         private readonly Entity playerEntity;
         private readonly ExposedCameraData exposedCameraData;
 
-        public string Name => "set_camera_pose";
+        public override string Name => "set_camera_pose";
 
-        public string Description =>
+        public override string Description =>
             "Place the free camera at an absolute world position, optionally aiming it at a point and setting its field of view. "
             + "Enters the free camera mode if needed (refuses with the reason when the scene locks the camera). The camera stays "
             + "put while the player moves; restore a player-following view with set_camera_mode third_person.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Number("x", "Camera world position.", required: true)
-                          .Number("y", required: true)
-                          .Number("z", required: true)
-                          .Number("lookAtX", "Optional world point to aim at (all three lookAt components required together).")
-                          .Number("lookAtY")
-                          .Number("lookAtZ")
-                          .Number("fov", "Optional vertical field of view in degrees (10-120).")
-                          .Number("timeoutSec", "Seconds to wait for the camera to settle at the target. Default 5, max 15.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("x", "Camera world position.", required: true)
+                  .Number("y", required: true)
+                  .Number("z", required: true)
+                  .Number("lookAtX", "Optional world point to aim at (all three lookAt components required together).")
+                  .Number("lookAtY")
+                  .Number("lookAtZ")
+                  .Number("fov", "Optional vertical field of view in degrees (10-120).")
+                  .Number("timeoutSec", "Seconds to wait for the camera to settle at the target. Default 5, max 15.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public SetCameraPoseTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {
@@ -60,7 +58,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates for the camera position are required.");

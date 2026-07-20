@@ -17,7 +17,7 @@ namespace DCL.McpServer.Tools
     ///     Reloads the scene at the player's parcel, freezing character motion and the skybox during the reload
     ///     exactly like the local-scene-development hot reload does.
     /// </summary>
-    public class ReloadSceneTool : IMcpTool
+    public class ReloadSceneTool : McpTool
     {
         private const float MIN_TIMEOUT_SEC = 5f;
         private const float MAX_TIMEOUT_SEC = 120f;
@@ -29,18 +29,16 @@ namespace DCL.McpServer.Tools
         private readonly Entity playerEntity;
         private readonly Entity skyboxEntity;
 
-        public string Name => "reload_scene";
+        public override string Name => "reload_scene";
 
-        public string Description =>
+        public override string Description =>
             "Reload the scene at the player's current parcel and wait for it to restart. Use after editing scene code "
             + "when hot reload didn't trigger, or to reset scene state before a test run.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Number("timeoutSec", "Maximum seconds to wait for the reload. Default 15.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("timeoutSec", "Maximum seconds to wait for the reload. Default 15.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: true, idempotent: false);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: true, idempotent: false);
 
         public ReloadSceneTool(ECSReloadScene reloadScene, IScenesCache scenesCache, World world, Entity playerEntity, Entity skyboxEntity)
         {
@@ -51,7 +49,7 @@ namespace DCL.McpServer.Tools
             this.skyboxEntity = skyboxEntity;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 

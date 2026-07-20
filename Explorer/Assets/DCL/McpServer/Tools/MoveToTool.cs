@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.McpServer.Tools
 {
-    public class MoveToTool : IMcpTool
+    public class MoveToTool : McpTool
     {
         private const float MAX_DURATION_SEC = 30f;
         private const float COMPLETION_GRACE_SEC = 5f;
@@ -21,24 +21,22 @@ namespace DCL.McpServer.Tools
         private readonly World world;
         private readonly Entity playerEntity;
 
-        public string Name => "move_to";
+        public override string Name => "move_to";
 
-        public string Description =>
+        public override string Description =>
             "Move the player to a world-space position (x,y,z in meters; one parcel is 16x16m). Instant by default, or smooth over durationSec. "
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Number("x", required: true)
-                          .Number("y", required: true)
-                          .Number("z", required: true)
-                          .Number("lookAtX")
-                          .Number("lookAtY")
-                          .Number("lookAtZ")
-                          .Number("durationSec", "Seconds to move over; 0 (default) teleports instantly.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("x", required: true)
+                  .Number("y", required: true)
+                  .Number("z", required: true)
+                  .Number("lookAtX")
+                  .Number("lookAtY")
+                  .Number("lookAtZ")
+                  .Number("durationSec", "Seconds to move over; 0 (default) teleports instantly.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public MoveToTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity)
         {
@@ -47,7 +45,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");

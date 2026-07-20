@@ -9,31 +9,29 @@ using System.Threading;
 
 namespace DCL.McpServer.Tools
 {
-    public class GetEntityDetailsTool : IMcpTool
+    public class GetEntityDetailsTool : McpTool
     {
         private const int MAX_CHARS = 8000;
         private const string CURRENT_SCENE = "CURRENT";
 
         private readonly IWorldInfoHub worldInfoHub;
 
-        public string Name => "get_entity_details";
+        public override string Name => "get_entity_details";
 
-        public string Description =>
+        public override string Description =>
             "Dump all components of one entity in the current scene's ECS world (ids come from list_scene_entities).";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Integer("entityId", "Entity id within the current scene world.", required: true)
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Integer("entityId", "Entity id within the current scene world.", required: true);
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetEntityDetailsTool(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;
         }
 
-        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("entityId", out int entityId))
                 return UniTask.FromResult(McpToolResult.Error("entityId is required."));

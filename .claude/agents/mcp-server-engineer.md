@@ -30,7 +30,7 @@ Everything lives in `Explorer/Assets/DCL/McpServer/`, its own `DCL.McpServer` as
 | Piece | Path | Role |
 |---|---|---|
 | Plugin | `Systems/McpServerPlugin.cs` | Builds the tool registry in `InjectToWorld` (needs `GlobalPluginArguments.PlayerEntity/SkyboxEntity`), starts/disposes the server, wires the scene-log tap (`DiagnosticsContainer.AddDebugConsoleHandler`) |
-| Core (transport + protocol + contract) | `Core/McpHttpServer.cs`, `McpJsonRpcDispatcher.cs`, `IMcpTool.cs`, `McpToolsRegistry.cs`, `McpToolResult.cs`, `McpToolAnnotations.cs`, `McpInputSchema.cs` | `HttpListener` on `http://127.0.0.1:{port}/unity-explorer-mcp` (endpoint path is single-sourced in `McpHttpServer` — commit `7a734c77b`); POST → dispatch, GET → 405, Origin allowlist, 1 MB body cap; JSON-RPC 2.0 over Streamable HTTP (spec 2025-06-18), tools-only capability |
+| Core (transport + protocol + contract) | `Core/McpHttpServer.cs`, `McpJsonRpcDispatcher.cs`, `McpTool.cs`, `McpToolsRegistry.cs`, `McpToolResult.cs`, `McpToolAnnotations.cs`, `McpJsonSchema.cs` | `HttpListener` on `http://127.0.0.1:{port}/unity-explorer-mcp` (endpoint path is single-sourced in `McpHttpServer` — commit `7a734c77b`); POST → dispatch, GET → 405, Origin allowlist, 1 MB body cap; JSON-RPC 2.0 over Streamable HTTP (spec 2025-06-18), tools-only capability |
 | Tools | `Tools/*.cs` (one class per tool, 16) | The agent-facing surface |
 | Components | `Components/` — `McpMovementOverride`, `McpPointerClickIntent` | ECS intents for the input-driving tools |
 | Systems | `Systems/McpInputOverrideSystem.cs` (held movement), `Systems/McpPointerClickSystem.cs` (synthetic entity clicks) | Per-frame/pipeline-integrated drivers |
@@ -44,7 +44,7 @@ Request flow: `HttpListener` accepts on the thread pool → detached `UniTaskVoi
 
 ## Adding a tool — checklist
 
-1. One class in `Tools/`, implementing `IMcpTool` (`Name` snake_case, 1–2 sentence `Description` written for an agent, `InputSchema` as a `JObject` built with the `McpInputSchema` builder — malformed schemas fail at registration, not first use; `Annotations` behaviour hints; override the default-null `OutputSchema` only for tools returning `McpToolResult.TextWithStructured`).
+1. One class in `Tools/`, deriving from `McpTool` (`Name` snake_case, 1–2 sentence `Description` written for an agent, argument fields declared by overriding `DescribeInput(McpJsonSchema schema)` — the base assembles the inputSchema, so it is valid by construction; omit the override for tools without arguments; `Annotations` behaviour hints; override the default-null `OutputSchema` only for tools returning `McpToolResult.TextWithStructured`).
 2. Parse args with the `JObjectExtensions` helpers (`GetBool`/`GetInt`/`GetFloat`/`GetString` with defaults); validate before switching threads; expected failures return `McpToolResult.Error(...)` (never throw — JSON-RPC errors are for protocol-level failures only).
 3. Register it in `McpServerPlugin.InjectToWorld`; dependencies must be readable from `DynamicWorldContainer.CreateAsync` scope (never mutate containers).
 4. ECS writes go through **intent components** — reuse `GlobalWorldActions` (`MoveAndRotatePlayerAsync`, `RotateCamera`, `TriggerEmote`) or `IChatMessagesBus` / `ECSReloadScene` / `IWorldInfoHub` before inventing anything. A new `BaseUnityLoopSystem` is justified only when a value must be re-asserted every frame against a real-input system (see `McpInputOverrideSystem`, ordered `[UpdateAfter(typeof(UpdateInputMovementSystem))]`).

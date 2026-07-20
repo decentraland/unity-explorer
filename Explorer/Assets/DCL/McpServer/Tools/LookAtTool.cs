@@ -11,26 +11,24 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    public class LookAtTool : IMcpTool
+    public class LookAtTool : McpTool
     {
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly ExposedCameraData exposedCameraData;
 
-        public string Name => "look_at";
+        public override string Name => "look_at";
 
-        public string Description =>
+        public override string Description =>
             "Rotate the camera to look at a world-space point (x,y,z in meters). Useful to center something on screen before a screenshot.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Number("x", required: true)
-                          .Number("y", required: true)
-                          .Number("z", required: true)
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Number("x", required: true)
+                  .Number("y", required: true)
+                  .Number("z", required: true);
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public LookAtTool(IGlobalWorldActions globalWorldActions, World world, Entity playerEntity, ExposedCameraData exposedCameraData)
         {
@@ -40,7 +38,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");

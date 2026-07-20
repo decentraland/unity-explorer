@@ -191,11 +191,11 @@ namespace DCL.McpServer.Tests
             Assert.That(error["code"]!.Value<int>(), Is.EqualTo(-32600));
         }
 
-        private static McpJsonRpcDispatcher DispatcherWith(params IMcpTool[] tools)
+        private static McpJsonRpcDispatcher DispatcherWith(params McpTool[] tools)
         {
             var registry = new McpToolsRegistry();
 
-            foreach (IMcpTool tool in tools)
+            foreach (McpTool tool in tools)
                 registry.Add(tool);
 
             registry.Build();

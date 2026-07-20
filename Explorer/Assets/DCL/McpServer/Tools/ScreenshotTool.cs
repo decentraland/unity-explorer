@@ -23,7 +23,7 @@ namespace DCL.McpServer.Tools
     ///     downscales it and returns it as an MCP image content block. Textures never accumulate:
     ///     temporaries are released per call and the ReadPixels fallback reuses one persistent buffer.
     /// </summary>
-    public class ScreenshotTool : IMcpTool, IDisposable
+    public class ScreenshotTool : McpTool, IDisposable
     {
         private const int DEFAULT_MAX_WIDTH = 1280;
         private const int MIN_WIDTH = 64;
@@ -42,20 +42,18 @@ namespace DCL.McpServer.Tools
         // check-and-set below runs without preemption before the first await.
         private bool capturing;
 
-        public string Name => "screenshot";
+        public override string Name => "screenshot";
 
-        public string Description =>
+        public override string Description =>
             "Capture a screenshot of what the player currently sees in the Explorer, including scene UI. "
             + "Use worldOnly to exclude all UI overlays. Returns a downscaled image plus a caption with the capture context.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .Integer("maxWidth", "Maximum output width in pixels (aspect ratio preserved). Default 1280.")
-                          .String("quality", "Output encoding. Default jpg.", enumValues: new[] { "jpg", "png" })
-                          .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.")
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.Integer("maxWidth", "Maximum output width in pixels (aspect ratio preserved). Default 1280.")
+                  .String("quality", "Output encoding. Default jpg.", enumValues: new[] { "jpg", "png" })
+                  .Boolean("worldOnly", "Render only the 3D world through the main camera, excluding UI. Default false.");
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public ScreenshotTool(ICoroutineRunner coroutineRunner, World world, Entity playerEntity)
         {
@@ -70,7 +68,7 @@ namespace DCL.McpServer.Tools
                 Object.Destroy(readPixelsBuffer);
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
             bool asPng = arguments.GetString("quality", "jpg") == "png";

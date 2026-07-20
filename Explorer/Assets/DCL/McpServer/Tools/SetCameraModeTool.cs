@@ -15,24 +15,22 @@ namespace DCL.McpServer.Tools
     ///     <c>ControlCinemachineVirtualCameraSystem</c> applies it next frame). The direct write bypasses the user-input
     ///     gates, so this tool re-checks them itself and refuses when a scene holds the camera.
     /// </summary>
-    public class SetCameraModeTool : IMcpTool
+    public class SetCameraModeTool : McpTool
     {
         private readonly World world;
         private readonly ExposedCameraData exposedCameraData;
 
-        public string Name => "set_camera_mode";
+        public override string Name => "set_camera_mode";
 
-        public string Description =>
+        public override string Description =>
             "Switch the player camera mode (first_person, third_person, drone, or the free-fly camera), like a user pressing the camera key. "
             + "Refuses with an explanation when the scene locks the mode (CameraModeArea, scene virtual camera, photo camera). "
             + "Any player movement drops free back to third_person.";
 
-        public JObject InputSchema =>
-            McpJsonSchema.Object()
-                          .String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true)
-                          .Build();
+        protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
+            schema.String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true);
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
+        public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
         public SetCameraModeTool(World world, ExposedCameraData exposedCameraData)
         {
@@ -40,7 +38,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             CameraMode targetMode;
 

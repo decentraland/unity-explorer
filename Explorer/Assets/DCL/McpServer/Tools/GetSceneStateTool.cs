@@ -11,22 +11,20 @@ using UnityEngine;
 
 namespace DCL.McpServer.Tools
 {
-    public class GetSceneStateTool : IMcpTool
+    public class GetSceneStateTool : McpTool
     {
         private readonly IScenesCache scenesCache;
         private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ILoadingStatus loadingStatus;
         private readonly bool localSceneDevelopment;
 
-        public string Name => "get_scene_state";
+        public override string Name => "get_scene_state";
 
-        public string Description =>
+        public override string Description =>
             "Read the state of the scene at the player's current parcel: name, base parcel, runtime state (including JavaScript/ECS errors), "
             + "readiness, asset loading progress and the global loading-screen stage. Call this after teleporting or reloading before interacting.";
 
-        public JObject InputSchema => McpJsonSchema.Object().Build();
-
-        public JObject OutputSchema =>
+        public override JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Object("currentParcel", JObjectExtensions.ParcelSchema())
                           .String("loadingStage")
@@ -43,7 +41,7 @@ namespace DCL.McpServer.Tools
                               "The scene at the player's current parcel, or null when no scene is loaded there.", nullable: true)
                           .Build();
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetSceneStateTool(IScenesCache scenesCache, ICurrentSceneInfo currentSceneInfo, ILoadingStatus loadingStatus, bool localSceneDevelopment)
         {
@@ -53,7 +51,7 @@ namespace DCL.McpServer.Tools
             this.localSceneDevelopment = localSceneDevelopment;
         }
 
-        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             Vector2Int currentParcel = scenesCache.CurrentParcel.Value;
             ISceneFacade? scene = scenesCache.CurrentScene.Value;

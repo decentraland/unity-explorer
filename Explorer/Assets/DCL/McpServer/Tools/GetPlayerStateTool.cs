@@ -14,22 +14,20 @@ using Utility;
 
 namespace DCL.McpServer.Tools
 {
-    public class GetPlayerStateTool : IMcpTool
+    public class GetPlayerStateTool : McpTool
     {
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly ExposedCameraData exposedCameraData;
         private readonly ICurrentSceneInfo currentSceneInfo;
 
-        public string Name => "get_player_state";
+        public override string Name => "get_player_state";
 
-        public string Description =>
+        public override string Description =>
             "Read the player's current world position, rotation, parcel, velocity and grounded state, the camera position, rotation and mode, "
             + "and the wallet address — use the address to tell Explorer instances apart when several run at once.";
 
-        public JObject InputSchema => McpJsonSchema.Object().Build();
-
-        public JObject OutputSchema =>
+        public override JObject OutputSchema =>
             McpJsonSchema.Object()
                           .Object("position", JObjectExtensions.VectorSchema())
                           .Object("rotationEuler", JObjectExtensions.VectorSchema())
@@ -46,7 +44,7 @@ namespace DCL.McpServer.Tools
                                                           .Boolean("pointerLocked"))
                           .Build();
 
-        public McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
+        public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
         public GetPlayerStateTool(World world, Entity playerEntity, ExposedCameraData exposedCameraData, ICurrentSceneInfo currentSceneInfo)
         {
@@ -56,7 +54,7 @@ namespace DCL.McpServer.Tools
             this.currentSceneInfo = currentSceneInfo;
         }
 
-        public UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             CharacterTransform characterTransform = world.Get<CharacterTransform>(playerEntity);
             Vector3 position = characterTransform.Position;
