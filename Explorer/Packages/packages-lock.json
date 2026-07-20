@@ -140,7 +140,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a1a8ecc571c94de45b23bea1569854326a0ba7c9"
+      "hash": "de4cce8340ab6a0afafd1b1fc871dcb19013bff3"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#fix/unity-6000.5.4-api-compat",
@@ -535,11 +535,11 @@
       "hash": "84a79b486b171068b1429cf61c9081b59a7cf276"
     },
     "io.sentry.unity": {
-      "version": "https://github.com/getsentry/unity.git#4.0.0",
+      "version": "https://github.com/getsentry/unity.git#4.7.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "ad36b581ab86a846c33a7d509acb9a0dd9016bde"
+      "hash": "2768f82362e9d6468f1fcf7fd43e922e54c1b0ff"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
