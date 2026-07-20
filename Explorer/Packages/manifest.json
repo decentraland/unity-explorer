@@ -48,7 +48,7 @@
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#fix/unity-6000.5.4-api-compat",
     "io.livekit.unity": "https://github.com/livekit/client-sdk-unity-web.git",
-    "io.sentry.unity": "https://github.com/getsentry/unity.git#4.0.0",
+    "io.sentry.unity": "https://github.com/getsentry/unity.git#4.7.0",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
     "org.decentraland.clearscript": "https://github.com/decentraland/ClearScript.git?path=/Unity/Package#7.5.1.a",
     "superscrollview": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",
