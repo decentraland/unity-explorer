@@ -96,7 +96,9 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            state.AcquiredBudget!.Release();
+            // Null-safe: the pooled state can be recycled (budget disposed and nulled) if the promise is
+            // forgotten/cancelled while this detached flow is mid-await
+            state.AcquiredBudget?.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
