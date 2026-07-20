@@ -21,6 +21,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
@@ -86,7 +87,7 @@ namespace DCL.Passport
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportProfileInfoController passportProfileInfoController;
@@ -100,6 +101,7 @@ namespace DCL.Passport
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly IFriendsService? friendsService;
         private readonly IWebRequestController webRequestController;
+        private readonly MarketplaceShopAPIClient marketplaceShopAPIClient;
         private readonly FriendsConnectivityStatusTracker? friendOnlineStatusCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -180,7 +182,7 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IInputBlock inputBlock,
@@ -206,7 +208,8 @@ namespace DCL.Passport
             CommunitiesDataProvider communitiesDataProvider,
             ImageControllerProvider imageControllerProvider,
             ColorPresetsSO colorPresets,
-            IWebRequestController webRequestController) : base(viewFactory)
+            IWebRequestController webRequestController,
+            MarketplaceShopAPIClient marketplaceShopAPIClient) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -247,6 +250,7 @@ namespace DCL.Passport
             this.imageControllerProvider = imageControllerProvider;
             this.colorPresets = colorPresets;
             this.webRequestController = webRequestController;
+            this.marketplaceShopAPIClient = marketplaceShopAPIClient;
 
             isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -314,6 +318,11 @@ namespace DCL.Passport
                 passportErrorsController,
                 passportProfileInfoController));
 
+            bool isCreditPurchaseEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_WEARABLE_PURCHASE)
+                                           && FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS);
+
+            var creditPurchaseBuyHandler = new CreditPurchaseBuyHandler(mvcManager, marketplaceShopAPIClient, webBrowser, isCreditPurchaseEnabled);
+
             overviewPassportModules.Add(new EquippedItemsPassportModuleController(
                 viewInstance.EquippedItemsModuleView,
                 world,
@@ -323,7 +332,8 @@ namespace DCL.Passport
                 thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
-                passportErrorsController));
+                passportErrorsController,
+                creditPurchaseBuyHandler));
 
             overviewPassportModules.Add(new BadgesOverviewPassportModuleController(
                 viewInstance.BadgesOverviewModuleView,
@@ -349,7 +359,8 @@ namespace DCL.Passport
                 categoryIcons,
                 webBrowser,
                 imageControllerProvider,
-                passportErrorsController);
+                passportErrorsController,
+                creditPurchaseBuyHandler);
             creationsPassportModules.Add(creationsDetailsPassportModuleController);
 
             cameraReelGalleryController = new CameraReelGalleryController(

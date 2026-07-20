@@ -89,7 +89,7 @@ namespace DCL.PluginSystem.Global
             IUserBlockingCache injectedUserBlockingCache,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatOrchestrator voiceChatOrchestrator,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.mainUIView = mainUIView;

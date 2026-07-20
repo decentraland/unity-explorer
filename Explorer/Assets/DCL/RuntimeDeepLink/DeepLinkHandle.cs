@@ -1,15 +1,23 @@
-using DCL.Utility.Types;
-
 namespace DCL.RuntimeDeepLink
 {
-    public interface IDeepLinkHandle
+    public enum DeepLinkHandleResult
     {
-        public string Name { get; }
+        CONSUMED,
+        NO_MATCHES,
 
         /// <summary>
-        /// Implementations of the method must be exception free.
+        ///     A signin deep link arrived that this instance must not consume: either no login here is waiting
+        ///     for one, or its authRequestId does not match the request this login minted. It is left untouched
+        ///     so the instance it was minted for can claim it from the shared bridge file, rather than a
+        ///     concurrent or idle Explorer instance consuming and deleting it first. Kept until claimed by the
+        ///     matching login (bounded by a timeout).
         /// </summary>
-        public Result HandleDeepLink(DeepLink deeplink);
+        DEFERRED,
+    }
+
+    public interface IDeepLinkHandle
+    {
+        DeepLinkHandleResult HandleDeepLink(DeepLink deeplink);
 
         class Null : IDeepLinkHandle
         {
@@ -17,10 +25,9 @@ namespace DCL.RuntimeDeepLink
 
             private Null() { }
 
-            public string Name => "Null Implementation";
 
-            public Result HandleDeepLink(DeepLink deeplink) =>
-                Result.SuccessResult();
+            public DeepLinkHandleResult HandleDeepLink(DeepLink deeplink) =>
+                DeepLinkHandleResult.CONSUMED;
         }
     }
 }

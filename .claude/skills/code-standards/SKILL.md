@@ -29,6 +29,8 @@ user-invocable: false
 
 **Exception:** serialized JSON DTO fields keep their wire-format casing — see *Serialized JSON DTOs* below.
 
+**Namespaces are domain names, not folder paths** — never suppress a folder-namespace mismatch with `// ReSharper disable once CheckNamespace`; fix the namespace or leave the warning visible. Full rule: `docs/code-style-guidelines.md` § Namespaces.
+
 ## Member Ordering
 
 Within a class, group members in this order:
