@@ -33,10 +33,9 @@ public class AssetBundleManifestVersion
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
-        private HashSet<string>? convertedFiles;
-
-        //Bare hash → verbatim manifest file name (<hash>_<depsDigest>_<platform>), see InjectDepsDigests
-        private IReadOnlyDictionary<string, string>? depsFiles;
+        //Digest-less platform-suffixed hash → canonical CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
+        private Dictionary<string, string>? cdnFiles;
+        private bool hasDepsDigests;
 
         public bool HasHashInPath()
         {
@@ -72,16 +71,10 @@ public class AssetBundleManifestVersion
             return int.TryParse(version.AsSpan(1), out parsed);
         }
 
-        /// <summary>Stores, per bare hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
+        /// <summary>Stores, keyed by the digest-less platform-suffixed hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (files == null || files.Length == 0)
-            {
-                depsFiles = null;
-                return;
-            }
-
-            Dictionary<string, string>? map = null;
+            if (files == null || files.Length == 0) return;
 
             foreach (string file in files)
             {
@@ -90,35 +83,24 @@ public class AssetBundleManifestVersion
                 string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
                 if (parts.Length < 3) continue;
 
-                map ??= new Dictionary<string, string>(new UrlHashComparer());
-                map[parts[0]] = file;
+                cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
+                cdnFiles[$"{parts[0]}_{parts[2]}"] = file;
+                hasDepsDigests = true;
             }
-
-            depsFiles = map;
         }
 
-        /// <summary>True when the deps map was injected — only scene manifests fetch <c>files[]</c>; wearables/emotes never do and keep buildDate cache keying.</summary>
+        /// <summary>True when digest-bearing files were injected — only scene manifests fetch <c>files[]</c>; wearables/emotes never do and keep buildDate cache keying.</summary>
         public bool HasDepsDigests() =>
-            depsFiles != null;
+            hasDepsDigests;
 
-        /// <summary>Resolves a platform-suffixed hash to the verbatim digest-bearing manifest entry (case-insensitive, keeping the manifest's casing), or returns the input unchanged when unlisted.</summary>
-        public string ResolveCdnRequestHash(string hash)
+        /// <summary>Resolves a platform-suffixed hash to the canonical CDN file name — digest-bearing and correctly cased when known (case-insensitive lookup) — or returns the input unchanged when unlisted.</summary>
+        public string ResolveCdnRequestHash(string hash) =>
+            TryResolveCdnRequestHash(hash, out string fileName) ? fileName : hash;
+
+        /// <summary>Same resolution as <see cref="ResolveCdnRequestHash" />, reporting whether the manifest knows the file.</summary>
+        public bool TryResolveCdnRequestHash(string hash, out string fileName)
         {
-            if (depsFiles == null)
-                return hash;
-
-            string platformSuffix = PlatformUtils.GetCurrentPlatform();
-
-            if (platformSuffix.Length > 0 && !hash.EndsWith(platformSuffix, StringComparison.OrdinalIgnoreCase))
-                return hash;
-
-            return depsFiles.TryGetValue(hash[..^platformSuffix.Length], out string fileName) ? fileName : hash;
-        }
-
-        /// <summary>Same resolution as <see cref="ResolveCdnRequestHash" /> but keyed by the bare hash (no platform suffix).</summary>
-        public bool TryGetFileNameWithDigest(string bareHash, out string fileName)
-        {
-            if (depsFiles != null && depsFiles.TryGetValue(bareHash, out fileName!))
+            if (cdnFiles != null && cdnFiles.TryGetValue(hash, out fileName!))
                 return true;
 
             fileName = string.Empty;
@@ -206,17 +188,6 @@ public class AssetBundleManifestVersion
             return assetBundleManifestVersion;
         }
 
-        public string CheckCasing(string inputHash)
-        {
-            if (convertedFiles == null || convertedFiles.Count == 0)
-                return inputHash;
-
-            if (convertedFiles.TryGetValue(inputHash, out string convertedFile))
-                return convertedFile;
-
-            return inputHash;
-        }
-
         public void InjectContent(string entityID, ContentDefinition[] entityDefinitionContent)
         {
             // TODO (JUANI): hack, for older Qm. Doesnt happen with bafk because they are all lowercase
@@ -230,15 +201,16 @@ public class AssetBundleManifestVersion
             // Maybe one day, when `Qm` deployments dont exist anymore, this method can be removed
             if (!AssetBundleManifestHelper.IsQmEntity(entityID)) return;
 
-            convertedFiles = new HashSet<string>(new UrlHashComparer());
+            cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
+            string platformSuffix = PlatformUtils.GetCurrentPlatform();
+            bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac);
 
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
-                    convertedFiles.Add($"{entityDefinitionContent[i].hash.ToLowerInvariant()}" + PlatformUtils.GetCurrentPlatform());
-
-            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                for (var i = 0; i < entityDefinitionContent.Length; i++)
-                    convertedFiles.Add($"{entityDefinitionContent[i].hash}" + PlatformUtils.GetCurrentPlatform());
+            // TryAdd so digest-bearing entries from InjectDepsDigests always win, regardless of injection order.
+            for (var i = 0; i < entityDefinitionContent.Length; i++)
+            {
+                string fileName = (lowerCase ? entityDefinitionContent[i].hash.ToLowerInvariant() : entityDefinitionContent[i].hash) + platformSuffix;
+                cdnFiles.TryAdd(fileName, fileName);
+            }
         }
     }
 

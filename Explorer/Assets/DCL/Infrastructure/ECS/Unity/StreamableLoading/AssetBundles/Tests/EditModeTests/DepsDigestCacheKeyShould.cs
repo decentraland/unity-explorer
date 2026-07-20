@@ -103,9 +103,44 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ComposeCacheKey_ReturnsVerbatimFileNameWhenPresent()
         {
-            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+            string platform = PlatformUtils.GetCurrentPlatform();
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}_mac"));
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+        }
+
+        [Test]
+        public void ResolveQmContentCasingThroughTheSameMap()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v35", "2026-05-01");
+
+            manifest.InjectContent("Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk",
+                new[] { new ContentDefinition { file = "model.glb", hash = "QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV" } });
+
+            Assert.That(manifest.HasDepsDigests(), Is.False, "Content casing entries must not switch cache keying to the v49 scheme");
+
+            Assert.That(manifest.ResolveCdnRequestHash($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}"),
+                Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}").IgnoreCase);
+        }
+
+        [Test]
+        public void PreferDigestEntriesOverContentCasingEntries()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+            const string QM_ENTITY_ID = "Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk";
+            const string QM_HASH = "qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv";
+
+            // Regardless of injection order, the digest-bearing manifest entry wins over the casing entry.
+            var contentFirst = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            contentFirst.InjectContent(QM_ENTITY_ID, new[] { new ContentDefinition { file = "model.glb", hash = QM_HASH } });
+            contentFirst.InjectDepsDigests(new[] { $"{QM_HASH}_{DIGEST_A}{platform}" });
+            Assert.That(contentFirst.ResolveCdnRequestHash($"{QM_HASH}{platform}"), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
+
+            var digestsFirst = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            digestsFirst.InjectDepsDigests(new[] { $"{QM_HASH}_{DIGEST_A}{platform}" });
+            digestsFirst.InjectContent(QM_ENTITY_ID, new[] { new ContentDefinition { file = "model.glb", hash = QM_HASH } });
+            Assert.That(digestsFirst.ResolveCdnRequestHash($"{QM_HASH}{platform}"), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
         }
 
         [Test]
