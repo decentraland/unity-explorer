@@ -67,12 +67,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                // v49+ hashes carry the deps digest inside the file name (<hash>_<depsDigest>_<platform>), so
-                // (version + hash) is unique per dependency closure. Dispatch on whether the manifest carries the
-                // deps map (only scene manifests do), not on whether this hash happens to carry a digest — an AB
-                // with a legacy 2-part name inside a mapped manifest would otherwise be keyed on buildDate,
-                // preventing cache sharing across CDN republishes. Wearables/emotes never carry the map and keep
-                // buildDate keying: their bundles are republished in place and cannot be reused across builds.
+                // Scene manifests carry the deps map and key on version+hash (the digest travels inside the hash); wearables/emotes never carry it and keep buildDate keying, as their bundles are republished in place.
                 assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.HasDepsDigests()
                     ? ComputeHashV49(assetBundleIntention.Hash,
                         assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion())
@@ -103,10 +98,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static unsafe Hash128 ComputeHashV49(string hash, string version)
         {
-            // The per-file deps digest embedded in the hash replaces the buildDate sledgehammer that was previously
-            // used to invalidate the cache whenever a dependency might have changed. Keying on (version + hash) lets
-            // the cache stay shareable across CDN republishes when the dependency closure is unchanged. The delimiter
-            // prevents boundary collisions between version and hash.
+            // The digest embedded in the hash replaces buildDate-based invalidation, keeping the cache shareable across CDN republishes; the delimiter prevents version/hash boundary collisions.
             ReadOnlySpan<char> hashSpan = hash.AsSpan();
             ReadOnlySpan<char> versionSpan = version.AsSpan();
 

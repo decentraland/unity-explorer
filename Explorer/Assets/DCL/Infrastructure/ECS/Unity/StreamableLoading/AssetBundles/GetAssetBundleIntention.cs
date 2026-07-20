@@ -66,8 +66,7 @@ namespace ECS.StreamableLoading.AssetBundles
             CommonArguments = commonArguments;
         }
 
-        // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name itself
-        // (<hash>_<depsDigest>_<platform>), so two dependency closures never share a Hash.
+        // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name, so two dependency closures never share a Hash.
         public bool Equals(GetAssetBundleIntention other) =>
             StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash);
 
@@ -101,8 +100,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
             {
-                // v49+ hashes carry the deps digest inside the name, so the hash alone keys the on-disk file;
-                // digest-less hashes produce the same key as before this scheme, keeping legacy entries hitting.
+                // The hash alone keys the on-disk file (v49+ hashes embed the digest); digest-less hashes keep their legacy key so existing entries keep hitting.
                 keyPayload.Put(asset.Hash ?? asset.Name!);
             }
         }

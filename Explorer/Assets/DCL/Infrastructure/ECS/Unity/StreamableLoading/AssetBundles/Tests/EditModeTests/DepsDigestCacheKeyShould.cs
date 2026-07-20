@@ -27,8 +27,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ResolveCdnRequestHashToVerbatimManifestEntry()
         {
-            // ResolveCdnRequestHash strips the *current* platform suffix off the input, so the manifest entries must be
-            // built with it for the test to be platform-agnostic.
+            // ResolveCdnRequestHash strips the *current* platform suffix, so entries are built with it to stay platform-agnostic.
             string platform = PlatformUtils.GetCurrentPlatform();
 
             AssetBundleManifestVersion manifest = CreateV49Manifest(
@@ -51,8 +50,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             AssetBundleManifestVersion manifest = CreateV49Manifest($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}");
 
-            // The lookup is case-insensitive and returns the manifest's casing — the CDN is case-sensitive,
-            // so the verbatim entry is the one that actually exists.
+            // The lookup is case-insensitive and returns the manifest's casing — the name that exists on the case-sensitive CDN.
             Assert.That(manifest.ResolveCdnRequestHash($"QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV{platform}"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}"));
         }
@@ -76,9 +74,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ReportDepsDigestsOnlyWhenMapWasInjected()
         {
-            // The cache-key dispatch (v49 version+hash vs legacy buildDate+hash) hinges on this: only manifests
-            // that received files[] (scenes) report true. Wearable/emote manifests never fetch files[] and must
-            // keep buildDate keying — their bundles are republished in place and cannot be reused across builds.
+            // The cache-key dispatch hinges on this: only scene manifests receive files[]; wearables/emotes must keep buildDate keying.
             var withoutMap = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
             Assert.That(withoutMap.HasDepsDigests(), Is.False);
 
@@ -115,8 +111,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void TreatIntentionsWithDifferentDigestBearingHashesAsDistinct()
         {
-            // The digest is part of the Hash itself, so two dependency closures of the same bare hash never
-            // collide in the in-memory AB cache.
+            // The digest is part of the Hash itself, so two dependency closures of the same bare hash never collide.
             var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
             var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac");
 
@@ -149,8 +144,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void PreserveLegacyDiskFilenameForDigestLessHashes()
         {
-            // A digest-less hash must produce the same on-disk file name as before this scheme so existing
-            // cached entries keep hitting after upgrade.
+            // A digest-less hash must keep its pre-scheme on-disk file name so existing cached entries keep hitting.
             var legacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
             var alsoLegacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
 
@@ -199,8 +193,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void V49HashDiffersWhenDigestBearingHashDiffers()
         {
-            // The digest travels inside the hash, so two dependency closures of the same bare hash produce
-            // different Unity-cache keys.
+            // The digest travels inside the hash, so two dependency closures produce different Unity-cache keys.
             Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
             Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_B}_mac", "v49");
 
@@ -219,8 +212,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void V49DelimiterPreventsBoundaryCollisions()
         {
-            // Without the delimiter, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce
-            // the same byte stream.
+            // Without the delimiter, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce the same byte stream.
             Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("9foo", "v4");
             Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("foo", "v49");
 
@@ -239,8 +231,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LegacyHashChangesWithBuildDate()
         {
-            // Pre-v49 ABs have no per-file freshness signal, so buildDate is the only thing that flushes the cache
-            // when dependencies might have changed — verify it is actually contributing to the key.
+            // Pre-v49 ABs have no per-file freshness signal — buildDate must contribute to the key to flush stale entries.
             Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
             Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-02");
 
@@ -250,8 +241,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void V49AndLegacyDoNotCollideForSameHash()
         {
-            // A v49+ AB with a digest-less name must not accidentally produce the same Hash128 as the legacy path
-            // for the same hash, even if the legacy buildDate happens to equal the v49 version string.
+            // A digest-less v49 hash must not collide with the legacy key even when buildDate equals the version string.
             Hash128 legacy = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_A, "v49");
             Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(HASH_A, "v49");
 

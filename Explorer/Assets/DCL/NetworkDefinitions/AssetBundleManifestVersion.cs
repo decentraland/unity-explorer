@@ -44,11 +44,7 @@ public class AssetBundleManifestVersion
             return HasHashInPathValue.Value;
         }
 
-        /// <summary>
-        ///     True when the manifest's version is v49 or newer — i.e. when the per-file deps-digest scheme is
-        ///     in use. This is purely a version check; an individual file may still carry no digest (v49 manifests
-        ///     mix digest-bearing and legacy 2-part file names).
-        /// </summary>
+        /// <summary>True when the manifest's version is v49 or newer — a pure version check; individual files may still carry no digest.</summary>
         public bool SupportsDepsDigests()
         {
             SupportsDepsDigestsValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST;
@@ -76,12 +72,7 @@ public class AssetBundleManifestVersion
             return int.TryParse(version.AsSpan(1), out parsed);
         }
 
-        /// <summary>
-        ///     Parses the manifest's <c>files[]</c> entries and stores, per bare hash, the verbatim
-        ///     digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>). Entries without a
-        ///     valid digest segment (legacy 2-part names, which v49 manifests still mix in) are skipped and keep
-        ///     resolving to their digest-less name.
-        /// </summary>
+        /// <summary>Stores, per bare hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
         public void InjectDepsDigests(string[]? files)
         {
             if (files == null || files.Length == 0)
@@ -106,22 +97,11 @@ public class AssetBundleManifestVersion
             depsFiles = map;
         }
 
-        /// <summary>
-        ///     True when this manifest carries the per-file deps map (injected from the manifest's <c>files[]</c>).
-        ///     Only scene manifests get it — wearable/emote manifests never fetch <c>files[]</c>, so they keep the
-        ///     legacy buildDate-based cache keying regardless of their version (their bundles are republished in
-        ///     place and cannot be reused across builds).
-        /// </summary>
+        /// <summary>True when the deps map was injected — only scene manifests fetch <c>files[]</c>; wearables/emotes never do and keep buildDate cache keying.</summary>
         public bool HasDepsDigests() =>
             depsFiles != null;
 
-        /// <summary>
-        ///     Resolves a platform-suffixed hash (e.g. <c>bafk..._mac</c>) to the verbatim digest-bearing manifest
-        ///     entry (<c>bafk..._&lt;depsDigest&gt;_mac</c>) when the manifest lists one, or returns the input
-        ///     unchanged when it doesn't (pre-v49 manifests, files without a digest). The lookup is
-        ///     case-insensitive and the returned name carries the manifest's casing — the name that actually
-        ///     exists on the case-sensitive CDN.
-        /// </summary>
+        /// <summary>Resolves a platform-suffixed hash to the verbatim digest-bearing manifest entry (case-insensitive, keeping the manifest's casing), or returns the input unchanged when unlisted.</summary>
         public string ResolveCdnRequestHash(string hash)
         {
             if (depsFiles == null)
@@ -135,9 +115,7 @@ public class AssetBundleManifestVersion
             return depsFiles.TryGetValue(hash[..^platformSuffix.Length], out string fileName) ? fileName : hash;
         }
 
-        /// <summary>
-        ///     Same resolution as <see cref="ResolveCdnRequestHash" /> but keyed by the bare hash (no platform suffix).
-        /// </summary>
+        /// <summary>Same resolution as <see cref="ResolveCdnRequestHash" /> but keyed by the bare hash (no platform suffix).</summary>
         public bool TryGetFileNameWithDigest(string bareHash, out string fileName)
         {
             if (depsFiles != null && depsFiles.TryGetValue(bareHash, out fileName!))

@@ -91,10 +91,7 @@ namespace DCL.LOD.Systems
                     continue;
                 }
 
-                // Descriptor mode: fetch each asset's own bundle. Resolving through the manifest also lands this
-                // promise in the same AssetBundleCache slot as the SDK runtime (which resolves identically in
-                // PrepareGltfAssetLoadingSystem); a diverging Hash would race two LoadAssetBundleSystem flows for
-                // the same physical bundle, which Unity refuses with "asset bundle already loaded".
+                // Resolving through the manifest lands this promise in the same AssetBundleCache slot as the SDK runtime — a diverging Hash races two loads of the same bundle ("asset bundle already loaded").
                 var intent = GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
