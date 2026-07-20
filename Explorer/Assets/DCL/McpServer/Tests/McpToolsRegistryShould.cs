@@ -163,7 +163,7 @@ namespace DCL.McpServer.Tests
             var names = new List<string>();
 
             foreach (JToken entry in (JArray)toolsList["tools"]!)
-                names.Add(entry["name"]!.Value<string>());
+                names.Add(entry["name"]!.Value<string>()!);
 
             Assert.That(names, Is.EquivalentTo(new[] { "first", "second" }));
         }
