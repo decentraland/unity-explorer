@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.IO;
 using System.Net;
@@ -18,10 +19,6 @@ namespace DCL.McpServer.Core
     {
         private const int MAX_BODY_BYTES = 1024 * 1024;
 
-        // Single source of truth for the endpoint path. Docs and scripts restate it (they cannot reference this
-        // const): docs/mcp-automation.md, docs/app-arguments.md, .claude/skills/mcp-scene-iteration/ — keep in sync.
-        private const string ENDPOINT_PATH = "unity-explorer-mcp";
-
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
 
@@ -35,12 +32,13 @@ namespace DCL.McpServer.Core
         private HttpListener? listener;
 
         /// <summary>The localhost URL the server listens on, e.g. <c>http://127.0.0.1:8123/unity-explorer-mcp</c>.</summary>
-        public string EndpointUrl => $"http://127.0.0.1:{port}/{ENDPOINT_PATH}";
+        public string EndpointUrl { get; }
 
         public McpHttpServer(McpToolsRegistry toolsRegistry, int port)
         {
             this.dispatcher = new McpJsonRpcDispatcher(toolsRegistry, Application.version);
             this.port = port;
+            EndpointUrl = string.Format(IDecentralandUrlsSource.LOCAL_MCP_ENDPOINT_URL, port);
         }
 
         public void Dispose()
