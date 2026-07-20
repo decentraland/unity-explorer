@@ -40,7 +40,7 @@ public class AssetBundleManifestVersion
 
         public bool HasHashInPath()
         {
-            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH && version < ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST ;
+            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
         }
 
