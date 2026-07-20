@@ -61,7 +61,7 @@ namespace DCL.AvatarRendering.Emotes
             // Scene emotes are scene content — resolve to the digest-bearing name so URL and cache identity match the scene's ABs.
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
-                    SceneAssetBundleManifestVersion.GetCdnRequestHash(this.EmoteHash),
+                    AssetBundleManifestVersion.GetCdnRequestHash(SceneAssetBundleManifestVersion, this.EmoteHash),
                     typeof(GameObject),
                     assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,

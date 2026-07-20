@@ -238,7 +238,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
-                        component.DTO.assetBundleManifestVersion.GetCdnRequestHash(hash!),
+                        AssetBundleManifestVersion.GetCdnRequestHash(component.DTO.assetBundleManifestVersion, hash!),
                         typeof(GameObject),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,

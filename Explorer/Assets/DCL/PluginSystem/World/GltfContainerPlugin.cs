@@ -120,10 +120,10 @@ namespace DCL.PluginSystem.World
 
             // GLTF Container
             // Bridge GLTF cache keying to the AB layer without leaking AB symbols into LoadGltfContainerSystem:
-            // when the scene's manifest has a deps digest for the hash, the key becomes "hash@digest", else the bare hash.
+            // when the scene's manifest knows the hash, the key becomes the canonical CDN file name, else the bare hash.
             var sceneData = sharedDependencies.SceneData;
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
-                hash => sceneData.SceneEntityDefinition.assetBundleManifestVersion.ComposeCacheKey(hash));
+                hash => AssetBundleManifestVersion.ComposeCacheKey(sceneData.SceneEntityDefinition.assetBundleManifestVersion, hash));
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

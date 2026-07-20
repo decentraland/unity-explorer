@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ResolveCdnRequestHashToVerbatimManifestEntry()
         {
-            // ResolveCdnRequestHash strips the *current* platform suffix, so entries are built with it to stay platform-agnostic.
+            // The map is keyed by the *current* platform-suffixed hash, so entries are built with it to stay platform-agnostic.
             string platform = PlatformUtils.GetCurrentPlatform();
 
             AssetBundleManifestVersion manifest = CreateV49Manifest(
@@ -62,13 +62,13 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(manifest, HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
-            Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
+            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(manifest, HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
                 "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
 
             AssetBundleManifestVersion? nullManifest = null;
-            Assert.That(nullManifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
+            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(nullManifest, HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
         }
 
         [Test]
@@ -90,14 +90,14 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void ComposeCacheKey_FallsBackToBareHashWhenManifestIsNull()
         {
             AssetBundleManifestVersion? manifest = null;
-            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo(HASH_A));
+            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo(HASH_A));
         }
 
         [Test]
         public void ComposeCacheKey_FallsBackToBareHashWhenNoDigest()
         {
             AssetBundleManifestVersion manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo(HASH_A));
+            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo(HASH_A));
         }
 
         [Test]
@@ -106,7 +106,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             string platform = PlatformUtils.GetCurrentPlatform();
             AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
         }
 
         [Test]

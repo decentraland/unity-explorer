@@ -93,6 +93,17 @@ public class AssetBundleManifestVersion
         public bool HasDepsDigests() =>
             hasDepsDigests;
 
+        /// <summary>Builds the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
+        public static string GetCdnRequestHash(AssetBundleManifestVersion? manifest, string bareHash)
+        {
+            string platformHash = $"{bareHash}{PlatformUtils.GetCurrentPlatform()}";
+            return manifest?.ResolveCdnRequestHash(platformHash) ?? platformHash;
+        }
+
+        /// <summary>Composes the upper-layer cache key (GLTF container, etc.): the canonical CDN file name when known, otherwise the bare hash.</summary>
+        public static string ComposeCacheKey(AssetBundleManifestVersion? manifest, string hash) =>
+            manifest != null && manifest.TryResolveCdnRequestHash($"{hash}{PlatformUtils.GetCurrentPlatform()}", out string fileName) ? fileName : hash;
+
         /// <summary>Resolves a platform-suffixed hash to the canonical CDN file name — digest-bearing and correctly cased when known (case-insensitive lookup) — or returns the input unchanged when unlisted.</summary>
         public string ResolveCdnRequestHash(string hash) =>
             TryResolveCdnRequestHash(hash, out string fileName) ? fileName : hash;

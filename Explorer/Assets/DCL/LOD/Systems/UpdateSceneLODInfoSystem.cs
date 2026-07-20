@@ -89,7 +89,7 @@ namespace DCL.LOD.Systems
             AssetBundleManifestVersion lodManifest = AssetBundleManifestVersion.CreateForLOD($"LOD/{level.ToString()}", "dummyDate");
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(
-                lodManifest.GetCdnRequestHash($"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),
+                AssetBundleManifestVersion.GetCdnRequestHash(lodManifest, $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}"),
                 typeof(GameObject),
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,

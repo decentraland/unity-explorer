@@ -76,10 +76,10 @@ namespace DCL.LOD.Systems
             {
                 ISSDescriptorAsset entry = assets[i];
 
-                // The GLTF container cache is keyed by the digest-bearing file name (see AssetBundleManifestVersionExtensions.ComposeCacheKey).
+                // The GLTF container cache is keyed by the canonical CDN file name (see AssetBundleManifestVersion.ComposeCacheKey).
                 // Looking up by bare hash misses any bridged entry the SDK runtime left behind, so the LOD spawns a
                 // second instance of an asset that's already resident — that's the visible "double" overlap.
-                string cacheKey = manifest.ComposeCacheKey(entry.hash);
+                string cacheKey = AssetBundleManifestVersion.ComposeCacheKey(manifest, entry.hash);
 
                 if (gltfCache.TryGet(cacheKey, out var asset))
                 {
@@ -92,7 +92,7 @@ namespace DCL.LOD.Systems
                 }
 
                 // Resolving through the manifest lands this promise in the same AssetBundleCache slot as the SDK runtime — a diverging Hash races two loads of the same bundle ("asset bundle already loaded").
-                var intent = GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(entry.hash),
+                var intent = GetAssetBundleIntention.FromHash(AssetBundleManifestVersion.GetCdnRequestHash(manifest, entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
 
