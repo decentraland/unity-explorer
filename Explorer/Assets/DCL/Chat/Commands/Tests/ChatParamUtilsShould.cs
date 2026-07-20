@@ -43,7 +43,7 @@ namespace DCL.Chat.Commands.Tests
             GotoTarget target = ChatParamUtils.ParseGotoTarget("crowd");
 
             // Assert
-            Assert.That(target.IsCrowd, Is.False); // Deliberately broken for CI smoke test - revert this line.
+            Assert.That(target.IsCrowd, Is.True);
             Assert.That(target.IsRandom, Is.False);
             Assert.That(target.World, Is.Null);
             Assert.That(target.Parcel, Is.Null);
