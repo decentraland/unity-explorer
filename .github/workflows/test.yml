@@ -444,6 +444,7 @@ jobs:
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           BASELINE: ${{ steps.baseline.outputs.baseline }}
+          FINDINGS_TOTAL: ${{ steps.pr-findings.outputs.total || 0 }}
         run: |
           if [ -z "$COUNT" ]; then
             echo "No warning count computed (lint produced no result) - skipping comment payload."
@@ -455,7 +456,7 @@ jobs:
             --arg baseline "$BASELINE" \
             --argjson allow_equal "$IS_RELEASE_OR_HOTFIX" \
             --slurpfile findings pr-findings.json \
-            --argjson findings_total "${{ steps.pr-findings.outputs.total || 0 }}" \
+            --argjson findings_total "$FINDINGS_TOTAL" \
             '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal, pr_findings: ($findings[0] // []), pr_findings_total: $findings_total}' \
             > warning-result.json
           cat warning-result.json
