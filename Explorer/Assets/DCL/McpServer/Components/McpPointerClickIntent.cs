@@ -41,7 +41,13 @@ namespace DCL.McpServer.Components
         public UniTaskCompletionSource<McpPointerClickResult>? Completion;
 
         // In-flight state owned by McpPointerClickSystem.
-        public Arch.Core.World? SceneWorld;
+
+        /// <summary>
+        ///     The scene world that received the press. Set only when a CLICK stays in flight across frames
+        ///     awaiting the release; a different current world afterwards means the scene reloaded mid-click
+        ///     and the rest of the in-flight state below is stale.
+        /// </summary>
+        public Arch.Core.World? DownWorld;
         public Arch.Core.Entity ResolvedEntity;
         public uint DownTick;
         public RaycastHit DownHit;

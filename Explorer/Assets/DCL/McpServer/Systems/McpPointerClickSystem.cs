@@ -92,7 +92,9 @@ namespace DCL.McpServer.Systems
 
             World sceneWorld = scene.EcsExecutor.World;
 
-            if (intent.SceneWorld != null && !ReferenceEquals(sceneWorld, intent.SceneWorld))
+            // A mid-click reload swaps in a new world for the same parcel; ResolvedEntity/DownTick belong
+            // to the disposed one (entity ids get recycled), so the click can only be failed.
+            if (intent.DownWorld != null && !ReferenceEquals(sceneWorld, intent.DownWorld))
             {
                 CompleteAndRemove(intent.Completion, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
                 return;
@@ -117,7 +119,7 @@ namespace DCL.McpServer.Systems
                         return;
                     }
 
-                    intent.SceneWorld = sceneWorld;
+                    intent.DownWorld = sceneWorld;
                     intent.DownTick = scene.SceneStateProvider.TickNumber;
                     intent.DownResult = result;
                     intent.Phase = McpPointerClickIntent.ClickPhase.WAIT_TICK;
@@ -288,7 +290,8 @@ namespace DCL.McpServer.Systems
             if (intent.HasExplicitAimPoint && intent.TargetEntityId < 0)
                 return true;
 
-            if (intent.SceneWorld != null)
+            // The press already resolved the target; only re-validate that it is still alive.
+            if (intent.DownWorld != null)
             {
                 if (sceneWorld.IsAlive(intent.ResolvedEntity))
                     return true;
