@@ -17,6 +17,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private const string HASH_B = "bafkreice3qpeyeb4ni7fnlt6bijs57zrbuw7cwmbymzcndyllzho3hbgaa";
         private const string HASH_LEGACY = "bafybeih4xx65yycsf2vx6sari7myjho6rugqox4ocd2tzjhfam73g2trru";
 
+        private static readonly AssetBundleManifestVersion ANY_MANIFEST = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+
         private static AssetBundleManifestVersion CreateV49Manifest(params string[] files)
         {
             var manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
@@ -62,13 +64,10 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(manifest, HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
-            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(manifest, HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
+            Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
                 "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
-
-            AssetBundleManifestVersion? nullManifest = null;
-            Assert.That(AssetBundleManifestVersion.GetCdnRequestHash(nullManifest, HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
         }
 
         [Test]
@@ -87,17 +86,21 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ComposeCacheKey_FallsBackToBareHashWhenManifestIsNull()
+        public void ProvideFailedManifestWhenDefinitionHasNone()
         {
-            AssetBundleManifestVersion? manifest = null;
-            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo(HASH_A));
+            // AB intentions require a manifest: definitions without one hand out the failed sentinel,
+            // which the loading pipeline already treats as a dead end.
+            var definition = new SceneEntityDefinition();
+
+            Assert.That(definition.assetBundleManifestVersion, Is.Null);
+            Assert.That(definition.AssetBundleManifestVersionOrFailed.assetBundleManifestRequestFailed, Is.True);
         }
 
         [Test]
         public void ComposeCacheKey_FallsBackToBareHashWhenNoDigest()
         {
             AssetBundleManifestVersion manifest = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo(HASH_A));
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo(HASH_A));
         }
 
         [Test]
@@ -106,7 +109,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             string platform = PlatformUtils.GetCurrentPlatform();
             AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(AssetBundleManifestVersion.ComposeCacheKey(manifest, HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(manifest.ComposeCacheKey(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
         }
 
         [Test]
@@ -147,8 +150,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void TreatIntentionsWithDifferentDigestBearingHashesAsDistinct()
         {
             // The digest is part of the Hash itself, so two dependency closures of the same bare hash never collide.
-            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
-            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac");
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac", ANY_MANIFEST);
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac", ANY_MANIFEST);
 
             Assert.That(a.Equals(b), Is.False);
             Assert.That(a.GetHashCode(), Is.Not.EqualTo(b.GetHashCode()));
@@ -157,8 +160,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void TreatIntentionsWithSameHashAsEqual()
         {
-            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
-            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac", ANY_MANIFEST);
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac", ANY_MANIFEST);
 
             Assert.That(a.Equals(b), Is.True);
             Assert.That(a.GetHashCode(), Is.EqualTo(b.GetHashCode()));
@@ -167,8 +170,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ProduceDistinctDiskFilenamesForDifferentDigestBearingHashes()
         {
-            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac");
-            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac");
+            var a = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_A}_mac", ANY_MANIFEST);
+            var b = GetAssetBundleIntention.FromHash($"{HASH_A}_{DIGEST_B}_mac", ANY_MANIFEST);
 
             using var keyA = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in a);
             using var keyB = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in b);
@@ -180,8 +183,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         public void PreserveLegacyDiskFilenameForDigestLessHashes()
         {
             // A digest-less hash must keep its pre-scheme on-disk file name so existing cached entries keep hitting.
-            var legacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
-            var alsoLegacy = GetAssetBundleIntention.FromHash(HASH_LEGACY);
+            var legacy = GetAssetBundleIntention.FromHash(HASH_LEGACY, ANY_MANIFEST);
+            var alsoLegacy = GetAssetBundleIntention.FromHash(HASH_LEGACY, ANY_MANIFEST);
 
             using var keyA = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in legacy);
             using var keyB = GetAssetBundleIntention.DiskHashCompute.INSTANCE.ComputeHash(in alsoLegacy);

@@ -219,14 +219,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
             else
             {
+                AssetBundleManifestVersion abManifest = wearable.DTO.AssetBundleManifestVersionOrFailed;
+
                 // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
-                        AssetBundleManifestVersion.GetCdnRequestHash(wearable.DTO.assetBundleManifestVersion, hash),
+                        abManifest.GetCdnRequestHash(hash),
+                        abManifest,
                         expectedObjectType,
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        assetBundleManifestVersion: wearable.DTO.assetBundleManifestVersion,
                         parentEntityID: wearable.DTO.id,
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);

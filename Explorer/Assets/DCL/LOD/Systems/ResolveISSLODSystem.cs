@@ -70,7 +70,7 @@ namespace DCL.LOD.Systems
         /// </summary>
         private void SpawnAssetPromises(InitialSceneStateLOD initialSceneStateLOD, IReadOnlyList<ISSDescriptorAsset> assets, SceneDefinitionComponent sceneDefinition, ISSDescriptor issDescriptor)
         {
-            AssetBundleManifestVersion? manifest = sceneDefinition.Definition.assetBundleManifestVersion;
+            AssetBundleManifestVersion manifest = sceneDefinition.Definition.AssetBundleManifestVersionOrFailed;
 
             for (var i = 0; i < assets.Count; i++)
             {
@@ -79,7 +79,7 @@ namespace DCL.LOD.Systems
                 // The GLTF container cache is keyed by the canonical CDN file name (see AssetBundleManifestVersion.ComposeCacheKey).
                 // Looking up by bare hash misses any bridged entry the SDK runtime left behind, so the LOD spawns a
                 // second instance of an asset that's already resident — that's the visible "double" overlap.
-                string cacheKey = AssetBundleManifestVersion.ComposeCacheKey(manifest, entry.hash);
+                string cacheKey = manifest.ComposeCacheKey(entry.hash);
 
                 if (gltfCache.TryGet(cacheKey, out var asset))
                 {
@@ -92,7 +92,7 @@ namespace DCL.LOD.Systems
                 }
 
                 // Resolving through the manifest lands this promise in the same AssetBundleCache slot as the SDK runtime — a diverging Hash races two loads of the same bundle ("asset bundle already loaded").
-                var intent = GetAssetBundleIntention.FromHash(AssetBundleManifestVersion.GetCdnRequestHash(manifest, entry.hash),
+                var intent = GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
 

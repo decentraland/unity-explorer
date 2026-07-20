@@ -51,7 +51,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (assetBundleIntention.AssetBundleManifestVersion == null || assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
+                if (assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest version must be provided to load {assetBundleIntention.Name} from `WEB` source"))));

@@ -5,7 +5,6 @@ using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using ECS.Groups;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -16,12 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
-        private readonly ISceneData sceneData;
-
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
-        {
-            this.sceneData = sceneData;
-        }
+        internal PrepareAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL) { }
 
         protected override void Update(float t)
         {
@@ -33,9 +27,6 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
-            assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
-
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

@@ -235,15 +235,17 @@ namespace DCL.AvatarRendering.Emotes.Load
             if (component.AssetResults[intention.BodyShape] == null)
             {
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
+                AssetBundleManifestVersion abManifest = component.DTO.AssetBundleManifestVersionOrFailed;
+
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
-                        AssetBundleManifestVersion.GetCdnRequestHash(component.DTO.assetBundleManifestVersion, hash!),
+                        abManifest.GetCdnRequestHash(hash!),
+                        abManifest,
                         typeof(GameObject),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         cancellationTokenSource: intention.CancellationTokenSource,
-                        assetBundleManifestVersion: component.DTO.assetBundleManifestVersion,
                         parentEntityID: component.DTO.id
                     ),
                     partitionComponent

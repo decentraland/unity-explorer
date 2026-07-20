@@ -69,9 +69,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
+            {
+                AssetBundleManifestVersion abManifest = sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed;
+
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject),
-                    AssetBundleManifestVersion.GetCdnRequestHash(sceneData.SceneEntityDefinition.assetBundleManifestVersion, intention.Hash),
-                    intention.Name));
+                    abManifest.GetCdnRequestHash(intention.Hash),
+                    intention.Name,
+                    abManifest,
+                    sceneData.SceneEntityDefinition.id ?? string.Empty));
+            }
         }
 
         public struct Options

@@ -123,7 +123,7 @@ namespace DCL.PluginSystem.World
             // when the scene's manifest knows the hash, the key becomes the canonical CDN file name, else the bare hash.
             var sceneData = sharedDependencies.SceneData;
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sceneData, sharedDependencies.EntityCollidersSceneCache,
-                hash => AssetBundleManifestVersion.ComposeCacheKey(sceneData.SceneEntityDefinition.assetBundleManifestVersion, hash));
+                hash => sceneData.SceneEntityDefinition.AssetBundleManifestVersionOrFailed.ComposeCacheKey(hash));
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

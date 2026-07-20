@@ -14,7 +14,8 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public string? Hash;
 
-        public AssetBundleManifestVersion? AssetBundleManifestVersion;
+        //Required by every factory — an AB can never be requested without a manifest. Only default-initialized structs (never flowed into loading) can carry null.
+        public AssetBundleManifestVersion AssetBundleManifestVersion;
         public string ParentEntityID;
 
         /// <summary>
@@ -37,10 +38,9 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool IsDependency;
         public bool LookForDependencies;
 
-        private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
+        private GetAssetBundleIntention(Type? expectedObjectType, AssetBundleManifestVersion assetBundleVersion, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
-            AssetBundleManifestVersion? assetBundleVersion = null,
             string parentEntityID = "",
             bool isDependency = false,
             bool lookForDependencies = false,
@@ -64,6 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
         {
             CommonArguments = commonArguments;
+            AssetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
         }
 
         // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name, so two dependency closures never share a Hash.
@@ -74,14 +75,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetBundleManifestVersion assetBundleManifestVersion, string parentEntityID, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+            new (expectedAssetType, assetBundleManifestVersion, hash: hash, name: name, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(string hash, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
+        public static GetAssetBundleIntention FromHash(string hash, AssetBundleManifestVersion assetBundleManifestVersion, Type? expectedAssetType = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default, CancellationTokenSource cancellationTokenSource = null,
-            AssetBundleManifestVersion? assetBundleManifestVersion = null, string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
-            new (expectedAssetType, hash: hash, assetBundleVersion: assetBundleManifestVersion, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);
+            string parentEntityID = "", bool isDependency = false, bool lookForDependencies = false) =>
+            new (expectedAssetType, assetBundleManifestVersion, hash: hash, parentEntityID: parentEntityID, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, isDependency: isDependency, lookForDependencies: lookForDependencies, cancellationTokenSource: cancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

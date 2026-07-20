@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in SystemsDependencies systemsDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL);
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
 
             bool byteWeightedProgress = FeaturesRegistry.Instance.IsEnabled(FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS);
 
