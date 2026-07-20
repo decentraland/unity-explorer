@@ -11,24 +11,18 @@ namespace DCL.Web3.Authenticators
     /// <summary>
     ///     Composite provider that wraps both authentication methods (ThirdWeb OTP and Dapp Wallet)
     ///     and delegates calls to the currently selected method.
-    ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi,
-    ///     IDappVerificationHandler and IOtpAuthenticator to provide a single entry point for all Web3 needs.
+    ///     Implements ICompositeWeb3Provider which combines IWeb3Authenticator, IEthereumApi
+    ///     and IOtpAuthenticator to provide a single entry point for all Web3 needs.
     /// </summary>
     public class CompositeWeb3Provider : ICompositeWeb3Provider
     {
         private readonly ThirdWebAuthenticator thirdWebAuth;
-        private readonly DappWeb3Authenticator dappAuth;
+        private readonly DappWeb3EthereumApi dappEthereumApi;
+        private readonly IWeb3Authenticator dappLogin;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
 
         public AuthProvider CurrentProvider { private get; set; } = AuthProvider.Dapp;
-
-        // IDappVerificationHandler - delegates to dappAuth
-        public event Action<(int code, DateTime expiration, string requestId)>? VerificationRequired
-        {
-            add => dappAuth.VerificationRequired += value;
-            remove => dappAuth.VerificationRequired -= value;
-        }
 
         public event Action<string>? OTPSendSucceeded
         {
@@ -38,17 +32,19 @@ namespace DCL.Web3.Authenticators
 
         public bool IsThirdWebOTP => CurrentProvider == AuthProvider.ThirdWeb;
 
-        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
-        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappAuth;
+        private IWeb3Authenticator currentAuthenticator => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappLogin;
+        private IEthereumApi currentEthereumApi => CurrentProvider == AuthProvider.ThirdWeb ? thirdWebAuth : dappEthereumApi;
 
         public CompositeWeb3Provider(
             ThirdWebAuthenticator thirdWebAuth,
-            DappWeb3Authenticator dappAuth,
+            DappWeb3EthereumApi dappEthereumApi,
+            DappDeepLinkAuthenticator dappLogin,
             IWeb3IdentityCache identityCache,
             IAnalyticsController analytics)
         {
             this.thirdWebAuth = thirdWebAuth ?? throw new ArgumentNullException(nameof(thirdWebAuth));
-            this.dappAuth = dappAuth ?? throw new ArgumentNullException(nameof(dappAuth));
+            this.dappEthereumApi = dappEthereumApi ?? throw new ArgumentNullException(nameof(dappEthereumApi));
+            this.dappLogin = dappLogin ?? throw new ArgumentNullException(nameof(dappLogin));
             this.identityCache = identityCache ?? throw new ArgumentNullException(nameof(identityCache));
             this.analytics = analytics ?? throw new ArgumentNullException(nameof(analytics));
         }
@@ -56,7 +52,8 @@ namespace DCL.Web3.Authenticators
         public void Dispose()
         {
             thirdWebAuth.Dispose();
-            dappAuth.Dispose();
+            dappEthereumApi.Dispose();
+            dappLogin.Dispose();
             identityCache.Dispose();
         }
 
@@ -76,7 +73,15 @@ namespace DCL.Web3.Authenticators
         public async UniTask LogoutAsync(CancellationToken ct)
         {
             analytics.Identify(null);
-            await currentAuthenticator.LogoutAsync(ct);
+
+            // ThirdWeb is the only provider holding a login session of its own.
+            if (IsThirdWebOTP)
+                await thirdWebAuth.LogoutAsync(ct);
+            else
+                // Abort any in-flight browser signature confirmation so an approval arriving
+                // after logout cannot complete under the logged-out session.
+                await dappEthereumApi.DisconnectFromAuthApiAsync();
+
             identityCache.Clear();
         }
 

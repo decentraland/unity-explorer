@@ -33,7 +33,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly LobbyForNewAccountAuthView view;
 
         private readonly IWearablesProvider wearablesProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
@@ -57,7 +57,7 @@ namespace DCL.AuthenticationScreenFlow
             AuthenticationScreenCharacterPreviewController characterPreviewController,
             ISelfProfile selfProfile,
             IWearablesProvider wearablesProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             ProfileChangesBus profileChangesBus) : base(viewInstance)
@@ -161,7 +161,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void OpenClickableURL(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrlMainThreadOnly(url);
 
         private async UniTask InitializeAvatarAsync()
         {

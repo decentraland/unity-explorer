@@ -28,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IPassportBridge passportBridge;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISelfProfile selfProfile;
 
@@ -45,7 +45,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
             bool includeUserBlocking,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             ISelfProfile selfProfile)
             : base(view, friendsService, friendEventBus, mvcManager, requestManager)
