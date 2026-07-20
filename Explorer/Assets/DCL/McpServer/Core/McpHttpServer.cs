@@ -99,6 +99,10 @@ namespace DCL.McpServer.Core
 
         private async UniTaskVoid HandleRequestAsync(HttpListenerContext context, CancellationToken ct)
         {
+            // The accept loop runs this handler inline until the first suspension; hop off it before the
+            // synchronous body read so one slow client cannot stall accepting new connections.
+            await DCLTask.SwitchToThreadPool();
+
             try
             {
                 if (!IsAllowed(context.Request.Headers["Origin"]))
@@ -140,22 +144,12 @@ namespace DCL.McpServer.Core
                 return;
             }
 
-            string requestJson;
-
             // The Content-Length check above is only a fast reject; a chunked request reports ContentLength64 == -1
-            // and bypasses it, so cap the read itself into a fixed buffer to keep the body bounded regardless.
-            using (var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8))
+            // and bypasses it, so the read itself stays capped to keep the body bounded regardless.
+            if (!TryReadBodyWithinCap(context.Request, out string requestJson))
             {
-                var buffer = new char[MAX_BODY_BYTES + 1];
-                int charsRead = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
-
-                if (charsRead > MAX_BODY_BYTES)
-                {
-                    context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
-                    return;
-                }
-
-                requestJson = new string(buffer, 0, charsRead);
+                context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
+                return;
             }
 
             string? responseJson = await dispatcher.DispatchAsync(requestJson, ct);
@@ -175,6 +169,37 @@ namespace DCL.McpServer.Core
             context.Response.ContentLength64 = payload.Length;
             await context.Response.OutputStream.WriteAsync(payload, 0, payload.Length, CancellationToken.None);
             context.Response.Close();
+        }
+
+        /// <summary>
+        ///     Reads the request body synchronously (blocking the current thread-pool thread) through a stack
+        ///     buffer, so heap allocations stay proportional to the actual body size instead of the cap.
+        ///     Returns false when the body exceeds <see cref="MAX_BODY_BYTES" />; <paramref name="body" /> is
+        ///     then empty and the request must be rejected.
+        /// </summary>
+        private static bool TryReadBodyWithinCap(HttpListenerRequest request, out string body)
+        {
+            using Stream input = request.InputStream;
+
+            // ContentLength64 is -1 for chunked requests, so it can size the accumulator only when declared.
+            var accumulated = new MemoryStream(request.ContentLength64 > 0 ? (int)request.ContentLength64 : 4 * 1024);
+            Span<byte> chunk = stackalloc byte[16 * 1024];
+
+            int bytesRead;
+
+            while ((bytesRead = input.Read(chunk)) > 0)
+            {
+                if (accumulated.Length + bytesRead > MAX_BODY_BYTES)
+                {
+                    body = string.Empty;
+                    return false;
+                }
+
+                accumulated.Write(chunk[..bytesRead]);
+            }
+
+            body = Encoding.UTF8.GetString(accumulated.GetBuffer(), 0, (int)accumulated.Length);
+            return true;
         }
 
         private void TryWriteInternalError(HttpListenerContext context)

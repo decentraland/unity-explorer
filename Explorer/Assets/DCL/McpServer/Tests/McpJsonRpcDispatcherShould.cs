@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -141,7 +142,8 @@ namespace DCL.McpServer.Tests
             FakeMcpTool tool = FakeMcpTool.Throwing("cancelled", new OperationCanceledException());
             McpJsonRpcDispatcher dispatcher = DispatcherWith(tool);
 
-            Assert.Throws<OperationCanceledException>(() => Dispatch(dispatcher, CallRequest(8, "cancelled", new JObject())));
+            // Catch, not Throws: AsTask in the Dispatch helper surfaces the cancellation as the derived TaskCanceledException.
+            Assert.Catch<OperationCanceledException>(() => Dispatch(dispatcher, CallRequest(8, "cancelled", new JObject())));
         }
 
         [Test]
@@ -202,8 +204,10 @@ namespace DCL.McpServer.Tests
             return new McpJsonRpcDispatcher(registry, SERVER_VERSION);
         }
 
+        // AsTask allows a blocking wait: a tools/call response completes on the thread pool (the dispatcher
+        // hops there after the tool), so the UniTask is no longer synchronously completed on the test thread.
         private static string? Dispatch(McpJsonRpcDispatcher dispatcher, string requestJson) =>
-            dispatcher.DispatchAsync(requestJson, CancellationToken.None).GetAwaiter().GetResult();
+            dispatcher.DispatchAsync(requestJson, CancellationToken.None).AsTask().GetAwaiter().GetResult();
 
         private static string Request(int id, string method) =>
             new JObject

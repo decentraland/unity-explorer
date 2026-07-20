@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.McpServer.Core
 {
@@ -135,22 +136,28 @@ namespace DCL.McpServer.Core
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(TOOL_CALL_TIMEOUT);
 
-            try
-            {
-                McpToolResult result = await tool.ExecuteAsync(arguments, timeout.Token);
-                return JsonRpcEnvelope.Result(id, result.Payload);
-            }
+            McpToolResult result;
+
+            try { result = await tool.ExecuteAsync(arguments, timeout.Token); }
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
-                return JsonRpcEnvelope.Result(id, McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s").Payload);
+                result = McpToolResult.Error($"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.MCP);
-                return JsonRpcEnvelope.Result(id, McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}").Payload);
+                result = McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}");
             }
+
+            // A main-thread tool completes on the main thread and UniTask continuations run inline on the
+            // completing thread; hop back so the envelope serialization here and the HTTP write in the
+            // transport never spend main-thread time.
+            if (PlayerLoopHelper.IsMainThread)
+                await DCLTask.SwitchToThreadPool();
+
+            return JsonRpcEnvelope.Result(id, result.Payload);
         }
 
         private static class JsonRpcEnvelope
