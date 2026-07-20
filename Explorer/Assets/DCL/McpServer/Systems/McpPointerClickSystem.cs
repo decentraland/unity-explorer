@@ -256,7 +256,7 @@ namespace DCL.McpServer.Systems
         /// </summary>
         private void DeliverUp(ref McpPointerClickIntent intent, World sceneWorld, out McpPointerClickResult result)
         {
-            McpPointerClickResult downResult = intent.DownResult!;
+            McpPointerClickResult downResult = intent.DownResult!.Value;
 
             if (TryDeliver(ref intent, sceneWorld, PointerEventType.PetUp, out McpPointerClickResult freshResult))
             {
@@ -282,7 +282,7 @@ namespace DCL.McpServer.Systems
 
         private bool TryResolveTarget(ref McpPointerClickIntent intent, World sceneWorld, out McpPointerClickResult result)
         {
-            result = null!;
+            result = default;
 
             // Aim-point mode: the validation raycast picks the entity.
             if (intent.HasExplicitAimPoint && intent.TargetEntityId < 0)

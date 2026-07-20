@@ -50,7 +50,7 @@ namespace DCL.McpServer.Components
     }
 
     /// <summary>Outcome of a synthetic pointer click, serialized by the click_entity tool.</summary>
-    public class McpPointerClickResult
+    public struct McpPointerClickResult
     {
         public bool Hit;
         public string? FailureReason;
