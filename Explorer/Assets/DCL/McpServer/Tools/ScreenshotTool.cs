@@ -37,8 +37,10 @@ namespace DCL.McpServer.Tools
         // Reused across calls by the ReadPixels fallback so repeated captures don't allocate new textures.
         private Texture2D? readPixelsBuffer;
 
-        // 1 while a capture is running; concurrent requests are rejected so one set of buffers suffices.
-        private int captureGate;
+        // True while a capture is running; concurrent requests are rejected so one set of buffers suffices.
+        // A plain bool is safe: tool execution is marshalled onto the main thread by the dispatcher, so the
+        // check-and-set below runs without preemption before the first await.
+        private bool capturing;
 
         public string Name => "screenshot";
 
@@ -74,11 +76,13 @@ namespace DCL.McpServer.Tools
             bool asPng = arguments.GetString("quality", "jpg") == "png";
             bool worldOnly = arguments.GetBool("worldOnly", false);
 
-            if (Interlocked.CompareExchange(ref captureGate, 1, 0) != 0)
+            if (capturing)
                 return McpToolResult.Error("Another screenshot capture is already in progress; retry when it completes.");
 
+            capturing = true;
+
             try { return await CaptureAsync(maxWidth, asPng, worldOnly, ct); }
-            finally { Interlocked.Exchange(ref captureGate, 0); }
+            finally { capturing = false; }
         }
 
         private async UniTask<McpToolResult> CaptureAsync(int maxWidth, bool asPng, bool worldOnly, CancellationToken ct)
