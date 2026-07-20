@@ -3,7 +3,6 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Ipfs;
-using DCL.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -61,11 +60,9 @@ namespace DCL.AvatarRendering.Emotes
         {
             // Scene emotes are part of the scene's converted content — resolve to the manifest's digest-bearing
             // file name (v49+) so the URL and cache identity match the rest of the scene's ABs.
-            string platformHash = SceneAssetBundleManifestVersion.GetHashWithDigest(this.EmoteHash + PlatformUtils.GetCurrentPlatform());
-
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
-                    platformHash,
+                    SceneAssetBundleManifestVersion.GetPlatformHashWithDigest(this.EmoteHash),
                     typeof(GameObject),
                     assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,

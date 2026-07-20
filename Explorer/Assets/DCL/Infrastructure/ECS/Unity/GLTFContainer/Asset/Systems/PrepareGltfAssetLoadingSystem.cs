@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.Utility;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -69,17 +69,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (loadRawGltf)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
-            {
-                // For v49+ manifests the hash resolves to the digest-bearing file name
-                // (<hash>_<depsDigest>_<platform>) — the name that actually exists on the CDN and the sole
-                // identity used by every cache layer downstream.
-                string platformHash = $"{intention.Hash}{PlatformUtils.GetCurrentPlatform()}";
-
-                if (sceneData.SceneEntityDefinition.assetBundleManifestVersion is { } manifest)
-                    platformHash = manifest.GetHashWithDigest(platformHash);
-
-                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), platformHash, intention.Name));
-            }
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject),
+                    sceneData.SceneEntityDefinition.assetBundleManifestVersion.GetPlatformHashWithDigest(intention.Hash),
+                    intention.Name));
         }
 
         public struct Options

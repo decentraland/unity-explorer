@@ -58,6 +58,22 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
+        public void ComposePlatformHashWithDigestFromBareHash()
+        {
+            string platform = PlatformUtils.GetCurrentPlatform();
+
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
+
+            Assert.That(manifest.GetPlatformHashWithDigest(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+
+            Assert.That(manifest.GetPlatformHashWithDigest(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
+                "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
+
+            AssetBundleManifestVersion? nullManifest = null;
+            Assert.That(nullManifest.GetPlatformHashWithDigest(HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
+        }
+
+        [Test]
         public void ReportDepsDigestsOnlyWhenMapWasInjected()
         {
             // The cache-key dispatch (v49 version+hash vs legacy buildDate+hash) hinges on this: only manifests

@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utility;
 using ECS.Abstract;
 using System.Collections.Generic;
 using ECS.Prioritization.Components;
@@ -92,17 +91,11 @@ namespace DCL.LOD.Systems
                     continue;
                 }
 
-                // Descriptor mode: fetch each asset's own bundle — must include the platform suffix and, for v49+,
-                // the deps digest to match the deployed AB filename. Resolving through the manifest also lands this
+                // Descriptor mode: fetch each asset's own bundle. Resolving through the manifest also lands this
                 // promise in the same AssetBundleCache slot as the SDK runtime (which resolves identically in
                 // PrepareGltfAssetLoadingSystem); a diverging Hash would race two LoadAssetBundleSystem flows for
                 // the same physical bundle, which Unity refuses with "asset bundle already loaded".
-                string promiseHash = $"{entry.hash}{PlatformUtils.GetCurrentPlatform()}";
-
-                if (manifest != null)
-                    promiseHash = manifest.GetHashWithDigest(promiseHash);
-
-                var intent = GetAssetBundleIntention.FromHash(promiseHash,
+                var intent = GetAssetBundleIntention.FromHash(manifest.GetPlatformHashWithDigest(entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
 
