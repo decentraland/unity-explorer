@@ -20,9 +20,9 @@
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.1.0",
         "com.unity.test-framework": "1.1.33",
-        "com.unity.ugui": "1.0.0"
+        "com.unity.ugui": "2.0.0"
       },
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -57,7 +57,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.coffee.softmask-for-ugui": {
       "version": "https://github.com/mob-sakai/SoftMaskForUGUI.git?path=Packages/src#3.6.2",
@@ -80,14 +80,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#222d67ccc289337dadb5e8d96ee5b633dfb905b6",
@@ -136,11 +136,11 @@
       "hash": "dc9994994637d30b0a61e2354eb2bbb8e963fa33"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "git@github.com:decentraland/unity-shared-dependencies.git",
+      "version": "git@github.com:decentraland/unity-shared-dependencies.git#fix/unity-6000.5-shader-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "f040030e82c51bdddce67ae18149e22b5b4c4c0d"
+      "hash": "c4241756b8c12179dd849a57be5116616418c17f"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#fix/unity-6000.5.4-api-compat",
@@ -151,7 +151,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#fix/unity-6000.5.4-api-compat",
@@ -160,14 +160,14 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SerializeReferenceExtensions#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
       "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
@@ -191,7 +191,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -516,14 +516,14 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "c35c10aabe0f919b1a455d28d2a1d18b6bcbe574"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "52706a3059b4e963c96e99f58f4f2e76416142e6"
+      "hash": "90a8a92a9dbea1ce1db765dfe383ff61741ba9f5"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
@@ -562,7 +562,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8e1478ec9f8fe2f5fbe1249ceeb31cdc764d1465"
+      "hash": "53f8551acaf204b3319d3f9999c12e688a19ff13"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
