@@ -140,7 +140,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "de4cce8340ab6a0afafd1b1fc871dcb19013bff3"
+      "hash": "52619333d46173c4f8258fe25c7ca1cec1bfa2cc"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#fix/unity-6000.5.4-api-compat",
