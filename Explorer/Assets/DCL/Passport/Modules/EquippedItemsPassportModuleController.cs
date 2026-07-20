@@ -37,7 +37,7 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> loadingItemsPool;
@@ -58,7 +58,7 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController,
             CreditPurchaseBuyHandler creditPurchaseBuyHandler)

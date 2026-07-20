@@ -29,7 +29,7 @@ namespace DCL.WebRequests
             (float delaySeconds, bool useDelay) = await options.GetOptionsAsync(envelope.Ct);
 
             if (useDelay)
-                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: envelope.Ct);
 
             return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op, expectedContentLength, progressReporter);
         }
