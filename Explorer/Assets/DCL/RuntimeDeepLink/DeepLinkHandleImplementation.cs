@@ -2,10 +2,12 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Communities;
+using DCL.ExplorePanel;
 using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using Global.AppArgs;
+using MVC;
 using System.Threading;
 using UnityEngine;
 
@@ -17,17 +19,21 @@ namespace DCL.RuntimeDeepLink
         private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
         private readonly CommunityDataService communityDataService;
+        private readonly IMVCManager mvcManager;
+        private readonly ILoadingStatus loadingStatus;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId;
         private readonly bool routeNavigationDeepLinks;
 
-        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, ReactiveProperty<string?> deeplinkSigninIdentityId,
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token, CommunityDataService communityDataService, IMVCManager mvcManager, ILoadingStatus loadingStatus, ReactiveProperty<string?> deeplinkSigninIdentityId,
             IReadonlyReactiveProperty<string?> loginAwaitingSigninRequestId, bool routeNavigationDeepLinks)
         {
             this.startParcel = startParcel;
             this.chatTeleporter = chatTeleporter;
             this.token = token;
             this.communityDataService = communityDataService;
+            this.mvcManager = mvcManager;
+            this.loadingStatus = loadingStatus;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
             this.routeNavigationDeepLinks = routeNavigationDeepLinks;
@@ -88,6 +94,12 @@ namespace DCL.RuntimeDeepLink
             if (!string.IsNullOrEmpty(communityId))
             {
                 communityDataService.ShowCommunityDeepLinkNotification(communityId);
+                handled = true;
+            }
+
+            if (deeplink.ValueOf(AppArgsFlags.FORCE_OPEN_BACKPACK) != null)
+            {
+                BackpackDeepLinkOpener.OpenBackpackWhenLandedAsync(mvcManager, loadingStatus, token).Forget();
                 handled = true;
             }
 
