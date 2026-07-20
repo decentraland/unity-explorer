@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public string? Hash;
 
         //Required by every factory — an AB can never be requested without a manifest. Only default-initialized structs (never flowed into loading) can carry null.
-        public AssetBundleManifestVersion AssetBundleManifestVersion;
+        public AssetBundleManifestVersion AssetBundleManifest;
         public string ParentEntityID;
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool IsDependency;
         public bool LookForDependencies;
 
-        private GetAssetBundleIntention(Type? expectedObjectType, AssetBundleManifestVersion assetBundleVersion, string? name = null,
+        private GetAssetBundleIntention(Type? expectedObjectType, AssetBundleManifestVersion assetBundle, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
             string parentEntityID = "",
@@ -56,7 +56,7 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheHash = null;
 
             ParentEntityID = parentEntityID;
-            AssetBundleManifestVersion = assetBundleVersion;
+            AssetBundleManifest = assetBundle;
             IsDependency = isDependency;
             LookForDependencies = lookForDependencies;
         }
@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
         {
             CommonArguments = commonArguments;
-            AssetBundleManifestVersion = AssetBundleManifestVersion.CreateManualManifest();
+            AssetBundleManifest = AssetBundleManifestVersion.CreateManualManifest();
         }
 
         // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name, so two dependency closures never share a Hash.

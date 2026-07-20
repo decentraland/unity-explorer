@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (assetBundleIntention.AssetBundleManifestVersion.assetBundleManifestRequestFailed)
+                if (assetBundleIntention.AssetBundleManifest.assetBundleManifestRequestFailed)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest version must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
@@ -63,10 +63,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.WEB;
 
                 // Hash was already resolved to the canonical CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash/ResolveCdnRequestHash.
-                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
+                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifest.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifest.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.ComputeCacheHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeCacheHash(assetBundleIntention.Hash);
             }
         }
 
