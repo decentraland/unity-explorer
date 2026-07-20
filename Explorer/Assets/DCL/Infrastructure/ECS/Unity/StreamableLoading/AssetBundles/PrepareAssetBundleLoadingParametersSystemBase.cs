@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
 
-                // Hash was already resolved to the canonical CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash/ResolveCdnRequestHash.
+                // Hash was already translated to the canonical CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifest.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifest.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 

@@ -27,47 +27,33 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ResolveCdnRequestHashToVerbatimManifestEntry()
+        public void TranslateBareHashToCdnRequestHash()
         {
-            // The map is keyed by the *current* platform-suffixed hash, so entries are built with it to stay platform-agnostic.
             string platform = PlatformUtils.GetCurrentPlatform();
 
             AssetBundleManifestVersion manifest = CreateV49Manifest(
                 $"{HASH_LEGACY}{platform}",
                 $"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_A}{platform}"), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
-            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_LEGACY}{platform}"), Is.EqualTo($"{HASH_LEGACY}{platform}"),
-                "Files listed without a digest must fall back to the input hash");
+            Assert.That(manifest.GetCdnRequestHash(HASH_LEGACY), Is.EqualTo($"{HASH_LEGACY}{platform}"),
+                "Files listed without a digest must fall back to the platform-suffixed bare hash");
 
-            Assert.That(manifest.ResolveCdnRequestHash($"{HASH_B}{platform}"), Is.EqualTo($"{HASH_B}{platform}"),
-                "Hashes absent from the manifest must fall back to the input hash");
+            Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
+                "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
         }
 
         [Test]
-        public void ResolveCdnRequestHashCaseInsensitivelyToManifestCasing()
+        public void TranslateBareHashCaseInsensitivelyToManifestCasing()
         {
             string platform = PlatformUtils.GetCurrentPlatform();
 
             AssetBundleManifestVersion manifest = CreateV49Manifest($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}");
 
             // The lookup is case-insensitive and returns the manifest's casing — the name that exists on the case-sensitive CDN.
-            Assert.That(manifest.ResolveCdnRequestHash($"QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV{platform}"),
+            Assert.That(manifest.GetCdnRequestHash("QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv_{DIGEST_A}{platform}"));
-        }
-
-        [Test]
-        public void ComposeCdnRequestHashFromBareHash()
-        {
-            string platform = PlatformUtils.GetCurrentPlatform();
-
-            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
-
-            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
-
-            Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
-                "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
         }
 
         [Test]
@@ -123,7 +109,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(manifest.HasDepsDigests(), Is.False, "Content casing entries must not switch cache keying to the v49 scheme");
 
-            Assert.That(manifest.ResolveCdnRequestHash($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}"),
+            Assert.That(manifest.GetCdnRequestHash("QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}").IgnoreCase);
         }
 
@@ -138,12 +124,12 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             var contentFirst = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
             contentFirst.InjectContent(QM_ENTITY_ID, new[] { new ContentDefinition { file = "model.glb", hash = QM_HASH } });
             contentFirst.InjectDepsDigests(new[] { $"{QM_HASH}_{DIGEST_A}{platform}" });
-            Assert.That(contentFirst.ResolveCdnRequestHash($"{QM_HASH}{platform}"), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
+            Assert.That(contentFirst.GetCdnRequestHash(QM_HASH), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
 
             var digestsFirst = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
             digestsFirst.InjectDepsDigests(new[] { $"{QM_HASH}_{DIGEST_A}{platform}" });
             digestsFirst.InjectContent(QM_ENTITY_ID, new[] { new ContentDefinition { file = "model.glb", hash = QM_HASH } });
-            Assert.That(digestsFirst.ResolveCdnRequestHash($"{QM_HASH}{platform}"), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
+            Assert.That(digestsFirst.GetCdnRequestHash(QM_HASH), Is.EqualTo($"{QM_HASH}_{DIGEST_A}{platform}"));
         }
 
         [Test]

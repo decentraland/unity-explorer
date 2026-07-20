@@ -34,13 +34,13 @@ public class AssetBundleManifestVersion
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
-        //Digest-less platform-suffixed hash → canonical CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
+        //Bare hash → canonical CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
         private bool hasDepsDigests;
 
         public bool HasHashInPath()
         {
-            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH && version < ASSET_BUNDLE_VERSION_SUPPORTS_DEPS_DIGEST ;
             return HasHashInPathValue.Value;
         }
 
@@ -72,7 +72,7 @@ public class AssetBundleManifestVersion
             return int.TryParse(version.AsSpan(1), out parsed);
         }
 
-        /// <summary>Stores, keyed by the digest-less platform-suffixed hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
+        /// <summary>Stores, keyed by the bare hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
         public void InjectDepsDigests(string[]? files)
         {
             if (files == null || files.Length == 0) return;
@@ -85,7 +85,7 @@ public class AssetBundleManifestVersion
                 if (parts.Length < 3) continue;
 
                 cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
-                cdnFiles[$"{parts[0]}_{parts[2]}"] = file;
+                cdnFiles[parts[0]] = file;
                 hasDepsDigests = true;
             }
         }
@@ -94,23 +94,19 @@ public class AssetBundleManifestVersion
         public bool HasDepsDigests() =>
             hasDepsDigests;
 
-        /// <summary>Builds the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
+        /// <summary>Translates a bare hash to the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
         public string GetCdnRequestHash(string bareHash) =>
-            ResolveCdnRequestHash($"{bareHash}{PlatformUtils.GetCurrentPlatform()}");
+            TryGetCdnFileName(bareHash, out string fileName) ? fileName : $"{bareHash}{PlatformUtils.GetCurrentPlatform()}";
 
         /// <summary>Composes the upper-layer cache key (GLTF container, etc.): the canonical CDN file name when known, otherwise the bare hash.</summary>
         public string ComposeCacheKey(string hash) =>
-            TryResolveCdnRequestHash($"{hash}{PlatformUtils.GetCurrentPlatform()}", out string fileName) ? fileName : hash;
+            TryGetCdnFileName(hash, out string fileName) ? fileName : hash;
 
         /// <summary>Computes the Unity-cache key for a CDN request hash: scene manifests (deps map present) key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
         public Hash128 ComputeCacheHash(string hash) =>
             HasDepsDigests()
-                ? ComputeHashV49(hash, GetAssetBundleManifestVersion() ?? string.Empty)
-                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate() ?? string.Empty);
-
-        /// <summary>Resolves a platform-suffixed hash to the canonical CDN file name — digest-bearing and correctly cased when known (case-insensitive lookup) — or returns the input unchanged when unlisted.</summary>
-        public string ResolveCdnRequestHash(string hash) =>
-            TryResolveCdnRequestHash(hash, out string fileName) ? fileName : hash;
+                ? ComputeHashV49(hash, GetAssetBundleManifestVersion()!)
+                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate()!);
 
         private static unsafe Hash128 ComputeHashV49(string hash, string version)
         {
@@ -138,21 +134,20 @@ public class AssetBundleManifestVersion
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
-        /// <summary>Same resolution as <see cref="ResolveCdnRequestHash" />, reporting whether the manifest knows the file.</summary>
-        bool TryResolveCdnRequestHash(string hash, out string fileName)
+        private bool TryGetCdnFileName(string bareHash, out string fileName)
         {
-            if (cdnFiles != null && cdnFiles.TryGetValue(hash, out fileName!))
+            if (cdnFiles != null && cdnFiles.TryGetValue(bareHash, out fileName!))
                 return true;
 
             fileName = string.Empty;
             return false;
         }
 
-        public string? GetAssetBundleManifestVersion() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version : assets?.mac!.version;
+        public string GetAssetBundleManifestVersion() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version! : assets?.mac!.version!;
 
-        public string? GetAssetBundleManifestBuildDate() =>
-            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate : assets?.mac!.buildDate;
+        private string GetAssetBundleManifestBuildDate() =>
+            IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate! : assets?.mac!.buildDate!;
 
         public bool IsEmpty() =>
             assets?.IsEmpty() ?? true;
@@ -249,8 +244,8 @@ public class AssetBundleManifestVersion
             // TryAdd so digest-bearing entries from InjectDepsDigests always win, regardless of injection order.
             for (var i = 0; i < entityDefinitionContent.Length; i++)
             {
-                string fileName = (lowerCase ? entityDefinitionContent[i].hash.ToLowerInvariant() : entityDefinitionContent[i].hash) + platformSuffix;
-                cdnFiles.TryAdd(fileName, fileName);
+                string hash = entityDefinitionContent[i].hash;
+                cdnFiles.TryAdd(hash, (lowerCase ? hash.ToLowerInvariant() : hash) + platformSuffix);
             }
         }
     }
