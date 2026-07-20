@@ -33,6 +33,12 @@ namespace Global.AppArgs
         /// </summary>
         public const string COMMUNITY = "community";
 
+        // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
+        public const string SIGNIN = "signin";
+
+        // The auth request id parameter echoed in the signin deep link, used to match a link to the login that minted it.
+        public const string AUTH_REQUEST_ID = "authRequestId";
+
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";

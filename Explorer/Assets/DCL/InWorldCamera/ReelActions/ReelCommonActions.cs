@@ -18,7 +18,7 @@ namespace DCL.InWorldCamera.ReelActions
         ///     Opens a browser tab on x.com with a tweet ready to be posted containing the reel url.
         ///     Also copies the url to the clipboard.
         /// </summary>
-        public static void ShareReelToX(string shareToXMessage, string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard, IWebBrowser webBrowser)
+        public static void ShareReelToX(string shareToXMessage, string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard, UnityAppWebBrowser webBrowser)
         {
             string description = shareToXMessage;
             string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}";
@@ -26,7 +26,7 @@ namespace DCL.InWorldCamera.ReelActions
             string xUrl = $"https://x.com/intent/post?text={description}&url={url}";
 
             systemClipboard.Set(xUrl);
-            webBrowser.OpenUrl(xUrl);
+            webBrowser.OpenUrlMainThreadOnly(xUrl);
         }
 
         /// <summary>

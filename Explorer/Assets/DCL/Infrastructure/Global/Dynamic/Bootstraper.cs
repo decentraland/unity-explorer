@@ -105,21 +105,21 @@ namespace Global.Dynamic
             RealmData realmData,
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
-            IAppArgs appArgs,
+            IAppArgs args,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.Analytics,
                 bootstrapContainer.DecentralandUrlsSource,
                 realmData,
-                bootstrapContainer.AssetsProvisioner,
+                bootstrapContainer.AssetsProvisioner!,
                 bootstrapContainer.ReportHandlingSettings,
                 debugContainerBuilder,
                 webRequestsContainer,
                 pluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
-                bootstrapContainer.IdentityCache,
-                bootstrapContainer.CompositeWeb3Provider,
+                bootstrapContainer.IdentityCache!,
+                bootstrapContainer.CompositeWeb3Provider!,
                 bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
@@ -130,7 +130,7 @@ namespace Global.Dynamic
                 diskCache,
                 partialsDiskCache,
                 ct,
-                appArgs
+                args
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
@@ -142,7 +142,7 @@ namespace Global.Dynamic
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
-            IAppArgs appArgs,
+            IAppArgs args,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
             CancellationToken ct)
@@ -150,13 +150,13 @@ namespace Global.Dynamic
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
-                appArgs,
-                bootstrapContainer.AssetsProvisioner,
+                args,
+                bootstrapContainer.AssetsProvisioner!,
                 staticContainer,
                 pluginSettingsContainer,
                 dynamicSettings,
                 bootstrapContainer.CompositeWeb3Provider!,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 splashScreen,
                 worldInfoTool
             );
@@ -182,7 +182,7 @@ namespace Global.Dynamic
                 backgroundMusic,
                 world,
                 playerEntity,
-                appArgs,
+                args,
                 coroutineRunner,
                 dclVersion,
                 realmUrls,
@@ -250,7 +250,7 @@ namespace Global.Dynamic
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
-                bootstrapContainer.IdentityCache,
+                bootstrapContainer.IdentityCache!,
                 staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,

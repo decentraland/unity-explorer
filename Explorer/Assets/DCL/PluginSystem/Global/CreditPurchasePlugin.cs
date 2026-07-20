@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICreditsPurchaseService creditsPurchaseService;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
 
         private CreditPurchaseModalController? creditPurchaseModalController;
 
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
             ICreditsPurchaseService creditsPurchaseService,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             IWeb3IdentityCache web3IdentityCache,
-            IWebBrowser webBrowser)
+            UnityAppWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
