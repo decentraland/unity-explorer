@@ -2,6 +2,7 @@ using DCL.Platforms;
 using DCL.Utility;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility;
 
 // ReSharper disable once CheckNamespace
@@ -101,9 +102,41 @@ public class AssetBundleManifestVersion
         public string ComposeCacheKey(string hash) =>
             TryResolveCdnRequestHash($"{hash}{PlatformUtils.GetCurrentPlatform()}", out string fileName) ? fileName : hash;
 
+        /// <summary>Computes the Unity-cache key for a CDN request hash: scene manifests (deps map present) key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
+        public Hash128 ComputeCacheHash(string hash) =>
+            HasDepsDigests()
+                ? ComputeHashV49(hash, GetAssetBundleManifestVersion() ?? string.Empty)
+                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate() ?? string.Empty);
+
         /// <summary>Resolves a platform-suffixed hash to the canonical CDN file name — digest-bearing and correctly cased when known (case-insensitive lookup) — or returns the input unchanged when unlisted.</summary>
         public string ResolveCdnRequestHash(string hash) =>
             TryResolveCdnRequestHash(hash, out string fileName) ? fileName : hash;
+
+        private static unsafe Hash128 ComputeHashV49(string hash, string version)
+        {
+            // The digest embedded in the hash replaces buildDate-based invalidation, keeping the cache shareable across CDN republishes; the delimiter prevents version/hash boundary collisions.
+            ReadOnlySpan<char> hashSpan = hash.AsSpan();
+            ReadOnlySpan<char> versionSpan = version.AsSpan();
+
+            Span<char> builder = stackalloc char[versionSpan.Length + 1 + hashSpan.Length];
+            versionSpan.CopyTo(builder);
+            builder[versionSpan.Length] = '|';
+            hashSpan.CopyTo(builder[(versionSpan.Length + 1)..]);
+
+            fixed (char* ptr = builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * builder.Length)); }
+        }
+
+        private static unsafe Hash128 ComputeHashLegacy(string hash, string buildDate)
+        {
+            // Byte-identical to the pre-v49 cache key so existing Unity-AB-cache entries keep hitting after upgrade.
+            // The lack of a delimiter is a known theoretical collision risk (e.g. buildDate ending in 'X' vs. hash
+            // starting with 'X') — accepted here, will be addressed when v49 adoption lets us retire this path.
+            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
+            buildDate.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
+
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
 
         /// <summary>Same resolution as <see cref="ResolveCdnRequestHash" />, reporting whether the manifest knows the file.</summary>
         bool TryResolveCdnRequestHash(string hash, out string fileName)

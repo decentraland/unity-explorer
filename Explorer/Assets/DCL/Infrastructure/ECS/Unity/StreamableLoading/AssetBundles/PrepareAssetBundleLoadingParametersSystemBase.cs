@@ -5,8 +5,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
-using DCL.Platforms;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -68,12 +66,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
 
-                // Scene manifests carry the deps map and key on version+hash (the digest travels inside the hash); wearables/emotes never carry it and keep buildDate keying, as their bundles are republished in place.
-                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.HasDepsDigests()
-                    ? ComputeHashV49(assetBundleIntention.Hash,
-                        assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion())
-                    : ComputeHashLegacy(assetBundleIntention.Hash,
-                        assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestBuildDate());
+                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifestVersion.ComputeCacheHash(assetBundleIntention.Hash);
             }
         }
 
@@ -84,32 +77,6 @@ namespace ECS.StreamableLoading.AssetBundles
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
-
-        public static unsafe Hash128 ComputeHashLegacy(string hash, string buildDate)
-        {
-            // Byte-identical to the pre-v49 cache key so existing Unity-AB-cache entries keep hitting after upgrade.
-            // The lack of a delimiter is a known theoretical collision risk (e.g. buildDate ending in 'X' vs. hash
-            // starting with 'X') — accepted here, will be addressed when v49 adoption lets us retire this path.
-            Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
-            buildDate.AsSpan().CopyTo(hashBuilder);
-            hash.AsSpan().CopyTo(hashBuilder[buildDate.Length..]);
-
-            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
-        }
-
-        public static unsafe Hash128 ComputeHashV49(string hash, string version)
-        {
-            // The digest embedded in the hash replaces buildDate-based invalidation, keeping the cache shareable across CDN republishes; the delimiter prevents version/hash boundary collisions.
-            ReadOnlySpan<char> hashSpan = hash.AsSpan();
-            ReadOnlySpan<char> versionSpan = version.AsSpan();
-
-            Span<char> builder = stackalloc char[versionSpan.Length + 1 + hashSpan.Length];
-            versionSpan.CopyTo(builder);
-            builder[versionSpan.Length] = '|';
-            hashSpan.CopyTo(builder[(versionSpan.Length + 1)..]);
-
-            fixed (char* ptr = builder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * builder.Length)); }
-        }
 
         private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)
         {

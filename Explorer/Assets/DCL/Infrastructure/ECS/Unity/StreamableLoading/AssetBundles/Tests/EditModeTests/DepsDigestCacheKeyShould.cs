@@ -220,70 +220,67 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void V49HashIsStableForSameInputs()
+        public void ComputeStableCacheHashForSameInputs()
         {
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
+            AssetBundleManifestVersion sceneManifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+            Assert.That(sceneManifest.ComputeCacheHash($"{HASH_A}_{DIGEST_A}_mac"), Is.EqualTo(sceneManifest.ComputeCacheHash($"{HASH_A}_{DIGEST_A}_mac")));
 
-            Assert.That(a, Is.EqualTo(b));
+            AssetBundleManifestVersion legacyManifest = AssetBundleManifestVersion.CreateFromFallback("v48", "2026-05-01");
+            Assert.That(legacyManifest.ComputeCacheHash(HASH_LEGACY), Is.EqualTo(legacyManifest.ComputeCacheHash(HASH_LEGACY)));
         }
 
         [Test]
-        public void V49HashDiffersWhenDigestBearingHashDiffers()
+        public void ComputeDifferentCacheHashWhenDigestBearingHashDiffers()
         {
             // The digest travels inside the hash, so two dependency closures produce different Unity-cache keys.
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_B}_mac", "v49");
+            AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac", $"{HASH_A}_{DIGEST_B}_mac");
 
-            Assert.That(a, Is.Not.EqualTo(b));
+            Assert.That(manifest.ComputeCacheHash($"{HASH_A}_{DIGEST_A}_mac"), Is.Not.EqualTo(manifest.ComputeCacheHash($"{HASH_A}_{DIGEST_B}_mac")));
         }
 
         [Test]
-        public void V49HashDiffersWhenVersionDiffers()
+        public void ComputeDifferentCacheHashWhenVersionDiffers()
         {
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v49");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49($"{HASH_A}_{DIGEST_A}_mac", "v50");
+            AssetBundleManifestVersion v49 = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
 
-            Assert.That(a, Is.Not.EqualTo(b));
+            var v50 = AssetBundleManifestVersion.CreateFromFallback("v50", "2026-05-01");
+            v50.InjectDepsDigests(new[] { $"{HASH_A}_{DIGEST_A}_mac" });
+
+            Assert.That(v49.ComputeCacheHash($"{HASH_A}_{DIGEST_A}_mac"), Is.Not.EqualTo(v50.ComputeCacheHash($"{HASH_A}_{DIGEST_A}_mac")));
         }
 
         [Test]
-        public void V49DelimiterPreventsBoundaryCollisions()
+        public void ComputeDifferentCacheHashAcrossVersionHashBoundary()
         {
             // Without the delimiter, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce the same byte stream.
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("9foo", "v4");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49("foo", "v49");
+            var v4 = AssetBundleManifestVersion.CreateFromFallback("v4", "2026-05-01");
+            v4.InjectDepsDigests(new[] { $"9foo_{DIGEST_A}_mac" });
 
-            Assert.That(a, Is.Not.EqualTo(b));
+            var v49 = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            v49.InjectDepsDigests(new[] { $"foo_{DIGEST_A}_mac" });
+
+            Assert.That(v4.ComputeCacheHash("9foo"), Is.Not.EqualTo(v49.ComputeCacheHash("foo")));
         }
 
         [Test]
-        public void LegacyHashIsStableForSameInputs()
+        public void ComputeCacheHashFromBuildDateWithoutDepsMap()
         {
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
+            // Manifests without a deps map (wearables/emotes, pre-v49 scenes) key on buildDate — a republish must flush their cache.
+            var a = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            var b = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-02");
 
-            Assert.That(a, Is.EqualTo(b));
+            Assert.That(a.ComputeCacheHash(HASH_LEGACY), Is.Not.EqualTo(b.ComputeCacheHash(HASH_LEGACY)));
         }
 
         [Test]
-        public void LegacyHashChangesWithBuildDate()
+        public void ComputeDistinctCacheHashesAcrossKeyingSchemes()
         {
-            // Pre-v49 ABs have no per-file freshness signal — buildDate must contribute to the key to flush stale entries.
-            Hash128 a = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-01");
-            Hash128 b = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_LEGACY, "2026-05-02");
+            // A mapped and an unmapped manifest must not produce the same key for the same hash, even when the
+            // legacy buildDate happens to equal the v49 version string.
+            AssetBundleManifestVersion mapped = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+            var unmapped = AssetBundleManifestVersion.CreateFromFallback("v49", "v49");
 
-            Assert.That(a, Is.Not.EqualTo(b));
-        }
-
-        [Test]
-        public void V49AndLegacyDoNotCollideForSameHash()
-        {
-            // A digest-less v49 hash must not collide with the legacy key even when buildDate equals the version string.
-            Hash128 legacy = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashLegacy(HASH_A, "v49");
-            Hash128 v49 = PrepareAssetBundleLoadingParametersSystemBase.ComputeHashV49(HASH_A, "v49");
-
-            Assert.That(legacy, Is.Not.EqualTo(v49));
+            Assert.That(mapped.ComputeCacheHash(HASH_A), Is.Not.EqualTo(unmapped.ComputeCacheHash(HASH_A)));
         }
 
         [Test]
