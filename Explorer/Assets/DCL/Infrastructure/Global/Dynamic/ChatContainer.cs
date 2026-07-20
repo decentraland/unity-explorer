@@ -17,7 +17,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.Translation;
 using DCL.UI.InputFieldFormatting;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;

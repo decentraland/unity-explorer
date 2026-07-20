@@ -79,10 +79,13 @@ namespace DCL.Chat.Commands
             return new Vector2Int(topScene.baseCoords[0], topScene.baseCoords[1]);
         }
 
+        // ReSharper disable InconsistentNaming
+        // Archipelago hot-scenes API response - fields must match the JSON wire format.
         private struct HotScene
         {
             public string name;
             public int[] baseCoords;
         }
+        // ReSharper restore InconsistentNaming
     }
 }

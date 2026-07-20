@@ -95,13 +95,13 @@ namespace DCL.RealmNavigation
         )
         {
             if (ct.IsCancellationRequested)
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.CHANGE_CANCELLED);
 
             if (realmController.RealmData.IsLocalSceneDevelopment)
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LocalSceneDevelopmentBlocked);
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.LOCAL_SCENE_DEVELOPMENT_BLOCKED);
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NOT_REACHABLE);
 
             // We use worldName != null to determine if the target is a world, instead of
             // RealmData.IsWorld(), because RealmData reflects the *current* realm — not the target.
@@ -116,7 +116,7 @@ namespace DCL.RealmNavigation
                     {
                         ReportHub.LogWarning(ReportCategory.REALM, $"[RealmNavigator] Permission check failed for '{worldName}'");
                         NotificationsBusController.Instance.AddNotification(new ServerErrorNotification(PERMISSION_CHECK_FAILED_MESSAGE));
-                        return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UnauthorizedWorldAccess);
+                        return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.UNAUTHORIZED_WORLD_ACCESS);
                     }
 
                     if (result != WorldAccessResult.Allowed)
@@ -138,7 +138,7 @@ namespace DCL.RealmNavigation
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
 
                 ReportHub.LogError(ReportCategory.REALM,
-                    $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
+                    $"Error trying to teleport to a realm {realm}: {loadResult.Error!.Value.Message}");
 
                 return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
             }
@@ -163,9 +163,9 @@ namespace DCL.RealmNavigation
         private static EnumResult<ChangeRealmError> MapToChangeRealmError(WorldAccessResult result) =>
             result switch
             {
-                WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WhitelistAccessDenied),
-                WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordCancelled),
-                _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PasswordRequired)
+                WorldAccessResult.Denied => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.WHITELIST_ACCESS_DENIED),
+                WorldAccessResult.PasswordCancelled => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PASSWORD_CANCELLED),
+                _ => EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.PASSWORD_REQUIRED)
             };
 
         private static bool TryExtractWorldName(URLDomain realm, out string worldName)

@@ -67,15 +67,15 @@ namespace DCL.Chat.Commands
 
             return error.State switch
                    {
-                       ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
-                       ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
-                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
-                       ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
-                       ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
-                       ChangeRealmError.PasswordRequired => $"🔴 Error: The world {realm} requires a password to access",
-                       ChangeRealmError.PasswordCancelled => "🟡 Password entry was cancelled",
-                       ChangeRealmError.WhitelistAccessDenied => $"🔴 Error: You are not on the access list for {realm}",
+                       ChangeRealmError.MESSAGE_ERROR => $"🔴 Teleport was not fully successful to {realm} world!",
+                       ChangeRealmError.NOT_REACHABLE => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
+                       ChangeRealmError.CHANGE_CANCELLED => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.LOCAL_SCENE_DEVELOPMENT_BLOCKED => "🔴 Error: Realm changes are not allowed in local scene development mode",
+                       ChangeRealmError.UNAUTHORIZED_WORLD_ACCESS => "🔴 Error: User is not authorized to access the requested world",
+                       ChangeRealmError.TIMEOUT => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
+                       ChangeRealmError.PASSWORD_REQUIRED => $"🔴 Error: The world {realm} requires a password to access",
+                       ChangeRealmError.PASSWORD_CANCELLED => "🟡 Password entry was cancelled",
+                       ChangeRealmError.WHITELIST_ACCESS_DENIED => $"🔴 Error: You are not on the access list for {realm}",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -102,12 +102,12 @@ namespace DCL.Chat.Commands
 
             return error.State switch
                    {
-                       ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {realm} world!",
-                       ChangeRealmError.NotReachable => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
-                       ChangeRealmError.ChangeCancelled => "🔴 Error: The operation was canceled!",
-                       ChangeRealmError.LocalSceneDevelopmentBlocked => "🔴 Error: Realm changes are not allowed in local scene development mode",
-                       ChangeRealmError.UnauthorizedWorldAccess => "🔴 Error: User is not authorized to access the requested world",
-                       ChangeRealmError.Timeout => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
+                       ChangeRealmError.MESSAGE_ERROR => $"🔴 Teleport was not fully successful to {realm} world!",
+                       ChangeRealmError.NOT_REACHABLE => $"🔴 Error: The world {realm} doesn't exist or not reachable!",
+                       ChangeRealmError.CHANGE_CANCELLED => "🔴 Error: The operation was canceled!",
+                       ChangeRealmError.LOCAL_SCENE_DEVELOPMENT_BLOCKED => "🔴 Error: Realm changes are not allowed in local scene development mode",
+                       ChangeRealmError.UNAUTHORIZED_WORLD_ACCESS => "🔴 Error: User is not authorized to access the requested world",
+                       ChangeRealmError.TIMEOUT => "🔴 Error: We were unable to connect to the realm. Please verify your connection.",
                        _ => throw new ArgumentOutOfRangeException()
                    };
         }
@@ -119,7 +119,7 @@ namespace DCL.Chat.Commands
 
             if (!environmentValidationResult.Success)
             {
-                errorMessage = environmentValidationResult.ErrorMessage;
+                errorMessage = environmentValidationResult.ErrorMessage!;
                 return false;
             }
 
