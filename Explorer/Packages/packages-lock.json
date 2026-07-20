@@ -22,7 +22,7 @@
         "com.unity.test-framework": "1.1.33",
         "com.unity.ugui": "2.0.0"
       },
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -57,7 +57,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.coffee.softmask-for-ugui": {
       "version": "https://github.com/mob-sakai/SoftMaskForUGUI.git?path=Packages/src#3.6.2",
@@ -80,14 +80,14 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.decentraland.filebrowserpro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git#222d67ccc289337dadb5e8d96ee5b633dfb905b6",
@@ -140,7 +140,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "c4241756b8c12179dd849a57be5116616418c17f"
+      "hash": "a1a8ecc571c94de45b23bea1569854326a0ba7c9"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#fix/unity-6000.5.4-api-compat",
@@ -151,7 +151,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain#fix/unity-6000.5.4-api-compat",
@@ -160,14 +160,14 @@
       "dependencies": {
         "com.gurbu.gpui-pro": "0.9.19"
       },
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SerializeReferenceExtensions#fix/unity-6000.5.4-api-compat",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.nickkhalow.chrome-devtool-protocol-unity": {
       "version": "https://github.com/decentraland/chrome-devtool-protocol-unity.git?path=/Packages",
@@ -191,7 +191,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -523,7 +523,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1293099978bcca5ef57a20ea22aeb99c44fbe94a"
+      "hash": "6bc4241ce1314527226b60000734e7398fcf565c"
     },
     "io.livekit.unity": {
       "version": "https://github.com/livekit/client-sdk-unity-web.git",
