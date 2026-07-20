@@ -83,6 +83,43 @@ curl -s -X POST http://127.0.0.1:8123/unity-explorer-mcp \
 
 `get_player_state`, `get_scene_state` and `list_scene_entities` also return `structuredContent` mirroring their text payload and declare a matching `outputSchema` in `tools/list` (MCP 2025-06-18). This is done **only as an example on the read-only state tools that benefit from it now** — every other tool returns text content only. A tool opts in by overriding `IMcpTool.OutputSchema` (default `null`); the same `McpInputSchema` builder produces the schema.
 
+
+## Streaming logs (SSE subscribe)
+
+The tools above are request/response. For logs you can also **subscribe** and get a live push
+instead of polling `get_scene_logs`. Open the server-to-client SSE stream with a `GET` and pick one
+of two independent streams:
+
+| Stream | `GET …?stream=` | Source |
+|---|---|---|
+| Scene | `scene` | The running SDK7 scene's JavaScript console (same source as `get_scene_logs`) |
+| Client | `client` | The whole Unity player/editor log — engine, build and editor output |
+
+Each event is a JSON-RPC `notifications/message` (MCP logging shape):
+
+```json
+{"jsonrpc":"2.0","method":"notifications/message","params":{"level":"error","logger":"scene","data":"…"}}
+```
+
+`level` is an RFC 5424 severity (`debug`,`info`,`notice`,`warning`,`error`,`critical`,`alert`,`emergency`).
+Filter with an optional `?level=` (default `debug` = everything at or above): the subscription only
+receives entries at that level or higher. The two streams are independent — subscribe to one or both,
+each at its own level. The capability is advertised in `initialize` under
+`capabilities.experimental["dcl/logStreams"]`.
+
+```bash
+# Stream engine/build/editor errors as they happen
+curl -N -H 'Accept: text/event-stream' \
+  'http://127.0.0.1:8123/unity-explorer-mcp?stream=client&level=warning'
+
+# Stream the scene's JS console (all levels)
+curl -N -H 'Accept: text/event-stream' \
+  'http://127.0.0.1:8123/unity-explorer-mcp?stream=scene'
+```
+
+The stream stays open until the client disconnects or the Explorer stops. `GET` without
+`Accept: text/event-stream` still returns 405; an unknown `stream`/`level` returns 400.
+
 ## The scene-iteration loop
 
 1. Serve the scene and launch the Explorer in one step: `npm run start -- --mcp` in the scene folder (serves at `http://127.0.0.1:8000`, auto-launches the installed client against it with the MCP server on, and hot-reloads on file changes).

@@ -12,7 +12,8 @@ namespace DCL.McpServer.Core
 {
     /// <summary>
     ///     Minimal MCP Streamable HTTP transport on top of <see cref="HttpListener" />, bound to 127.0.0.1 only.
-    ///     POST carries a single JSON-RPC message; GET (server-initiated stream) is not supported and returns 405.
+    ///     POST carries a single JSON-RPC message; GET opens the server-to-client SSE stream — a log-stream
+    ///     subscription (<c>?stream=scene|client</c>, optional <c>?level=</c>) delivered via <see cref="McpNotificationChannel" />.
     /// </summary>
     public class McpHttpServer : IDisposable
     {
@@ -24,6 +25,7 @@ namespace DCL.McpServer.Core
 
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
+        private readonly McpNotificationChannel notifications;
 
         // The session maps to the Explorer process, not to a client: this server is stateless and drives one
         // shared world, so every request operates on the same state and there is nothing session-scoped to isolate.
@@ -37,10 +39,11 @@ namespace DCL.McpServer.Core
         /// <summary>The localhost URL the server listens on, e.g. <c>http://127.0.0.1:8123/unity-explorer-mcp</c>.</summary>
         public string EndpointUrl => $"http://127.0.0.1:{port}/{ENDPOINT_PATH}";
 
-        public McpHttpServer(McpToolsRegistry toolsRegistry, int port)
+        public McpHttpServer(McpToolsRegistry toolsRegistry, int port, McpNotificationChannel notifications)
         {
             this.dispatcher = new McpJsonRpcDispatcher(toolsRegistry, Application.version);
             this.port = port;
+            this.notifications = notifications;
         }
 
         public void Dispose()
@@ -114,6 +117,9 @@ namespace DCL.McpServer.Core
                     case "POST":
                         await HandlePostAsync(context, ct);
                         break;
+                    case "GET":
+                        await HandleGetAsync(context, ct);
+                        break;
                     case "DELETE":
                         // Session termination is accepted but stateless: nothing to clean up.
                         context.Response.WriteEmptyAndClose(HttpStatusCode.OK, sessionId);
@@ -179,6 +185,76 @@ namespace DCL.McpServer.Core
             context.Response.Close();
         }
 
+        private async UniTask HandleGetAsync(HttpListenerContext context, CancellationToken ct)
+        {
+            // The standalone server-to-client SSE stream: subscribe to one log stream and receive
+            // notifications/message events until the client disconnects or the server stops.
+            string? accept = context.Request.Headers["Accept"];
+
+            if (accept == null || !accept.Contains("text/event-stream"))
+            {
+                context.Response.WriteEmptyAndClose(HttpStatusCode.MethodNotAllowed, sessionId);
+                return;
+            }
+
+            string? stream = context.Request.QueryString["stream"];
+
+            if (!McpLogStreams.IsKnown(stream))
+            {
+                WriteBadRequest(context, "GET requires ?stream=scene or ?stream=client");
+                return;
+            }
+
+            var minLevel = McpLogLevel.Debug;
+            string? levelParam = context.Request.QueryString["level"];
+
+            if (!string.IsNullOrEmpty(levelParam) && !McpLogLevelExtensions.TryParse(levelParam, out minLevel))
+            {
+                WriteBadRequest(context, $"Unknown level '{levelParam}' (RFC 5424: debug..emergency)");
+                return;
+            }
+
+            HttpListenerResponse response = context.Response;
+            response.StatusCode = (int)HttpStatusCode.OK;
+            response.ContentType = "text/event-stream";
+            response.SendChunked = true;
+            response.AddHeader("Cache-Control", "no-cache");
+            response.WithMcpHeaders(sessionId);
+
+            // A vanished client is only discovered when a write fails; the sink then cancels this token so the
+            // handler stops holding the connection instead of parking on ct until the server shuts down.
+            using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            IDisposable? subscription = notifications.Add(stream!, minLevel, new HttpListenerSseSink(response, connectionCts));
+
+            if (subscription == null)
+            {
+                // The channel is shutting down.
+                TryAbort(context);
+                return;
+            }
+
+            try
+            {
+                // Park until the connection token cancels (server shutdown or a write-failure via the sink).
+                var closed = new UniTaskCompletionSource();
+                using (connectionCts.Token.Register(() => closed.TrySetResult()))
+                    await closed.Task;
+            }
+            finally { subscription.Dispose(); }
+        }
+
+        private void WriteBadRequest(HttpListenerContext context, string message)
+        {
+            byte[] payload = Encoding.UTF8.GetBytes(message);
+            context.Response.WithMcpHeaders(sessionId);
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "text/plain; charset=utf-8";
+            context.Response.ContentLength64 = payload.Length;
+            context.Response.OutputStream.Write(payload, 0, payload.Length);
+            context.Response.Close();
+        }
+
         private void TryWriteInternalError(HttpListenerContext context)
         {
             try
@@ -212,6 +288,56 @@ namespace DCL.McpServer.Core
                 return false;
 
             return originUri.Host is "localhost" or "127.0.0.1" or "::1";
+        }
+
+        /// <summary>Writes SSE chunks to one still-open HTTP response; serialized, and self-latching once broken.</summary>
+        private sealed class HttpListenerSseSink : McpNotificationChannel.ISseSink
+        {
+            private readonly HttpListenerResponse response;
+            private readonly CancellationTokenSource connectionCts;
+            private readonly object gate = new ();
+            private bool broken;
+
+            public HttpListenerSseSink(HttpListenerResponse response, CancellationTokenSource connectionCts)
+            {
+                this.response = response;
+                this.connectionCts = connectionCts;
+            }
+
+            public bool TryWrite(byte[] bytes)
+            {
+                lock (gate)
+                {
+                    if (broken) return false;
+
+                    try
+                    {
+                        response.OutputStream.Write(bytes, 0, bytes.Length);
+                        response.OutputStream.Flush();
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        broken = true;
+                        return false;
+                    }
+                }
+            }
+
+            public void Close()
+            {
+                lock (gate)
+                {
+                    broken = true;
+                    try { response.Close(); }
+                    catch (Exception) { /* already torn down */ }
+                }
+
+                // Ends the parked GET handler. The linked CTS may already be disposed if that handler
+                // completed first (server shutdown), so tolerate it.
+                try { connectionCts.Cancel(); }
+                catch (ObjectDisposedException) { }
+            }
         }
     }
 
