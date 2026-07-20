@@ -222,7 +222,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
-                        hash + PlatformUtils.GetCurrentPlatform(),
+                        wearable.DTO.assetBundleManifestVersion.GetPlatformHashWithDigest(hash),
                         expectedObjectType,
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,

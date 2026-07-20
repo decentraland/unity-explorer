@@ -11,7 +11,6 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SDKComponents.AudioSources;
-using DCL.Utility;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -239,7 +238,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                 var promise = AssetBundlePromise.Create(
                     World!,
                     GetAssetBundleIntention.FromHash(
-                        hash! + PlatformUtils.GetCurrentPlatform(),
+                        component.DTO.assetBundleManifestVersion.GetPlatformHashWithDigest(hash!),
                         typeof(GameObject),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,

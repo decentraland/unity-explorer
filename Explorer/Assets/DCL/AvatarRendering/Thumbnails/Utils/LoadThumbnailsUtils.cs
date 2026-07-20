@@ -4,9 +4,9 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using DCL.Utility;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
-                    hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
+                    hash: assetBundleManifestVersion.GetPlatformHashWithDigest(thumbnailPath.Value),
                     typeof(Texture2D),
                     permittedSources: AssetSource.ALL,
                     assetBundleManifestVersion: assetBundleManifestVersion,
