@@ -25,7 +25,7 @@ namespace DCL.McpServer.Tools
             + "(e.g. /goto x,y, /reload, /help); command output appears in chat and scene logs.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.String("message", "The chat message or /command to send.", required: true);
+            schema.String("message", "The chat message or /command to send.", isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
 
@@ -34,7 +34,7 @@ namespace DCL.McpServer.Tools
             this.chatMessagesBus = chatMessagesBus;
         }
 
-        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             string message = arguments.GetString("message", string.Empty);
 

@@ -35,8 +35,8 @@ namespace DCL.McpServer.Tools
             + "Reports the final scene state; follow up with get_scene_state for details.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("x", "Target parcel X coordinate.", required: true)
-                  .Integer("y", "Target parcel Y coordinate.", required: true)
+            schema.Integer("x", "Target parcel X coordinate.", isRequired: true)
+                  .Integer("y", "Target parcel Y coordinate.", isRequired: true)
                   .Boolean("waitForReady", "Wait until the destination scene is ready. Default true.")
                   .Number("timeoutSec", "Maximum seconds to wait for readiness. Default 60.");
 
@@ -49,7 +49,7 @@ namespace DCL.McpServer.Tools
             this.loadingStatus = loadingStatus;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("x", out int x) || !arguments.TryGetInt("y", out int y))
                 return McpToolResult.Error("Both x and y parcel coordinates are required.");

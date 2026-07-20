@@ -40,9 +40,9 @@ namespace DCL.McpServer.Tools
             + "put while the player moves; restore a player-following view with set_camera_mode third_person.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("x", "Camera world position.", required: true)
-                  .Number("y", required: true)
-                  .Number("z", required: true)
+            schema.Number("x", "Camera world position.", isRequired: true)
+                  .Number("y", isRequired: true)
+                  .Number("z", isRequired: true)
                   .Number("lookAtX", "Optional world point to aim at (all three lookAt components required together).")
                   .Number("lookAtY")
                   .Number("lookAtZ")
@@ -58,7 +58,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates for the camera position are required.");

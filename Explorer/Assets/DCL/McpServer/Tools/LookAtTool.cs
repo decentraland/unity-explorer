@@ -24,9 +24,9 @@ namespace DCL.McpServer.Tools
             "Rotate the camera to look at a world-space point (x,y,z in meters). Useful to center something on screen before a screenshot.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("x", required: true)
-                  .Number("y", required: true)
-                  .Number("z", required: true);
+            schema.Number("x", isRequired: true)
+                  .Number("y", isRequired: true)
+                  .Number("z", isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
@@ -38,7 +38,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");

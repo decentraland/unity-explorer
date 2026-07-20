@@ -29,12 +29,16 @@ namespace DCL.McpServer.Tools
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
+        // SceneLogBuffer is thread-safe and nothing else here touches ECS/Unity state, so the tool runs on the
+        // transport's thread-pool thread and answers even while the main thread is busy loading or paused.
+        protected override bool requiresMainThread => false;
+
         public GetSceneLogsTool(SceneLogBuffer logBuffer)
         {
             this.logBuffer = logBuffer;
         }
 
-        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             int limit = Mathf.Clamp(arguments.GetInt("limit", DEFAULT_LIMIT), 1, MAX_LIMIT);
             bool errorsOnly = arguments.GetString("severity", "all") == "error";

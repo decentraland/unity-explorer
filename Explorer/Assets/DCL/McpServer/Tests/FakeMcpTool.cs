@@ -52,7 +52,7 @@ namespace DCL.McpServer.Tests
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
             schema.String("value", "Any value.");
 
-        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             CallCount++;
             LastArguments = arguments;

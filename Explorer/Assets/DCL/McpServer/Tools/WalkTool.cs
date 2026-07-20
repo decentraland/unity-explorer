@@ -34,8 +34,8 @@ namespace DCL.McpServer.Tools
             + "(collisions apply). directionY is forward, directionX is strafe right. Returns the start and end positions.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("directionX", "Strafe axis: 1 right, -1 left.", required: true)
-                  .Number("directionY", "Forward axis: 1 forward, -1 backward.", required: true)
+            schema.Number("directionX", "Strafe axis: 1 right, -1 left.", isRequired: true)
+                  .Number("directionY", "Forward axis: 1 forward, -1 backward.", isRequired: true)
                   .Number("seconds", "How long to hold the movement. Default 1, max 30.")
                   .String("kind", "Movement speed. Default jog.", enumValues: new[] { "walk", "jog", "run" })
                   .Boolean("jump", "Jump once at the start of the movement. Default false.");
@@ -48,7 +48,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             var direction = new Vector2(arguments.GetFloat("directionX", 0f), arguments.GetFloat("directionY", 0f));
 

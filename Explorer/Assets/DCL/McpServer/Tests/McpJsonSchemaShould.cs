@@ -33,9 +33,9 @@ namespace DCL.McpServer.Tests
         public void CollectEveryRequiredFieldInDeclarationOrder()
         {
             JObject schema = McpJsonSchema.Object()
-                                           .String("first", required: true)
+                                           .String("first", isRequired: true)
                                            .Integer("skipped")
-                                           .Boolean("second", required: true)
+                                           .Boolean("second", isRequired: true)
                                            .Build();
 
             Assert.That(((JArray)schema["required"]!).ToObject<string[]>(), Is.EqualTo(new[] { "first", "second" }));
@@ -45,7 +45,7 @@ namespace DCL.McpServer.Tests
         public void NestAnObjectFieldWithItsOwnProperties()
         {
             JObject schema = McpJsonSchema.Object()
-                                           .Object("camera", McpJsonSchema.Object().String("mode"), "The camera.", required: true)
+                                           .Object("camera", McpJsonSchema.Object().String("mode"), "The camera.", isRequired: true)
                                            .Build();
 
             var camera = (JObject)schema["properties"]!["camera"]!;

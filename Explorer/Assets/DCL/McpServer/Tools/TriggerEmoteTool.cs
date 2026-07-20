@@ -33,7 +33,7 @@ namespace DCL.McpServer.Tools
             this.globalWorldActions = globalWorldActions;
         }
 
-        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             bool stop = arguments.GetBool("stop", false);
             string urn = arguments.GetString("urn", string.Empty);

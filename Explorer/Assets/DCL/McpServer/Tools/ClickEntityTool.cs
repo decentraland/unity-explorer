@@ -52,7 +52,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             bool hasEntityId = arguments.TryGetInt("entityId", out int entityId);
 

@@ -28,7 +28,7 @@ namespace DCL.McpServer.Tools
             + "Any player movement drops free back to third_person.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, required: true);
+            schema.String("mode", "Target camera mode.", enumValues: new[] { "first_person", "third_person", "drone", "free" }, isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: true);
 
@@ -38,7 +38,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             CameraMode targetMode;
 

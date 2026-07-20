@@ -22,7 +22,7 @@ namespace DCL.McpServer.Tools
             "Dump all components of one entity in the current scene's ECS world (ids come from list_scene_entities).";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Integer("entityId", "Entity id within the current scene world.", required: true);
+            schema.Integer("entityId", "Entity id within the current scene world.", isRequired: true);
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.ReadOnly();
 
@@ -31,7 +31,7 @@ namespace DCL.McpServer.Tools
             this.worldInfoHub = worldInfoHub;
         }
 
-        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("entityId", out int entityId))
                 return UniTask.FromResult(McpToolResult.Error("entityId is required."));

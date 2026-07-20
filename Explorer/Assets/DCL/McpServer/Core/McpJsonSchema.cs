@@ -19,23 +19,23 @@ namespace DCL.McpServer.Core
         public static McpJsonSchema Object() =>
             new ();
 
-        public McpJsonSchema String(string name, string? description = null, string[]? enumValues = null, bool required = false, bool nullable = false) =>
-            Property(name, "string", description, enumValues, required, nullable);
+        public McpJsonSchema String(string name, string? description = null, string[]? enumValues = null, bool isRequired = false, bool nullable = false) =>
+            Property(name, "string", description, enumValues, isRequired, nullable);
 
-        public McpJsonSchema Number(string name, string? description = null, bool required = false, bool nullable = false) =>
-            Property(name, "number", description, null, required, nullable);
+        public McpJsonSchema Number(string name, string? description = null, bool isRequired = false, bool nullable = false) =>
+            Property(name, "number", description, null, isRequired, nullable);
 
-        public McpJsonSchema Integer(string name, string? description = null, bool required = false, bool nullable = false) =>
-            Property(name, "integer", description, null, required, nullable);
+        public McpJsonSchema Integer(string name, string? description = null, bool isRequired = false, bool nullable = false) =>
+            Property(name, "integer", description, null, isRequired, nullable);
 
-        public McpJsonSchema Boolean(string name, string? description = null, bool required = false, bool nullable = false) =>
-            Property(name, "boolean", description, null, required, nullable);
+        public McpJsonSchema Boolean(string name, string? description = null, bool isRequired = false, bool nullable = false) =>
+            Property(name, "boolean", description, null, isRequired, nullable);
 
         /// <summary>
         ///     Adds a nested object field described by its own <paramref name="schema" /> builder. A
         ///     <paramref name="nullable" /> field admits null in place of the object (JSON Schema "type": ["object", "null"]).
         /// </summary>
-        public McpJsonSchema Object(string name, McpJsonSchema schema, string? description = null, bool required = false, bool nullable = false)
+        public McpJsonSchema Object(string name, McpJsonSchema schema, string? description = null, bool isRequired = false, bool nullable = false)
         {
             JObject field = schema.Build();
 
@@ -45,11 +45,11 @@ namespace DCL.McpServer.Core
             if (description != null)
                 field["description"] = description;
 
-            return AddField(name, field, required);
+            return AddField(name, field, isRequired);
         }
 
         /// <summary>Adds an array field whose items are all integers.</summary>
-        public McpJsonSchema IntegerArray(string name, string? description = null, bool required = false)
+        public McpJsonSchema IntegerArray(string name, string? description = null, bool isRequired = false)
         {
             var field = new JObject
             {
@@ -60,7 +60,7 @@ namespace DCL.McpServer.Core
             if (description != null)
                 field["description"] = description;
 
-            return AddField(name, field, required);
+            return AddField(name, field, isRequired);
         }
 
         /// <summary>Materializes the accumulated fields into the JSON Schema object.</summary>

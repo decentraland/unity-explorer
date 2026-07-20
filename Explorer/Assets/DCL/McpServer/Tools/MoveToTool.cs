@@ -28,9 +28,9 @@ namespace DCL.McpServer.Tools
             + "Optionally face a look-at target on arrival. For crossing to another scene prefer the teleport tool.";
 
         protected override McpJsonSchema DescribeInput(McpJsonSchema schema) =>
-            schema.Number("x", required: true)
-                  .Number("y", required: true)
-                  .Number("z", required: true)
+            schema.Number("x", isRequired: true)
+                  .Number("y", isRequired: true)
+                  .Number("z", isRequired: true)
                   .Number("lookAtX")
                   .Number("lookAtY")
                   .Number("lookAtZ")
@@ -45,7 +45,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
+        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetFloat("x", out float x) || !arguments.TryGetFloat("y", out float y) || !arguments.TryGetFloat("z", out float z))
                 return McpToolResult.Error("x, y and z world coordinates are required.");

@@ -137,9 +137,6 @@ namespace DCL.McpServer.Core
 
             try
             {
-                // Tools run on the main thread: the transport accepts and reads requests on a thread-pool thread,
-                // and the single hop here lets every tool touch ECS/Unity state without repeating the switch.
-                await UniTask.SwitchToMainThread(timeout.Token);
                 McpToolResult result = await tool.ExecuteAsync(arguments, timeout.Token);
                 return JsonRpcEnvelope.Result(id, result.Payload);
             }

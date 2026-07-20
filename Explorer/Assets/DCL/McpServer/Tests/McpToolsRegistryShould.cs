@@ -16,7 +16,7 @@ namespace DCL.McpServer.Tests
             // Act
             JObject schema = McpJsonSchema.Object()
                                            .Integer("count", "How many.")
-                                           .String("mode", "Pick one.", enumValues: new[] { "a", "b" }, required: true)
+                                           .String("mode", "Pick one.", enumValues: new[] { "a", "b" }, isRequired: true)
                                            .Build();
 
             // Assert
@@ -201,7 +201,7 @@ namespace DCL.McpServer.Tests
                 OutputSchema = outputSchema;
             }
 
-            public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct) =>
+            protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct) =>
                 UniTask.FromResult(McpToolResult.Text("fake"));
         }
     }
