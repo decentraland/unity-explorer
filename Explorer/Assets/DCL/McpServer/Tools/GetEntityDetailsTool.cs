@@ -49,7 +49,11 @@ namespace DCL.McpServer.Tools
             var output = new StringBuilder(MAX_CHARS + 64);
             output.Append(dump, 0, MAX_CHARS);
             output.AppendLine();
-            output.Append($"... output truncated at {MAX_CHARS}/{dump.Length} chars");
+            output.Append("... output truncated at ")
+                  .Append(MAX_CHARS)
+                  .Append('/')
+                  .Append(dump.Length)
+                  .Append(" chars");
 
             return UniTask.FromResult(McpToolResult.Text(output.ToString()));
         }

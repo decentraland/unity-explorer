@@ -61,7 +61,11 @@ namespace DCL.McpServer.Tools
 
             var ids = new JArray();
             var output = new StringBuilder();
-            output.AppendLine($"total={entityIds.Count} returned={returned}");
+            output.Append("total=")
+                  .Append(entityIds.Count)
+                  .Append(" returned=")
+                  .Append(returned)
+                  .AppendLine();
 
             for (var i = 0; i < entityIds.Count && i < limit; i++)
             {
@@ -73,7 +77,12 @@ namespace DCL.McpServer.Tools
             if (truncated)
             {
                 output.AppendLine();
-                output.Append($"{returned} of {entityIds.Count} shown; raise limit (max {MAX_LIMIT}) to see the rest.");
+                output.Append(returned)
+                      .Append(" of ")
+                      .Append(entityIds.Count)
+                      .Append(" shown; raise limit (max ")
+                      .Append(MAX_LIMIT)
+                      .Append(") to see the rest.");
             }
 
             var structured = new JObject

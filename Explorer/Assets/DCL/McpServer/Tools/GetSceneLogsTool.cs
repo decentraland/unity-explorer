@@ -52,10 +52,21 @@ namespace DCL.McpServer.Tools
             logBuffer.CopyTo(entries, sinceSeq, errorsOnly, limit);
 
             var output = new StringBuilder();
-            output.AppendLine($"latestSeq={logBuffer.LatestSeq} returned={entries.Count}");
+
+            output.Append("latestSeq=")
+                  .Append(logBuffer.LatestSeq)
+                  .Append(" returned=")
+                  .Append(entries.Count)
+                  .AppendLine();
 
             foreach (SceneLogBuffer.Entry entry in entries)
-                output.AppendLine($"#{entry.Seq} {entry.Message}");
+            {
+                output.Append('#')
+                      .Append(entry.Seq)
+                      .Append(' ')
+                      .Append(entry.Message)
+                      .AppendLine();
+            }
 
             return UniTask.FromResult(McpToolResult.Text(output.ToString()));
         }
