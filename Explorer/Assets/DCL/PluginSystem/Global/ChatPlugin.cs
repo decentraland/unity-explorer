@@ -208,7 +208,12 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, pluginCts.Token);
-            fallbackFontsProvider = new FallbackFontsProvider(assetsProvisioner, settings.FallbackFonts, linkedCts.Token);
+            fallbackFontsProvider = new FallbackFontsProvider();
+
+            // Awaited so the fallback chain is complete before any chat text (channel names,
+            // history) generates its mesh — text rendered without the CJK fallbacks resolves
+            // missing glyphs to spaces and logs a warning per character.
+            await fallbackFontsProvider.LoadAndApplyFallbacksAsync(assetsProvisioner, settings.FallbackFonts, linkedCts.Token);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, settings.ChatSettingsAsset);
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, linkedCts.Token);
