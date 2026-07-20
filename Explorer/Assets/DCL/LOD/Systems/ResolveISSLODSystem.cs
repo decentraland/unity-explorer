@@ -95,7 +95,7 @@ namespace DCL.LOD.Systems
                 // promise in the same AssetBundleCache slot as the SDK runtime (which resolves identically in
                 // PrepareGltfAssetLoadingSystem); a diverging Hash would race two LoadAssetBundleSystem flows for
                 // the same physical bundle, which Unity refuses with "asset bundle already loaded".
-                var intent = GetAssetBundleIntention.FromHash(manifest.GetPlatformHashWithDigest(entry.hash),
+                var intent = GetAssetBundleIntention.FromHash(manifest.GetCdnRequestHash(entry.hash),
                     assetBundleManifestVersion: manifest,
                     parentEntityID: sceneDefinition.Definition.id);
 

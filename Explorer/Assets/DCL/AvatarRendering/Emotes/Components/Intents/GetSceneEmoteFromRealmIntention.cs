@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes
             // file name (v49+) so the URL and cache identity match the rest of the scene's ABs.
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(
-                    SceneAssetBundleManifestVersion.GetPlatformHashWithDigest(this.EmoteHash),
+                    SceneAssetBundleManifestVersion.GetCdnRequestHash(this.EmoteHash),
                     typeof(GameObject),
                     assetBundleManifestVersion: SceneAssetBundleManifestVersion,
                     parentEntityID: SceneId,

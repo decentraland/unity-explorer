@@ -58,19 +58,19 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ComposePlatformHashWithDigestFromBareHash()
+        public void ComposeCdnRequestHashFromBareHash()
         {
             string platform = PlatformUtils.GetCurrentPlatform();
 
             AssetBundleManifestVersion manifest = CreateV49Manifest($"{HASH_A}_{DIGEST_A}{platform}");
 
-            Assert.That(manifest.GetPlatformHashWithDigest(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
+            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
-            Assert.That(manifest.GetPlatformHashWithDigest(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
+            Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
                 "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
 
             AssetBundleManifestVersion? nullManifest = null;
-            Assert.That(nullManifest.GetPlatformHashWithDigest(HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
+            Assert.That(nullManifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}{platform}"));
         }
 
         [Test]

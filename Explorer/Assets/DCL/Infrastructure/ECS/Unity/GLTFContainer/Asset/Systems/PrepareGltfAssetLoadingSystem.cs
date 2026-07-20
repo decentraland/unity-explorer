@@ -70,7 +70,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject),
-                    sceneData.SceneEntityDefinition.assetBundleManifestVersion.GetPlatformHashWithDigest(intention.Hash),
+                    sceneData.SceneEntityDefinition.assetBundleManifestVersion.GetCdnRequestHash(intention.Hash),
                     intention.Name));
         }
 

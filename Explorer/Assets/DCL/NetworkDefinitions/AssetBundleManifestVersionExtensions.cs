@@ -11,7 +11,7 @@ namespace DCL.Ipfs
         ///     downstream. Falls back to <c>&lt;hash&gt;_&lt;platform&gt;</c> otherwise (null or pre-v49 manifests,
         ///     files without a digest).
         /// </summary>
-        public static string GetPlatformHashWithDigest(this AssetBundleManifestVersion? manifest, string bareHash) =>
+        public static string GetCdnRequestHash(this AssetBundleManifestVersion? manifest, string bareHash) =>
             manifest != null && manifest.TryGetFileNameWithDigest(bareHash, out string fileName)
                 ? fileName
                 : $"{bareHash}{PlatformUtils.GetCurrentPlatform()}";
