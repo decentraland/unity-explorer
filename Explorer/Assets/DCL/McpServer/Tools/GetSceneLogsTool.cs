@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using DCL.Optimization.ThreadSafePool;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -13,6 +14,9 @@ namespace DCL.McpServer.Tools
     {
         private const int DEFAULT_LIMIT = 100;
         private const int MAX_LIMIT = 500;
+
+        // Thread-safe because the tool runs on the transport's thread-pool thread and requests can overlap.
+        private static readonly ThreadSafeListPool<SceneLogBuffer.Entry> ENTRIES_POOL = new (MAX_LIMIT, 2);
 
         private readonly SceneLogBuffer logBuffer;
 
@@ -44,7 +48,7 @@ namespace DCL.McpServer.Tools
             bool errorsOnly = arguments.GetString("severity", "all") == "error";
             long sinceSeq = arguments.GetLong("sinceSeq", -1);
 
-            var entries = new List<SceneLogBuffer.Entry>(limit);
+            using var scope = ENTRIES_POOL.Get(out List<SceneLogBuffer.Entry> entries);
             logBuffer.CopyTo(entries, sinceSeq, errorsOnly, limit);
 
             var output = new StringBuilder();
