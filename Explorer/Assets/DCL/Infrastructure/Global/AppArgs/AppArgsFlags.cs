@@ -120,6 +120,7 @@ namespace Global.AppArgs
         public const string LSD_USE_REMOTE_AB = "lsd-use-remote-ab";
         public const string LSD_REMOTE_AB_SERVER = "lsd-remote-ab-server";
         public const string LSD_REMOTE_AB_WORLD = "lsd-remote-ab-world";
+        public const string LSD_LOCAL_AB = "lsd-local-ab";
 
         public const string OPTIMIZED_ASSETS_URL = "optimized-assets-url";
 

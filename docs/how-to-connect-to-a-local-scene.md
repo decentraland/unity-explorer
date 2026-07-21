@@ -68,6 +68,27 @@ Run the build from a console/terminal specifying the needed parameters, for exam
 open Decentraland.app --args --realm http://127.0.0.1:8000 --position 0,0 --local-scene true --debug --skip-version-check true
 ```
 
+## Local asset bundles (abgen)
+
+By default a local scene loads raw GLTFs. To preview it with real asset bundles, run an
+[abgen](https://github.com/decentraland/abgen) server pointed at the preview server's content API
+(`ABGEN_CATALYST_URL=http://127.0.0.1:8000/content ABGEN_JIT_CONTENT_DIGEST=1 ABGEN_UPSTREAM_AB_CDN=https://ab-cdn.decentraland.org ABGEN_DEPS_DIGEST=0 abgen`)
+and add these parameters to the launch:
+
+```
+--lsd-local-ab true --optimized-assets-url http://127.0.0.1:5147
+```
+
+The scene's asset-bundle manifest is then fetched from abgen (which converts the scene's GLBs
+just-in-time) instead of using the manual LSD manifest, and bundles download from the same server.
+If the manifest fetch fails (abgen not running), the scene degrades to today's raw-GLTF loading.
+Wearables/emotes keep working through abgen's upstream ab-cdn read-through.
+
+In the Unity Editor, ticking "Use Local Asset Bundles" in the Main Scene Loader (shown when
+Initial Realm is Localhost) is all that's needed when abgen runs on its default port —
+`--optimized-assets-url` defaults to `http://127.0.0.1:5147` in that mode and only needs to be
+passed (via Debug Settings → App Parameters) for a non-default port.
+
 ## Modifying the scene
 
 You can work with the scene using an editor like VSCode as explained here: [SDK 101](https://docs.decentraland.org/creator/development-guide/sdk7/sdk-101/)

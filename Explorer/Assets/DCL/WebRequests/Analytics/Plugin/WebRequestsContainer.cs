@@ -93,7 +93,8 @@ namespace DCL.WebRequests.Analytics
             ChromeDevToolHandler chromeDevtoolProtocolHandler,
             SentrySampler? sentrySampler,
             RealmClock realmClock,
-            CancellationToken ct
+            CancellationToken ct,
+            bool disableABCache = false
         )
         {
             var container = new WebRequestsContainer();
@@ -132,7 +133,7 @@ namespace DCL.WebRequests.Analytics
                 var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
                 var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-                var requestHub = new RequestHub(urlsSource);
+                var requestHub = new RequestHub(urlsSource, disableABCache);
 
                 IWebRequestController coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub, new WebRequestBudget(coreBudget, coreAvailableBudget), realmClock)
                                                                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)

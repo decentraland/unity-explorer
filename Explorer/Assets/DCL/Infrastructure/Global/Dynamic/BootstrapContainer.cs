@@ -60,6 +60,7 @@ namespace Global.Dynamic
         public IAppArgs AppArgs { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
+        public bool UseLocalAssetBundles { get; private set; }
         public DecentralandEnvironment Environment { get; private set; }
         public RealmClock RealmClock { get; } = new ();
         public WebRequestsContainer WebRequestsContainer { get; private set; }
@@ -106,6 +107,7 @@ namespace Global.Dynamic
                 WebBrowser = browser,
                 LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
+                UseLocalAssetBundles = realmLaunchSettings.useLocalAssetBundles,
                 AppArgs = applicationParametersParser,
                 DebugSettings = debugSettings,
                 VolumeBus = new VolumeBus(),
@@ -129,7 +131,11 @@ namespace Global.Dynamic
                 };
 
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
-                WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
+                // LSD dev-server hashes are path-based, not content-based, so any disk-level AB cache can
+                // serve stale bundles across reloads and sessions; the custom disk caches are already
+                // disabled in this mode, this closes the Unity Caching-backed one.
+                WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct,
+                    disableABCache: realmLaunchSettings.CurrentMode == DCL.Utility.LaunchMode.LocalSceneDevelopment);
                 container.WebRequestsContainer = webRequestsContainer;
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 

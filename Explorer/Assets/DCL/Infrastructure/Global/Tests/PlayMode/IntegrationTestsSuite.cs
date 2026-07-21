@@ -108,6 +108,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
+                useLocalAssetBundles: false,
                 world,
                 playerEntity,
                 new SystemMemoryCap(),

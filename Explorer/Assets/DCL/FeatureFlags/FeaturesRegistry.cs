@@ -24,7 +24,8 @@ namespace DCL.FeatureFlags
 
         public FeaturesRegistry(
             IAppArgs appArgs,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            bool useLocalAssetBundles = false)
         {
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
             bool isEditor = Application.isEditor;
@@ -37,6 +38,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.FRIENDS_ONLINE_STATUS] = appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS) || featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS),
                 [FeatureId.PROFILE_NAME_EDITOR] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PROFILE_NAME_EDITOR, featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || Application.isEditor),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
+                [FeatureId.LSD_LOCAL_ASSET_BUNDLES] = localSceneDevelopment && useLocalAssetBundles,
                 [FeatureId.CHAT_MESSAGE_RATE_LIMIT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_RATE_LIMIT, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_RATE_LIMIT)),
                 [FeatureId.CHAT_MESSAGE_BUFFER] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.CHAT_MESSAGE_BUFFER, featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_MESSAGE_BUFFER_CONFIG)),
                 [FeatureId.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
@@ -207,5 +209,6 @@ namespace DCL.FeatureFlags
         HARDWARE_FINGERPRINT = 66,
         USER_CREDITS = 67,
         CREDITS_WEARABLE_PURCHASE = 68,
+        LSD_LOCAL_ASSET_BUNDLES = 69,
     }
 }

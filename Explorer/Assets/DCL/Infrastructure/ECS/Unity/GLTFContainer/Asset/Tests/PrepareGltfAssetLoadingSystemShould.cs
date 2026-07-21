@@ -115,6 +115,81 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         }
 
         [Test]
+        public void CreateAssetBundleIntentionWhenLsdWithLocalAb()
+        {
+            //Arrange
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition
+            {
+                assetBundleManifestVersion = AssetBundleManifestVersion.CreateFromFallback("v49", "1"),
+            });
+
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options
+            {
+                LocalSceneDevelopment = true,
+                UseLocalAssetBundles = true,
+            });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.False);
+            Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
+            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetCurrentPlatform()}"));
+        }
+
+        [Test]
+        public void CreateGltfIntentionWhenLsdWithLocalAbAndManifestFailed()
+        {
+            //Arrange
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition
+            {
+                assetBundleManifestVersion = AssetBundleManifestVersion.CreateFailed(),
+            });
+
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options
+            {
+                LocalSceneDevelopment = true,
+                UseLocalAssetBundles = true,
+            });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
+                "A failed manifest fetch must degrade the whole scene to raw GLTF loading");
+        }
+
+        [Test]
+        public void CreateGltfIntentionWhenLsdWithLocalAbAndNoManifest()
+        {
+            //Arrange: default SceneEntityDefinition carries no manifest at all
+            BuildSystem(new PrepareGltfAssetLoadingSystem.Options
+            {
+                LocalSceneDevelopment = true,
+                UseLocalAssetBundles = true,
+            });
+
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
+            Entity e = world.Create(intent);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
+            Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
+        }
+
+        [Test]
         public void LoadFromCache()
         {
             BuildSystem();
