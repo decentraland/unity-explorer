@@ -83,10 +83,10 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             string version = manifest.GetAssetBundleManifestVersion();
 
-            // Digest-mapped bundles live under the canonical assets/ prefix (no entity segment) — requesting it
-            // directly skips the edge rewrite. Manifests without the map (wearables/emotes, pre-v49 scenes) carry
-            // digest-less hashes that only resolve through the entity path, so they keep the legacy shapes.
-            if (manifest.HasDepsDigests())
+            // Canonical-assets bundles live under the assets/ prefix (no entity segment) — requesting it directly
+            // skips the edge rewrite. Entity-scoped bundles (wearables/emotes, pre-v49 scenes) only resolve through
+            // the entity path, so they keep the legacy shapes.
+            if (manifest.HasCanonicalAssets())
                 return assetBundlesURL.Append(new URLPath($"{version}/assets/{hash}"));
 
             if (manifest.HasHashInPath())

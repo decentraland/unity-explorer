@@ -36,7 +36,7 @@ public class AssetBundleManifestVersion
 
         //Bare hash → canonical CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
-        private bool hasDepsDigests;
+        private bool hasCanonicalAssets;
 
         public bool HasHashInPath()
         {
@@ -76,6 +76,7 @@ public class AssetBundleManifestVersion
         public void InjectDepsDigests(string[]? files)
         {
             if (files == null || files.Length == 0) return;
+            hasCanonicalAssets = true;
 
             foreach (string file in files)
             {
@@ -86,13 +87,12 @@ public class AssetBundleManifestVersion
 
                 cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
                 cdnFiles[parts[0]] = file;
-                hasDepsDigests = true;
             }
         }
 
-        /// <summary>True when digest-bearing files were injected — only scene manifests fetch <c>files[]</c>; wearables/emotes never do and keep buildDate cache keying.</summary>
-        public bool HasDepsDigests() =>
-            hasDepsDigests;
+        /// <summary>True when the manifest's <c>files[]</c> were injected — only scenes fetch them, and only scene bundles are stored under the canonical <c>assets/</c> prefix. Wearables/emotes stay entity-scoped and keep buildDate cache keying.</summary>
+        public bool HasCanonicalAssets() =>
+            hasCanonicalAssets;
 
         /// <summary>Translates a bare hash to the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
         public string GetCdnRequestHash(string bareHash) =>
@@ -102,9 +102,9 @@ public class AssetBundleManifestVersion
         public string ComposeCacheKey(string hash) =>
             TryGetCdnFileName(hash, out string fileName) ? fileName : hash;
 
-        /// <summary>Computes the Unity-cache key for a CDN request hash: scene manifests (deps map present) key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
+        /// <summary>Computes the Unity-cache key for a CDN request hash: canonical-assets manifests key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
         public Hash128 ComputeCacheHash(string hash) =>
-            HasDepsDigests()
+            HasCanonicalAssets()
                 ? ComputeHashV49(hash, GetAssetBundleManifestVersion()!)
                 : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate()!);
 

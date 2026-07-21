@@ -57,18 +57,19 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ReportDepsDigestsOnlyWhenMapWasInjected()
+        public void ReportCanonicalAssetsOnlyWhenFilesWereInjected()
         {
-            // The cache-key dispatch hinges on this: only scene manifests receive files[]; wearables/emotes must keep buildDate keying.
-            var withoutMap = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            Assert.That(withoutMap.HasDepsDigests(), Is.False);
+            // The URL shape and cache-key dispatch hinge on this: only scenes fetch files[], and only scene bundles
+            // are stored under the canonical assets/ prefix; wearables/emotes must keep entity-path URLs and buildDate keying.
+            var withoutFiles = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
+            Assert.That(withoutFiles.HasCanonicalAssets(), Is.False);
 
-            AssetBundleManifestVersion withMap = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
-            Assert.That(withMap.HasDepsDigests(), Is.True);
+            AssetBundleManifestVersion withDigestFiles = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
+            Assert.That(withDigestFiles.HasCanonicalAssets(), Is.True);
 
-            // A manifest whose files[] contained only legacy 2-part names carries no map either.
+            // Any injected files[] counts — a reuse-converted scene can legitimately list only 2-part names.
             AssetBundleManifestVersion onlyLegacyFiles = CreateV49Manifest($"{HASH_LEGACY}_mac");
-            Assert.That(onlyLegacyFiles.HasDepsDigests(), Is.False);
+            Assert.That(onlyLegacyFiles.HasCanonicalAssets(), Is.True);
         }
 
         [Test]
@@ -107,7 +108,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             manifest.InjectContent("Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk",
                 new[] { new ContentDefinition { file = "model.glb", hash = "QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV" } });
 
-            Assert.That(manifest.HasDepsDigests(), Is.False, "Content casing entries must not switch cache keying to the v49 scheme");
+            Assert.That(manifest.HasCanonicalAssets(), Is.False, "Content casing entries must not switch the URL shape or cache keying to the canonical scheme");
 
             Assert.That(manifest.GetCdnRequestHash("QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}").IgnoreCase);
