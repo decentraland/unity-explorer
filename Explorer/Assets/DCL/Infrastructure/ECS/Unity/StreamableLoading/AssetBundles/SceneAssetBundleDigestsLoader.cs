@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             AssetBundleManifestVersion manifestVersion = entityDefinition.AssetBundleManifestVersionOrFailed;
 
-            // Network short-circuit only — InjectDepsDigests self-gates on v49+, but fetching the manifest JSON for a pre-v49 scene would be a wasted round-trip.
+            // Pre-v49 manifests have no canonical assets/ layout — skip both the manifest download and the injection.
             if (!manifestVersion.SupportsDepsDigests())
                 return;
 

@@ -249,18 +249,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void IgnoreInjectedFilesOnPreV49Manifests()
-        {
-            // Hybrid/world flows inject files[] for whatever version they fetched — pre-v49 bundles are
-            // entity-scoped, so they must not flag canonical assets nor resolve to manifest names.
-            var manifest = AssetBundleManifestVersion.CreateFromFallback("v48", "2026-05-01");
-            manifest.InjectDepsDigests(new[] { $"{HASH_A}_{DIGEST_A}_mac" });
-
-            Assert.That(manifest.HasCanonicalAssets(), Is.False);
-            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}{PlatformUtils.GetCurrentPlatform()}"));
-        }
-
-        [Test]
         public void ComputeCacheHashFromBuildDateWithoutDepsMap()
         {
             // Manifests without a deps map (wearables/emotes, pre-v49 scenes) key on buildDate — a republish must flush their cache.

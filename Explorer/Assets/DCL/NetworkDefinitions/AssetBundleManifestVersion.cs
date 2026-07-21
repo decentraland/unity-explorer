@@ -74,12 +74,12 @@ public class AssetBundleManifestVersion
 
         /// <summary>
         ///     Stores the manifest's <c>files[]</c> — the verbatim canonical names bundles live under on the CDN's
-        ///     <c>assets/</c> prefix — keyed by the bare hash. Pre-v49 manifests are ignored: their bundles are
-        ///     entity-scoped and their URLs must keep the legacy shapes.
+        ///     <c>assets/</c> prefix — keyed by the bare hash. Callers gate on <see cref="SupportsDepsDigests" />:
+        ///     pre-v49 bundles are entity-scoped and must not be flagged canonical.
         /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (!SupportsDepsDigests() || files == null || files.Length == 0) return;
+            if (files == null || files.Length == 0) return;
             hasCanonicalAssets = true;
 
             foreach (string file in files)
