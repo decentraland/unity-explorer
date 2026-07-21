@@ -101,12 +101,24 @@ namespace Global.AppArgs
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
+            var droppedKeys = new List<string>();
+
             foreach (string uriQueryKey in uriQuery.AllKeys)
             {
                 // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
                 if (uriQueryKey == null) continue;
+
+                if (!DeepLinkAllowlist.IsPermitted(uriQueryKey))
+                {
+                    droppedKeys.Add(uriQueryKey);
+                    continue;
+                }
+
                 output[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
+
+            if (droppedKeys.Count > 0)
+                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
 
             if (output.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
@@ -120,9 +132,16 @@ namespace Global.AppArgs
                 output[AppArgsFlags.REALM] = realmParamValue;
             }
 
-            // Patch for WinOS sometimes affecting the 'skip-auth-screen' parameter in deep links putting a '/' at the end
-            if (output.TryGetValue(AppArgsFlags.SKIP_AUTH_SCREEN, out string? value) && value?.EndsWith('/') == true)
-                output[AppArgsFlags.SKIP_AUTH_SCREEN] = value[..^1];
+            // SEC-020: local-scene enables local-scene-development mode, which opens a websocket to the realm.
+            // It is dropped by default (an attacker deep link could point it at a remote realm), but the
+            // legitimate local-scene-dev deep link targets a loopback realm — permit it only in that case.
+            string? localSceneValue = uriQuery.Get(AppArgsFlags.LOCAL_SCENE);
+
+            if (localSceneValue != null
+                && output.TryGetValue(AppArgsFlags.REALM, out string? lsdRealm)
+                && Uri.TryCreate(lsdRealm, UriKind.Absolute, out Uri? lsdRealmUri)
+                && lsdRealmUri.IsLoopback)
+                output[AppArgsFlags.LOCAL_SCENE] = localSceneValue;
 
             return output;
         }
