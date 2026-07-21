@@ -14,7 +14,7 @@ namespace DCL.ExternalUrlPrompt
 
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;
-        private readonly List<string> trustedDomains = new ();
+        private readonly HashSet<string> trustedKeys = new ();
         private Action<ExternalUrlPromptResultType> resultCallback;
 
         public ExternalUrlPromptController(
@@ -38,7 +38,7 @@ namespace DCL.ExternalUrlPrompt
             if (inputData.Uri == null)
                 return;
 
-            if (trustedDomains.Contains(inputData.Uri.Host))
+            if (ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string trustKey) && trustedKeys.Contains(trustKey))
             {
                 webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
                 viewInstance.CloseButton.OnClickAsync(CancellationToken.None).Forget();
@@ -51,8 +51,9 @@ namespace DCL.ExternalUrlPrompt
                 switch (result)
                 {
                     case ExternalUrlPromptResultType.ApprovedTrusted:
-                        if (!trustedDomains.Contains(inputData.Uri.Host))
-                            trustedDomains.Add(inputData.Uri.Host);
+                        // Only cache when a real (scheme, host) key exists — empty-host URIs are never trusted (SEC-008).
+                        if (ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string key))
+                            trustedKeys.Add(key);
                         webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
                         break;
                     case ExternalUrlPromptResultType.Approved:
@@ -64,7 +65,9 @@ namespace DCL.ExternalUrlPrompt
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            if (inputData.Uri != null && trustedDomains.Contains(inputData.Uri.Host))
+            if (inputData.Uri != null
+                && ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string trustKey)
+                && trustedKeys.Contains(trustKey))
                 return UniTask.CompletedTask;
 
             return UniTask.WhenAny(
@@ -75,7 +78,7 @@ namespace DCL.ExternalUrlPrompt
 
         public override void Dispose()
         {
-            trustedDomains.Clear();
+            trustedKeys.Clear();
         }
 
         private void RequestOpenUrl(Uri uri, Action<ExternalUrlPromptResultType> result)
