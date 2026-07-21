@@ -124,7 +124,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
-            this.useLocalAssetBundles = FeaturesRegistry.Instance.IsEnabled(FeatureId.LSD_LOCAL_ASSET_BUNDLES);
+            this.useLocalAssetBundles = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_ASSET_BUNDLES);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
