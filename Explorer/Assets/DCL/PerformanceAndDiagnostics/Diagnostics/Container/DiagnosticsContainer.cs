@@ -13,12 +13,21 @@ namespace DCL.Diagnostics
     {
         private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
 
-        private ILogHandler defaultLogHandler;
-        private ReportHubLogger reportHubLogger;
+        private readonly ILogHandler defaultLogHandler;
+        private readonly ReportHubLogger reportHubLogger;
 
-        public SentryReportHandler? Sentry { get; private init; }
-        public IReportsHandlingSettings Settings { get; private set; }
-        public SentrySampler? SentrySampler { get; private set; }
+        public SentryReportHandler? Sentry { get; }
+        public IReportsHandlingSettings Settings { get; }
+        public SentrySampler? SentrySampler { get; }
+
+        private DiagnosticsContainer(ILogHandler defaultLogHandler, ReportHubLogger reportHubLogger, SentryReportHandler? sentry, IReportsHandlingSettings settings, SentrySampler? sentrySampler)
+        {
+            this.defaultLogHandler = defaultLogHandler;
+            this.reportHubLogger = reportHubLogger;
+            Sentry = sentry;
+            Settings = settings;
+            SentrySampler = sentrySampler;
+        }
 
         public void Dispose()
         {
@@ -58,7 +67,7 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Initialize(logger);
 
-            return new DiagnosticsContainer { reportHubLogger = logger, defaultLogHandler = defaultLogHandler, Sentry = sentryReportHandler, Settings = settings, SentrySampler = sentrySampler };
+            return new DiagnosticsContainer(defaultLogHandler, logger, sentryReportHandler, settings, sentrySampler);
         }
 
         public void AddDebugConsoleHandler(DebugMenuConsoleLogEntryBus sceneDebugConsoleMessageBus)

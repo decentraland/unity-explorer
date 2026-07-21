@@ -13,11 +13,16 @@ namespace DCL.McpServer.Core
     /// </summary>
     public static class McpWireEnum<T> where T : struct, Enum
     {
+        // A distinct static cache per enum type T is the intended behavior of this class.
+        // ReSharper disable StaticMemberInGenericType
+
         /// <summary>Wire names of all members, in declaration order.</summary>
         public static readonly string[] WIRE_NAMES;
 
         private static readonly T[] VALUES;
         private static readonly Dictionary<string, T> BY_WIRE_NAME;
+
+        // ReSharper restore StaticMemberInGenericType
 
         static McpWireEnum()
         {

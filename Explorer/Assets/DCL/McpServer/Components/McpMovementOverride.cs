@@ -6,7 +6,7 @@ namespace DCL.McpServer.Components
 {
     /// <summary>
     ///     Held movement input requested by the MCP walk tool. While present on the player entity,
-    ///     <see cref="DCL.McpServer.Systems.McpInputOverrideSystem" /> re-asserts it into <see cref="MovementInputComponent" /> every frame.
+    ///     <see cref="McpInputOverrideSystem" /> re-asserts it into <see cref="MovementInputComponent" /> every frame.
     /// </summary>
     public struct McpMovementOverride
     {

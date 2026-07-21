@@ -112,7 +112,6 @@ namespace Global.Dynamic
         private DynamicWorldContainer(
             UIShellContainer uiShellContainer,
             IGlobalRealmController realmController,
-            IRealmNavigator realmNavigator,
             GlobalWorldFactory globalWorldFactory,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
             IReadOnlyList<IDCLWorldPlugin> worldPlugins,
@@ -1025,7 +1024,6 @@ namespace Global.Dynamic
             var container = new DynamicWorldContainer(
                 uiShellContainer,
                 realmContainer.RealmController,
-                realmNavigator,
                 globalWorldFactory,
                 globalPlugins,
                 worldPlugins,
