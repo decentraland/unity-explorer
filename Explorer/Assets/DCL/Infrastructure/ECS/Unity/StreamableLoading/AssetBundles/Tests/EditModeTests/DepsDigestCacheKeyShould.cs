@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}_{DIGEST_A}{platform}"));
 
             Assert.That(manifest.GetCdnRequestHash(HASH_LEGACY), Is.EqualTo($"{HASH_LEGACY}{platform}"),
-                "Files listed without a digest must fall back to the platform-suffixed bare hash");
+                "Files listed without a digest resolve to their verbatim 2-part manifest name");
 
             Assert.That(manifest.GetCdnRequestHash(HASH_B), Is.EqualTo($"{HASH_B}{platform}"),
                 "Hashes absent from the manifest must fall back to the platform-suffixed bare hash");
@@ -239,14 +239,25 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void ComputeDifferentCacheHashAcrossVersionHashBoundary()
         {
-            // Without the delimiter, (version="v4", hash="9foo") and (version="v49", hash="foo") would produce the same byte stream.
-            var v4 = AssetBundleManifestVersion.CreateFromFallback("v4", "2026-05-01");
-            v4.InjectDepsDigests(new[] { $"9foo_{DIGEST_A}_mac" });
+            // Without the delimiter, (version="v49", hash="0foo") and (version="v490", hash="foo") would produce the same byte stream.
+            AssetBundleManifestVersion v49 = CreateV49Manifest($"0foo_{DIGEST_A}_mac");
 
-            var v49 = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            v49.InjectDepsDigests(new[] { $"foo_{DIGEST_A}_mac" });
+            var v490 = AssetBundleManifestVersion.CreateFromFallback("v490", "2026-05-01");
+            v490.InjectDepsDigests(new[] { $"foo_{DIGEST_A}_mac" });
 
-            Assert.That(v4.ComputeCacheHash("9foo"), Is.Not.EqualTo(v49.ComputeCacheHash("foo")));
+            Assert.That(v49.ComputeCacheHash("0foo"), Is.Not.EqualTo(v490.ComputeCacheHash("foo")));
+        }
+
+        [Test]
+        public void IgnoreInjectedFilesOnPreV49Manifests()
+        {
+            // Hybrid/world flows inject files[] for whatever version they fetched — pre-v49 bundles are
+            // entity-scoped, so they must not flag canonical assets nor resolve to manifest names.
+            var manifest = AssetBundleManifestVersion.CreateFromFallback("v48", "2026-05-01");
+            manifest.InjectDepsDigests(new[] { $"{HASH_A}_{DIGEST_A}_mac" });
+
+            Assert.That(manifest.HasCanonicalAssets(), Is.False);
+            Assert.That(manifest.GetCdnRequestHash(HASH_A), Is.EqualTo($"{HASH_A}{PlatformUtils.GetCurrentPlatform()}"));
         }
 
         [Test]

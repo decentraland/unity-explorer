@@ -72,18 +72,23 @@ public class AssetBundleManifestVersion
             return int.TryParse(version.AsSpan(1), out parsed);
         }
 
-        /// <summary>Stores, keyed by the bare hash, the verbatim digest-bearing file name (<c>&lt;hash&gt;_&lt;depsDigest&gt;_&lt;platform&gt;</c>) from the manifest's <c>files[]</c>; legacy 2-part names are skipped.</summary>
+        /// <summary>
+        ///     Stores the manifest's <c>files[]</c> — the verbatim canonical names bundles live under on the CDN's
+        ///     <c>assets/</c> prefix — keyed by the bare hash. Pre-v49 manifests are ignored: their bundles are
+        ///     entity-scoped and their URLs must keep the legacy shapes.
+        /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
-            if (files == null || files.Length == 0) return;
+            if (!SupportsDepsDigests() || files == null || files.Length == 0) return;
             hasCanonicalAssets = true;
 
             foreach (string file in files)
             {
                 if (string.IsNullOrEmpty(file)) continue;
 
-                string[] parts = file.Split(FILE_NAME_SEPARATOR, 3);
-                if (parts.Length < 3) continue;
+                // Non-suffixed entries (build logs, folders) carry no hash to key by.
+                string[] parts = file.Split(FILE_NAME_SEPARATOR, 2);
+                if (parts.Length < 2) continue;
 
                 cdnFiles ??= new Dictionary<string, string>(new UrlHashComparer());
                 cdnFiles[parts[0]] = file;
