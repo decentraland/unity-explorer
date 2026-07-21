@@ -69,6 +69,9 @@ namespace DCL.PlacesAPIService
 
             public bool IsEmptyPlace => id == EMPTY_PLACE_ID;
 
+            [JsonIgnore]
+            public bool IsWorld => !string.IsNullOrEmpty(world_name);
+
             public PlaceInfo(Vector2Int position)
             {
                 id = EMPTY_PLACE_ID;

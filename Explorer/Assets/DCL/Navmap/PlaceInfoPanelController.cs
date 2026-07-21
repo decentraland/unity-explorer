@@ -191,9 +191,14 @@ namespace DCL.Navmap
             view.PlayerCountLabel.text = place.user_count.ToString();
             view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
-            view.CoordinatesLabel.text = place.base_position;
+
+            bool isWorld = place.IsWorld;
+
+            view.CoordinatesLabel.text = isWorld ? place.world_name : place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
-            view.StartNavigationButton.gameObject.SetActive(true);
+
+            // Worlds are not on the Genesis map, so on-map navigation doesn't apply to them.
+            view.StartNavigationButton.gameObject.SetActive(!isWorld);
             view.StopNavigationButton.gameObject.SetActive(false);
             view.DonateButton?.gameObject.SetActive(donationsService.DonationFeatureEnabled && !string.IsNullOrEmpty(place.creator_address));
 
@@ -304,7 +309,7 @@ namespace DCL.Navmap
 
             if (isHome)
             {
-                if (!string.IsNullOrEmpty(place.world_name))
+                if (place.IsWorld)
                 {
                     homePlaceEventBus.SetAsHome(place.world_name);
                 }
@@ -358,7 +363,18 @@ namespace DCL.Navmap
 
             navmapBus.JumpIn(place!);
 
-            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place!.title) && originParcel != null ? originParcel : currentBaseParcel;
+            // Worlds live on a separate realm; the goto command teleports there by world name.
+            if (place!.IsWorld)
+            {
+                chatMessagesBus
+                   .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,
+                        $"/{ChatCommandsUtils.COMMAND_GOTO} {place.world_name}",
+                        ChatMessageOrigin.JUMP_IN);
+
+                return;
+            }
+
+            Vector2Int? destinationParcel = TeleportUtils.IsRoad(place.title) && originParcel != null ? originParcel : currentBaseParcel;
 
             chatMessagesBus
                .SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL,

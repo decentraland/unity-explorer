@@ -109,12 +109,12 @@ namespace DCL.Navmap
 
                 if (@params.filter == NavmapSearchPlaceFilter.All)
                 {
+                    // Note: onlyPlaces is intentionally omitted so the destinations endpoint returns both Genesis City places and Worlds.
                     using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchDestinationsAsync(@params.page, @params.pageSize, ct,
                         searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
                         category: @params.category is "All" or "Favorites" ? string.Empty : @params.category,
-                        onlySdk7: true,
-                        onlyPlaces: true);
+                        onlySdk7: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }

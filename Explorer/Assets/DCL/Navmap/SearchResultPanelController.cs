@@ -83,12 +83,19 @@ namespace DCL.Navmap
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
+                bool isWorld = placeInfo.IsWorld;
+
+                // Worlds have no Genesis coordinates and all report base_position "0,0", so they are keyed by their unique id.
+                string key = isWorld ? placeInfo.id : placeInfo.base_position;
+
                 // Why two places with the same base position comes in the list?
-                if (usedPoolElements.ContainsKey(placeInfo.base_position)) continue;
+                if (usedPoolElements.ContainsKey(key)) continue;
 
                 PlaceElementView placeElementView = resultsPool.Get();
-                usedPoolElements.Add(placeInfo.base_position, placeElementView);
+                usedPoolElements.Add(key, placeElementView);
                 placeElementView.transform.SetAsLastSibling();
+                // Worlds have no Genesis coordinates, so they must not drive map hover/selection.
+                placeElementView.IsHoverEnabled = !isWorld;
                 placeElementView.placeName.text = placeInfo.title;
                 placeElementView.coords = placeInfo.base_position_processed;
                 placeElementView.placeCreator.gameObject.SetActive(
@@ -102,7 +109,11 @@ namespace DCL.Navmap
                 placeElementView.resultButton.onClick.AddListener(() =>
                 {
                     showPlaceInfoCancellationToken = showPlaceInfoCancellationToken.SafeRestart();
-                    navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, false, true);
+
+                    // Worlds don't live on the Genesis map so there is no marker/parcel to select.
+                    if (!isWorld)
+                        navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, false, true);
+
                     navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token, true).Forget();
                 });
 

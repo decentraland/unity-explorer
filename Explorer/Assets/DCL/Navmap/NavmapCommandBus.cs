@@ -54,7 +54,10 @@ namespace DCL.Navmap
             if (!isFromSearchResults)
                 ClearPlacesFromMap();
 
-            MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
+            // Worlds have no Genesis parcels, so there is nothing to move the map camera to.
+            if (!place.IsWorld)
+                MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
+
             await command.ExecuteAsync(new AdditionalParams(isFromSearchResults, originalParcel), ct);
 
             AddCommand(command);
