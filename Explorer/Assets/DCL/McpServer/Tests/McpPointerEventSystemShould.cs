@@ -19,7 +19,7 @@ using Utility.Multithreading;
 
 namespace DCL.McpServer.Tests
 {
-    public class McpPointerClickSystemShould : UnitySystemTestBase<McpPointerClickSystem>
+    public class McpPointerEventSystemShould : UnitySystemTestBase<McpPointerEventSystem>
     {
         private const int TARGET_CRDT_ID = 512;
         private const int BLOCKER_CRDT_ID = 513;
@@ -77,7 +77,7 @@ namespace DCL.McpServer.Tests
             targetPointerEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
 
             // The entity needs a TransformComponent so ResolveEntityAimPoint can aim the validation ray at it;
-            // without it the aim point is Vector3.zero and the click bails out before the raycast.
+            // without it the aim point is Vector3.zero and the delivery bails out before the raycast.
             targetEntity = sceneWorld.Create(targetPointerEvents, new CRDTEntity(TARGET_CRDT_ID), new TransformComponent(targetGo.transform));
 
             // Colliders created/moved this frame are not in the PhysX scene until transforms are synced (no physics step runs in EditMode).
@@ -127,7 +127,7 @@ namespace DCL.McpServer.Tests
                                return false;
                            });
 
-            system = new McpPointerClickSystem(world, scenesCache, collidersCache, playerEntity);
+            system = new McpPointerEventSystem(world, scenesCache, collidersCache, playerEntity);
             system.Initialize();
         }
 
@@ -144,22 +144,40 @@ namespace DCL.McpServer.Tests
         }
 
         private UniTaskCompletionSource<McpPointerClickResult> AddIntent(
-            McpPointerClickIntent.ClickKind kind = McpPointerClickIntent.ClickKind.CLICK,
-            int? targetId = null)
+            PointerEventType eventType = PointerEventType.PetDown,
+            int? targetId = null,
+            McpPressHandoff? press = null)
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
 
-            world.Add(playerEntity, new McpPointerClickIntent
+            world.Add(playerEntity, new McpPointerEventIntent
             {
                 TargetEntityId = targetId ?? targetEntity.Id,
                 Button = InputAction.IaPointer,
-                Kind = kind,
-                Phase = McpPointerClickIntent.ClickPhase.DOWN,
+                EventType = eventType,
+                Press = press,
                 Deadline = UnityEngine.Time.time + 5f,
                 Completion = completion,
             });
 
             return completion;
+        }
+
+        /// <summary>Delivers a press and returns its result, asserting the handoff the release leg needs is filled.</summary>
+        private McpPointerClickResult DeliverPress()
+        {
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
+
+            system!.Update(0);
+
+            McpPointerClickResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.True);
+            Assert.That(result.Press, Is.Not.Null);
+
+            // The scene-world flush clears the intent at the end of a real frame.
+            targetPointerEvents.AppendPointerEventResultsIntent.Clear();
+
+            return result;
         }
 
         private static McpPointerClickResult ResultOf(UniTaskCompletionSource<McpPointerClickResult> completion)
@@ -169,7 +187,48 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void DeliverDownThenUpOnNextTick()
+        public void DeliverPressThenOrderedReleaseOnNextTick()
+        {
+            UniTaskCompletionSource<McpPointerClickResult> pressCompletion = AddIntent();
+
+            system!.Update(0);
+
+            var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
+            Assert.That(actions.Count, Is.EqualTo(1));
+            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetDown)));
+
+            McpPointerClickResult pressResult = ResultOf(pressCompletion);
+            Assert.That(pressResult.Hit, Is.True);
+            Assert.That(pressResult.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
+            Assert.That(pressResult.HoverText, Is.EqualTo("Open"));
+            Assert.That(pressResult.Press, Is.Not.Null);
+            Assert.That(pressResult.Press.Value.Entity, Is.EqualTo(targetEntity));
+            Assert.That(pressResult.Press.Value.Tick, Is.EqualTo(tick));
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+
+            // The scene-world flush clears the intent at the end of a real frame.
+            targetPointerEvents.AppendPointerEventResultsIntent.Clear();
+
+            UniTaskCompletionSource<McpPointerClickResult> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressResult.Press);
+
+            system.Update(0); // same tick: keeps waiting so PetUp lands on a later tick than PetDown
+            Assert.That(releaseCompletion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
+
+            tick++;
+            system.Update(0);
+
+            actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
+            Assert.That(actions.Count, Is.EqualTo(1));
+            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetUp)));
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.True);
+            Assert.That(releaseResult.UpRayMissed, Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void DeliverSinglePressWithoutWaiting()
         {
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
@@ -178,43 +237,95 @@ namespace DCL.McpServer.Tests
             var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
             Assert.That(actions.Count, Is.EqualTo(1));
             Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetDown)));
-            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
 
-            // The scene-world flush clears the intent at the end of a real frame.
-            targetPointerEvents.AppendPointerEventResultsIntent.Clear();
-
-            system.Update(0); // same tick: keeps waiting so PetUp lands on a later tick than PetDown
-            Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-
-            tick++;
-            system.Update(0); // observes the tick advance
-            system.Update(0); // delivers PetUp
-
-            actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
-            Assert.That(actions.Count, Is.EqualTo(1));
-            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetUp)));
-
-            McpPointerClickResult result = ResultOf(completion);
-            Assert.That(result.Hit, Is.True);
-            Assert.That(result.CrdtEntityId, Is.EqualTo(TARGET_CRDT_ID));
-            Assert.That(result.HoverText, Is.EqualTo("Open"));
-            Assert.That(result.UpRayMissed, Is.False);
-            Assert.That(world.Has<McpPointerClickIntent>(playerEntity), Is.False);
+            Assert.That(ResultOf(completion).Hit, Is.True);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
-        public void DeliverSingleDownWithoutWaiting()
+        public void DeliverSingleReleaseWithoutPressContext()
         {
-            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(McpPointerClickIntent.ClickKind.DOWN);
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(PointerEventType.PetUp);
 
             system!.Update(0);
 
             var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
             Assert.That(actions.Count, Is.EqualTo(1));
-            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetDown)));
+            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetUp)));
 
             Assert.That(ResultOf(completion).Hit, Is.True);
-            Assert.That(world.Has<McpPointerClickIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+        }
+
+        [Test]
+        public void ReplayPressHitWhenReleaseRayIsBlocked()
+        {
+            McpPointerClickResult pressResult = DeliverPress();
+
+            // A blocker slides between the camera and the target after the press.
+            blockerGo = new GameObject("mcp-click-test-blocker") { transform = { position = new Vector3(0f, 0f, 2f) }};
+
+            blockerGo.AddComponent<BoxCollider>();
+            Physics.SyncTransforms();
+
+            UniTaskCompletionSource<McpPointerClickResult> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressResult.Press);
+
+            tick++;
+            system!.Update(0);
+
+            var actions = targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions;
+            Assert.That(actions.Count, Is.EqualTo(1));
+            Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetUp)));
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.True);
+            Assert.That(releaseResult.UpRayMissed, Is.True);
+        }
+
+        [Test]
+        public void ReportPressOnlyWhenTargetDiesBeforeRelease()
+        {
+            McpPointerClickResult pressResult = DeliverPress();
+
+            sceneWorld.Destroy(targetEntity);
+
+            UniTaskCompletionSource<McpPointerClickResult> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressResult.Press);
+
+            tick++;
+            system!.Update(0);
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.False);
+            Assert.That(releaseResult.UpRayMissed, Is.True);
+            Assert.That(releaseResult.FailureReason, Does.Contain("destroyed"));
+        }
+
+        [Test]
+        public void FailReleaseWhenSceneWorldChangedMidClick()
+        {
+            McpPointerClickResult pressResult = DeliverPress();
+
+            var reloadedWorld = World.Create();
+
+            try
+            {
+                McpPressHandoff stalePress = pressResult.Press.Value;
+                stalePress.World = reloadedWorld;
+
+                UniTaskCompletionSource<McpPointerClickResult> releaseCompletion = AddIntent(PointerEventType.PetUp, press: stalePress);
+
+                tick++;
+                system!.Update(0);
+
+                McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+                Assert.That(releaseResult.Hit, Is.False);
+                Assert.That(releaseResult.FailureReason, Does.Contain("reloaded"));
+                Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(0));
+            }
+            finally
+            {
+                reloadedWorld.Dispose();
+            }
         }
 
         [Test]
@@ -233,7 +344,7 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Hit, Is.False);
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(BLOCKER_CRDT_ID));
             Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(0));
-            Assert.That(world.Has<McpPointerClickIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -282,12 +393,11 @@ namespace DCL.McpServer.Tests
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
 
-            world.Add(playerEntity, new McpPointerClickIntent
+            world.Add(playerEntity, new McpPointerEventIntent
             {
                 TargetEntityId = targetEntity.Id,
                 Button = InputAction.IaPointer,
-                Kind = McpPointerClickIntent.ClickKind.CLICK,
-                Phase = McpPointerClickIntent.ClickPhase.DOWN,
+                EventType = PointerEventType.PetDown,
                 Deadline = UnityEngine.Time.time - 1f,
                 Completion = completion,
             });
@@ -297,7 +407,7 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("timed out"));
-            Assert.That(world.Has<McpPointerClickIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
     }
 }

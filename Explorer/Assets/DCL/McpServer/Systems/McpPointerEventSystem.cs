@@ -25,22 +25,27 @@ namespace DCL.McpServer.Systems
 {
     /// <summary>
     ///     <para>
-    ///         Delivers an agent-requested pointer press to a scene entity while a <see cref="McpPointerClickIntent" />
-    ///         is present on the player entity. The aim is validated with the same physics raycast the reticle
-    ///         pipeline uses (camera origin, <see cref="PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK" />, occlusion and
-    ///         max-distance rules apply), then the target's <see cref="PBPointerEvents.AppendPointerEventResultsIntent" />
-    ///         is filled exactly as <see cref="ProcessPointerEventsSystem" /> fills it for a real click, so the
+    ///         Delivers a single agent-requested pointer event to a scene entity while a
+    ///         <see cref="McpPointerEventIntent" /> is present on the player entity. The aim is validated with the
+    ///         same physics raycast the reticle pipeline uses (camera origin, <see cref="PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK" />,
+    ///         occlusion and max-distance rules apply), then the target's <see cref="PBPointerEvents.AppendPointerEventResultsIntent" />
+    ///         is filled exactly as <see cref="ProcessPointerEventsSystem" /> fills it for a real press, so the
     ///         unmodified scene-world write-back emits an identical PBPointerEventsResult.
     ///     </para>
     ///     <para>
+    ///         A release that follows a press (<see cref="McpPointerEventIntent.Press" />) is delivered only once
+    ///         the scene has advanced past the press tick and only to the world that received the press; the
+    ///         click_entity tool composes a full click from two such intents.
+    ///     </para>
+    ///     <para>
     ///         Runs after <see cref="ProcessPointerEventsSystem" /> so its per-frame intent Initialize cannot wipe
-    ///         the synthetic press before the scene-world flush, which happens later in the same frame.
+    ///         the synthetic event before the scene-world flush, which happens later in the same frame.
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(ProcessPointerEventsSystem))]
     [LogCategory(ReportCategory.MCP)]
-    public partial class McpPointerClickSystem : BaseUnityLoopSystem
+    public partial class McpPointerEventSystem : BaseUnityLoopSystem
     {
         private const float MAX_RAYCAST_DISTANCE = 100f;
         private const float AIM_DIRECTION_EPSILON_SQR = 0.0001f;
@@ -53,7 +58,7 @@ namespace DCL.McpServer.Systems
 
         private SingleInstanceEntity playerCamera;
 
-        internal McpPointerClickSystem(World world,
+        internal McpPointerEventSystem(World world,
             IScenesCache scenesCache,
             IEntityCollidersGlobalCache collidersGlobalCache,
             Entity playerEntity) : base(world)
@@ -71,14 +76,14 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpPointerClickIntent intent = ref World.TryGetRef<McpPointerClickIntent>(playerEntity, out bool exists);
+            ref McpPointerEventIntent intent = ref World.TryGetRef<McpPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
                 return;
 
             if (UnityEngine.Time.time > intent.Deadline)
             {
-                CompleteAndRemove(intent.Completion, Failure(in intent, "click timed out before it could be delivered (is the simulation paused?)"));
+                CompleteAndRemove(intent.Completion, Failure(in intent, "the pointer event timed out before it could be delivered (is the simulation paused?)"));
                 return;
             }
 
@@ -86,67 +91,46 @@ namespace DCL.McpServer.Systems
 
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {
-                CompleteAndRemove(intent.Completion, Failure(in intent, "no running current scene to deliver the click to"));
+                CompleteAndRemove(intent.Completion, Failure(in intent, "no running current scene to deliver the pointer event to"));
                 return;
             }
 
             World sceneWorld = scene.EcsExecutor.World;
+            uint tick = scene.SceneStateProvider.TickNumber;
 
-            // A mid-click reload swaps in a new world for the same parcel; ResolvedEntity/DownTick belong
-            // to the disposed one (entity ids get recycled), so the click can only be failed.
-            if (intent.DownWorld != null && !ReferenceEquals(sceneWorld, intent.DownWorld))
+            if (intent.Press.HasValue)
             {
-                CompleteAndRemove(intent.Completion, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
+                McpPressHandoff press = intent.Press.Value;
+
+                // A mid-click reload swaps in a new world for the same parcel; the press handoff belongs to the
+                // disposed one (entity ids get recycled), so the release can only be failed.
+                if (!ReferenceEquals(sceneWorld, press.World))
+                {
+                    CompleteAndRemove(intent.Completion, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
+                    return;
+                }
+
+                // The scene must observe the press on an earlier tick than the release, otherwise ordering is ambiguous.
+                if (tick <= press.Tick)
+                    return;
+
+                DeliverRelease(in intent, in press, sceneWorld, tick, out McpPointerClickResult releaseResult);
+                CompleteAndRemove(intent.Completion, releaseResult);
                 return;
             }
 
-            switch (intent.Phase)
-            {
-                case McpPointerClickIntent.ClickPhase.DOWN:
-                    PointerEventType pressType = intent.Kind == McpPointerClickIntent.ClickKind.UP
-                        ? PointerEventType.PetUp
-                        : PointerEventType.PetDown;
-
-                    if (!TryDeliver(ref intent, sceneWorld, pressType, out McpPointerClickResult result))
-                    {
-                        CompleteAndRemove(intent.Completion, result);
-                        return;
-                    }
-
-                    if (intent.Kind != McpPointerClickIntent.ClickKind.CLICK)
-                    {
-                        CompleteAndRemove(intent.Completion, result);
-                        return;
-                    }
-
-                    intent.DownWorld = sceneWorld;
-                    intent.DownTick = scene.SceneStateProvider.TickNumber;
-                    intent.DownResult = result;
-                    intent.Phase = McpPointerClickIntent.ClickPhase.WAIT_TICK;
-                    return;
-
-                case McpPointerClickIntent.ClickPhase.WAIT_TICK:
-                    // The scene must observe PetDown on an earlier tick than PetUp, otherwise ordering is ambiguous.
-                    if (scene.SceneStateProvider.TickNumber > intent.DownTick)
-                        intent.Phase = McpPointerClickIntent.ClickPhase.UP;
-
-                    return;
-
-                case McpPointerClickIntent.ClickPhase.UP:
-                    DeliverUp(ref intent, sceneWorld, out McpPointerClickResult upResult);
-                    CompleteAndRemove(intent.Completion, upResult);
-                    return;
-            }
+            TryDeliver(in intent, sceneWorld, tick, null, out McpPointerClickResult result);
+            CompleteAndRemove(intent.Completion, result);
         }
 
         /// <summary>Structural removal happens only after every read of the intent ref is done.</summary>
         private void CompleteAndRemove(UniTaskCompletionSource<McpPointerClickResult>? completion, McpPointerClickResult result)
         {
-            World.Remove<McpPointerClickIntent>(playerEntity);
+            World.Remove<McpPointerEventIntent>(playerEntity);
             completion?.TrySetResult(result);
         }
 
-        private static McpPointerClickResult Failure(in McpPointerClickIntent intent, string reason) =>
+        private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
             new ()
             {
                 Hit = false,
@@ -154,12 +138,11 @@ namespace DCL.McpServer.Systems
                 SceneEntityId = intent.TargetEntityId,
             };
 
-        private bool TryDeliver(ref McpPointerClickIntent intent, World sceneWorld, PointerEventType eventType, out McpPointerClickResult result)
+        private bool TryDeliver(in McpPointerEventIntent intent, World sceneWorld, uint tick, Entity? pressEntity, out McpPointerClickResult result)
         {
-            if (!TryResolveTarget(ref intent, sceneWorld, out result))
+            if (!TryResolveTarget(in intent, sceneWorld, pressEntity, out Entity targetEntity, out result))
                 return false;
 
-            Entity targetEntity = intent.ResolvedEntity;
             bool requireTarget = intent.TargetEntityId >= 0;
 
             Vector3 aimPoint = intent.HasExplicitAimPoint
@@ -204,7 +187,6 @@ namespace DCL.McpServer.Systems
 
             // In pure aim-point mode the raycast decides the target.
             targetEntity = hitEntity;
-            intent.ResolvedEntity = hitEntity;
 
             if (!hitInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
             {
@@ -233,10 +215,7 @@ namespace DCL.McpServer.Systems
             }
 
             pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(hit, ray);
-            pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(intent.Button, eventType);
-
-            intent.DownHit = hit;
-            intent.DownRay = ray;
+            pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(intent.Button, intent.EventType);
 
             result = new McpPointerClickResult
             {
@@ -246,55 +225,66 @@ namespace DCL.McpServer.Systems
                 HoverText = hoverText,
                 HitPoint = hit.point,
                 Distance = distance,
+                Press = new McpPressHandoff
+                {
+                    World = sceneWorld,
+                    Entity = targetEntity,
+                    Tick = tick,
+                    Hit = hit,
+                    Ray = ray,
+                },
             };
 
             return true;
         }
 
         /// <summary>
-        ///     Delivers the release. If the target moved out from under the ray after the press (or its distance gate
-        ///     no longer qualifies), the press-frame hit is reused so the entity still receives an ordered PetUp,
-        ///     and the divergence is reported via <see cref="McpPointerClickResult.UpRayMissed" />.
+        ///     Delivers the release leg of a click. If the target moved out from under the ray after the press
+        ///     (or its distance gate no longer qualifies), the press-frame hit is reused so the entity still
+        ///     receives an ordered PetUp, and the divergence is reported via <see cref="McpPointerClickResult.UpRayMissed" />.
         /// </summary>
-        private void DeliverUp(ref McpPointerClickIntent intent, World sceneWorld, out McpPointerClickResult result)
+        private void DeliverRelease(in McpPointerEventIntent intent, in McpPressHandoff press, World sceneWorld, uint tick, out McpPointerClickResult result)
         {
-            McpPointerClickResult downResult = intent.DownResult!.Value;
-
-            if (TryDeliver(ref intent, sceneWorld, PointerEventType.PetUp, out McpPointerClickResult freshResult))
-            {
-                result = freshResult;
+            if (TryDeliver(in intent, sceneWorld, tick, press.Entity, out result))
                 return;
-            }
 
             // Fresh delivery failed: fall back to the press-frame hit if the component is still reachable.
-            if (sceneWorld.IsAlive(intent.ResolvedEntity) && sceneWorld.TryGet(intent.ResolvedEntity, out PBPointerEvents? pbPointerEvents) && pbPointerEvents != null)
+            if (sceneWorld.IsAlive(press.Entity) && sceneWorld.TryGet(press.Entity, out PBPointerEvents? pbPointerEvents) && pbPointerEvents != null)
             {
-                pbPointerEvents.AppendPointerEventResultsIntent.Initialize(intent.DownHit, intent.DownRay);
-                pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(intent.Button, PointerEventType.PetUp);
+                pbPointerEvents.AppendPointerEventResultsIntent.Initialize(press.Hit, press.Ray);
+                pbPointerEvents.AppendPointerEventResultsIntent.AddInputAction(intent.Button, intent.EventType);
 
-                downResult.UpRayMissed = true;
-                result = downResult;
+                result = new McpPointerClickResult
+                {
+                    Hit = true,
+                    SceneEntityId = press.Entity.Id,
+                    UpRayMissed = true,
+                };
+
                 return;
             }
 
-            downResult.UpRayMissed = true;
-            downResult.FailureReason = $"the entity disappeared after the press ({freshResult.FailureReason}); only PetDown was delivered";
-            result = downResult;
+            // Nothing was delivered: keep the fresh failure reason and flag that only the press landed.
+            result.UpRayMissed = true;
         }
 
-        private bool TryResolveTarget(ref McpPointerClickIntent intent, World sceneWorld, out McpPointerClickResult result)
+        private static bool TryResolveTarget(in McpPointerEventIntent intent, World sceneWorld, Entity? pressEntity, out Entity resolved, out McpPointerClickResult result)
         {
             result = default;
+            resolved = Entity.Null;
 
             // Aim-point mode: the validation raycast picks the entity.
             if (intent.HasExplicitAimPoint && intent.TargetEntityId < 0)
                 return true;
 
             // The press already resolved the target; only re-validate that it is still alive.
-            if (intent.DownWorld != null)
+            if (pressEntity.HasValue)
             {
-                if (sceneWorld.IsAlive(intent.ResolvedEntity))
+                if (sceneWorld.IsAlive(pressEntity.Value))
+                {
+                    resolved = pressEntity.Value;
                     return true;
+                }
 
                 result = Failure(in intent, "the target entity was destroyed mid-click");
                 return false;
@@ -315,7 +305,7 @@ namespace DCL.McpServer.Systems
                 return false;
             }
 
-            intent.ResolvedEntity = found;
+            resolved = found;
             return true;
         }
 

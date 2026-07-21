@@ -112,7 +112,7 @@ namespace DCL.McpServer.Systems
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             McpInputOverrideSystem.InjectToWorld(ref builder, arguments.PlayerEntity);
-            McpPointerClickSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
+            McpPointerEventSystem.InjectToWorld(ref builder, scenesCache, entityCollidersGlobalCache, arguments.PlayerEntity);
 
             screenshotTool = new ScreenshotTool(coroutineRunner, globalWorld, arguments.PlayerEntity);
 

@@ -13,9 +13,10 @@ using Utility.Arch;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses a pointer button on a scene entity through <see cref="McpPointerClickIntent" /> /
-    ///     McpPointerClickSystem, which validates the aim with the same raycast rules as the reticle
-    ///     pipeline before filling the entity's pointer-event intent like a real click.
+    ///     Presses a pointer button on a scene entity by composing single-event <see cref="McpPointerEventIntent" />s
+    ///     delivered by McpPointerEventSystem, which validates the aim with the same raycast rules as the reticle
+    ///     pipeline before filling the entity's pointer-event intent like a real click. A full click is a press
+    ///     followed by a release ordered onto a later scene tick, merged into one result here.
     /// </summary>
     public class ClickEntityTool : McpTool
     {
@@ -25,6 +26,15 @@ namespace DCL.McpServer.Tools
             POINTER,
             PRIMARY,
             SECONDARY,
+        }
+
+        /// <summary>Wire-facing gesture kinds: a full click, or a single press/release leg.</summary>
+        private enum ClickKind : byte
+        {
+            /// <summary>Pointer down, then pointer up on the next scene tick.</summary>
+            CLICK,
+            DOWN,
+            UP,
         }
 
         private const float DEFAULT_TIMEOUT_SEC = 3f;
@@ -49,7 +59,7 @@ namespace DCL.McpServer.Tools
                   .Number("y")
                   .Number("z")
                   .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
-                  .Enum<McpPointerClickIntent.ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
+                  .Enum<ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
 
         public override McpToolAnnotations Annotations => McpToolAnnotations.Mutating(destructive: false, idempotent: false);
@@ -81,46 +91,37 @@ namespace DCL.McpServer.Tools
                                      _ => InputAction.IaPointer,
                                  };
 
-            if (!arguments.TryGetEnum("eventType", McpPointerClickIntent.ClickKind.CLICK, out McpPointerClickIntent.ClickKind kind))
+            if (!arguments.TryGetEnum("eventType", ClickKind.CLICK, out ClickKind kind))
                 return McpToolResult.Error("eventType must be one of: click, down, up.");
 
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
-            // A newer click preempts a pending one; release its awaiter before replacing the intent.
-            if (world.TryGet(playerEntity, out McpPointerClickIntent existingIntent))
-                existingIntent.Completion?.TrySetResult(new McpPointerClickResult
-                {
-                    Hit = false,
-                    FailureReason = "preempted by a newer click_entity call",
-                });
-
-            var completion = new UniTaskCompletionSource<McpPointerClickResult>();
-
-            world.AddOrSet(playerEntity, new McpPointerClickIntent
+            // One request template for every leg of the gesture; EventType/Press vary per leg. The deadline is
+            // a single budget for the whole gesture, enforced by the system while the tool-side timeout below
+            // only covers a paused simulation that never updates the system at all.
+            var request = new McpPointerEventIntent
             {
                 TargetEntityId = hasEntityId ? entityId : -1,
                 AimPoint = new Vector3(x, y, z),
                 HasExplicitAimPoint = hasAimPoint,
                 Button = button,
-                Kind = kind,
-                Phase = McpPointerClickIntent.ClickPhase.DOWN,
                 Deadline = UnityEngine.Time.time + timeoutSec,
-                Completion = completion,
-            });
+            };
 
             McpPointerClickResult result;
 
             try
             {
-                result = await completion.Task.AttachExternalCancellation(ct)
-                                         .Timeout(TimeSpan.FromSeconds(timeoutSec + COMPLETION_GRACE_SEC));
+                result = await RunGestureAsync(request, kind)
+                              .AttachExternalCancellation(ct)
+                              .Timeout(TimeSpan.FromSeconds(timeoutSec + COMPLETION_GRACE_SEC));
             }
             catch (TimeoutException)
             {
                 await UniTask.SwitchToMainThread();
 
-                if (world.Has<McpPointerClickIntent>(playerEntity))
-                    world.Remove<McpPointerClickIntent>(playerEntity);
+                if (world.Has<McpPointerEventIntent>(playerEntity))
+                    world.Remove<McpPointerEventIntent>(playerEntity);
 
                 return McpToolResult.Error($"click_entity did not complete within {timeoutSec + COMPLETION_GRACE_SEC}s (is the simulation paused?).");
             }
@@ -155,6 +156,55 @@ namespace DCL.McpServer.Tools
                 json["upRayMissed"] = true;
 
             return McpToolResult.Json(json);
+        }
+
+        /// <summary>
+        ///     Composes the requested gesture from single-event intents: a lone press or release is one delivery;
+        ///     a click is a press followed by a release that carries the press handoff so the system keeps it
+        ///     ordered onto a later scene tick.
+        /// </summary>
+        private async UniTask<McpPointerClickResult> RunGestureAsync(McpPointerEventIntent request, ClickKind kind)
+        {
+            request.EventType = kind == ClickKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown;
+
+            McpPointerClickResult down = await SendAsync(request);
+
+            if (kind != ClickKind.CLICK || !down.Hit)
+                return down;
+
+            request.EventType = PointerEventType.PetUp;
+            request.Press = down.Press;
+
+            McpPointerClickResult up = await SendAsync(request);
+
+            if (!up.UpRayMissed)
+                return up; // a fresh release, or a failure (scene reload, timeout, preemption) that tells the whole story
+
+            // The release needed the press-frame hit: report the press delivery and flag the divergence.
+            down.UpRayMissed = true;
+
+            if (!up.Hit)
+                down.FailureReason = $"the entity disappeared after the press ({up.FailureReason}); only PetDown was delivered";
+
+            return down;
+        }
+
+        private UniTask<McpPointerClickResult> SendAsync(McpPointerEventIntent request)
+        {
+            // A newer intent preempts a pending one; release its awaiter before replacing the component.
+            if (world.TryGet(playerEntity, out McpPointerEventIntent existing))
+                existing.Completion?.TrySetResult(new McpPointerClickResult
+                {
+                    Hit = false,
+                    FailureReason = "preempted by a newer click_entity call",
+                });
+
+            var completion = new UniTaskCompletionSource<McpPointerClickResult>();
+            request.Completion = completion;
+
+            world.AddOrSet(playerEntity, request);
+
+            return completion.Task;
         }
     }
 }
