@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace DCL.Web3.Authenticators
 {
@@ -10,15 +11,21 @@ namespace DCL.Web3.Authenticators
 
     /// <summary>
     ///     Interface for composite authentication provider that supports multiple authentication methods.
-    ///     Combines base authentication, Ethereum API, Dapp verification, and OTP flows.
+    ///     Combines base authentication, Ethereum API, and OTP flows.
     ///     This is the single entry point for all Web3 authentication needs.
     /// </summary>
-    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IDappVerificationHandler, IOtpAuthenticator
+    public interface ICompositeWeb3Provider : IWeb3Authenticator, IEthereumApi, IOtpAuthenticator
     {
         /// <summary>
         /// Currently selected authentication method
         /// </summary>
         AuthProvider CurrentProvider { set; }
+
+        /// <summary>
+        ///     Clears the local session (identity cache, analytics identity) and releases
+        ///     provider-side login resources where the current provider holds any.
+        /// </summary>
+        UniTask LogoutAsync(CancellationToken ct);
 
         /// <summary>
         /// Returns true if ThirdWeb OTP method is currently selected

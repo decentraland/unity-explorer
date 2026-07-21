@@ -21,7 +21,7 @@ namespace DCL.NftPrompt
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.POPUP;
 
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;
         private readonly INftMarketAPIClient nftInfoAPIClient;
         private readonly ImageControllerProvider imageControllerProvider;
@@ -34,7 +34,7 @@ namespace DCL.NftPrompt
 
         public NftPromptController(
             ViewFactoryMethod viewFactory,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ICursor cursor,
             INftMarketAPIClient nftInfoAPIClient,
             ImageControllerProvider imageControllerProvider
@@ -63,7 +63,7 @@ namespace DCL.NftPrompt
                 if (result != NftPromptResultType.ViewOnMarket || string.IsNullOrEmpty(marketUrl))
                     return;
 
-                webBrowser.OpenUrl(marketUrl);
+                webBrowser.OpenUrlMainThreadOnly(marketUrl);
             });
         }
 

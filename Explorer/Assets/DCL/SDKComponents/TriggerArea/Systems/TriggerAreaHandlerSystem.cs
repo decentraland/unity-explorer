@@ -122,9 +122,8 @@ namespace DCL.SDKComponents.TriggerArea.Systems
         {
             ProcessOnEnterTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
 
-            // TAET_STAY is intentionally not emitted on the wire. The SDK runtime synthesizes
-            // per-tick OnStay callbacks locally from ENTER/EXIT events to avoid flooding the
-            // GOVS-capped TriggerAreaResult buffer with redundant per-frame messages.
+            // Only ENTER and EXIT results are emitted; TAET_STAY is intentionally never appended,
+            // so the GOVS-capped TriggerAreaResult buffer is not flooded with per-frame messages.
             ProcessOnExitTriggerArea(entity, triggerAreaCRDTEntity, transform, ref triggerAreaComponent);
         }
 

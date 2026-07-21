@@ -483,5 +483,248 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // Check area effect is reset
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
         }
+
+        [Test]
+        public void ToggleNameTagHidingFlagCorrectly()
+        {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())), new AvatarShapeComponent());
+
+            world.Add(fakeAvatarEntity, new AvatarShapeComponent());
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0f);
+
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
+
+            sdkEntityTriggerArea.OnTriggerExit(fakeAvatarShapeCollider);
+
+            system.Update(0f);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+        }
+
+        [Test]
+        public void FilterNameTagByExcludedIds()
+        {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID.ToLower(), "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                ExcludeIds = { FAKE_USER_ID },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0f);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+        }
+
+        [Test]
+        public void HandleNameTagExcludedIdsUpdateCorrectly()
+        {
+            var avatar1ExcludedId = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(avatar1ExcludedId.ToLower(), "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                ExcludeIds = { avatar1ExcludedId },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+
+            pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Set(triggerAreaEntity, pbComponent);
+
+            system.Update(0);
+
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+        }
+
+        [Test]
+        public void HandleNameTagComponentRemoveCorrectly()
+        {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0);
+
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+
+            world.Remove<PBAvatarModifierArea>(triggerAreaEntity);
+            system.Update(0);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+            Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
+        }
+
+        [Test]
+        public void HandleNameTagEntityDestructionCorrectly()
+        {
+            const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+            globalWorld.Add(fakeAvatarEntity, new Profile(FAKE_USER_ID, "fake user", new Avatar(
+                BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor())));
+
+            var pbComponent = new PBAvatarModifierArea
+            {
+                Area = new Vector3
+                {
+                    X = 1.68f,
+                    Y = 2.96f,
+                    Z = 8.66f,
+                },
+                IsDirty = true,
+                Modifiers =
+                {
+                    AvatarModifierType.AmtHideNametags,
+                },
+            };
+
+            world.Add(triggerAreaEntity, pbComponent);
+            system.Update(0);
+
+            sdkEntityTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
+            SDKEntityTriggerAreaComponent component = world.Get<SDKEntityTriggerAreaComponent>(triggerAreaEntity);
+            component.SetMonoBehaviour(sdkEntityTriggerArea);
+            world.Set(triggerAreaEntity, component);
+
+            system.Update(0);
+
+            Assert.IsTrue(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+
+            world.Add<DeleteEntityIntention>(triggerAreaEntity);
+            system.Update(0);
+
+            Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).NameTagHiddenByModifierArea);
+        }
     }
 }

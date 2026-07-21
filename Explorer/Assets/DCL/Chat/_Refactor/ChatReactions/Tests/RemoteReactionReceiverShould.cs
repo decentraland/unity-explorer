@@ -1,10 +1,10 @@
-using System.Collections.Generic;
 using DCL.Chat.ChatReactions.Configs;
 using DCL.Chat.ChatReactions.Core;
 using DCL.Chat.ChatReactions.Networking;
 using DCL.Chat.ChatReactions.Simulation.World;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Chat.ChatReactions.Tests

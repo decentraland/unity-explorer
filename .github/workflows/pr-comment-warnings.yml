@@ -73,6 +73,7 @@ jobs:
           {
             echo "body<<EOF"
             echo "<!-- warning-ratchet -->"
+            blocked=false
             if [ -z "$BASELINE" ]; then
               echo "**Warnings counted: $COUNT** (no baseline established yet)"
             elif [ "$COUNT" -lt "$BASELINE" ]; then
@@ -81,6 +82,27 @@ jobs:
               echo "**Warnings unchanged: $BASELINE => $COUNT** — allowed on release/hotfix branches."
             else
               echo "**Warnings not reduced: $BASELINE => $COUNT** — remove at least one warning to merge."
+              blocked=true
+            fi
+
+            # Always list the warnings/errors in files this PR changed; expand only when blocking.
+            total=$(jq -r '.pr_findings_total // 0' warning-result.json)
+            if [ "$total" -gt 0 ]; then
+              open_attr=""
+              [ "$blocked" = "true" ] && open_attr=" open"
+              echo ""
+              echo "<details$open_attr><summary>Warnings/errors in files changed by this PR ($total)</summary>"
+              echo ""
+              echo "| File | Line | Rule | Message |"
+              echo "| --- | --- | --- | --- |"
+              jq -r '.pr_findings[] | "| \(.file) | \(.line) | \(.rule) | \(.message | gsub("[|\r\n]"; " ")) |"' warning-result.json
+              shown=$(jq -r '.pr_findings | length' warning-result.json)
+              if [ "$total" -gt "$shown" ]; then
+                echo ""
+                echo "_…and $((total - shown)) more (see the \`csharp-lint-reports\` artifact)._"
+              fi
+              echo ""
+              echo "</details>"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"

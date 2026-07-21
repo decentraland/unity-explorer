@@ -46,7 +46,7 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
         private readonly Animator sidebarCreditsButtonAnimator;
@@ -73,7 +73,7 @@ namespace DCL.MarketplaceCredits
         public MarketplaceCreditsMenuController(
             ViewFactoryMethod viewFactory,
             HoverableAndSelectableButtonWithAnimator sidebarButton,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             IInputBlock inputBlock,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
             ISelfProfile selfProfile,
@@ -274,10 +274,10 @@ namespace DCL.MarketplaceCredits
             viewInstance?.InfoLinkButtonTooltip.Show();
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrlMainThreadOnly(WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenGoShoppingLink() =>
-            webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);
+            webBrowser.OpenUrlMainThreadOnly(DecentralandUrl.GoShoppingWithMarketplaceCredits);
 
         private async UniTaskVoid ShowErrorNotificationAsync(string message, CancellationToken ct)
         {
@@ -335,8 +335,9 @@ namespace DCL.MarketplaceCredits
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram() || TrySetAsShownThisWeek(creditsProgramProgressResponse))
                 {
-                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
-                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City,
+                    // holding off while any other popup or fullscreen view is on screen (e.g. the backpack opened via force-open-backpack).
+                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis() && !mvcManager.IsAnyModalViewShowing(), cancellationToken: ct);
                     await mvcManager.ShowAsync(MarketplaceCreditsMenuController.IssueCommand(new Params(isOpenedFromNotification: false)), ct);
                 }
 

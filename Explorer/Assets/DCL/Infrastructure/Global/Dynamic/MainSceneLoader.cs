@@ -4,12 +4,9 @@ using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
-using DCL.ApplicationMinimumSpecsGuard;
-using DCL.ApplicationVersionGuard;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
@@ -29,7 +26,6 @@ using DCL.PluginSystem.World;
 using DCL.Prefs;
 using DCL.Quality.Runtime;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Time;
 using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -46,7 +42,6 @@ using ECS.StreamableLoading.Cache.Disk.Lock; // IGNORE_LINE_WEBGL_THREAD_SAFETY_
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.DebugSettings;
 using Global.Versioning;
 using MVC;
 using Newtonsoft.Json.Linq;
@@ -61,8 +56,9 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
-using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
+using MinimumSpecsScreenView = DCL.ApplicationGuards.MinimumSpecsScreenView;
 
+// ReSharper disable once CheckNamespace
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
@@ -234,6 +230,7 @@ namespace Global.Dynamic
             var realmData = new RealmData();
 
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
+            applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
             var decentralandUrlsSource = new GatewayUrlsSource(
                 decentralandEnvironment,
@@ -241,7 +238,8 @@ namespace Global.Dynamic
                 launchSettings,
                 debugSettings.GatekeeperMode,
                 debugSettings.CustomGatekeeperUrl,
-                cliGatekeeperUrl);
+                cliGatekeeperUrl,
+                cliOptimizedAssetsUrl);
             DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var assetsProvisioner = new AddressablesProvisioner();
@@ -458,7 +456,7 @@ namespace Global.Dynamic
             return false;
         }
 
-        private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
+        private async UniTask RegisterBlockedPopupAsync(UnityAppWebBrowser webBrowser, CancellationToken ct)
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
 
@@ -469,7 +467,7 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
+        private async UniTask<IReadOnlyList<SpecResult>> VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, UnityAppWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider(),
                 new UnitySystemInfoProvider());
@@ -587,10 +585,10 @@ namespace Global.Dynamic
             var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
 
             ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+                LivekitHealthGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
 
-            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
-            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand(), ct).Forget();
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealthGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealthGuardController.IssueCommand(), ct).Forget();
             return true;
         }
 

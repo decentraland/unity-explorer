@@ -69,6 +69,12 @@ namespace MVC
                     controller.SetViewCanvasActive(!isActive);
         }
 
+        public bool IsAnyModalViewShowing()
+        {
+            var info = windowsStackManager.GetNonPersistentControllersInfo();
+            return info.PopupControllers.Count > 0 || info.FullscreenController != null;
+        }
+
         public void CloseAllNonPersistentViews(CancellationToken ct = default)
         {
             var info = windowsStackManager.GetNonPersistentControllersInfo();
@@ -95,7 +101,7 @@ namespace MVC
             if (controller.State != ControllerState.ViewHidden)
                 return;
 
-            ct = ct.Equals(default(CancellationToken))
+            ct = ct.Equals(CancellationToken.None)
                 ? destructionToken
                 : CancellationTokenSource.CreateLinkedTokenSource(ct, destructionToken).Token;
 
@@ -258,10 +264,8 @@ namespace MVC
         private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
             do
-            {
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
                     UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused, cancellationToken: ct));
-            }
             while (currentController != windowsStackManager.TopMostPopup.controller);
         }
     }

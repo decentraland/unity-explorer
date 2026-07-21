@@ -1,6 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -23,6 +23,7 @@ using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Emotes;
@@ -201,7 +202,7 @@ namespace Global.Dynamic
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
-            IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
+            UnityAppWebBrowser webBrowser = bootstrapContainer.WebBrowser;
 
             IEmoteStorage emotesCache = staticContainer.EmoteStorage;
 
@@ -428,6 +429,19 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
+            var marketplaceShopAPIClient = new MarketplaceShopAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            var creditsChainConfig = new CreditsChainConfig(bootstrapContainer.Environment);
+
+            ICreditsPurchaseService creditsPurchaseService = new CreditsPurchaseService(
+                marketplaceShopAPIClient,
+                marketplaceCreditsAPIClient,
+                new CreditsManagerMetaTxRelayer(dynamicWorldDependencies.CompositeWeb3Provider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, creditsChainConfig),
+                new PolygonSettlementPoller(dynamicWorldDependencies.CompositeWeb3Provider, creditsChainConfig),
+                creditsChainConfig,
+                identityCache,
+                dynamicWorldDependencies.CompositeWeb3Provider,
+                FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_WEARABLE_PURCHASE) && FeaturesRegistry.Instance.IsEnabled(FeatureId.USER_CREDITS));
             var cameraReelContainer = CameraReelContainer.Create(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache.Identity?.Address);
 
             var userCalendar = new GoogleUserCalendar(webBrowser);
@@ -447,12 +461,12 @@ namespace Global.Dynamic
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
             CommunityVoiceChatContextMenuConfiguration communityVoiceChatContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CommunityVoiceChatContextMenuSettings, ct)).Value;
 
-            // Local scene development scenes are excluded from deeplink runtime handling logic
-            if (!appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE))
-            {
-                var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService);
-                deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
-            }
+            // Deep link listening stays alive in every mode so browser sign-in can complete; local scene
+            // development only opts out of navigation routing (teleports would break the scene under test).
+            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatContainer.ChatTeleporter, ct, communitiesDataService, uiShellContainer.MvcManager, staticContainer.LoadingStatus, bootstrapContainer.DeeplinkSigninIdentityId,
+                bootstrapContainer.DeeplinkLoginAwaitingSigninRequestId, routeNavigationDeepLinks: !appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE));
+
+            deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 uiShellContainer.MvcManager,
@@ -730,8 +744,16 @@ namespace Global.Dynamic
                     communitiesContainer.DataProvider,
                     wearableContainer.ThumbnailProvider,
                     staticContainer.ImageControllerProvider,
-                    staticContainer.WebRequestsContainer.WebRequestController
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    marketplaceShopAPIClient
                 ),
+                new CreditPurchasePlugin(
+                    assetsProvisioner,
+                    uiShellContainer.MvcManager,
+                    creditsPurchaseService,
+                    marketplaceCreditsAPIClient,
+                    identityCache,
+                    webBrowser),
                 uiShellContainer.CreateGenericPopupsPlugin(assetsProvisioner),
                 uiShellContainer.CreateColorPickerPlugin(assetsProvisioner),
                 uiShellContainer.CreateGenericContextMenuPlugin(assetsProvisioner, profileContainer.ProfileRepositoryWrapper),

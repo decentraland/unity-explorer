@@ -209,7 +209,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             var elementDTO = element.Entity;
 
-            elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
+            if (elementDTO.thumbnail != null)
+                elementDTO.thumbnail = AssetBundleManifestHelper.SanitizeEntityHash(elementDTO.thumbnail);
 
             var wearable = trimmedAvatarElementStorage.GetOrAddByDTO(elementDTO);
 

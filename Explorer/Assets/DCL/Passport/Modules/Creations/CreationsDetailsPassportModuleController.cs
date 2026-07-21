@@ -33,7 +33,7 @@ namespace DCL.Passport.Modules.Creations
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
-        private readonly IWebBrowser webBrowser;
+        private readonly UnityAppWebBrowser webBrowser;
         private readonly ImageControllerProvider imageControllerProvider;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<EquippedItemPassportFieldView> wearablesItemsPool;
@@ -43,7 +43,8 @@ namespace DCL.Passport.Modules.Creations
         private readonly List<EquippedItemPassportFieldView> instantiatedEmotes = new ();
         private readonly List<EquippedItemPassportFieldView> instantiatedEmptyItems = new ();
         private readonly List<Texture2DRef> loadedThumbnails = new ();
-        private readonly Dictionary<EquippedItemPassportFieldView, UnityAction> navigationListeners = new ();
+        private readonly Dictionary<EquippedItemPassportFieldView, (UnityAction buy, UnityAction view)> navigationListeners = new ();
+        private readonly CreditPurchaseBuyHandler creditPurchaseBuyHandler;
 
         private Profile? currentProfile;
         private CancellationTokenSource? loadCreationsCts;
@@ -55,9 +56,10 @@ namespace DCL.Passport.Modules.Creations
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IWebBrowser webBrowser,
+            UnityAppWebBrowser webBrowser,
             ImageControllerProvider imageControllerProvider,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            CreditPurchaseBuyHandler creditPurchaseBuyHandler)
         {
             this.view = view;
             this.webRequestController = webRequestController;
@@ -68,6 +70,7 @@ namespace DCL.Passport.Modules.Creations
             this.webBrowser = webBrowser;
             this.imageControllerProvider = imageControllerProvider;
             this.passportErrorsController = passportErrorsController;
+            this.creditPurchaseBuyHandler = creditPurchaseBuyHandler;
 
             wearablesItemsPool = CreateItemsPool(view.CreatedWearablesContainer);
             emotesItemsPool = CreateItemsPool(view.CreatedEmotesContainer);
@@ -128,6 +131,7 @@ namespace DCL.Passport.Modules.Creations
         public void Clear()
         {
             loadCreationsCts.SafeCancelAndDispose();
+            creditPurchaseBuyHandler.ClearCache();
 
             ClearItems(wearablesItemsPool, instantiatedWearables);
             ClearItems(emotesItemsPool, instantiatedEmotes);
@@ -210,8 +214,8 @@ namespace DCL.Passport.Modules.Creations
             bool isEmote,
             CancellationToken ct)
         {
-            string baseUrl = decentralandUrlsSource.Url(DecentralandUrl.MarketplaceApiLink);
-            var url = URLAddress.FromString($"{baseUrl}?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false&first=100");
+            string baseUrl = decentralandUrlsSource.Url(DecentralandUrl.MarketplaceServer);
+            var url = URLAddress.FromString($"{baseUrl}/v2/catalog?category={category}&creator={currentProfile?.UserId}&includeSocialEmotes=false&first=100");
 
             MarketplaceCatalogResponse response = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
                                                                             .CreateFromJson<MarketplaceCatalogResponse>(WRJsonParser.Unity);
@@ -254,10 +258,13 @@ namespace DCL.Passport.Modules.Creations
             itemView.OnSaleFlap.gameObject.SetActive(showBuy);
 
             RemoveNavigationListener(itemView);
-            UnityAction navigationListener = () => webBrowser.OpenUrl(marketplaceLink);
-            itemView.BuyButton.onClick.AddListener(navigationListener);
-            itemView.ViewButton.onClick.AddListener(navigationListener);
-            navigationListeners[itemView] = navigationListener;
+            string itemUrn = item.urn ?? string.Empty;
+            string rarityName = item.rarity ?? string.Empty;
+            UnityAction buyListener = () => OnBuyClicked(itemView, itemUrn, marketplaceLink, rarityName, raritySprite, rarityColor);
+            UnityAction viewListener = () => webBrowser.OpenUrlMainThreadOnly(marketplaceLink);
+            itemView.BuyButton.onClick.AddListener(buyListener);
+            itemView.ViewButton.onClick.AddListener(viewListener);
+            navigationListeners[itemView] = (buyListener, viewListener);
 
             itemView.SetAsLoading(false);
             WaitForThumbnailAsync(item.thumbnail, itemView, ct).Forget();
@@ -265,12 +272,32 @@ namespace DCL.Passport.Modules.Creations
 
         private void RemoveNavigationListener(EquippedItemPassportFieldView itemView)
         {
-            if (!navigationListeners.TryGetValue(itemView, out UnityAction navigationListener))
+            if (!navigationListeners.TryGetValue(itemView, out (UnityAction buy, UnityAction view) listeners))
                 return;
 
-            itemView.BuyButton.onClick.RemoveListener(navigationListener);
-            itemView.ViewButton.onClick.RemoveListener(navigationListener);
+            itemView.BuyButton.onClick.RemoveListener(listeners.buy);
+            itemView.ViewButton.onClick.RemoveListener(listeners.view);
             navigationListeners.Remove(itemView);
+        }
+
+        private void OnBuyClicked(EquippedItemPassportFieldView itemView, string urn, string marketplaceLink, string rarityName, Sprite raritySprite, Color rarityColor)
+        {
+            if (loadCreationsCts == null)
+                return;
+
+            var visuals = new CreditPurchaseBuyHandler.ItemVisuals(
+                itemView.AssetNameText.text,
+                rarityName,
+                itemView.EquippedItemThumbnail.sprite,
+                raritySprite,
+                rarityColor,
+                itemView.CategoryImage.sprite);
+
+            creditPurchaseBuyHandler.HandleBuyClickAsync(
+                                         urn, marketplaceLink, visuals,
+                                         resolving => itemView.BuyButton.interactable = !resolving,
+                                         loadCreationsCts.Token)
+                                    .Forget();
         }
 
         private string GetMarketplaceLink(MarketplaceCatalogItem item)

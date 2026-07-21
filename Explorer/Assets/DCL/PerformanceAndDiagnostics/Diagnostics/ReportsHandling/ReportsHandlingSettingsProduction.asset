@@ -448,6 +448,12 @@ MonoBehaviour:
       Severity: 0
     - Category: MULTIPLAYER
       Severity: 2
+    - Category: AUTHENTICATION
+      Severity: 3
+    - Category: AUTHENTICATION
+      Severity: 2
+    - Category: AUTHENTICATION
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
