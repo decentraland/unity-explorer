@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.McpServer.Core;
 using UnityEngine;
 using RaycastHit = UnityEngine.RaycastHit;
 
@@ -8,31 +9,42 @@ namespace DCL.McpServer.Components
     /// <summary>
     ///     Present on the player entity while a single agent-requested pointer event awaits delivery.
     ///     McpPointerEventSystem validates the aim with a physics raycast, appends the event to the target's
-    ///     <see cref="PBPointerEvents.AppendPointerEventResultsIntent" /> and removes the component. The intent
-    ///     is written once and never mutated; a full click is composed by the click_entity tool from two intents —
-    ///     a press, then a release carrying the press <see cref="Press" /> handoff.
+    ///     <see cref="PBPointerEvents.AppendPointerEventResultsIntent" /> and removes the component. The request
+    ///     is immutable; a full click is composed by the click_entity tool from two intents — a press, then a
+    ///     release carrying the press <see cref="Press" /> handoff. A request the simulation never picks up is
+    ///     removed by the tool-side timeout.
     /// </summary>
-    public struct McpPointerEventIntent
+    public struct McpEcsPointerEventIntent : IMcpEcsRequest<McpPointerClickResult>
     {
         /// <summary>Arch entity id in the current scene world; -1 when aiming at an explicit world point.</summary>
-        public int TargetEntityId;
-        public Vector3 AimPoint;
-        public bool HasExplicitAimPoint;
-        public InputAction Button;
+        public readonly int TargetEntityId;
+
+        /// <summary>Explicit world-space aim point; when null the aim is the target's collider center.</summary>
+        public readonly Vector3? AimPoint;
+
+        public readonly InputAction Button;
 
         /// <summary>PetDown or PetUp.</summary>
-        public PointerEventType EventType;
+        public readonly PointerEventType EventType;
 
         /// <summary>
         ///     Set on the release leg of a click: the press this release must stay ordered after. Delivery waits
         ///     until the scene has advanced past the press tick, is bound to the world that received the press,
         ///     and falls back to the press-frame hit when the fresh ray no longer reaches the target.
         /// </summary>
-        public McpPressHandoff? Press;
+        public readonly McpPressHandoff? Press;
 
-        /// <summary>Time.time after which delivery is abandoned.</summary>
-        public float Deadline;
-        public UniTaskCompletionSource<McpPointerClickResult>? Completion;
+        public UniTaskCompletionSource<McpPointerClickResult>? Completion { get; set; }
+
+        public McpEcsPointerEventIntent(int targetEntityId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
+        {
+            TargetEntityId = targetEntityId;
+            AimPoint = aimPoint;
+            Button = button;
+            EventType = eventType;
+            Press = press;
+            Completion = null;
+        }
     }
 
     /// <summary>

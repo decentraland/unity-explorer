@@ -10,12 +10,11 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Arch;
 
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Holds a movement input on the player for a duration via <see cref="McpMovementOverride" />,
+    ///     Holds a movement input on the player for a duration via <see cref="McpEcsMovementOverride" />,
     ///     exercising the regular locomotion pipeline (velocity, collisions, jumps) instead of teleporting.
     /// </summary>
     public class WalkTool : McpTool
@@ -65,34 +64,25 @@ namespace DCL.McpServer.Tools
             if (!arguments.TryGetEnum("kind", MovementKind.JOG, out MovementKind kind, ALLOWED_KINDS))
                 return McpToolResult.Error("kind must be one of: walk, jog, run.");
 
-            // A newer walk preempts a pending one; release its awaiter before replacing the override.
-            if (world.TryGet(playerEntity, out McpMovementOverride existingOverride))
-                existingOverride.Completion?.TrySetResult();
-
             Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
-            var completion = new UniTaskCompletionSource();
 
-            world.AddOrSet(playerEntity, new McpMovementOverride
+            // A newer walk preempts a pending one; the preempted awaiter completes as a finished (shortened) hold.
+            UniTask<AsyncUnit> hold = McpRequest.SendAsync(world, playerEntity, new McpEcsMovementOverride
             {
                 Axes = direction,
                 Kind = kind,
                 EndTime = UnityEngine.Time.time + seconds,
                 JumpRequested = jump,
-                Completion = completion,
-            });
+            }, AsyncUnit.Default);
 
             try
             {
-                await completion.Task.AttachExternalCancellation(ct)
-                                .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
+                await hold.AttachExternalCancellation(ct)
+                          .Timeout(TimeSpan.FromSeconds(seconds + COMPLETION_GRACE_SEC));
             }
             catch (TimeoutException)
             {
-                await UniTask.SwitchToMainThread();
-
-                if (world.Has<McpMovementOverride>(playerEntity))
-                    world.Remove<McpMovementOverride>(playerEntity);
-
+                await McpRequest.AbandonAsync<McpEcsMovementOverride>(world, playerEntity);
                 return McpToolResult.Error($"walk did not complete within {seconds + COMPLETION_GRACE_SEC}s (is the simulation paused?).");
             }
 

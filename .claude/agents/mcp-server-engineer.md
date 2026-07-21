@@ -32,8 +32,8 @@ Everything lives in `Explorer/Assets/DCL/McpServer/`, its own `DCL.McpServer` as
 | Plugin | `Systems/McpServerPlugin.cs` | Builds the tool registry in `InjectToWorld` (needs `GlobalPluginArguments.PlayerEntity/SkyboxEntity`), starts/disposes the server, wires the scene-log tap (`DiagnosticsContainer.AddDebugConsoleHandler`) |
 | Core (transport + protocol + contract) | `Core/McpHttpServer.cs`, `McpJsonRpcDispatcher.cs`, `McpTool.cs`, `McpToolsRegistry.cs`, `McpToolResult.cs`, `McpToolAnnotations.cs`, `McpJsonSchema.cs`, `McpWireEnum.cs` | `HttpListener` on `http://127.0.0.1:{port}/unity-explorer-mcp` (the URL template is single-sourced in `IDecentralandUrlsSource.LOCAL_MCP_ENDPOINT_URL`); POST → dispatch, GET → 405, Origin allowlist, 1 MB body cap; JSON-RPC 2.0 over Streamable HTTP (spec 2025-06-18), tools-only capability |
 | Tools | `Tools/*.cs` (one class per tool, 16) | The agent-facing surface |
-| Components | `Components/` — `McpMovementOverride`, `McpPointerClickIntent` | ECS intents for the input-driving tools |
-| Systems | `Systems/McpInputOverrideSystem.cs` (held movement), `Systems/McpPointerClickSystem.cs` (synthetic entity clicks) | Per-frame/pipeline-integrated drivers |
+| Components | `Components/` — `McpMovementOverride`, `McpPointerEventIntent` | ECS intents for the input-driving tools |
+| Systems | `Systems/McpInputOverrideSystem.cs` (held movement), `Systems/McpPointerEventSystem.cs` (synthetic pointer press/release delivery; `ClickEntityTool` composes a click from two intents) | Per-frame/pipeline-integrated drivers |
 | Utils | `Utils/SceneLogBuffer.cs`, `JObjectExtensions.cs` | Log tap buffer, args parsing |
 
 Registration: `DynamicWorldContainer.CreateAsync`, gated on `FeaturesRegistry` `FeatureId.MCP_SERVER` = `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)` — so `--mcp-port` alone implies `--mcp` (presence check; an invalid port value still enables the server and falls back to 8123). Flags accepted from CLI **or** deep link by user decision — do not add CLI-only enforcement without being asked. Log category: `ReportCategory.MCP`.
@@ -92,6 +92,6 @@ Forbidden: `git commit`, `git push`, `git merge`, `git rebase`
 
 ## Roadmap context
 
-Milestone 2 (pointer clicks) SHIPPED 2026-07-05 as `click_entity` — implemented via **semantic injection**, not the originally-scoped synthetic `InputSystem` device: `McpPointerClickSystem` raycasts camera→target, mirrors the distance gate, and fills the entity's `PBPointerEvents.AppendPointerEventResultsIntent` so the unmodified `WritePointerEventResultsSystem` emits a byte-identical `PBPointerEventsResult`. Zero production interaction code changed; approach recorded in `~/.claude/plans/wondrous-forging-fox.md`.
+Milestone 2 (pointer clicks) SHIPPED 2026-07-05 as `click_entity` — implemented via **semantic injection**, not the originally-scoped synthetic `InputSystem` device: `McpPointerEventSystem` (née McpPointerClickSystem) raycasts camera→target, mirrors the distance gate, and fills the entity's `PBPointerEvents.AppendPointerEventResultsIntent` so the unmodified `WritePointerEventResultsSystem` emits a byte-identical `PBPointerEventsResult`. Zero production interaction code changed; approach recorded in `~/.claude/plans/wondrous-forging-fox.md`.
 
 Current "Wanted tools" head: **recover_scene** — force-recreate a scene that dropped out of `ScenesCache` (`get_scene_state` → `scene: null`, the LSD hard-wedge from rapid saves where every existing reload path needs the cached facade). Implementation lead is in the skill's Wanted tools entry.

@@ -7,13 +7,14 @@ using DCL.CharacterMotion.Systems;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.McpServer.Components;
+using DCL.McpServer.Core;
 using ECS.Abstract;
 using UnityEngine;
 
 namespace DCL.McpServer.Systems
 {
     /// <summary>
-    ///     While an <see cref="McpMovementOverride" /> is present on the player entity, re-asserts its axes into
+    ///     While an <see cref="McpEcsMovementOverride" /> is present on the player entity, re-asserts its axes into
     ///     <see cref="MovementInputComponent" /> after the real-input systems have written it, so an agent-requested
     ///     walk survives the per-frame overwrite performed by <see cref="UpdateInputMovementSystem" />.
     /// </summary>
@@ -40,24 +41,24 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpMovementOverride movementOverride = ref World.TryGetRef<McpMovementOverride>(playerEntity, out bool overrideExists);
+            ref McpEcsMovementOverride ecsMovementOverride = ref World.TryGetRef<McpEcsMovementOverride>(playerEntity, out bool overrideExists);
 
             if (!overrideExists)
                 return;
 
             ref MovementInputComponent movement = ref World.TryGetRef<MovementInputComponent>(playerEntity, out bool hasMovement);
 
-            if (UnityEngine.Time.time < movementOverride.EndTime)
+            if (UnityEngine.Time.time < ecsMovementOverride.EndTime)
             {
                 if (hasMovement)
                 {
-                    movement.Axes = movementOverride.Axes;
-                    movement.Kind = movementOverride.Kind;
+                    movement.Axes = ecsMovementOverride.Axes;
+                    movement.Kind = ecsMovementOverride.Kind;
                 }
 
-                if (movementOverride.JumpRequested)
+                if (ecsMovementOverride.JumpRequested)
                 {
-                    movementOverride.JumpRequested = false;
+                    ecsMovementOverride.JumpRequested = false;
 
                     ref JumpInputComponent jump = ref World.TryGetRef<JumpInputComponent>(playerEntity, out bool hasJump);
 
@@ -67,17 +68,14 @@ namespace DCL.McpServer.Systems
             }
             else
             {
-                UniTaskCompletionSource? completion = movementOverride.Completion;
-
                 if (hasMovement)
                 {
                     movement.Axes = Vector2.zero;
                     movement.Kind = MovementKind.IDLE;
                 }
 
-                // Structural change only after all outstanding component refs are done.
-                World.Remove<McpMovementOverride>(playerEntity);
-                completion?.TrySetResult();
+                // The override is copied out before the structural removal; no component refs are touched afterwards.
+                McpRequest.CompleteAndRemove(World, playerEntity, ecsMovementOverride, AsyncUnit.Default);
             }
         }
     }

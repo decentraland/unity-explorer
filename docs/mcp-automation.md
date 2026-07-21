@@ -119,8 +119,8 @@ A user-invokable Claude Code skill wrapping this loop lives at `.claude/skills/m
 - `Explorer/Assets/DCL/McpServer/` — feature root, its own `DCL.McpServer` assembly. Two folders are folded into other assemblies via `.asmref` so they can reach code that assembly doesn't reference:
   - `Core/` — protocol, transport and tool contract: `McpHttpServer` (`HttpListener` server + Origin validation), `McpJsonRpcDispatcher` (JSON-RPC 2.0 routing; `PROTOCOL_VERSION` `2025-06-18`), `McpTool` (abstract tool base), `McpToolsRegistry`, `McpToolResult`, `McpToolAnnotations` (behaviour hints), `McpJsonSchema` (typed schema builder).
   - `Tools/` — one class per tool (16).
-  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerClickIntent`.
-  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerClickSystem` (synthetic entity clicks).
+  - `Components/` — ECS components for the input-driving tools: `McpMovementOverride`, `McpPointerEventIntent`.
+  - `Systems/` — **folded into `DCL.Plugins`** via `.asmref`: `McpServerPlugin` (builds the registry and hosts the server in `InjectToWorld`), `McpInputOverrideSystem` (held movement), `McpPointerEventSystem` (synthetic pointer press/release delivery; `ClickEntityTool` composes a click from two intents).
   - `Utils/` — `SceneLogBuffer`, `JObjectExtensions`.
   - `Tests/` — EditMode tests **folded into `DCL.EditMode.Tests`** via `.asmref`: dispatcher / registry / result routing and the pointer-click system.
 - Gating: `FeatureId.MCP_SERVER` in `FeaturesRegistry` (resolved as `appArgs.HasFlag(MCP) || appArgs.HasFlag(MCP_PORT)`); `DynamicWorldContainer.CreateAsync` reads `FeaturesRegistry.Instance.IsEnabled(FeatureId.MCP_SERVER)` and adds `McpServerPlugin`.

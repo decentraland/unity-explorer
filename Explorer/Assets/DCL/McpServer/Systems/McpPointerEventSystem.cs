@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Physics;
-using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
@@ -13,6 +12,7 @@ using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
 using DCL.McpServer.Components;
+using DCL.McpServer.Core;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -26,14 +26,14 @@ namespace DCL.McpServer.Systems
     /// <summary>
     ///     <para>
     ///         Delivers a single agent-requested pointer event to a scene entity while a
-    ///         <see cref="McpPointerEventIntent" /> is present on the player entity. The aim is validated with the
+    ///         <see cref="McpEcsPointerEventIntent" /> is present on the player entity. The aim is validated with the
     ///         same physics raycast the reticle pipeline uses (camera origin, <see cref="PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK" />,
     ///         occlusion and max-distance rules apply), then the target's <see cref="PBPointerEvents.AppendPointerEventResultsIntent" />
     ///         is filled exactly as <see cref="ProcessPointerEventsSystem" /> fills it for a real press, so the
     ///         unmodified scene-world write-back emits an identical PBPointerEventsResult.
     ///     </para>
     ///     <para>
-    ///         A release that follows a press (<see cref="McpPointerEventIntent.Press" />) is delivered only once
+    ///         A release that follows a press (<see cref="McpEcsPointerEventIntent.Press" />) is delivered only once
     ///         the scene has advanced past the press tick and only to the world that received the press; the
     ///         click_entity tool composes a full click from two such intents.
     ///     </para>
@@ -76,22 +76,16 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpPointerEventIntent intent = ref World.TryGetRef<McpPointerEventIntent>(playerEntity, out bool exists);
+            ref McpEcsPointerEventIntent intent = ref World.TryGetRef<McpEcsPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
                 return;
-
-            if (UnityEngine.Time.time > intent.Deadline)
-            {
-                CompleteAndRemove(intent.Completion, Failure(in intent, "the pointer event timed out before it could be delivered (is the simulation paused?)"));
-                return;
-            }
 
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {
-                CompleteAndRemove(intent.Completion, Failure(in intent, "no running current scene to deliver the pointer event to"));
+                CompleteAndRemove(in intent, Failure(in intent, "no running current scene to deliver the pointer event to"));
                 return;
             }
 
@@ -106,7 +100,7 @@ namespace DCL.McpServer.Systems
                 // disposed one (entity ids get recycled), so the release can only be failed.
                 if (!ReferenceEquals(sceneWorld, press.World))
                 {
-                    CompleteAndRemove(intent.Completion, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
+                    CompleteAndRemove(in intent, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
                     return;
                 }
 
@@ -115,22 +109,19 @@ namespace DCL.McpServer.Systems
                     return;
 
                 DeliverRelease(in intent, in press, sceneWorld, tick, out McpPointerClickResult releaseResult);
-                CompleteAndRemove(intent.Completion, releaseResult);
+                CompleteAndRemove(in intent, releaseResult);
                 return;
             }
 
             TryDeliver(in intent, sceneWorld, tick, null, out McpPointerClickResult result);
-            CompleteAndRemove(intent.Completion, result);
+            CompleteAndRemove(in intent, result);
         }
 
-        /// <summary>Structural removal happens only after every read of the intent ref is done.</summary>
-        private void CompleteAndRemove(UniTaskCompletionSource<McpPointerClickResult>? completion, McpPointerClickResult result)
-        {
-            World.Remove<McpPointerEventIntent>(playerEntity);
-            completion?.TrySetResult(result);
-        }
+        /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
+        private void CompleteAndRemove(in McpEcsPointerEventIntent intent, McpPointerClickResult result) =>
+            McpRequest.CompleteAndRemove(World, playerEntity, intent, result);
 
-        private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
+        private static McpPointerClickResult Failure(in McpEcsPointerEventIntent intent, string reason) =>
             new ()
             {
                 Hit = false,
@@ -138,16 +129,14 @@ namespace DCL.McpServer.Systems
                 SceneEntityId = intent.TargetEntityId,
             };
 
-        private bool TryDeliver(in McpPointerEventIntent intent, World sceneWorld, uint tick, Entity? pressEntity, out McpPointerClickResult result)
+        private bool TryDeliver(in McpEcsPointerEventIntent intent, World sceneWorld, uint tick, Entity? pressEntity, out McpPointerClickResult result)
         {
             if (!TryResolveTarget(in intent, sceneWorld, pressEntity, out Entity targetEntity, out result))
                 return false;
 
             bool requireTarget = intent.TargetEntityId >= 0;
 
-            Vector3 aimPoint = intent.HasExplicitAimPoint
-                ? intent.AimPoint
-                : ResolveEntityAimPoint(sceneWorld, targetEntity);
+            Vector3 aimPoint = intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
             CameraComponent camera = playerCamera.GetCameraComponent(World);
             Vector3 origin = camera.Camera.transform.position;
@@ -243,7 +232,7 @@ namespace DCL.McpServer.Systems
         ///     (or its distance gate no longer qualifies), the press-frame hit is reused so the entity still
         ///     receives an ordered PetUp, and the divergence is reported via <see cref="McpPointerClickResult.UpRayMissed" />.
         /// </summary>
-        private void DeliverRelease(in McpPointerEventIntent intent, in McpPressHandoff press, World sceneWorld, uint tick, out McpPointerClickResult result)
+        private void DeliverRelease(in McpEcsPointerEventIntent intent, in McpPressHandoff press, World sceneWorld, uint tick, out McpPointerClickResult result)
         {
             if (TryDeliver(in intent, sceneWorld, tick, press.Entity, out result))
                 return;
@@ -268,13 +257,13 @@ namespace DCL.McpServer.Systems
             result.UpRayMissed = true;
         }
 
-        private static bool TryResolveTarget(in McpPointerEventIntent intent, World sceneWorld, Entity? pressEntity, out Entity resolved, out McpPointerClickResult result)
+        private static bool TryResolveTarget(in McpEcsPointerEventIntent intent, World sceneWorld, Entity? pressEntity, out Entity resolved, out McpPointerClickResult result)
         {
             result = default;
             resolved = Entity.Null;
 
             // Aim-point mode: the validation raycast picks the entity.
-            if (intent.HasExplicitAimPoint && intent.TargetEntityId < 0)
+            if (intent.AimPoint.HasValue && intent.TargetEntityId < 0)
                 return true;
 
             // The press already resolved the target; only re-validate that it is still alive.

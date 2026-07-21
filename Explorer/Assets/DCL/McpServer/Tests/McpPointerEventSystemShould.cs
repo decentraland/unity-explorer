@@ -150,13 +150,8 @@ namespace DCL.McpServer.Tests
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
 
-            world.Add(playerEntity, new McpPointerEventIntent
+            world.Add(playerEntity, new McpEcsPointerEventIntent(targetId ?? targetEntity.Id, null, InputAction.IaPointer, eventType, press)
             {
-                TargetEntityId = targetId ?? targetEntity.Id,
-                Button = InputAction.IaPointer,
-                EventType = eventType,
-                Press = press,
-                Deadline = UnityEngine.Time.time + 5f,
                 Completion = completion,
             });
 
@@ -204,7 +199,7 @@ namespace DCL.McpServer.Tests
             Assert.That(pressResult.Press, Is.Not.Null);
             Assert.That(pressResult.Press.Value.Entity, Is.EqualTo(targetEntity));
             Assert.That(pressResult.Press.Value.Tick, Is.EqualTo(tick));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
 
             // The scene-world flush clears the intent at the end of a real frame.
             targetPointerEvents.AppendPointerEventResultsIntent.Clear();
@@ -224,7 +219,7 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.True);
             Assert.That(releaseResult.UpRayMissed, Is.False);
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -239,7 +234,7 @@ namespace DCL.McpServer.Tests
             Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetDown)));
 
             Assert.That(ResultOf(completion).Hit, Is.True);
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -254,7 +249,7 @@ namespace DCL.McpServer.Tests
             Assert.That(actions[0], Is.EqualTo((InputAction.IaPointer, PointerEventType.PetUp)));
 
             Assert.That(ResultOf(completion).Hit, Is.True);
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -344,7 +339,7 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Hit, Is.False);
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(BLOCKER_CRDT_ID));
             Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(0));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -386,28 +381,6 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("no entity"));
-        }
-
-        [Test]
-        public void FailWhenDeadlinePassed()
-        {
-            var completion = new UniTaskCompletionSource<McpPointerClickResult>();
-
-            world.Add(playerEntity, new McpPointerEventIntent
-            {
-                TargetEntityId = targetEntity.Id,
-                Button = InputAction.IaPointer,
-                EventType = PointerEventType.PetDown,
-                Deadline = UnityEngine.Time.time - 1f,
-                Completion = completion,
-            });
-
-            system!.Update(0);
-
-            McpPointerClickResult result = ResultOf(completion);
-            Assert.That(result.Hit, Is.False);
-            Assert.That(result.FailureReason, Does.Contain("timed out"));
-            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
     }
 }
