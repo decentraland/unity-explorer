@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -63,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.WEB;
 
                 // Hash was already translated to the canonical CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
-                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifest.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifest.GetAssetBundleManifestVersion());
+                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifest, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID);
                 assetBundleIntention.CommonArguments = ca;
 
                 assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeCacheHash(assetBundleIntention.Hash);
@@ -78,12 +79,20 @@ namespace ECS.StreamableLoading.AssetBundles
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
 
-        private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)
+        private URLAddress GetAssetBundleURL(AssetBundleManifestVersion manifest, string hash, string sceneID)
         {
-            if (hasSceneIDInPath)
-                return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{sceneID}/{hash}"));
+            string version = manifest.GetAssetBundleManifestVersion();
 
-            return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
+            // Digest-mapped bundles live under the canonical assets/ prefix (no entity segment) — requesting it
+            // directly skips the edge rewrite. Manifests without the map (wearables/emotes, pre-v49 scenes) carry
+            // digest-less hashes that only resolve through the entity path, so they keep the legacy shapes.
+            if (manifest.HasDepsDigests())
+                return assetBundlesURL.Append(new URLPath($"{version}/assets/{hash}"));
+
+            if (manifest.HasHashInPath())
+                return assetBundlesURL.Append(new URLPath($"{version}/{sceneID}/{hash}"));
+
+            return assetBundlesURL.Append(new URLPath($"{version}/{hash}"));
         }
 
     }
