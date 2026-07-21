@@ -34,7 +34,7 @@ namespace DCL.McpServer.Tools
             this.chatMessagesBus = chatMessagesBus;
         }
 
-        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             string message = arguments.GetString("message", string.Empty);
 

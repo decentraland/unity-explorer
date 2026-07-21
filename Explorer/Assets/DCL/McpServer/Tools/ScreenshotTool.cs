@@ -77,7 +77,7 @@ namespace DCL.McpServer.Tools
                 Object.Destroy(readPixelsBuffer);
         }
 
-        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             int maxWidth = Mathf.Clamp(arguments.GetInt("maxWidth", DEFAULT_MAX_WIDTH), MIN_WIDTH, MAX_WIDTH);
 

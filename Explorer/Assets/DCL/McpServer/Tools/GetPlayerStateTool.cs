@@ -54,7 +54,7 @@ namespace DCL.McpServer.Tools
             this.currentSceneInfo = currentSceneInfo;
         }
 
-        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             CharacterTransform characterTransform = world.Get<CharacterTransform>(playerEntity);
             Vector3 position = characterTransform.Position;

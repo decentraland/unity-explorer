@@ -31,7 +31,7 @@ namespace DCL.McpServer.Tools
             this.worldInfoHub = worldInfoHub;
         }
 
-        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("entityId", out int entityId))
                 return UniTask.FromResult(McpToolResult.Error("entityId is required."));

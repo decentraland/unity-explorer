@@ -201,7 +201,7 @@ namespace DCL.McpServer.Tests
                 OutputSchema = outputSchema;
             }
 
-            protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct) =>
+            public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct) =>
                 UniTask.FromResult(McpToolResult.Text("fake"));
         }
     }

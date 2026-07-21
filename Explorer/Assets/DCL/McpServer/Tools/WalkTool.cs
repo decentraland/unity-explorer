@@ -50,7 +50,7 @@ namespace DCL.McpServer.Tools
             this.playerEntity = playerEntity;
         }
 
-        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             var direction = new Vector2(arguments.GetFloat("directionX", 0f), arguments.GetFloat("directionY", 0f));
 

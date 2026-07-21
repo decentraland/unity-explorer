@@ -138,7 +138,15 @@ namespace DCL.McpServer.Core
 
             McpToolResult result;
 
-            try { result = await tool.ExecuteAsync(arguments, timeout.Token); }
+            try
+            {
+                // Put the tool on the thread it declares. Switching under the timeout token turns a stalled
+                // main thread into the regular tool timeout instead of an indefinitely parked request.
+                if (tool.RequiresMainThread)
+                    await UniTask.SwitchToMainThread(timeout.Token);
+
+                result = await tool.ExecuteAsync(arguments, timeout.Token);
+            }
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 ReportHub.LogWarning(ReportCategory.MCP, $"Tool '{toolName}' timed out after {TOOL_CALL_TIMEOUT.TotalSeconds:0}s");
@@ -151,9 +159,8 @@ namespace DCL.McpServer.Core
                 result = McpToolResult.Error($"Tool '{toolName}' failed: {e.Message}");
             }
 
-            // A main-thread tool completes on the main thread and UniTask continuations run inline on the
-            // completing thread; hop back so the envelope serialization here and the HTTP write in the
-            // transport never spend main-thread time.
+            // A main-thread tool completes on the main thread and UniTask continuations run inline on the completing thread;
+            // undo the switch above so the envelope serialization below never spends main-thread time.
             if (PlayerLoopHelper.IsMainThread)
                 await DCLTask.SwitchToThreadPool();
 

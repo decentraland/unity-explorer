@@ -51,7 +51,7 @@ namespace DCL.McpServer.Tools
             this.localSceneDevelopment = localSceneDevelopment;
         }
 
-        protected override UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             Vector2Int currentParcel = scenesCache.CurrentParcel.Value;
             ISceneFacade? scene = scenesCache.CurrentScene.Value;

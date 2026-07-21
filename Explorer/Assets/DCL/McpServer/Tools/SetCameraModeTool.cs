@@ -40,7 +40,7 @@ namespace DCL.McpServer.Tools
             this.exposedCameraData = exposedCameraData;
         }
 
-        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetEnum("mode", out CameraMode targetMode, ALLOWED_MODES))
                 return McpToolResult.Error("mode must be one of: first_person, third_person, drone_view, free.");

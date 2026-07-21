@@ -49,7 +49,7 @@ namespace DCL.McpServer.Tools
             this.loadingStatus = loadingStatus;
         }
 
-        protected override async UniTask<McpToolResult> ExecuteCoreAsync(JObject arguments, CancellationToken ct)
+        public override async UniTask<McpToolResult> ExecuteAsync(JObject arguments, CancellationToken ct)
         {
             if (!arguments.TryGetInt("x", out int x) || !arguments.TryGetInt("y", out int y))
                 return McpToolResult.Error("Both x and y parcel coordinates are required.");
