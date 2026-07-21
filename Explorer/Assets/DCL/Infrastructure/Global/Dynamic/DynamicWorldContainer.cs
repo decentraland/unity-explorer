@@ -697,7 +697,15 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     uiShellContainer.MvcManager,
                     uiShellContainer.Cursor,
-                    realmUrl => chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API)),
+                    (realmUrl, position) =>
+                    {
+                        // With a target parcel: teleport with the typed position (works for URL realms too).
+                        // Without one: keep the existing chat-command route so the switch surfaces in nearby chat.
+                        if (position.HasValue)
+                            chatContainer.ChatTeleporter.TeleportToRealmAsync(realmUrl, position.Value, CancellationToken.None).Forget();
+                        else
+                            chatContainer.ChatMessagesBus.SendWithUtcNowTimestamp(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", ChatMessageOrigin.RESTRICTED_ACTION_API);
+                    }),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, uiShellContainer.MvcManager, nftInfoAPIClient, staticContainer.ImageControllerProvider, uiShellContainer.Cursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),

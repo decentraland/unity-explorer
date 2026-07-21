@@ -3,6 +3,7 @@ using DCL.Input;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.ChangeRealmPrompt
 {
@@ -13,13 +14,13 @@ namespace DCL.ChangeRealmPrompt
         private const string DEFAULT_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         private readonly ICursor cursor;
-        private readonly Action<string> changeRealmCallback;
+        private readonly Action<string, Vector2Int?> changeRealmCallback;
         private Action<ChangeRealmPromptResultType> resultCallback;
 
         public ChangeRealmPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            Action<string> changeRealmCallback) : base(viewFactory)
+            Action<string, Vector2Int?> changeRealmCallback) : base(viewFactory)
         {
             this.cursor = cursor;
             this.changeRealmCallback = changeRealmCallback;
@@ -45,7 +46,7 @@ namespace DCL.ChangeRealmPrompt
                 if (result != ChangeRealmPromptResultType.Approved)
                     return;
 
-                changeRealmCallback?.Invoke(inputData.Realm);
+                changeRealmCallback?.Invoke(inputData.Realm, inputData.Position);
             });
         }
 
