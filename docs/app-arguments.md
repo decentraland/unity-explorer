@@ -252,6 +252,21 @@ More detailed instructions on how to test can be found in the description of rel
 
 ---
 
+## UI Flags
+
+### `force-open-backpack`
+**Description:** Automatically opens the Backpack panel once the user lands in the world (after authentication and the loading screen). Presence-only: any value triggers it. Also works when a deep link reaches an already-running client — the Backpack opens immediately (or once loading completes).
+
+**Usage:**
+```bash
+--force-open-backpack
+```
+```
+decentraland://?force-open-backpack=true
+```
+
+---
+
 ## Performance & Caching Flags
 
 ### `disable-disk-cache`
