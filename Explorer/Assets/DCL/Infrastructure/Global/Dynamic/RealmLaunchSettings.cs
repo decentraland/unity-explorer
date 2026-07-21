@@ -1,3 +1,4 @@
+using DCL.Browser;
 using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -101,7 +102,7 @@ namespace Global.Dynamic
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
                                            && ParseLocalSceneParameter(localSceneParamValue)
-                                           && IsRealmAValidUrl(realmParamValue);
+                                           && ExternalUrlPolicy.IsWebScheme(realmParamValue);
 
             if (isLocalSceneDevelopment)
             {
@@ -170,10 +171,6 @@ namespace Global.Dynamic
 
         private bool IsRealmAWorld(string realmParam) =>
             realmParam.IsEns();
-
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         public void CheckStartParcelOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
