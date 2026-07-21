@@ -210,6 +210,47 @@ namespace DCL.MarketplaceCredits.Purchase.Tests
         }
 
         [Test]
+        public async Task HandOffToBackgroundPollAndStillCreditWhenBrowserWaitStopped()
+        {
+            // Arrange: the order stays processing during the foreground wait and only completes once
+            // it has been handed off to the background poll (mirroring a payment finished after the
+            // user closed the browser tab). The foreground timeout is long, so the hand-off can only
+            // come from StopWaitingForBrowser, not from a timeout.
+            creditsAPIClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
+                            .Returns(_ => service.CurrentStatus.Stage == CreditsTopUpStage.PENDING_TIMEOUT
+                                 ? Order(CreditsOrderStatusResponse.STATUS_CREDITED, creditsGranted: 50, newBalance: 62)
+                                 : Order(CreditsOrderStatusResponse.STATUS_PROCESSING));
+
+            service.StartTopUp(PACK);
+            await WaitForStageAsync(CreditsTopUpStage.WAITING_FOR_PAYMENT);
+
+            // Act
+            service.StopWaitingForBrowser();
+
+            // Assert
+            await WaitForStageAsync(CreditsTopUpStage.CREDITED);
+            Assert.AreEqual(50, service.CurrentStatus.CreditsGranted);
+            Assert.IsTrue(recordedStatuses.Exists(s => s.Stage == CreditsTopUpStage.PENDING_TIMEOUT));
+        }
+
+        [Test]
+        public async Task IgnoreStopWaitingForBrowserWhenNotWaiting()
+        {
+            // Arrange
+            creditsAPIClient.GetCheckoutOrderAsync(ORDER_ID, Arg.Any<CancellationToken>())
+                            .Returns(Order(CreditsOrderStatusResponse.STATUS_FAILED, error: "card_declined"));
+
+            service.StartTopUp(PACK);
+            await WaitForStageAsync(CreditsTopUpStage.FAILED);
+
+            // Act
+            service.StopWaitingForBrowser();
+
+            // Assert
+            Assert.AreEqual(CreditsTopUpStage.FAILED, service.CurrentStatus.Stage);
+        }
+
+        [Test]
         public async Task IgnoreStartTopUpWhileOrderInFlight()
         {
             // Arrange

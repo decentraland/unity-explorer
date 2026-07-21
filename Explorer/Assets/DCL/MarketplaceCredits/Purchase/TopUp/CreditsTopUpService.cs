@@ -33,6 +33,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         private readonly TimeSpan backgroundPollTimeout;
 
         private CancellationTokenSource? cts;
+        private CancellationTokenSource? skipForegroundCts;
         private bool pendingAcknowledged;
 
         public CreditsTopUpStatus CurrentStatus { get; private set; } = CreditsTopUpStatus.Idle();
@@ -70,6 +71,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
+            skipForegroundCts.SafeCancelAndDispose();
         }
 
         public void StartTopUp(CreditPack pack)
@@ -80,6 +82,16 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
             pendingAcknowledged = false;
             cts = cts.SafeRestart();
             RunTopUpAsync(pack, cts.Token).Forget();
+        }
+
+        public void StopWaitingForBrowser()
+        {
+            if (CurrentStatus.Stage != CreditsTopUpStage.WAITING_FOR_PAYMENT)
+                return;
+
+            // Cancels only the foreground poll; RunTopUpAsync then hands the order off to the
+            // background poll (PENDING_TIMEOUT), so a payment completed later still gets credited.
+            skipForegroundCts?.Cancel();
         }
 
         public void AcknowledgeTerminalState()
@@ -123,7 +135,14 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp
                 webBrowser.OpenUrlMainThreadOnly(checkoutResult.Value.url);
                 SetStatus(CreditsTopUpStatus.WaitingForPayment(pack, orderId));
 
-                (PollOutcome outcome, CreditsOrderStatusResponse order) = await PollOrderAsync(orderId, foregroundPollInterval, foregroundPollTimeout, ct);
+                skipForegroundCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                (PollOutcome outcome, CreditsOrderStatusResponse order) = await PollOrderAsync(orderId, foregroundPollInterval, foregroundPollTimeout, skipForegroundCts.Token);
+                skipForegroundCts.SafeCancelAndDispose();
+                skipForegroundCts = null;
+
+                // Only the skip token fired (the user stopped waiting), not the outer ct: fall through to the background poll.
+                if (outcome == PollOutcome.CANCELLED && !ct.IsCancellationRequested)
+                    outcome = PollOutcome.TIMED_OUT;
 
                 if (outcome == PollOutcome.TIMED_OUT)
                 {
