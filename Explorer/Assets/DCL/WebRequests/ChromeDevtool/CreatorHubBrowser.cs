@@ -1,6 +1,5 @@
 using CDPBridges;
 using DCL.Diagnostics;
-using Global.AppArgs;
 using Plugins.DclNativeProcesses;
 using RichTypes;
 using System;
@@ -11,7 +10,6 @@ namespace DCL.WebRequests.ChromeDevtool
     public class CreatorHubBrowser : IBrowser
     {
         private const string DEVTOOL_PORT_ARG = "--open-devtools-with-port=";
-        private readonly IAppArgs appArgs;
         private readonly int port;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
@@ -25,15 +23,14 @@ namespace DCL.WebRequests.ChromeDevtool
         public static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
 #endif
 
-        public CreatorHubBrowser(IAppArgs appArgs, int port)
+        public CreatorHubBrowser(int port)
         {
-            this.appArgs = appArgs;
             this.port = port;
         }
 
         public BrowserOpenResult OpenUrl(string url)
         {
-            string path = CreatorHubExecutablePath();
+            string path = DEFAULT_CREATOR_HUB_BIN_PATH;
 
             if (File.Exists(path) == false)
             {
@@ -43,13 +40,7 @@ namespace DCL.WebRequests.ChromeDevtool
 
             ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Url always ignored by Creator Hub Browser, port is used");
 
-            Result result = DclProcesses.Start(
-                path,
-                new[]
-                {
-                    $"{DEVTOOL_PORT_ARG}{port}",
-                }
-            );
+            Result result = DclProcesses.Start(path, new[] { $"{DEVTOOL_PORT_ARG}{port}" });
 
             if (result.Success == false)
             {
@@ -58,15 +49,6 @@ namespace DCL.WebRequests.ChromeDevtool
             }
 
             return BrowserOpenResult.Success();
-        }
-
-        private string CreatorHubExecutablePath()
-        {
-            if (appArgs.TryGetValue(AppArgsFlags.CREATOR_HUB_BIN_PATH, out string? path))
-                return path!;
-
-            ReportHub.LogWarning(ReportCategory.CHROME_DEVTOOL_PROTOCOL, "Creator Hub path is not provided, fallback to default path");
-            return DEFAULT_CREATOR_HUB_BIN_PATH;
         }
     }
 }
