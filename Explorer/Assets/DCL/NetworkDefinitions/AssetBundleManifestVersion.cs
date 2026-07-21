@@ -109,8 +109,8 @@ public class AssetBundleManifestVersion
         /// <summary>Computes the Unity-cache key for a CDN request hash: canonical-assets manifests key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
         public Hash128 ComputeCacheHash(string hash) =>
             HasCanonicalAssets()
-                ? ComputeHashV49(hash, GetAssetBundleManifestVersion()!)
-                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate()!);
+                ? ComputeHashV49(hash, GetAssetBundleManifestVersion())
+                : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate());
 
         private static unsafe Hash128 ComputeHashV49(string hash, string version)
         {
@@ -147,9 +147,11 @@ public class AssetBundleManifestVersion
             return false;
         }
 
+        //! safe: every factory (CreateFromFallback, CreateFailed, CreateManualManifest, CreateForLOD) sets the current platform's info, and deserialized manifests carry both platforms.
         public string GetAssetBundleManifestVersion() =>
             IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.version! : assets?.mac!.version!;
 
+        //! safe: same factory invariant as GetAssetBundleManifestVersion.
         private string GetAssetBundleManifestBuildDate() =>
             IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? assets?.windows!.buildDate! : assets?.mac!.buildDate!;
 
@@ -245,7 +247,7 @@ public class AssetBundleManifestVersion
             string platformSuffix = PlatformUtils.GetCurrentPlatform();
             bool lowerCase = IPlatform.DEFAULT.Is(IPlatform.Kind.Mac);
 
-            // TryAdd so digest-bearing entries from InjectDepsDigests always win, regardless of injection order.
+            // TryAdd keeps the first entry for each key; a digest-bearing name already stored by InjectDepsDigests is never overwritten.
             for (var i = 0; i < entityDefinitionContent.Length; i++)
             {
                 string hash = entityDefinitionContent[i].hash;
