@@ -76,7 +76,7 @@ By default a local scene loads raw GLTFs. To preview it with real asset bundles,
 and add these parameters to the launch:
 
 ```
---lsd-local-ab true --optimized-assets-url http://127.0.0.1:5147
+--local-ab true
 ```
 
 The scene's asset-bundle manifest is then fetched from abgen (which converts the scene's GLBs

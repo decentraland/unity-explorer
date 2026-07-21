@@ -114,12 +114,12 @@ namespace Global.Dynamic
 
             if (isLocalSceneDevelopment)
             {
-                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LSD_LOCAL_AB) || useLocalAssetBundles;
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || useLocalAssetBundles;
                 bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
 
                 if (useLocalAB && useRemoteAB)
                 {
-                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LSD_LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
+                    ReportHub.LogWarning(ReportCategory.ASSET_BUNDLES, $"Both '{AppArgsFlags.LOCAL_AB}' and '{AppArgsFlags.LSD_USE_REMOTE_AB}' were provided: local asset bundles take precedence");
                     useRemoteAB = false;
                 }
 
