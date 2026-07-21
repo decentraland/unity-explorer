@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-// ReSharper disable once CheckNamespace
 namespace DCL.Ipfs
 {
 public class AssetBundleManifestVersion
