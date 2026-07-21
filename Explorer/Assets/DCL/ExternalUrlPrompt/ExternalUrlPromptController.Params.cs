@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Browser;
+using System;
 
 namespace DCL.ExternalUrlPrompt
 {
@@ -10,7 +11,9 @@ namespace DCL.ExternalUrlPrompt
 
             public Params(string url)
             {
-                Uri = Uri.TryCreate(url, UriKind.Absolute, out Uri uri) ? uri : null;
+                Uri = ExternalUrlPolicy.IsWebScheme(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri uri)
+                    ? uri
+                    : null;
             }
         }
     }
