@@ -22,10 +22,10 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public static async UniTask EnsureDepsDigestsAsync(World world, EntityDefinitionBase entityDefinition, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundleManifestVersion? manifestVersion = entityDefinition.assetBundleManifestVersion;
+            AssetBundleManifestVersion manifestVersion = entityDefinition.AssetBundleManifestVersionOrFailed;
 
-            // Pre-v49 manifests have no deps digest, and CreateFailed/CreateManualManifest entries report version < v49 as well — short-circuit those.
-            if (manifestVersion == null || !manifestVersion.SupportsDepsDigests())
+            // Network short-circuit only — InjectDepsDigests self-gates on v49+, but fetching the manifest JSON for a pre-v49 scene would be a wasted round-trip.
+            if (!manifestVersion.SupportsDepsDigests())
                 return;
 
             //Needed to use the UnityEngine.Time.realtimeSinceStartup on the intention creation
