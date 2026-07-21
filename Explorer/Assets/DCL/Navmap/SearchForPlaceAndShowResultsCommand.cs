@@ -3,7 +3,6 @@ using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.Navmap
@@ -124,8 +123,7 @@ namespace DCL.Navmap
                         ct,
                         pageNumber: @params.page, pageSize: @params.pageSize,
                         sortByBy: sort, sortDirection: sortDirection,
-                        onlySdk7: true,
-                        onlyPlaces: true);
+                        onlySdk7: true);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }

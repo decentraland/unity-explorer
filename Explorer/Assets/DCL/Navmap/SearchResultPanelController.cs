@@ -54,6 +54,7 @@ namespace DCL.Navmap
         {
             foreach ((string _, PlaceElementView fullSearchResultsView) in usedPoolElements)
             {
+                fullSearchResultsView.IsHoverEnabled = true;
                 fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
                 fullSearchResultsView.resultAnimator.Rebind();
                 fullSearchResultsView.resultAnimator.Update(0f);
