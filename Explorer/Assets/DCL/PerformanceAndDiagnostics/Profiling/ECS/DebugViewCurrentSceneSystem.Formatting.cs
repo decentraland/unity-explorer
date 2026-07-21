@@ -1,7 +1,6 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Utilities;
-using SceneRunner.Scene;
+using System;
 using System.Globalization;
 using UnityEngine;
 
@@ -9,6 +8,165 @@ namespace DCL.Profiling.ECS
 {
     public partial class DebugViewCurrentSceneSystem
     {
+        // Hardcoded scene limits derived from the parcel count (n), matching the documented
+        // Decentraland scene limitations; colliders and external content have no documented
+        // limit, so they use project-chosen caps.
+        private const int MAX_TRIANGLES_PER_PARCEL = 10_000;
+        private const int MAX_ENTITIES_PER_PARCEL = 200;
+        private const int MAX_BODIES_PER_PARCEL = 300;
+        private const int MAX_COLLIDERS_PER_PARCEL = 300;
+        private const int MAX_MATERIALS_LOG2_MULTIPLIER = 20;
+        private const int MAX_TEXTURES_LOG2_MULTIPLIER = 10;
+        private const int MAX_GEOMETRIES_LOG2_MULTIPLIER = 200;
+        private const long MAX_CONTENT_BYTES_PER_PARCEL = 15L * 1024 * 1024;
+        private const int MAX_EXTERNAL_CONTENT = 10;
+
+        private const float CAP_WARNING_PERCENT = 80f;
+
+        private readonly struct SceneContentCaps
+        {
+            public readonly int Entities;
+            public readonly long Triangles;
+            public readonly int Bodies;
+            public readonly int Geometries;
+            public readonly int Materials;
+            public readonly int Textures;
+            public readonly int Colliders;
+            public readonly long ContentSizeBytes;
+            public readonly int ExternalContent;
+
+            private SceneContentCaps(int entities, long triangles, int bodies, int geometries, int materials, int textures, int colliders, long contentSizeBytes, int externalContent)
+            {
+                Entities = entities;
+                Triangles = triangles;
+                Bodies = bodies;
+                Geometries = geometries;
+                Materials = materials;
+                Textures = textures;
+                Colliders = colliders;
+                ContentSizeBytes = contentSizeBytes;
+                ExternalContent = externalContent;
+            }
+
+            public static SceneContentCaps ForParcelCount(int parcelCount)
+            {
+                float log2 = Mathf.Log(parcelCount + 1, 2f);
+
+                return new SceneContentCaps(
+                    entities: parcelCount * MAX_ENTITIES_PER_PARCEL,
+                    triangles: (long)parcelCount * MAX_TRIANGLES_PER_PARCEL,
+                    bodies: parcelCount * MAX_BODIES_PER_PARCEL,
+                    geometries: Mathf.FloorToInt(log2 * MAX_GEOMETRIES_LOG2_MULTIPLIER),
+                    materials: Mathf.FloorToInt(log2 * MAX_MATERIALS_LOG2_MULTIPLIER),
+                    textures: Mathf.FloorToInt(log2 * MAX_TEXTURES_LOG2_MULTIPLIER),
+                    colliders: parcelCount * MAX_COLLIDERS_PER_PARCEL,
+                    contentSizeBytes: parcelCount * MAX_CONTENT_BYTES_PER_PARCEL,
+                    externalContent: MAX_EXTERNAL_CONTENT);
+            }
+        }
+
+        private readonly struct ContentStatsBindings
+        {
+            public readonly ElementBinding<string> Entities;
+            public readonly ElementBinding<string> Triangles;
+            public readonly ElementBinding<string> Bodies;
+            public readonly ElementBinding<string> Geometries;
+            public readonly ElementBinding<string> Materials;
+            public readonly ElementBinding<string> Textures;
+            public readonly ElementBinding<string> Colliders;
+            public readonly ElementBinding<string> ContentSize;
+            public readonly ElementBinding<string> ExternalContent;
+
+            private ContentStatsBindings(
+                ElementBinding<string> entities,
+                ElementBinding<string> triangles,
+                ElementBinding<string> bodies,
+                ElementBinding<string> geometries,
+                ElementBinding<string> materials,
+                ElementBinding<string> textures,
+                ElementBinding<string> colliders,
+                ElementBinding<string> contentSize,
+                ElementBinding<string> externalContent)
+            {
+                Entities = entities;
+                Triangles = triangles;
+                Bodies = bodies;
+                Geometries = geometries;
+                Materials = materials;
+                Textures = textures;
+                Colliders = colliders;
+                ContentSize = contentSize;
+                ExternalContent = externalContent;
+            }
+
+            public static ContentStatsBindings Create() =>
+                new (
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty),
+                    new ElementBinding<string>(string.Empty));
+        }
+
+        private static void UpdateContentStatsBindings(in ContentStatsBindings bindings, SceneContentStats stats, in SceneContentCaps caps)
+        {
+            if (!stats.HasData)
+            {
+                bindings.Entities.Value = "—";
+                bindings.Triangles.Value = "—";
+                bindings.Bodies.Value = "—";
+                bindings.Geometries.Value = "—";
+                bindings.Materials.Value = "—";
+                bindings.Textures.Value = "—";
+                bindings.Colliders.Value = "—";
+                bindings.ContentSize.Value = "—";
+                bindings.ExternalContent.Value = "—";
+                return;
+            }
+
+            bindings.Entities.Value = FormatCapped(stats.Entities, caps.Entities);
+            bindings.Triangles.Value = FormatCapped(stats.Triangles, caps.Triangles);
+            bindings.Bodies.Value = FormatCapped(stats.Bodies, caps.Bodies);
+            bindings.Geometries.Value = FormatCapped(stats.Geometries, caps.Geometries);
+            bindings.Materials.Value = FormatCapped(stats.Materials, caps.Materials);
+            bindings.Textures.Value = FormatCapped(stats.Textures, caps.Textures);
+            bindings.Colliders.Value = FormatCapped(stats.Colliders, caps.Colliders);
+            bindings.ContentSize.Value = FormatCappedBytes(stats.ContentSizeBytes, caps.ContentSizeBytes);
+            bindings.ExternalContent.Value = FormatCapped(stats.ExternalContent, caps.ExternalContent);
+        }
+
+        private static string FormatCapped(long current, long cap)
+        {
+            if (cap <= 0)
+                return current.ToString("N0", CultureInfo.InvariantCulture);
+
+            float percent = current * 100f / cap;
+            return $"<color={CapColor(percent)}>{current.ToString("N0", CultureInfo.InvariantCulture)} / {cap.ToString("N0", CultureInfo.InvariantCulture)} ({percent:F0}%)</color>";
+        }
+
+        private static string FormatCappedBytes(long current, long cap)
+        {
+            string currentNormalized = BytesFormatter.Normalize((ulong)Math.Max(0L, current), false);
+
+            if (cap <= 0)
+                return currentNormalized;
+
+            float percent = current * 100f / cap;
+            return $"<color={CapColor(percent)}>{currentNormalized} / {BytesFormatter.Normalize((ulong)cap, false)} ({percent:F0}%)</color>";
+        }
+
+        private static string CapColor(float percent) =>
+            percent switch
+            {
+                >= 100f => "red",
+                >= CAP_WARNING_PERCENT => "yellow",
+                _ => "green",
+            };
+
         private readonly struct StringBindings
         {
             public readonly ElementBinding<string> RealFps;

@@ -30,6 +30,7 @@ namespace DCL.Profiling.ECS
         private readonly DebugWidgetVisibilityBinding visibility;
 
         private readonly StringBindings stringBindings;
+        private readonly ContentStatsBindings contentStatsBindings;
 
         private readonly ElementBinding<LineChartBuffer> fpsChart;
         private readonly ElementBinding<LineChartBuffer> bytesFromChart;
@@ -50,6 +51,7 @@ namespace DCL.Profiling.ECS
         private readonly Action<ISceneFacade?>? onCurrentSceneChanged;
 
         private ISceneFacade? currentScene;
+        private SceneContentCaps contentCaps;
         private long lastBytesFromScene;
         private long lastBytesToScene;
         private long lastMessagesFromScene;
@@ -64,6 +66,7 @@ namespace DCL.Profiling.ECS
 
             visibility = new DebugWidgetVisibilityBinding(true);
             stringBindings = StringBindings.Create();
+            contentStatsBindings = ContentStatsBindings.Create();
 
             fpsChart = new ElementBinding<LineChartBuffer>(new LineChartBuffer(fpsRing, 0, 0, 0));
             bytesFromChart = new ElementBinding<LineChartBuffer>(new LineChartBuffer(bytesFromRing, 0, 0, 0));
@@ -83,6 +86,15 @@ namespace DCL.Profiling.ECS
             OnCurrentSceneChanged(scenesCache.CurrentScene.Value);
 
             widgetBuilder.SetVisibilityBinding(visibility)
+                         .AddCustomMarker("Entities:", contentStatsBindings.Entities)
+                         .AddCustomMarker("Triangles:", contentStatsBindings.Triangles)
+                         .AddCustomMarker("Meshes (bodies):", contentStatsBindings.Bodies)
+                         .AddCustomMarker("Geometries:", contentStatsBindings.Geometries)
+                         .AddCustomMarker("Materials:", contentStatsBindings.Materials)
+                         .AddCustomMarker("Textures:", contentStatsBindings.Textures)
+                         .AddCustomMarker("Colliders:", contentStatsBindings.Colliders)
+                         .AddCustomMarker("Content size:", contentStatsBindings.ContentSize)
+                         .AddCustomMarker("External content:", contentStatsBindings.ExternalContent)
                          .AddCustomMarker("Real tick FPS:", stringBindings.RealFps)
                          .AddCustomMarker("Min FPS (last 256 ticks):", stringBindings.MinFps)
                          .AddCustomMarker("Max FPS (last 256 ticks):", stringBindings.MaxFps)
@@ -110,10 +122,12 @@ namespace DCL.Profiling.ECS
         {
             if (!widgetEnabled) return;
             if (!realmData.Configured) return;
-            if (!visibility.IsConnectedAndExpanded) return;
             if (currentScene == null) return;
 
             SceneRuntimeMetrics metrics = currentScene.RuntimeMetrics;
+            metrics.ContentStats.CollectionRequested = visibility.IsConnectedAndExpanded;
+
+            if (!visibility.IsConnectedAndExpanded) return;
 
             long bytesFrom = metrics.BytesFromScene.Total;
             long bytesTo = metrics.BytesToScene.Total;
@@ -150,6 +164,7 @@ namespace DCL.Profiling.ECS
                 framesSinceMetricsUpdate = 0;
                 UpdateStringBindings(in stringBindings, metrics, currentFpsValue, minFpsValue, maxFpsValue, hiccupCount,
                     deltaBytesFrom, deltaBytesTo, deltaMessagesFrom, deltaMessagesTo, dt);
+                UpdateContentStatsBindings(in contentStatsBindings, metrics.ContentStats, in contentCaps);
             }
         }
 
@@ -161,7 +176,11 @@ namespace DCL.Profiling.ECS
 
         private void OnCurrentSceneChanged(ISceneFacade? scene)
         {
+            if (currentScene != null)
+                currentScene.RuntimeMetrics.ContentStats.CollectionRequested = false;
+
             currentScene = scene;
+            contentCaps = scene != null ? SceneContentCaps.ForParcelCount(scene.SceneData.Parcels.Count) : default(SceneContentCaps);
             ResetLocalState();
 
             if (scene != null)
