@@ -91,7 +91,6 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
-                // Worlds don't live on the Genesis map (they all report base_position "0,0"), so they get no map marker.
                 if (placeInfo.IsWorld)
                     continue;
 
