@@ -70,8 +70,9 @@ jobs:
           BASELINE: ${{ steps.result.outputs.baseline }}
           ALLOW_EQUAL: ${{ steps.result.outputs.allow-equal }}
         run: |
+          DELIM="EOF_$(uuidgen)"
           {
-            echo "body<<EOF"
+            echo "body<<$DELIM"
             echo "<!-- warning-ratchet -->"
             blocked=false
             if [ -z "$BASELINE" ]; then
@@ -85,26 +86,24 @@ jobs:
               blocked=true
             fi
 
-            # Always list the warnings/errors in files this PR changed; expand only when blocking.
+            # Always list the warnings/errors in files this PR changed, collapsed by default.
             total=$(jq -r '.pr_findings_total // 0' warning-result.json)
             if [ "$total" -gt 0 ]; then
-              open_attr=""
-              [ "$blocked" = "true" ] && open_attr=" open"
               echo ""
-              echo "<details$open_attr><summary>Warnings/errors in files changed by this PR ($total)</summary>"
+              echo "<details><summary>Warnings/errors in files changed by this PR ($total)</summary>"
               echo ""
-              echo "| File | Line | Rule | Message |"
-              echo "| --- | --- | --- | --- |"
-              jq -r '.pr_findings[] | "| \(.file) | \(.line) | \(.rule) | \(.message | gsub("[|\r\n]"; " ")) |"' warning-result.json
+              echo '```'
+              jq -r '.pr_findings[] | "\(.file):\(.line)  \(.rule)  \(.message | gsub("[\r\n]"; " "))"' warning-result.json
               shown=$(jq -r '.pr_findings | length' warning-result.json)
               if [ "$total" -gt "$shown" ]; then
                 echo ""
-                echo "_…and $((total - shown)) more (see the \`csharp-lint-reports\` artifact)._"
+                echo "…and $((total - shown)) more (see the csharp-lint-reports artifact)."
               fi
+              echo '```'
               echo ""
               echo "</details>"
             fi
-            echo "EOF"
+            echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
       - name: Find existing comment

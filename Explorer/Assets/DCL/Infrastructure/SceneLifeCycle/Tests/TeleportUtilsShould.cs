@@ -66,7 +66,7 @@ namespace DCL.SceneLifeCycle.Tests
             (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel);
 
             Assert.AreEqual(baseParcel.x * PARCEL, worldPos.x, EPSILON);
-            Assert.AreEqual(baseParcel.y * PARCEL + 8f, worldPos.z, EPSILON);
+            Assert.AreEqual((baseParcel.y * PARCEL) + 8f, worldPos.z, EPSILON);
         }
 
         [Test]
@@ -113,7 +113,141 @@ namespace DCL.SceneLifeCycle.Tests
             Assert.AreEqual(0f, worldPos.y, EPSILON);
         }
 
-        private static SceneEntityDefinition BuildSceneDef(Vector2Int baseParcel, IReadOnlyList<Vector2Int> parcels, SceneMetadata.SpawnPoint spawnPoint)
+        [Test]
+        public void PickNamedSpawnPointOverDefault()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 8f, name: "lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel, "lobby");
+
+            Assert.AreEqual(8f, worldPos.x, EPSILON);
+            Assert.AreEqual(8f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void MatchSpawnPointNameCaseInsensitively()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 8f, name: "Lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel, "lOBBY");
+
+            Assert.AreEqual(8f, worldPos.x, EPSILON);
+            Assert.AreEqual(8f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void FallBackToDefaultSelectionWhenNameNotMatched()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 8f, name: "lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel, "missing");
+
+            Assert.AreEqual(2f, worldPos.x, EPSILON);
+            Assert.AreEqual(2f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void PickFirstSpawnPointWhenNamesDuplicate()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 8f, name: "lobby"),
+                MakeSpawnPoint(xSingle: 12f, ySingle: 0f, zSingle: 12f, name: "lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel, "lobby");
+
+            Assert.AreEqual(8f, worldPos.x, EPSILON);
+            Assert.AreEqual(8f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void ApplyNamedSpawnPointCameraTarget()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                new[] { baseParcel },
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 8f, ySingle: 0f, zSingle: 8f, name: "lobby", cameraTarget: new Vector3(10f, 1f, 10f)));
+
+            (_, Vector3? cameraTarget) = TeleportUtils.PickTargetWithOffset(sceneDef, baseParcel, "lobby");
+
+            Assert.NotNull(cameraTarget);
+            Assert.AreEqual(10f, cameraTarget!.Value.x, EPSILON);
+            Assert.AreEqual(1f, cameraTarget.Value.y, EPSILON);
+            Assert.AreEqual(10f, cameraTarget.Value.z, EPSILON);
+        }
+
+        [Test]
+        public void AnchorNamedSpawnPointToSceneBaseNotTargetParcel()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var parcels = new[] { new Vector2Int(0, 0), new Vector2Int(1, 0) };
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                parcels,
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xSingle: 20f, ySingle: 0f, zSingle: 8f, name: "lobby"));
+
+            (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, new Vector2Int(1, 0), "lobby");
+
+            Assert.AreEqual(20f, worldPos.x, EPSILON);
+            Assert.AreEqual(8f, worldPos.z, EPSILON);
+        }
+
+        [Test]
+        public void ScatterWithinNamedRangeRegardlessOfTargetParcel()
+        {
+            var baseParcel = new Vector2Int(0, 0);
+            var parcels = new[] { new Vector2Int(0, 0), new Vector2Int(1, 0), new Vector2Int(2, 0) };
+
+            SceneEntityDefinition sceneDef = BuildSceneDef(
+                baseParcel,
+                parcels,
+                MakeSpawnPoint(xSingle: 2f, ySingle: 0f, zSingle: 2f, isDefault: true, name: "main"),
+                MakeSpawnPoint(xRange: new[] { 26f, 38f }, ySingle: 0f, zSingle: 8f, name: "scatter"));
+
+            var distinctLandings = new HashSet<float>();
+
+            for (var i = 0; i < 100; i++)
+            {
+                (Vector3 worldPos, _) = TeleportUtils.PickTargetWithOffset(sceneDef, new Vector2Int(2, 0), "scatter");
+
+                Assert.GreaterOrEqual(worldPos.x, 26f);
+                Assert.LessOrEqual(worldPos.x, 38f + EPSILON);
+                Assert.AreEqual(8f, worldPos.z, EPSILON);
+
+                distinctLandings.Add(worldPos.x);
+            }
+
+            Assert.Greater(distinctLandings.Count, 1, "Players must scatter within the range, not stack on one point");
+        }
+
+        private static SceneEntityDefinition BuildSceneDef(Vector2Int baseParcel, IReadOnlyList<Vector2Int> parcels, params SceneMetadata.SpawnPoint[] spawnPoints)
         {
             var sceneSection = new SceneMetadataScene
             {
@@ -124,7 +258,7 @@ namespace DCL.SceneLifeCycle.Tests
             var metadata = new SceneMetadata
             {
                 scene = sceneSection,
-                spawnPoints = new List<SceneMetadata.SpawnPoint> { spawnPoint },
+                spawnPoints = new List<SceneMetadata.SpawnPoint>(spawnPoints),
             };
 
             return new SceneEntityDefinition("test-scene", metadata);
@@ -133,11 +267,11 @@ namespace DCL.SceneLifeCycle.Tests
         private static SceneMetadata.SpawnPoint MakeSpawnPoint(
             float[]? xRange = null, float[]? yRange = null, float[]? zRange = null,
             float? xSingle = null, float? ySingle = null, float? zSingle = null,
-            Vector3? cameraTarget = null, bool isDefault = false)
+            Vector3? cameraTarget = null, bool isDefault = false, string name = "TestSpawn")
         {
             var sp = new SceneMetadata.SpawnPoint
             {
-                name = "TestSpawn",
+                name = name,
                 @default = isDefault,
                 position = new SceneMetadata.SpawnPoint.Position
                 {
