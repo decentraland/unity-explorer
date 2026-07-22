@@ -87,6 +87,12 @@ namespace DCL.Friends
                             case FriendshipUpdate.UpdateOneofCase.Request:
                                 FriendshipUpdate.Types.RequestResponse? request = response.Request;
 
+                                if (request.Friend == null)
+                                {
+                                    ReportHub.LogWarning(ReportCategory.FRIENDS, "Ignoring incoming friend request: server sent no friend profile");
+                                    break;
+                                }
+
                                 Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
                                 var fr = new FriendRequest(
@@ -117,6 +123,12 @@ namespace DCL.Friends
                 {
                     try
                     {
+                        if (response.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, $"Ignoring connectivity update with status {response.Status}: server sent no friend profile");
+                            continue;
+                        }
+
                         switch (response.Status)
                         {
                             case ConnectivityStatus.Away:
@@ -375,6 +387,12 @@ namespace DCL.Friends
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
+                        if (rr.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping received friend request: server sent no friend profile");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
@@ -423,6 +441,12 @@ namespace DCL.Friends
                 case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
                     foreach (FriendshipRequestResponse? rr in response.Requests.Requests)
                     {
+                        if (rr.Friend == null)
+                        {
+                            ReportHub.LogWarning(ReportCategory.FRIENDS, "Skipping sent friend request: server sent no friend profile");
+                            continue;
+                        }
+
                         var fr = new FriendRequest(
                             rr.Id,
                             DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
@@ -534,6 +558,9 @@ namespace DCL.Friends
                     },
                 },
             }, ct);
+
+            if (response.Friend == null)
+                throw new InvalidOperationException("Cannot create friend request: server accepted the upsert but returned no friend profile");
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
