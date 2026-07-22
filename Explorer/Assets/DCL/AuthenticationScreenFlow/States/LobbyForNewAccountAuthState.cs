@@ -361,7 +361,10 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+                // Best-effort attribution: a failure here (including the expected "already registered"
+                // response when the web setup flow already tracked it) must not surface as a Sentry
+                // error. The launcher retries on the next launch and the referral finalizes on login.
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral tracking (POST) failed: {e.Message}");
             }
         }
 
@@ -380,7 +383,7 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral sign-up (PATCH) failed: {e.Message}");
             }
         }
 
