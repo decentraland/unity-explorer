@@ -113,8 +113,8 @@ namespace DCL.McpServer.Systems
             currentScene.SceneData.SceneEntityDefinition?.id == sceneId;
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
-        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result) =>
-            McpEcsRequest.CompleteAndRemove(World, playerEntity, intent, result);
+        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result, McpPressHandoff? press = null) =>
+            McpEcsRequest.CompleteAndRemove(World, playerEntity, intent, new McpPointerEventOutcome { Result = result, Press = press });
 
         private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
             new ()
@@ -185,7 +185,8 @@ namespace DCL.McpServer.Systems
 
             McpPointerClickResult result = BuildResult(in intent, sceneWorld,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
-                in World.Get<HoverStateComponent>(pipelineEntity));
+                in World.Get<HoverStateComponent>(pipelineEntity),
+                out McpPressHandoff? press);
 
             if (intent.Press.HasValue && !result.Hit)
                 result.UpRayMissed = true;
@@ -195,12 +196,15 @@ namespace DCL.McpServer.Systems
             if (result.Hit && intent.EventType == PointerEventType.PetDown)
                 PostSyntheticInput(intent.InjectedAimPoint);
 
-            CompleteAndRemove(in intent, result);
+            CompleteAndRemove(in intent, result, press);
         }
 
         private McpPointerClickResult BuildResult(in McpPointerEventIntent intent, World sceneWorld,
-            in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState)
+            in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState,
+            out McpPressHandoff? press)
         {
+            press = null;
+
             // The pipeline echoes the aim it consumed; anything else means the guarded frame ignored the input.
             if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
                 return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
@@ -225,6 +229,15 @@ namespace DCL.McpServer.Systems
             }
 
             if (hoverState.HasCollider && hoverState.LastHitCollider == raycastResult.Collider && hoverState.IsAtDistance)
+            {
+                if (intent.EventType == PointerEventType.PetDown)
+                    press = new McpPressHandoff
+                    {
+                        World = sceneWorld,
+                        Entity = hitEntity,
+                        Tick = intent.InjectedTick,
+                    };
+
                 return new McpPointerClickResult
                 {
                     Hit = true,
@@ -233,15 +246,8 @@ namespace DCL.McpServer.Systems
                     HoverText = FirstTooltipText(),
                     HitPoint = raycastResult.RaycastHit.point,
                     Distance = raycastResult.GetDistance(),
-                    Press = intent.EventType == PointerEventType.PetDown
-                        ? new McpPressHandoff
-                        {
-                            World = sceneWorld,
-                            Entity = hitEntity,
-                            Tick = intent.InjectedTick,
-                        }
-                        : null,
                 };
+            }
 
             return DiagnoseUnqualified(in intent, in entityInfo, hitEntity, hitCrdtId, raycastResult.GetDistance());
         }

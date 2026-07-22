@@ -13,7 +13,7 @@ namespace DCL.McpServer.Components
     ///     press, then a release carrying the press <see cref="Press" /> handoff. A request the simulation never
     ///     picks up is removed by the tool-side timeout.
     /// </summary>
-    public struct McpPointerEventIntent : IMcpEcsRequest<McpPointerClickResult>
+    public struct McpPointerEventIntent : IMcpEcsRequest<McpPointerEventOutcome>
     {
         /// <summary>Arch entity id in the current scene world; -1 when aiming at an explicit world point.</summary>
         public readonly int TargetEntityId;
@@ -40,7 +40,7 @@ namespace DCL.McpServer.Components
         /// </summary>
         public readonly McpPressHandoff? Press;
 
-        public UniTaskCompletionSource<McpPointerClickResult>? Completion { get; set; }
+        public UniTaskCompletionSource<McpPointerEventOutcome>? Completion { get; set; }
 
         /// <summary>Set once the synthetic input was posted to the pipeline; the outcome is observed one frame later.</summary>
         public bool Injected;
@@ -67,8 +67,8 @@ namespace DCL.McpServer.Components
     }
 
     /// <summary>
-    ///     Where a delivered press landed. Handed back inside <see cref="McpPointerClickResult" /> and passed
-    ///     verbatim on the release intent of a click. In-process only, never serialized.
+    ///     Where a delivered press landed. Handed back inside <see cref="McpPointerEventOutcome" /> and passed
+    ///     verbatim on the release intent of a click.
     /// </summary>
     public struct McpPressHandoff
     {
@@ -77,7 +77,7 @@ namespace DCL.McpServer.Components
         public uint Tick;
     }
 
-    /// <summary>Outcome of a synthetic pointer event or click, serialized by the click_entity tool.</summary>
+    /// <summary>Wire-facing outcome of a synthetic pointer event or click, serialized by the click_entity tool.</summary>
     public struct McpPointerClickResult
     {
         public bool Hit;
@@ -97,8 +97,15 @@ namespace DCL.McpServer.Components
         ///     mid-click.
         /// </summary>
         public bool UpRayMissed;
+    }
 
-        /// <summary>Where the press landed; the click_entity tool passes it back on the release leg of a click. In-process only.</summary>
+    /// <summary>
+    ///     What the fulfilling system hands back for one intent: the wire-facing <see cref="Result" /> plus, on a
+    ///     delivered press, the <see cref="Press" /> handoff the release leg of a click carries.
+    /// </summary>
+    public struct McpPointerEventOutcome
+    {
+        public McpPointerClickResult Result;
         public McpPressHandoff? Press;
     }
 }

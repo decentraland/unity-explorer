@@ -156,27 +156,31 @@ namespace DCL.McpServer.Tools
         {
             PointerEventType pressType = kind == ClickKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown;
 
-            McpPointerClickResult down = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
+            McpPointerEventOutcome down = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
 
-            if (kind != ClickKind.CLICK || !down.Hit)
-                return down;
+            if (kind != ClickKind.CLICK || !down.Result.Hit)
+                return down.Result;
 
-            McpPointerClickResult up = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
+            McpPointerEventOutcome up = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
 
-            if (!up.UpRayMissed)
-                return up; // a fresh release, or a failure (scene reload, preemption) that tells the whole story
+            if (!up.Result.UpRayMissed)
+                return up.Result; // a fresh release, or a failure (scene reload, preemption) that tells the whole story
 
             // The release did not reach the target: report the delivered press and flag the divergence.
-            down.UpRayMissed = true;
-            down.FailureReason = $"the release did not reach the target ({up.FailureReason}); the scene received only the press";
-            return down;
+            McpPointerClickResult merged = down.Result;
+            merged.UpRayMissed = true;
+            merged.FailureReason = $"the release did not reach the target ({up.Result.FailureReason}); the scene received only the press";
+            return merged;
         }
 
-        private UniTask<McpPointerClickResult> SendAsync(McpPointerEventIntent request) =>
-            McpEcsRequest.SendAsync(world, playerEntity, request, new McpPointerClickResult
+        private UniTask<McpPointerEventOutcome> SendAsync(McpPointerEventIntent request) =>
+            McpEcsRequest.SendAsync(world, playerEntity, request, new McpPointerEventOutcome
             {
-                Hit = false,
-                FailureReason = "preempted by a newer click_entity call",
+                Result = new McpPointerClickResult
+                {
+                    Hit = false,
+                    FailureReason = "preempted by a newer click_entity call",
+                },
             });
     }
 }
