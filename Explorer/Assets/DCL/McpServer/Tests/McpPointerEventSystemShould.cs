@@ -554,7 +554,9 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailWhenCurrentSceneHasNoDefinitionId()
         {
-            // sceneFacade's auto-mocked SceneData carries no SceneEntityDefinition, so no pin can match it.
+            // The current scene's definition carries no id, so no pin can match it.
+            sceneFacade.SceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
+
             UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(sceneId: "scene-gone");
 
             system!.Update(0);

@@ -159,13 +159,12 @@ namespace DCL.McpServer.Systems
                 }
             }
 
-            if (!TryResolveTarget(in intent, sceneWorld, out Entity targetEntity, out McpPointerClickResult resolveFailure))
+            if (!TryResolveAimPoint(in intent, sceneWorld, out Vector3 aimPoint, out McpPointerClickResult resolveFailure))
             {
                 CompleteAndRemove(in intent, resolveFailure);
                 return;
             }
 
-            Vector3 aimPoint = ResolveAimPoint(in intent, sceneWorld, targetEntity);
             Vector3 cameraPosition = playerCamera.GetCameraComponent(World).Camera.transform.position;
 
             if ((aimPoint - cameraPosition).sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
@@ -332,26 +331,37 @@ namespace DCL.McpServer.Systems
         private static Vector3 ResolveAimPoint(in McpPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
-        private static bool TryResolveTarget(in McpPointerEventIntent intent, World sceneWorld, out Entity targetEntity, out McpPointerClickResult failure)
+        /// <summary>
+        ///     Resolves the world point the synthetic ray must pass through. An explicit aim is taken as is and
+        ///     needs no entity — the pipeline raycast still validates whatever the ray lands on. Otherwise the aim
+        ///     is the target entity's collider center, and only this case scans the scene world: the target id is a
+        ///     raw Arch id, recovered the same way list_scene_entities/get_entity_details recover it.
+        /// </summary>
+        private static bool TryResolveAimPoint(in McpPointerEventIntent intent, World sceneWorld, out Vector3 aimPoint, out McpPointerClickResult failure)
         {
             failure = default(McpPointerClickResult);
+            aimPoint = default(Vector3);
 
-            // The press already resolved the target; its liveness is validated before the release is ordered.
-            if (intent.Press is { } press)
+            if (intent.AimPoint is { } explicitAim)
             {
-                targetEntity = press.Entity;
+                aimPoint = explicitAim;
                 return true;
             }
 
-            targetEntity = Entity.Null;
-
-            // Aim-point mode: the pipeline raycast picks the entity.
-            if (intent.TargetEntityId < 0)
+            // The press already resolved its target (liveness checked before the release is ordered); the release
+            // aims at wherever that entity sits now, so the hover follows a target that moved between the legs.
+            if (intent.Press is { } press)
+            {
+                aimPoint = ResolveEntityAimPoint(sceneWorld, press.Entity);
                 return true;
+            }
 
             Entity found = Entity.Null;
             int targetId = intent.TargetEntityId;
 
+            // TODO (Vit): drop this scan in a follow-up by switching MCP entity addressing from raw Arch ids to
+            // CRDT ids and resolving through CrdtEcsSynchronizer.EntitiesMap (O(1)); done together with
+            // list_scene_entities/get_entity_details/WorldInfo, which scan for the same reason.
             sceneWorld.Query(in ALL_ENTITIES, entity =>
             {
                 if (entity.Id == targetId)
@@ -364,7 +374,7 @@ namespace DCL.McpServer.Systems
                 return false;
             }
 
-            targetEntity = found;
+            aimPoint = ResolveEntityAimPoint(sceneWorld, found);
             return true;
         }
 
