@@ -159,19 +159,17 @@ namespace DCL.McpServer.Core
 
             long contentLength = request.ContentLength64;
 
-            // -1 means chunked or no declared length. Every real MCP client sends a Content-Length for its JSON
-            // body (Node fetch/undici, Python httpx, C# StringContent), so requiring one lets the read below rent
-            // an exact-size buffer and removes the unbounded-accumulator path entirely; RFC 9112 allows the 411.
-            if (contentLength < 0)
+            switch (contentLength)
             {
-                RejectAfterDraining(context, HttpStatusCode.LengthRequired);
-                return;
-            }
-
-            if (contentLength > MAX_BODY_BYTES)
-            {
-                RejectAfterDraining(context, HttpStatusCode.RequestEntityTooLarge);
-                return;
+                // -1 means chunked or no declared length. Every real MCP client sends a Content-Length for its JSON
+                // body (Node fetch/undici, Python httpx, C# StringContent), so requiring one lets the read below rent
+                // an exact-size buffer and removes the unbounded-accumulator path entirely; RFC 9112 allows the 411.
+                case < 0:
+                    RejectAfterDraining(context, HttpStatusCode.LengthRequired);
+                    return;
+                case > MAX_BODY_BYTES:
+                    RejectAfterDraining(context, HttpStatusCode.RequestEntityTooLarge);
+                    return;
             }
 
             if (!TryReadBody(request, (int)contentLength, out string requestJson))
