@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
+using System.Buffers;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -18,6 +19,11 @@ namespace DCL.McpServer.Core
     public class McpHttpServer : IDisposable
     {
         private const int MAX_BODY_BYTES = 1024 * 1024;
+
+        // HttpListener RSTs the connection when the response closes while the client is still uploading, so an
+        // early rejection (411/413/400) must first consume the pending body or the client sees ECONNRESET instead
+        // of the status. This caps how much of an oversized/refused body is read before the rejection is sent.
+        private const int DRAIN_CAP_BYTES = 8 * 1024 * 1024;
 
         private readonly McpJsonRpcDispatcher dispatcher;
         private readonly int port;
@@ -121,6 +127,9 @@ namespace DCL.McpServer.Core
                         context.Response.WriteEmptyAndClose(HttpStatusCode.OK, sessionId);
                         break;
                     default:
+                        // GET reaches here too: we expose no server-initiated SSE stream. Answer 405, not 404 —
+                        // mcp-remote and the MCP SDKs read 405 as "this endpoint is POST-only" and stop probing,
+                        // whereas a 404 makes them fail with "Failed to open SSE stream". Keep this a 405.
                         context.Response.WriteEmptyAndClose(HttpStatusCode.MethodNotAllowed, sessionId);
                         break;
                 }
@@ -138,17 +147,38 @@ namespace DCL.McpServer.Core
 
         private async UniTask HandlePostAsync(HttpListenerContext context, CancellationToken ct)
         {
-            if (context.Request.ContentLength64 > MAX_BODY_BYTES)
+            HttpListenerRequest request = context.Request;
+
+            // Absent on the initialize request and on pre-2025-06-18 clients, so only an explicit unsupported
+            // value is rejected. This is the transport's MUST from the 2025-06-18 spec: validate the header.
+            if (!IsProtocolVersionSupported(request.Headers["MCP-Protocol-Version"]))
             {
-                context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
+                RejectAfterDraining(context, HttpStatusCode.BadRequest);
                 return;
             }
 
-            // The Content-Length check above is only a fast reject; a chunked request reports ContentLength64 == -1
-            // and bypasses it, so the read itself stays capped to keep the body bounded regardless.
-            if (!TryReadBodyWithinCap(context.Request, out string requestJson))
+            long contentLength = request.ContentLength64;
+
+            // -1 means chunked or no declared length. Every real MCP client sends a Content-Length for its JSON
+            // body (Node fetch/undici, Python httpx, C# StringContent), so requiring one lets the read below rent
+            // an exact-size buffer and removes the unbounded-accumulator path entirely; RFC 9112 allows the 411.
+            if (contentLength < 0)
             {
-                context.Response.WriteEmptyAndClose(HttpStatusCode.RequestEntityTooLarge, sessionId);
+                RejectAfterDraining(context, HttpStatusCode.LengthRequired);
+                return;
+            }
+
+            if (contentLength > MAX_BODY_BYTES)
+            {
+                RejectAfterDraining(context, HttpStatusCode.RequestEntityTooLarge);
+                return;
+            }
+
+            if (!TryReadBody(request, (int)contentLength, out string requestJson))
+            {
+                // The client declared more than it sent and the stream hit EOF early. The body is already fully
+                // consumed at EOF, so unlike the rejections above this one needs no drain before answering.
+                context.Response.WriteEmptyAndClose(HttpStatusCode.BadRequest, sessionId);
                 return;
             }
 
@@ -161,46 +191,94 @@ namespace DCL.McpServer.Core
                 return;
             }
 
-            byte[] payload = Encoding.UTF8.GetBytes(responseJson);
+            int byteCount = Encoding.UTF8.GetByteCount(responseJson);
+            byte[] payload = ArrayPool<byte>.Shared.Rent(byteCount);
 
-            context.Response.WithMcpHeaders(sessionId);
-            context.Response.StatusCode = (int)HttpStatusCode.OK;
-            context.Response.ContentType = "application/json; charset=utf-8";
-            context.Response.ContentLength64 = payload.Length;
-            await context.Response.OutputStream.WriteAsync(payload, 0, payload.Length, CancellationToken.None);
-            context.Response.Close();
+            try
+            {
+                Encoding.UTF8.GetBytes(responseJson, 0, responseJson.Length, payload, 0);
+
+                context.Response.WithMcpHeaders(sessionId);
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                context.Response.ContentType = "application/json; charset=utf-8";
+                context.Response.ContentLength64 = byteCount;
+                await context.Response.OutputStream.WriteAsync(payload, 0, byteCount, CancellationToken.None);
+                context.Response.Close();
+            }
+            finally { ArrayPool<byte>.Shared.Return(payload); }
         }
 
         /// <summary>
-        ///     Reads the request body synchronously (blocking the current thread-pool thread) through a stack
-        ///     buffer, so heap allocations stay proportional to the actual body size instead of the cap.
-        ///     Returns false when the body exceeds <see cref="MAX_BODY_BYTES" />; <paramref name="body" /> is
-        ///     then empty and the request must be rejected.
+        ///     Reads exactly <paramref name="length" /> bytes of the request body synchronously (blocking the
+        ///     current thread-pool thread) into a pooled buffer, so the per-request heap cost is only the final
+        ///     string. Returns false when the stream ends before <paramref name="length" /> bytes arrive;
+        ///     <paramref name="body" /> is then empty and the request must be rejected as a 400.
         /// </summary>
-        private static bool TryReadBodyWithinCap(HttpListenerRequest request, out string body)
+        private static bool TryReadBody(HttpListenerRequest request, int length, out string body)
         {
-            using Stream input = request.InputStream;
+            byte[] rented = ArrayPool<byte>.Shared.Rent(length);
 
-            // ContentLength64 is -1 for chunked requests, so it can size the accumulator only when declared.
-            var accumulated = new MemoryStream(request.ContentLength64 > 0 ? (int)request.ContentLength64 : 4 * 1024);
-            Span<byte> chunk = stackalloc byte[16 * 1024];
-
-            int bytesRead;
-
-            while ((bytesRead = input.Read(chunk)) > 0)
+            try
             {
-                if (accumulated.Length + bytesRead > MAX_BODY_BYTES)
+                using Stream input = request.InputStream;
+
+                int offset = 0;
+
+                while (offset < length)
                 {
-                    body = string.Empty;
-                    return false;
+                    int read = input.Read(rented, offset, length - offset);
+
+                    if (read == 0)
+                    {
+                        // EOF before the declared Content-Length: a truncated or lying client.
+                        body = string.Empty;
+                        return false;
+                    }
+
+                    offset += read;
                 }
 
-                accumulated.Write(chunk[..bytesRead]);
+                body = Encoding.UTF8.GetString(rented, 0, length);
+                return true;
             }
-
-            body = Encoding.UTF8.GetString(accumulated.GetBuffer(), 0, (int)accumulated.Length);
-            return true;
+            finally { ArrayPool<byte>.Shared.Return(rented); }
         }
+
+        private void RejectAfterDraining(HttpListenerContext context, HttpStatusCode status)
+        {
+            DrainRequestBody(context.Request);
+            context.Response.WriteEmptyAndClose(status, sessionId);
+        }
+
+        /// <summary>
+        ///     Consumes up to <see cref="DRAIN_CAP_BYTES" /> of a body we are about to reject, so closing the
+        ///     response does not RST the connection and cost the client its status (verified on Mono's
+        ///     HttpListener). A client that keeps sending past the cap still gets reset — an acceptable outcome
+        ///     for a flood far larger than the accepted body.
+        /// </summary>
+        private static void DrainRequestBody(HttpListenerRequest request)
+        {
+            byte[] chunk = ArrayPool<byte>.Shared.Rent(16 * 1024);
+
+            try
+            {
+                using Stream input = request.InputStream;
+
+                long total = 0;
+                int read;
+
+                while (total < DRAIN_CAP_BYTES && (read = input.Read(chunk, 0, chunk.Length)) > 0)
+                    total += read;
+            }
+            catch (Exception)
+            {
+                // The client already vanished or the body errored mid-drain; the rejection is best-effort.
+            }
+            finally { ArrayPool<byte>.Shared.Return(chunk); }
+        }
+
+        private static bool IsProtocolVersionSupported(string? headerValue) =>
+            string.IsNullOrEmpty(headerValue) || headerValue == McpJsonRpcDispatcher.PROTOCOL_VERSION;
 
         private void TryWriteInternalError(HttpListenerContext context)
         {
