@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace DCL.McpServer.Tests
 {
-    public class McpRequestShould
+    public class McpEcsRequestShould
     {
         private struct TestEcsRequest : IMcpEcsRequest<int>
         {

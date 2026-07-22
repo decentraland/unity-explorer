@@ -44,9 +44,6 @@ namespace DCL.McpServer.Systems
     [LogCategory(ReportCategory.MCP)]
     public partial class McpPointerEventSystem : BaseUnityLoopSystem
     {
-        /// <summary>sin² of the angle under which the observed reticle ray still counts as passing through the posted aim point.</summary>
-        private const float RAY_THROUGH_AIM_SIN_SQR = 0.0001f;
-
         private static readonly QueryDescription ALL_ENTITIES = new ();
         private static readonly QueryDescription PIPELINE_ENTITY = new QueryDescription().WithAll<SyntheticPointerInput>();
 
@@ -214,7 +211,8 @@ namespace DCL.McpServer.Systems
         private McpPointerClickResult BuildResult(in McpPointerEventIntent intent, World sceneWorld,
             in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState)
         {
-            if (!RayPassesThroughAim(raycastResult.OriginRay, intent.InjectedAimPoint))
+            // The pipeline echoes the aim it consumed; anything else means the guarded frame ignored the input.
+            if (raycastResult.SyntheticAimPoint != intent.InjectedAimPoint)
                 return Failure(in intent, "the reticle pipeline did not process the synthetic aim (is the cursor panning or the in-world camera active?)");
 
             if (!raycastResult.IsValidHit)
@@ -306,16 +304,6 @@ namespace DCL.McpServer.Systems
                 return hitEntity == press.Entity;
 
             return intent.TargetEntityId < 0 || hitEntity.Id == intent.TargetEntityId;
-        }
-
-        /// <summary>A default (never set) ray has a zero direction and recognizes nothing.</summary>
-        private static bool RayPassesThroughAim(in Ray ray, Vector3 aimPoint)
-        {
-            if (ray.direction.sqrMagnitude < 0.5f)
-                return false;
-
-            Vector3 toAim = aimPoint - ray.origin;
-            return Vector3.Cross(ray.direction, toAim).sqrMagnitude <= RAY_THROUGH_AIM_SIN_SQR * toAim.sqrMagnitude;
         }
 
         private void PostSyntheticInput(Vector3 aimPoint, InputAction? pressButton = null, InputAction? releaseButton = null)

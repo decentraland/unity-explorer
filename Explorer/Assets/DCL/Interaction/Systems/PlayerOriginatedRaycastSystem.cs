@@ -75,20 +75,25 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 if (cursorComponent.CursorState == CursorState.Panning || World.Has<InWorldCameraComponent>(entity))
                 {
                     raycastResultForSceneEntities.Reset();
+                    raycastResultForSceneEntities.ClearSyntheticAim();
                     raycastResultForGlobalEntities.Reset();
                     return;
                 }
 
                 Ray ray;
+                Vector3? consumedSyntheticAim = null;
 
                 if (playerInteractionEntity.SyntheticPointerInput.AimPoint is { } syntheticAimPoint)
                 {
                     if (!TryCreateRayThrough(in camera, syntheticAimPoint, out ray))
                     {
                         raycastResultForSceneEntities.Reset();
+                        raycastResultForSceneEntities.ClearSyntheticAim();
                         raycastResultForGlobalEntities.Reset();
                         return;
                     }
+
+                    consumedSyntheticAim = syntheticAimPoint;
                 }
                 else
                     ray = CreateRay(in camera, in cursorComponent);
@@ -96,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 // we are interested in one hit only
                 bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
 
-                raycastResultForSceneEntities.SetRay(ray);
+                raycastResultForSceneEntities.SetRay(ray, consumedSyntheticAim);
                 raycastResultForGlobalEntities.SetRay(ray);
 
                 if (hasHit)

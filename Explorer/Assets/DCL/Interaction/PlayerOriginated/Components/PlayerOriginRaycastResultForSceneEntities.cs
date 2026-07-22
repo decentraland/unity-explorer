@@ -19,6 +19,13 @@ namespace DCL.Interaction.PlayerOriginated.Components
 
         public Ray OriginRay { get; private set; }
 
+        /// <summary>
+        ///     The <see cref="SyntheticPointerInput.AimPoint" /> this frame's ray was deliberately built through,
+        ///     regardless of whether the ray hit anything; null when the ray came from the cursor or no ray was
+        ///     built at all (cursor panning, in-world camera).
+        /// </summary>
+        public Vector3? SyntheticAimPoint { get; private set; }
+
         public GlobalColliderSceneEntityInfo? EntityInfo { get; private set; }
 
         public float? DistanceToPlayer { get; private set; }
@@ -36,9 +43,17 @@ namespace DCL.Interaction.PlayerOriginated.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetRay(Ray ray)
+        public void SetRay(Ray ray, Vector3? syntheticAimPoint = null)
         {
             OriginRay = ray;
+            SyntheticAimPoint = syntheticAimPoint;
+        }
+
+        /// <summary>No ray was built this frame, so a stale synthetic-aim echo must not survive into diagnostics.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearSyntheticAim()
+        {
+            SyntheticAimPoint = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -10,7 +10,9 @@ namespace DCL.Interaction.PlayerOriginated.Components
     ///         point and/or press or release a pointer button as if the player did.
     ///     </para>
     ///     <para>
-    ///         PlayerOriginatedRaycastSystem reads the aim when building the ray; ProcessPointerEventsSystem
+    ///         PlayerOriginatedRaycastSystem reads the aim when building the ray and echoes the point it consumed
+    ///         in <see cref="PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint" /> (null on frames it
+    ///         guards away), so drivers can tell whether their aim was processed; ProcessPointerEventsSystem
     ///         reads the buttons, applies them under the same qualification gates as real input, and clears the
     ///         component — so instructions that are not re-posted next frame leave no residue.
     ///     </para>

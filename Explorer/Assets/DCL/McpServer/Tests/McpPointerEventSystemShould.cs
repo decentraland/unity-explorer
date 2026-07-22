@@ -187,7 +187,7 @@ namespace DCL.McpServer.Tests
             var ray = new Ray(origin, (aim - origin).normalized);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResult = ref world.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
-            raycastResult.SetRay(ray);
+            raycastResult.SetRay(ray, aim);
 
             ref HoverStateComponent hoverState = ref world.Get<HoverStateComponent>(pipelineEntity);
             hoverState.Clear();
@@ -210,6 +210,26 @@ namespace DCL.McpServer.Tests
             }
             else
                 raycastResult.Reset();
+        }
+
+        /// <summary>
+        ///     Emulates a frame the reticle pipeline guards away (cursor panning, in-world camera): the posted
+        ///     input is still consumed, but no ray is built, so the raycast result is reset and no synthetic-aim
+        ///     echo is published.
+        /// </summary>
+        private void RunPipelineSkippedFrame()
+        {
+            SyntheticInput = default(SyntheticPointerInput);
+
+            ref PlayerOriginRaycastResultForSceneEntities raycastResult = ref world.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
+            raycastResult.Reset();
+            raycastResult.ClearSyntheticAim();
+
+            ref HoverStateComponent hoverState = ref world.Get<HoverStateComponent>(pipelineEntity);
+            hoverState.Clear();
+
+            ref HoverFeedbackComponent hoverFeedback = ref world.Get<HoverFeedbackComponent>(pipelineEntity);
+            hoverFeedback.Clear();
         }
 
         /// <summary>Delivers a press and returns its result, asserting the handoff the release leg needs is filled.</summary>
@@ -446,15 +466,32 @@ namespace DCL.McpServer.Tests
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent();
 
             system!.Update(0);
-
-            // The pipeline consumed the input but published nothing (panning / in-world camera guard).
-            SyntheticInput = default(SyntheticPointerInput);
-
+            RunPipelineSkippedFrame();
             system.Update(0);
 
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("did not process"));
+        }
+
+        [Test]
+        public void FailTruthfullyWhenPipelineSkipsTheReleaseFrame()
+        {
+            // The press frame left a raycast result whose ray passes through the very aim the release re-uses;
+            // only the explicit synthetic-aim echo distinguishes a skipped release frame from a processed one.
+            McpPointerClickResult pressResult = DeliverPress();
+
+            UniTaskCompletionSource<McpPointerClickResult> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressResult.Press);
+
+            tick++;
+            system!.Update(0); // inject the release
+            RunPipelineSkippedFrame();
+            system.Update(0); // observe
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.False);
+            Assert.That(releaseResult.UpRayMissed, Is.True);
+            Assert.That(releaseResult.FailureReason, Does.Contain("did not process"));
         }
 
         [Test]

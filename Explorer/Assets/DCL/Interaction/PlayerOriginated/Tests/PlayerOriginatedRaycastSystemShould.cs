@@ -204,6 +204,76 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         }
 
         [Test]
+        public void BuildRayThroughSyntheticAimAndEchoIt()
+        {
+            var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
+            colliderGo.transform.ResetLocalTRS();
+
+            // Off the camera axis: only a ray built through the synthetic aim can hit it.
+            colliderGo.transform.localPosition = new Vector3(5f, 0f, 10f);
+            colliderGo.layer = PhysicsLayers.DEFAULT_LAYER;
+            BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
+            collider.size = Vector3.one;
+
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
+                                      .Returns(x =>
+                                       {
+                                           x[1] = new GlobalColliderSceneEntityInfo();
+                                           return true;
+                                       });
+
+            Vector3 aim = colliderGo.transform.localPosition;
+            playerInteractionEntity.SyntheticPointerInput.AimPoint = aim;
+
+            system.Update(0);
+
+            ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(result.SyntheticAimPoint, Is.EqualTo((Vector3?)aim));
+            Assert.That(result.IsValidHit, Is.True);
+            Assert.That(result.Collider, Is.EqualTo(collider));
+            UnityObjectUtils.SafeDestroyGameObject(collider);
+        }
+
+        [Test]
+        public void EchoSyntheticAimEvenWhenRayHitsNothing()
+        {
+            var aim = new Vector3(0f, 50f, 10f);
+            playerInteractionEntity.SyntheticPointerInput.AimPoint = aim;
+
+            system.Update(0);
+
+            ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(result.SyntheticAimPoint, Is.EqualTo((Vector3?)aim));
+            Assert.That(result.IsValidHit, Is.False);
+        }
+
+        [Test]
+        public void ClearStaleSyntheticAimEcho()
+        {
+            var staleAim = new Vector3(0f, 0f, 10f);
+            var staleRay = new Ray(Vector3.zero, Vector3.forward);
+
+            // A previous synthetic frame left its echo; a panning frame builds no ray, so the echo must die.
+            playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SetRay(staleRay, staleAim);
+            playerInteractionEntity.SyntheticPointerInput.AimPoint = staleAim;
+            ref CursorComponent cursorComponent = ref world.Get<CursorComponent>(cameraEntity);
+            cursorComponent.CursorState = CursorState.Panning;
+
+            system.Update(0);
+
+            Assert.That(playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint, Is.Null);
+
+            // A cursor frame replaces the echo with null as well (the input is gone: consumed by the pointer-events system).
+            playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SetRay(staleRay, staleAim);
+            playerInteractionEntity.SyntheticPointerInput = default(SyntheticPointerInput);
+            cursorComponent.CursorState = CursorState.Free;
+
+            system.Update(0);
+
+            Assert.That(playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint, Is.Null);
+        }
+
+        [Test]
         public void AddHoveredComponentToGlobalEntityWhenRaycastHits()
         {
             // Arrange
