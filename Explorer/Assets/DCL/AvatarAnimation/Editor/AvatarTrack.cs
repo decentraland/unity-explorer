@@ -1,8 +1,7 @@
-﻿
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
+﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using UnityEngine.Timeline;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     /// <summary>
     /// A timeline track intented for animating avatars.

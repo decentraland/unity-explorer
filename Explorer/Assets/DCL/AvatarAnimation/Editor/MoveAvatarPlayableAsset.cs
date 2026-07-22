@@ -1,11 +1,10 @@
-﻿
-using DCL.CharacterMotion.Components;
+﻿using DCL.CharacterMotion.Components;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     [DisplayName("Avatar movement clip")]
     public class MoveAvatarPlayableAsset : PlayableAsset, ITimelineClipAsset
