@@ -163,13 +163,17 @@ namespace DCL.McpServer.Tools
 
             McpPointerEventOutcome up = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
 
-            if (!up.Result.UpRayMissed)
-                return up.Result; // a fresh release, or a failure (scene reload, preemption) that tells the whole story
+            if (up.Result.Hit)
+                return up.Result;
 
-            // The release did not reach the target: report the delivered press and flag the divergence.
+            // The release did not reach the target (whether it missed, a guard rejected it or a newer call
+            // preempted it): report the delivered press, flag the divergence and keep the release diagnostics.
             McpPointerClickResult merged = down.Result;
             merged.UpRayMissed = true;
             merged.FailureReason = $"the release did not reach the target ({up.Result.FailureReason}); the scene received only the press";
+            merged.BlockedByEntityId = up.Result.BlockedByEntityId;
+            merged.BlockedByCrdtId = up.Result.BlockedByCrdtId;
+            merged.BlockedByColliderName = up.Result.BlockedByColliderName;
             return merged;
         }
 

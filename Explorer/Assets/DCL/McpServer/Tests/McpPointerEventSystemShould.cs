@@ -418,12 +418,51 @@ namespace DCL.McpServer.Tests
 
                 McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
                 Assert.That(releaseResult.Hit, Is.False);
+                Assert.That(releaseResult.UpRayMissed, Is.True);
                 Assert.That(releaseResult.FailureReason, Does.Contain("reloaded"));
             }
             finally
             {
                 reloadedWorld.Dispose();
             }
+        }
+
+        [Test]
+        public void MarkReleaseAsPressOnlyWhenCurrentSceneGuardRejectsIt()
+        {
+            McpPointerEventOutcome pressOutcome = DeliverPress();
+
+            // The scene stops being current between the legs (player crossed a parcel border).
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
+
+            tick++;
+            system!.Update(0);
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.False);
+            Assert.That(releaseResult.UpRayMissed, Is.True);
+            Assert.That(releaseResult.FailureReason, Does.Contain("no running current scene"));
+        }
+
+        [Test]
+        public void MarkReleaseAsPressOnlyWhenPinnedSceneChangedBetweenLegs()
+        {
+            SetCurrentSceneDefinitionId("scene-press");
+            McpPointerEventOutcome pressOutcome = DeliverPress();
+
+            SetCurrentSceneDefinitionId("scene-after-move");
+
+            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press, sceneId: "scene-press");
+
+            tick++;
+            system!.Update(0);
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.False);
+            Assert.That(releaseResult.UpRayMissed, Is.True);
+            Assert.That(releaseResult.FailureReason, Does.Contain("pinned"));
         }
 
         [Test]

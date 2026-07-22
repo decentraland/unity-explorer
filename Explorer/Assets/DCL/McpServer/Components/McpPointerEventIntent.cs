@@ -92,9 +92,9 @@ namespace DCL.McpServer.Components
         public string? BlockedByColliderName;
 
         /// <summary>
-        ///     The release did not reach the press target (it moved, died or got occluded after the press):
-        ///     the scene received only the PetDown, exactly as it would for a real cursor that lost its target
-        ///     mid-click.
+        ///     The release did not reach the press target (it moved, died or got occluded after the press, or a
+        ///     scene guard rejected the release): the scene received only the PetDown, exactly as it would for a
+        ///     real cursor that lost its target mid-click.
         /// </summary>
         public bool UpRayMissed;
     }

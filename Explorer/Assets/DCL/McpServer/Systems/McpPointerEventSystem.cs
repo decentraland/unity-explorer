@@ -98,7 +98,7 @@ namespace DCL.McpServer.Systems
             // disposed one (entity ids get recycled), so the release can only be failed.
             if (intent.Press.HasValue && !ReferenceEquals(sceneWorld, intent.Press.Value.World))
             {
-                CompleteAndRemove(in intent, Failure(in intent, "the scene reloaded mid-click; only the press may have been delivered"));
+                CompleteAndRemove(in intent, Failure(in intent, "the scene reloaded mid-click"));
                 return;
             }
 
@@ -113,8 +113,14 @@ namespace DCL.McpServer.Systems
             currentScene.SceneData.SceneEntityDefinition?.id == sceneId;
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
-        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result, McpPressHandoff? press = null) =>
+        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result, McpPressHandoff? press = null)
+        {
+            // Whatever rejected a release that follows a delivered press, the scene observed only the PetDown.
+            if (intent.Press.HasValue && !result.Hit)
+                result.UpRayMissed = true;
+
             McpEcsRequest.CompleteAndRemove(World, playerEntity, intent, new McpPointerEventOutcome { Result = result, Press = press });
+        }
 
         private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
             new ()
@@ -131,9 +137,7 @@ namespace DCL.McpServer.Systems
             {
                 if (!sceneWorld.IsAlive(press.Entity))
                 {
-                    McpPointerClickResult died = Failure(in intent, "the target entity was destroyed mid-click");
-                    died.UpRayMissed = true;
-                    CompleteAndRemove(in intent, died);
+                    CompleteAndRemove(in intent, Failure(in intent, "the target entity was destroyed mid-click"));
                     return;
                 }
 
@@ -187,9 +191,6 @@ namespace DCL.McpServer.Systems
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
                 in World.Get<HoverStateComponent>(pipelineEntity),
                 out McpPressHandoff? press);
-
-            if (intent.Press.HasValue && !result.Hit)
-                result.UpRayMissed = true;
 
             // A press is usually followed by a release intent installed later this frame: hold the aim so the
             // hover does not leave the target in the gap between the two legs.
