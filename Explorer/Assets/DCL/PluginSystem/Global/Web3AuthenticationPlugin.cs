@@ -104,6 +104,8 @@ namespace DCL.PluginSystem.Global
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
+
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory,
                 web3Authenticator,
                 selfProfile,
@@ -121,7 +123,8 @@ namespace DCL.PluginSystem.Global
                 wearablesProvider,
                 webRequestController,
                 decentralandUrlsSource,
-                profileChangesBus);
+                profileChangesBus,
+                referrer);
 
             mvcManager.RegisterController(authenticationScreenController);
 

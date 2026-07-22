@@ -292,6 +292,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Notifications => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.CommunitiesV2 => $"https://social-api.decentraland.{ENV}/v2/communities",
+                DecentralandUrl.ReferralProgress => $"https://social-api.decentraland.{ENV}/v1/referral-progress",
                 DecentralandUrl.CommunityThumbnail => $"https://assets-cdn.decentraland.{ENV}/social/communities/{{0}}/raw-thumbnail.png",
                 DecentralandUrl.Members => $"https://social-api.decentraland.{ENV}/v1/members",
                 DecentralandUrl.MembersV2 => $"https://social-api.decentraland.{ENV}/v2/members",

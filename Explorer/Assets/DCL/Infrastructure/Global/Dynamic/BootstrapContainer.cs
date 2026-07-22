@@ -208,6 +208,8 @@ namespace Global.Dynamic
                 identityExpirationDuration
             );
 
+            string? referrer = appArgs.TryGetValue(AppArgsFlags.REFERRER, out string? referrerValue) ? referrerValue : null;
+
             var dappDeepLinkAuth = new DappDeepLinkAuthenticator(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
@@ -215,7 +217,8 @@ namespace Global.Dynamic
                 web3AccountFactory,
                 webRequestController,
                 deeplinkSigninIdentityId,
-                deeplinkLoginAwaitingSigninRequestId
+                deeplinkLoginAwaitingSigninRequestId,
+                referrer
             );
 
             var dappAuth = new DappWeb3EthereumApi(

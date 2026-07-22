@@ -33,6 +33,7 @@ namespace DCL.Web3.Authenticators
         private readonly IWebRequestController webRequestController;
         private readonly ReactiveProperty<string?> deeplinkSigninIdentityId;
         private readonly ReactiveProperty<string?> loginAwaitingSigninRequestId;
+        private readonly string? referrer;
         private readonly URLBuilder urlBuilder = new ();
         private readonly DCLSemaphoreSlim loginMutex = new ();
 
@@ -43,7 +44,8 @@ namespace DCL.Web3.Authenticators
             IWeb3AccountFactory web3AccountFactory,
             IWebRequestController webRequestController,
             ReactiveProperty<string?> deeplinkSigninIdentityId,
-            ReactiveProperty<string?> loginAwaitingSigninRequestId)
+            ReactiveProperty<string?> loginAwaitingSigninRequestId,
+            string? referrer = null)
         {
             this.webBrowser = webBrowser;
             this.authApiUrl = authApiUrl;
@@ -52,6 +54,7 @@ namespace DCL.Web3.Authenticators
             this.webRequestController = webRequestController;
             this.deeplinkSigninIdentityId = deeplinkSigninIdentityId;
             this.loginAwaitingSigninRequestId = loginAwaitingSigninRequestId;
+            this.referrer = referrer;
         }
 
         public void Dispose()
@@ -73,13 +76,15 @@ namespace DCL.Web3.Authenticators
 
                 // Client-generated id embedded in the browser URL; no server round-trip needed before opening the browser.
                 var authRequestId = Guid.NewGuid().ToString();
-                var url = $"{signatureWebAppUrl}/{authRequestId}?loginMethod={payload.Method}&flow=deeplink";
 #if UNITY_EDITOR
 
                 // Without this flag the auth website also launches a standalone Explorer build,
                 // which would steal the signin from the editor.
-                url += "&bridgeOnly";
+                const bool BRIDGE_ONLY = true;
+#else
+                const bool BRIDGE_ONLY = false;
 #endif
+                string url = DeepLinkSignInUrl.Build(signatureWebAppUrl, authRequestId, payload.Method.ToString(), BRIDGE_ONLY, referrer);
 
                 webBrowser.OpenUrlMainThreadOnly(url);
 

@@ -12,6 +12,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -37,6 +38,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly string? referrer;
 
         private readonly AvatarRandomizer avatarRandomizer = new ();
 
@@ -45,6 +47,7 @@ namespace DCL.AuthenticationScreenFlow
         private Profile newUserProfile;
         private string userEmail;
         private CancellationToken loginCt;
+        private bool referralTracked;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -60,7 +63,8 @@ namespace DCL.AuthenticationScreenFlow
             UnityAppWebBrowser webBrowser,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus) : base(viewInstance)
+            ProfileChangesBus profileChangesBus,
+            string? referrer = null) : base(viewInstance)
         {
             view = viewInstance.LobbyForNewAccountAuthView;
 
@@ -74,6 +78,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.referrer = ReferrerArg.Normalize(referrer);
 
             characterPreviewView = viewInstance.CharacterPreviewView;
             characterPreviewOrigPosition = characterPreviewView.transform.localPosition;
@@ -94,6 +99,17 @@ namespace DCL.AuthenticationScreenFlow
 
             controller.IsCurrentlyNewAccount = true;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
+
+            // Referral attribution: this state runs exclusively for new accounts, which is the
+            // "invited user signed up" signal. Registered as early as possible so the referral
+            // exists before the first LOGGED_IN event reaches the referral backend. Errors are
+            // logged and never block onboarding; a duplicate (already-registered) is expected
+            // when the backend recorded a previous attempt.
+            if (referrer != null && !referralTracked)
+            {
+                referralTracked = true;
+                TrackReferralAsync().Forget();
+            }
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
@@ -296,6 +312,9 @@ namespace DCL.AuthenticationScreenFlow
                     // freshly created profile is live
                     profileChangesBus.PushUpdate(newUserProfile);
 
+                    if (referralTracked)
+                        MarkReferralSignedUpAsync().Forget();
+
                     // Mark the analytics-visible end of the onboarding step. Anything between
                     // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
                     // setting up their account.
@@ -321,6 +340,47 @@ namespace DCL.AuthenticationScreenFlow
                     view.Hide(UIAnimationHashes.SLIDE);
                     fsm.Enter<LoginSelectionAuthState, ErrorType>(ErrorType.CONNECTION_ERROR);
                 }
+            }
+        }
+
+        private async UniTaskVoid TrackReferralAsync()
+        {
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
+
+                // referrer is regex-validated at construction, safe to interpolate
+                var jsonBody = $"{{\"referrer\":\"{referrer}\"}}";
+
+                await webRequestController.SignedFetchPostAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.CreateJson(jsonBody),
+                                               string.Empty,
+                                               CancellationToken.None) // survives login-flow cancellation
+                                          .WithNoOpAsync();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
+            }
+        }
+
+        private async UniTaskVoid MarkReferralSignedUpAsync()
+        {
+            try
+            {
+                string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
+
+                await webRequestController.SignedFetchPatchAsync(
+                                               new CommonArguments(URLAddress.FromString(url)),
+                                               GenericPostArguments.Empty,
+                                               string.Empty,
+                                               CancellationToken.None)
+                                          .WithNoOpAsync();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.AUTHENTICATION);
             }
         }
 
