@@ -17,10 +17,12 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class PrepareAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
         private readonly ISceneData sceneData;
+        private readonly bool localSceneDevelopment;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL, bool localSceneDevelopment) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.sceneData = sceneData;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override void Update(float t)
@@ -37,6 +39,12 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
 
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
+
+            // Local-scene dev bundles are addressed by path-derived ids that keep the same hash
+            // across edits, so a disk-cache entry could serve them stale forever; dropping the
+            // cache hash makes the request bypass Unity Caching.
+            if (localSceneDevelopment)
+                assetBundleIntention.cacheHash = null;
         }
 
     }

@@ -708,6 +708,10 @@ MonoBehaviour:
       Severity: 2
     - Category: MULTIPLAYER
       Severity: 2
+    - Category: WEARABLE
+      Severity: 3
+    - Category: WEARABLE
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

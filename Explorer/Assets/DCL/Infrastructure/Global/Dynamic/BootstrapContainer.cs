@@ -131,11 +131,7 @@ namespace Global.Dynamic
                 };
 
                 var cdpClient = ChromeDevToolHandler.New(applicationParametersParser.HasFlag(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), applicationParametersParser);
-                // LSD dev-server hashes are path-based, not content-based, so any disk-level AB cache can
-                // serve stale bundles across reloads and sessions; the custom disk caches are already
-                // disabled in this mode, this closes the Unity Caching-backed one.
-                WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct,
-                    disableABCache: realmLaunchSettings.CurrentMode == DCL.Utility.LaunchMode.LocalSceneDevelopment);
+                WebRequestsContainer? webRequestsContainer = await WebRequestsContainer.CreateAsync(settingsContainer, identityCache, debugContainer.Builder, decentralandUrlsSource, cdpClient, container.DiagnosticsContainer.SentrySampler, container.RealmClock, ct);
                 container.WebRequestsContainer = webRequestsContainer;
                 var realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
