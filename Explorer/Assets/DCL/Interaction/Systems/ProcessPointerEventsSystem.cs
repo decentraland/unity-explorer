@@ -59,9 +59,10 @@ namespace DCL.Interaction.Systems
             ref HoverStateComponent hoverStateComponent,
             ref SyntheticPointerInput syntheticPointerInput)
         {
-            // Synthetic instructions apply to exactly this frame; consuming them here guarantees a driver
-            // that stops re-posting leaves no residue.
-            SyntheticPointerInput synthetic = syntheticPointerInput;
+            // Synthetic instructions apply to exactly this frame: a post that survived from an earlier frame
+            // (this system did not run since it was made) is discarded unread, and consuming the component
+            // here guarantees a driver that stops re-posting leaves no residue.
+            SyntheticPointerInput synthetic = syntheticPointerInput.IsPostedThisFrame ? syntheticPointerInput : default(SyntheticPointerInput);
             syntheticPointerInput = default(SyntheticPointerInput);
 
             // Process all PBPointerEvents components to see if any of them is qualified

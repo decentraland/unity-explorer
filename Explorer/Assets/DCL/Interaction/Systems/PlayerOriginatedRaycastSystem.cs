@@ -82,8 +82,10 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 Ray ray;
                 Vector3? consumedSyntheticAim = null;
+                SyntheticPointerInput syntheticInput = playerInteractionEntity.SyntheticPointerInput;
 
-                if (playerInteractionEntity.SyntheticPointerInput.AimPoint is { } syntheticAimPoint)
+                // A stale aim (posted on a frame this system did not run) must not steer this frame's ray.
+                if (syntheticInput.IsPostedThisFrame && syntheticInput.AimPoint is { } syntheticAimPoint)
                 {
                     if (!TryCreateRayThrough(in camera, syntheticAimPoint, out ray))
                     {

@@ -76,10 +76,7 @@ namespace DCL.McpServer.Systems
             ref McpPointerEventIntent intent = ref World.TryGetRef<McpPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
-            {
-                ClearOrphanedSyntheticInput();
                 return;
-            }
 
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
@@ -109,19 +106,6 @@ namespace DCL.McpServer.Systems
                 Observe(ref intent, sceneWorld);
             else
                 Inject(ref intent, scene, sceneWorld);
-        }
-
-        /// <summary>
-        ///     An abandoned request (tool-side timeout while the simulation was paused) may have left its posted
-        ///     synthetic input unconsumed; clearing it before the pipeline runs prevents a stray click on the
-        ///     resume frame.
-        /// </summary>
-        private void ClearOrphanedSyntheticInput()
-        {
-            ref SyntheticPointerInput synthetic = ref World.Get<SyntheticPointerInput>(pipelineEntity);
-
-            if (synthetic.AimPoint.HasValue || synthetic.PressButton.HasValue || synthetic.ReleaseButton.HasValue)
-                synthetic = default(SyntheticPointerInput);
         }
 
         /// <summary>The pin matches only when the current scene carries the pinned definition id.</summary>
@@ -189,9 +173,15 @@ namespace DCL.McpServer.Systems
         /// <summary>Reads the pipeline's answer for the injected frame and completes the request.</summary>
         private void Observe(ref McpPointerEventIntent intent, World sceneWorld)
         {
-            // The pipeline has not consumed the posted input yet (paused simulation?); the tool-side timeout bounds the wait.
-            if (World.Get<SyntheticPointerInput>(pipelineEntity).AimPoint.HasValue)
+            // The pipeline has not consumed the posted input yet (paused simulation?); the stamp is renewed
+            // so the post stays valid until it does, and the tool-side timeout bounds the wait.
+            ref SyntheticPointerInput pending = ref World.Get<SyntheticPointerInput>(pipelineEntity);
+
+            if (pending.AimPoint.HasValue)
+            {
+                pending.PostedAtFrame = UnityEngine.Time.frameCount;
                 return;
+            }
 
             McpPointerClickResult result = BuildResult(in intent, sceneWorld,
                 in World.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity),
@@ -313,6 +303,7 @@ namespace DCL.McpServer.Systems
                 AimPoint = aimPoint,
                 PressButton = pressButton,
                 ReleaseButton = releaseButton,
+                PostedAtFrame = UnityEngine.Time.frameCount,
             });
         }
 

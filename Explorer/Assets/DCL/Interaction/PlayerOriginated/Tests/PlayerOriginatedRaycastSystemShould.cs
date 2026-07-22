@@ -223,7 +223,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                                        });
 
             Vector3 aim = colliderGo.transform.localPosition;
-            playerInteractionEntity.SyntheticPointerInput.AimPoint = aim;
+            playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = aim, PostedAtFrame = UnityEngine.Time.frameCount };
 
             system.Update(0);
 
@@ -238,13 +238,26 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void EchoSyntheticAimEvenWhenRayHitsNothing()
         {
             var aim = new Vector3(0f, 50f, 10f);
-            playerInteractionEntity.SyntheticPointerInput.AimPoint = aim;
+            playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = aim, PostedAtFrame = UnityEngine.Time.frameCount };
 
             system.Update(0);
 
             ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(result.SyntheticAimPoint, Is.EqualTo((Vector3?)aim));
             Assert.That(result.IsValidHit, Is.False);
+        }
+
+        [Test]
+        public void IgnoreSyntheticAimPostedOnAnEarlierFrame()
+        {
+            // A post that outlived its frame belongs to a driver that may have already given up on it.
+            var staleAim = new Vector3(5f, 0f, 10f);
+            playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = staleAim, PostedAtFrame = UnityEngine.Time.frameCount - 1 };
+
+            system.Update(0);
+
+            ref PlayerOriginRaycastResultForSceneEntities result = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(result.SyntheticAimPoint, Is.Null, "a stale aim must not steer the ray nor be echoed");
         }
 
         [Test]
@@ -255,7 +268,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             // A previous synthetic frame left its echo; a panning frame builds no ray, so the echo must die.
             playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities.SetRay(staleRay, staleAim);
-            playerInteractionEntity.SyntheticPointerInput.AimPoint = staleAim;
+            playerInteractionEntity.SyntheticPointerInput = new SyntheticPointerInput { AimPoint = staleAim, PostedAtFrame = UnityEngine.Time.frameCount };
             ref CursorComponent cursorComponent = ref world.Get<CursorComponent>(cameraEntity);
             cursorComponent.CursorState = CursorState.Panning;
 

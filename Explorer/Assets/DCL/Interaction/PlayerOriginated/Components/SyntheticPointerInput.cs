@@ -14,7 +14,13 @@ namespace DCL.Interaction.PlayerOriginated.Components
     ///         in <see cref="PlayerOriginRaycastResultForSceneEntities.SyntheticAimPoint" /> (null on frames it
     ///         guards away), so drivers can tell whether their aim was processed; ProcessPointerEventsSystem
     ///         reads the buttons, applies them under the same qualification gates as real input, and clears the
-    ///         component — so instructions that are not re-posted next frame leave no residue.
+    ///         component.
+    ///     </para>
+    ///     <para>
+    ///         Both readers honor a post only during the frame recorded in <see cref="PostedAtFrame" />: a post
+    ///         that survived longer (the pipeline skipped frames) is discarded unread, so no component owner has
+    ///         to sweep up instructions abandoned mid-pause. Posting is last-write-wins — at most one driver may
+    ///         steer the pipeline at a time.
     ///     </para>
     /// </summary>
     public struct SyntheticPointerInput
@@ -33,5 +39,11 @@ namespace DCL.Interaction.PlayerOriginated.Components
 
         /// <summary>Button reported as released this frame.</summary>
         public InputAction? ReleaseButton;
+
+        /// <summary><see cref="UnityEngine.Time.frameCount" /> at the moment of posting; every poster must stamp it.</summary>
+        public int PostedAtFrame;
+
+        /// <summary>The instructions are valid only while this holds; readers treat a stale post as absent.</summary>
+        public bool IsPostedThisFrame => PostedAtFrame == UnityEngine.Time.frameCount;
     }
 }

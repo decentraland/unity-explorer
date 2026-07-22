@@ -180,6 +180,7 @@ namespace DCL.McpServer.Tests
         {
             ref SyntheticPointerInput synthetic = ref SyntheticInput;
             Assert.That(synthetic.AimPoint.HasValue, Is.True, "a synthetic aim should have been posted");
+            Assert.That(synthetic.IsPostedThisFrame, Is.True, "the pipeline honors a post only during the frame it was stamped with");
             Vector3 aim = synthetic.AimPoint!.Value;
             synthetic = default(SyntheticPointerInput);
 
@@ -279,6 +280,19 @@ namespace DCL.McpServer.Tests
 
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
             Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.True);
+        }
+
+        [Test]
+        public void LeaveForeignSyntheticInputAloneWhenNoRequestIsPending()
+        {
+            // Another automation driver's post must survive an idle update of this system untouched;
+            // stale posts die at the pipeline's readers, not at a sweeping owner.
+            var foreignAim = new Vector3(1f, 2f, 3f);
+            SyntheticInput = new SyntheticPointerInput { AimPoint = foreignAim, PostedAtFrame = UnityEngine.Time.frameCount };
+
+            system!.Update(0);
+
+            Assert.That(SyntheticInput.AimPoint, Is.EqualTo((Vector3?)foreignAim));
         }
 
         [Test]
