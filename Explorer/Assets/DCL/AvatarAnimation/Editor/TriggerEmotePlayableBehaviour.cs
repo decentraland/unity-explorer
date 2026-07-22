@@ -1,12 +1,11 @@
-﻿
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.AvatarRendering.Emotes;
 using DCL.Profiles;
 using Global.Dynamic;
 using UnityEngine.Playables;
 using Utility.Arch;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     /// <summary>
     /// A playable / clip for the Unity timeline that takes a URN (either local or remote) and tells an avatar to play it.

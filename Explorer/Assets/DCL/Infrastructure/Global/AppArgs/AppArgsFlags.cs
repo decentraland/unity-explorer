@@ -23,6 +23,7 @@ namespace Global.AppArgs
         public const string GATEKEEPER_URL = "gatekeeper-url";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
+        public const string SPAWN_POINT = "spawnpoint";
         public const string SKIP_AUTH_SCREEN = "skip-auth-screen";
         public const string LANDSCAPE_TERRAIN_ENABLED = "landscape-terrain-enabled";
         public const string SKYBOX_TIME_ENABLED = "skybox-time-enabled";

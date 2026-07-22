@@ -43,7 +43,7 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void StartScene()
+        public async Task StartScene()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
 
@@ -64,7 +64,10 @@ namespace DCL.SceneLifeCycle.Tests
 
             system?.Update(0f);
 
-            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+            // let the system switch to the thread pool
+            await Task.Delay(100);
+
+            await scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 
@@ -100,33 +103,42 @@ namespace DCL.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void HoldWorldSceneStartUntilSceneRoomIsSettled()
+        public async Task HoldWorldSceneStartUntilSceneRoomIsSettled()
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: true);
 
             system?.Update(0f);
 
-            scene.DidNotReceive().StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+            // let the system switch to the thread pool
+            await Task.Delay(100);
+
+            await scene.DidNotReceive().StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
-        public void StartWorldSceneWhenSceneRoomIsSettled()
+        public async Task StartWorldSceneWhenSceneRoomIsSettled()
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: true, hasReadinessReport: true);
 
             system?.Update(0f);
 
-            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+            // let the system switch to the thread pool
+            await Task.Delay(100);
+
+            await scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
-        public void StartWorldSceneWithoutReadinessReportRegardlessOfSceneRoom()
+        public async Task StartWorldSceneWithoutReadinessReportRegardlessOfSceneRoom()
         {
             ISceneFacade scene = CreateWorldScenePendingStart(isRoomSettled: false, hasReadinessReport: false);
 
             system?.Update(0f);
 
-            scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
+            // let the system switch to the thread pool
+            await Task.Delay(100);
+
+            await scene.Received(1).StartUpdateLoopAsync(Arg.Any<int>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
