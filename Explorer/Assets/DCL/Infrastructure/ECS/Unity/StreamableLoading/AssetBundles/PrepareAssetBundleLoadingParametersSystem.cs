@@ -38,13 +38,8 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
             assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
 
-            base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
-
-            // Local-scene dev bundles are addressed by path-derived ids that keep the same hash
-            // across edits, so a disk-cache entry could serve them stale forever; dropping the
-            // cache hash makes the request bypass Unity Caching.
-            if (localSceneDevelopment)
-                assetBundleIntention.cacheHash = null;
+            // Local-scene dev bundle ids are path-derived and keep the same hash across edits, so cached entries would go stale forever
+            base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state, ignoreCacheHash: localSceneDevelopment);
         }
 
     }

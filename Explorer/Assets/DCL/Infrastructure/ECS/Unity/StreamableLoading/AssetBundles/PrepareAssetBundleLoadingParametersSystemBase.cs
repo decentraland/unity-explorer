@@ -29,7 +29,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assetBundlesURL = assetBundlesURL;
         }
 
-        protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state, bool ignoreCacheHash = false)
         {
             if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
@@ -66,6 +66,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 assetBundleIntention.Hash = assetBundleIntention.AssetBundleManifestVersion.CheckCasing(assetBundleIntention.Hash);
                 ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifestVersion.HasHashInPath(), assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion.GetAssetBundleManifestVersion());
                 assetBundleIntention.CommonArguments = ca;
+
+                if (ignoreCacheHash) return;
 
                 // DepsDigest is pre-populated upstream (e.g. PrepareGltfAssetLoadingSystem) from the bare hash,
                 // before the platform suffix is appended. The digest map itself is also keyed by bare hashes, so
