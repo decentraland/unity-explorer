@@ -26,8 +26,8 @@ namespace DCL.Interaction.PlayerOriginated.Components
     public struct SyntheticPointerInput
     {
         /// <summary>
-        ///     Squared minimum distance from the camera origin to <see cref="AimPoint" />; any closer and no aim
-        ///     ray can be built, so the pipeline skips the raycast and drivers must fail such a request upfront.
+        ///     Squared minimum distance from the camera origin to <see cref="AimPoint" />; any closer and no usable
+        ///     aim ray can be built, so drivers must fail such a request upfront before posting it.
         /// </summary>
         public const float MIN_AIM_DISTANCE_SQR = 0.0001f;
 

@@ -85,17 +85,12 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 SyntheticPointerInput syntheticInput = playerInteractionEntity.SyntheticPointerInput;
 
                 // A stale aim (posted on a frame this system did not run) must not steer this frame's ray.
-                if (syntheticInput.IsPostedThisFrame && syntheticInput.AimPoint is { } syntheticAimPoint)
+                if (syntheticInput is { IsPostedThisFrame: true, AimPoint: { } syntheticAimPoint })
                 {
-                    if (!TryCreateRayThrough(in camera, syntheticAimPoint, out ray))
-                    {
-                        raycastResultForSceneEntities.Reset();
-                        raycastResultForSceneEntities.ClearSyntheticAim();
-                        raycastResultForGlobalEntities.Reset();
-                        return;
-                    }
-
                     consumedSyntheticAim = syntheticAimPoint;
+
+                    Vector3 origin = camera.Camera.transform.position;
+                    ray = new Ray(origin, syntheticAimPoint - origin);
                 }
                 else
                     ray = CreateRay(in camera, in cursorComponent);
@@ -153,22 +148,5 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             cameraComponent.Camera.ScreenPointToRay(cursorComponent.CursorState != CursorState.Free
                 ? new Vector3(cameraComponent.Camera.pixelWidth / 2f, cameraComponent.Camera.pixelHeight / 2f, 0)
                 : cursorComponent.Position);
-
-        /// <summary>A ray from the camera through a world point; degenerate when the camera stands on the point.</summary>
-        private static bool TryCreateRayThrough(in CameraComponent cameraComponent, Vector3 worldPoint, out Ray ray)
-        {
-            Vector3 origin = cameraComponent.Camera.transform.position;
-            Vector3 direction = worldPoint - origin;
-
-            if (direction.sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
-            {
-                ray = default(Ray);
-                return false;
-            }
-
-            ray = new Ray(origin, direction.normalized);
-            return true;
-        }
-
     }
 }
