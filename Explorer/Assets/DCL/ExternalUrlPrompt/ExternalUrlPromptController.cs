@@ -15,7 +15,7 @@ namespace DCL.ExternalUrlPrompt
         private readonly UnityAppWebBrowser webBrowser;
         private readonly ICursor cursor;
         private readonly HashSet<string> trustedKeys = new ();
-        private Action<ExternalUrlPromptResultType> resultCallback;
+        private Action<ExternalUrlPromptResultType>? resultCallback;
 
         public ExternalUrlPromptController(
             ViewFactoryMethod viewFactory,
@@ -28,7 +28,7 @@ namespace DCL.ExternalUrlPrompt
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.CloseButton.onClick.AddListener(Dismiss);
+            viewInstance!.CloseButton.onClick.AddListener(Dismiss);
             viewInstance.CancelButton.onClick.AddListener(Dismiss);
             viewInstance.ContinueButton.onClick.AddListener(Approve);
         }
@@ -43,7 +43,7 @@ namespace DCL.ExternalUrlPrompt
             if (ExternalUrlPolicy.TryGetTrustKey(uri, out string trustKey) && trustedKeys.Contains(trustKey))
             {
                 webBrowser.OpenUrlMainThreadOnly(uri.OriginalString);
-                viewInstance.CloseButton.OnClickAsync(CancellationToken.None).Forget();
+                viewInstance!.CloseButton.OnClickAsync(CancellationToken.None).Forget();
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace DCL.ExternalUrlPrompt
         private void RequestOpenUrl(Uri uri, Action<ExternalUrlPromptResultType> result)
         {
             resultCallback = result;
-            viewInstance.DomainText.text = uri.Host;
+            viewInstance!.DomainText.text = uri.Host;
             viewInstance.UrlText.text = uri.OriginalString;
             viewInstance.TrustToggle.isOn = false;
         }
@@ -95,6 +95,6 @@ namespace DCL.ExternalUrlPrompt
             resultCallback?.Invoke(ExternalUrlPromptResultType.Canceled);
 
         private void Approve() =>
-            resultCallback?.Invoke(viewInstance.TrustToggle.isOn ? ExternalUrlPromptResultType.ApprovedTrusted : ExternalUrlPromptResultType.Approved);
+            resultCallback?.Invoke(viewInstance!.TrustToggle.isOn ? ExternalUrlPromptResultType.ApprovedTrusted : ExternalUrlPromptResultType.Approved);
     }
 }

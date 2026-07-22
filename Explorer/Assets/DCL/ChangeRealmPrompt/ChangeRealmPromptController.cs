@@ -15,7 +15,7 @@ namespace DCL.ChangeRealmPrompt
 
         private readonly ICursor cursor;
         private readonly Action<string, Vector2Int?> changeRealmCallback;
-        private Action<ChangeRealmPromptResultType> resultCallback;
+        private Action<ChangeRealmPromptResultType>? resultCallback;
 
         public ChangeRealmPromptController(
             ViewFactoryMethod viewFactory,
@@ -28,7 +28,7 @@ namespace DCL.ChangeRealmPrompt
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.CloseButton.onClick.AddListener(Dismiss);
+            viewInstance!.CloseButton.onClick.AddListener(Dismiss);
             viewInstance.CancelButton.onClick.AddListener(Dismiss);
             viewInstance.ContinueButton.onClick.AddListener(Approve);
 
@@ -52,14 +52,14 @@ namespace DCL.ChangeRealmPrompt
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
-                viewInstance.CloseButton.OnClickAsync(ct),
+                viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
                 viewInstance.ContinueButton.OnClickAsync(ct));
 
         private void RequestChangeRealm(string message, string realm, Action<ChangeRealmPromptResultType> result)
         {
             resultCallback = result;
-            viewInstance.MessageText.text = string.IsNullOrEmpty(message) ? DEFAULT_CONFIRMATION_MESSAGE : message;
+            viewInstance!.MessageText.text = string.IsNullOrEmpty(message) ? DEFAULT_CONFIRMATION_MESSAGE : message;
             viewInstance.RealmText.text = DestinationHostFor(realm);
         }
 
