@@ -56,6 +56,7 @@ namespace DCL.McpServer.Tools
                   .Number("x", "World-space aim point; overrides the automatic aim at the entity's collider center.")
                   .Number("y")
                   .Number("z")
+                  .String("sceneId", "Pin the click to this scene (id from get_scene_state): it fails instead of landing in another scene if the player moved.")
                   .Enum<PointerButton>("button", "Which input action to press. Default pointer (left click / IA_POINTER).")
                   .Enum<ClickKind>("eventType", "click = down, then up on the next scene tick. Default click.")
                   .Number("timeoutSec", "Seconds to wait for delivery. Default 3, max 15.");
@@ -95,6 +96,7 @@ namespace DCL.McpServer.Tools
             float timeoutSec = Mathf.Clamp(arguments.GetFloat("timeoutSec", DEFAULT_TIMEOUT_SEC), MIN_TIMEOUT_SEC, MAX_TIMEOUT_SEC);
 
             int targetEntityId = hasEntityId ? entityId : -1;
+            string? sceneId = arguments["sceneId"]?.Type == JTokenType.String ? arguments["sceneId"]!.Value<string>() : null;
             Vector3? aimPoint = hasAimPoint ? new Vector3(x, y, z) : null;
 
             McpPointerClickResult result;
@@ -103,7 +105,7 @@ namespace DCL.McpServer.Tools
             {
                 // A single budget for the whole gesture: it covers both a paused simulation that never runs
                 // the system and a release stuck waiting for the scene tick to advance.
-                result = await RunGestureAsync(targetEntityId, aimPoint, button, kind)
+                result = await RunGestureAsync(targetEntityId, sceneId, aimPoint, button, kind)
                               .AttachExternalCancellation(ct)
                               .Timeout(TimeSpan.FromSeconds(timeoutSec));
             }
@@ -150,16 +152,16 @@ namespace DCL.McpServer.Tools
         ///     a click is a press followed by a release that carries the press handoff so the system keeps it
         ///     ordered onto a later scene tick.
         /// </summary>
-        private async UniTask<McpPointerClickResult> RunGestureAsync(int targetEntityId, Vector3? aimPoint, InputAction button, ClickKind kind)
+        private async UniTask<McpPointerClickResult> RunGestureAsync(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, ClickKind kind)
         {
             PointerEventType pressType = kind == ClickKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown;
 
-            McpPointerClickResult down = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, aimPoint, button, pressType));
+            McpPointerClickResult down = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
 
             if (kind != ClickKind.CLICK || !down.Hit)
                 return down;
 
-            McpPointerClickResult up = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, aimPoint, button, PointerEventType.PetUp, down.Press));
+            McpPointerClickResult up = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
 
             if (!up.UpRayMissed)
                 return up; // a fresh release, or a failure (scene reload, timeout, preemption) that tells the whole story

@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.McpServer.Core;
 using DCL.McpServer.Tools;
 using DCL.RealmNavigation;
@@ -82,6 +83,7 @@ namespace DCL.McpServer.Tests
 
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "scene-abc" });
 
             ISceneFacade scene = Substitute.For<ISceneFacade>();
             scene.Info.Returns(new SceneShortInfo(new Vector2Int(1, 2), "Test scene", "7"));
@@ -97,6 +99,9 @@ namespace DCL.McpServer.Tests
 
             // Assert
             McpSchemaAssert.KeysMatch(tool.OutputSchema, structured);
+
+            // Assert — the definition id is what click_entity's sceneId pin expects
+            Assert.That(structured["scene"]!["sceneId"]!.Value<string>(), Is.EqualTo("scene-abc"));
         }
 
         private McpToolResult Execute() =>

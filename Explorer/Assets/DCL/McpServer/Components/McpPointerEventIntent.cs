@@ -19,6 +19,13 @@ namespace DCL.McpServer.Components
         /// <summary>Arch entity id in the current scene world; -1 when aiming at an explicit world point.</summary>
         public readonly int TargetEntityId;
 
+        /// <summary>
+        ///     Pins delivery to one scene, matched by the definition id get_scene_state reports: the event fails
+        ///     instead of landing in whatever scene is current if the player moved after the request was made.
+        ///     Null accepts the current scene as is.
+        /// </summary>
+        public readonly string? SceneId;
+
         /// <summary>Explicit world-space aim point; when null the aim is the target's collider center.</summary>
         public readonly Vector3? AimPoint;
 
@@ -36,9 +43,10 @@ namespace DCL.McpServer.Components
 
         public UniTaskCompletionSource<McpPointerClickResult>? Completion { get; set; }
 
-        public McpEcsPointerEventIntent(int targetEntityId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
+        public McpEcsPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
         {
             TargetEntityId = targetEntityId;
+            SceneId = sceneId;
             AimPoint = aimPoint;
             Button = button;
             EventType = eventType;

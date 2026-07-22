@@ -89,6 +89,12 @@ namespace DCL.McpServer.Systems
                 return;
             }
 
+            if (intent.SceneId != null && !IsPinnedScene(scene, intent.SceneId))
+            {
+                CompleteAndRemove(in intent, Failure(in intent, $"the request is pinned to scene '{intent.SceneId}' but the current scene is '{scene.Info.Name}' (did the player move?)"));
+                return;
+            }
+
             World sceneWorld = scene.EcsExecutor.World;
             uint tick = scene.SceneStateProvider.TickNumber;
 
@@ -116,6 +122,10 @@ namespace DCL.McpServer.Systems
             TryDeliver(in intent, sceneWorld, tick, null, out McpPointerClickResult result);
             CompleteAndRemove(in intent, result);
         }
+
+        /// <summary>The pin matches only when its id resolves to the very scene that is current.</summary>
+        private bool IsPinnedScene(ISceneFacade currentScene, string sceneId) =>
+            scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? pinned) && ReferenceEquals(pinned, currentScene);
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
         private void CompleteAndRemove(in McpEcsPointerEventIntent intent, McpPointerClickResult result) =>

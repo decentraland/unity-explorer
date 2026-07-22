@@ -32,6 +32,7 @@ namespace DCL.McpServer.Tools
                           .Boolean("localSceneDevelopment")
                           .Object("scene", McpJsonSchema.Object()
                                                          .String("name")
+                                                         .String("sceneId", "Scene definition id; pass it to click_entity's sceneId to pin clicks to this scene. Null when unknown.", nullable: true)
                                                          .Object("baseParcel", JObjectExtensions.ParcelSchema())
                                                          .String("sdkVersion", "SDK version reported by the scene, or null when unknown.", nullable: true)
                                                          .String("state")
@@ -67,6 +68,7 @@ namespace DCL.McpServer.Tools
                     : new JObject
                     {
                         ["name"] = scene.Info.Name,
+                        ["sceneId"] = scene.SceneData.SceneEntityDefinition?.id,
                         ["baseParcel"] = scene.Info.BaseParcel.ToParcel(),
                         ["sdkVersion"] = scene.Info.SdkVersion,
                         ["state"] = scene.SceneStateProvider.State.Value().ToString(),

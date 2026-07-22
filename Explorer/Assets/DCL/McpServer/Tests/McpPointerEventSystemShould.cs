@@ -36,6 +36,8 @@ namespace DCL.McpServer.Tests
         private BoxCollider targetCollider = null!;
         private PBPointerEvents targetPointerEvents = null!;
         private ISceneStateProvider sceneStateProvider = null!;
+        private ISceneFacade sceneFacade = null!;
+        private IScenesCache scenesCache = null!;
         private uint tick;
 
         [SetUp]
@@ -89,14 +91,14 @@ namespace DCL.McpServer.Tests
             sceneStateProvider.State.Returns(new Atomic<SceneState>(SceneState.Running));
             sceneStateProvider.TickNumber.Returns(_ => tick);
 
-            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
+            sceneFacade = Substitute.For<ISceneFacade>();
             sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
             sceneFacade.EcsExecutor.Returns(new SceneEcsExecutor(sceneWorld));
 
             IReadonlyReactiveProperty<ISceneFacade?> currentScene = Substitute.For<IReadonlyReactiveProperty<ISceneFacade?>>();
             currentScene.Value.Returns(sceneFacade);
 
-            IScenesCache scenesCache = Substitute.For<IScenesCache>();
+            scenesCache = Substitute.For<IScenesCache>();
             scenesCache.CurrentScene.Returns(currentScene);
 
             IEntityCollidersGlobalCache collidersCache = Substitute.For<IEntityCollidersGlobalCache>();
@@ -146,11 +148,12 @@ namespace DCL.McpServer.Tests
         private UniTaskCompletionSource<McpPointerClickResult> AddIntent(
             PointerEventType eventType = PointerEventType.PetDown,
             int? targetId = null,
-            McpPressHandoff? press = null)
+            McpPressHandoff? press = null,
+            string? sceneId = null)
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
 
-            world.Add(playerEntity, new McpEcsPointerEventIntent(targetId ?? targetEntity.Id, null, InputAction.IaPointer, eventType, press)
+            world.Add(playerEntity, new McpEcsPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
             {
                 Completion = completion,
             });
@@ -369,6 +372,62 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("PointerEvents"));
+        }
+
+        [Test]
+        public void FailWhenPinnedSceneIsUnknown()
+        {
+            scenesCache.TryGetBySceneId("scene-gone", out Arg.Any<ISceneFacade?>()).Returns(false);
+
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-gone");
+
+            system!.Update(0);
+
+            McpPointerClickResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("pinned"));
+            Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void FailWhenPinnedSceneIsNotCurrent()
+        {
+            // The pinned scene is still loaded, but the player stands in a different one now.
+            ISceneFacade otherScene = Substitute.For<ISceneFacade>();
+
+            scenesCache.TryGetBySceneId("scene-elsewhere", out Arg.Any<ISceneFacade?>())
+                       .Returns(call =>
+                        {
+                            call[1] = otherScene;
+                            return true;
+                        });
+
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-elsewhere");
+
+            system!.Update(0);
+
+            McpPointerClickResult result = ResultOf(completion);
+            Assert.That(result.Hit, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("pinned"));
+            Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void DeliverWhenPinnedSceneIsCurrent()
+        {
+            scenesCache.TryGetBySceneId("scene-here", out Arg.Any<ISceneFacade?>())
+                       .Returns(call =>
+                        {
+                            call[1] = sceneFacade;
+                            return true;
+                        });
+
+            UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-here");
+
+            system!.Update(0);
+
+            Assert.That(ResultOf(completion).Hit, Is.True);
+            Assert.That(targetPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Count, Is.EqualTo(1));
         }
 
         [Test]
