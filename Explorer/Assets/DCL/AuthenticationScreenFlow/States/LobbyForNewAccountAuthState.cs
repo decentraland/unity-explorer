@@ -40,6 +40,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ProfileChangesBus profileChangesBus;
         private readonly string? referrer;
 
+        private const int REFERRAL_REQUEST_TIMEOUT_SECONDS = 5;
+
         private readonly AvatarRandomizer avatarRandomizer = new ();
 
         private BodyShape selectedBodyType = BodyShape.MALE;
@@ -47,8 +49,6 @@ namespace DCL.AuthenticationScreenFlow
         private Profile newUserProfile;
         private string userEmail;
         private CancellationToken loginCt;
-        private bool referralTracked;
-        private bool referralInFlight;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -95,15 +95,6 @@ namespace DCL.AuthenticationScreenFlow
             userEmail = payload.email;
             selectedBodyType = BodyShape.MALE;
             newUserProfile = payload.profile;
-
-            // Referral attribution: this state runs exclusively for new accounts, which is the
-            // "invited user signed up" signal. Fired BEFORE the LoggedIn status transition below
-            // so the referral is created before any LOGGED_IN event can reach the backend (whose
-            // finalize step drops events for referrals that don't exist yet). Errors never block
-            // onboarding; a duplicate (already-registered) is expected when a previous attempt or
-            // the web setup flow already recorded it.
-            if (referrer != null && !referralTracked && !referralInFlight)
-                TrackReferralAsync().Forget();
 
             InitializeAvatarAsync().Forget();
 
@@ -311,8 +302,11 @@ namespace DCL.AuthenticationScreenFlow
                     // freshly created profile is live
                     profileChangesBus.PushUpdate(newUserProfile);
 
-                    if (referralTracked)
-                        MarkReferralSignedUpAsync().Forget();
+                    // Register the referral here — awaited BEFORE the user proceeds to the world —
+                    // so the referral exists before the first LOGGED_IN event reaches the backend
+                    // (whose finalize step drops events for referrals that don't exist yet). Best
+                    // effort and time-boxed: a slow/failed call must not block or fail onboarding.
+                    await RegisterReferralAsync();
 
                     // Mark the analytics-visible end of the onboarding step. Anything between
                     // LOGGED_IN (avatar customization shown) and PROFILE_FINALIZED is the user
@@ -342,9 +336,18 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private async UniTaskVoid TrackReferralAsync()
+        /// <summary>
+        ///     Registers the referral: POST creates it, PATCH marks the invited user as signed up.
+        ///     Awaited by the caller so the create completes before the user enters the world (i.e.
+        ///     before LOGGED_IN), but time-boxed and best-effort so it never blocks or fails
+        ///     onboarding. A duplicate (already-registered) is expected when the web setup flow
+        ///     already recorded it and is treated as a no-op.
+        /// </summary>
+        private async UniTask RegisterReferralAsync()
         {
-            referralInFlight = true;
+            if (referrer == null)
+                return;
+
             try
             {
                 string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
@@ -356,39 +359,25 @@ namespace DCL.AuthenticationScreenFlow
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.CreateJson(jsonBody),
                                                string.Empty,
-                                               CancellationToken.None) // survives login-flow cancellation
-                                          .WithNoOpAsync();
-
-                // Only mark as done on success, so a transient failure (network, 5xx) is retried
-                // on the next entry to this state instead of being silently dropped for the session.
-                referralTracked = true;
-            }
-            catch (Exception e)
-            {
-                // Best-effort attribution: a failure here must not surface as a Sentry error nor
-                // block onboarding. referralTracked stays false so a re-entry retries; the referrer
-                // also persists in the launcher, and finalize runs off the login events regardless.
-                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral tracking (POST) failed: {e.Message}");
-            }
-            finally { referralInFlight = false; }
-        }
-
-        private async UniTaskVoid MarkReferralSignedUpAsync()
-        {
-            try
-            {
-                string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
+                                               CancellationToken.None)
+                                          .WithNoOpAsync()
+                                          .Timeout(TimeSpan.FromSeconds(REFERRAL_REQUEST_TIMEOUT_SECONDS));
 
                 await webRequestController.SignedFetchPatchAsync(
                                                new CommonArguments(URLAddress.FromString(url)),
                                                GenericPostArguments.Empty,
                                                string.Empty,
                                                CancellationToken.None)
-                                          .WithNoOpAsync();
+                                          .WithNoOpAsync()
+                                          .Timeout(TimeSpan.FromSeconds(REFERRAL_REQUEST_TIMEOUT_SECONDS));
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral sign-up (PATCH) failed: {e.Message}");
+                // Best-effort attribution: any failure (timeout, network, expected "already
+                // registered") must not surface as a Sentry error nor block onboarding. Durable
+                // cross-session retry is intentionally out of scope here — the referrer persists in
+                // the launcher and the backend dedups, so a follow-up login-time retry can pick it up.
+                ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral registration failed: {e.Message}");
             }
         }
 
