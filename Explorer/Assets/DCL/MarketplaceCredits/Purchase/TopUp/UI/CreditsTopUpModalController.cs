@@ -23,7 +23,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
         private const string ANALYTICS_STEP_CHECKOUT = "checkout";
         private const string ANALYTICS_STEP_GRANT = "grant";
         private const string ANALYTICS_ERROR_GRANT_FAILED = "grant_failed";
-        private const string SUCCESS_TEXT = "YOU SUCCESFULLY BOUGHT {0} CREDITS, CURRENT BALANCE {1} CREDITS";
+        private const string SUCCESS_TEXT = "YOU SUCCESSFULLY BOUGHT {0} CREDITS, CURRENT BALANCE {1} CREDITS";
         private const string AVAILABLE_CREDITS_TEXT = "You own {0} credits";
 
         private readonly ICreditsTopUpService topUpService;
