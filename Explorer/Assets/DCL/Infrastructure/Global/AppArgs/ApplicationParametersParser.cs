@@ -118,7 +118,7 @@ namespace Global.AppArgs
             }
 
             if (droppedKeys.Count > 0)
-                ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
+                ReportHub.LogWarning(ReportCategory.ALWAYS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
 
             if (output.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
