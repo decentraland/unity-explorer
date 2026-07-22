@@ -202,7 +202,6 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
             if (viewInstance == null)
                 return;
 
-            bool creatingCheckout = newState == ModalState.CREATING_CHECKOUT;
             bool packsVisible = newState is ModalState.PACK_SELECTION or ModalState.CREATING_CHECKOUT;
             bool fullScreenState = newState is ModalState.WAITING_FOR_BROWSER or ModalState.SUCCESS;
 
@@ -238,7 +237,7 @@ namespace DCL.MarketplaceCredits.Purchase.TopUp.UI
                 UserCreditsResponse credits = await creditsAPIClient.GetUserCreditsAsync(identity.Address, ct);
 
                 if (!ct.IsCancellationRequested && viewInstance != null)
-                    viewInstance.BalanceCreditsText.text = viewInstance.BalanceCreditsText.text = string.Format(AVAILABLE_CREDITS_TEXT, credits.usd.credits.ToString());
+                    viewInstance.BalanceCreditsText.text = string.Format(AVAILABLE_CREDITS_TEXT, credits.usd.credits.ToString());
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
