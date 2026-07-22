@@ -46,7 +46,7 @@ namespace DCL.ChangeRealmPrompt
                 if (result != ChangeRealmPromptResultType.Approved)
                     return;
 
-                changeRealmCallback?.Invoke(inputData.Realm, inputData.Position);
+                changeRealmCallback.Invoke(inputData.Realm, inputData.Position);
             });
         }
 

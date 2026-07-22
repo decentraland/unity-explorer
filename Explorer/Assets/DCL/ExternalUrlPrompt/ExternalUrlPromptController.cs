@@ -38,26 +38,28 @@ namespace DCL.ExternalUrlPrompt
             if (inputData.Uri == null)
                 return;
 
-            if (ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string trustKey) && trustedKeys.Contains(trustKey))
+            Uri uri = inputData.Uri;
+
+            if (ExternalUrlPolicy.TryGetTrustKey(uri, out string trustKey) && trustedKeys.Contains(trustKey))
             {
-                webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
+                webBrowser.OpenUrlMainThreadOnly(uri.OriginalString);
                 viewInstance.CloseButton.OnClickAsync(CancellationToken.None).Forget();
                 return;
             }
 
             cursor.Unlock();
-            RequestOpenUrl(inputData.Uri, result =>
+            RequestOpenUrl(uri, result =>
             {
                 switch (result)
                 {
                     case ExternalUrlPromptResultType.ApprovedTrusted:
                         // Only cache when a real (scheme, host) key exists — empty-host URIs are never trusted (SEC-008).
-                        if (ExternalUrlPolicy.TryGetTrustKey(inputData.Uri, out string key))
+                        if (ExternalUrlPolicy.TryGetTrustKey(uri, out string key))
                             trustedKeys.Add(key);
-                        webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
+                        webBrowser.OpenUrlMainThreadOnly(uri.OriginalString);
                         break;
                     case ExternalUrlPromptResultType.Approved:
-                        webBrowser.OpenUrlMainThreadOnly(inputData.Uri.OriginalString);
+                        webBrowser.OpenUrlMainThreadOnly(uri.OriginalString);
                         break;
                 }
             });

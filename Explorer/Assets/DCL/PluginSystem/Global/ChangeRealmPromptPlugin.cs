@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChangeRealmPromptPlugin) + "." + nameof(ChangeRealmPromptSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject ChangeRealmPromptPrefab;
+            public AssetReferenceGameObject ChangeRealmPromptPrefab = null!;
         }
     }
 }
