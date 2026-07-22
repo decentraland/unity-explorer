@@ -17,7 +17,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.Translation;
 using DCL.UI.InputFieldFormatting;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;
@@ -100,7 +99,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var chatEventBus = new ChatEventBus();
 
-            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache);
 
             var reloadSceneChatCommand = new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache, teleportController, localSceneDevelopment);
 
@@ -111,7 +110,7 @@ namespace Global.Dynamic
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
-                new GoToLocalChatCommand(chatTeleporter),
+                new GoToLocalChatCommand(chatTeleporter, staticContainer.ScenesCache),
                 new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
                 reloadSceneChatCommand,

@@ -9,7 +9,6 @@ using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.MapRenderer.MapLayers.HomeMarker;
-using DCL.Prefs;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utility;
 using Unity.Mathematics;
@@ -48,9 +47,10 @@ namespace Global.Dynamic
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
 
-        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
+        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart = Array.Empty<string>();
 
         private bool isLocalSceneDevelopmentRealm;
+        internal string? spawnPointName;
 
         public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
 
@@ -98,18 +98,21 @@ namespace Global.Dynamic
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
-                ParseRealmAppParameter(applicationParameters, realm);
+                ParseRealmAppParameter(applicationParameters, realm!);
 
-            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
-                ParsePositionAppParameter(parcelToTeleportOverride);
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? parcelToTeleportOverride))
+                ParsePositionAppParameter(parcelToTeleportOverride!);
+
+            if (applicationParameters.TryGetValue(AppArgsFlags.SPAWN_POINT, out string? spawnPointOverride) && !string.IsNullOrEmpty(spawnPointOverride))
+                spawnPointName = spawnPointOverride;
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
         {
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
-                                           && ParseLocalSceneParameter(localSceneParamValue)
+            bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string? localSceneParamValue)
+                                           && ParseLocalSceneParameter(localSceneParamValue!)
                                            && IsRealmAValidUrl(realmParamValue);
 
             if (isLocalSceneDevelopment)
@@ -127,7 +130,7 @@ namespace Global.Dynamic
                 SetLocalSceneDevelopmentRealm(realmParamValue, useRemoteAB);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_SERVER, out string? serverValue))
-                    ParseLSDRemoteABServer(serverValue);
+                    ParseLsdRemoteABServer(serverValue!);
 
                 if (appParameters.TryGetValue(AppArgsFlags.LSD_REMOTE_AB_WORLD, out string? worldValue))
                 {
@@ -161,7 +164,7 @@ namespace Global.Dynamic
             isLocalSceneDevelopmentRealm = true;
         }
 
-        private void ParseLSDRemoteABServer(string serverValue)
+        private void ParseLsdRemoteABServer(string serverValue)
         {
             if (Enum.TryParse<HybridSceneContentServer>(serverValue, true, out var server))
                 remoteHybridSceneContentServer = server;
