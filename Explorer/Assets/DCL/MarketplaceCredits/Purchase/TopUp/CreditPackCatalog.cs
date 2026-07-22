@@ -1,5 +1,6 @@
 namespace DCL.MarketplaceCredits.Purchase.TopUp
 {
+    //Temporary struct to hold the credit pack data, this will be replaced by the data coming from the server in the future
     public readonly struct CreditPack
     {
         public readonly string Id;
