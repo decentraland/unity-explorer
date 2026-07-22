@@ -18,6 +18,7 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Multithreading;
+using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.McpServer.Tests

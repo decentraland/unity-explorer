@@ -13,6 +13,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
+using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 
 namespace DCL.Interaction.PlayerOriginated.Tests
 {
@@ -38,7 +39,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Entity playerEntity = world.Create();
             world.Add(playerEntity, Vector3.zero);
 
-            system = new PlayerOriginatedRaycastSystem(world, pointer, entityCollidersGlobalCache,
+            system = new PlayerOriginatedRaycastSystem(world, entityCollidersGlobalCache,
                 playerInteractionEntity = new PlayerInteractionEntity(world.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new SyntheticPointerInput()), world, playerEntity), 1000);
 
             var cameraGo = new GameObject("Camera GO");

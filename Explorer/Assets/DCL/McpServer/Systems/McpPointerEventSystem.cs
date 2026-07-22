@@ -17,6 +17,7 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.McpServer.Systems
@@ -80,37 +81,45 @@ namespace DCL.McpServer.Systems
 
             ISceneFacade? scene = scenesCache.CurrentScene.Value;
 
+            if (!TryResolve(in intent, scene, out World? sceneWorld))
+                return;
+
+            if (intent.Injected)
+                Observe(ref intent, sceneWorld!);
+            else
+                Inject(ref intent, scene!, sceneWorld!);
+        }
+
+        /// <summary>Picks the world the pointer event must be delivered to, or completes the request with the reason no delivery is possible.</summary>
+        private bool TryResolve(in McpPointerEventIntent intent, ISceneFacade? scene, out World? sceneWorld)
+        {
+            sceneWorld = null;
+
             if (scene == null || !scene.SceneStateProvider.IsCurrent || scene.SceneStateProvider.IsNotRunningState())
             {
                 CompleteAndRemove(in intent, Failure(in intent, "no running current scene to deliver the pointer event to"));
-                return;
+                return false;
             }
 
-            if (intent.SceneId != null && !IsPinnedScene(scene, intent.SceneId))
+            if (intent.SceneId != null && scene.SceneData.SceneEntityDefinition.id != intent.SceneId)
             {
                 CompleteAndRemove(in intent, Failure(in intent, $"the request is pinned to scene '{intent.SceneId}' but the current scene is '{scene.Info.Name}' (did the player move?)"));
-                return;
+                return false;
             }
 
-            World sceneWorld = scene.EcsExecutor.World;
+            World world = scene.EcsExecutor.World;
 
             // A mid-click reload swaps in a new world for the same parcel; the press handoff belongs to the
             // disposed one (entity ids get recycled), so the release can only be failed.
-            if (intent.Press.HasValue && !ReferenceEquals(sceneWorld, intent.Press.Value.World))
+            if (intent.Press.HasValue && !ReferenceEquals(world, intent.Press.Value.World))
             {
                 CompleteAndRemove(in intent, Failure(in intent, "the scene reloaded mid-click"));
-                return;
+                return false;
             }
 
-            if (intent.Injected)
-                Observe(ref intent, sceneWorld);
-            else
-                Inject(ref intent, scene, sceneWorld);
+            sceneWorld = world;
+            return true;
         }
-
-        /// <summary>The pin matches only when the current scene carries the pinned definition id.</summary>
-        private static bool IsPinnedScene(ISceneFacade currentScene, string sceneId) =>
-            currentScene.SceneData.SceneEntityDefinition?.id == sceneId;
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
         private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result, McpPressHandoff? press = null)
@@ -166,8 +175,8 @@ namespace DCL.McpServer.Systems
             }
 
             PostSyntheticInput(aimPoint,
-                intent.EventType == PointerEventType.PetDown ? intent.Button : (InputAction?)null,
-                intent.EventType == PointerEventType.PetUp ? intent.Button : (InputAction?)null);
+                intent.EventType == PointerEventType.PetDown ? intent.Button : null,
+                intent.EventType == PointerEventType.PetUp ? intent.Button : null);
 
             intent.Injected = true;
             intent.InjectedTick = scene.SceneStateProvider.TickNumber;

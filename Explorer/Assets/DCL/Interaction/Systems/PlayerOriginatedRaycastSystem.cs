@@ -3,13 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
-using DCL.CharacterCamera.Components;
-using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
@@ -17,9 +14,8 @@ using DCL.InWorldCamera;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-namespace DCL.Interaction.PlayerOriginated.Systems
+namespace DCL.Interaction.Systems
 {
     /// <summary>
     ///     <para>
@@ -44,14 +40,12 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly float maxRaycastDistance;
         private readonly PlayerInteractionEntity playerInteractionEntity;
-        private readonly InputAction pointInput;
 
-        internal PlayerOriginatedRaycastSystem(World world, InputAction pointInput,
+        internal PlayerOriginatedRaycastSystem(World world,
             IEntityCollidersGlobalCache collidersGlobalCache,
             PlayerInteractionEntity playerInteractionEntity,
             float maxRaycastDistance) : base(world)
         {
-            this.pointInput = pointInput;
             this.collidersGlobalCache = collidersGlobalCache;
             this.playerInteractionEntity = playerInteractionEntity;
             this.maxRaycastDistance = maxRaycastDistance;

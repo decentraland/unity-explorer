@@ -19,10 +19,10 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 using PlayerOriginatedProximitySystem = DCL.Interaction.Systems.PlayerOriginatedProximitySystem;
+using PlayerOriginatedRaycastSystem = DCL.Interaction.Systems.PlayerOriginatedRaycastSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -85,8 +85,7 @@ namespace DCL.PluginSystem.Global
                     new SyntheticPointerInput()),
                 builder.World, arguments.PlayerEntity);
 
-            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
-                playerInteractionEntity, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
+            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, entityCollidersGlobalCache, playerInteractionEntity, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
             PlayerOriginatedProximitySystem.InjectToWorld(ref builder, entityCollidersGlobalCache, scenesCache, playerInteractionEntity);
 
             DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;
