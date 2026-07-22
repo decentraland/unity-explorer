@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiling;
@@ -94,7 +95,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             // (e.g. drained by Unload). Comparing against Unity's overloaded null catches that destroyed
             // GameObject; re-pooling it would crash DereferenceFinalOperation and hand a dead instance back out.
             if (asset.Root == null)
+            {
+                // TODO temporary: confirms the guard fires during repro of issue #9452, remove before merge
+                ReportHub.LogWarning(ReportCategory.GLTF_CONTAINER, $"Skipped dereferencing GltfContainerAsset '{key}' with an already destroyed Root");
                 return;
+            }
 
             if (handleAssetLoad && assetLoadCache != null && assetLoadCache.ContainsGltf(key))
             {
