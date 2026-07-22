@@ -32,6 +32,8 @@ namespace Global.AppArgs
         /// </summary>
         public const string COMMUNITY = "community";
 
+        public const string FORCE_OPEN_BACKPACK = "force-open-backpack";
+
         // The opaque identity id delivered by the auth website's signin deep link (<c>decentraland://?signin={identityId}</c>).
         public const string SIGNIN = "signin";
 
