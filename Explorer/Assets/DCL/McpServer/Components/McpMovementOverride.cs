@@ -9,7 +9,7 @@ namespace DCL.McpServer.Components
     ///     Held movement input requested by the MCP walk tool. While present on the player entity,
     ///     <see cref="McpInputOverrideSystem" /> re-asserts it into <see cref="MovementInputComponent" /> every frame.
     /// </summary>
-    public struct McpEcsMovementOverride : IMcpEcsRequest<AsyncUnit>
+    public struct McpMovementOverride : IMcpEcsRequest<AsyncUnit>
     {
         /// <summary>
         ///     Normalized camera-relative axes (x = strafe, y = forward).

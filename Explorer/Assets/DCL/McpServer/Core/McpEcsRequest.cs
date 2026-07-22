@@ -6,7 +6,7 @@ namespace DCL.McpServer.Core
 {
     /// <summary>
     ///     A request component written onto an entity by an MCP tool and fulfilled by a consuming system.
-    ///     The shared install/complete/abandon choreography lives in <see cref="McpRequest" />.
+    ///     The shared install/complete/abandon choreography lives in <see cref="McpEcsRequest" />.
     /// </summary>
     public interface IMcpEcsRequest<TResult>
     {
@@ -22,7 +22,7 @@ namespace DCL.McpServer.Core
     ///     (preempting a pending one), the consuming system completes and removes it, and the tool-side timeout
     ///     abandons a request the simulation never picked up.
     /// </summary>
-    public static class McpRequest
+    public static class McpEcsRequest
     {
         /// <summary>
         ///     Installs the request on the entity and returns the task its consuming system will complete.

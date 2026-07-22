@@ -14,7 +14,7 @@ using UnityEngine;
 namespace DCL.McpServer.Systems
 {
     /// <summary>
-    ///     While an <see cref="McpEcsMovementOverride" /> is present on the player entity, re-asserts its axes into
+    ///     While an <see cref="McpMovementOverride" /> is present on the player entity, re-asserts its axes into
     ///     <see cref="MovementInputComponent" /> after the real-input systems have written it, so an agent-requested
     ///     walk survives the per-frame overwrite performed by <see cref="UpdateInputMovementSystem" />.
     /// </summary>
@@ -41,7 +41,7 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpEcsMovementOverride ecsMovementOverride = ref World.TryGetRef<McpEcsMovementOverride>(playerEntity, out bool overrideExists);
+            ref McpMovementOverride ecsMovementOverride = ref World.TryGetRef<McpMovementOverride>(playerEntity, out bool overrideExists);
 
             if (!overrideExists)
                 return;
@@ -75,7 +75,7 @@ namespace DCL.McpServer.Systems
                 }
 
                 // The override is copied out before the structural removal; no component refs are touched afterwards.
-                McpRequest.CompleteAndRemove(World, playerEntity, ecsMovementOverride, AsyncUnit.Default);
+                McpEcsRequest.CompleteAndRemove(World, playerEntity, ecsMovementOverride, AsyncUnit.Default);
             }
         }
     }

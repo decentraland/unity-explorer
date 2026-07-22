@@ -38,7 +38,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
     {
-        private const float SYNTHETIC_AIM_EPSILON_SQR = 0.0001f;
+        /// <summary>The reticle raycast length in production; diagnostics that re-trace the ray must use the same reach.</summary>
+        public const float MAX_RAYCAST_DISTANCE = 100f;
 
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly float maxRaycastDistance;
@@ -152,7 +153,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             Vector3 origin = cameraComponent.Camera.transform.position;
             Vector3 direction = worldPoint - origin;
 
-            if (direction.sqrMagnitude < SYNTHETIC_AIM_EPSILON_SQR)
+            if (direction.sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
             {
                 ray = default(Ray);
                 return false;

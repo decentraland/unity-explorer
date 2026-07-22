@@ -4,7 +4,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using DCL.McpServer.Components;
 using DCL.McpServer.Systems;
 using DCL.Utilities;
@@ -156,13 +158,16 @@ namespace DCL.McpServer.Tests
         {
             var completion = new UniTaskCompletionSource<McpPointerClickResult>();
 
-            world.Add(playerEntity, new McpEcsPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
+            world.Add(playerEntity, new McpPointerEventIntent(targetId ?? targetEntity.Id, sceneId, null, InputAction.IaPointer, eventType, press)
             {
                 Completion = completion,
             });
 
             return completion;
         }
+
+        private void SetCurrentSceneDefinitionId(string id) =>
+            sceneFacade.SceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition(id, new SceneMetadata()));
 
         private ref SyntheticPointerInput SyntheticInput => ref world.Get<SyntheticPointerInput>(pipelineEntity);
 
@@ -190,7 +195,7 @@ namespace DCL.McpServer.Tests
             ref HoverFeedbackComponent hoverFeedback = ref world.Get<HoverFeedbackComponent>(pipelineEntity);
             hoverFeedback.Clear();
 
-            if (Physics.Raycast(ray, out RaycastHit hit, 100f)
+            if (Physics.Raycast(ray, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE)
                 && collidersCache.TryGetSceneEntity(hit.collider, out GlobalColliderSceneEntityInfo info))
             {
                 raycastResult.SetupHit(hit, info, hit.distance, hit.distance);
@@ -241,7 +246,7 @@ namespace DCL.McpServer.Tests
             Assert.That(synthetic.PressButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
             Assert.That(synthetic.ReleaseButton, Is.Null);
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.True);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.True);
         }
 
         [Test]
@@ -253,7 +258,7 @@ namespace DCL.McpServer.Tests
             system.Update(0); // the pipeline has not run: keep waiting
 
             Assert.That(completion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.True);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.True);
         }
 
         [Test]
@@ -272,7 +277,7 @@ namespace DCL.McpServer.Tests
             Assert.That(pressResult.Press, Is.Not.Null);
             Assert.That(pressResult.Press!.Value.Entity, Is.EqualTo(targetEntity));
             Assert.That(pressResult.Press.Value.Tick, Is.EqualTo(tick));
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
 
             // The observe frame of a press re-posts the aim so the hover stays on the target between the legs.
             Assert.That(SyntheticInput.AimPoint.HasValue, Is.True);
@@ -295,7 +300,7 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
             Assert.That(releaseResult.Hit, Is.True);
             Assert.That(releaseResult.UpRayMissed, Is.False);
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -312,7 +317,7 @@ namespace DCL.McpServer.Tests
             system.Update(0);
 
             Assert.That(ResultOf(completion).Hit, Is.True);
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -402,7 +407,7 @@ namespace DCL.McpServer.Tests
             Assert.That(result.Hit, Is.False);
             Assert.That(result.UpRayMissed, Is.False);
             Assert.That(result.BlockedByCrdtId, Is.EqualTo(BLOCKER_CRDT_ID));
-            Assert.That(world.Has<McpEcsPointerEventIntent>(playerEntity), Is.False);
+            Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
         }
 
         [Test]
@@ -453,10 +458,9 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void FailWhenPinnedSceneIsUnknown()
+        public void FailWhenCurrentSceneHasNoDefinitionId()
         {
-            scenesCache.TryGetBySceneId("scene-gone", out Arg.Any<ISceneFacade?>()).Returns(false);
-
+            // sceneFacade's auto-mocked SceneData carries no SceneEntityDefinition, so no pin can match it.
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-gone");
 
             system!.Update(0);
@@ -470,15 +474,8 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailWhenPinnedSceneIsNotCurrent()
         {
-            // The pinned scene is still loaded, but the player stands in a different one now.
-            ISceneFacade otherScene = Substitute.For<ISceneFacade>();
-
-            scenesCache.TryGetBySceneId("scene-elsewhere", out Arg.Any<ISceneFacade?>())
-                       .Returns(call =>
-                        {
-                            call[1] = otherScene;
-                            return true;
-                        });
+            // The pinned scene may still be loaded, but the player stands in a different one now.
+            SetCurrentSceneDefinitionId("scene-current");
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-elsewhere");
 
@@ -493,12 +490,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void DeliverWhenPinnedSceneIsCurrent()
         {
-            scenesCache.TryGetBySceneId("scene-here", out Arg.Any<ISceneFacade?>())
-                       .Returns(call =>
-                        {
-                            call[1] = sceneFacade;
-                            return true;
-                        });
+            SetCurrentSceneDefinitionId("scene-here");
 
             UniTaskCompletionSource<McpPointerClickResult> completion = AddIntent(sceneId: "scene-here");
 

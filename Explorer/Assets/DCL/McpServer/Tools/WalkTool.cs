@@ -14,7 +14,7 @@ using Utility;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Holds a movement input on the player for a duration via <see cref="McpEcsMovementOverride" />,
+    ///     Holds a movement input on the player for a duration via <see cref="McpMovementOverride" />,
     ///     exercising the regular locomotion pipeline (velocity, collisions, jumps) instead of teleporting.
     /// </summary>
     public class WalkTool : McpTool
@@ -67,7 +67,7 @@ namespace DCL.McpServer.Tools
             Vector3 startPosition = world.Get<CharacterTransform>(playerEntity).Position;
 
             // A newer walk preempts a pending one; the preempted awaiter completes as a finished (shortened) hold.
-            UniTask<AsyncUnit> hold = McpRequest.SendAsync(world, playerEntity, new McpEcsMovementOverride
+            UniTask<AsyncUnit> hold = McpEcsRequest.SendAsync(world, playerEntity, new McpMovementOverride
             {
                 Axes = direction,
                 Kind = kind,
@@ -82,7 +82,7 @@ namespace DCL.McpServer.Tools
             }
             catch (TimeoutException)
             {
-                await McpRequest.AbandonAsync<McpEcsMovementOverride>(world, playerEntity);
+                await McpEcsRequest.AbandonAsync<McpMovementOverride>(world, playerEntity);
                 return McpToolResult.Error($"walk did not complete within {seconds + COMPLETION_GRACE_SEC}s (is the simulation paused?).");
             }
 

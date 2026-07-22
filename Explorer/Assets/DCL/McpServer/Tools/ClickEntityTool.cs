@@ -12,7 +12,7 @@ using UnityEngine;
 namespace DCL.McpServer.Tools
 {
     /// <summary>
-    ///     Presses a pointer button on a scene entity by composing single-event <see cref="McpEcsPointerEventIntent" />s
+    ///     Presses a pointer button on a scene entity by composing single-event <see cref="McpPointerEventIntent" />s
     ///     delivered by McpPointerEventSystem through the real reticle pipeline (a synthetic aim and button edge
     ///     posted to it), so occlusion, distance gates and the scene write-back are the production ones. A full
     ///     click is a press followed by a release ordered onto a later scene tick, merged into one result here.
@@ -111,7 +111,7 @@ namespace DCL.McpServer.Tools
             }
             catch (TimeoutException)
             {
-                await McpRequest.AbandonAsync<McpEcsPointerEventIntent>(world, playerEntity);
+                await McpEcsRequest.AbandonAsync<McpPointerEventIntent>(world, playerEntity);
                 return McpToolResult.Error($"click_entity did not complete within {timeoutSec}s (is the simulation paused?).");
             }
 
@@ -156,12 +156,12 @@ namespace DCL.McpServer.Tools
         {
             PointerEventType pressType = kind == ClickKind.UP ? PointerEventType.PetUp : PointerEventType.PetDown;
 
-            McpPointerClickResult down = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
+            McpPointerClickResult down = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, pressType));
 
             if (kind != ClickKind.CLICK || !down.Hit)
                 return down;
 
-            McpPointerClickResult up = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
+            McpPointerClickResult up = await SendAsync(new McpPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
 
             if (!up.UpRayMissed)
                 return up; // a fresh release, or a failure (scene reload, preemption) that tells the whole story
@@ -172,8 +172,8 @@ namespace DCL.McpServer.Tools
             return down;
         }
 
-        private UniTask<McpPointerClickResult> SendAsync(McpEcsPointerEventIntent request) =>
-            McpRequest.SendAsync(world, playerEntity, request, new McpPointerClickResult
+        private UniTask<McpPointerClickResult> SendAsync(McpPointerEventIntent request) =>
+            McpEcsRequest.SendAsync(world, playerEntity, request, new McpPointerClickResult
             {
                 Hit = false,
                 FailureReason = "preempted by a newer click_entity call",

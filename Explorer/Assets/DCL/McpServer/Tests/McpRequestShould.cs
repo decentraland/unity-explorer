@@ -32,7 +32,7 @@ namespace DCL.McpServer.Tests
         [Test]
         public void InstallRequestWithPendingCompletion()
         {
-            UniTask<int> task = McpRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 7 }, -1);
+            UniTask<int> task = McpEcsRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 7 }, -1);
 
             Assert.That(task.Status, Is.EqualTo(UniTaskStatus.Pending));
             Assert.That(world.TryGet(entity, out TestEcsRequest installed), Is.True);
@@ -43,8 +43,8 @@ namespace DCL.McpServer.Tests
         [Test]
         public void PreemptPendingRequestWhenNewerOneIsSent()
         {
-            UniTask<int> first = McpRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 1 }, -1);
-            UniTask<int> second = McpRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 2 }, -1);
+            UniTask<int> first = McpEcsRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 1 }, -1);
+            UniTask<int> second = McpEcsRequest.SendAsync(world, entity, new TestEcsRequest { Payload = 2 }, -1);
 
             Assert.That(first.Status, Is.EqualTo(UniTaskStatus.Succeeded));
             Assert.That(first.GetAwaiter().GetResult(), Is.EqualTo(-1));
@@ -55,10 +55,10 @@ namespace DCL.McpServer.Tests
         [Test]
         public void CompleteAndRemoveResolvesAwaiterAfterRemoval()
         {
-            UniTask<int> task = McpRequest.SendAsync(world, entity, new TestEcsRequest(), -1);
+            UniTask<int> task = McpEcsRequest.SendAsync(world, entity, new TestEcsRequest(), -1);
             TestEcsRequest ecsRequest = world.Get<TestEcsRequest>(entity);
 
-            McpRequest.CompleteAndRemove(world, entity, ecsRequest, 42);
+            McpEcsRequest.CompleteAndRemove(world, entity, ecsRequest, 42);
 
             Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
             Assert.That(task.Status, Is.EqualTo(UniTaskStatus.Succeeded));
@@ -70,7 +70,7 @@ namespace DCL.McpServer.Tests
         {
             world.Add(entity, new TestEcsRequest());
 
-            McpRequest.CompleteAndRemove(world, entity, world.Get<TestEcsRequest>(entity), 0);
+            McpEcsRequest.CompleteAndRemove(world, entity, world.Get<TestEcsRequest>(entity), 0);
 
             Assert.That(world.Has<TestEcsRequest>(entity), Is.False);
         }

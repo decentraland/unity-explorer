@@ -13,7 +13,7 @@ namespace DCL.McpServer.Components
     ///     press, then a release carrying the press <see cref="Press" /> handoff. A request the simulation never
     ///     picks up is removed by the tool-side timeout.
     /// </summary>
-    public struct McpEcsPointerEventIntent : IMcpEcsRequest<McpPointerClickResult>
+    public struct McpPointerEventIntent : IMcpEcsRequest<McpPointerClickResult>
     {
         /// <summary>Arch entity id in the current scene world; -1 when aiming at an explicit world point.</summary>
         public readonly int TargetEntityId;
@@ -51,7 +51,7 @@ namespace DCL.McpServer.Components
         /// <summary>The world point the posted aim targeted, to recognize the pipeline's answer on the observe frame.</summary>
         public Vector3 InjectedAimPoint;
 
-        public McpEcsPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
+        public McpPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
         {
             TargetEntityId = targetEntityId;
             SceneId = sceneId;

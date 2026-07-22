@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
                 builder.World, arguments.PlayerEntity);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
-                playerInteractionEntity, 100f);
+                playerInteractionEntity, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE);
             PlayerOriginatedProximitySystem.InjectToWorld(ref builder, entityCollidersGlobalCache, scenesCache, playerInteractionEntity);
 
             DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;

@@ -24,7 +24,7 @@ namespace DCL.McpServer.Systems
     /// <summary>
     ///     <para>
     ///         Delivers a single agent-requested pointer event through the real reticle pipeline while a
-    ///         <see cref="McpEcsPointerEventIntent" /> is present on the player entity. Instead of imitating the
+    ///         <see cref="McpPointerEventIntent" /> is present on the player entity. Instead of imitating the
     ///         pipeline, the system posts a <see cref="SyntheticPointerInput" /> (an aim point plus a button edge)
     ///         that <see cref="PlayerOriginatedRaycastSystem" /> and
     ///         <see cref="DCL.Interaction.Systems.ProcessPointerEventsSystem" /> consume the same frame, so
@@ -33,7 +33,7 @@ namespace DCL.McpServer.Systems
     ///         hover state, before the next raycast overwrites them.
     ///     </para>
     ///     <para>
-    ///         A release that follows a press (<see cref="McpEcsPointerEventIntent.Press" />) is posted only once
+    ///         A release that follows a press (<see cref="McpPointerEventIntent.Press" />) is posted only once
     ///         the scene has advanced past the press tick, so the scene observes PetDown on an earlier tick than
     ///         PetUp; the click_entity tool composes a full click from two such intents. While the release waits,
     ///         the aim is re-posted every frame so the hover does not leave the target mid-click.
@@ -44,9 +44,6 @@ namespace DCL.McpServer.Systems
     [LogCategory(ReportCategory.MCP)]
     public partial class McpPointerEventSystem : BaseUnityLoopSystem
     {
-        private const float MAX_RAYCAST_DISTANCE = 100f;
-        private const float AIM_DIRECTION_EPSILON_SQR = 0.0001f;
-
         /// <summary>sin² of the angle under which the observed reticle ray still counts as passing through the posted aim point.</summary>
         private const float RAY_THROUGH_AIM_SIN_SQR = 0.0001f;
 
@@ -79,7 +76,7 @@ namespace DCL.McpServer.Systems
 
         protected override void Update(float t)
         {
-            ref McpEcsPointerEventIntent intent = ref World.TryGetRef<McpEcsPointerEventIntent>(playerEntity, out bool exists);
+            ref McpPointerEventIntent intent = ref World.TryGetRef<McpPointerEventIntent>(playerEntity, out bool exists);
 
             if (!exists)
             {
@@ -130,15 +127,15 @@ namespace DCL.McpServer.Systems
                 synthetic = default(SyntheticPointerInput);
         }
 
-        /// <summary>The pin matches only when its id resolves to the very scene that is current.</summary>
-        private bool IsPinnedScene(ISceneFacade currentScene, string sceneId) =>
-            scenesCache.TryGetBySceneId(sceneId, out ISceneFacade? pinned) && ReferenceEquals(pinned, currentScene);
+        /// <summary>The pin matches only when the current scene carries the pinned definition id.</summary>
+        private static bool IsPinnedScene(ISceneFacade currentScene, string sceneId) =>
+            currentScene.SceneData.SceneEntityDefinition?.id == sceneId;
 
         /// <summary>The intent is copied out before the structural removal, so the caller's ref must not be touched afterwards.</summary>
-        private void CompleteAndRemove(in McpEcsPointerEventIntent intent, McpPointerClickResult result) =>
-            McpRequest.CompleteAndRemove(World, playerEntity, intent, result);
+        private void CompleteAndRemove(in McpPointerEventIntent intent, McpPointerClickResult result) =>
+            McpEcsRequest.CompleteAndRemove(World, playerEntity, intent, result);
 
-        private static McpPointerClickResult Failure(in McpEcsPointerEventIntent intent, string reason) =>
+        private static McpPointerClickResult Failure(in McpPointerEventIntent intent, string reason) =>
             new ()
             {
                 Hit = false,
@@ -147,7 +144,7 @@ namespace DCL.McpServer.Systems
             };
 
         /// <summary>Posts the synthetic aim and button edge the pipeline will consume later this frame.</summary>
-        private void Inject(ref McpEcsPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
+        private void Inject(ref McpPointerEventIntent intent, ISceneFacade scene, World sceneWorld)
         {
             if (intent.Press is { } press)
             {
@@ -177,7 +174,7 @@ namespace DCL.McpServer.Systems
             Vector3 aimPoint = ResolveAimPoint(in intent, sceneWorld, targetEntity);
             Vector3 cameraPosition = playerCamera.GetCameraComponent(World).Camera.transform.position;
 
-            if ((aimPoint - cameraPosition).sqrMagnitude < AIM_DIRECTION_EPSILON_SQR)
+            if ((aimPoint - cameraPosition).sqrMagnitude < SyntheticPointerInput.MIN_AIM_DISTANCE_SQR)
             {
                 CompleteAndRemove(in intent, Failure(in intent, "the camera is on top of the aim point; move back and retry"));
                 return;
@@ -193,7 +190,7 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>Reads the pipeline's answer for the injected frame and completes the request.</summary>
-        private void Observe(ref McpEcsPointerEventIntent intent, World sceneWorld)
+        private void Observe(ref McpPointerEventIntent intent, World sceneWorld)
         {
             // The pipeline has not consumed the posted input yet (paused simulation?); the tool-side timeout bounds the wait.
             if (World.Get<SyntheticPointerInput>(pipelineEntity).AimPoint.HasValue)
@@ -214,7 +211,7 @@ namespace DCL.McpServer.Systems
             CompleteAndRemove(in intent, result);
         }
 
-        private McpPointerClickResult BuildResult(in McpEcsPointerEventIntent intent, World sceneWorld,
+        private McpPointerClickResult BuildResult(in McpPointerEventIntent intent, World sceneWorld,
             in PlayerOriginRaycastResultForSceneEntities raycastResult, in HoverStateComponent hoverState)
         {
             if (!RayPassesThroughAim(raycastResult.OriginRay, intent.InjectedAimPoint))
@@ -262,9 +259,9 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>The pipeline hit nothing usable: a cold-path raycast tells whether the aim reaches any collider at all.</summary>
-        private McpPointerClickResult DiagnoseMiss(in McpEcsPointerEventIntent intent, in Ray originRay)
+        private McpPointerClickResult DiagnoseMiss(in McpPointerEventIntent intent, in Ray originRay)
         {
-            if (!Physics.Raycast(originRay, out RaycastHit hit, MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
+            if (!Physics.Raycast(originRay, out RaycastHit hit, PlayerOriginatedRaycastSystem.MAX_RAYCAST_DISTANCE, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
                 return Failure(in intent, "the ray from the camera hit nothing (target may lack a collider)");
 
             return collidersGlobalCache.TryGetSceneEntity(hit.collider, out _)
@@ -273,7 +270,7 @@ namespace DCL.McpServer.Systems
         }
 
         /// <summary>The ray reached the expected entity, but the pipeline did not qualify it for cursor input.</summary>
-        private static McpPointerClickResult DiagnoseUnqualified(in McpEcsPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo, Entity hitEntity, int hitCrdtId, float distance)
+        private static McpPointerClickResult DiagnoseUnqualified(in McpPointerEventIntent intent, in GlobalColliderSceneEntityInfo entityInfo, Entity hitEntity, int hitCrdtId, float distance)
         {
             McpPointerClickResult result;
 
@@ -303,7 +300,7 @@ namespace DCL.McpServer.Systems
         ///     The release must land on the entity that received the press; a lone event with an explicit target
         ///     must land on that target. A pure aim-point event accepts whatever the pipeline hit.
         /// </summary>
-        private static bool IsExpectedTarget(in McpEcsPointerEventIntent intent, Entity hitEntity)
+        private static bool IsExpectedTarget(in McpPointerEventIntent intent, Entity hitEntity)
         {
             if (intent.Press is { } press)
                 return hitEntity == press.Entity;
@@ -337,10 +334,10 @@ namespace DCL.McpServer.Systems
             return tooltips is { Count: > 0 } ? tooltips[0].Text : null;
         }
 
-        private static Vector3 ResolveAimPoint(in McpEcsPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
+        private static Vector3 ResolveAimPoint(in McpPointerEventIntent intent, World sceneWorld, Entity targetEntity) =>
             intent.AimPoint ?? ResolveEntityAimPoint(sceneWorld, targetEntity);
 
-        private static bool TryResolveTarget(in McpEcsPointerEventIntent intent, World sceneWorld, out Entity targetEntity, out McpPointerClickResult failure)
+        private static bool TryResolveTarget(in McpPointerEventIntent intent, World sceneWorld, out Entity targetEntity, out McpPointerClickResult failure)
         {
             failure = default(McpPointerClickResult);
 
