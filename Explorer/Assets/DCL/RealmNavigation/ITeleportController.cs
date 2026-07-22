@@ -12,17 +12,21 @@ namespace DCL.RealmNavigation
     {
         void StartTeleportToSpawnPoint(SceneEntityDefinition sceneDataSceneEntityDefinition, CancellationToken ct);
 
+        /// <param name="parcel">The parcel to teleport to.</param>
+        /// <param name="loadReport">Reports the progress of the scene load.</param>
+        /// <param name="ct">Cancellation token for the teleport operation.</param>
         /// <param name="landOnParcel">When true, land at <paramref name="parcel" /> itself instead of the scene's spawn point.</param>
-        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false);
+        /// <param name="spawnPointName">When set, land at the scene's spawn point with this name (case-insensitive); an unmatched name falls back to the default selection.</param>
+        UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null);
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
     }
 
     public static class TeleportControllerExtensions
     {
-        public static async UniTask<EnumResult<TaskError>> TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false)
+        public static async UniTask<EnumResult<TaskError>> TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct, bool landOnParcel = false, string? spawnPointName = null)
         {
-            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct, landOnParcel);
+            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct, landOnParcel, spawnPointName);
             return await waitForSceneReadiness.ToUniTask();
         }
     }
@@ -32,19 +36,23 @@ namespace DCL.RealmNavigation
         private Vector2Int value;
         private bool consumed;
 
-        public StartParcel(Vector2Int value)
+        public StartParcel(Vector2Int value, string? spawnPointName = null)
         {
             this.value = value;
+            SpawnPointName = spawnPointName;
         }
+
+        public string? SpawnPointName { get; private set; }
 
         public bool IsConsumed() =>
             consumed;
 
-        public AssignResult Assign(Vector2Int newParcel)
+        public AssignResult Assign(Vector2Int newParcel, string? newSpawnPointName = null)
         {
-            if (consumed) return AssignResult.ParcelAlreadyConsumed;
+            if (consumed) return AssignResult.PARCEL_ALREADY_CONSUMED;
             value = newParcel;
-            return AssignResult.Ok;
+            SpawnPointName = newSpawnPointName;
+            return AssignResult.OK;
         }
 
         public Vector2Int ConsumeByTeleportOperation()
@@ -59,7 +67,7 @@ namespace DCL.RealmNavigation
 
     public enum AssignResult
     {
-        Ok,
-        ParcelAlreadyConsumed,
+        OK,
+        PARCEL_ALREADY_CONSUMED,
     }
 }

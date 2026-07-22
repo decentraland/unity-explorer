@@ -444,6 +444,7 @@ jobs:
         env:
           COUNT: ${{ steps.warnings.outputs.count }}
           BASELINE: ${{ steps.baseline.outputs.baseline }}
+          FINDINGS_TOTAL: ${{ steps.pr-findings.outputs.total || 0 }}
         run: |
           if [ -z "$COUNT" ]; then
             echo "No warning count computed (lint produced no result) - skipping comment payload."
@@ -455,7 +456,7 @@ jobs:
             --arg baseline "$BASELINE" \
             --argjson allow_equal "$IS_RELEASE_OR_HOTFIX" \
             --slurpfile findings pr-findings.json \
-            --argjson findings_total "${{ steps.pr-findings.outputs.total || 0 }}" \
+            --argjson findings_total "$FINDINGS_TOTAL" \
             '{pr: $pr, count: $count, baseline: (if $baseline == "" then null else ($baseline | tonumber) end), allow_equal: $allow_equal, pr_findings: ($findings[0] // []), pr_findings_total: $findings_total}' \
             > warning-result.json
           cat warning-result.json
@@ -691,6 +692,65 @@ jobs:
           fail-on-error: true
           fail-on-empty: true
           use-actions-summary: true
+          list-suites: failed
+          list-tests: failed
+
+      # Extracts just the failed test-case fullnames from the NUnit XML results, so the
+      # trusted pr-comment-test-failures.yml companion (workflow_run) can post a small,
+      # copy-pasteable PR comment - a dev can grab a name and re-run it locally instead of
+      # reading the full report.
+      - name: Extract failed test names
+        if: always() && github.event_name == 'pull_request'
+        env:
+          ARTIFACTS_PATH: ${{ steps.testRunner.outputs.artifactsPath }}
+          TEST_MODE: ${{ matrix.testMode }}
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, xml.etree.ElementTree as ET
+
+          artifacts_path = os.environ["ARTIFACTS_PATH"]
+          test_mode = os.environ["TEST_MODE"]
+
+          xml_files = glob.glob(f"{artifacts_path}/*.xml")
+          total = 0
+          passed = 0
+          failed = []
+
+          for path in xml_files:
+              try:
+                  root = ET.parse(path).getroot()
+              except ET.ParseError:
+                  continue
+              for test_case in root.iter("test-case"):
+                  case_result = test_case.get("result")
+                  if case_result is None:
+                      continue
+                  total += 1
+                  if case_result == "Passed":
+                      passed += 1
+                  elif case_result == "Failed":
+                      failed.append(test_case.get("fullname") or test_case.get("name"))
+
+          result = {
+              "hasResults": len(xml_files) > 0,
+              "total": total,
+              "passed": passed,
+              "failed": sorted(set(failed)),
+          }
+
+          with open(f"failed-tests-{test_mode}.json", "w") as f:
+              json.dump(result, f)
+
+          print(f"[{test_mode}] xml files: {len(xml_files)}, total: {total}, passed: {passed}, failed: {len(result['failed'])}")
+          PY
+
+      - name: Upload failed test names
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-tests-${{ matrix.testMode }}
+          path: failed-tests-${{ matrix.testMode }}.json
+          if-no-files-found: ignore
 
       # Upload artifact
       - uses: actions/upload-artifact@v6
