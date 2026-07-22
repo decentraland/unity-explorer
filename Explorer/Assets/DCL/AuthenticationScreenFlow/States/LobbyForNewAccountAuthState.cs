@@ -48,6 +48,7 @@ namespace DCL.AuthenticationScreenFlow
         private string userEmail;
         private CancellationToken loginCt;
         private bool referralTracked;
+        private bool referralInFlight;
 
         private readonly CharacterPreviewView characterPreviewView;
         private readonly Vector3 characterPreviewOrigPosition;
@@ -95,21 +96,19 @@ namespace DCL.AuthenticationScreenFlow
             selectedBodyType = BodyShape.MALE;
             newUserProfile = payload.profile;
 
+            // Referral attribution: this state runs exclusively for new accounts, which is the
+            // "invited user signed up" signal. Fired BEFORE the LoggedIn status transition below
+            // so the referral is created before any LOGGED_IN event can reach the backend (whose
+            // finalize step drops events for referrals that don't exist yet). Errors never block
+            // onboarding; a duplicate (already-registered) is expected when a previous attempt or
+            // the web setup flow already recorded it.
+            if (referrer != null && !referralTracked && !referralInFlight)
+                TrackReferralAsync().Forget();
+
             InitializeAvatarAsync().Forget();
 
             controller.IsCurrentlyNewAccount = true;
             currentState.Value = payload.isCached ? AuthStatus.LoggedInCached : AuthStatus.LoggedIn;
-
-            // Referral attribution: this state runs exclusively for new accounts, which is the
-            // "invited user signed up" signal. Registered as early as possible so the referral
-            // exists before the first LOGGED_IN event reaches the referral backend. Errors are
-            // logged and never block onboarding; a duplicate (already-registered) is expected
-            // when the backend recorded a previous attempt.
-            if (referrer != null && !referralTracked)
-            {
-                referralTracked = true;
-                TrackReferralAsync().Forget();
-            }
 
             view.Show();
             characterPreviewView.transform.SetParent(view.transform);
@@ -345,6 +344,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTaskVoid TrackReferralAsync()
         {
+            referralInFlight = true;
             try
             {
                 string url = decentralandUrlsSource.Url(DecentralandUrl.ReferralProgress);
@@ -358,14 +358,19 @@ namespace DCL.AuthenticationScreenFlow
                                                string.Empty,
                                                CancellationToken.None) // survives login-flow cancellation
                                           .WithNoOpAsync();
+
+                // Only mark as done on success, so a transient failure (network, 5xx) is retried
+                // on the next entry to this state instead of being silently dropped for the session.
+                referralTracked = true;
             }
             catch (Exception e)
             {
-                // Best-effort attribution: a failure here (including the expected "already registered"
-                // response when the web setup flow already tracked it) must not surface as a Sentry
-                // error. The launcher retries on the next launch and the referral finalizes on login.
+                // Best-effort attribution: a failure here must not surface as a Sentry error nor
+                // block onboarding. referralTracked stays false so a re-entry retries; the referrer
+                // also persists in the launcher, and finalize runs off the login events regardless.
                 ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral tracking (POST) failed: {e.Message}");
             }
+            finally { referralInFlight = false; }
         }
 
         private async UniTaskVoid MarkReferralSignedUpAsync()
