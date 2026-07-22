@@ -13,9 +13,9 @@ namespace DCL.McpServer.Tools
 {
     /// <summary>
     ///     Presses a pointer button on a scene entity by composing single-event <see cref="McpEcsPointerEventIntent" />s
-    ///     delivered by McpPointerEventSystem, which validates the aim with the same raycast rules as the reticle
-    ///     pipeline before filling the entity's pointer-event intent like a real click. A full click is a press
-    ///     followed by a release ordered onto a later scene tick, merged into one result here.
+    ///     delivered by McpPointerEventSystem through the real reticle pipeline (a synthetic aim and button edge
+    ///     posted to it), so occlusion, distance gates and the scene write-back are the production ones. A full
+    ///     click is a press followed by a release ordered onto a later scene tick, merged into one result here.
     /// </summary>
     public class ClickEntityTool : McpTool
     {
@@ -47,7 +47,7 @@ namespace DCL.McpServer.Tools
 
         public override string Description =>
             "Press and release a pointer button on a scene entity so its PointerEvents fire exactly like a real click. "
-            + "The aim is validated by a physics raycast from the camera: occluders and the entity's maxDistance apply, and a miss "
+            + "The click runs through the real reticle pipeline: occluders and the entity's maxDistance apply, and a miss "
             + "returns hit:false with the blocking entity. Ids come from list_scene_entities. For entities whose collider "
             + "sits away from their pivot (e.g. GLTF meshes), pass an explicit x/y/z world point to aim at.";
 
@@ -164,14 +164,11 @@ namespace DCL.McpServer.Tools
             McpPointerClickResult up = await SendAsync(new McpEcsPointerEventIntent(targetEntityId, sceneId, aimPoint, button, PointerEventType.PetUp, down.Press));
 
             if (!up.UpRayMissed)
-                return up; // a fresh release, or a failure (scene reload, timeout, preemption) that tells the whole story
+                return up; // a fresh release, or a failure (scene reload, preemption) that tells the whole story
 
-            // The release needed the press-frame hit: report the press delivery and flag the divergence.
+            // The release did not reach the target: report the delivered press and flag the divergence.
             down.UpRayMissed = true;
-
-            if (!up.Hit)
-                down.FailureReason = $"the entity disappeared after the press ({up.FailureReason}); only PetDown was delivered";
-
+            down.FailureReason = $"the release did not reach the target ({up.FailureReason}); the scene received only the press";
             return down;
         }
 

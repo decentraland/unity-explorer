@@ -81,7 +81,8 @@ namespace DCL.PluginSystem.Global
                     new PlayerOriginRaycastResultForGlobalEntities(),
                     new HoverStateComponent(),
                     new HoverFeedbackComponent(hoverCanvas.TooltipsCount),
-                    new ProximityResultForSceneEntities()),
+                    new ProximityResultForSceneEntities(),
+                    new SyntheticPointerInput()),
                 builder.World, arguments.PlayerEntity);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,

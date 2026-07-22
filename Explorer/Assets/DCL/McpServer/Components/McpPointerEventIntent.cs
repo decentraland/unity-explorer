@@ -2,17 +2,16 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.McpServer.Core;
 using UnityEngine;
-using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.McpServer.Components
 {
     /// <summary>
     ///     Present on the player entity while a single agent-requested pointer event awaits delivery.
-    ///     McpPointerEventSystem validates the aim with a physics raycast, appends the event to the target's
-    ///     <see cref="PBPointerEvents.AppendPointerEventResultsIntent" /> and removes the component. The request
-    ///     is immutable; a full click is composed by the click_entity tool from two intents — a press, then a
-    ///     release carrying the press <see cref="Press" /> handoff. A request the simulation never picks up is
-    ///     removed by the tool-side timeout.
+    ///     McpPointerEventSystem drives the real reticle pipeline: it posts a synthetic aim and button edge for
+    ///     one frame and reads the outcome from the pipeline's own raycast and hover state one frame later. The
+    ///     request fields are immutable; a full click is composed by the click_entity tool from two intents — a
+    ///     press, then a release carrying the press <see cref="Press" /> handoff. A request the simulation never
+    ///     picks up is removed by the tool-side timeout.
     /// </summary>
     public struct McpEcsPointerEventIntent : IMcpEcsRequest<McpPointerClickResult>
     {
@@ -35,13 +34,22 @@ namespace DCL.McpServer.Components
         public readonly PointerEventType EventType;
 
         /// <summary>
-        ///     Set on the release leg of a click: the press this release must stay ordered after. Delivery waits
-        ///     until the scene has advanced past the press tick, is bound to the world that received the press,
-        ///     and falls back to the press-frame hit when the fresh ray no longer reaches the target.
+        ///     Set on the release leg of a click: the press this release must stay ordered after. The synthetic
+        ///     release is posted only once the scene has advanced past the press tick, and only while the world
+        ///     that received the press is still the current one.
         /// </summary>
         public readonly McpPressHandoff? Press;
 
         public UniTaskCompletionSource<McpPointerClickResult>? Completion { get; set; }
+
+        /// <summary>Set once the synthetic input was posted to the pipeline; the outcome is observed one frame later.</summary>
+        public bool Injected;
+
+        /// <summary>Scene tick at the moment the synthetic input was posted; the press handoff carries it for release ordering.</summary>
+        public uint InjectedTick;
+
+        /// <summary>The world point the posted aim targeted, to recognize the pipeline's answer on the observe frame.</summary>
+        public Vector3 InjectedAimPoint;
 
         public McpEcsPointerEventIntent(int targetEntityId, string? sceneId, Vector3? aimPoint, InputAction button, PointerEventType eventType, McpPressHandoff? press = null)
         {
@@ -52,20 +60,21 @@ namespace DCL.McpServer.Components
             EventType = eventType;
             Press = press;
             Completion = null;
+            Injected = false;
+            InjectedTick = 0;
+            InjectedAimPoint = Vector3.zero;
         }
     }
 
     /// <summary>
-    ///     Where a delivered pointer event landed. Handed back inside <see cref="McpPointerClickResult" /> and
-    ///     passed verbatim on the release intent of a click. In-process only, never serialized.
+    ///     Where a delivered press landed. Handed back inside <see cref="McpPointerClickResult" /> and passed
+    ///     verbatim on the release intent of a click. In-process only, never serialized.
     /// </summary>
     public struct McpPressHandoff
     {
         public Arch.Core.World World;
         public Arch.Core.Entity Entity;
         public uint Tick;
-        public RaycastHit Hit;
-        public Ray Ray;
     }
 
     /// <summary>Outcome of a synthetic pointer event or click, serialized by the click_entity tool.</summary>
@@ -83,12 +92,13 @@ namespace DCL.McpServer.Components
         public string? BlockedByColliderName;
 
         /// <summary>
-        ///     The release ray no longer hit the target (it moved after the press): PetUp was delivered with the
-        ///     press-frame hit, or not at all when <see cref="Hit" /> is also false.
+        ///     The release did not reach the press target (it moved, died or got occluded after the press):
+        ///     the scene received only the PetDown, exactly as it would for a real cursor that lost its target
+        ///     mid-click.
         /// </summary>
         public bool UpRayMissed;
 
-        /// <summary>Where the event landed; the click_entity tool passes it back on the release leg of a click. In-process only.</summary>
+        /// <summary>Where the press landed; the click_entity tool passes it back on the release leg of a click. In-process only.</summary>
         public McpPressHandoff? Press;
     }
 }

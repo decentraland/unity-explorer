@@ -26,6 +26,10 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     ///         Raycasts from the player camera and prepares data that will be consumed by other systems
     ///     </para>
     ///     <para>
+    ///         When a <see cref="SyntheticPointerInput" /> aim is posted for this frame, the ray is built from the
+    ///         camera through that world point instead of the cursor, so automation drivers steer the same pipeline
+    ///     </para>
+    ///     <para>
     ///         Runs in the global world
     ///     </para>
     /// </summary>
@@ -34,6 +38,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
     {
+        private const float SYNTHETIC_AIM_EPSILON_SQR = 0.0001f;
+
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly float maxRaycastDistance;
         private readonly PlayerInteractionEntity playerInteractionEntity;
@@ -72,7 +78,19 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     return;
                 }
 
-                Ray ray = CreateRay(in camera, in cursorComponent);
+                Ray ray;
+
+                if (playerInteractionEntity.SyntheticPointerInput.AimPoint is { } syntheticAimPoint)
+                {
+                    if (!TryCreateRayThrough(in camera, syntheticAimPoint, out ray))
+                    {
+                        raycastResultForSceneEntities.Reset();
+                        raycastResultForGlobalEntities.Reset();
+                        return;
+                    }
+                }
+                else
+                    ray = CreateRay(in camera, in cursorComponent);
 
                 // we are interested in one hit only
                 bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
@@ -127,6 +145,22 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             cameraComponent.Camera.ScreenPointToRay(cursorComponent.CursorState != CursorState.Free
                 ? new Vector3(cameraComponent.Camera.pixelWidth / 2f, cameraComponent.Camera.pixelHeight / 2f, 0)
                 : cursorComponent.Position);
+
+        /// <summary>A ray from the camera through a world point; degenerate when the camera stands on the point.</summary>
+        private static bool TryCreateRayThrough(in CameraComponent cameraComponent, Vector3 worldPoint, out Ray ray)
+        {
+            Vector3 origin = cameraComponent.Camera.transform.position;
+            Vector3 direction = worldPoint - origin;
+
+            if (direction.sqrMagnitude < SYNTHETIC_AIM_EPSILON_SQR)
+            {
+                ray = default(Ray);
+                return false;
+            }
+
+            ray = new Ray(origin, direction.normalized);
+            return true;
+        }
 
     }
 }
