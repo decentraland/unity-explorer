@@ -39,12 +39,9 @@ namespace DCL.Ipfs
         [JsonProperty("versions")]
         public AssetBundleManifestVersion? assetBundleManifestVersion;
 
-        //Cached: CreateFailed() allocates three objects and this property is read from per-entity-load paths.
-        private static readonly AssetBundleManifestVersion FAILED_MANIFEST = AssetBundleManifestVersion.CreateFailed();
-
-        /// <summary>The manifest version, or a failed sentinel when none was resolved — AB intentions require a manifest, and the sentinel is the same dead end the pipeline already handles.</summary>
+        /// <summary>The manifest version, or the failed sentinel when none was resolved — AB intentions require a manifest, and the sentinel is the same dead end the pipeline already handles.</summary>
         [JsonIgnore]
-        public AssetBundleManifestVersion AssetBundleManifestVersionOrFailed => assetBundleManifestVersion ?? FAILED_MANIFEST;
+        public AssetBundleManifestVersion AssetBundleManifestVersionOrFailed => assetBundleManifestVersion ?? AssetBundleManifestVersion.FAILED;
 
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;

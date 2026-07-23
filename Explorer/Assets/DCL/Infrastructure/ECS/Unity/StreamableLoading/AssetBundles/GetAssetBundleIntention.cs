@@ -13,9 +13,10 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public string? Hash;
 
-        //Required by every factory — an AB can never be requested without a manifest. Only default-initialized structs (never flowed into loading) can carry null.
-        public AssetBundleManifestVersion AssetBundleManifest;
         public string ParentEntityID;
+
+        //Backing for AssetBundleManifest — nullable because default-initialized structs zero reference fields; set by every factory.
+        private AssetBundleManifestVersion? assetBundleManifest;
 
         /// <summary>
         ///     If the expected object type is null we don't know which asset will be loaded.
@@ -55,7 +56,7 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheHash = null;
 
             ParentEntityID = parentEntityID;
-            AssetBundleManifest = assetBundle;
+            assetBundleManifest = assetBundle;
             IsDependency = isDependency;
             LookForDependencies = lookForDependencies;
         }
@@ -63,8 +64,10 @@ namespace ECS.StreamableLoading.AssetBundles
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
         {
             CommonArguments = commonArguments;
-            AssetBundleManifest = AssetBundleManifestVersion.CreateManualManifest();
         }
+
+        /// <summary>An AB can never be requested without a manifest: every factory sets one, and default-initialized structs (which never flow into loading) observe the failed sentinel.</summary>
+        public readonly AssetBundleManifestVersion AssetBundleManifest => assetBundleManifest ?? AssetBundleManifestVersion.FAILED;
 
         // Hash alone identifies the bundle: v49+ hashes carry the deps digest inside the file name, so two dependency closures never share a Hash.
         public bool Equals(GetAssetBundleIntention other) =>

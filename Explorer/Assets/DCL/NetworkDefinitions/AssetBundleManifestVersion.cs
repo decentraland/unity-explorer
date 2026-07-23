@@ -23,6 +23,9 @@ public class AssetBundleManifestVersion
         public static readonly int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public static readonly int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
+        //Shared sentinel for paths that require a manifest but have none; injections no-op on failed manifests, so the instance stays immutable.
+        public static readonly AssetBundleManifestVersion FAILED = CreateFailed();
+
         private static readonly char[] FILE_NAME_SEPARATOR = { '_' };
 
         private bool? HasHashInPathValue;
@@ -158,7 +161,7 @@ public class AssetBundleManifestVersion
         public bool IsEmpty() =>
             assets?.IsEmpty() ?? true;
 
-        public static AssetBundleManifestVersion CreateFailed()
+        private static AssetBundleManifestVersion CreateFailed()
         {
             //All AB requests will fail when this occurs; its a dead end
             var failedAssets = new AssetBundleManifestVersionPerPlatform();
@@ -232,6 +235,9 @@ public class AssetBundleManifestVersion
 
         public void InjectContent(string entityID, ContentDefinition[] entityDefinitionContent)
         {
+            // A failed manifest serves no file names — and it can be the shared FAILED sentinel, which must never be mutated.
+            if (assetBundleManifestRequestFailed) return;
+
             // TODO (JUANI): hack, for older Qm. Doesnt happen with bafk because they are all lowercase
             // This has a long due capitalization problem. The hash in Mac which is requested should always be lower case, since the output files are lowercase and the
             // request to S3 is case sensitive.
