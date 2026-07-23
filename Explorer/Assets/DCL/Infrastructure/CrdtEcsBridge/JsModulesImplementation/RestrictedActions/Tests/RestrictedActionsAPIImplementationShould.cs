@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             });
             systemClipboard = Substitute.For<ISystemClipboard>();
             explorerUiActions = Substitute.For<IExplorerUiActions>();
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenSectionResult.Opened);
+            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.Opened);
             sceneWorld = World.Create();
             Entity scenePlayerEntity = sceneWorld.Create();
             restrictedActionsAPIImplementation = new RestrictedActionsAPIImplementation(
@@ -204,16 +204,27 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        public void OpenExplorerUi_AlreadyOpen_Rejects()
+        public void OpenExplorerUi_AlreadyOpen_ReturnsWasAlreadyOpen()
         {
             // Arrange
-            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenSectionResult.AlreadyOpen);
+            explorerUiActions.OpenSection(Arg.Any<ExploreSections>()).Returns(OpenExplorerUiResult.WasAlreadyOpen);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuMap);
 
             // Assert
-            Assert.AreEqual((int)OpenExplorerUiResult.RejectedAlreadyOpen, result);
+            Assert.AreEqual((int)OpenExplorerUiResult.WasAlreadyOpen, result);
+        }
+
+        [Test]
+        public void OpenExplorerUi_UnknownUiValue_Rejects()
+        {
+            // Act: 99 is not a member of the ExplorerUi enum, so the section mapping must fail.
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi(99);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
         }
 
         [Test]

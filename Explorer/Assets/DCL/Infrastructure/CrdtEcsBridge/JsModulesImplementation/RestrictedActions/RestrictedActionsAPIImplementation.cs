@@ -236,10 +236,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
             }
 
-            if (explorerUiActions.OpenSection(section) == OpenSectionResult.AlreadyOpen)
-                return (int)OpenExplorerUiResult.RejectedAlreadyOpen;
-
-            return (int)OpenExplorerUiResult.Opened;
+            return (int)explorerUiActions.OpenSection(section);
         }
 
         public void Dispose()
@@ -304,7 +301,7 @@ namespace CrdtEcsBridge.RestrictedActions
         /// <summary>
         ///     Maps a protocol <see cref="ExplorerUi" /> value to its explore panel section and, when the
         ///     section is behind a synchronous feature flag, the <see cref="FeatureId" /> that gates it.
-        ///     Returns false for unspecified or unknown values so the caller can reject the request.
+        ///     Returns false for unknown values so the caller can reject the request.
         /// </summary>
         private static bool TryMapExplorerUi(ExplorerUi ui, out ExploreSections section, out FeatureId? gatingFeature)
         {
@@ -338,7 +335,6 @@ namespace CrdtEcsBridge.RestrictedActions
                     section = ExploreSections.Events;
                     gatingFeature = FeatureId.DISCOVER;
                     return true;
-                case ExplorerUi.EuUnspecified:
                 default:
                     section = default(ExploreSections);
                     gatingFeature = null;

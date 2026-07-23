@@ -12,21 +12,20 @@ function makeEnum(entries) {
 }
 
 module.exports.ExplorerUi = makeEnum([
-    ['EU_UNSPECIFIED', 0],
+    ['EU_SETTINGS', 0],
     ['EU_MAP', 1],
-    ['EU_SETTINGS', 2],
-    ['EU_BACKPACK', 3],
-    ['EU_CAMERA_REEL', 4],
-    ['EU_COMMUNITIES', 5],
-    ['EU_PLACES', 6],
-    ['EU_EVENTS', 7],
+    ['EU_BACKPACK', 2],
+    ['EU_CAMERA_REEL', 3],
+    ['EU_COMMUNITIES', 4],
+    ['EU_PLACES', 5],
+    ['EU_EVENTS', 6],
 ]);
 
 module.exports.OpenExplorerUiResult = makeEnum([
     ['UNSPECIFIED', 0],
     ['OPENED', 1],
-    ['REJECTED_NOT_CURRENT_SCENE', 2],
-    ['REJECTED_ALREADY_OPEN', 3],
+    ['WAS_ALREADY_OPEN', 2],
+    ['REJECTED_NOT_CURRENT_SCENE', 3],
     ['REJECTED_FEATURE_DISABLED', 4],
     ['REJECTED_NO_USER_GESTURE', 5],
 ]);

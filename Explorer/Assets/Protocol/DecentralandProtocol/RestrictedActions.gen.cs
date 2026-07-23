@@ -54,43 +54,42 @@ namespace Decentraland.Kernel.Apis {
             "cGVuRXhwbG9yZXJVaVJlcXVlc3QSMAoCdWkYASABKA4yJC5kZWNlbnRyYWxh",
             "bmQua2VybmVsLmFwaXMuRXhwbG9yZXJVaSJdChZPcGVuRXhwbG9yZXJVaVJl",
             "c3BvbnNlEkMKC29wZW5fcmVzdWx0GAEgASgOMi4uZGVjZW50cmFsYW5kLmtl",
-            "cm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzdWx0KpQBCgpFeHBsb3JlclVp",
-            "EhIKDkVVX1VOU1BFQ0lGSUVEEAASCgoGRVVfTUFQEAESDwoLRVVfU0VUVElO",
-            "R1MQAhIPCgtFVV9CQUNLUEFDSxADEhIKDkVVX0NBTUVSQV9SRUVMEAQSEgoO",
-            "RVVfQ09NTVVOSVRJRVMQBRINCglFVV9QTEFDRVMQBhINCglFVV9FVkVOVFMQ",
-            "ByqrAQoUT3BlbkV4cGxvcmVyVWlSZXN1bHQSDwoLVU5TUEVDSUZJRUQQABIK",
-            "CgZPUEVORUQQARIeChpSRUpFQ1RFRF9OT1RfQ1VSUkVOVF9TQ0VORRACEhkK",
-            "FVJFSkVDVEVEX0FMUkVBRFlfT1BFThADEh0KGVJFSkVDVEVEX0ZFQVRVUkVf",
-            "RElTQUJMRUQQBBIcChhSRUpFQ1RFRF9OT19VU0VSX0dFU1RVUkUQBTLsCQoY",
-            "UmVzdHJpY3RlZEFjdGlvbnNTZXJ2aWNlEm8KDE1vdmVQbGF5ZXJUbxItLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXF1ZXN0Gi4u",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1vdmVQbGF5ZXJUb1Jlc3BvbnNl",
-            "IgASaQoKVGVsZXBvcnRUbxIrLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
-            "ZWxlcG9ydFRvUmVxdWVzdBosLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
-            "ZWxlcG9ydFRvUmVzcG9uc2UiABJvCgxUcmlnZ2VyRW1vdGUSLS5kZWNlbnRy",
-            "YWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVxdWVzdBouLmRlY2Vu",
-            "dHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2VyRW1vdGVSZXNwb25zZSIAEmgK",
-            "C0NoYW5nZVJlYWxtEiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNoYW5n",
-            "ZVJlYWxtUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNj",
-            "ZXNzUmVzcG9uc2UiABJwCg9PcGVuRXh0ZXJuYWxVcmwSMC5kZWNlbnRyYWxh",
-            "bmQua2VybmVsLmFwaXMuT3BlbkV4dGVybmFsVXJsUmVxdWVzdBopLmRlY2Vu",
-            "dHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJsCg1PcGVu",
-            "TmZ0RGlhbG9nEi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk9wZW5OZnRE",
-            "aWFsb2dSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
-            "c3NSZXNwb25zZSIAEnYKGFNldENvbW11bmljYXRpb25zQWRhcHRlchItLmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Db21tc0FkYXB0ZXJSZXF1ZXN0Giku",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnQK",
-            "EVRyaWdnZXJTY2VuZUVtb3RlEjIuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
-            "LlRyaWdnZXJTY2VuZUVtb3RlUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJu",
-            "ZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJuCg9Db3B5VG9DbGlwYm9hcmQS",
-            "MC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ29weVRvQ2xpcGJvYXJkUmVx",
-            "dWVzdBonLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5FbXB0eVJlc3BvbnNl",
-            "IgASZAoJU3RvcEVtb3RlEiouZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN0",
-            "b3BFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3Vj",
-            "Y2Vzc1Jlc3BvbnNlIgASdQoOT3BlbkV4cGxvcmVyVWkSLy5kZWNlbnRyYWxh",
-            "bmQua2VybmVsLmFwaXMuT3BlbkV4cGxvcmVyVWlSZXF1ZXN0GjAuZGVjZW50",
-            "cmFsYW5kLmtlcm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzcG9uc2UiAGIG",
-            "cHJvdG8z"));
+            "cm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzdWx0KoABCgpFeHBsb3JlclVp",
+            "Eg8KC0VVX1NFVFRJTkdTEAASCgoGRVVfTUFQEAESDwoLRVVfQkFDS1BBQ0sQ",
+            "AhISCg5FVV9DQU1FUkFfUkVFTBADEhIKDkVVX0NPTU1VTklUSUVTEAQSDQoJ",
+            "RVVfUExBQ0VTEAUSDQoJRVVfRVZFTlRTEAYqpgEKFE9wZW5FeHBsb3JlclVp",
+            "UmVzdWx0Eg8KC1VOU1BFQ0lGSUVEEAASCgoGT1BFTkVEEAESFAoQV0FTX0FM",
+            "UkVBRFlfT1BFThACEh4KGlJFSkVDVEVEX05PVF9DVVJSRU5UX1NDRU5FEAMS",
+            "HQoZUkVKRUNURURfRkVBVFVSRV9ESVNBQkxFRBAEEhwKGFJFSkVDVEVEX05P",
+            "X1VTRVJfR0VTVFVSRRAFMuwJChhSZXN0cmljdGVkQWN0aW9uc1NlcnZpY2US",
+            "bwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1v",
+            "dmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
+            "TW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRvEisuZGVjZW50",
+            "cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0GiwuZGVjZW50",
+            "cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25zZSIAEm8KDFRy",
+            "aWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2Vy",
+            "RW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRyaWdn",
+            "ZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0GikuZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAKD09wZW5FeHRl",
+            "cm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXh0ZXJu",
+            "YWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nl",
+            "c3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoYU2V0Q29tbXVu",
+            "aWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkNv",
+            "bW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
+            "U3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1vdGUSMi5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1vdGVSZXF1ZXN0",
+            "GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIA",
+            "Em4KD0NvcHlUb0NsaXBib2FyZBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
+            "cy5Db3B5VG9DbGlwYm9hcmRSZXF1ZXN0GicuZGVjZW50cmFsYW5kLmtlcm5l",
+            "bC5hcGlzLkVtcHR5UmVzcG9uc2UiABJkCglTdG9wRW1vdGUSKi5kZWNlbnRy",
+            "YWxhbmQua2VybmVsLmFwaXMuU3RvcEVtb3RlUmVxdWVzdBopLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ1Cg5PcGVuRXhw",
+            "bG9yZXJVaRIvLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuRXhwbG9y",
+            "ZXJVaVJlcXVlc3QaMC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuT3BlbkV4",
+            "cGxvcmVyVWlSZXNwb25zZSIAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.ExplorerUi), typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResult), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -120,36 +119,34 @@ namespace Decentraland.Kernel.Apis {
   #region Enums
   /// <summary>
   /// Identifies which fullscreen explorer panel OpenExplorerUi targets.
-  /// Additive: new panels are appended with the next number; existing values never change.
+  /// EU_SETTINGS holds 0 so an unset `ui` field defaults to the least-intrusive panel.
   /// </summary>
   public enum ExplorerUi {
-    [pbr::OriginalName("EU_UNSPECIFIED")] EuUnspecified = 0,
+    [pbr::OriginalName("EU_SETTINGS")] EuSettings = 0,
     [pbr::OriginalName("EU_MAP")] EuMap = 1,
-    [pbr::OriginalName("EU_SETTINGS")] EuSettings = 2,
-    [pbr::OriginalName("EU_BACKPACK")] EuBackpack = 3,
-    [pbr::OriginalName("EU_CAMERA_REEL")] EuCameraReel = 4,
-    [pbr::OriginalName("EU_COMMUNITIES")] EuCommunities = 5,
-    [pbr::OriginalName("EU_PLACES")] EuPlaces = 6,
-    [pbr::OriginalName("EU_EVENTS")] EuEvents = 7,
+    [pbr::OriginalName("EU_BACKPACK")] EuBackpack = 2,
+    [pbr::OriginalName("EU_CAMERA_REEL")] EuCameraReel = 3,
+    [pbr::OriginalName("EU_COMMUNITIES")] EuCommunities = 4,
+    [pbr::OriginalName("EU_PLACES")] EuPlaces = 5,
+    [pbr::OriginalName("EU_EVENTS")] EuEvents = 6,
   }
 
   /// <summary>
   /// Verdict of an OpenExplorerUi request (enum rather than a bool so new outcomes stay expressible).
-  /// Additive: new rejection reasons may be appended; existing values never change.
   /// </summary>
   public enum OpenExplorerUiResult {
     [pbr::OriginalName("UNSPECIFIED")] Unspecified = 0,
     [pbr::OriginalName("OPENED")] Opened = 1,
     /// <summary>
-    /// the standard restricted-actions current-scene gate rejected the call
-    /// </summary>
-    [pbr::OriginalName("REJECTED_NOT_CURRENT_SCENE")] RejectedNotCurrentScene = 2,
-    /// <summary>
     /// a fullscreen panel is already open
     /// </summary>
-    [pbr::OriginalName("REJECTED_ALREADY_OPEN")] RejectedAlreadyOpen = 3,
+    [pbr::OriginalName("WAS_ALREADY_OPEN")] WasAlreadyOpen = 2,
     /// <summary>
-    /// the requested section is hidden by feature flags
+    /// the standard restricted-actions current-scene gate rejected the call
+    /// </summary>
+    [pbr::OriginalName("REJECTED_NOT_CURRENT_SCENE")] RejectedNotCurrentScene = 3,
+    /// <summary>
+    /// the requested section is hidden by feature flags or client doesn't have that feature
     /// </summary>
     [pbr::OriginalName("REJECTED_FEATURE_DISABLED")] RejectedFeatureDisabled = 4,
     /// <summary>
@@ -3569,7 +3566,7 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "ui" field.</summary>
     public const int UiFieldNumber = 1;
-    private global::Decentraland.Kernel.Apis.ExplorerUi ui_ = global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified;
+    private global::Decentraland.Kernel.Apis.ExplorerUi ui_ = global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::Decentraland.Kernel.Apis.ExplorerUi Ui {
@@ -3602,7 +3599,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) hash ^= Ui.GetHashCode();
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) hash ^= Ui.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3621,7 +3618,7 @@ namespace Decentraland.Kernel.Apis {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Ui);
       }
@@ -3635,7 +3632,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
         output.WriteRawTag(8);
         output.WriteEnum((int) Ui);
       }
@@ -3649,7 +3646,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Ui);
       }
       if (_unknownFields != null) {
@@ -3664,7 +3661,7 @@ namespace Decentraland.Kernel.Apis {
       if (other == null) {
         return;
       }
-      if (other.Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+      if (other.Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuSettings) {
         Ui = other.Ui;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -3769,9 +3766,7 @@ namespace Decentraland.Kernel.Apis {
     public const int OpenResultFieldNumber = 1;
     private global::Decentraland.Kernel.Apis.OpenExplorerUiResult openResult_ = global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified;
     /// <summary>
-    /// Carries only the verdict of the open action. Post-open signals (panel closed, flow
-    /// outcomes, milestones) are deliberately out of scope here and are delivered through a
-    /// separate additive event channel (a grow-only scene component), keeping this contract stable.
+    /// Carries only the verdict of the open action. 
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

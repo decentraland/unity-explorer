@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.ExplorePanel;
 using DCL.UI;
+using Decentraland.Kernel.Apis;
 using MVC;
 
 namespace DCL.SceneRunner
@@ -30,13 +31,13 @@ namespace DCL.SceneRunner
             mvcManager.OnViewClosed -= OnViewClosed;
         }
 
-        public OpenSectionResult OpenSection(ExploreSections section)
+        public OpenExplorerUiResult OpenSection(ExploreSections section)
         {
             if (isExplorePanelOpen)
-                return OpenSectionResult.AlreadyOpen;
+                return OpenExplorerUiResult.WasAlreadyOpen;
 
             OpenSectionAsync(section).Forget();
-            return OpenSectionResult.Opened;
+            return OpenExplorerUiResult.Opened;
         }
 
         private async UniTask OpenSectionAsync(ExploreSections section)
