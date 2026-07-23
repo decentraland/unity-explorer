@@ -2,16 +2,20 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
+using DCL.CrdtEcsBridge.JsModulesImplementation;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
+using DCL.UI;
 using Utility.Arch;
 using DCL.ExternalUrlPrompt;
 using DCL.NftPrompt;
+using DCL.SceneRuntime.Apis.RestrictedActionsApi;
 using DCL.TeleportPrompt;
 using DCL.Utilities;
+using Decentraland.Kernel.Apis;
 using MVC;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.ScenePermissions;
 using System;
 using System.Threading;
@@ -22,12 +26,15 @@ namespace CrdtEcsBridge.RestrictedActions
 {
     public class RestrictedActionsAPIImplementation : IRestrictedActionsAPI
     {
+        private const uint USER_GESTURE_WINDOW_TICKS = 1;
+
         private readonly IMVCManager mvcManager;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalWorldActions globalWorldActions;
         private readonly ISceneData sceneData;
         private readonly IJsApiPermissionsProvider permissionsProvider;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IExplorerUiActions explorerUiActions;
         private readonly Arch.Core.World sceneWorld;
         private readonly Arch.Core.Entity scenePlayerEntity;
 
@@ -39,7 +46,8 @@ namespace CrdtEcsBridge.RestrictedActions
             IJsApiPermissionsProvider permissionsProvider,
             ISystemClipboard systemClipboard,
             Arch.Core.World sceneWorld,
-            Arch.Core.Entity scenePlayerEntity)
+            Arch.Core.Entity scenePlayerEntity,
+            IExplorerUiActions explorerUiActions)
         {
             this.mvcManager = mvcManager;
             this.sceneStateProvider = sceneStateProvider;
@@ -49,6 +57,7 @@ namespace CrdtEcsBridge.RestrictedActions
             this.systemClipboard = systemClipboard;
             this.sceneWorld = sceneWorld;
             this.scenePlayerEntity = scenePlayerEntity;
+            this.explorerUiActions = explorerUiActions;
         }
 
         public bool TryOpenExternalUrl(string url)
@@ -200,6 +209,44 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public int TryOpenExplorerUi(int ui)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return (int)OpenExplorerUiResult.RejectedNotCurrentScene;
+
+            // Underflow-safe recent-gesture check: never subtract unsigned ticks. The "== 0" guard is
+            // load-bearing — a scene where no user input has ever been recorded must be rejected.
+            uint lastUserInputTick = sceneStateProvider.LastUserInputTick;
+
+            if (lastUserInputTick == 0 || lastUserInputTick + USER_GESTURE_WINDOW_TICKS < sceneStateProvider.TickNumber)
+            {
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenExplorerUi: rejected, call did not originate from a recent user gesture");
+                return (int)OpenExplorerUiResult.RejectedNoUserGesture;
+            }
+
+            if (!TryMapExplorerUi((ExplorerUi)ui, out ExploreSections section, out FeatureId? gatingFeature))
+            {
+                ReportHub.LogWarning(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: unsupported ui value '{ui}'");
+                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
+            if (gatingFeature.HasValue && !FeaturesRegistry.Instance.IsEnabled(gatingFeature.Value))
+            {
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, $"OpenExplorerUi: feature '{gatingFeature.Value}' is disabled");
+                return (int)OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
+            if (explorerUiActions.OpenSection(section) == OpenSectionResult.AlreadyOpen)
+                return (int)OpenExplorerUiResult.RejectedAlreadyOpen;
+
+            return (int)OpenExplorerUiResult.Opened;
+        }
+
+        public void Dispose()
+        {
+            explorerUiActions.Dispose();
+        }
+
         public void TryCopyToClipboard(string text)
         {
             if (!sceneStateProvider.IsCurrent)
@@ -252,6 +299,50 @@ namespace CrdtEcsBridge.RestrictedActions
         {
             await UniTask.SwitchToMainThread();
             systemClipboard.Set(text);
+        }
+
+        /// <summary>
+        ///     Maps a protocol <see cref="ExplorerUi" /> value to its explore panel section and, when the
+        ///     section is behind a synchronous feature flag, the <see cref="FeatureId" /> that gates it.
+        ///     Returns false for unspecified or unknown values so the caller can reject the request.
+        /// </summary>
+        private static bool TryMapExplorerUi(ExplorerUi ui, out ExploreSections section, out FeatureId? gatingFeature)
+        {
+            switch (ui)
+            {
+                case ExplorerUi.EuMap:
+                    section = ExploreSections.Navmap;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuSettings:
+                    section = ExploreSections.Settings;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuBackpack:
+                    section = ExploreSections.Backpack;
+                    gatingFeature = null;
+                    return true;
+                case ExplorerUi.EuCameraReel:
+                    section = ExploreSections.CameraReel;
+                    gatingFeature = FeatureId.CAMERA_REEL;
+                    return true;
+                case ExplorerUi.EuCommunities:
+                    section = ExploreSections.Communities;
+                    gatingFeature = FeatureId.COMMUNITIES;
+                    return true;
+                case ExplorerUi.EuPlaces:
+                    section = ExploreSections.Places;
+                    gatingFeature = FeatureId.DISCOVER;
+                    return true;
+                case ExplorerUi.EuEvents:
+                    section = ExploreSections.Events;
+                    gatingFeature = FeatureId.DISCOVER;
+                    return true;
+                default:
+                    section = default(ExploreSections);
+                    gatingFeature = null;
+                    return false;
+            }
         }
     }
 }

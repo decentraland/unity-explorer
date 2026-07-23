@@ -50,7 +50,18 @@ namespace Decentraland.Kernel.Apis {
             "Y2Nlc3MYASABKAgiFgoUVHJpZ2dlckVtb3RlUmVzcG9uc2UiJwoUTW92ZVBs",
             "YXllclRvUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIUChJUZWxlcG9ydFRv",
             "UmVzcG9uc2UiJgoWQ29weVRvQ2xpcGJvYXJkUmVxdWVzdBIMCgR0ZXh0GAEg",
-            "ASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVxdWVzdDL1CAoY",
+            "ASgJIg8KDUVtcHR5UmVzcG9uc2UiEgoQU3RvcEVtb3RlUmVxdWVzdCJJChVP",
+            "cGVuRXhwbG9yZXJVaVJlcXVlc3QSMAoCdWkYASABKA4yJC5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuRXhwbG9yZXJVaSJdChZPcGVuRXhwbG9yZXJVaVJl",
+            "c3BvbnNlEkMKC29wZW5fcmVzdWx0GAEgASgOMi4uZGVjZW50cmFsYW5kLmtl",
+            "cm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzdWx0KpQBCgpFeHBsb3JlclVp",
+            "EhIKDkVVX1VOU1BFQ0lGSUVEEAASCgoGRVVfTUFQEAESDwoLRVVfU0VUVElO",
+            "R1MQAhIPCgtFVV9CQUNLUEFDSxADEhIKDkVVX0NBTUVSQV9SRUVMEAQSEgoO",
+            "RVVfQ09NTVVOSVRJRVMQBRINCglFVV9QTEFDRVMQBhINCglFVV9FVkVOVFMQ",
+            "ByqrAQoUT3BlbkV4cGxvcmVyVWlSZXN1bHQSDwoLVU5TUEVDSUZJRUQQABIK",
+            "CgZPUEVORUQQARIeChpSRUpFQ1RFRF9OT1RfQ1VSUkVOVF9TQ0VORRACEhkK",
+            "FVJFSkVDVEVEX0FMUkVBRFlfT1BFThADEh0KGVJFSkVDVEVEX0ZFQVRVUkVf",
+            "RElTQUJMRUQQBBIcChhSRUpFQ1RFRF9OT19VU0VSX0dFU1RVUkUQBTLsCQoY",
             "UmVzdHJpY3RlZEFjdGlvbnNTZXJ2aWNlEm8KDE1vdmVQbGF5ZXJUbxItLmRl",
             "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXF1ZXN0Gi4u",
             "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk1vdmVQbGF5ZXJUb1Jlc3BvbnNl",
@@ -76,10 +87,13 @@ namespace Decentraland.Kernel.Apis {
             "dWVzdBonLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5FbXB0eVJlc3BvbnNl",
             "IgASZAoJU3RvcEVtb3RlEiouZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN0",
             "b3BFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3Vj",
-            "Y2Vzc1Jlc3BvbnNlIgBiBnByb3RvMw=="));
+            "Y2Vzc1Jlc3BvbnNlIgASdQoOT3BlbkV4cGxvcmVyVWkSLy5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuT3BlbkV4cGxvcmVyVWlSZXF1ZXN0GjAuZGVjZW50",
+            "cmFsYW5kLmtlcm5lbC5hcGlzLk9wZW5FeHBsb3JlclVpUmVzcG9uc2UiAGIG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, global::DCL.ECSComponents.AvatarMaskReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.ExplorerUi), typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResult), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "AvatarTarget", "Duration" }, new[]{ "CameraTarget", "AvatarTarget", "Duration" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote", "Mask" }, new[]{ "Mask" }, null, null, null),
@@ -95,12 +109,57 @@ namespace Decentraland.Kernel.Apis {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToResponse), global::Decentraland.Kernel.Apis.TeleportToResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CopyToClipboardRequest), global::Decentraland.Kernel.Apis.CopyToClipboardRequest.Parser, new[]{ "Text" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.EmptyResponse), global::Decentraland.Kernel.Apis.EmptyResponse.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.StopEmoteRequest), global::Decentraland.Kernel.Apis.StopEmoteRequest.Parser, null, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.StopEmoteRequest), global::Decentraland.Kernel.Apis.StopEmoteRequest.Parser, null, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiRequest), global::Decentraland.Kernel.Apis.OpenExplorerUiRequest.Parser, new[]{ "Ui" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenExplorerUiResponse), global::Decentraland.Kernel.Apis.OpenExplorerUiResponse.Parser, new[]{ "OpenResult" }, null, null, null, null)
           }));
     }
     #endregion
 
   }
+  #region Enums
+  /// <summary>
+  /// Identifies which fullscreen explorer panel OpenExplorerUi targets.
+  /// Additive: new panels are appended with the next number; existing values never change.
+  /// </summary>
+  public enum ExplorerUi {
+    [pbr::OriginalName("EU_UNSPECIFIED")] EuUnspecified = 0,
+    [pbr::OriginalName("EU_MAP")] EuMap = 1,
+    [pbr::OriginalName("EU_SETTINGS")] EuSettings = 2,
+    [pbr::OriginalName("EU_BACKPACK")] EuBackpack = 3,
+    [pbr::OriginalName("EU_CAMERA_REEL")] EuCameraReel = 4,
+    [pbr::OriginalName("EU_COMMUNITIES")] EuCommunities = 5,
+    [pbr::OriginalName("EU_PLACES")] EuPlaces = 6,
+    [pbr::OriginalName("EU_EVENTS")] EuEvents = 7,
+  }
+
+  /// <summary>
+  /// Verdict of an OpenExplorerUi request (enum rather than a bool so new outcomes stay expressible).
+  /// Additive: new rejection reasons may be appended; existing values never change.
+  /// </summary>
+  public enum OpenExplorerUiResult {
+    [pbr::OriginalName("UNSPECIFIED")] Unspecified = 0,
+    [pbr::OriginalName("OPENED")] Opened = 1,
+    /// <summary>
+    /// the standard restricted-actions current-scene gate rejected the call
+    /// </summary>
+    [pbr::OriginalName("REJECTED_NOT_CURRENT_SCENE")] RejectedNotCurrentScene = 2,
+    /// <summary>
+    /// a fullscreen panel is already open
+    /// </summary>
+    [pbr::OriginalName("REJECTED_ALREADY_OPEN")] RejectedAlreadyOpen = 3,
+    /// <summary>
+    /// the requested section is hidden by feature flags
+    /// </summary>
+    [pbr::OriginalName("REJECTED_FEATURE_DISABLED")] RejectedFeatureDisabled = 4,
+    /// <summary>
+    /// rejected: the call did not originate from a user gesture
+    /// </summary>
+    [pbr::OriginalName("REJECTED_NO_USER_GESTURE")] RejectedNoUserGesture = 5,
+  }
+
+  #endregion
+
   #region Messages
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class MovePlayerToRequest : pb::IMessage<MovePlayerToRequest>
@@ -3456,6 +3515,407 @@ namespace Decentraland.Kernel.Apis {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class OpenExplorerUiRequest : pb::IMessage<OpenExplorerUiRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<OpenExplorerUiRequest> _parser = new pb::MessageParser<OpenExplorerUiRequest>(() => new OpenExplorerUiRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<OpenExplorerUiRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[16]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest(OpenExplorerUiRequest other) : this() {
+      ui_ = other.ui_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiRequest Clone() {
+      return new OpenExplorerUiRequest(this);
+    }
+
+    /// <summary>Field number for the "ui" field.</summary>
+    public const int UiFieldNumber = 1;
+    private global::Decentraland.Kernel.Apis.ExplorerUi ui_ = global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.ExplorerUi Ui {
+      get { return ui_; }
+      set {
+        ui_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as OpenExplorerUiRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(OpenExplorerUiRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Ui != other.Ui) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) hash ^= Ui.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Ui);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) Ui);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Ui);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(OpenExplorerUiRequest other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Ui != global::Decentraland.Kernel.Apis.ExplorerUi.EuUnspecified) {
+        Ui = other.Ui;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Ui = (global::Decentraland.Kernel.Apis.ExplorerUi) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Ui = (global::Decentraland.Kernel.Apis.ExplorerUi) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class OpenExplorerUiResponse : pb::IMessage<OpenExplorerUiResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<OpenExplorerUiResponse> _parser = new pb::MessageParser<OpenExplorerUiResponse>(() => new OpenExplorerUiResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<OpenExplorerUiResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[17]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse(OpenExplorerUiResponse other) : this() {
+      openResult_ = other.openResult_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OpenExplorerUiResponse Clone() {
+      return new OpenExplorerUiResponse(this);
+    }
+
+    /// <summary>Field number for the "open_result" field.</summary>
+    public const int OpenResultFieldNumber = 1;
+    private global::Decentraland.Kernel.Apis.OpenExplorerUiResult openResult_ = global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified;
+    /// <summary>
+    /// Carries only the verdict of the open action. Post-open signals (panel closed, flow
+    /// outcomes, milestones) are deliberately out of scope here and are delivered through a
+    /// separate additive event channel (a grow-only scene component), keeping this contract stable.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.OpenExplorerUiResult OpenResult {
+      get { return openResult_; }
+      set {
+        openResult_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as OpenExplorerUiResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(OpenExplorerUiResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (OpenResult != other.OpenResult) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) hash ^= OpenResult.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) OpenResult);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(OpenExplorerUiResponse other) {
+      if (other == null) {
+        return;
+      }
+      if (other.OpenResult != global::Decentraland.Kernel.Apis.OpenExplorerUiResult.Unspecified) {
+        OpenResult = other.OpenResult;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            OpenResult = (global::Decentraland.Kernel.Apis.OpenExplorerUiResult) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            OpenResult = (global::Decentraland.Kernel.Apis.OpenExplorerUiResult) input.ReadEnum();
+            break;
+          }
         }
       }
     }
