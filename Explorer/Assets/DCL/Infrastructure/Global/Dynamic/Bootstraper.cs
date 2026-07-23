@@ -223,7 +223,7 @@ namespace Global.Dynamic
 
         public void InitializeFeaturesRegistry()
         {
-            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment, realmLaunchSettings.useLocalAssetBundles));
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
 
             // Gate the v49 deps-digest cache-keying scheme behind the feature flag. Off by default means every
             // manifest reports SupportsDepsDigests() == false and the entire pipeline takes the legacy code path.

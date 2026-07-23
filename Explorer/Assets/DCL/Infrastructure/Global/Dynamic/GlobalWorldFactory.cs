@@ -100,6 +100,7 @@ namespace Global.Dynamic
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
+            bool useLocalAssetBundles,
             RoadAssetsPool roadAssetPool,
             SceneLoadingLimit sceneLoadingLimit,
             EntitiesAnalytics entitiesAnalytics,
@@ -124,7 +125,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
-            this.useLocalAssetBundles = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_ASSET_BUNDLES);
+            this.useLocalAssetBundles = useLocalAssetBundles;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneRoomStatus = sceneRoomStatus;
             this.world = world;
