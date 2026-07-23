@@ -33,7 +33,7 @@ namespace DCL.ApplicationGuards
         [TearDown]
         public void TearDown()
         {
-            FeatureFlagsConfiguration.Reset(true);
+            FeatureFlagsConfiguration.Reset();
         }
 
         [Test]
@@ -194,13 +194,13 @@ namespace DCL.ApplicationGuards
         public void ValidateVramSizeSufficient(int actualVramMB, bool expectedResult)
         {
             // Arrange: The requirement for this test suite is 6GB.
-            const int requiredVramMB = 6144; // 6 * 1024
+            const int REQUIRED_VRAM_MB = 6144; // 6 * 1024
 
             // Act: Call the method being tested.
-            bool isSufficient = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, requiredVramMB);
+            bool isSufficient = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, REQUIRED_VRAM_MB);
 
             // Assert: Verify the result is what we expect.
-            Assert.AreEqual(expectedResult, isSufficient, $"Failed on VRAM actual: {actualVramMB}MB, required: {requiredVramMB}MB");
+            Assert.AreEqual(expectedResult, isSufficient, $"Failed on VRAM actual: {actualVramMB}MB, required: {REQUIRED_VRAM_MB}MB");
         }
     }
 }

@@ -1,12 +1,11 @@
-﻿
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using Global.Dynamic;
-using UnityEngine.Playables;
 using UnityEngine;
+using UnityEngine.Playables;
 
-namespace DCL.AvatarAnimation
+namespace DCL.AvatarAnimation.Editor
 {
     /// <summary>
     /// A playable / clip for the Unity timeline that makes an avatar move and / or rotate. When the clip is not playing, the avatar does not move.
