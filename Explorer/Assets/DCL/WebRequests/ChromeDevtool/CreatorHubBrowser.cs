@@ -4,13 +4,23 @@ using Plugins.DclNativeProcesses;
 using RichTypes;
 using System;
 using System.IO;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DCL.WebRequests.ChromeDevtool
 {
     public class CreatorHubBrowser : IBrowser
     {
+        /// <summary>
+        ///     EditorPrefs key holding a developer-local override for the Creator Hub executable path.
+        ///     It is assigned through the Debug Settings drawer and read only in the Editor: it is never
+        ///     sourced from app-args or deep links (SEC-005) and is compiled out of player builds, so a
+        ///     shipped client can only ever launch the pinned <see cref="DEFAULT_CREATOR_HUB_BIN_PATH" />.
+        /// </summary>
+        public const string BIN_PATH_EDITOR_PREF_KEY = "CreatorHubBrowser.BinPathOverride";
+
         private const string DEVTOOL_PORT_ARG = "--open-devtools-with-port=";
-        private readonly int port;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         // path for: C:\Users\<YourUsername>\AppData\Local\Programs\creator-hub\Decentraland Creator Hub.exe
@@ -23,6 +33,8 @@ namespace DCL.WebRequests.ChromeDevtool
         public static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
 #endif
 
+        private readonly int port;
+
         public CreatorHubBrowser(int port)
         {
             this.port = port;
@@ -30,7 +42,7 @@ namespace DCL.WebRequests.ChromeDevtool
 
         public BrowserOpenResult OpenUrl(string url)
         {
-            string path = DEFAULT_CREATOR_HUB_BIN_PATH;
+            string path = ResolveBinPath();
 
             if (File.Exists(path) == false)
             {
@@ -49,6 +61,17 @@ namespace DCL.WebRequests.ChromeDevtool
             }
 
             return BrowserOpenResult.Success();
+        }
+
+        private static string ResolveBinPath()
+        {
+#if UNITY_EDITOR
+            string overridePath = EditorPrefs.GetString(BIN_PATH_EDITOR_PREF_KEY, string.Empty);
+
+            if (!string.IsNullOrEmpty(overridePath))
+                return overridePath;
+#endif
+            return DEFAULT_CREATOR_HUB_BIN_PATH;
         }
     }
 }
