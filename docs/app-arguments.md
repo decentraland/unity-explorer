@@ -337,17 +337,6 @@ decentraland://?force-open-backpack=true
 
 ---
 
-### `creator-hub-bin-path`
-**Type:** String (file path)
-**Description:** Custom path to the Creator Hub binary launched by the Chrome DevTools Protocol bridge. Honored **only via app-args** (command line / editor Debug Settings) — the SEC-019 deep-link allowlist drops this key, so it cannot be set through a `decentraland://` link. When absent, the pinned default install path is used.
-
-**Usage:**
-```bash
---creator-hub-bin-path /path/to/creator-hub
-```
-
----
-
 ### `use-log-matrix`
 **Type:** String (file path)
 **Description:** Enables logging to a matrix file. The value should be the path to the log matrix file.
