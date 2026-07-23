@@ -373,10 +373,10 @@ namespace DCL.AuthenticationScreenFlow
             }
             catch (Exception e)
             {
-                // Best-effort attribution: any failure (timeout, network, expected "already
-                // registered") must not surface as a Sentry error nor block onboarding. Durable
-                // cross-session retry is intentionally out of scope here — the referrer persists in
-                // the launcher and the backend dedups, so a follow-up login-time retry can pick it up.
+                // Best-effort attribution: any failure (timeout, network) must not surface as a
+                // Sentry error nor block onboarding. The POST is idempotent server-side (a same-
+                // referrer duplicate returns 204, not an error), so a retry — here on re-entry, or
+                // from a future login-time retry using the launcher-persisted referrer — is safe.
                 ReportHub.LogWarning(ReportCategory.AUTHENTICATION, $"Referral registration failed: {e.Message}");
             }
         }
