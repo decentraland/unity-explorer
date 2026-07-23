@@ -1,6 +1,36 @@
 // Responses should always correspond to the protocol definitions at
 // https://github.com/decentraland/protocol/blob/main/proto/decentraland/kernel/apis/restricted_actions.proto
 
+// Protocol enums exposed to scenes as runtime values (mirroring the generated
+// ts-proto enums: both forward name->value and reverse value->name mappings).
+// Scenes import these from `~system/RestrictedActions` and use them at runtime,
+// e.g. `openExplorerUi({ ui: ExplorerUi.EU_MAP })` and `OpenExplorerUiResult[openResult]`.
+function makeEnum(entries) {
+    const e = {};
+    for (const [name, value] of entries) { e[name] = value; e[value] = name; }
+    return e;
+}
+
+module.exports.ExplorerUi = makeEnum([
+    ['EU_UNSPECIFIED', 0],
+    ['EU_MAP', 1],
+    ['EU_SETTINGS', 2],
+    ['EU_BACKPACK', 3],
+    ['EU_CAMERA_REEL', 4],
+    ['EU_COMMUNITIES', 5],
+    ['EU_PLACES', 6],
+    ['EU_EVENTS', 7],
+]);
+
+module.exports.OpenExplorerUiResult = makeEnum([
+    ['UNSPECIFIED', 0],
+    ['OPENED', 1],
+    ['REJECTED_NOT_CURRENT_SCENE', 2],
+    ['REJECTED_ALREADY_OPEN', 3],
+    ['REJECTED_FEATURE_DISABLED', 4],
+    ['REJECTED_NO_USER_GESTURE', 5],
+]);
+
 module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
@@ -60,6 +90,11 @@ module.exports.openNftDialog = async function(message) {
     return {
         success: isSuccess
     };
+}
+
+module.exports.openExplorerUi = async function(message) {
+    const openResult = UnityRestrictedActionsApi.OpenExplorerUi(message.ui)
+    return { openResult };
 }
 
 module.exports.setCommunicationsAdapter = async function(message) {
