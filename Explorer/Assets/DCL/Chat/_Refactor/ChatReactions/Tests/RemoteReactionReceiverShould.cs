@@ -93,21 +93,47 @@ namespace DCL.Chat.ChatReactions.Tests
         }
 
         [Test]
-        public void ClampCountToNetworkFlushThreshold()
+        public void ClampCountToMaxSituationalParticlesPerPacket()
         {
+            // NetworkFlushThreshold is a send-side config and must have no bearing on the
+            // receive-side clamp — set it to a value the old coupled implementation would have
+            // clamped to (10), and prove the batch is instead bounded by the self-contained
+            // MAX_SITUATIONAL_PARTICLES_PER_PACKET cap (50).
             messageConfig.NetworkFlushThreshold = 10;
             var target = CreateTarget(stagger: 0f);
 
-            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 7, count: 50));
+            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 7, count: 200));
             target.Tick(0.016f);
 
-            Assert.That(processed.Count, Is.EqualTo(10), "Batch clamped to NetworkFlushThreshold");
+            Assert.That(processed.Count, Is.EqualTo(50),
+                "Batch clamped to MAX_SITUATIONAL_PARTICLES_PER_PACKET, ignoring NetworkFlushThreshold");
 
             foreach (var p in processed)
             {
                 Assert.That(p.EmojiIndex, Is.EqualTo(7));
                 Assert.That(p.Count, Is.EqualTo(1));
             }
+        }
+
+        [Test]
+        public void BoundExtremeCountWhenNetworkFlushThresholdDisabled()
+        {
+            // NetworkFlushThreshold = 0 is its documented "disabled" value. Before this change,
+            // the clamp degraded to Mathf.Max(args.Count, 1), so an untrusted args.Count of
+            // int.MaxValue would drive the enqueue loop up to int.MaxValue iterations. This must
+            // now be bounded self-contained by MAX_SITUATIONAL_PARTICLES_PER_PACKET, further
+            // tightened here by an explicit MaxPerAvatarQueued, and complete quickly.
+            messageConfig.NetworkFlushThreshold = 0;
+            config.MaxPerAvatarQueued = 5;
+            var target = CreateTarget(stagger: 0f);
+
+            target.HandleRemoteReaction(MakeArgs("wallet_a", emojiIndex: 3, count: int.MaxValue));
+            target.Tick(0.016f);
+
+            Assert.That(processed.Count, Is.EqualTo(5),
+                "int.MaxValue count must be bounded (MAX_SITUATIONAL_PARTICLES_PER_PACKET, " +
+                "then tightened by MaxPerAvatarQueued) — never unbounded — even with " +
+                "NetworkFlushThreshold disabled (0)");
         }
 
         [Test]

@@ -17,12 +17,19 @@ namespace DCL.Chat.ChatReactions.Core
     /// through a single global pipe.
     ///
     /// Bounding:
+    /// - Untrusted per-packet count is clamped to MAX_SITUATIONAL_PARTICLES_PER_PACKET, self-contained
+    ///   and independent of any send-side config.
     /// - World spawns are bounded by MaxParticlesPerAvatar + world pool capacity.
     /// - UI spawns are bounded by UILane.MaxVisibleParticles.
     /// - Per-avatar queue is bounded by MaxPerAvatarQueued (oldest-drop safety cap).
     /// </summary>
     internal sealed class SituationalRemoteTarget : IRemoteReactionTarget
     {
+        // Self-contained safety bound on the untrusted per-packet count, deliberately independent
+        // of the send-side NetworkFlushThreshold config. The per-avatar queue (MaxPerAvatarQueued)
+        // is the tighter steady-state bound; this only guards a single packet against a pathological count.
+        private const int MAX_SITUATIONAL_PARTICLES_PER_PACKET = 50;
+
         private readonly ChatReactionsConfig config;
         private readonly LocalPlayerWorldReactor worldReactor;
         private readonly ChatReactionUISimulation uiSimulation;
@@ -49,8 +56,7 @@ namespace DCL.Chat.ChatReactions.Core
         {
             Profiler.BeginSample("ChatReactions.Remote.Handle");
 
-            int batchCap = config.MessageReactions.NetworkFlushThreshold;
-            int count = batchCap > 0 ? Mathf.Min(args.Count, batchCap) : Mathf.Max(args.Count, 1);
+            int count = Mathf.Clamp(args.Count, 0, MAX_SITUATIONAL_PARTICLES_PER_PACKET);
 
             if (count > 0)
             {
