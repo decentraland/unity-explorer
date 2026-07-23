@@ -61,6 +61,12 @@ dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.symbols = inte
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.style = i_prefix_pascal_case_style
 dotnet_naming_rule.interfaces_should_be_pascal_case_with_i_prefix.severity = warning
 
+# Enum members are PascalCase (docs/code-style-guidelines.md § Naming Conventions:
+# "Enumeration and its Enumerators -> PascalCase"). Enum members are const fields to
+# the analyzer, so without this explicit rule ReSharper sweeps them into the
+# CAPITALS_SNAKE_CASE constants rule below.
+resharper_csharp_naming_rule.enum_member = AaBb
+
 
 #### CAPITALS_SNAKE_CASE ####
 dotnet_naming_style.capital_snake_case_style.capitalization = all_upper
