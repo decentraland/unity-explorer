@@ -117,7 +117,10 @@ namespace Global.Dynamic
 
             if (isLocalSceneDevelopment)
             {
-                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || useLocalAssetBundles;
+                // The serialized checkbox is an Editor convenience only: player builds opt in
+                // exclusively through the app arg, so a box ticked (and accidentally committed)
+                // in the scene asset cannot ship enabled.
+                bool useLocalAB = appParameters.HasFlag(AppArgsFlags.LOCAL_AB) || (Application.isEditor && useLocalAssetBundles);
                 bool useRemoteAB = appParameters.HasFlag(AppArgsFlags.LSD_USE_REMOTE_AB) || useRemoteAssetsBundles;
 
                 if (useLocalAB && useRemoteAB)
