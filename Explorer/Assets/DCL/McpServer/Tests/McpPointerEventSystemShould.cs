@@ -342,6 +342,32 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
+        public void ReportPointerEventMatchedForTheRequestedButtonAndEdge()
+        {
+            // The target wires only a PetDown/IaPointer handler: a press maps to it, while a release ray still
+            // hits the same collider but matches no handler — hit:true alone would not tell these two apart.
+            UniTaskCompletionSource<McpPointerEventOutcome> pressCompletion = AddIntent();
+
+            system!.Update(0);
+            RunPipelineFrame();
+            system.Update(0);
+
+            McpPointerClickResult pressResult = ResultOf(pressCompletion);
+            Assert.That(pressResult.Hit, Is.True);
+            Assert.That(pressResult.PointerEventMatched, Is.True);
+
+            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp);
+
+            system.Update(0);
+            RunPipelineFrame();
+            system.Update(0);
+
+            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
+            Assert.That(releaseResult.Hit, Is.True);
+            Assert.That(releaseResult.PointerEventMatched, Is.False);
+        }
+
+        [Test]
         public void DeliverSingleReleaseWithoutPressContext()
         {
             UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(PointerEventType.PetUp);
@@ -554,8 +580,8 @@ namespace DCL.McpServer.Tests
         [Test]
         public void FailWhenCurrentSceneHasNoDefinitionId()
         {
-            // The current scene's definition carries no id, so no pin can match it.
-            sceneFacade.SceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition());
+            // The current scene's definition carries an empty id (the codebase's id-less definition), so no pin can match it.
+            SetCurrentSceneDefinitionId(string.Empty);
 
             UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(sceneId: "scene-gone");
 
