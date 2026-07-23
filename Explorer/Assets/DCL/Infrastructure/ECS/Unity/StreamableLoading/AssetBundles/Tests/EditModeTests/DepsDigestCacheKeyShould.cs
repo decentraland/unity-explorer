@@ -57,19 +57,21 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ReportCanonicalAssetsOnlyWhenFilesWereInjected()
+        public void RouteReusableAssetsThroughTheSharedAssetsPath()
         {
-            // The URL shape and cache-key dispatch hinge on this: only scenes fetch files[], and only scene bundles
-            // are stored under the canonical assets/ prefix; wearables/emotes must keep entity-path URLs and buildDate keying.
+            const string SCENE_ID = "sceneId";
+
+            // Only scenes fetch files[], and only reuse-converted bundles live under the shared assets/ prefix;
+            // manifests without injected files keep the entity path.
             var withoutFiles = AssetBundleManifestVersion.CreateFromFallback("v49", "2026-05-01");
-            Assert.That(withoutFiles.HasCanonicalAssets(), Is.False);
+            Assert.That(withoutFiles.GetCdnRequestPath(HASH_A, SCENE_ID), Is.EqualTo($"v49/{SCENE_ID}/{HASH_A}"));
 
             AssetBundleManifestVersion withDigestFiles = CreateV49Manifest($"{HASH_A}_{DIGEST_A}_mac");
-            Assert.That(withDigestFiles.HasCanonicalAssets(), Is.True);
+            Assert.That(withDigestFiles.GetCdnRequestPath(HASH_A, SCENE_ID), Is.EqualTo($"v49/assets/{HASH_A}"));
 
             // Any injected files[] counts — a reuse-converted scene can legitimately list only 2-part names.
             AssetBundleManifestVersion onlyLegacyFiles = CreateV49Manifest($"{HASH_LEGACY}_mac");
-            Assert.That(onlyLegacyFiles.HasCanonicalAssets(), Is.True);
+            Assert.That(onlyLegacyFiles.GetCdnRequestPath(HASH_LEGACY, SCENE_ID), Is.EqualTo($"v49/assets/{HASH_LEGACY}"));
         }
 
         [Test]
@@ -108,7 +110,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             manifest.InjectContent("Qmf7DaJZRygoayfNn5Jq6QAykrhFpQUr2us2VFvjREiajk",
                 new[] { new ContentDefinition { file = "model.glb", hash = "QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV" } });
 
-            Assert.That(manifest.HasCanonicalAssets(), Is.False, "Content casing entries must not switch the URL shape or cache keying to the canonical scheme");
+            Assert.That(manifest.GetCdnRequestPath(HASH_A, "sceneId"), Is.EqualTo($"v35/sceneId/{HASH_A}"),
+                "Content casing entries must not switch the URL shape or cache keying to the reusable scheme");
 
             Assert.That(manifest.GetCdnRequestHash("QmaBrb8WisG9b4Szzt6ACHgaJdyULTEjpzmTwDi4RCEtZV"),
                 Is.EqualTo($"qmabrb8wisg9b4szzt6achgajdyultejpzmtwdi4rcetzv{platform}").IgnoreCase);
@@ -275,12 +278,11 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             //Check that when handling a LOD it doesn't throw
             var lodManifest = AssetBundleManifestVersion.CreateForLOD("LOD/0", "dummyDate");
 
-            Assert.That(lodManifest.HasHashInPath(), Is.False);
+            Assert.That(lodManifest.GetCdnRequestPath(HASH_A, "sceneId"), Is.EqualTo($"LOD/0/{HASH_A}"), "Unparseable versions must keep the flat legacy path");
             Assert.That(lodManifest.SupportsDepsDigests(), Is.False);
 
             var manualManifest = AssetBundleManifestVersion.CreateManualManifest();
 
-            Assert.That(manualManifest.HasHashInPath(), Is.False);
             Assert.That(manualManifest.SupportsDepsDigests(), Is.False);
 
             var wrongString = AssetBundleManifestVersion.CreateFromFallback("v", "dummyDate");

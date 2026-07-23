@@ -36,11 +36,13 @@ public class AssetBundleManifestVersion
         public bool IsLSDAsset;
         public AssetBundleManifestVersionPerPlatform? assets;
 
-        //Bare hash → canonical CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
+        //Bare hash → CDN file name; fed by InjectDepsDigests (digest-bearing names) and InjectContent (Qm casing fixes).
         private Dictionary<string, string>? cdnFiles;
-        private bool hasCanonicalAssets;
 
-        public bool HasHashInPath()
+        //Set when the manifest's files[] were injected — only scenes fetch them. Reusable bundles live under the shared assets/ prefix and cache-key on version+hash; wearables/emotes stay entity-scoped and keep buildDate keying.
+        private bool hasReusableAssets;
+
+        private bool HasHashInPath()
         {
             HasHashInPathValue ??= TryParseVersionNumber(GetAssetBundleManifestVersion(), out int version) && version >= ASSET_BUNDLE_VERSION_REQUIRES_HASH;
             return HasHashInPathValue.Value;
@@ -75,14 +77,14 @@ public class AssetBundleManifestVersion
         }
 
         /// <summary>
-        ///     Stores the manifest's <c>files[]</c> — the verbatim canonical names bundles live under on the CDN's
+        ///     Stores the manifest's <c>files[]</c> — the verbatim names bundles live under on the CDN's shared
         ///     <c>assets/</c> prefix — keyed by the bare hash. Callers gate on <see cref="SupportsDepsDigests" />:
-        ///     pre-v49 bundles are entity-scoped and must not be flagged canonical.
+        ///     pre-v49 bundles are entity-scoped and must not be flagged reusable.
         /// </summary>
         public void InjectDepsDigests(string[]? files)
         {
             if (files == null || files.Length == 0) return;
-            hasCanonicalAssets = true;
+            hasReusableAssets = true;
 
             foreach (string file in files)
             {
@@ -97,10 +99,6 @@ public class AssetBundleManifestVersion
             }
         }
 
-        /// <summary>True when the manifest's <c>files[]</c> were injected — only scenes fetch them, and only scene bundles are stored under the canonical <c>assets/</c> prefix. Wearables/emotes stay entity-scoped and keep buildDate cache keying.</summary>
-        public bool HasCanonicalAssets() =>
-            hasCanonicalAssets;
-
         /// <summary>Translates a bare hash to the hash requested from the CDN: the canonical manifest file name when known (digest-bearing, correctly cased), otherwise the platform-suffixed bare hash.</summary>
         public string GetCdnRequestHash(string bareHash) =>
             TryGetCdnFileName(bareHash, out string fileName) ? fileName : $"{bareHash}{PlatformUtils.GetCurrentPlatform()}";
@@ -109,11 +107,25 @@ public class AssetBundleManifestVersion
         public string ComposeCacheKey(string hash) =>
             TryGetCdnFileName(hash, out string fileName) ? fileName : hash;
 
-        /// <summary>Computes the Unity-cache key for a CDN request hash: canonical-assets manifests key on version+hash — the digest travels inside the hash — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
+        /// <summary>Computes the Unity-cache key for a CDN request hash: reusable bundles key on version+hash — the digest travels inside the hash, so the cache is shareable across republishes — while wearables/emotes keep buildDate keying, as their bundles are republished in place.</summary>
         public Hash128 ComputeCacheHash(string hash) =>
-            HasCanonicalAssets()
+            hasReusableAssets
                 ? ComputeHashV49(hash, GetAssetBundleManifestVersion())
                 : ComputeHashLegacy(hash, GetAssetBundleManifestBuildDate());
+
+        /// <summary>Builds the CDN-relative path for a request hash: reusable bundles live under the shared <c>assets/</c> prefix (no entity segment), entity-scoped bundles (wearables/emotes, pre-v49 scenes) keep the legacy shapes.</summary>
+        public string GetCdnRequestPath(string hash, string sceneID)
+        {
+            string version = GetAssetBundleManifestVersion();
+
+            if (hasReusableAssets)
+                return $"{version}/assets/{hash}";
+
+            if (HasHashInPath())
+                return $"{version}/{sceneID}/{hash}";
+
+            return $"{version}/{hash}";
+        }
 
         private static unsafe Hash128 ComputeHashV49(string hash, string version)
         {

@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -63,8 +62,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
 
-                // Hash was already translated to the canonical CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
-                ca.URL = GetAssetBundleURL(assetBundleIntention.AssetBundleManifest, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID);
+                // Hash was already translated to the CDN file name (digest and Qm casing) at intention creation via GetCdnRequestHash.
+                ca.URL = assetBundlesURL.Append(new URLPath(assetBundleIntention.AssetBundleManifest.GetCdnRequestPath(assetBundleIntention.Hash, assetBundleIntention.ParentEntityID)));
                 assetBundleIntention.CommonArguments = ca;
 
                 assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeCacheHash(assetBundleIntention.Hash);
@@ -78,22 +77,6 @@ namespace ECS.StreamableLoading.AssetBundles
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
-
-        private URLAddress GetAssetBundleURL(AssetBundleManifestVersion manifest, string hash, string sceneID)
-        {
-            string version = manifest.GetAssetBundleManifestVersion();
-
-            // Canonical-assets bundles live under the assets/ prefix (no entity segment) — requesting it directly
-            // skips the edge rewrite. Entity-scoped bundles (wearables/emotes, pre-v49 scenes) only resolve through
-            // the entity path, so they keep the legacy shapes.
-            if (manifest.HasCanonicalAssets())
-                return assetBundlesURL.Append(new URLPath($"{version}/assets/{hash}"));
-
-            if (manifest.HasHashInPath())
-                return assetBundlesURL.Append(new URLPath($"{version}/{sceneID}/{hash}"));
-
-            return assetBundlesURL.Append(new URLPath($"{version}/{hash}"));
-        }
 
     }
 }
