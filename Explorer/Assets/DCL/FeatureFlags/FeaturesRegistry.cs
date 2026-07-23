@@ -42,6 +42,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
                 [FeatureId.USER_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.USER_CREDITS),
                 [FeatureId.CREDITS_WEARABLE_PURCHASE] = featureFlags.IsEnabled(FeatureFlagsStrings.CREDITS_WEARABLE_PURCHASE),
+                [FeatureId.CREDITS_TOPUP] = featureFlags.IsEnabled(FeatureFlagsStrings.CREDITS_TOPUP),
                 [FeatureId.HEAD_SYNC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HEAD_SYNC, featureFlags.IsEnabled(FeatureFlagsStrings.HEAD_SYNC) || isEditor),
                 [FeatureId.STOP_ON_DUPLICATE_IDENTITY] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.STOP_ON_DUPLICATE_IDENTITY, featureFlags.IsEnabled(FeatureFlagsStrings.STOP_ON_DUPLICATE_IDENTITY)),
                 [FeatureId.PRIVATE_CHAT_REQUIRES_TOPIC] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PRIVATE_CHAT_REQUIRES_TOPIC, featureFlags.IsEnabled(FeatureFlagsStrings.PRIVATE_CHAT_REQUIRES_TOPIC)),
@@ -208,6 +209,7 @@ namespace DCL.FeatureFlags
         HARDWARE_FINGERPRINT = 66,
         USER_CREDITS = 67,
         CREDITS_WEARABLE_PURCHASE = 68,
-        MCP_SERVER = 69,
+        CREDITS_TOPUP = 69,
+        MCP_SERVER = 70,
     }
 }

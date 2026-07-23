@@ -3,6 +3,7 @@ using DCL.MarketplaceCredits;
 using DCL.Profiles;
 using DCL.UI.Credits;
 using DCL.Web3.Identities;
+using System;
 using System.Threading;
 using Utility;
 
@@ -14,6 +15,7 @@ namespace DCL.Credits
         private readonly MarketplaceCreditsAPIClient creditsAPIClient;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly Action openTopUpPanel;
 
         private CancellationTokenSource? loadCreditsCts;
 
@@ -21,18 +23,26 @@ namespace DCL.Credits
             CreditsPanelView view,
             MarketplaceCreditsAPIClient creditsAPIClient,
             ProfileChangesBus profileChangesBus,
-            IWeb3IdentityCache identityCache)
+            IWeb3IdentityCache identityCache,
+            bool topUpEnabled,
+            Action openTopUpPanel)
         {
             this.view = view;
             this.creditsAPIClient = creditsAPIClient;
             this.profileChangesBus = profileChangesBus;
             this.identityCache = identityCache;
+            this.openTopUpPanel = openTopUpPanel;
 
             profileChangesBus.SubscribeToUpdate(OnProfileUpdated);
 
             creditsAPIClient.OnUserCreditsFetched += OnUserCreditsFetched;
             identityCache.OnIdentityChanged += OnIdentityChanged;
             identityCache.OnIdentityCleared += OnIdentityCleared;
+
+            view.GetCreditsButton.gameObject.SetActive(topUpEnabled);
+
+            if (topUpEnabled)
+                view.GetCreditsButton.onClick.AddListener(OnGetCreditsClicked);
 
             if (identityCache.Identity != null)
                 LoadCreditsWithRestart();
@@ -45,7 +55,11 @@ namespace DCL.Credits
             creditsAPIClient.OnUserCreditsFetched -= OnUserCreditsFetched;
             identityCache.OnIdentityChanged -= OnIdentityChanged;
             identityCache.OnIdentityCleared -= OnIdentityCleared;
+            view.GetCreditsButton.onClick.RemoveListener(OnGetCreditsClicked);
         }
+
+        private void OnGetCreditsClicked() =>
+            openTopUpPanel();
 
         private void OnProfileUpdated(Profile profile) =>
             LoadCreditsWithRestart();
