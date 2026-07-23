@@ -200,6 +200,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public static class MarketplaceCredits
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
+
+            // Credits top-up funnel: event names and property keys are shared with the web shop so
+            // both clients land in one unified Segment funnel.
+            public const string SHOP_STARTED_BUY_CREDITS = "Shop Started Buy Credits";
+            public const string SHOP_REDIRECTED_TO_STRIPE = "Shop Redirected To Stripe";
+            public const string SHOP_COMPLETED_BUY_CREDITS = "Shop Completed Buy Credits";
+            public const string SHOP_BUY_CREDITS_PENDING = "Shop Buy Credits Pending";
+            public const string SHOP_BUY_CREDITS_FAILED = "Shop Buy Credits Failed";
         }
 
         public static class Settings
