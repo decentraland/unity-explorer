@@ -1,26 +1,19 @@
 using CDPBridges;
 using DCL.Diagnostics;
+using Global.AppArgs;
 using Plugins.DclNativeProcesses;
 using RichTypes;
 using System;
 using System.IO;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace DCL.WebRequests.ChromeDevtool
 {
     public class CreatorHubBrowser : IBrowser
     {
-        /// <summary>
-        ///     EditorPrefs key holding a developer-local override for the Creator Hub executable path.
-        ///     It is assigned through the Debug Settings drawer and read only in the Editor: it is never
-        ///     sourced from app-args or deep links (SEC-005) and is compiled out of player builds, so a
-        ///     shipped client can only ever launch the pinned <see cref="DEFAULT_CREATOR_HUB_BIN_PATH" />.
-        /// </summary>
-        public const string BIN_PATH_EDITOR_PREF_KEY = "CreatorHubBrowser.BinPathOverride";
-
         private const string DEVTOOL_PORT_ARG = "--open-devtools-with-port=";
+
+        private readonly IAppArgs appArgs;
+        private readonly int port;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         // path for: C:\Users\<YourUsername>\AppData\Local\Programs\creator-hub\Decentraland Creator Hub.exe
@@ -33,16 +26,15 @@ namespace DCL.WebRequests.ChromeDevtool
         public static readonly string DEFAULT_CREATOR_HUB_BIN_PATH = "/Applications/Decentraland Creator Hub.app/Contents/MacOS/Decentraland Creator Hub";
 #endif
 
-        private readonly int port;
-
-        public CreatorHubBrowser(int port)
+        public CreatorHubBrowser(IAppArgs appArgs, int port)
         {
+            this.appArgs = appArgs;
             this.port = port;
         }
 
         public BrowserOpenResult OpenUrl(string url)
         {
-            string path = ResolveBinPath();
+            string path = CreatorHubExecutablePath();
 
             if (File.Exists(path) == false)
             {
@@ -63,14 +55,17 @@ namespace DCL.WebRequests.ChromeDevtool
             return BrowserOpenResult.Success();
         }
 
-        private static string ResolveBinPath()
+        /// <summary>
+        ///     The Creator Hub executable to launch. Sourced from the <c>creator-hub-bin-path</c> app-arg
+        ///     (command line / editor Debug Settings) — a trusted channel: the SEC-019 deny-by-default deep-link
+        ///     allowlist drops this key, so an attacker-crafted <c>decentraland://</c> link can never set it.
+        ///     When absent, falls back to the pinned <see cref="DEFAULT_CREATOR_HUB_BIN_PATH" />.
+        /// </summary>
+        private string CreatorHubExecutablePath()
         {
-#if UNITY_EDITOR
-            string overridePath = EditorPrefs.GetString(BIN_PATH_EDITOR_PREF_KEY, string.Empty);
+            if (appArgs.TryGetValue(AppArgsFlags.CREATOR_HUB_BIN_PATH, out string? path) && !string.IsNullOrEmpty(path))
+                return path;
 
-            if (!string.IsNullOrEmpty(overridePath))
-                return overridePath;
-#endif
             return DEFAULT_CREATOR_HUB_BIN_PATH;
         }
     }

@@ -26,6 +26,7 @@ namespace Global.Editor
             SerializedProperty appParameters = property.FindPropertyRelative("appParameters");
 
             bool cdpEnabled = HasFlag(appParameters, AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START);
+            string? currentCreatorHubPath = GetFlagValue(appParameters, AppArgsFlags.CREATOR_HUB_BIN_PATH);
 
             string? detectedCreatorHubPath = FindCreatorHubPath();
             bool creatorHubInstalled = !string.IsNullOrEmpty(detectedCreatorHubPath);
@@ -57,18 +58,16 @@ namespace Global.Editor
             if (EditorGUI.EndChangeCheck() && newCdpEnabled != cdpEnabled)
             {
                 if (newCdpEnabled)
-                    EnableCdpDevTools(appParameters);
+                    EnableCdpDevTools(appParameters, detectedCreatorHubPath);
                 else
                     DisableCdpDevTools(appParameters);
             }
 
             position.y += SingleLineHeight;
 
-            // Custom Creator Hub path — developer-local override stored in EditorPrefs, never an app-arg / deep link (SEC-005).
+            // Custom Creator Hub path (only if CDP is enabled)
             if (cdpEnabled)
             {
-                string currentOverride = EditorPrefs.GetString(CreatorHubBrowser.BIN_PATH_EDITOR_PREF_KEY, string.Empty);
-
                 EditorGUI.BeginChangeCheck();
 
                 Rect pathFieldRect = position;
@@ -78,12 +77,12 @@ namespace Global.Editor
                 browseButtonRect.x = position.xMax - 75;
                 browseButtonRect.width = 75;
 
-                string displayPath = !string.IsNullOrEmpty(currentOverride) ? currentOverride : detectedCreatorHubPath ?? "Not found";
-                string newPath = EditorGUI.TextField(pathFieldRect, new GUIContent("Creator Hub Path", "Editor-only override for the Creator Hub executable. Leave empty to use the default install path."), displayPath);
+                string displayPath = currentCreatorHubPath ?? detectedCreatorHubPath ?? "Not found";
+                string newPath = EditorGUI.TextField(pathFieldRect, new GUIContent("Creator Hub Path"), displayPath);
 
                 if (GUI.Button(browseButtonRect, "Browse"))
                 {
-                    string? initialDir = !string.IsNullOrEmpty(currentOverride) ? Path.GetDirectoryName(currentOverride) :
+                    string? initialDir = !string.IsNullOrEmpty(currentCreatorHubPath) ? Path.GetDirectoryName(currentCreatorHubPath) :
                         !string.IsNullOrEmpty(detectedCreatorHubPath) ? Path.GetDirectoryName(detectedCreatorHubPath) : Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
 #if UNITY_EDITOR_WIN
@@ -97,19 +96,19 @@ namespace Global.Editor
                 }
 
                 if (EditorGUI.EndChangeCheck() && newPath != displayPath)
-                    EditorPrefs.SetString(CreatorHubBrowser.BIN_PATH_EDITOR_PREF_KEY, newPath);
+                    SetCreatorHubPath(appParameters, newPath);
 
                 position.y += SingleLineHeight;
 
-                // "Use Default Path" clears the override so the pinned default path is used.
-                if (!string.IsNullOrEmpty(currentOverride))
+                // Clear custom path button if a custom path is set
+                if (!string.IsNullOrEmpty(currentCreatorHubPath))
                 {
                     Rect clearButtonRect = position;
                     clearButtonRect.x = position.xMax - 150;
                     clearButtonRect.width = 150;
 
                     if (GUI.Button(clearButtonRect, "Use Default Path"))
-                        EditorPrefs.DeleteKey(CreatorHubBrowser.BIN_PATH_EDITOR_PREF_KEY);
+                        RemoveFlag(appParameters, AppArgsFlags.CREATOR_HUB_BIN_PATH);
 
                     position.y += SingleLineHeight;
                 }
@@ -130,6 +129,7 @@ namespace Global.Editor
         {
             SerializedProperty appParameters = property.FindPropertyRelative("appParameters");
             bool cdpEnabled = HasFlag(appParameters, AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START);
+            string? currentCreatorHubPath = GetFlagValue(appParameters, AppArgsFlags.CREATOR_HUB_BIN_PATH);
 
             // CDP section: header + status + toggle
             int lineCount = 3;
@@ -139,8 +139,8 @@ namespace Global.Editor
             {
                 lineCount += 1;
 
-                // "Use Default Path" button (only when an override is set)
-                if (!string.IsNullOrEmpty(EditorPrefs.GetString(CreatorHubBrowser.BIN_PATH_EDITOR_PREF_KEY, string.Empty)))
+                // Clear button (if custom path is set)
+                if (!string.IsNullOrEmpty(currentCreatorHubPath))
                     lineCount += 1;
             }
 
@@ -261,7 +261,20 @@ namespace Global.Editor
             return false;
         }
 
-        private static void EnableCdpDevTools(SerializedProperty appParameters)
+        private static string? GetFlagValue(SerializedProperty appParameters, string flag)
+        {
+            string formattedFlag = FormatFlag(flag);
+
+            for (int i = 0; i < appParameters.arraySize; i++)
+            {
+                if (appParameters.GetArrayElementAtIndex(i).stringValue == formattedFlag && i + 1 < appParameters.arraySize)
+                    return appParameters.GetArrayElementAtIndex(i + 1).stringValue;
+            }
+
+            return null;
+        }
+
+        private static void EnableCdpDevTools(SerializedProperty appParameters, string? creatorHubPath)
         {
             if (!HasFlag(appParameters, AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START))
             {
@@ -276,16 +289,63 @@ namespace Global.Editor
                 appParameters.GetArrayElementAtIndex(insertIndex + 1).stringValue = "true";
             }
 
+            // Add Creator Hub path if found
+            if (!string.IsNullOrEmpty(creatorHubPath))
+                SetCreatorHubPath(appParameters, creatorHubPath);
+
             appParameters.serializedObject.ApplyModifiedProperties();
         }
 
         private static void DisableCdpDevTools(SerializedProperty appParameters)
         {
             RemoveFlag(appParameters, AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START);
+            RemoveFlag(appParameters, AppArgsFlags.CREATOR_HUB_BIN_PATH);
+            appParameters.serializedObject.ApplyModifiedProperties();
+        }
+
+        private static void SetCreatorHubPath(SerializedProperty appParameters, string path)
+        {
+            // First remove existing path if any
+            RemoveFlagWithValue(appParameters, AppArgsFlags.CREATOR_HUB_BIN_PATH);
+
+            // Add --flag and value
+            int insertIndex = appParameters.arraySize;
+            appParameters.InsertArrayElementAtIndex(insertIndex);
+            appParameters.GetArrayElementAtIndex(insertIndex).stringValue = FormatFlag(AppArgsFlags.CREATOR_HUB_BIN_PATH);
+
+            appParameters.InsertArrayElementAtIndex(insertIndex + 1);
+            appParameters.GetArrayElementAtIndex(insertIndex + 1).stringValue = path;
+
             appParameters.serializedObject.ApplyModifiedProperties();
         }
 
         private static void RemoveFlag(SerializedProperty appParameters, string flag)
+        {
+            string formattedFlag = FormatFlag(flag);
+
+            for (int i = appParameters.arraySize - 1; i >= 0; i--)
+            {
+                if (appParameters.GetArrayElementAtIndex(i).stringValue == formattedFlag)
+                {
+                    // Remove the value first (if exists)
+                    if (i + 1 < appParameters.arraySize)
+                    {
+                        string nextValue = appParameters.GetArrayElementAtIndex(i + 1).stringValue;
+
+                        // Only remove if it's not another flag
+                        if (!nextValue.StartsWith("--"))
+                            appParameters.DeleteArrayElementAtIndex(i + 1);
+                    }
+
+                    // Then remove the flag
+                    appParameters.DeleteArrayElementAtIndex(i);
+                    appParameters.serializedObject.ApplyModifiedProperties();
+                    return;
+                }
+            }
+        }
+
+        private static void RemoveFlagWithValue(SerializedProperty appParameters, string flag)
         {
             string formattedFlag = FormatFlag(flag);
 

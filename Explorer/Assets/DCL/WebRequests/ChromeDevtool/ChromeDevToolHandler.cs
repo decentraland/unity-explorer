@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.WebRequests.Analytics;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,7 @@ namespace DCL.WebRequests.ChromeDevtool
             new (1, new Bridge());
 #endif
 
-        public static ChromeDevToolHandler New(bool startOnCreation)
+        public static ChromeDevToolHandler New(bool startOnCreation, IAppArgs appArgs)
         {
 #if UNITY_WEBGL // ChromeDevtoolProtocolClient is not supported on WebGL. WebSocket server cannot be instantiated from a webpage, use mock
             return new ChromeDevToolHandler(0, null!);
@@ -60,7 +61,7 @@ namespace DCL.WebRequests.ChromeDevtool
 
             var bridge = new Bridge(
                 handleMethod: HandleCdpMethod,
-                browser: new CreatorHubBrowser(PORT),
+                browser: new CreatorHubBrowser(appArgs, PORT),
                 logger: new DCLLogger(ReportCategory.CHROME_DEVTOOL_PROTOCOL),
                 port: PORT
             );

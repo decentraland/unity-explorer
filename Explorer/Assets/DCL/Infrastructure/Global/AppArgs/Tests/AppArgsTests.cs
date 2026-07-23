@@ -55,7 +55,7 @@ namespace Global.AppArgs.Tests
             Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
                 "decentraland://?creator-hub-bin-path=%5C%5Cattacker%5Cshare%5Cp.exe&launch-cdp-monitor-on-start&local-scene=true&comms-adapter=x&skip-auth-screen=true");
 
-            Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must be dropped (deny-by-default; the arg no longer exists in the client)");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.CREATOR_HUB_BIN_PATH), "creator-hub-bin-path must be dropped from deep links — it is honored only via trusted app-args");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped");
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must be dropped");
