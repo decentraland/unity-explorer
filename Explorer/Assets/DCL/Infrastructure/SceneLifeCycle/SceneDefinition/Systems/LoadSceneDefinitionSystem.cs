@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             //These are fetched from catalyst, meaning they never have a manifest (fallback + no exception).
             //With local asset bundles the manual LSD manifest is skipped so the real manifest is fetched
             //from the local asset-bundle server (optimized-assets-url).
-            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, isLSD: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
+            await AssetBundleManifestFallbackHelper.CheckAssetBundleManifestFallbackAsync(World, sceneEntityDefinition, partition, ct, useManualManifest: isLocalSceneDevelopment && !useLocalAssetBundles, skipException: true);
 
             // v49+ scene ABs ship a per-file deps digest in their manifest. Fetch it (deduped via the promise cache)
             // so the AB / GLTF / disk caches can differentiate scenes that share a hash but resolve different deps.
