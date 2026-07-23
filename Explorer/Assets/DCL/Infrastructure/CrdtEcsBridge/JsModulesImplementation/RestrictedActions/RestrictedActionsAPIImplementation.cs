@@ -180,7 +180,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 EmoteId = urn,
                 Spatial = true,
-                TriggerSource = TriggerSource.SCENE,
+                TriggerSource = TriggerSource.Scene,
                 Mask = mask,
             });
         }

@@ -162,7 +162,7 @@ namespace DCL.Settings
                 if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
-                if (group.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
+                if (group.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(group.FeatureId)) return;
 
                 SettingsGroupView generalGroupView = (await assetsProvisioner.ProvideInstanceAsync(settingsMenuConfiguration.SettingsGroupPrefab!, sectionContainer)).Value;
 
@@ -174,7 +174,7 @@ namespace DCL.Settings
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
                     {
-                        if (module.FeatureId != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
+                        if (module.FeatureId != FeatureId.None && !FeaturesRegistry.Instance.IsEnabled(module.FeatureId))
                             continue;
 
                         var controller =

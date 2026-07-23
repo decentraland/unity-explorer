@@ -38,7 +38,7 @@ namespace DCL.Analytics.Systems
 
             if (World.TryGet<CharacterEmoteIntent>(playerEntity, out var emoteIntent))
             {
-                if (emoteIntent.TriggerSource is TriggerSource.REMOTE or TriggerSource.PREVIEW)
+                if (emoteIntent.TriggerSource is TriggerSource.Remote or TriggerSource.Preview)
                     return;
 
                 if (lastEmoteId != emoteIntent.EmoteId)

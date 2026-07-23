@@ -139,7 +139,7 @@ namespace DCL.FeatureFlags
     {
         // Numbered because we use these to selectively enable settings,
         // this way we avoid breaking that if we ever change the order here.
-        NONE = 0,
+        None = 0,
         VOICE_CHAT = 1,
         COMMUNITY_VOICE_CHAT = 2,
         FRIENDS = 3,

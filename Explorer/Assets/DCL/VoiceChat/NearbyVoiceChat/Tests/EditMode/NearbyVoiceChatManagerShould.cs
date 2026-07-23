@@ -19,7 +19,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             callStatus = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
             loadingStatus = new FakeLoadingStatus(LoadingStatus.LoadingStage.Completed);
         }
@@ -37,7 +37,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
         }
 
         [Test]
@@ -50,8 +50,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             using var manager = new NearbyVoiceChatSuppressor(stateModel, callStatus, loadingStatus);
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
-            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.LOADING));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.Loading));
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             loadingStatus.CurrentStageMut.Value = LoadingStatus.LoadingStage.Completed;
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
         }
 
         [Test]
@@ -78,8 +78,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             callStatus.Value = VoiceChatStatus.VOICE_CHAT_IN_CALL;
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.SUPPRESSED));
-            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.CALL));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Suppressed));
+            Assert.That(stateModel.ActiveSuppression.Value, Is.EqualTo(SuppressionReason.Call));
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             callStatus.Value = VoiceChatStatus.DISCONNECTED;
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             loadingStatus.CurrentStageMut.Value = LoadingStatus.LoadingStage.Init;
 
             // Assert
-            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.IDLE));
+            Assert.That(stateModel.State.Value, Is.EqualTo(NearbyVoiceChatState.Idle));
         }
 
         private class FakeLoadingStatus : ILoadingStatus

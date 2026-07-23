@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             registry = Substitute.For<INearbyAudioStreamRegistry>();
 
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
 
             muteCache = Substitute.For<INearbyMuteCache>();
             muteService = new NearbyMuteService(muteCache, Substitute.For<INearbyMuteRepository>());
@@ -72,7 +72,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Entity b = CreateNametaggedAvatarEntity("wallet-b", new VoiceChatNametagComponent(true, VoiceChatType.NEARBY));
             Entity c = CreateNametaggedAvatarEntity("wallet-c", new VoiceChatNametagComponent(false, VoiceChatType.NEARBY));
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             AssertIsRemoving(a);
@@ -97,7 +97,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             Entity community = CreateNametaggedAvatarEntity("wallet-community",
                 new VoiceChatNametagComponent(true, VoiceChatType.COMMUNITY));
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             ref var c = ref world.Get<VoiceChatNametagComponent>(community);
@@ -114,7 +114,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
             CreateAvatarEntity("wallet-a");
             registry.IsActiveSpeaker("wallet-a").Returns(true);
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
 
             int count = 0;
@@ -368,12 +368,12 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 
             // 1. Tick under SUPPRESSED — bulk teardown runs but there's nothing to teardown yet
             //    (component was never created since suppressed gate skips add-missing).
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
             system.Update(0);
             Assert.That(world.Has<VoiceChatNametagComponent>(e), Is.False);
 
             // 2. Resume → IDLE, tick again — add-missing must rehydrate.
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
             system.Update(0);
 
             Assert.That(world.Has<VoiceChatNametagComponent>(e), Is.True);

@@ -19,7 +19,7 @@ namespace DCL.VoiceChat.UI
             this.view = view;
 
             view.SetState(stateModel.State.Value);
-            view.IsSuppressed = stateModel.State.Value == NearbyVoiceChatState.SUPPRESSED;
+            view.IsSuppressed = stateModel.State.Value == NearbyVoiceChatState.Suppressed;
             view.CloseAreaButton.onClick.AddListener(view.HideDisabledTooltip);
             view.InitializeSoundWave(() => stateModel.IsLocalSpeaking ? 1f : 0f);
             stateSubscription = stateModel.State.Subscribe(OnStateChanged);
@@ -29,9 +29,9 @@ namespace DCL.VoiceChat.UI
         private void OnStateChanged(NearbyVoiceChatState state)
         {
             view.SetState(state);
-            view.IsSuppressed = state == NearbyVoiceChatState.SUPPRESSED;
+            view.IsSuppressed = state == NearbyVoiceChatState.Suppressed;
 
-            if (state != NearbyVoiceChatState.SUPPRESSED)
+            if (state != NearbyVoiceChatState.Suppressed)
                 view.HideDisabledTooltip();
         }
 
@@ -41,8 +41,8 @@ namespace DCL.VoiceChat.UI
 
             string text = reason switch
             {
-                SuppressionReason.SCENE => SCENE_SUPPRESSED_TEXT,
-                SuppressionReason.SCENE_BAN => SCENE_BAN_SUPPRESSED_TEXT,
+                SuppressionReason.Scene => SCENE_SUPPRESSED_TEXT,
+                SuppressionReason.SceneBan => SCENE_BAN_SUPPRESSED_TEXT,
                 _ => CALL_SUPPRESSED_TEXT,
             };
 

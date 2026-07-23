@@ -231,8 +231,8 @@ namespace DCL.PluginSystem.Global
                 // Persist the user's on/off preference of the nearby chat.
                 stateModel.State.Subscribe(newState =>
                 {
-                    if (newState is NearbyVoiceChatState.DISABLED or NearbyVoiceChatState.IDLE)
-                        DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.DISABLED);
+                    if (newState is NearbyVoiceChatState.Disabled or NearbyVoiceChatState.Idle)
+                        DCLPlayerPrefs.SetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED, newState == NearbyVoiceChatState.Disabled);
                 });
 
                 var sceneRestrictionWatcher = new NearbyVoiceSceneRestrictionWatcher(scenesCache, sceneRestrictionBusController, stateModel);

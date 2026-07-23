@@ -8,8 +8,8 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
 {
     /// <summary>
     ///     Documents <see cref="NearbyMicrophoneAudioToggleHandler"/> as a user-action SFX adapter:
-    ///     plays on/off cues only on user-driven <see cref="NearbyVoiceChatState.IDLE"/> ↔
-    ///     <see cref="NearbyVoiceChatState.OPEN_MIC"/> transitions, at <c>0.2×</c> the asset volume when the
+    ///     plays on/off cues only on user-driven <see cref="NearbyVoiceChatState.Idle"/> ↔
+    ///     <see cref="NearbyVoiceChatState.OpenMic"/> transitions, at <c>0.2×</c> the asset volume when the
     ///     session was triggered by push-to-talk and at full volume otherwise. Suppress force-stops and system
     ///     Resume transitions stay silent.
     /// </summary>
@@ -29,7 +29,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [SetUp]
         public void SetUp()
         {
-            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.IDLE);
+            stateModel = new NearbyVoiceChatStateModel(NearbyVoiceChatState.Idle);
             configuration = ScriptableObject.CreateInstance<VoiceChatConfiguration>();
             configuration.NearbyPushToTalkVolumeScale = PUSH_TO_TALK_SCALE;
             offClip = ScriptableObject.CreateInstance<AudioClipConfig>();
@@ -66,7 +66,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOnClipAtFullVolumeForButtonActivation()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
 
             Assert.That(played.Count, Is.EqualTo(1));
             Assert.That(played[0].clip, Is.SameAs(onClip));
@@ -76,7 +76,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOffClipAtFullVolumeForButtonActivation()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             played.Clear();
 
             stateModel.StopSpeaking();
@@ -89,7 +89,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOnClipAtReducedVolumeForPushToTalk()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            stateModel.StartSpeaking(NearbyVoiceActivation.PushToTalk);
 
             Assert.That(played.Count, Is.EqualTo(1));
             Assert.That(played[0].clip, Is.SameAs(onClip));
@@ -99,7 +99,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayOffClipAtReducedVolumeForPushToTalk()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.PUSH_TO_TALK);
+            stateModel.StartSpeaking(NearbyVoiceActivation.PushToTalk);
             played.Clear();
 
             stateModel.StopSpeaking();
@@ -112,7 +112,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void PlayAtFullVolumeForFocusResumed()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.FOCUS_RESUMED);
+            stateModel.StartSpeaking(NearbyVoiceActivation.FocusResumed);
 
             Assert.That(played.Count, Is.EqualTo(1));
             Assert.That(played[0].scale, Is.EqualTo(DEFAULT_SCALE).Within(TOLERANCE));
@@ -121,10 +121,10 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOffClipWhenSuppressedFromOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             played.Clear();
 
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.Suppress(SuppressionReason.Call);
 
             Assert.That(played, Is.Empty);
         }
@@ -132,11 +132,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOnClipWhenResumedToOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
-            stateModel.Suppress(SuppressionReason.CALL);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
+            stateModel.Suppress(SuppressionReason.Call);
             played.Clear();
 
-            stateModel.Resume(SuppressionReason.CALL);
+            stateModel.Resume(SuppressionReason.Call);
 
             Assert.That(played, Is.Empty);
         }
@@ -144,11 +144,11 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void StaySilentAcrossFullSuppressResumeCycle()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             played.Clear();
 
-            stateModel.Suppress(SuppressionReason.SCENE);
-            stateModel.Resume(SuppressionReason.SCENE);
+            stateModel.Suppress(SuppressionReason.Scene);
+            stateModel.Resume(SuppressionReason.Scene);
 
             Assert.That(played, Is.Empty);
         }
@@ -156,7 +156,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         [Test]
         public void NotPlayOffClipWhenDisabledFromOpenMic()
         {
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
             played.Clear();
 
             stateModel.Disable();
@@ -169,7 +169,7 @@ namespace DCL.VoiceChat.NearbyVoiceChat.Tests.EditMode
         {
             handler.Dispose();
 
-            stateModel.StartSpeaking(NearbyVoiceActivation.BUTTON);
+            stateModel.StartSpeaking(NearbyVoiceActivation.Button);
 
             Assert.That(played, Is.Empty);
         }

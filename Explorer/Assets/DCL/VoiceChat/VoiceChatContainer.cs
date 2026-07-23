@@ -76,8 +76,8 @@ namespace DCL.VoiceChat
             NearbyStateModel = FeaturesRegistry.Instance.IsEnabled(FeatureId.NEARBY_VOICE_CHAT)
                 ? new NearbyVoiceChatStateModel(
                     DCLPlayerPrefs.GetBool(DCLPrefKeys.NEARBY_VOICE_CHAT_DISABLED)
-                        ? NearbyVoiceChatState.DISABLED
-                        : NearbyVoiceChatState.IDLE)
+                        ? NearbyVoiceChatState.Disabled
+                        : NearbyVoiceChatState.Idle)
                 : null;
         }
 

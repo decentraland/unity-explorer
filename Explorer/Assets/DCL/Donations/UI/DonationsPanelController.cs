@@ -134,7 +134,7 @@ namespace DCL.Donations.UI
             {
                 EmoteId = emoteUrn,
                 Spatial = true,
-                TriggerSource = TriggerSource.SELF
+                TriggerSource = TriggerSource.Self
             });
         }
 

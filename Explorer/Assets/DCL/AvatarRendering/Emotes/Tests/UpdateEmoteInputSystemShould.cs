@@ -95,7 +95,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Assert.IsTrue(world.Has<CharacterEmoteIntent>(entity));
             var intent = world.Get<CharacterEmoteIntent>(entity);
             Assert.AreEqual("urn:decentraland:off-chain:base-avatars:wave", intent.EmoteId.ToString());
-            Assert.AreEqual(TriggerSource.SELF, intent.TriggerSource);
+            Assert.AreEqual(TriggerSource.Self, intent.TriggerSource);
             Assert.IsTrue(intent.Spatial);
             Assert.IsFalse(world.Has<TriggerEmoteBySlotIntent>(entity), "TriggerEmoteBySlotIntent should be removed after processing");
         }

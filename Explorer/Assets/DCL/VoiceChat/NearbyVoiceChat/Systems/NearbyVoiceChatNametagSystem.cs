@@ -45,7 +45,7 @@ namespace DCL.VoiceChat.Nearby.Systems
                 return;
             }
 
-            localMicOpen = stateModel.State.Value == NearbyVoiceChatState.OPEN_MIC;
+            localMicOpen = stateModel.State.Value == NearbyVoiceChatState.OpenMic;
 
             UpdateExistingNearbyNametagsQuery(World);
             AddMissingNearbyNametagsQuery(World);
