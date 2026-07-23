@@ -116,9 +116,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
             bool isNonHover = eventType is not (PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave);
 
-            // Record a user gesture so gesture-gated restricted actions (e.g. OpenExplorerUi) can verify the
-            // call originated from recent input. Uses the same tick source as the appended result. Hover
-            // enter/leave are not gestures.
             if (isNonHover)
                 sceneStateProvider.LastUserInputTick = sceneStateProvider.TickNumber;
 

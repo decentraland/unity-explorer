@@ -39,6 +39,12 @@ namespace DCL.SceneRunner
             return OpenSectionResult.Opened;
         }
 
+        private async UniTask OpenSectionAsync(ExploreSections section)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section)));
+        }
+
         private void OnViewShowed(IController controller)
         {
             if (controller is ExplorePanelController)
@@ -49,12 +55,6 @@ namespace DCL.SceneRunner
         {
             if (controller is ExplorePanelController)
                 isExplorePanelOpen = false;
-        }
-
-        private async UniTask OpenSectionAsync(ExploreSections section)
-        {
-            await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section)));
         }
     }
 }

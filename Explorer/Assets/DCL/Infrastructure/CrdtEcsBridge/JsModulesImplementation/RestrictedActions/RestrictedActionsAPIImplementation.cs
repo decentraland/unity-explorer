@@ -338,6 +338,7 @@ namespace CrdtEcsBridge.RestrictedActions
                     section = ExploreSections.Events;
                     gatingFeature = FeatureId.DISCOVER;
                     return true;
+                case ExplorerUi.EuUnspecified:
                 default:
                     section = default(ExploreSections);
                     gatingFeature = null;
