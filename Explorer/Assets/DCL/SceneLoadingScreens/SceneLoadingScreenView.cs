@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DG.Tweening;
 using MVC;
 using RichTypes;
@@ -9,8 +10,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
-using DCL.Diagnostics;
-using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -44,10 +43,13 @@ namespace DCL.SceneLoadingScreens
         private TipView tipViewPrefab = null!;
 
         [SerializeField]
+        private TipByTitlePrefab[] tipsByTitlePrefabs = null!;
+
+        [SerializeField]
         private Sprite[] fallbackSprites = null!;
 
         [field: SerializeField]
-        public Image Background { get; private set; }
+        public Image Background { get; private set; } = null!;
 
         [SerializeField]
         private TipBreadcrumb breadcrumbPrefab = null!;
@@ -59,8 +61,6 @@ namespace DCL.SceneLoadingScreens
 
         private readonly List<TipView> tips = new ();
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
-
-        private static readonly int BG_COLOR_PROPERTY = Shader.PropertyToID("_Color1");
 
 #if UNITY_EDITOR
         private void Awake()
@@ -84,17 +84,8 @@ namespace DCL.SceneLoadingScreens
 
         public void AddTip(SceneTips.LoadedTip tip)
         {
-            TipView view = Instantiate(tipViewPrefab, tipsParent);
-            view.TitleLabel.text = tip.Title;
-            view.BodyLabel.text = tip.Body;
-
-            Option<Sprite> spriteResource = tip.Image.Resource;
-
-            Sprite icon = spriteResource.Has
-                ? spriteResource.Value
-                : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
-
-            view.Image.sprite = icon;
+            TipView view = Instantiate(GetTipPrefab(tip), tipsParent);
+            view.Set(tip, fallbackSprites);
 
             TipBreadcrumb breadcrumb = Instantiate(breadcrumbPrefab, breadcrumbParent);
             int breadcrumbIndex = tipsBreadcrumbs.Count;
@@ -162,34 +153,30 @@ namespace DCL.SceneLoadingScreens
                 tipView.Value.gameObject.SetActive(false);
         }
 
-        public async UniTask ChangeBackgroundColorFadeAsync(Color toColor, float duration, CancellationToken ct)
-        {
-            Color currentColor = Background.material.GetColor(BG_COLOR_PROPERTY);
-            float time = 0f;
-
-            while (time < duration)
-            {
-                ct.ThrowIfCancellationRequested();
-                Color newColor = Color.Lerp(currentColor, toColor, time / duration);
-                Background.material.SetColor(BG_COLOR_PROPERTY, newColor);
-                await UniTask.Yield(PlayerLoopTiming.Update, ct);
-                time += UnityEngine.Time.deltaTime;
-            }
-
-            Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
-        }
-
-        public void ChangeBackgroundColor(Color toColor)
-        {
-            Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
-        }
-
         private Option<TipView> TipViewByIndex(int index)
         {
             if (index >= 0 && index < tips.Count)
                 return Option<TipView>.Some(tips[index]);
 
             return Option<TipView>.None;
+        }
+
+        private TipView GetTipPrefab(SceneTips.LoadedTip tip)
+        {
+            foreach (TipByTitlePrefab tipByTitlePrefab in tipsByTitlePrefabs)
+                if (tipByTitlePrefab.title == tip.Title)
+                    return tipByTitlePrefab.prefab;
+
+            return tipViewPrefab;
+        }
+
+        [Serializable]
+        struct TipByTitlePrefab
+        {
+            // ReSharper disable InconsistentNaming
+            public string title;
+            public TipView prefab;
+            // ReSharper restore InconsistentNaming
         }
     }
 }

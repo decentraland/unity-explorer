@@ -1,3 +1,4 @@
+using RichTypes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,5 +18,19 @@ namespace DCL.SceneLoadingScreens
 
         [field: SerializeField]
         public CanvasGroup RootCanvasGroup { get; private set; } = null!;
+
+        public virtual void Set(SceneTips.LoadedTip tip, Sprite[] fallbackSprites)
+        {
+            TitleLabel.text = tip.Title;
+            BodyLabel.text = tip.Body;
+
+            Option<Sprite> spriteResource = tip.Image.Resource;
+
+            Sprite icon = spriteResource.Has
+                ? spriteResource.Value
+                : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
+
+            Image.sprite = icon;
+        }
     }
 }
