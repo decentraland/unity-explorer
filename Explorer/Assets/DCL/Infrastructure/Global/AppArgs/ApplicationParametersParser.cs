@@ -103,22 +103,15 @@ namespace Global.AppArgs
 
             var droppedKeys = new List<string>();
 
+            // Tier 1: always-permitted (base) navigation/login params.
             foreach (string uriQueryKey in uriQuery.AllKeys)
             {
                 // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
                 if (uriQueryKey == null) continue;
 
-                if (!DeepLinkAllowlist.IsPermitted(uriQueryKey))
-                {
-                    droppedKeys.Add(uriQueryKey);
-                    continue;
-                }
-
-                output[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                if (DeepLinkAllowlist.IsPermitted(uriQueryKey))
+                    output[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
-
-            if (droppedKeys.Count > 0)
-                ReportHub.LogWarning(ReportCategory.ALWAYS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
 
             if (output.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
@@ -132,16 +125,26 @@ namespace Global.AppArgs
                 output[AppArgsFlags.REALM] = realmParamValue;
             }
 
-            // SEC-020: local-scene enables local-scene-development mode, which opens a websocket to the realm.
-            // It is dropped by default (an attacker deep link could point it at a remote realm), but the
-            // legitimate local-scene-dev deep link targets a loopback realm — permit it only in that case.
-            string? localSceneValue = uriQuery.Get(AppArgsFlags.LOCAL_SCENE);
+            // Tier 2 (SEC-019/020): the local-development params Creator Hub / sdk-commands attach to preview deep
+            // links (local-scene, dclenv, hub, skip-auth-screen, landscape-terrain-enabled, multi-instance) are
+            // permitted only when the target realm is loopback — a remote-realm deep link from a web page cannot
+            // enable them. Everything not in either tier is dropped.
+            bool realmIsLoopback = output.TryGetValue(AppArgsFlags.REALM, out string? loopbackRealm)
+                                   && Uri.TryCreate(loopbackRealm, UriKind.Absolute, out Uri? loopbackRealmUri)
+                                   && loopbackRealmUri.IsLoopback;
 
-            if (localSceneValue != null
-                && output.TryGetValue(AppArgsFlags.REALM, out string? lsdRealm)
-                && Uri.TryCreate(lsdRealm, UriKind.Absolute, out Uri? lsdRealmUri)
-                && lsdRealmUri.IsLoopback)
-                output[AppArgsFlags.LOCAL_SCENE] = localSceneValue;
+            foreach (string uriQueryKey in uriQuery.AllKeys)
+            {
+                if (uriQueryKey == null || output.ContainsKey(uriQueryKey)) continue;
+
+                if (realmIsLoopback && DeepLinkAllowlist.IsPermittedForLoopbackRealm(uriQueryKey))
+                    output[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                else
+                    droppedKeys.Add(uriQueryKey);
+            }
+
+            if (droppedKeys.Count > 0)
+                ReportHub.LogWarning(ReportCategory.ALWAYS, $"Dropped {droppedKeys.Count} non-allowlisted deep-link param(s): {string.Join(", ", droppedKeys)}");
 
             return output;
         }

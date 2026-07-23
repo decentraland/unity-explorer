@@ -93,5 +93,44 @@ namespace Global.AppArgs.Tests
 
             Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a non-loopback (remote) realm (SEC-020)");
         }
+
+        [Test]
+        public void DeepLinkKeepsSdkAndCreatorHubDevParamsForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&position=10,20&local-scene=true&dclenv=zone&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
+
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LOCAL_SCENE), "local-scene");
+            Assert.AreEqual("zone", output.GetValueOrDefault(AppArgsFlags.ENVIRONMENT), "dclenv");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.DCL_EDITOR), "hub");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED), "landscape-terrain-enabled");
+            Assert.AreEqual("true", output.GetValueOrDefault(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES), "multi-instance");
+        }
+
+        [Test]
+        public void DeepLinkDropsSdkAndCreatorHubDevParamsForRemoteRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=https://peer.decentraland.org&local-scene=true&dclenv=zone&hub=true&skip-auth-screen=true&landscape-terrain-enabled=true&multi-instance=true");
+
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LOCAL_SCENE), "local-scene must be dropped for a remote realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.ENVIRONMENT), "dclenv must be dropped for a remote realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.DCL_EDITOR), "hub must be dropped for a remote realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.SKIP_AUTH_SCREEN), "skip-auth-screen must be dropped for a remote realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED), "landscape-terrain-enabled must be dropped for a remote realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.MULTIPLE_RUNNING_INSTANCES), "multi-instance must be dropped for a remote realm");
+        }
+
+        [Test]
+        public void DeepLinkDropsExecAndInfraParamsEvenForLoopbackRealm()
+        {
+            Dictionary<string, string> output = ApplicationParametersParser.ProcessDeepLinkParameters(
+                "decentraland://?realm=http://127.0.0.1:8000&creator-hub-bin-path=x&launch-cdp-monitor-on-start=true&comms-adapter=y");
+
+            Assert.IsFalse(output.ContainsKey("creator-hub-bin-path"), "creator-hub-bin-path must never be permitted (SEC-005), even for a loopback realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.LAUNCH_CDP_MONITOR_ON_START), "launch-cdp-monitor-on-start must never be permitted, even for a loopback realm");
+            Assert.IsFalse(output.ContainsKey(AppArgsFlags.COMMS_ADAPTER), "comms-adapter must never be permitted, even for a loopback realm");
+        }
     }
 }
