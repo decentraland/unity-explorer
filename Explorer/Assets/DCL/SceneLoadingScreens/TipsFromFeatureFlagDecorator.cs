@@ -68,14 +68,14 @@ namespace DCL.SceneLoadingScreens
         }
 
         private bool Contains(Tips tips, SceneTips.Tip tip) =>
-            tips.displayed.Any(title => string.Equals(title, tip.Title, StringComparison.OrdinalIgnoreCase));
+            tips.displayed.Any(title => string.Equals(title, tip.Key, StringComparison.OrdinalIgnoreCase));
 
         private bool Contains(TemporalTips tips, SceneTips.Tip tip) =>
-            tips.displayed.Any(temporalTip => string.Equals(temporalTip.name, tip.Title, StringComparison.OrdinalIgnoreCase)
+            tips.displayed.Any(temporalTip => string.Equals(temporalTip.name, tip.Key, StringComparison.OrdinalIgnoreCase)
                                               && temporalTip.IsActive());
 
         private IEnumerable<SceneTips.Tip> ToPreConfiguredTip(Tips tips) =>
-            tips.displayed.Select(title => new SceneTips.Tip(title, "", null)).ToList();
+            tips.displayed.Select(key => new SceneTips.Tip(key));
 
         // ReSharper disable InconsistentNaming
         [Serializable]

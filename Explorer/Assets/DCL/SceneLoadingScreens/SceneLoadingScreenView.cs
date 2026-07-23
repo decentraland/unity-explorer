@@ -43,7 +43,7 @@ namespace DCL.SceneLoadingScreens
         private TipView tipViewPrefab = null!;
 
         [SerializeField]
-        private TipByTitlePrefab[] tipsByTitlePrefabs = null!;
+        private LoadingTipCatalogSO tipCatalog = null!;
 
         [SerializeField]
         private Sprite[] fallbackSprites = null!;
@@ -84,7 +84,9 @@ namespace DCL.SceneLoadingScreens
 
         public void AddTip(SceneTips.LoadedTip tip)
         {
-            TipView view = Instantiate(GetTipPrefab(tip), tipsParent);
+            TipView view = Instantiate(tipCatalog.TryGet(tip.Key, out TipView? preConfiguredPrefab)
+                ? preConfiguredPrefab! : tipViewPrefab, tipsParent);
+
             view.Set(tip, fallbackSprites);
 
             TipBreadcrumb breadcrumb = Instantiate(breadcrumbPrefab, breadcrumbParent);
@@ -159,24 +161,6 @@ namespace DCL.SceneLoadingScreens
                 return Option<TipView>.Some(tips[index]);
 
             return Option<TipView>.None;
-        }
-
-        private TipView GetTipPrefab(SceneTips.LoadedTip tip)
-        {
-            foreach (TipByTitlePrefab tipByTitlePrefab in tipsByTitlePrefabs)
-                if (tipByTitlePrefab.title == tip.Title)
-                    return tipByTitlePrefab.prefab;
-
-            return tipViewPrefab;
-        }
-
-        [Serializable]
-        struct TipByTitlePrefab
-        {
-            // ReSharper disable InconsistentNaming
-            public string title;
-            public TipView prefab;
-            // ReSharper restore InconsistentNaming
         }
     }
 }
