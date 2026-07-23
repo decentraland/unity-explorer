@@ -6,7 +6,6 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
@@ -324,7 +323,7 @@ namespace DCL.McpServer.Systems
 
         private string? FirstTooltipText()
         {
-            IReadOnlyList<HoverFeedbackComponent.Tooltip>? tooltips = World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips;
+            IReadOnlyList<HoverFeedbackComponent.Tooltip> tooltips = World.Get<HoverFeedbackComponent>(pipelineEntity).Tooltips;
             return tooltips is { Count: > 0 } ? tooltips[0].Text : null;
         }
 

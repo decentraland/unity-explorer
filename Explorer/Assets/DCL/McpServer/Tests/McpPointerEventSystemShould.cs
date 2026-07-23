@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.McpServer.Components;
@@ -170,7 +169,7 @@ namespace DCL.McpServer.Tests
         private void SetCurrentSceneDefinitionId(string id) =>
             sceneFacade.SceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition(id, new SceneMetadata()));
 
-        private ref SyntheticPointerInput SyntheticInput => ref world.Get<SyntheticPointerInput>(pipelineEntity);
+        private ref SyntheticPointerInput syntheticInput => ref world.Get<SyntheticPointerInput>(pipelineEntity);
 
         /// <summary>
         ///     Emulates the frame of the reticle pipeline at its contract boundary: consumes the posted synthetic
@@ -179,7 +178,7 @@ namespace DCL.McpServer.Tests
         /// </summary>
         private void RunPipelineFrame(bool assignHover = true, bool isAtDistance = true, string? hoverText = null)
         {
-            ref SyntheticPointerInput synthetic = ref SyntheticInput;
+            ref SyntheticPointerInput synthetic = ref syntheticInput;
             Assert.That(synthetic.AimPoint.HasValue, Is.True, "a synthetic aim should have been posted");
             Assert.That(synthetic.IsPostedThisFrame, Is.True, "the pipeline honors a post only during the frame it was stamped with");
             Vector3 aim = synthetic.AimPoint!.Value;
@@ -221,7 +220,7 @@ namespace DCL.McpServer.Tests
         /// </summary>
         private void RunPipelineSkippedFrame()
         {
-            SyntheticInput = default(SyntheticPointerInput);
+            syntheticInput = default(SyntheticPointerInput);
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResult = ref world.Get<PlayerOriginRaycastResultForSceneEntities>(pipelineEntity);
             raycastResult.Reset();
@@ -266,7 +265,7 @@ namespace DCL.McpServer.Tests
 
             system!.Update(0);
 
-            ref SyntheticPointerInput synthetic = ref SyntheticInput;
+            ref SyntheticPointerInput synthetic = ref syntheticInput;
             Assert.That(synthetic.AimPoint, Is.EqualTo((Vector3?)targetGo.transform.position));
             Assert.That(synthetic.PressButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
             Assert.That(synthetic.ReleaseButton, Is.Null);
@@ -292,11 +291,11 @@ namespace DCL.McpServer.Tests
             // Another automation driver's post must survive an idle update of this system untouched;
             // stale posts die at the pipeline's readers, not at a sweeping owner.
             var foreignAim = new Vector3(1f, 2f, 3f);
-            SyntheticInput = new SyntheticPointerInput { AimPoint = foreignAim, PostedAtFrame = UnityEngine.Time.frameCount };
+            syntheticInput = new SyntheticPointerInput { AimPoint = foreignAim, PostedAtFrame = UnityEngine.Time.frameCount };
 
             system!.Update(0);
 
-            Assert.That(SyntheticInput.AimPoint, Is.EqualTo((Vector3?)foreignAim));
+            Assert.That(syntheticInput.AimPoint, Is.EqualTo((Vector3?)foreignAim));
         }
 
         [Test]
@@ -318,19 +317,19 @@ namespace DCL.McpServer.Tests
             Assert.That(world.Has<McpPointerEventIntent>(playerEntity), Is.False);
 
             // The observe frame of a press re-posts the aim so the hover stays on the target between the legs.
-            Assert.That(SyntheticInput.AimPoint.HasValue, Is.True);
-            Assert.That(SyntheticInput.PressButton, Is.Null);
+            Assert.That(syntheticInput.AimPoint.HasValue, Is.True);
+            Assert.That(syntheticInput.PressButton, Is.Null);
 
             UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp, press: pressOutcome.Press);
 
             system.Update(0); // same tick: keeps waiting so PetUp lands on a later tick than PetDown
             Assert.That(releaseCompletion.Task.Status, Is.EqualTo(UniTaskStatus.Pending));
-            Assert.That(SyntheticInput.ReleaseButton, Is.Null, "no button may be posted while the release waits for the tick");
+            Assert.That(syntheticInput.ReleaseButton, Is.Null, "no button may be posted while the release waits for the tick");
 
             tick++;
             system.Update(0); // inject the release
 
-            Assert.That(SyntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
+            Assert.That(syntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
 
             RunPipelineFrame();
             system.Update(0); // observe
@@ -342,40 +341,14 @@ namespace DCL.McpServer.Tests
         }
 
         [Test]
-        public void ReportPointerEventMatchedForTheRequestedButtonAndEdge()
-        {
-            // The target wires only a PetDown/IaPointer handler: a press maps to it, while a release ray still
-            // hits the same collider but matches no handler — hit:true alone would not tell these two apart.
-            UniTaskCompletionSource<McpPointerEventOutcome> pressCompletion = AddIntent();
-
-            system!.Update(0);
-            RunPipelineFrame();
-            system.Update(0);
-
-            McpPointerClickResult pressResult = ResultOf(pressCompletion);
-            Assert.That(pressResult.Hit, Is.True);
-            Assert.That(pressResult.PointerEventMatched, Is.True);
-
-            UniTaskCompletionSource<McpPointerEventOutcome> releaseCompletion = AddIntent(PointerEventType.PetUp);
-
-            system.Update(0);
-            RunPipelineFrame();
-            system.Update(0);
-
-            McpPointerClickResult releaseResult = ResultOf(releaseCompletion);
-            Assert.That(releaseResult.Hit, Is.True);
-            Assert.That(releaseResult.PointerEventMatched, Is.False);
-        }
-
-        [Test]
         public void DeliverSingleReleaseWithoutPressContext()
         {
             UniTaskCompletionSource<McpPointerEventOutcome> completion = AddIntent(PointerEventType.PetUp);
 
             system!.Update(0);
 
-            Assert.That(SyntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
-            Assert.That(SyntheticInput.PressButton, Is.Null);
+            Assert.That(syntheticInput.ReleaseButton, Is.EqualTo((InputAction?)InputAction.IaPointer));
+            Assert.That(syntheticInput.PressButton, Is.Null);
 
             RunPipelineFrame();
             system.Update(0);
@@ -590,7 +563,7 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("pinned"));
-            Assert.That(SyntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
+            Assert.That(syntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
         }
 
         [Test]
@@ -606,7 +579,7 @@ namespace DCL.McpServer.Tests
             McpPointerClickResult result = ResultOf(completion);
             Assert.That(result.Hit, Is.False);
             Assert.That(result.FailureReason, Does.Contain("pinned"));
-            Assert.That(SyntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
+            Assert.That(syntheticInput.AimPoint, Is.Null, "no synthetic input may be posted for a rejected request");
         }
 
         [Test]

@@ -38,10 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
 
-        private HoverCanvas hoverCanvas;
-        private Settings settings;
-        private Material hoverMaterial;
-        private Material hoverOorMaterial;
+        private HoverCanvas hoverCanvas = null!;
+        private Settings settings = null!;
 
         public GlobalInteractionPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -65,11 +63,11 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings pluginSettings, CancellationToken ct)
         {
-            this.settings = settings;
+            settings = pluginSettings;
 
-            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(settings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
+            hoverCanvas = (await assetsProvisioner.ProvideInstanceAsync(pluginSettings.hoverCanvasSettings.HoverUIDocument, ct: ct)).Value.rootVisualElement.Q<HoverCanvas>();
             hoverCanvas.Initialize();
         }
 

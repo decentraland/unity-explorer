@@ -68,7 +68,7 @@ namespace DCL.McpServer.Tools
                     : new JObject
                     {
                         ["name"] = scene.Info.Name,
-                        ["sceneId"] = scene.SceneData.SceneEntityDefinition?.id,
+                        ["sceneId"] = scene.SceneData.SceneEntityDefinition.id,
                         ["baseParcel"] = scene.Info.BaseParcel.ToParcel(),
                         ["sdkVersion"] = scene.Info.SdkVersion,
                         ["state"] = scene.SceneStateProvider.State.Value().ToString(),

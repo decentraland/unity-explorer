@@ -7,7 +7,6 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;

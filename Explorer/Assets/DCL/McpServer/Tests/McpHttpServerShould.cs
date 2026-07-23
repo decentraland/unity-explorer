@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using DCL.McpServer.Core;
 using NUnit.Framework;
 using System;
@@ -236,7 +235,9 @@ namespace DCL.McpServer.Tests
         /// </summary>
         private string SendRaw(byte[] request, bool halfCloseAfterSend = false)
         {
-            using var client = new TcpClient { SendTimeout = 10_000, ReceiveTimeout = 10_000 };
+            using var client = new TcpClient();
+            client.SendTimeout = 10_000;
+            client.ReceiveTimeout = 10_000;
             client.Connect(IPAddress.Loopback, port);
 
             try

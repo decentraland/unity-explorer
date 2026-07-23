@@ -4,6 +4,7 @@ using DCL.ECSComponents;
 using DCL.McpServer.Components;
 using DCL.McpServer.Core;
 using DCL.McpServer.Utils;
+using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Threading;
@@ -32,6 +33,9 @@ namespace DCL.McpServer.Tools
         {
             /// <summary>Pointer down, then pointer up on the next scene tick.</summary>
             CLICK,
+
+            /// <summary>Press-only leg; parsed from the wire and exposed via the schema through reflection over this enum.</summary>
+            [UsedImplicitly]
             DOWN,
             UP,
         }

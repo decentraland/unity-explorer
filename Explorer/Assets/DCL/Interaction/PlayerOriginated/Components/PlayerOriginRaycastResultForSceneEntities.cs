@@ -57,11 +57,11 @@ namespace DCL.Interaction.PlayerOriginated.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetupHit(RaycastHit hitInfo, GlobalColliderSceneEntityInfo sceneEntityInfo, float distance, float? playerDistance)
+        public void SetupHit(RaycastHit hitInfo, GlobalColliderSceneEntityInfo sceneEntityInfo, float hitDistance, float? playerDistance)
         {
             RaycastHit = hitInfo;
             this.EntityInfo = sceneEntityInfo;
-            this.distance = distance;
+            distance = hitDistance;
             DistanceToPlayer = playerDistance;
         }
 
