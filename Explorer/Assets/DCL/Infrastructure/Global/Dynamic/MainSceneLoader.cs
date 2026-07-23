@@ -232,7 +232,6 @@ namespace Global.Dynamic
             applicationParametersParser.TryGetValue(AppArgsFlags.GATEKEEPER_URL, out string? cliGatekeeperUrl);
             applicationParametersParser.TryGetValue(AppArgsFlags.OPTIMIZED_ASSETS_URL, out string? cliOptimizedAssetsUrl);
 
-            // Local asset bundles default to a local abgen on its default port unless an explicit URL is given
             if (string.IsNullOrEmpty(cliOptimizedAssetsUrl) && launchSettings.useLocalAssetBundles)
                 cliOptimizedAssetsUrl = RealmLaunchSettings.DEFAULT_LOCAL_ASSET_BUNDLES_URL;
 
