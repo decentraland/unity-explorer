@@ -72,7 +72,7 @@ namespace DCL.McpServer.Tools
             SingleInstanceEntity cameraEntity = world.CacheCamera();
             ref readonly CameraComponent camera = ref cameraEntity.GetCameraComponent(world);
 
-            return camera.Mode != CameraMode.SDKCamera
+            return camera.Mode != CameraMode.SdkCamera
                    && camera.CameraInputChangeEnabled
                    && !world.Has<InWorldCameraComponent>(cameraEntity);
         }
@@ -83,7 +83,7 @@ namespace DCL.McpServer.Tools
             ref CameraComponent camera = ref cameraEntity.GetCameraComponent(world);
             previousMode = camera.Mode;
 
-            if (camera.Mode == CameraMode.SDKCamera)
+            if (camera.Mode == CameraMode.SdkCamera)
                 return "A scene virtual camera controls the view right now (mode SDKCamera); the mode cannot change until the scene releases it.";
 
             if (!camera.CameraInputChangeEnabled)

@@ -9,7 +9,7 @@ namespace DCL.McpServer.Tests
         /// <summary>
         ///     Deliberately mixes every member-naming style the snake_case conversion must handle — PascalCase,
         ///     an acronym run, SCREAMING and SCREAMING_SNAKE — mirroring the real wire enums (CameraMode.FirstPerson,
-        ///     CameraMode.SDKCamera, MovementKind.Walk). The members are read only through
+        ///     CameraMode.SdkCamera, MovementKind.Walk). The members are read only through
         ///     reflection by McpWireEnum, hence the suppressions.
         /// </summary>
         [SuppressMessage("ReSharper", "InconsistentNaming")]
