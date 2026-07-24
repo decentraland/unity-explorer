@@ -5,12 +5,12 @@ using DCL.UI;
 using Decentraland.Kernel.Apis;
 using MVC;
 
-namespace DCL.SceneRunner
+namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions
 {
     /// <summary>
-    ///     DCL.Plugins-side implementation of <see cref="IExplorerUiActions" />. It lives here (rather than
-    ///     next to the restricted-actions API) because it references <see cref="ExplorePanelController" />
-    ///     from DCL.Social, an assembly that already depends on SceneRuntime.
+    ///     Implementation of <see cref="IExplorerUiActions" />. The sibling asmref compiles it into
+    ///     DCL.Social (not into SceneRuntime like the rest of this folder) because it references
+    ///     <see cref="ExplorePanelController" />, and DCL.Social already depends on SceneRuntime.
     /// </summary>
     public class ExplorerUiActions : IExplorerUiActions
     {
