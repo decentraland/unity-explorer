@@ -50,9 +50,12 @@ namespace DCL.SceneLoadingScreens
 
                 SceneTips audienceTips = new (originTips.Duration, originTips.Random, filteredTipList);
 
-                filteredTipList.AddRange(LaunchCounter.Count >= RETURNING_USER_THRESHOLD
-                    ? ToPreConfiguredTip(audienceTipsJson.returningUsers)
-                    : ToPreConfiguredTip(audienceTipsJson.newUsers));
+                Tips tips = LaunchCounter.Count >= RETURNING_USER_THRESHOLD
+                    ? audienceTipsJson.returningUsers
+                    : audienceTipsJson.newUsers;
+
+                foreach (string key in tips.displayed)
+                    filteredTipList.Add(new SceneTips.Tip(key));
 
                 return audienceTips;
             }
@@ -73,9 +76,6 @@ namespace DCL.SceneLoadingScreens
         private bool Contains(TemporalTips tips, SceneTips.Tip tip) =>
             tips.displayed.Any(temporalTip => string.Equals(temporalTip.name, tip.Key, StringComparison.OrdinalIgnoreCase)
                                               && temporalTip.IsActive());
-
-        private IEnumerable<SceneTips.Tip> ToPreConfiguredTip(Tips tips) =>
-            tips.displayed.Select(key => new SceneTips.Tip(key));
 
         // ReSharper disable InconsistentNaming
         [Serializable]

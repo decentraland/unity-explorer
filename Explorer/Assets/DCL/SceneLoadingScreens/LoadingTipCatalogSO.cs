@@ -16,21 +16,19 @@ namespace DCL.SceneLoadingScreens
 
         [SerializeField] private List<Entry> entries = new ();
 
+        private Dictionary<string, TipView>? entriesByKey;
+
         public bool TryGet(string key, out TipView? prefab)
         {
-            for (var i = 0; i < entries.Count; i++)
+            if (entriesByKey == null)
             {
-                Entry entry = entries[i];
+                entriesByKey = new Dictionary<string, TipView>(StringComparer.OrdinalIgnoreCase);
 
-                if (entry.Key == key)
-                {
-                    prefab = entry.Prefab;
-                    return true;
-                }
+                foreach (Entry entry in entries)
+                    entriesByKey[entry.Key] = entry.Prefab;
             }
 
-            prefab = null;
-            return false;
+            return entriesByKey.TryGetValue(key, out prefab);
         }
     }
 }

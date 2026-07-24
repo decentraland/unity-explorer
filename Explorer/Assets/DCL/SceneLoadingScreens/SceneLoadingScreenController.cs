@@ -92,7 +92,7 @@ namespace DCL.SceneLoadingScreens
             if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
                 progressLocalizationString = handle.Result.EnsureNotNull();
             else
-                Debug.LogError("SceneLoadingScreenController cannot load localized text");
+                ReportHub.LogError(ReportCategory.UI, "SceneLoadingScreenController cannot load localized text");
         }
 
         protected override void OnBeforeViewShow()
