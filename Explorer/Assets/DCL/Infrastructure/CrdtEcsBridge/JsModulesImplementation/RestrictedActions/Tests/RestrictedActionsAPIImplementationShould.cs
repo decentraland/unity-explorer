@@ -231,15 +231,32 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         public void OpenExplorerUi_FeatureDisabled_Rejects()
         {
             // Arrange
-            // COMMUNITIES is not force-enabled in the editor (unlike CAMERA_REEL / DISCOVER),
-            // so the default features registry reports it as disabled.
+            // CAMERA_REEL is force-enabled in the editor, so an app-args override is the only way
+            // to exercise the disabled branch of the features-registry gate.
+            EcsTestsUtils.TearDownFeaturesRegistry();
+            EcsTestsUtils.SetUpFeaturesRegistryWithAppArgs(new[] { "--camera-reel", "false" });
+
+            // Act
+            int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCameraReel);
+
+            // Assert
+            Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
+            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
+        }
+
+        [Test]
+        public void OpenExplorerUi_CommunitiesRejectionPropagates()
+        {
+            // Arrange
+            // Communities availability is identity-dependent, so its gate lives inside the
+            // IExplorerUiActions implementation; the API must return that rejection to the scene.
+            explorerUiActions.OpenSection(ExploreSections.Communities).Returns(OpenExplorerUiResult.RejectedFeatureDisabled);
 
             // Act
             int result = restrictedActionsAPIImplementation.TryOpenExplorerUi((int)ExplorerUi.EuCommunities);
 
             // Assert
             Assert.AreEqual((int)OpenExplorerUiResult.RejectedFeatureDisabled, result);
-            explorerUiActions.DidNotReceive().OpenSection(Arg.Any<ExploreSections>());
         }
 
         [Test]

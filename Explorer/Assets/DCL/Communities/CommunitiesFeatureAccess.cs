@@ -65,6 +65,19 @@ namespace DCL.Communities
             return result;
         }
 
+        /// <summary>
+        ///     Synchronous counterpart of <see cref="IsUserAllowedToUseTheFeatureAsync" />: returns the cached
+        ///     result of the last completed check, or false while no check has resolved for the current identity.
+        /// </summary>
+        public bool IsUserAllowedCached()
+        {
+#if UNITY_EDITOR && !COMMUNITIES_FORCE_USER_WHITELIST
+            return true;
+#else
+            return storedResult ?? false;
+#endif
+        }
+
         public bool TryGetCommunityIdFromAppArgs(out string? communityId) =>
             appArgs.TryGetValue(AppArgsFlags.COMMUNITY, out communityId) && !string.IsNullOrEmpty(communityId);
 

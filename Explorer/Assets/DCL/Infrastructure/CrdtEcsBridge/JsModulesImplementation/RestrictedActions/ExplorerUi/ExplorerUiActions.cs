@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities;
 using DCL.CrdtEcsBridge.JsModulesImplementation;
+using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
@@ -33,6 +35,14 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
         public OpenExplorerUiResult OpenSection(ExploreSections section)
         {
+            // Communities availability depends on the user identity (feature flag + wallets allowlist),
+            // so it cannot be gated through FeaturesRegistry like the other sections.
+            if (section == ExploreSections.Communities && !CommunitiesFeatureAccess.Instance.IsUserAllowedCached())
+            {
+                ReportHub.Log(ReportCategory.RESTRICTED_ACTIONS, "OpenSection: the Communities feature is not available for this user");
+                return OpenExplorerUiResult.RejectedFeatureDisabled;
+            }
+
             if (isExplorePanelOpen)
                 return OpenExplorerUiResult.WasAlreadyOpen;
 

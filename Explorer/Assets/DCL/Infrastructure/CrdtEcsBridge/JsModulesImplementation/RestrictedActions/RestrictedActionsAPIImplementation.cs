@@ -325,7 +325,10 @@ namespace CrdtEcsBridge.RestrictedActions
                     return true;
                 case ExplorerUi.EuCommunities:
                     section = ExploreSections.Communities;
-                    gatingFeature = FeatureId.COMMUNITIES;
+                    // FeatureId.COMMUNITIES is never populated in FeaturesRegistry (its state is
+                    // identity-dependent), so the gate lives in the IExplorerUiActions implementation,
+                    // which can reach CommunitiesFeatureAccess.
+                    gatingFeature = null;
                     return true;
                 case ExplorerUi.EuPlaces:
                     section = ExploreSections.Places;
