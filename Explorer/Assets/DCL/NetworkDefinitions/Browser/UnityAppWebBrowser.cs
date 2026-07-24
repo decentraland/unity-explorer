@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using UnityEngine;
@@ -16,6 +17,12 @@ namespace DCL.Browser
 
         public virtual void OpenUrlMainThreadOnly(string url)
         {
+            if (!ExternalUrlPolicy.IsWebScheme(url))
+            {
+                ReportHub.LogWarning(ReportCategory.UI, "Refused to open non-web URL scheme");
+                return;
+            }
+
             Application.OpenURL(Uri.EscapeUriString(url));
         }
 

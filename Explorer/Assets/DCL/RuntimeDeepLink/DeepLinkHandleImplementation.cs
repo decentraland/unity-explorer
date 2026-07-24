@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.ChangeRealmPrompt;
 using DCL.Chat.Commands;
 using DCL.Communities;
 using DCL.ExplorePanel;
@@ -71,11 +72,7 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                if(position.HasValue)
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position.Value, token).Forget();
-                else
-                    chatTeleporter.TeleportToRealmAsync(realm.Value.Value, token).Forget();
-
+                ShowRealmChangePromptAsync(realm.Value.Value, position).Forget();
                 handled = true;
             }
             else if (position.HasValue)
@@ -103,6 +100,19 @@ namespace DCL.RuntimeDeepLink
             }
 
             return handled ? DeepLinkHandleResult.CONSUMED : DeepLinkHandleResult.NO_MATCHES;
+        }
+
+        private async UniTaskVoid ShowRealmChangePromptAsync(string realm, Vector2Int? position)
+        {
+            // Empty message → the prompt renders the default confirmation text and requires an explicit click (SEC-003).
+            if (token.IsCancellationRequested)
+                return;
+
+            await UniTask.SwitchToMainThread(token);
+
+            var parameters = new ChangeRealmPromptController.Params(string.Empty, realm, position);
+
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(parameters), token);
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)
