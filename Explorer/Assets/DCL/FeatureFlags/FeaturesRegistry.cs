@@ -72,6 +72,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.PULSE] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.PULSE_MULTIPLAYER, featureFlags.IsEnabled(FeatureFlagsStrings.PULSE), requireDebug: false) && !localSceneDevelopment,
                 [FeatureId.BYTE_WEIGHTED_LOADING_PROGRESS] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.BYTE_WEIGHTED_LOADING_PROGRESS, featureFlags.IsEnabled(FeatureFlagsStrings.BYTE_WEIGHTED_LOADING_PROGRESS) || isEditor),
                 [FeatureId.HARDWARE_FINGERPRINT] = appArgs.ResolveFeatureFlagArg(AppArgsFlags.HARDWARE_FINGERPRINT, featureFlags.IsEnabled(FeatureFlagsStrings.HARDWARE_FINGERPRINT)),
+                [FeatureId.MCP_SERVER] = appArgs.HasFlag(AppArgsFlags.MCP) || appArgs.HasFlag(AppArgsFlags.MCP_PORT),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
@@ -210,5 +211,6 @@ namespace DCL.FeatureFlags
         USER_CREDITS = 67,
         CREDITS_WEARABLE_PURCHASE = 68,
         CREDITS_TOPUP = 69,
+        MCP_SERVER = 70,
     }
 }
