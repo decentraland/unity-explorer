@@ -12,14 +12,7 @@ namespace DCL.ChangeRealmPrompt
             /// <summary>Optional target parcel to land on after the realm switch.</summary>
             public Vector2Int? Position { get; }
 
-            public Params(string message, string realm)
-            {
-                Message = message;
-                Realm = realm;
-                Position = null;
-            }
-
-            public Params(string message, string realm, Vector2Int position)
+            public Params(string message, string realm, Vector2Int? position = null)
             {
                 Message = message;
                 Realm = realm;

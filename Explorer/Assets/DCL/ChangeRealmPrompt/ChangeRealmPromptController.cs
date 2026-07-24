@@ -69,7 +69,7 @@ namespace DCL.ChangeRealmPrompt
         /// spoof; a world name or realm alias is shown unchanged. This — with rich-text disabled in
         /// <see cref="OnViewInstantiated"/> — is what the user actually consents to.
         /// </summary>
-        private static string DestinationHostFor(string realm)
+        internal static string DestinationHostFor(string realm)
         {
             int schemeIdx = realm.IndexOf("://", StringComparison.Ordinal);
 

@@ -108,13 +108,11 @@ namespace DCL.RuntimeDeepLink
             if (token.IsCancellationRequested)
                 return;
 
-            await UniTask.SwitchToMainThread();
+            await UniTask.SwitchToMainThread(token);
 
-            ChangeRealmPromptController.Params parameters = position.HasValue
-                ? new ChangeRealmPromptController.Params(string.Empty, realm, position.Value)
-                : new ChangeRealmPromptController.Params(string.Empty, realm);
+            var parameters = new ChangeRealmPromptController.Params(string.Empty, realm, position);
 
-            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(parameters));
+            await mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(parameters), token);
         }
 
         private static URLDomain? RealmFrom(DeepLink deepLink)

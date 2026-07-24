@@ -41,7 +41,8 @@ namespace DCL.Chat.Commands
         /// <summary>
         /// True if the URL's host equals <paramref name="suffix"/> or ends with "." + suffix at a domain
         /// boundary. Reads the host out of the string via a span (no <see cref="Uri"/> allocation); a URL
-        /// carrying userinfo ('@') is rejected so it cannot spoof the host (e.g. https://decentraland.org@evil).
+        /// carrying userinfo ('@') is rejected so it cannot spoof the host — the '@' is checked before any ':'
+        /// so a colon-before-'@' form (https://decentraland.org:1234@evil.com) cannot slip past the guard.
         /// </summary>
         private static bool HostHasSuffix(string url, string suffix)
         {
@@ -51,23 +52,27 @@ namespace DCL.Chat.Commands
                 return false;
 
             int hostStart = schemeIdx + 3;
-            int hostEnd = hostStart;
+            int authorityEnd = hostStart;
 
-            while (hostEnd < url.Length)
+            while (authorityEnd < url.Length)
             {
-                char c = url[hostEnd];
+                char c = url[authorityEnd];
 
-                if (c == '/' || c == '?' || c == '#' || c == ':')
+                if (c == '/' || c == '?' || c == '#')
                     break;
 
-                // userinfo is not expected in a realm URL; reject rather than risk host-confusion
+                // userinfo is not expected in a realm URL; reject rather than risk host-confusion. Checked BEFORE
+                // any ':' so https://decentraland.org:1234@evil.com (port before userinfo) can't slip past.
                 if (c == '@')
                     return false;
 
-                hostEnd++;
+                authorityEnd++;
             }
 
-            ReadOnlySpan<char> host = url.AsSpan(hostStart, hostEnd - hostStart);
+            // Strip the port (if any) from the authority to get the bare host.
+            ReadOnlySpan<char> authority = url.AsSpan(hostStart, authorityEnd - hostStart);
+            int portSep = authority.IndexOf(':');
+            ReadOnlySpan<char> host = portSep >= 0 ? authority.Slice(0, portSep) : authority;
 
             if (host.Equals(suffix, StringComparison.OrdinalIgnoreCase))
                 return true;

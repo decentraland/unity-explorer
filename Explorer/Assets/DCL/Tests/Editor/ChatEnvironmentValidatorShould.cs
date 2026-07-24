@@ -11,6 +11,9 @@ namespace DCL.Tests.Editor
         [TestCase("https://evil.example/org", false)]              // substring "org" no longer passes
         [TestCase("https://decentraland.org.attacker.com", false)] // suffix-spoof
         [TestCase("https://attacker-decentraland.org", false)]     // not a real subdomain boundary
+        [TestCase("https://decentraland.org@evil.com", false)]      // userinfo spoof — real host is evil.com
+        [TestCase("https://decentraland.org:1234@evil.com", false)] // colon-before-@ userinfo spoof (real host evil.com)
+        [TestCase("https://peer.decentraland.org:443", true)]       // legit host with an explicit port
         public void ValidateOrgBySuffix(string realm, bool expectSuccess)
         {
             var validator = new ChatEnvironmentValidator(DecentralandEnvironment.Org);
