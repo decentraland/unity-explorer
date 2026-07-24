@@ -6,6 +6,7 @@ using DCL.ExplorePanel;
 using DCL.UI;
 using Decentraland.Kernel.Apis;
 using MVC;
+using System;
 
 namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedActions
 {
@@ -52,8 +53,13 @@ namespace DCL.Infrastructure.CrdtEcsBridge.JsModulesImplementation.RestrictedAct
 
         private async UniTask OpenSectionAsync(ExploreSections section)
         {
-            await UniTask.SwitchToMainThread();
-            await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section)));
+            try
+            {
+                await UniTask.SwitchToMainThread();
+                await mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(section)));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.RESTRICTED_ACTIONS); }
         }
 
         private void OnViewShowed(IController controller)
