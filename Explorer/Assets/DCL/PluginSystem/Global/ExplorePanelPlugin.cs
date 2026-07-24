@@ -60,6 +60,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Ipfs;
 using DCL.MapRenderer.MapLayers.HomeMarker;
 using DCL.MarketplaceCredits;
+using DCL.MarketplaceCredits.Purchase.TopUp.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Passport;
@@ -587,7 +588,9 @@ namespace DCL.PluginSystem.Global
             explorePanelView.CreditsPanelView.gameObject.SetActive(userCreditsEnabled);
 
             if (userCreditsEnabled)
-                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache);
+                creditsPanelController = new CreditsPanelController(explorePanelView.CreditsPanelView, marketplaceCreditsAPIClient, profileChangesBus, web3IdentityCache,
+                    topUpEnabled: FeaturesRegistry.Instance.IsEnabled(FeatureId.CREDITS_TOPUP),
+                    openTopUpPanel: () => mvcManager.ShowAsync(CreditsTopUpModalController.IssueCommand(new CreditsTopUpModalControllerParams(CreditsTopUpModalControllerParams.SOURCE_HUD))).Forget());
 
             explorePanelController = new
                 ExplorePanelController(
