@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
@@ -67,7 +67,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
@@ -88,7 +88,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
             Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetCurrentPlatform()}"));
@@ -108,7 +108,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("models/local_only.glb", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
             Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
@@ -133,7 +133,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Entity e = world.Create(intent);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
 
             //Assert
             Assert.That(world.Has<GetGLTFIntention>(e), Is.False);
@@ -160,7 +160,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Entity e = world.Create(intent);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
 
             //Assert
             Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
@@ -182,7 +182,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             Entity e = world.Create(intent);
 
             //Act
-            system.Update(0);
+            system!.Update(0);
 
             //Assert
             Assert.That(world.Has<GetAssetBundleIntention>(e), Is.False);
@@ -196,7 +196,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
-            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
                  .Returns(c =>
                   {
                       c[1] = asset;
@@ -206,9 +206,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
-            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>());
+            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>());
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.EqualTo(asset));
@@ -223,7 +223,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
-            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
                  .Returns(c =>
                   {
                       c[1] = asset;
@@ -233,9 +233,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
-            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>());
+            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>());
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.EqualTo(asset));
@@ -252,9 +252,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
-            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>());
+            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>());
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True,
                 "LSD cache miss must still fall through to the raw GLTF load path");
@@ -269,7 +269,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
-            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset?>())
                  .Returns(c =>
                   {
                       c[1] = asset;
@@ -279,9 +279,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
-            system.Update(0);
+            system!.Update(0);
 
-            cache.DidNotReceive().TryGet(Arg.Any<string>(), out Arg.Any<GltfContainerAsset>());
+            cache.DidNotReceive().TryGet(Arg.Any<string>(), out Arg.Any<GltfContainerAsset?>());
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.Has<GetGLTFIntention>(e), Is.True);
         }
