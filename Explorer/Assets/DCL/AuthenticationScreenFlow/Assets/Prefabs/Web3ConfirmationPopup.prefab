@@ -2030,6 +2030,7 @@ RectTransform:
   m_Children:
   - {fileID: 3248513229864106186}
   - {fileID: 8923801153950425337}
+  - {fileID: 3476988507066335564}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2055,6 +2056,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -2119,7 +2121,6 @@ MonoBehaviour:
   cancelButton: {fileID: 2064352090273611970}
   continueButton: {fileID: 6887516498286652005}
   continueButtonText: {fileID: 6839760442487993625}
-  tooltip: {fileID: 3713731086327051427}
   transactionInfoPanel: {fileID: 1235409549632294784}
   balanceValue: {fileID: 3154375944492424615}
   costValue: {fileID: 3484660924689283499}
@@ -2137,6 +2138,8 @@ MonoBehaviour:
       This does not move any funds or create a blockchain transaction.It\u2019s commonly
       used to continue a scene, save a choice, or verify your account. \L\nOnly continue
       if you trust this experience."
+  recipientPopup: {fileID: 7955668499527329207}
+  defaultContent: {fileID: 0}
 --- !u!1 &6665411606974361329
 GameObject:
   m_ObjectHideFlags: 0
@@ -2923,6 +2926,127 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &5759192764181957024
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3697872467015258986}
+    m_Modifications:
+    - target: {fileID: 5357728835287357475, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_Name
+      value: Web3WarningConfirmationModal
+      objectReference: {fileID: 0}
+    - target: {fileID: 5357728835287357475, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8169330921431457158, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+--- !u!224 &3476988507066335564 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 9199866600602126572, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+  m_PrefabInstance: {fileID: 5759192764181957024}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7955668499527329207 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2415324780502166551, guid: 0ea1cd78a0a0f124aae76f2d7a2e7aa1, type: 3}
+  m_PrefabInstance: {fileID: 5759192764181957024}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 106d14176d6191842805ae0c23b07bf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DCL.UI.Flows::DCL.AuthenticationScreenFlow.TransactionRecipientPopupView
 --- !u!1001 &7505876544514429917
 PrefabInstance:
   m_ObjectHideFlags: 0

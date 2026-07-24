@@ -206,7 +206,7 @@ namespace DCL.Web3.Authenticators
                     confirmationRequest.HideDetailsPanel = true;
                 }
 
-                bool confirmed = await TransactionConfirmationCallback(confirmationRequest);
+                bool confirmed = await TransactionConfirmationCallback(confirmationRequest, ct);
 
                 if (!confirmed)
                     throw new Web3Exception("Transaction rejected by user");
@@ -271,7 +271,7 @@ namespace DCL.Web3.Authenticators
 
                 confirmationRequest.To = to;
                 confirmationRequest.Value = value != "0x0" ? value : null;
-                confirmationRequest.Data = data != "0x" ? value : null;
+                confirmationRequest.Data = data != "0x" ? data : null;
 
                 try
                 {

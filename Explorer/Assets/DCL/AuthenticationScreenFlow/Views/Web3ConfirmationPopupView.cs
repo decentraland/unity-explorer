@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Web3.Authenticators;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,7 +28,6 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button continueButton;
         [SerializeField] private TMP_Text continueButtonText;
-        [SerializeField] private GameObject tooltip;
 
         [Header("TRANSACTION")]
         [SerializeField] private GameObject transactionInfoPanel;
@@ -40,14 +40,11 @@ namespace DCL.AuthenticationScreenFlow
         [SerializeField] private Web3ConfirmationPopupConfig transactionConfig;
         [SerializeField] private Web3ConfirmationPopupConfig signingConfig;
 
-        private bool isTransaction;
-        private bool isFirstClick = true;
+        [Header("RECIPIENT GATE")]
+        [SerializeField] private TransactionRecipientPopupView recipientPopup;
 
-        private void OnEnable()
-        {
-            tooltip.SetActive(false);
-            isFirstClick = true;
-        }
+        [Header("Can be Null")]
+        [SerializeField] private GameObject? defaultContent;
 
         private void UseConfig(Web3ConfirmationPopupConfig config)
         {
@@ -56,8 +53,29 @@ namespace DCL.AuthenticationScreenFlow
             continueButtonText.text = config.ConfirmButtonText;
         }
 
-        public UniTask<bool> ShowAsync(TransactionConfirmationRequest request)
+        public async UniTask<bool> ShowAsync(TransactionConfirmationRequest request, CancellationToken ct)
         {
+            gameObject.SetActive(true);
+
+            try
+            {
+                // First confirmation: the standard transaction/signing popup.
+                bool confirmed = await ShowDefaultAsync(request, ct);
+
+                // Second confirmation: a scene transaction with a resolved recipient must clear the
+                // recipient gate, shown only after the user confirms the first popup.
+                if (confirmed && request.Gate != RecipientGate.None)
+                    confirmed = await recipientPopup.ShowAsync(request, ct);
+
+                return confirmed;
+            }
+            finally { gameObject.SetActive(false); }
+        }
+
+        private async UniTask<bool> ShowDefaultAsync(TransactionConfirmationRequest request, CancellationToken ct)
+        {
+            if (defaultContent != null) defaultContent.SetActive(true);
+
             UseConfig(request.IsTransaction ? transactionConfig : signingConfig);
 
             // Hide description and details panel for internal features (Gifting, Donations)
@@ -75,43 +93,23 @@ namespace DCL.AuthenticationScreenFlow
                 balanceValue.text = $"{balanceEth} ETH";
             }
 
-            gameObject.SetActive(true);
-
             var tcs = new UniTaskCompletionSource<bool>();
 
             cancelButton.onClick.AddListener(OnCancel);
             continueButton.onClick.AddListener(OnContinue);
 
-            return tcs.Task;
-
-            void OnCancel()
-            {
-                Cleanup();
-                tcs.TrySetResult(false);
-            }
-
-            void OnContinue()
-            {
-                if (isFirstClick)
-                {
-                    tooltip.SetActive(true);
-                    isFirstClick = false;
-                }
-                else
-                {
-                    Cleanup();
-                    tcs.TrySetResult(true);
-                }
-            }
-
-            void Cleanup()
+            try { return await tcs.Task.AttachExternalCancellation(ct); }
+            finally
             {
                 cancelButton.onClick.RemoveListener(OnCancel);
                 continueButton.onClick.RemoveListener(OnContinue);
-                gameObject.SetActive(false);
-                tooltip.SetActive(false);
-                isFirstClick = true;
+
+                // Hide the default content so only the recipient popup remains for the second step.
+                if (defaultContent != null) defaultContent.SetActive(false);
             }
+
+            void OnCancel() => tcs.TrySetResult(false);
+            void OnContinue() => tcs.TrySetResult(true);
         }
     }
 }

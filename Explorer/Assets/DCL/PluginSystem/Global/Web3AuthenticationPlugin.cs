@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -47,6 +48,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly ITransactionRecipientResolver recipientResolver;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -72,7 +74,8 @@ namespace DCL.PluginSystem.Global
             IWearablesProvider wearablesProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            ProfileChangesBus profileChangesBus
+            ProfileChangesBus profileChangesBus,
+            ITransactionRecipientResolver recipientResolver
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -95,6 +98,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.profileChangesBus = profileChangesBus;
+            this.recipientResolver = recipientResolver;
         }
 
         public void Dispose() { }
@@ -134,12 +138,25 @@ namespace DCL.PluginSystem.Global
             transactionConfirmationView = Object.Instantiate(popupPrefab);
             transactionConfirmationView.SetDrawOrder(new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, 500));
             transactionConfirmationView.gameObject.SetActive(false);
-            web3Authenticator.SetTransactionConfirmationCallback(transactionConfirmationView.ShowAsync);
+            web3Authenticator.SetTransactionConfirmationCallback(ShowConfirmationAsync);
+        }
+
+        /// <summary>
+        ///     Resolves the recipient gate (plain-language "who receives this") before showing the popup.
+        ///     Resolution failures are non-fatal: the popup falls back to its default transaction view.
+        /// </summary>
+        private async UniTask<bool> ShowConfirmationAsync(TransactionConfirmationRequest request, CancellationToken ct)
+        {
+            try { await recipientResolver.ResolveAsync(request, ct); }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.AUTHENTICATION); }
+
+            return await transactionConfirmationView!.ShowAsync(request, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
+            LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData, storedIdentityProvider);
         }
     }
 
